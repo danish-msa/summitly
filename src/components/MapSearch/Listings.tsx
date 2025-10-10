@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { getListings } from '@/data/data';
+import { getListings } from '@/lib/api/properties';
 import { FaMapMarkerAlt, FaList } from 'react-icons/fa';
 import PropertyCard from '@/components/Helper/PropertyCard';
 import ListingFilters from './ListingFilters';
 import dynamic from 'next/dynamic';
-import { PropertyListing } from '@/data/types'; // Import the interface from types.ts
+import { PropertyListing } from '@/lib/types';
 
 // Dynamically import the Map component with no SSR to avoid hydration issues
 const PropertyMap = dynamic(() => import('@/components/MapSearch/PropertyMap'), { ssr: false });

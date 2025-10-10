@@ -1,4 +1,4 @@
-import { getListings } from '../../data/repliers';
+import { getListings } from '../../lib/api/properties';
 
 export default async function handler(req, res) {
   try {

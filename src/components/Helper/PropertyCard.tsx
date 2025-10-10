@@ -2,7 +2,7 @@ import Image from 'next/image';
 import React, { useState } from 'react';
 import { FaBed, FaBath, FaRulerCombined, FaChevronLeft, FaChevronRight, FaMapMarkerAlt, FaClock } from 'react-icons/fa';
 import Link from 'next/link';
-import { PropertyListing } from '@/data/types';
+import { PropertyListing } from '@/lib/types';
 
 interface PropertyCardProps {
   property: PropertyListing;

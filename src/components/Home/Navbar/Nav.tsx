@@ -1,5 +1,5 @@
 "use client";
-import { navLinks } from '@/constant/constant';
+import { navLinks } from '@/lib/constants/navigation';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import { BiPhone } from 'react-icons/bi';

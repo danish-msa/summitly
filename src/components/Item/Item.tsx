@@ -4,8 +4,8 @@ import React, { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Banner from './Banner/Banner'
 import ItemBody from './ItemBody/ItemBody'
-import { fetchPropertyListings } from '@/data/data'
-import { PropertyListing } from '@/data/types' // Import the interface from types.ts
+import { fetchPropertyListings } from '@/lib/api/properties'
+import { PropertyListing } from '@/lib/types'
 
 // Remove the local Property interface definition
 

@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { getListings } from '@/data/data';
+import { getListings } from '@/lib/api/properties';
 import PropertyCard from '@/components/Helper/PropertyCard';
-import { PropertyListing } from '@/data/types';
+import { PropertyListing } from '@/lib/types';
 import { FaSort } from 'react-icons/fa';
 import ListingFilters from './ListingFilters';
 
