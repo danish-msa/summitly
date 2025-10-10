@@ -1,0 +1,220 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-color: #012169;
+  --secondary-color: #418FDE;
+  --accent-color: #e74c3c;
+  --background-color: #F3F7FD;
+  --text-color: #2D2926;
+  --backgroundgray-color: #63666A;
+}
+
+@font-face {
+  font-family: 'GeometosNeue';
+  font-weight: 200;
+  font-style: normal;
+  src: url('/fonts/GeometosNeueExtraLight.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'GeometosNeue';
+  font-weight: 300;
+  font-style: normal;
+  src: url('/fonts/GeometosNeueLight.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'GeometosNeue';
+  font-weight: 400;
+  font-style: normal;
+  src: url('/fonts/Geometos.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'GeometosNeue';
+  font-weight: 700;
+  font-style: normal;
+  src: url('/fonts/GeometosNeueBold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'GeometosNeue';
+  font-weight: 800;
+  font-style: normal;
+  src: url('/fonts/GeometosNeueExtraBold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'GeometosNeue';
+  font-weight: 900;
+  font-style: normal;
+  src: url('/fonts/GeometosNeueBoldBlack.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'GeometosNeue';
+  font-weight: 950;
+  font-style: normal;
+  src: url('/fonts/GeometosNeueBoldUltra.ttf') format('truetype');
+}
+
+@layer components {
+  /* Button Classes */
+  .btn-primary{
+    @apply bg-secondary hover:bg-primary text-white border-0;
+  }
+
+
+  body{
+    @apply bg-[#F3F4F6];
+  }
+  /* Apply Poppins font to paragraphs */
+  * {
+    font-family: var(--font-poppins), sans-serif;
+  }
+
+  /* Apply Jost font to headings */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-geometosNeue;
+  }
+
+  h1{
+    @apply text-3xl sm:text-4xl md:text-4xl lg:text-5xl font-geometosNeue;
+  }
+
+  h2{
+    @apply text-3xl font-normal;
+  }
+
+  h3{
+    @apply text-2xl font-normal text-black;
+  }
+
+  p{
+    @apply text-base;
+  }
+
+  input{
+    @apply bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 outline-none;
+  }
+  select{
+    @apply bg-white text-black border border-gray-300 rounded-lg focus:ring-1 focus:ring-primary focus:border-transparent transition-all duration-200 outline-none;
+  }
+
+  span{
+    @apply text-black;
+  }
+
+  .footer__heading{
+    @apply text-lg font-bold text-white mb-4;
+  }
+  .footer__link{
+    @apply text-base text-white hover:text-secondary hover:underline cursor-pointer text-opacity-60 mb-3 w-fit
+  }
+
+  
+  
+  
+  
+  .banner-search{
+    @apply p-4 bg-white rounded-2xl;
+    border: 0 2px 4px rgba(0, 0, 0, 0.1)
+  }
+  .banner-search .tabs{
+    @apply mb-4 lg:w-[50%] flex justify-between gap-2;
+  }
+  .banner-search .tabs button {
+    @apply p-2 md:p-2 flex-1 bg-gray-200 hover:bg-gray-300 border-none cursor-pointer text-base rounded-full;
+  }
+  .tabs button.active {
+    @apply bg-primary text-white hover:bg-primary;
+  }
+  .banner-search form{
+    @apply flex flex-col lg:flex-row gap-4 justify-between items-end;
+  }
+  .banner-search form .field-box{
+    @apply w-full;
+  }
+
+  /* Hide number input arrows */
+  .peer::-webkit-outer-spin-button,
+  .peer::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .peer {
+    -moz-appearance: textfield; /* Firefox */
+  }
+  .slider-thumb::-webkit-slider-thumb{
+    @apply appearance-none w-10 h-10 bg-primary rounded-full shadow cursor-pointer;
+    border: 5px solid #fff;
+  }
+  .slider-thumb::-moz-range-thumb{
+    @apply w-10 h-10 bg-primary rounded-full shadow cursor-pointer;
+    border: 5px solid #fff;
+  }
+  
+ 
+}
+
+
+/* Ensure Leaflet container has proper dimensions */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* Add these styles for the property map */
+.custom-marker-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.leaflet-popup-content-wrapper {
+  padding: 0;
+  overflow: hidden;
+}
+
+.leaflet-popup-content {
+  margin: 0;
+  padding: 12px;
+}
+
+.property-popup img {
+  margin: -12px -12px 8px -12px;
+  width: calc(100% + 24px);
+}
+
+
+/* Mapbox styles */
+.mapbox-container {
+  width: 100%;
+  height: 100%;
+}
+
+.custom-marker {
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mapboxgl-popup-content {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.property-popup {
+  padding: 12px;
+}
+
+.property-popup img {
+  margin: -12px -12px 8px -12px;
+  width: calc(100% + 24px);
+}
