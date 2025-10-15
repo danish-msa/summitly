@@ -1,8 +1,29 @@
-import Image from 'next/image';
 import React, { useState } from 'react';
-import { FaBed, FaBath, FaRulerCombined } from 'react-icons/fa';
-import Link from 'next/link';
-import { PropertyListing } from '@/data/types'; // Import the interface from types.ts
+import { FaBed, FaBath, FaRulerCombined, FaMapMarkerAlt, FaClock, FaHeart, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+
+// Mock data type based on your original interface
+interface PropertyListing {
+  mlsNumber: string;
+  listPrice: number;
+  images: {
+    imageUrl: string;
+    imageUrls?: string[];
+  };
+  details: {
+    propertyType: string;
+    numBedrooms: number;
+    numBathrooms: number;
+    sqft: number;
+  };
+  address: {
+    city: string;
+    location: string;
+  };
+  listedDate?: string;
+  status?: string;
+}
 
 interface PropertyCardProps {
   property: PropertyListing;
@@ -10,59 +31,174 @@ interface PropertyCardProps {
 
 const PropertyCard = ({ property }: PropertyCardProps) => {
   const [imgError, setImgError] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
   
-  // Format price with commas and handle currency
+  // Mock multiple images for carousel
+  const images = property.images.imageUrls || [property.images.imageUrl];
+  const totalImages = images.length;
+  
+  // Format price with proper currency
   const formattedPrice = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0
   }).format(property.listPrice);
 
-  // Use a fallback image if the URL is invalid or on error
-  const imageSrc = imgError ? '/images/p1.jpg' : property.images.imageUrl;
+  // Use fallback image if error
+  const imageSrc = imgError ? '/placeholder.svg' : images[currentImageIndex];
 
-  // Create a property name from property type and location
-  const propertyName = `${property.details.propertyType} in ${property.address.city || 'Unknown Location'}`;
+  // Format listing date
+  const formatListingDate = (dateString?: string) => {
+    if (!dateString) return 'Recently listed';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  // Navigate carousel
+  const nextImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev + 1) % totalImages);
+  };
+
+  const prevImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev - 1 + totalImages) % totalImages);
+  };
+
+  const toggleLike = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsLiked(!isLiked);
+  };
 
   return (
-    <Link href={`/property/${property.mlsNumber}`} className="block">
-      <div className='bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer'>
-        <div className='relative h-64 w-full'>
-          <Image 
+    <div className="group cursor-pointer">
+      <div className='bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-gray-100 hover:border-gray-200'>
+        {/* Image Section with Carousel */}
+        <div className='relative h-64 w-full overflow-hidden p-2'>
+          <img 
             src={imageSrc} 
-            alt={propertyName}
-            fill
-            className='object-cover'
+            alt={`${property.details.propertyType} in ${property.address.city}`}
+            className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 rounded-2xl'
             onError={() => setImgError(true)}
-            unoptimized={!property.images.imageUrl.startsWith('/')}
           />
-          <div className='absolute top-4 left-4 bg-primary text-white px-3 py-1 rounded-md'>
-            {property.details.propertyType}
+          
+          {/* Gradient overlay */}
+          {/* <div className='absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/20' /> */}
+          
+          {/* Status Badge */}
+          <div className='absolute top-4 left-4'>
+            <Badge variant="secondary" className="bg-white/95 backdrop-blur-sm text-gray-800 hover:bg-white shadow-lg">
+              {property.status || 'For Sale'}
+            </Badge>
           </div>
-          <div className='absolute bottom-4 right-4 bg-white text-primary px-3 py-1 rounded-md font-bold'>
-            {formattedPrice}
+          
+          {/* Like Button */}
+          <button
+            onClick={toggleLike}
+            className='absolute top-4 right-4 p-2 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-lg'
+          >
+            <FaHeart className={`w-4 h-4 ${isLiked ? 'text-red-500' : 'text-gray-400'}`} />
+          </button>
+          
+          {/* Carousel Controls */}
+          {totalImages > 1 && (
+            <>
+              <button
+                onClick={prevImage}
+                className='absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md opacity-0 group-hover:opacity-100'
+              >
+                <FaChevronLeft className="w-3 h-3 text-gray-700" />
+              </button>
+              <button
+                onClick={nextImage}
+                className='absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md opacity-0 group-hover:opacity-100'
+              >
+                <FaChevronRight className="w-3 h-3 text-gray-700" />
+              </button>
+              
+              {/* Image Counter */}
+              <div className='absolute bottom-4 left-4'>
+                <span className='bg-black/60 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium'>
+                  {currentImageIndex + 1}/{totalImages}
+                </span>
+              </div>
+            </>
+          )}
+          
+          {/* Price Badge */}
+          <div className='absolute bottom-4 right-4'>
+            <span className='bg-primary text-primary-foreground px-4 py-2 rounded-full font-bold text-sm shadow-lg backdrop-blur-sm'>
+              {formattedPrice}
+            </span>
           </div>
         </div>
-        <div className='p-4'>
-          <h3 className='text-xl mb-2 truncate'>{propertyName}</h3>
-          <p className='text-gray-600 mb-4 truncate'>{property.address.location}</p>
-          <div className='flex justify-between text-gray-700'>
-            <div className='flex items-center'>
-              <FaBed className='mr-2' />
-              <span>{property.details.numBedrooms} Beds</span>
+        
+        {/* Content Section */}
+        <div className='px-5 py-3'>
+          {/* Property Type and Date */}
+          <div className='flex items-center justify-between mb-3'>
+            <Badge variant="outline" className="text-primary border-primary/20">
+              {property.details.propertyType}
+            </Badge>
+            <div className='flex items-center text-gray-500 text-xs'>
+              <FaClock className='mr-1.5 w-3 h-3' />
+              <span>{formatListingDate(property.listedDate)}</span>
             </div>
-            <div className='flex items-center'>
-              <FaBath className='mr-2' />
-              <span>{property.details.numBathrooms} Baths</span>
+          </div>
+          
+          {/* Location */}
+          <div className='flex items-start mb-2'>
+            <FaMapMarkerAlt className='mr-2 text-primary flex-shrink-0 mt-0.5' size={12} />
+            <p className='text-gray-700 text-xs leading-relaxed truncate'>{property.address.location}</p>
+          </div>
+          
+          {/* Property Details */}
+          <div className='flex items-center justify-between pt-2 border-t border-gray-100'>
+            {property.details.numBedrooms > 0 && (
+              <div className='flex items-center space-x-1 text-gray-700'>
+                <FaBed className='text-primary' size={12} />
+                <span className='text-xs font-medium ml-1'>{property.details.numBedrooms}</span>
+                <span className='text-xs text-gray-500'>bed{property.details.numBedrooms !== 1 ? 's' : ''}</span>
+              </div>
+            )}
+            
+            {property.details.numBathrooms > 0 && (
+              <div className='flex items-center space-x-1 text-gray-700'>
+                <FaBath className='text-primary' size={12} />
+                <span className='text-xs font-medium ml-1'>{property.details.numBathrooms}</span>
+                <span className='text-xs text-gray-500'>bath{property.details.numBathrooms !== 1 ? 's' : ''}</span>
+              </div>
+            )}
+            
+            <div className='flex items-center space-x-1 text-gray-700'>
+              <FaRulerCombined className='text-primary' size={12} />
+              <span className='text-xs font-medium ml-1'>{property.details.sqft.toLocaleString()}</span>
+              <span className='text-xs text-gray-500'>sqft</span>
             </div>
-            <div className='flex items-center'>
-              <FaRulerCombined className='mr-2' />
-              <span>{property.details.sqft} sqft</span>
-            </div>
+          </div>
+          
+          {/* Action Buttons */}
+          <div className='flex gap-2 pt-4'>
+            <Button variant="default" className="flex-1 h-9 rounded-full">
+              View Details
+            </Button>
+            <Button variant="outline" className="h-9 px-4 rounded-full">
+              Contact
+            </Button>
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 };
 

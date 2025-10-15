@@ -18,8 +18,10 @@ import CallToAction from './CallToAction/CallToAction';
 import CallToAction2 from '../About/CallToAction/CallToAction';
 import ExploreHotCities from './ExploreHotCities/ExploreHotCities';
 import BuyerAndSeller from './BuyerAndSeller/BuyerAndSeller';
+import FeatureGrid from './FeatureGrid/FeatureGrid';
 import Condos from './Condos/Condos';
 import SavingsCalculation from './SavingsCalculation/SavingsCalculation';
+import PropertyCategories from './PropertyCategories/PropertyCategories';
 
 const Home: React.FC = () => {
 
@@ -35,16 +37,21 @@ const Home: React.FC = () => {
 
 
     return (
-        <div className=' bg-white'>
+        <div className=''>
             <Hero />
-            <BuyerAndSeller />
+            <PropertyCategories />
+            {/* <BuyerAndSeller /> */}
+            <Properties />
+            <WhatWeDo />
+            <FeatureGrid />
             <ApartmentType />
             <FeaturedIn />
-            <Properties />
+            
+            
             <SavingsCalculation />
             <CityProperties />
             <CallToAction />
-            <WhatWeDo />
+            
             <WhyChooseUs />
             <Condos />
             <BuildingFeature />

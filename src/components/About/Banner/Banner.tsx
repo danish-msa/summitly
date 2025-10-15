@@ -5,7 +5,7 @@ import BlurImage from '../../Helper/BlurImage'
 const Banner = () => {
   return (
     <div className='bg-white text-center py-40'>
-        <div className='w-[60%] mx-auto flex flex-col gap-8 justify-center items-center'>
+        <div className='max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col gap-8 justify-center items-center'>
             <h1 className='text-black font-semibold'>Welcome to the Real Estate</h1>
             <p className='text-slate-500 font-light text-2xl'>Welcome to Real Estate, where we turn houses into homes and dreams into reality. At Home, we understand that a home is more than just a physical space, it is a place where memories are created, families grow, and life unfolds.</p>
             <div className='flex flex-col mt-8'>

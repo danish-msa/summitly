@@ -7,7 +7,7 @@ import Link from 'next/link';
 const OurAgents = () => {
   return (
     <div className='pt-16 pb-16 bg-white'>
-        <div className='w-[80%] mx-auto'>
+        <div className='max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8'>
             <SectionHeading heading='Meet Our Agents' subheading='Our Team' description='Our experienced agents are here to help you find your dream property.' />
             <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-10 md:mt-16'>
                 {agents.slice(0, 8).map((agent, i) => (

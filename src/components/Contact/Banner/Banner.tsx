@@ -2,7 +2,7 @@ import React from 'react'
 
 const Banner = () => {
   return (
-    <div className='bg-white text-center relative py-32 w-[90%] mx-auto my-28 p-20 rounded-2xl  bg-[url(/images/hero.jpg)] bg-cover bg-center bg-no-repeat'>
+    <div className='bg-white text-center relative py-32 max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 my-28 p-20 rounded-2xl  bg-[url(/images/hero.jpg)] bg-cover bg-center bg-no-repeat'>
      {/* Overlay */}
      <div className='absolute inset-0 bg-black bg-opacity-50 rounded-2xl'></div>
      <div className='flex flex-col gap-2 items-center justify-between text-white mx-auto relative'>

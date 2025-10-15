@@ -33,7 +33,7 @@ const explorecities = [
 const ExploreHotCities = () => {
   return (
     <div className='pt-16 pb-16 bg-white relative bg-cover bg-center'>
-        <div className='w-[80%] mx-auto'>
+        <div className='max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8'>
             <SectionHeading heading='Explore Hot Cities Neighbourhoods' subheading='Explore' description='Explore the places we serve and connect with one of our expert, local agents.' />
             <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 mt-10 gap-6 items-center'>
                 {explorecities.map((city, index) => (

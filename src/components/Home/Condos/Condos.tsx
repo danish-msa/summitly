@@ -2,7 +2,7 @@ import React from 'react'
 
 const Condos = () => {
   return (
-    <div className='flex flex-col md:flex-row items-center justify-between gap-2 bg-secondary p-10 md:p-20 relative'>
+    <div className='flex flex-col md:flex-row items-center justify-between gap-2 bg-secondary p-10 md:p-20 relative max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8'>
         <h2 className='text-left text-2xl md:text-5xl  md:w-[50%] text-white mb-4 capitalize'>Find Condos in your favourite area</h2>
         <div className='flex gap-4 flex-wrap w-full md:w-[50%]'>
             <button className='btn btn-primary bg-primary hover:bg-white hover:text-primary text-sm md:text-lg hover:bg-primary'>King West</button>

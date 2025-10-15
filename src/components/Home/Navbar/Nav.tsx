@@ -6,47 +6,23 @@ import { BiPhone } from 'react-icons/bi';
 import { FaUserCircle } from 'react-icons/fa';
 import { FaHouse } from 'react-icons/fa6';
 import { HiBars3BottomRight } from 'react-icons/hi2';
+import { motion, AnimatePresence } from 'framer-motion';
 import AuthModal from '@/components/Auth/AuthModal';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { cn } from '@/lib/utils';
+import { useTheme } from 'next-themes';
+import Image from 'next/image';
 
 type Props = {
   openNav: () => void;
 };
 
 const Nav = ({ openNav }: Props) => {
-  const [navBg, setNavBg] = useState(false);
-  const [navVisible, setNavVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      // Add shadow when scrolled down
-      if (currentScrollY > 90) {
-        setNavBg(true);
-      } else {
-        setNavBg(false);
-      }
-      
-      // Hide/show based on scroll direction
-      if (currentScrollY > lastScrollY && currentScrollY > 150) {
-        // Scrolling down - hide nav
-        setNavVisible(false);
-      } else {
-        // Scrolling up - show nav
-        setNavVisible(true);
-      }
-      
-      setLastScrollY(currentScrollY);
-    };
-    
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [lastScrollY]);
+  const { theme, resolvedTheme } = useTheme();
 
   const handleDropdownToggle = (id: number) => {
     setOpenDropdown((prev) => (prev === id ? null : id));
@@ -56,109 +32,209 @@ const Nav = ({ openNav }: Props) => {
     setShowLoginModal(true);
   };
 
+  const getSubLinkIcon = (label: string) => {
+    const labelLower = label.toLowerCase();
+    if (labelLower.includes('buy')) return '🏠';
+    if (labelLower.includes('sell')) return '💰';
+    if (labelLower.includes('rent')) return '🔑';
+    if (labelLower.includes('map')) return '🗺️';
+    if (labelLower.includes('mortgage')) return '📊';
+    if (labelLower.includes('calculator')) return '🧮';
+    if (labelLower.includes('agent')) return '👤';
+    if (labelLower.includes('about')) return 'ℹ️';
+    if (labelLower.includes('contact')) return '📞';
+    return '📋';
+  };
+
   return (
     <>
-      <div
-        className={`fixed bg-white ${navBg ? 'shadow-[0_4px_18px_0_rgba(0,0,0,0.078)]' : ''} h-[10vh] z-[100] w-full transition-all duration-300 transform ${navVisible ? 'translate-y-0' : '-translate-y-full'}`}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className={cn(
+          "relative w-full bg-background border-b border-border/40 shadow-sm"
+        )}
       >
-        <div className="flex items-center h-full justify-between w-[95%] sm:w-[90%] xl:w-[95%] mx-auto">
-          {/* Logo */}
-          <Link href="/">
-            <div className="flex items-center space-x-2 cursor-pointer">
-              <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-[#3162CC] text-white flex items-center justify-center">
-                <FaHouse />
-              </div>
-              <div className="text-black font-bold text-sm sm:text-base md:text-xl">
-                Real Estate Project
-              </div>
-            </div>
-          </Link>
-          {/* Nav Links */}
-          <div className="lg:flex items-center space-x-4 text-black hidden">
-            {navLinks.map((link) => (
-              <div key={link.id} className="relative">
-                {link.subLinks ? (
-                  <div
-                    onMouseEnter={() => handleDropdownToggle(link.id)}
-                    onMouseLeave={() => handleDropdownToggle(link.id)}
-                    className="cursor-pointer"
-                  >
-                    <p className="p-3 text-black sm:text-base text-base w-100 cursor-pointer hover:text-primary hover:font-semibold transition-all duration-200">
-                      {link.label}
-                    </p>
-                    <ul 
-                      className={`py-5 absolute top-full left-0 w-64 transform origin-top transition-all duration-300 ease-out z-50 ${openDropdown === link.id ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-5 scale-95 pointer-events-none'}`}
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 lg:h-20">
+            {/* Logo */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Link href="/" className="flex items-center group">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  className="relative"
+                >
+                  <Image
+                    src={resolvedTheme === 'dark' ? '/images/LogoWhite.png' : '/images/LogoBlue.png'}
+                    alt="Summitly Logo"
+                    width={200}
+                    height={60}
+                    className="h-8 lg:h-10 w-auto transition-opacity duration-300"
+                    priority
+                    quality={100}
+                  />
+                </motion.div>
+              </Link>
+            </motion.div>
+
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center space-x-1">
+              {navLinks.map((link, index) => (
+                <motion.div
+                  key={link.id}
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="relative"
+                >
+                  {link.subLinks ? (
+                    <div
+                      onMouseEnter={() => handleDropdownToggle(link.id)}
+                      onMouseLeave={() => handleDropdownToggle(link.id)}
+                      className="relative"
                     >
-                      <div className='bg-white shadow-2xl rounded-lg py-2 transform transition-transform duration-300 ease-out'>
-                        {link.subLinks.map((subLink) => {
-                          // Determine icon based on subLink label
-                          let icon;
-                          const label = subLink.label.toLowerCase();
-                          if (label.includes('buy')) icon = '🏠';
-                          else if (label.includes('sell')) icon = '💰';
-                          else if (label.includes('rent')) icon = '🔑';
-                          else if (label.includes('map')) icon = '🗺️';
-                          else if (label.includes('mortgage')) icon = '📊';
-                          else if (label.includes('calculator')) icon = '🧮';
-                          else if (label.includes('agent')) icon = '👤';
-                          else if (label.includes('about')) icon = 'ℹ️';
-                          else if (label.includes('contact')) icon = '📞';
-                          else icon = '📋';
-                          
-                          return (
-                            <li key={subLink.id} className="group">
-                              <Link
-                                href={subLink.url}
-                                className=" px-4 py-2.5 text-gray-700 transition-colors group-hover:bg-slate-300 duration-200 flex items-center transform"
-                              >
-                                <span className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full mr-3 text-lg group-hover:text-white transition-all">
-                                  {icon}
-                                </span>
-                                <div>
-                                  <span className="font-medium">{subLink.label}</span>
-                                </div>
-                              </Link>
-                            </li>
-                          );
-                        })}
-                        </div>
-                      </ul>
-                  </div>
-                ) : (
-                  <Link href={link.url}>
-                    <p className="text-black sm:text-base text-base cursor-pointer hover:text-primary hover:font-semibold transition-all duration-200">
-                      {link.label}
-                    </p>
-                  </Link>
-                )}
-              </div>
-            ))}
-          </div>
-          {/* Login & Hamburger Menu */}
-          <div className="flex items-center space-x-4">
-            <div className="hidden md:flex flex-col items-center  text-black text-sm sm:text-base md:text-lg cursor-pointer hover:text-primary transition-all duration-200">
-              <div className='flex items-center'>
-                <BiPhone className="w-5 h-5" />
-                <p className="hidden sm:block text-xs sm:text-base mx-2">123 456-7890</p>
-              </div>
-              <span className='text-[10px] leading-3'>Call us 7days/week 9:00 am to 10:00 pm</span>
+                      <motion.button
+                        className="flex items-center space-x-1 px-4 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-accent/50"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <span>{link.label}</span>
+                        <motion.svg
+                          className="w-4 h-4"
+                          animate={{ rotate: openDropdown === link.id ? 180 : 0 }}
+                          transition={{ duration: 0.2 }}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </motion.svg>
+                      </motion.button>
+
+                      <AnimatePresence>
+                        {openDropdown === link.id && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                            className="absolute top-full left-0 mt-2 w-80 bg-background border border-border rounded-xl shadow-xl z-[9999] overflow-hidden"
+                          >
+                            <div className="p-2">
+                              {link.subLinks.map((subLink, subIndex) => (
+                                <motion.div
+                                  key={subLink.id}
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ duration: 0.2, delay: subIndex * 0.05 }}
+                                >
+                                  <Link
+                                    href={subLink.url}
+                                    className="flex items-center space-x-3 px-4 py-3 text-sm text-foreground hover:bg-accent rounded-lg transition-colors group"
+                                  >
+                                    <div className="w-8 h-8 flex items-center justify-center bg-muted rounded-lg text-lg group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                                      {getSubLinkIcon(subLink.label)}
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="font-medium">{subLink.label}</div>
+                                    </div>
+                                  </Link>
+                                </motion.div>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  ) : (
+                    <Link href={link.url}>
+                      <motion.div
+                        className="px-4 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-accent/50"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        {link.label}
+                      </motion.div>
+                    </Link>
+                  )}
+                </motion.div>
+              ))}
+            </nav>
+
+            {/* Right Side Actions */}
+            <div className="flex items-center space-x-3">
+              {/* Phone Number - Desktop Only */}
+              <motion.div 
+                className="hidden xl:flex items-center space-x-2 text-sm text-muted-foreground"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                
+              </motion.div>
+
+              {/* Theme Toggle */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+              >
+                <ThemeToggle />
+              </motion.div>
+
+              {/* Login Button */}
+              <motion.button
+                onClick={handleLoginClick}
+                className="hidden md:flex items-center space-x-2 px-3 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-accent/50"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+              >
+                <FaUserCircle className="w-4 h-4" />
+                <span>Login</span>
+              </motion.button>
+
+              {/* Submit Property Button */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+              >
+                <Button 
+                  className="hidden sm:flex bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+                  size="sm"
+                >
+                  Submit Property
+                </Button>
+              </motion.div>
+
+              {/* Mobile Menu Button */}
+              <motion.button
+                onClick={openNav}
+                className="lg:hidden p-2 text-foreground hover:text-primary transition-colors rounded-lg hover:bg-accent/50"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.7 }}
+              >
+                <HiBars3BottomRight className="w-6 h-6" />
+              </motion.button>
             </div>
-            <div onClick={handleLoginClick} className="flex items-center text-black text-sm sm:text-base md:text-lg cursor-pointer hover:text-primary transition-all duration-200">
-              <FaUserCircle className="w-5 h-5" />
-              <p className="hidden sm:block text-xs sm:text-base mx-2">Login</p>
-            </div>
-            <button className={`btn btn-primary sm:text-sm bg-primary hover:text-white`}>
-              Submit Property
-            </button>
-            <HiBars3BottomRight
-              onClick={openNav}
-              className="text-black w-6 h-6 sm:w-8 sm:h-8 cursor-pointer lg:hidden"
-            />
           </div>
         </div>
-      </div>
+      </motion.div>
 
-    <AuthModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+      <AuthModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
     </>
   );
 };

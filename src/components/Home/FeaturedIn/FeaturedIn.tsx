@@ -5,7 +5,7 @@ import Image from 'next/image'
 const FeaturedIn = () => {
   return (
     <div className='pt-16 pb-16 bg-white relative bg-cover bg-center'>
-        <div className='w-[80%] mx-auto'>
+        <div className='max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8'>
             <SectionHeading heading='Featured In' subheading='' description='' />
             <div className='mt-10 md:mt-5'>
                 <div className='flex flex-wrap md:flex-nowrap justify-center items-center gap-10 md:gap-4'>

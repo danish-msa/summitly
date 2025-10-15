@@ -4,7 +4,7 @@ import BlurImage from '../../Helper/BlurImage'
 
 const CallToAction = () => {
   return (
-    <div className='w-[85%] mx-auto my-20'>
+    <div className='max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 my-20'>
         <div className='flex flex-col md:flex-row gap-8 justify-center items-center bg-[#F3F7FD] rounded-2xl'>
             <div className='flex flex-col gap-3 p-10'>
                 <span className='text-primary'>Become Partners</span>

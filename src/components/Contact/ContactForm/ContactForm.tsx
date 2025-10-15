@@ -4,7 +4,7 @@ import Form from './Form'
 
 const ContactForm = () => {
   return (
-    <div className='mx-auto w-[90%] flex justify-between mb-32'>
+    <div className='max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 flex justify-between mb-32'>
         <div className='w-[65%] flex flex-col gap-5'>
             <h2 className='text-black font-medium text-4xl'>Drop Us A Line</h2>
             <p className='text-gray-500 font-light'>Feel free to connect with us through our online channels for updates, news, and more.</p>

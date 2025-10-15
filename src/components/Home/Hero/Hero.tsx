@@ -1,30 +1,83 @@
-import React from 'react'
-import BannerSearch from './BannerSearch'
+import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import BannerSearch from "./BannerSearch";
 
-const Hero = () => {
+function Hero() {
+  const [titleNumber, setTitleNumber] = useState(0);
+  const [activeTab, setActiveTab] = useState("Buy");
+  const titles = useMemo(
+    () => ["amazing", "new", "wonderful", "beautiful", "smart"],
+    []
+  );
+
+  const tabs = ["Buy", "Rent", "Sell", "Pre-approval", "Just sold", "Home value"];
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (titleNumber === titles.length - 1) {
+        setTitleNumber(0);
+      } else {
+        setTitleNumber(titleNumber + 1);
+      }
+    }, 2000);
+    return () => clearTimeout(timeoutId);
+  }, [titleNumber, titles]);
+
   return (
-    <div className='w-full flex-col lg:flex-row flex justify-center items-center mb-80 md:mb-32 z-50 pt-28 md:pt-[10vw] pb-32 md:pb-[8vw] bg-[url("/images/banner.webp")] bg-cover bg-center relative mx-auto'>
-        {/* Overlay */}
-        <div className='absolute inset-0 bg-black bg-opacity-50'></div>
+    <div className="bg-transparent my-5">
+      <div className="w-[97%] m-auto min-h-[500px] rounded-2xl relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/images/backgroundGradient.jpg')" }}>
+        {/* Overlay for better text readability */}
+        <div className="absolute inset-0 bg-white/60" />
+        
+        <div className="container mx-auto relative z-10">
+          <div className="flex gap-8 py-20 lg:py-32 items-center justify-center flex-col">
+            {/* Animated Title */}
+            <div className="flex gap-4 flex-col">
+              <h1 className="text-4xl md:text-6xl lg:text-6xl tracking-tight text-center font-heading capitalize font-bold">
+                <span className="text-foreground">Let AI guide you to your</span>
+                <span className="relative flex w-full justify-center overflow-hidden text-center md:pb-4 md:pt-1">
+                  &nbsp;
+                  {titles.map((title, index) => (
+                    <motion.span
+                      key={index}
+                      className="absolute font-subhead font-semibold text-6xl text-primary"
+                      initial={{ opacity: 0, y: "-100" }}
+                      transition={{ type: "spring", stiffness: 50 }}
+                      animate={
+                        titleNumber === index
+                          ? {
+                              y: 0,
+                              opacity: 1,
+                            }
+                          : {
+                              y: titleNumber > index ? -150 : 150,
+                              opacity: 0,
+                            }
+                      }
+                    >
+                      {title}
+                    </motion.span>
+                  ))}
+                </span>
+                <span className="text-foreground">home today</span>
+              </h1>
 
-        <div className='flex flex-col items-center justify-center text-black w-[90%] sm:w-[55%] lg:w-[85%] relative'>
-            <span className='capitalize text-white text-sm font-light bg-secondary rounded-full px-4 py-1 mb-4'>
-                The Best Real Estate Service in Canada
-            </span>
-            <h1 className='capitalize leading-snug font-extrabold text-center text-white w-[75%]'>
-                Find Your Dream House In Canada Now.
-            </h1>
-            <p className='text-sm sm:text-base md:text-lg mt-4 text-white'>
-            Find homes in 80+ different countries represented byb 700 leading member brokerages.
-            </p>
-            <div className='mt-12 w-full md:w-[75%] absolute -bottom-[450px] md:-bottom-72 z-40'>
-                {/* <SearchBox /> */}
-                <BannerSearch />
+              <p className="text-base md:text-xl leading-relaxed tracking-tight text-foreground/70 max-w-3xl text-center">
+                Discover your dream property with our comprehensive search. Browse thousands of listings, 
+                get pre-approved, and find the perfect place to call home.
+              </p>
             </div>
+
+            
+
+            <BannerSearch />
+          </div>
         </div>
+      </div>
     </div>
-    
-  )
+  );
 }
 
-export default Hero
+export default Hero;

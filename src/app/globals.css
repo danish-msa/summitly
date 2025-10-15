@@ -2,13 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Font CSS Variables */
 :root {
-  --primary-color: #012169;
-  --secondary-color: #418FDE;
-  --accent-color: #e74c3c;
-  --background-color: #F3F7FD;
-  --text-color: #2D2926;
-  --backgroundgray-color: #63666A;
+  --font-geometos: 'GeometosNeue', sans-serif;
+  --font-roboto: 'Roboto', sans-serif;
+  --font-garamond: 'EB Garamond', serif;
 }
 
 @font-face {
@@ -29,7 +27,7 @@
   font-family: 'GeometosNeue';
   font-weight: 400;
   font-style: normal;
-  src: url('/fonts/Geometos.ttf') format('truetype');
+  src: url('/fonts/GeometosNeue.ttf') format('truetype');
 }
 
 @font-face {
@@ -50,91 +48,142 @@
   font-family: 'GeometosNeue';
   font-weight: 900;
   font-style: normal;
-  src: url('/fonts/GeometosNeueBoldBlack.ttf') format('truetype');
+  src: url('/fonts/GeometosNeueBlack.ttf') format('truetype');
 }
 
 @font-face {
   font-family: 'GeometosNeue';
   font-weight: 950;
   font-style: normal;
-  src: url('/fonts/GeometosNeueBoldUltra.ttf') format('truetype');
+  src: url('/fonts/GeometosNeueUltra.ttf') format('truetype');
 }
 
 @layer components {
   /* Button Classes */
   .btn-primary{
-    @apply bg-secondary hover:bg-primary text-white border-0;
+    @apply bg-primary hover:bg-primary/90 text-primary-foreground border-0;
   }
 
-
-  body{
-    @apply bg-[#F3F4F6];
-  }
-  /* Apply Poppins font to paragraphs */
-  * {
-    font-family: var(--font-poppins), sans-serif;
+  /* Apply Roboto font to body text and paragraphs */
+  body {
+    font-family: var(--font-roboto), sans-serif;
   }
 
-  /* Apply Jost font to headings */
+  /* Apply GEOMETOS font to headings */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-geometosNeue;
+    font-family: 'GeometosNeue', sans-serif;
   }
 
   h1{
-    @apply text-3xl sm:text-4xl md:text-4xl lg:text-5xl font-geometosNeue;
+    @apply text-3xl sm:text-4xl md:text-4xl lg:text-5xl font-bold;
+    font-family: 'GeometosNeue', sans-serif;
   }
 
   h2{
-    @apply text-3xl font-normal;
+    @apply text-3xl font-semibold;
+    font-family: 'GeometosNeue', sans-serif;
   }
 
   h3{
-    @apply text-2xl font-normal text-black;
+    @apply text-2xl font-semibold;
+    font-family: 'GeometosNeue', sans-serif;
+  }
+
+  h4{
+    @apply text-xl font-semibold;
+    font-family: 'GeometosNeue', sans-serif;
+  }
+
+  h5{
+    @apply text-lg font-semibold;
+    font-family: 'GeometosNeue', sans-serif;
+  }
+
+  h6{
+    @apply text-base font-semibold;
+    font-family: 'GeometosNeue', sans-serif;
   }
 
   p{
-    @apply text-base;
+    @apply text-base font-roboto;
+  }
+
+  /* Font Utility Classes */
+  .font-heading {
+    font-family: 'GeometosNeue', sans-serif;
+  }
+  
+  .font-body {
+    @apply font-roboto;
+  }
+  
+  .font-subhead {
+    @apply font-garamond;
+  }
+  
+  .font-caption {
+    @apply font-garamond text-sm;
+  }
+  
+  .font-initial-cap {
+    @apply font-garamond text-6xl leading-none;
+  }
+  
+  .font-numbers {
+    @apply font-garamond font-medium;
+  }
+
+  /* Hero Gradient Background */
+  .hero-gradient {
+    background: linear-gradient(135deg, 
+      hsl(var(--hero-gradient-start)) 0%, 
+      hsl(var(--hero-gradient-mid)) 50%, 
+      hsl(var(--hero-gradient-end)) 100%);
+  }
+  
+  /* Fallback for browsers that don't support CSS variables */
+  @supports not (color: hsl(var(--hero-gradient-start))) {
+    .hero-gradient {
+      background: linear-gradient(135deg, #F0F5FB 0%, #E0EBF3 50%, #D8E5F0 100%);
+    }
   }
 
   input{
-    @apply bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 outline-none;
+    @apply bg-background text-foreground border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200 outline-none;
   }
   select{
-    @apply bg-white text-black border border-gray-300 rounded-lg focus:ring-1 focus:ring-primary focus:border-transparent transition-all duration-200 outline-none;
-  }
-
-  span{
-    @apply text-black;
+    @apply bg-background text-foreground border border-input rounded-lg focus:ring-1 focus:ring-ring focus:border-transparent transition-all duration-200 outline-none;
   }
 
   .footer__heading{
-    @apply text-lg font-bold text-white mb-4;
+    @apply text-lg font-bold mb-4;
   }
   .footer__link{
-    @apply text-base text-white hover:text-secondary hover:underline cursor-pointer text-opacity-60 mb-3 w-fit
+    @apply text-base hover:text-primary hover:underline cursor-pointer opacity-60 mb-3 w-fit
+  }
+
+  /* Flat Slider Background */
+  .flat-slider {
+    position: relative;
+    background-position: 50%;
+    background-repeat: no-repeat;
+    background-size: cover;
   }
 
   
   
   
   
-  .banner-search{
-    @apply p-4 bg-white rounded-2xl;
-    border: 0 2px 4px rgba(0, 0, 0, 0.1)
+  /* Minimal Banner Search Styles */
+  .banner-search {
+    @apply w-full max-w-4xl mx-auto;
   }
-  .banner-search .tabs{
-    @apply mb-4 lg:w-[50%] flex justify-between gap-2;
-  }
-  .banner-search .tabs button {
-    @apply p-2 md:p-2 flex-1 bg-gray-200 hover:bg-gray-300 border-none cursor-pointer text-base rounded-full;
-  }
-  .tabs button.active {
-    @apply bg-primary text-white hover:bg-primary;
-  }
-  .banner-search form{
+  
+  .banner-search form {
     @apply flex flex-col lg:flex-row gap-4 justify-between items-end;
   }
-  .banner-search form .field-box{
+  
+  .banner-search form .field-box {
     @apply w-full;
   }
 
@@ -217,4 +266,90 @@
 .property-popup img {
   margin: -12px -12px 8px -12px;
   width: calc(100% + 24px);
+}
+
+
+
+@layer base {
+  :root {
+    /* Brand Identity Colors - Light Mode */
+    --background: 240 100% 98%; /* #F0F5FB - ICY BLUE */
+    --foreground: 220 65% 15%; /* #0A1730 - MIDNIGHT */
+    --card: 0 0% 100%; /* Pure white for cards */
+    --card-foreground: 220 65% 15%; /* #0A1730 - MIDNIGHT */
+    --popover: 0 0% 100%; /* Pure white for popovers */
+    --popover-foreground: 220 65% 15%; /* #0A1730 - MIDNIGHT */
+    --primary: 220 100% 20%; /* #012169 - CB BLUE */
+    --primary-foreground: 0 0% 98%; /* White text on primary */
+    --secondary: 210 100% 60%; /* #418FDE - CELESTIAL */
+    --secondary-foreground: 0 0% 98%; /* White text on secondary */
+    --muted: 220 25% 90%; /* #DAE1E8 - GLACIER */
+    --muted-foreground: 220 25% 45%; /* #58718D - SMOKY GRAY */
+    --accent: 220 100% 50%; /* #1F69FF - BRIGHT BLUE */
+    --accent-foreground: 0 0% 98%; /* White text on accent */
+    --destructive: 0 84.2% 60.2%; /* Red for destructive actions */
+    --destructive-foreground: 0 0% 98%; /* White text on destructive */
+    --border: 220 25% 85%; /* #BECAD7 - MIST */
+    --input: 220 25% 90%; /* #DAE1E8 - GLACIER */
+    --ring: 220 100% 20%; /* #012169 - CB BLUE for focus rings */
+    --radius: 0.5rem;
+    
+    /* Design System Tokens */
+    --shadow-sm: 0 1px 2px 0 rgb(1 33 105 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(1 33 105 / 0.1), 0 1px 2px -1px rgb(1 33 105 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(1 33 105 / 0.1), 0 2px 4px -2px rgb(1 33 105 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(1 33 105 / 0.1), 0 4px 6px -4px rgb(1 33 105 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(1 33 105 / 0.1), 0 8px 10px -6px rgb(1 33 105 / 0.1);
+    
+    /* Hero Gradient Colors - Light Mode */
+    --hero-gradient-start: 240 100% 98%; /* #F0F5FB - ICY BLUE */
+    --hero-gradient-mid: 220 100% 94%; /* #E0EBF3 - Light gray-blue */
+    --hero-gradient-end: 220 25% 90%; /* #D8E5F0 - Darker gray-blue */
+  }
+  
+  .dark {
+    /* Brand Identity Colors - Dark Mode */
+    --background: 220 65% 8%; /* #0A1730 - MIDNIGHT */
+    --foreground: 220 25% 95%; /* #DAE1E8 - GLACIER (light text) */
+    --card: 220 65% 12%; /* #1B3C55 - SLATE */
+    --card-foreground: 220 25% 95%; /* #DAE1E8 - GLACIER */
+    --popover: 220 65% 12%; /* #1B3C55 - SLATE */
+    --popover-foreground: 220 25% 95%; /* #DAE1E8 - GLACIER */
+    --primary: 220 100% 50%; /* #1F69FF - BRIGHT BLUE (brighter in dark) */
+    --primary-foreground: 220 65% 8%; /* #0A1730 - MIDNIGHT */
+    --secondary: 210 100% 60%; /* #418FDE - CELESTIAL */
+    --secondary-foreground: 220 65% 8%; /* #0A1730 - MIDNIGHT */
+    --muted: 220 65% 15%; /* Darker version of SLATE */
+    --muted-foreground: 220 25% 65%; /* #BECAD7 - MIST */
+    --accent: 220 100% 60%; /* #418FDE - CELESTIAL */
+    --accent-foreground: 220 65% 8%; /* #0A1730 - MIDNIGHT */
+    --destructive: 0 62.8% 30.6%; /* Darker red for dark mode */
+    --destructive-foreground: 220 25% 95%; /* #DAE1E8 - GLACIER */
+    --border: 220 65% 20%; /* Darker border */
+    --input: 220 65% 15%; /* Dark input background */
+    --ring: 220 100% 50%; /* #1F69FF - BRIGHT BLUE for focus rings */
+    
+    /* Dark mode shadows with brand colors */
+    --shadow-sm: 0 1px 2px 0 rgb(10 23 48 / 0.3);
+    --shadow: 0 1px 3px 0 rgb(10 23 48 / 0.4), 0 1px 2px -1px rgb(10 23 48 / 0.4);
+    --shadow-md: 0 4px 6px -1px rgb(10 23 48 / 0.4), 0 2px 4px -2px rgb(10 23 48 / 0.4);
+    --shadow-lg: 0 10px 15px -3px rgb(10 23 48 / 0.4), 0 4px 6px -4px rgb(10 23 48 / 0.4);
+    --shadow-xl: 0 20px 25px -5px rgb(10 23 48 / 0.4), 0 8px 10px -6px rgb(10 23 48 / 0.4);
+    
+    /* Dark Mode Hero Gradient Colors */
+    --hero-gradient-start: 220 65% 8%; /* #0A1730 - MIDNIGHT */
+    --hero-gradient-mid: 220 65% 12%; /* #1B3C55 - SLATE */
+    --hero-gradient-end: 220 65% 18%; /* Lighter slate for better gradient */
+  }
+}
+
+
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }

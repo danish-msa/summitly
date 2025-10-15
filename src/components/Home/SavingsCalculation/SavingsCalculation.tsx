@@ -10,7 +10,7 @@ const SavingsCalculation = () => {
   const cashback = homePrice * 0.013;
   return (
     <div className='pt-16 pb-16 bg-background relative bg-cover bg-center'>
-        <div className='w-[90%] md:w-[60%] mx-auto'>
+        <div className='max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8'>
             <SectionHeading heading='On average we save our sellers $11,250!' subheading='' description='When you sell a home with us in the Greater Toronto Area (GTA), Kitchener, Waterloo and Cambridge Region (KWC), Guelph and Hamilton – we save you 50% on listing fees!' />
               <div className='mt-10 bg-white p-10 rounded-2xl shadow-lg'>
                 <div className='flex flex-wrap md:flex-nowrap justify-center items-center gap-10 md:gap-4'>

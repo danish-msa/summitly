@@ -3,7 +3,7 @@ import Image from 'next/image'
 
 const WhyChooseUs = () => {
   return (
-    <div className='flex flex-col md:flex-row w-[98%] bg-background justify-center items-center mx-auto rounded-lg relative md:h-[800px] lg:h-[700px]'>
+    <div className='flex flex-col md:flex-row max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 bg-background justify-center items-center rounded-lg relative md:h-[800px] lg:h-[700px]'>
         <div className='w-1/2 relative h-[80%]'>
             <Image src='/images/hero.jpg' layout="fill" objectFit="cover" alt='hero' className='rounded-xl'/>
         </div>
