@@ -2,7 +2,6 @@ import React from 'react';
 import 'rc-slider/assets/index.css';
 import { BiCalculator } from 'react-icons/bi';
 import LocationInput from './LocationInput';
-import { Button } from '@/components/ui/button';
 
 const RentForm = () => {
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {

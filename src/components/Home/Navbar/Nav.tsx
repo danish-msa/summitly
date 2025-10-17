@@ -19,7 +19,7 @@ type Props = {
 const Nav = ({ openNav }: Props) => {
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const { theme, resolvedTheme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
   const handleDropdownToggle = (id: number) => {
     setOpenDropdown((prev) => (prev === id ? null : id));

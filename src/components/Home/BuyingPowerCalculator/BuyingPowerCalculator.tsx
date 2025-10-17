@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import SectionHeading from '@/components/Helper/SectionHeading';
 
 interface CalculatorResults {
@@ -15,7 +15,7 @@ const BuyingPowerCalculator = () => {
 
   const [results, setResults] = useState<CalculatorResults | null>(null);
 
-  const calculateSavings = () => {
+  const calculateSavings = useCallback(() => {
     // Constants based on the buy.ca example
     const downPaymentPercent = 20; // 20% down payment
     const summitlyBoost = 50000; // Fixed $50,000 boost
@@ -56,11 +56,11 @@ const BuyingPowerCalculator = () => {
       mortgageInterestSavings,
       totalSavingsWithSummitly,
     });
-  };
+  }, [homePrice]);
 
   useEffect(() => {
     calculateSavings();
-  }, [homePrice]);
+  }, [calculateSavings]);
 
   const handleSliderChange = (value: number) => {
     setHomePrice(value);
@@ -73,10 +73,6 @@ const BuyingPowerCalculator = () => {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
-  };
-
-  const formatPercent = (percent: number) => {
-    return `${percent.toFixed(1)}%`;
   };
 
   return (
