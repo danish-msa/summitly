@@ -18,7 +18,8 @@ const Hero = () => {
             <p className='text-sm sm:text-base md:text-lg mt-4 text-black/90 text-center px-4 max-w-2xl'>
             Find homes you'll love with fast search, real photos, and trusted data.
             </p>
-            <div className='mt-8 sm:mt-12 w-full max-w-4xl z-40 -mb-16 sm:-mb-20 lg:-mb-28 px-4'>
+            <p>Search <span className='text-brand-celestial text-lg sm:text-xl md:text-2xl font-bold'>336,092</span> listings from trusted REALTORS®</p>
+            <div className='mt-8 sm:mt-8 w-full max-w-4xl z-40 -mb-16 sm:-mb-20 lg:-mb-28 px-4'>
                 {/* <SearchBox /> */}
                 <BannerSearch />
             </div>

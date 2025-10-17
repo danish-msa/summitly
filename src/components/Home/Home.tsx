@@ -10,13 +10,13 @@ import Blogs from './Blogs/Blogs';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import ConnectWithUs from './ConnectWithUs/ConnectWithUs';
-import WhatWeDo from './WhatWeDo/WhatWeDo';
 import WhyChooseUs from './WhyChooseUs/WhyChooseUs';
 import FeaturedIn from './FeaturedIn/FeaturedIn';
+import AsSeenOn from './AsSeenOn/AsSeenOn';
 import CallToAction from './CallToAction/CallToAction';
 import CallToAction2 from '../About/CallToAction/CallToAction';
 import ExploreHotCities from './ExploreHotCities/ExploreHotCities';
-import FeatureGrid from './FeatureGrid/FeatureGrid';
+import ServiceFeatures from './ServiceFeatures/ServiceFeatures';
 import PropertyCategories from './PropertyCategories/PropertyCategories';
 import PropertyDiscovery from './PropertyDiscovery/PropertyDiscovery';
 
@@ -36,14 +36,16 @@ const Home: React.FC = () => {
     return (
         <div className=''>
             <Hero />
+            <AsSeenOn />
             <PropertyCategories />
+            
             <FeaturedIn />
             {/* <BuyerAndSeller /> */}
             <Properties />
-            <WhatWeDo />
+            {/* <WhatWeDo /> */}
             <CallToAction2 />
-            <FeatureGrid />
-            
+            {/* <FeatureGrid /> */}
+            <ServiceFeatures />
             
             
             <PropertyDiscovery />

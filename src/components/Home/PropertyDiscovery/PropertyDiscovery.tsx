@@ -144,7 +144,7 @@ const PropertyDiscovery: React.FC = () => {
 
   return (
     <div className="pt-16 pb-16 bg-gradient-to-br from-icy-blue to-glacier">
-      <div className="max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <SectionHeading 
           heading="Discover Your Perfect Home" 
@@ -215,7 +215,7 @@ const PropertyDiscovery: React.FC = () => {
                     <button
                       key={index}
                       onClick={() => handleCityClick(city)}
-                      className="w-full text-left rounded-lg hover:bg-gradient-to-r hover:from-brand-tide hover:to-brand-glacier transition-all duration-300 text-smoky-gray hover:text-primary border border-transparent hover:border-primary-200 font-body"
+                      className="w-full p-2 text-left rounded-lg hover:bg-gradient-to-r hover:from-brand-tide hover:to-brand-glacier transition-all duration-300 text-smoky-gray hover:text-primary border border-transparent hover:border-primary-200 font-body"
                     >
                       <span className="flex items-center gap-2">
                         <ArrowRight className="w-4 h-4" />
