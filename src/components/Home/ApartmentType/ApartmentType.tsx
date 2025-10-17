@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import SectionHeading from '@/components/Helper/SectionHeading'
 import { fetchPropertyClasses } from '@/data/data';
 import React from 'react'
 import AppartmentTypeCard from './AppartmentTypeCard';

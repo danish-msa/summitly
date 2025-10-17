@@ -1,5 +1,4 @@
 import { ButtonColorful } from "@/components/ui/button-colorful"
-import { Button } from "@/components/ui/button"
 
 function ButtonColorfulDemo() {
     return (

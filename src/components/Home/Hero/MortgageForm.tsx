@@ -2,7 +2,6 @@ import React from 'react';
 import { BiCalculator } from 'react-icons/bi';
 import 'rc-slider/assets/index.css';
 import LocationInput from './LocationInput';
-import { Button } from '@/components/ui/button';
 
 const MortgageForm = () => {
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {

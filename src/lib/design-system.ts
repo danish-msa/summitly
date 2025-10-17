@@ -215,17 +215,18 @@ export const componentVariants = {
 // Utility Functions
 export const getColorValue = (colorPath: string): string => {
   const keys = colorPath.split('.')
-  let value: any = designSystem.colors
+  let value: unknown = designSystem.colors
   
   for (const key of keys) {
-    value = value[key]
-    if (value === undefined) {
+    if (typeof value === 'object' && value !== null && key in value) {
+      value = (value as Record<string, unknown>)[key]
+    } else {
       console.warn(`Color path "${colorPath}" not found in design system`)
       return '#000000'
     }
   }
   
-  return value
+  return typeof value === 'string' ? value : '#000000'
 }
 
 export const getSpacingValue = (size: keyof typeof designSystem.spacing): string => {

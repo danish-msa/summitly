@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Bed, Bath, Maximize2, MapPin, Clock, Heart, ChevronLeft, ChevronRight, ArrowUpRight } from 'lucide-react';
+import { Bed, Bath, Maximize2, MapPin, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 // Mock data type based on your original interface

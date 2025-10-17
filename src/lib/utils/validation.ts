@@ -52,9 +52,12 @@ export const isValidPropertySize = (sqft: number): boolean => {
 /**
  * Required field validation
  */
-export const isRequired = (value: string | number | null | undefined): boolean => {
+export const isRequired = (value: unknown): boolean => {
   if (typeof value === 'string') {
     return value.trim().length > 0;
+  }
+  if (typeof value === 'number') {
+    return !isNaN(value);
   }
   return value !== null && value !== undefined;
 };
@@ -67,10 +70,10 @@ export interface ValidationRule {
   minLength?: number;
   maxLength?: number;
   pattern?: RegExp;
-  custom?: (value: any) => boolean | string;
+  custom?: (value: unknown) => boolean | string;
 }
 
-export const validateField = (value: any, rules: ValidationRule): string | null => {
+export const validateField = (value: unknown, rules: ValidationRule): string | null => {
   // Required validation
   if (rules.required && !isRequired(value)) {
     return 'This field is required';

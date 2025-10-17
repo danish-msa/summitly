@@ -2,7 +2,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { ButtonColorful } from '@/components/ui/button-colorful';
-import SectionHeading from '@/components/Helper/SectionHeading';
 import Image from 'next/image';
 
 interface PropertyCategory {

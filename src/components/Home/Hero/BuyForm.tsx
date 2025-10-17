@@ -2,8 +2,6 @@ import React from 'react';
 import { BiCalculator } from 'react-icons/bi';
 import 'rc-slider/assets/index.css';
 import LocationInput from './LocationInput';
-import { Button } from '@/components/ui/button';
-import { ButtonColorful } from '@/components/ui/button-colorful';
 
 const BuyForm = () => {
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {

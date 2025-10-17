@@ -17,10 +17,8 @@ import CallToAction from './CallToAction/CallToAction';
 import CallToAction2 from '../About/CallToAction/CallToAction';
 import ExploreHotCities from './ExploreHotCities/ExploreHotCities';
 import FeatureGrid from './FeatureGrid/FeatureGrid';
-import SavingsCalculation from './SavingsCalculation/SavingsCalculation';
 import PropertyCategories from './PropertyCategories/PropertyCategories';
 import PropertyDiscovery from './PropertyDiscovery/PropertyDiscovery';
-import BuyingPowerCalculator from './BuyingPowerCalculator/BuyingPowerCalculator';
 
 const Home: React.FC = () => {
 
@@ -51,7 +49,7 @@ const Home: React.FC = () => {
             <PropertyDiscovery />
             
             
-            <BuyingPowerCalculator />
+            {/* <BuyingPowerCalculator /> */}
             {/* <SavingsCalculation /> */}
             <CityProperties />
             <CallToAction />

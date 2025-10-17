@@ -1,4 +1,4 @@
-import { Agent, PropertyType, PropertyClass, City } from '@/lib/types';
+import { Agent, PropertyType, City } from '@/lib/types';
 
 // Sample agent data
 export const agents: Agent[] = [
