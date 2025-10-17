@@ -149,7 +149,7 @@ const ApartmentType = () => {
               Get personalized recommendations based on your specific needs.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="dark" className="px-8 py-3">
+              <Button className="px-8 py-3">
                 Get Expert Help
               </Button>
               <Button variant="outline" className="px-8 py-3">
