@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import AuthModal from '@/components/Auth/AuthModal';
 // import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { cn } from '@/lib/utils';
-import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import { ButtonColorful } from '@/components/ui/button-colorful';
 
@@ -19,7 +18,6 @@ type Props = {
 const Nav = ({ openNav }: Props) => {
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const { resolvedTheme } = useTheme();
 
   const handleDropdownToggle = (id: number) => {
     setOpenDropdown((prev) => (prev === id ? null : id));
@@ -69,7 +67,7 @@ const Nav = ({ openNav }: Props) => {
                   className="relative"
                 >
                   <Image
-                    src={resolvedTheme === 'dark' ? '/images/LogoWhite.png' : '/images/LogoBlue.png'}
+                    src="/images/LogoBlue.png"
                     alt="Summitly Logo"
                     width={200}
                     height={60}

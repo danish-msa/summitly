@@ -353,40 +353,6 @@
     --hero-gradient-end: 220 25% 90%; /* #D8E5F0 - Darker gray-blue */
   }
   
-  .dark {
-    /* Brand Identity Colors - Dark Mode */
-    --background: 220 65% 8%; /* #0A1730 - MIDNIGHT */
-    --foreground: 220 25% 95%; /* #DAE1E8 - GLACIER (light text) */
-    --card: 220 65% 12%; /* #1B3C55 - SLATE */
-    --card-foreground: 220 25% 95%; /* #DAE1E8 - GLACIER */
-    --popover: 220 65% 12%; /* #1B3C55 - SLATE */
-    --popover-foreground: 220 25% 95%; /* #DAE1E8 - GLACIER */
-    --primary: 220 100% 50%; /* #1F69FF - BRIGHT BLUE (brighter in dark) */
-    --primary-foreground: 220 65% 8%; /* #0A1730 - MIDNIGHT */
-    --secondary: 210 100% 60%; /* #418FDE - CELESTIAL */
-    --secondary-foreground: 220 65% 8%; /* #0A1730 - MIDNIGHT */
-    --muted: 220 65% 15%; /* Darker version of SLATE */
-    --muted-foreground: 220 25% 65%; /* #BECAD7 - MIST */
-    --accent: 220 100% 60%; /* #418FDE - CELESTIAL */
-    --accent-foreground: 220 65% 8%; /* #0A1730 - MIDNIGHT */
-    --destructive: 0 62.8% 30.6%; /* Darker red for dark mode */
-    --destructive-foreground: 220 25% 95%; /* #DAE1E8 - GLACIER */
-    --border: 220 65% 20%; /* Darker border */
-    --input: 220 65% 15%; /* Dark input background */
-    --ring: 220 100% 50%; /* #1F69FF - BRIGHT BLUE for focus rings */
-    
-    /* Dark mode shadows with brand colors */
-    --shadow-sm: 0 1px 2px 0 rgb(10 23 48 / 0.3);
-    --shadow: 0 1px 3px 0 rgb(10 23 48 / 0.4), 0 1px 2px -1px rgb(10 23 48 / 0.4);
-    --shadow-md: 0 4px 6px -1px rgb(10 23 48 / 0.4), 0 2px 4px -2px rgb(10 23 48 / 0.4);
-    --shadow-lg: 0 10px 15px -3px rgb(10 23 48 / 0.4), 0 4px 6px -4px rgb(10 23 48 / 0.4);
-    --shadow-xl: 0 20px 25px -5px rgb(10 23 48 / 0.4), 0 8px 10px -6px rgb(10 23 48 / 0.4);
-    
-    /* Dark Mode Hero Gradient Colors */
-    --hero-gradient-start: 220 65% 8%; /* #0A1730 - MIDNIGHT */
-    --hero-gradient-mid: 220 65% 12%; /* #1B3C55 - SLATE */
-    --hero-gradient-end: 220 65% 18%; /* Lighter slate for better gradient */
-  }
 }
 
 

@@ -17,8 +17,6 @@ const buttonVariants = cva(
           "btn-gradient-outline text-primary-700",
         secondary:
           "btn-gradient-secondary text-secondary-800 border-0",
-        dark:
-          "btn-gradient-dark border-0",
         ghost: "hover:bg-gradient-to-r hover:from-primary-50 hover:to-primary-100 text-primary-700 transition-[background] duration-500 ease-in-out",
         link: "text-primary underline-offset-4 hover:underline",
       },
