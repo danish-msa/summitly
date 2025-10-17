@@ -110,37 +110,37 @@
   }
 
   h1{
-    @apply text-3xl sm:text-4xl md:text-4xl lg:text-5xl font-bold;
+    @apply text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold;
     font-family: var(--font-geometos-neue), sans-serif;
   }
 
   h2{
-    @apply text-3xl font-semibold;
+    @apply text-xl sm:text-2xl md:text-3xl font-semibold;
     font-family: var(--font-geometos-neue), sans-serif;
   }
 
   h3{
-    @apply text-2xl font-semibold;
+    @apply text-lg sm:text-xl md:text-2xl font-semibold;
     font-family: var(--font-geometos-neue), sans-serif;
   }
 
   h4{
-    @apply text-xl font-semibold;
+    @apply text-base sm:text-lg md:text-xl font-semibold;
     font-family: var(--font-geometos-neue), sans-serif;
   }
 
   h5{
-    @apply text-lg font-semibold;
+    @apply text-sm sm:text-base md:text-lg font-semibold;
     font-family: var(--font-geometos-neue), sans-serif;
   }
 
   h6{
-    @apply text-base font-semibold;
+    @apply text-xs sm:text-sm md:text-base font-semibold;
     font-family: var(--font-geometos-neue), sans-serif;
   }
 
   p{
-    @apply text-base;
+    @apply text-sm sm:text-base;
     font-family: var(--font-bauziet), sans-serif;
   }
 
@@ -215,22 +215,22 @@
   
   /* Minimal Banner Search Styles */
   .banner-search{
-    @apply px-4 pb-4 pt-2 backdrop-blur-sm bg-white rounded-2xl;
+    @apply px-3 sm:px-4 pb-4 pt-2 backdrop-blur-sm bg-white rounded-2xl;
   }
   .banner-search .tabs{
-    @apply  flex justify-center gap-1;
+    @apply flex flex-wrap justify-center gap-1 sm:gap-2;
   }
   .banner-search .tabs button {
-    @apply px-4 py-2 text-base font-medium text-gray-900 hover:text-gray-800 border-none cursor-pointer rounded-lg transition-all duration-200 bg-transparent hover:bg-gray-50;
+    @apply px-2 sm:px-3 md:px-4 py-2 text-xs sm:text-sm md:text-base font-medium text-gray-900 hover:text-gray-800 border-none cursor-pointer rounded-lg transition-all duration-200 bg-transparent hover:bg-gray-50 min-w-0 flex-shrink-0;
   }
   .tabs button.active {
     @apply text-brand-celestial bg-blue-50 border-b-2 border-brand-celestial rounded-b-none;
   }
   .banner-search form{
-    @apply flex flex-col gap-4 justify-center items-center;
+    @apply flex flex-col gap-3 sm:gap-4 justify-center items-center;
   }
   .banner-search form .field-box{
-    @apply w-full ;
+    @apply w-full;
   }
 
   /* Hide number input arrows */

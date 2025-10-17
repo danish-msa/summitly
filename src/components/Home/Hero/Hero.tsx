@@ -3,22 +3,22 @@ import BannerSearch from './BannerSearch'
 
 const Hero = () => {
   return (
-    <div className='w-full flex-col lg:flex-row flex justify-center items-center mb-10 h-[800px] z-50 relative mx-auto bg-[url("/images/HomeBackground.png")]'>
+    <div className='w-full flex-col lg:flex-row flex justify-center items-center mb-10 min-h-[600px] sm:min-h-[700px] lg:h-[800px] z-50 relative mx-auto bg-[url("/images/HomeBackground.png")] bg-cover bg-center bg-no-repeat'>
         {/* Overlay */}
         {/* <div className='absolute inset-0 bg-black bg-opacity-50'></div> */}
 
-        <div className='w-[1300px] mx-auto flex flex-col items-center justify-center text-black relative'>
-            <span className='inline-flex mb-4 items-center gap-2 uppercase bg-brand-smoky-gray/10 backdrop-blur-sm text-secondary px-4 py-1 rounded-full text-base font-medium'>
+        <div className='w-full max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center text-black relative py-8 sm:py-12 lg:py-0'>
+            <span className='inline-flex mb-4 items-center gap-2 uppercase bg-brand-smoky-gray/10 backdrop-blur-sm text-secondary px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm md:text-base font-medium'>
                 <span className='w-2 h-2 bg-secondary rounded-full'></span>
                 The Best Real Estate Service in Canada
             </span>
-            <h1 className='font-bauziet capitalize text-7xl leading-tight font-extrabold text-center text-black'>
-                Canada’s #1 place to <br /> <span className='text-brand-celestial'>buy, sell, and rent</span>
+            <h1 className='font-bauziet capitalize text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-tight font-extrabold text-center text-black px-2'>
+                Canada's #1 place to <br /> <span className='text-brand-celestial'>buy, sell, and rent</span>
             </h1>
-            <p className='text-sm sm:text-base md:text-lg mt-4 text-black/90'>
-            Find homes you’ll love with fast search, real photos, and trusted data.
+            <p className='text-sm sm:text-base md:text-lg mt-4 text-black/90 text-center px-4 max-w-2xl'>
+            Find homes you'll love with fast search, real photos, and trusted data.
             </p>
-            <div className='mt-12 w-full md:w-[65%] z-40 -mb-28'>
+            <div className='mt-8 sm:mt-12 w-full max-w-4xl z-40 -mb-16 sm:-mb-20 lg:-mb-28 px-4'>
                 {/* <SearchBox /> */}
                 <BannerSearch />
             </div>

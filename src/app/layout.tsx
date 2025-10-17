@@ -11,6 +11,12 @@ import { geometosNeue, bauziet, garamondPro } from './fonts';
 export const metadata: Metadata = {
   title: "Real Estate Project",
   description: "Real Estate Website using Next.js",
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
 };
 
 export default function RootLayout({

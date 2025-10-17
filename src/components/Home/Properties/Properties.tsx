@@ -29,14 +29,14 @@ const Properties = () => {
   if (error) return <div className="text-center py-10 text-red-500">{error}</div>;
 
   return (
-    <div className='pt-16 pb-16'>
+    <div className='pt-12 sm:pt-16 pb-12 sm:pb-16'>
       <div className='max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8'>
         <SectionHeading 
           heading='Properties' 
           subheading='Latest Properties' 
           description='Explore our latest property listings to find your perfect home, investment opportunity, or commercial space.' 
         />
-        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-10'>
+        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 mt-8 sm:mt-10'>
           {properties.slice(0, 6).map((property) => (
             <PropertyCard key={property.mlsNumber} property={property} />
           ))}
