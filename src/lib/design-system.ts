@@ -69,8 +69,9 @@ export const designSystem = {
   // Typography
   typography: {
     fontFamily: {
-      sans: ['var(--font-poppins)', 'sans-serif'],
-      display: ['var(--font-geometosNeue)', 'sans-serif'],
+      sans: ['var(--font-bauziet)', 'sans-serif'],
+      display: ['var(--font-geometos-neue)', 'sans-serif'],
+      serif: ['var(--font-garamond-pro)', 'serif'],
     },
     fontSize: {
       xs: ['0.75rem', { lineHeight: '1rem' }],

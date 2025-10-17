@@ -142,7 +142,7 @@ const ApartmentType = () => {
           viewport={{ once: true }}
           className="text-center"
         >
-          <div className="bg-gradient-to-r from-primary/5 to-secondary/5 rounded-2xl p-8 border border-border/50">
+          <div className="bg-gradient-to-r from-brand-glacier to-brand-icy-blue rounded-2xl p-8 border border-border/50">
             <h3 className="text-2xl font-bold text-foreground mb-4">
               Can't Find What You're Looking For?
             </h3>
@@ -151,7 +151,7 @@ const ApartmentType = () => {
               Get personalized recommendations based on your specific needs.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3">
+              <Button variant="dark" className="px-8 py-3">
                 Get Expert Help
               </Button>
               <Button variant="outline" className="px-8 py-3">

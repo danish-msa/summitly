@@ -4,58 +4,9 @@
 
 /* Font CSS Variables */
 :root {
-  --font-geometos: 'GeometosNeue', sans-serif;
-  --font-roboto: 'Roboto', sans-serif;
-  --font-garamond: 'EB Garamond', serif;
-}
-
-@font-face {
-  font-family: 'GeometosNeue';
-  font-weight: 200;
-  font-style: normal;
-  src: url('/fonts/GeometosNeueExtraLight.ttf') format('truetype');
-}
-
-@font-face {
-  font-family: 'GeometosNeue';
-  font-weight: 300;
-  font-style: normal;
-  src: url('/fonts/GeometosNeueLight.ttf') format('truetype');
-}
-
-@font-face {
-  font-family: 'GeometosNeue';
-  font-weight: 400;
-  font-style: normal;
-  src: url('/fonts/GeometosNeue.ttf') format('truetype');
-}
-
-@font-face {
-  font-family: 'GeometosNeue';
-  font-weight: 700;
-  font-style: normal;
-  src: url('/fonts/GeometosNeueBold.ttf') format('truetype');
-}
-
-@font-face {
-  font-family: 'GeometosNeue';
-  font-weight: 800;
-  font-style: normal;
-  src: url('/fonts/GeometosNeueExtraBold.ttf') format('truetype');
-}
-
-@font-face {
-  font-family: 'GeometosNeue';
-  font-weight: 900;
-  font-style: normal;
-  src: url('/fonts/GeometosNeueBlack.ttf') format('truetype');
-}
-
-@font-face {
-  font-family: 'GeometosNeue';
-  font-weight: 950;
-  font-style: normal;
-  src: url('/fonts/GeometosNeueUltra.ttf') format('truetype');
+  --font-geometos-neue: var(--font-geometos-neue);
+  --font-bauziet: var(--font-bauziet);
+  --font-garamond-pro: var(--font-garamond-pro);
 }
 
 @layer components {
@@ -64,73 +15,161 @@
     @apply bg-primary hover:bg-primary/90 text-primary-foreground border-0;
   }
 
-  /* Apply Roboto font to body text and paragraphs */
-  body {
-    font-family: var(--font-roboto), sans-serif;
+  /* Gradient Button Transitions */
+  .btn-gradient-default {
+    background: linear-gradient(to right, #BBCFEA, #DAE1E8);
+    transition: background 0.5s ease-in-out, box-shadow 0.3s ease-in-out;
+  }
+  
+  .btn-gradient-default:hover {
+    background: linear-gradient(to right, #DAE1E8, #58718D);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
-  /* Apply GEOMETOS font to headings */
+  .btn-gradient-secondary {
+    background: linear-gradient(to right, #e0f2fe, #bae6fd);
+    transition: background 0.5s ease-in-out, box-shadow 0.3s ease-in-out;
+  }
+  
+  .btn-gradient-secondary:hover {
+    background: linear-gradient(to right, #bae6fd, #7dd3fc);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .btn-gradient-outline {
+    border: 1px solid #BECAD7;
+    transition: background 0.5s ease-in-out, box-shadow 0.3s ease-in-out;
+  }
+  
+  .btn-gradient-outline:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .btn-gradient-destructive {
+    background: linear-gradient(to right, #fecaca, #fca5a5);
+    transition: background 0.5s ease-in-out, box-shadow 0.3s ease-in-out;
+  }
+  
+  .btn-gradient-destructive:hover {
+    background: linear-gradient(to right, #fca5a5, #f87171);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Dark Brand Gradient Button */
+  .btn-gradient-dark {
+    background: linear-gradient(135deg, #418FDE, #1B3C55);
+    transition: background 0.5s ease-in-out, box-shadow 0.3s ease-in-out;
+    color: #DAE1E8;
+  }
+  
+  .btn-gradient-dark:hover {
+    background: linear-gradient(135deg, #1B3C55, #418FDE);
+    box-shadow: 0 4px 12px rgba(1, 33, 105, 0.3);
+    color: #F0F5FB;
+  }
+
+  /* Custom Pastel Colors for Feature Grid */
+  .feature-bg-1 {
+    background-color: #EBEDFD;
+    border-color: #D1D7F7;
+  }
+  
+  .feature-bg-2 {
+    background-color: #FEEFED;
+    border-color: #FDD5D1;
+  }
+  
+  .feature-bg-3 {
+    background-color: #E7FDF7;
+    border-color: #C7F7E7;
+  }
+  
+  .feature-bg-4 {
+    background-color: #F9E9D4;
+    border-color: #F5D4A3;
+  }
+  
+  .feature-bg-5 {
+    background-color: #EBEDFD;
+    border-color: #D1D7F7;
+  }
+  
+  .feature-bg-6 {
+    background-color: #FEEFED;
+    border-color: #FDD5D1;
+  }
+
+  /* Apply Bauziet font to body text and paragraphs */
+  body {
+    font-family: var(--font-bauziet), sans-serif;
+  }
+
+  /* Apply Geometos Neue font to headings */
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'GeometosNeue', sans-serif;
+    font-family: var(--font-geometos-neue), sans-serif;
   }
 
   h1{
     @apply text-3xl sm:text-4xl md:text-4xl lg:text-5xl font-bold;
-    font-family: 'GeometosNeue', sans-serif;
+    font-family: var(--font-geometos-neue), sans-serif;
   }
 
   h2{
     @apply text-3xl font-semibold;
-    font-family: 'GeometosNeue', sans-serif;
+    font-family: var(--font-geometos-neue), sans-serif;
   }
 
   h3{
     @apply text-2xl font-semibold;
-    font-family: 'GeometosNeue', sans-serif;
+    font-family: var(--font-geometos-neue), sans-serif;
   }
 
   h4{
     @apply text-xl font-semibold;
-    font-family: 'GeometosNeue', sans-serif;
+    font-family: var(--font-geometos-neue), sans-serif;
   }
 
   h5{
     @apply text-lg font-semibold;
-    font-family: 'GeometosNeue', sans-serif;
+    font-family: var(--font-geometos-neue), sans-serif;
   }
 
   h6{
     @apply text-base font-semibold;
-    font-family: 'GeometosNeue', sans-serif;
+    font-family: var(--font-geometos-neue), sans-serif;
   }
 
   p{
-    @apply text-base font-roboto;
+    @apply text-base;
+    font-family: var(--font-bauziet), sans-serif;
   }
 
   /* Font Utility Classes */
   .font-heading {
-    font-family: 'GeometosNeue', sans-serif;
+    font-family: var(--font-geometos-neue), sans-serif;
   }
   
   .font-body {
-    @apply font-roboto;
+    font-family: var(--font-bauziet), sans-serif;
   }
   
   .font-subhead {
-    @apply font-garamond;
+    font-family: var(--font-garamond-pro), serif;
   }
   
   .font-caption {
-    @apply font-garamond text-sm;
+    font-family: var(--font-garamond-pro), serif;
+    @apply text-sm;
   }
   
   .font-initial-cap {
-    @apply font-garamond text-6xl leading-none;
+    font-family: var(--font-garamond-pro), serif;
+    @apply text-6xl leading-none;
   }
   
   .font-numbers {
-    @apply font-garamond font-medium;
+    font-family: var(--font-garamond-pro), serif;
+    @apply font-medium;
   }
 
   /* Hero Gradient Background */
@@ -175,16 +214,23 @@
   
   
   /* Minimal Banner Search Styles */
-  .banner-search {
-    @apply w-full max-w-4xl mx-auto;
+  .banner-search{
+    @apply px-4 pb-4 pt-2 backdrop-blur-sm bg-white rounded-2xl;
   }
-  
-  .banner-search form {
-    @apply flex flex-col lg:flex-row gap-4 justify-between items-end;
+  .banner-search .tabs{
+    @apply  flex justify-center gap-1;
   }
-  
-  .banner-search form .field-box {
-    @apply w-full;
+  .banner-search .tabs button {
+    @apply px-4 py-2 text-base font-medium text-gray-900 hover:text-gray-800 border-none cursor-pointer rounded-lg transition-all duration-200 bg-transparent hover:bg-gray-50;
+  }
+  .tabs button.active {
+    @apply text-brand-celestial bg-blue-50 border-b-2 border-brand-celestial rounded-b-none;
+  }
+  .banner-search form{
+    @apply flex flex-col gap-4 justify-center items-center;
+  }
+  .banner-search form .field-box{
+    @apply w-full ;
   }
 
   /* Hide number input arrows */

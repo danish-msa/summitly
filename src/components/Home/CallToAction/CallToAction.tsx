@@ -1,12 +1,21 @@
 import React from 'react'
 import Image from 'next/image'
+import { ButtonColorful } from '@/components/ui/button-colorful'
 
 const CallToAction = () => {
   return (
-    <div className='max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 bg-secondary rounded-2xl p-8 relative my-10 md:my-20'>
-        <h2 className='text-left text-lg md:text-3xl leading-loose md:w-[60%] text-white mb-4'>Looking to rent? Check out our Rentals and find your next home</h2>
-        <button className='btn btn-primary bg-black text-lg hover:bg-primary'>Rent with Us!</button>
-        <Image src='/images/rental_banner.svg' className='absolute bottom-2 right-10' alt='rent' width={100} height={100} />
+    <div className='pt-2 pb-10 bg-white relative bg-cover bg-center'>
+      <div className='max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-secondary to-primary rounded-2xl p-8 relative my-10'>
+        <div className='flex flex-row gap-4'>
+          <div className='flex items-center gap-4'>
+            <Image src='/images/rental_banner.svg' className='invert' alt='rent' width={100} height={100} />
+            <h2 className='text-left font-body text-lg md:text-3xl leading-loose md:w-[60%] text-white mb-4'>Looking to rent? Check out our Rentals and find your next home</h2>
+          </div>
+            <div className='flex items-center gap-4'>
+              <ButtonColorful label='Rent with Us!' href='/rent' />
+            </div>
+        </div>
+      </div>
     </div>
   )
 }

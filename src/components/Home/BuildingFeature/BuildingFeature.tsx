@@ -8,7 +8,7 @@ const BuildingFeature = () => {
     <div className='pt-16 pb-16 bg-background'>
         <div className='max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8'>
             <SectionHeading heading='What We Offer' subheading='Our Features' description='' />
-            <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 mt-10 md:mt-20 gap-8 items-center'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 mt-10 md:mt-20 gap-8 items-stretch'>
                 {buildings.map((building, i) => (
                     <div key={building.id} data-aos="fade-left" data-aos-delay={`${i * 150}`} data-aos-anchor-placement="top-center">
                         <FeatureCard building={building} />

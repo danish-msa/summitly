@@ -4,10 +4,17 @@ import ReviewSlider from './ReviewSlider';
 
 const ClientReviews = () => {
   return (
-    <div className='pt-16 pb-16 bg-[url("/images/pattern.png")] relative bg-cover bg-center'>
-        <div className='max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8'>
-            <SectionHeading heading='What’s people say’s' subheading='Our Testimonials' description='Our seasoned team excels in real estate with years of successful market navigation, offering informed decisions and optimal results.' />
-            <div className='mt-10 md:mt-20'>
+    <div className='pt-16 pb-16 bg-gradient-to-br from-icy-blue to-glacier relative overflow-hidden'>
+        {/* Background Pattern Overlay */}
+        <div className='absolute inset-0 bg-[url("/images/pattern.png")] opacity-5 bg-cover bg-center'></div>
+        
+        <div className='max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10'>
+            <SectionHeading 
+                heading="What Our Clients Say" 
+                subheading="Client Testimonials" 
+                description="Discover why thousands of clients trust us with their real estate needs. Read their success stories and experiences." 
+            />
+            <div className='mt-12 md:mt-16'>
                 <ReviewSlider />
             </div>
         </div>   

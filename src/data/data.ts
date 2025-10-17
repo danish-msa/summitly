@@ -847,5 +847,12 @@ export const services = [
     description: "Discover your perfect rental effortlessly. Explore a diverse variety of listings tailored precisely to suit your unique lifestyle needs.",
     serviceImage: "/images/home-3.png",
     serviceURL: "/rent",
+  },
+  {
+    id: 4,
+    name: "Mortgage",
+    description: "Apply for a mortgage effortlessly. Explore a diverse variety of listings tailored precisely to suit your unique lifestyle needs.",
+    serviceImage: "/images/home-3.png",
+    serviceURL: "/mortgage",
   }
 ];

@@ -2,7 +2,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import usePlacesAutocomplete, { getGeocode, getLatLng } from 'use-places-autocomplete';
-
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 interface LocationInputProps {
   onSelect: (place: string) => void;
   placeholder: string;
@@ -59,15 +60,20 @@ const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) 
 
   return (
     <div className="relative w-full" ref={dropdownRef}>
-      <input
-        type="text"
-        value={value}
-        onChange={handleInput}
-        disabled={!ready}
-        placeholder={placeholder}
-        className="w-full p-3 bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-        onFocus={() => setIsOpen(true)}
-      />
+      <div className="relative">
+        <Input
+          type="text"
+          value={value}
+          onChange={handleInput}
+          disabled={!ready}
+          placeholder={placeholder}
+          onFocus={() => setIsOpen(true)}
+          className="pl-4 pr-12 h-12 text-base"
+        />
+        <div className="absolute inset-y-0 right-0 flex items-center pr-1">
+          <Search className="h-10 w-10 p-2 rounded-full text-white btn-gradient-dark cursor-pointer transition-colors" />
+        </div>
+      </div>
       {isOpen && status === 'OK' && (
         <div className="absolute z-50 w-full mt-1 bg-white shadow-lg rounded-lg overflow-hidden">
           <div className="py-2">

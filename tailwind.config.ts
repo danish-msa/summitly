@@ -60,13 +60,13 @@ export default {
         }
       },
       fontFamily: {
-        // Body text - Roboto
+        // Body text - Bauziet
         sans: [
-          'var(--font-roboto)',
-          'Roboto',
+          'var(--font-bauziet)',
+          'Bauziet',
           'sans-serif'
         ],
-        // Headings - Geometos
+        // Headings - Geometos Neue
         geometos: [
           'var(--font-geometos-neue)',
           'GeometosNeue',
@@ -77,16 +77,21 @@ export default {
           'GeometosNeue',
           'sans-serif'
         ],
-        // Subheads, captions, initial caps, numbers - Garamond
+        // Subheads, captions, initial caps, numbers - Garamond Pro
         garamond: [
-          'var(--font-garamond)',
-          'EB Garamond',
+          'var(--font-garamond-pro)',
+          'Garamond Pro',
           'serif'
         ],
-        // Legacy support
-        roboto: [
-          'var(--font-roboto)',
-          'Roboto',
+        garamondPro: [
+          'var(--font-garamond-pro)',
+          'Garamond Pro',
+          'serif'
+        ],
+        // Body text - Bauziet
+        bauziet: [
+          'var(--font-bauziet)',
+          'Bauziet',
           'sans-serif'
         ]
       },

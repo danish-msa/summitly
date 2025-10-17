@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FaBed, FaBath, FaRulerCombined, FaMapMarkerAlt, FaClock, FaHeart, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ArrowUpRight } from 'lucide-react';
 
 // Mock data type based on your original interface
 interface PropertyListing {
@@ -15,10 +16,10 @@ interface PropertyListing {
     propertyType: string;
     numBedrooms: number;
     numBathrooms: number;
-    sqft: number;
+    sqft: number | string;
   };
   address: {
-    city: string;
+    city: string | null;
     location: string;
   };
   listedDate?: string;
@@ -87,7 +88,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
         <div className='relative h-64 w-full overflow-hidden p-2'>
           <img 
             src={imageSrc} 
-            alt={`${property.details.propertyType} in ${property.address.city}`}
+            alt={`${property.details.propertyType} in ${property.address.city || 'Unknown City'}`}
             className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 rounded-2xl'
             onError={() => setImgError(true)}
           />
@@ -127,7 +128,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
               </button>
               
               {/* Image Counter */}
-              <div className='absolute bottom-4 left-4'>
+              <div className='absolute bottom-4 left-4 z-10'>
                 <span className='bg-black/60 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium'>
                   {currentImageIndex + 1}/{totalImages}
                 </span>
@@ -137,7 +138,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
           
           {/* Price Badge */}
           <div className='absolute bottom-4 right-4'>
-            <span className='bg-primary text-primary-foreground px-4 py-2 rounded-full font-bold text-sm shadow-lg backdrop-blur-sm'>
+            <span className='bg-black/60 text-primary-foreground px-4 py-1 rounded-md font-bold text-base shadow-lg backdrop-blur-sm'>
               {formattedPrice}
             </span>
           </div>
@@ -182,19 +183,25 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
             
             <div className='flex items-center space-x-1 text-gray-700'>
               <FaRulerCombined className='text-primary' size={12} />
-              <span className='text-xs font-medium ml-1'>{property.details.sqft.toLocaleString()}</span>
+              <span className='text-xs font-medium ml-1'>
+                {typeof property.details.sqft === 'number' 
+                  ? property.details.sqft.toLocaleString() 
+                  : property.details.sqft}
+              </span>
               <span className='text-xs text-gray-500'>sqft</span>
             </div>
           </div>
           
           {/* Action Buttons */}
           <div className='flex gap-2 pt-4'>
-            <Button variant="default" className="flex-1 h-9 rounded-full">
-              View Details
+            <Button variant="default" className="flex-1 h-8">
+              <span className='text-primary'>View Details</span>
+              <ArrowUpRight className='w-3.5 h-3.5 text-primary' />
             </Button>
-            <Button variant="outline" className="h-9 px-4 rounded-full">
-              Contact
-            </Button>
+            <Button variant="outline" className="h-8 px-4">
+              <span className='text-primary'>Contact</span>
+              <ArrowUpRight className='w-3.5 h-3.5 text-primary' />
+              </Button>
           </div>
         </div>
       </div>

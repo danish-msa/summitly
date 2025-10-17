@@ -1,19 +1,16 @@
 "use client";
 import { navLinks } from '@/lib/constants/navigation';
 import Link from 'next/link';
-import React, { useEffect, useState } from 'react';
-import { BiPhone } from 'react-icons/bi';
+import React, { useState } from 'react';
 import { FaUserCircle } from 'react-icons/fa';
-import { FaHouse } from 'react-icons/fa6';
 import { HiBars3BottomRight } from 'react-icons/hi2';
 import { motion, AnimatePresence } from 'framer-motion';
 import AuthModal from '@/components/Auth/AuthModal';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+// import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import Image from 'next/image';
+import { ButtonColorful } from '@/components/ui/button-colorful';
 
 type Props = {
   openNav: () => void;
@@ -53,7 +50,7 @@ const Nav = ({ openNav }: Props) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className={cn(
-          "relative w-full bg-background border-b border-border/40 shadow-sm"
+          "relative w-full absolute top-0 left-0 right-0 z-[9999] border-b border-border/40 shadow-sm  backdrop-blur-sm"
         )}
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -101,7 +98,7 @@ const Nav = ({ openNav }: Props) => {
                       className="relative"
                     >
                       <motion.button
-                        className="flex items-center space-x-1 px-4 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-accent/50"
+                        className="flex items-center space-x-1 px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
@@ -137,9 +134,9 @@ const Nav = ({ openNav }: Props) => {
                                 >
                                   <Link
                                     href={subLink.url}
-                                    className="flex items-center space-x-3 px-4 py-3 text-sm text-foreground hover:bg-accent rounded-lg transition-colors group"
+                                    className="flex items-center space-x-3 px-4 py-3 text-base font-medium text-foreground hover:bg-brand-tide rounded-lg transition-colors group"
                                   >
-                                    <div className="w-8 h-8 flex items-center justify-center bg-muted rounded-lg text-lg group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                                    <div className="w-8 h-8 flex items-center justify-center bg-muted rounded-lg text-lg group-hover:bg-bg-brand-tide group-hover:text-primary-foreground transition-colors">
                                       {getSubLinkIcon(subLink.label)}
                                     </div>
                                     <div className="flex-1">
@@ -156,7 +153,7 @@ const Nav = ({ openNav }: Props) => {
                   ) : (
                     <Link href={link.url}>
                       <motion.div
-                        className="px-4 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-accent/50"
+                        className="px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
@@ -172,7 +169,7 @@ const Nav = ({ openNav }: Props) => {
             <div className="flex items-center space-x-3">
               {/* Phone Number - Desktop Only */}
               <motion.div 
-                className="hidden xl:flex items-center space-x-2 text-sm text-muted-foreground"
+                className="hidden xl:flex items-center space-x-2 text-base text-muted-foreground"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
@@ -181,18 +178,18 @@ const Nav = ({ openNav }: Props) => {
               </motion.div>
 
               {/* Theme Toggle */}
-              <motion.div
+              {/* <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
               >
                 <ThemeToggle />
-              </motion.div>
+              </motion.div> */}
 
               {/* Login Button */}
               <motion.button
                 onClick={handleLoginClick}
-                className="hidden md:flex items-center space-x-2 px-3 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-accent/50"
+                className="hidden md:flex items-center space-x-2 px-3 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-accent/50"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 initial={{ opacity: 0, x: 20 }}
@@ -209,12 +206,7 @@ const Nav = ({ openNav }: Props) => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
               >
-                <Button 
-                  className="hidden sm:flex bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
-                  size="sm"
-                >
-                  Submit Property
-                </Button>
+                <ButtonColorful label='Submit Property' href='/submit-property' variant='gradient' />
               </motion.div>
 
               {/* Mobile Menu Button */}

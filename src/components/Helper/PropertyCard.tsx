@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { FaBed, FaBath, FaRulerCombined, FaMapMarkerAlt, FaClock, FaHeart, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { Bed, Bath, Maximize2, MapPin, Clock, Heart, ChevronLeft, ChevronRight, ArrowUpRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 // Mock data type based on your original interface
 interface PropertyListing {
@@ -34,34 +35,30 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   
-  // Mock multiple images for carousel
   const images = property.images.imageUrls || [property.images.imageUrl];
   const totalImages = images.length;
   
-  // Format price with proper currency
   const formattedPrice = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0
   }).format(property.listPrice);
 
-  // Use fallback image if error
   const imageSrc = imgError ? '/placeholder.svg' : images[currentImageIndex];
 
-  // Format listing date
   const formatListingDate = (dateString?: string) => {
-    if (!dateString) return 'Recently listed';
+    if (!dateString) return 'TODAY';
     const date = new Date(dateString);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    if (diffDays === 0) return 'TODAY';
+    if (diffDays === 1) return 'YESTERDAY';
+    if (diffDays < 7) return `${diffDays}D AGO`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
   };
 
-  // Navigate carousel
   const nextImage = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -81,33 +78,52 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
   };
 
   return (
-    <div className="group cursor-pointer">
-      <div className='bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-gray-100 hover:border-gray-200'>
-        {/* Image Section with Carousel */}
-        <div className='relative h-64 w-full overflow-hidden p-2'>
+    <div className="group cursor-pointer w-full">
+      <div className='bg-card rounded-3xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 border border-border/50'>
+        {/* Image Section */}
+        <div className='relative h-62 w-full overflow-hidden'>
           <img 
             src={imageSrc} 
             alt={`${property.details.propertyType} in ${property.address.city || 'Unknown City'}`}
-            className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 rounded-2xl'
+            className='w-full h-full object-cover group-hover:scale-110 transition-transform duration-700'
             onError={() => setImgError(true)}
           />
           
           {/* Gradient overlay */}
-          {/* <div className='absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/20' /> */}
+          <div className='absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20' />
           
-          {/* Status Badge */}
-          <div className='absolute top-4 left-4'>
-            <Badge variant="secondary" className="bg-white/95 backdrop-blur-sm text-gray-800 hover:bg-white shadow-lg">
-              {property.status || 'For Sale'}
+          {/* Top badges row */}
+          <div className='absolute top-5 left-5 flex items-center gap-2'>
+            <Badge className="bg-secondary/95 backdrop-blur-sm text-secondary-foreground hover:bg-secondary border-0 rounded-full px-4 py-1.5 text-xs font-medium shadow-lg">
+              {property.details.propertyType}
             </Badge>
           </div>
           
-          {/* Like Button */}
+          {/* Date badge - top right */}
+          <div className='absolute top-5 right-5 flex items-center gap-2'>
+            <Badge variant="secondary" className="bg-card/95 backdrop-blur-sm hover:bg-card border-0 text-dark rounded-full px-4 py-1.5 text-xs font-semibold shadow-lg">
+              {formatListingDate(property.listedDate)}
+            </Badge>
+          </div>
+          
+          {/* FOR SALE badge - bottom left */}
+          <div className='absolute bottom-5 left-5'>
+            <Badge className="bg-accent hover:bg-accent text-accent-foreground border-0 rounded-md px-4 py-2 text-xs font-bold shadow-lg">
+              {property.status || 'FOR SALE'}
+            </Badge>
+          </div>
+          
+          {/* Like Button - moved to bottom right, outside image carousel controls */}
           <button
             onClick={toggleLike}
-            className='absolute top-4 right-4 p-2 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-lg'
+            className='absolute bottom-5 right-5 p-3 rounded-full bg-card/95 backdrop-blur-sm hover:bg-card transition-all duration-200 shadow-lg z-20'
           >
-            <FaHeart className={`w-4 h-4 ${isLiked ? 'text-red-500' : 'text-gray-400'}`} />
+            <Heart 
+              className={cn(
+                "w-5 h-5 transition-all duration-200",
+                isLiked ? "fill-red-500 text-red-500" : "text-muted-foreground"
+              )} 
+            />
           </button>
           
           {/* Carousel Controls */}
@@ -115,90 +131,72 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
             <>
               <button
                 onClick={prevImage}
-                className='absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md opacity-0 group-hover:opacity-100'
+                className='absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-card/80 backdrop-blur-sm hover:bg-card transition-all duration-200 shadow-md opacity-0 group-hover:opacity-100 z-10'
               >
-                <FaChevronLeft className="w-3 h-3 text-gray-700" />
+                <ChevronLeft className="w-4 h-4 text-foreground" />
               </button>
               <button
                 onClick={nextImage}
-                className='absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-md opacity-0 group-hover:opacity-100'
+                className='absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-card/80 backdrop-blur-sm hover:bg-card transition-all duration-200 shadow-md opacity-0 group-hover:opacity-100 z-10'
               >
-                <FaChevronRight className="w-3 h-3 text-gray-700" />
+                <ChevronRight className="w-4 h-4 text-foreground" />
               </button>
               
               {/* Image Counter */}
-              <div className='absolute bottom-4 left-4'>
-                <span className='bg-black/60 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium'>
+              <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200'>
+                <span className='bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-medium'>
                   {currentImageIndex + 1}/{totalImages}
                 </span>
               </div>
             </>
           )}
-          
-          {/* Price Badge */}
-          <div className='absolute bottom-4 right-4'>
-            <span className='text-primary-foreground px-4 py-2 rounded-full font-bold text-base shadow-lg backdrop-blur-sm'>
-              {formattedPrice}
-            </span>
-          </div>
         </div>
         
         {/* Content Section */}
-        <div className='px-5 py-3'>
-          {/* Property Type and Date */}
-          <div className='flex items-center justify-between mb-3'>
-            <Badge variant="outline" className="text-primary border-primary/20">
-              {property.details.propertyType}
-            </Badge>
-            <div className='flex items-center text-gray-500 text-xs'>
-              <FaClock className='mr-1.5 w-3 h-3' />
-              <span>{formatListingDate(property.listedDate)}</span>
-            </div>
+        <div className='p-4'>
+          {/* Price */}
+          <div className='mb-3 flex items-center justify-between'>
+            <h3 className='text-2xl font-bold text-foreground'>{formattedPrice}</h3>
+            <p className='text-sm text-muted-foreground mt-0.5'>
+              ${Math.round(property.listPrice / 12).toLocaleString()}/month*
+            </p>
           </div>
           
+          {/* Property Title/Name - placeholder, you can add this to the interface */}
+          <h4 className='text-sm font-semibold text-foreground mb-2 line-clamp-1'>
+            Premium {property.details.propertyType}
+          </h4>
+          
           {/* Location */}
-          <div className='flex items-start mb-2'>
-            <FaMapMarkerAlt className='mr-2 text-primary flex-shrink-0 mt-0.5' size={12} />
-            <p className='text-gray-700 text-xs leading-relaxed truncate'>{property.address.location}</p>
+          <div className='flex items-start mb-4'>
+            <MapPin className='mr-1 text-muted-foreground flex-shrink-0 mt-0.5' size={12} />
+            <p className='text-xs text-foreground line-clamp-1'>{property.address.location}</p>
           </div>
           
           {/* Property Details */}
-          <div className='flex items-center justify-between pt-2 border-t border-gray-100'>
+          <div className='flex items-center gap-4'>
             {property.details.numBedrooms > 0 && (
-              <div className='flex items-center space-x-1 text-gray-700'>
-                <FaBed className='text-primary' size={12} />
-                <span className='text-xs font-medium ml-1'>{property.details.numBedrooms}</span>
-                <span className='text-xs text-gray-500'>bed{property.details.numBedrooms !== 1 ? 's' : ''}</span>
+              <div className='flex items-center gap-2 text-foreground'>
+                <Bed className='text-muted-foreground' size={18} />
+                <span className='text-sm font-medium'>{property.details.numBedrooms}+{Math.max(0, property.details.numBedrooms - 2)} Bed</span>
               </div>
             )}
             
             {property.details.numBathrooms > 0 && (
-              <div className='flex items-center space-x-1 text-gray-700'>
-                <FaBath className='text-primary' size={12} />
-                <span className='text-xs font-medium ml-1'>{property.details.numBathrooms}</span>
-                <span className='text-xs text-gray-500'>bath{property.details.numBathrooms !== 1 ? 's' : ''}</span>
+              <div className='flex items-center gap-2 text-foreground'>
+                <Bath className='text-muted-foreground' size={18} />
+                <span className='text-sm font-medium'>{property.details.numBathrooms} Bath</span>
               </div>
             )}
             
-            <div className='flex items-center space-x-1 text-gray-700'>
-              <FaRulerCombined className='text-primary' size={12} />
-              <span className='text-xs font-medium ml-1'>
+            <div className='flex items-center gap-2 text-foreground'>
+              <Maximize2 className='text-muted-foreground' size={18} />
+              <span className='text-sm font-medium'>
                 {typeof property.details.sqft === 'number' 
                   ? property.details.sqft.toLocaleString() 
-                  : property.details.sqft}
+                  : property.details.sqft}...
               </span>
-              <span className='text-xs text-gray-500'>sqft</span>
             </div>
-          </div>
-          
-          {/* Action Buttons */}
-          <div className='flex gap-2 pt-4'>
-            <Button variant="default" className="flex-1 h-9 rounded-full">
-              View Details
-            </Button>
-            <Button variant="outline" className="h-9 px-4 rounded-full">
-              Contact
-            </Button>
           </div>
         </div>
       </div>

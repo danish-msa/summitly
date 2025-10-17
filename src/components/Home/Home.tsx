@@ -12,16 +12,15 @@ import 'aos/dist/aos.css';
 import ConnectWithUs from './ConnectWithUs/ConnectWithUs';
 import WhatWeDo from './WhatWeDo/WhatWeDo';
 import WhyChooseUs from './WhyChooseUs/WhyChooseUs';
-import OurAgents from './OurAgents/OurAgents';
 import FeaturedIn from './FeaturedIn/FeaturedIn';
 import CallToAction from './CallToAction/CallToAction';
 import CallToAction2 from '../About/CallToAction/CallToAction';
 import ExploreHotCities from './ExploreHotCities/ExploreHotCities';
-import BuyerAndSeller from './BuyerAndSeller/BuyerAndSeller';
 import FeatureGrid from './FeatureGrid/FeatureGrid';
-import Condos from './Condos/Condos';
 import SavingsCalculation from './SavingsCalculation/SavingsCalculation';
 import PropertyCategories from './PropertyCategories/PropertyCategories';
+import PropertyDiscovery from './PropertyDiscovery/PropertyDiscovery';
+import BuyingPowerCalculator from './BuyingPowerCalculator/BuyingPowerCalculator';
 
 const Home: React.FC = () => {
 
@@ -40,23 +39,29 @@ const Home: React.FC = () => {
         <div className=''>
             <Hero />
             <PropertyCategories />
+            <FeaturedIn />
             {/* <BuyerAndSeller /> */}
             <Properties />
             <WhatWeDo />
+            <CallToAction2 />
             <FeatureGrid />
-            <ApartmentType />
-            <FeaturedIn />
             
             
-            <SavingsCalculation />
+            
+            <PropertyDiscovery />
+            
+            
+            <BuyingPowerCalculator />
+            {/* <SavingsCalculation /> */}
             <CityProperties />
             <CallToAction />
             
             <WhyChooseUs />
-            <Condos />
+            {/* <Condos /> */}
             <BuildingFeature />
-            <CallToAction2 />
-            <OurAgents />
+            
+            <ApartmentType />
+            {/* <OurAgents /> */}
             <ExploreHotCities />
             <ConnectWithUs />
             <ClientReviews />

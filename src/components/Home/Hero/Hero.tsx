@@ -1,83 +1,31 @@
-import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import { Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import BannerSearch from "./BannerSearch";
+import React from 'react'
+import BannerSearch from './BannerSearch'
 
-function Hero() {
-  const [titleNumber, setTitleNumber] = useState(0);
-  const [activeTab, setActiveTab] = useState("Buy");
-  const titles = useMemo(
-    () => ["amazing", "new", "wonderful", "beautiful", "smart"],
-    []
-  );
-
-  const tabs = ["Buy", "Rent", "Sell", "Pre-approval", "Just sold", "Home value"];
-
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (titleNumber === titles.length - 1) {
-        setTitleNumber(0);
-      } else {
-        setTitleNumber(titleNumber + 1);
-      }
-    }, 2000);
-    return () => clearTimeout(timeoutId);
-  }, [titleNumber, titles]);
-
+const Hero = () => {
   return (
-    <div className="bg-transparent my-5">
-      <div className="w-[97%] m-auto min-h-[500px] rounded-2xl relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/images/backgroundGradient.jpg')" }}>
-        {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-white/60" />
-        
-        <div className="container mx-auto relative z-10">
-          <div className="flex gap-8 py-20 lg:py-32 items-center justify-center flex-col">
-            {/* Animated Title */}
-            <div className="flex gap-4 flex-col">
-              <h1 className="text-4xl md:text-6xl lg:text-6xl tracking-tight text-center font-heading capitalize font-bold">
-                <span className="text-foreground">Let AI guide you to your</span>
-                <span className="relative flex w-full justify-center overflow-hidden text-center md:pb-4 md:pt-1">
-                  &nbsp;
-                  {titles.map((title, index) => (
-                    <motion.span
-                      key={index}
-                      className="absolute font-subhead font-semibold text-6xl text-primary"
-                      initial={{ opacity: 0, y: "-100" }}
-                      transition={{ type: "spring", stiffness: 50 }}
-                      animate={
-                        titleNumber === index
-                          ? {
-                              y: 0,
-                              opacity: 1,
-                            }
-                          : {
-                              y: titleNumber > index ? -150 : 150,
-                              opacity: 0,
-                            }
-                      }
-                    >
-                      {title}
-                    </motion.span>
-                  ))}
-                </span>
-                <span className="text-foreground">home today</span>
-              </h1>
+    <div className='w-full flex-col lg:flex-row flex justify-center items-center mb-10 h-[800px] z-50 relative mx-auto bg-[url("/images/HomeBackground.png")]'>
+        {/* Overlay */}
+        {/* <div className='absolute inset-0 bg-black bg-opacity-50'></div> */}
 
-              <p className="text-base md:text-xl leading-relaxed tracking-tight text-foreground/70 max-w-3xl text-center">
-                Discover your dream property with our comprehensive search. Browse thousands of listings, 
-                get pre-approved, and find the perfect place to call home.
-              </p>
+        <div className='w-[1300px] mx-auto flex flex-col items-center justify-center text-black relative'>
+            <span className='inline-flex mb-4 items-center gap-2 uppercase bg-brand-smoky-gray/10 backdrop-blur-sm text-secondary px-4 py-1 rounded-full text-base font-medium'>
+                <span className='w-2 h-2 bg-secondary rounded-full'></span>
+                The Best Real Estate Service in Canada
+            </span>
+            <h1 className='font-bauziet capitalize text-7xl leading-tight font-extrabold text-center text-black'>
+                Canada’s #1 place to <br /> <span className='text-brand-celestial'>buy, sell, and rent</span>
+            </h1>
+            <p className='text-sm sm:text-base md:text-lg mt-4 text-black/90'>
+            Find homes you’ll love with fast search, real photos, and trusted data.
+            </p>
+            <div className='mt-12 w-full md:w-[65%] z-40 -mb-28'>
+                {/* <SearchBox /> */}
+                <BannerSearch />
             </div>
-
-            
-
-            <BannerSearch />
-          </div>
         </div>
-      </div>
     </div>
-  );
+    
+  )
 }
 
-export default Hero;
+export default Hero
