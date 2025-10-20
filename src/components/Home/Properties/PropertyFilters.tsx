@@ -193,11 +193,11 @@ const PropertyFilters: React.FC<FiltersProps> = ({
         {/* Location Filter */}
         <div className="relative w-full sm:w-auto">
           <button 
-            className={`w-full bg-white flex items-center gap-2 px-4 py-2 rounded-md border ${activeDropdown === 'location' ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
+            className={`w-full bg-white flex items-center gap-2 px-4 py-2 rounded-full border ${activeDropdown === 'location' ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
             onClick={() => toggleDropdown('location')}
           >
             <FaMapMarkerAlt className="text-secondary" />
-            <span className="text-sm md:text-base">{getLocationText()}</span>
+            <span className="font-base text-sm md:text-sm">{getLocationText()}</span>
             {filters.location !== 'all' && (
               <button
                 onClick={(e) => {
@@ -327,11 +327,11 @@ const PropertyFilters: React.FC<FiltersProps> = ({
         {/* Property Type Filter */}
         <div className="relative w-full sm:w-auto">
           <button 
-            className={`w-full sm:w-auto bg-white flex items-center gap-2 px-4 py-2 rounded-md border ${activeDropdown === 'propertyType' ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
+            className={`w-full sm:w-auto bg-white flex items-center gap-2 px-4 py-2 rounded-full border ${activeDropdown === 'propertyType' ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
             onClick={() => toggleDropdown('propertyType')}
           >
             <FaHome className="text-secondary" />
-            <span className="text-sm md:text-base">{getPropertyTypeText()}</span>
+            <span className="font-base text-sm md:text-sm">{getPropertyTypeText()}</span>
             {filters.propertyType !== 'all' && (
               <button
                 onClick={(e) => {
@@ -387,13 +387,13 @@ const PropertyFilters: React.FC<FiltersProps> = ({
         {/* Community Filter */}
         <div className="relative w-full sm:w-auto filter-dropdown">
           <button 
-            className={`w-full bg-white flex items-center gap-2 px-4 py-2 rounded-md border ${activeDropdown === 'community' ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
+            className={`w-full bg-white flex items-center gap-2 px-4 py-2 rounded-full border ${activeDropdown === 'community' ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
             onClick={() => toggleDropdown('community')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
-            <span className="text-sm md:text-base">{getCommunityText()}</span>
+            <span className="font-base text-sm md:text-sm">{getCommunityText()}</span>
             {filters.community !== 'all' && (
               <button
                 onClick={(e) => {

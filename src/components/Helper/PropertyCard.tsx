@@ -163,19 +163,18 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
         <div className='p-4'>
           {/* Price */}
           <div className='mb-3 flex items-center justify-between'>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between gap-2">
               <h3 className='text-xl font-bold text-foreground'>{priceDisplay}</h3>
-              {isRental && (
-                <Badge variant="secondary" className="text-xs">
+              {isRental ? (
+                <Badge variant="outline" className="text-xs bg-brand-celestial/20 text-black border-brand-icy-blue">
                   For Rent
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-xs bg-green-100 text-green-800 border-green-300">
+                  For Sale
                 </Badge>
               )}
             </div>
-            {!isRental && (
-              <p className='text-xs bg-brand-celestial/20 py-1 px-2 rounded-md mt-0.5'>
-                ${Math.round(property.listPrice / 12).toLocaleString()}/month*
-              </p>
-            )}
           </div>
           
           {/* Property Title/Name - placeholder, you can add this to the interface */}

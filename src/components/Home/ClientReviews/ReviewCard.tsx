@@ -14,7 +14,7 @@ type Props = {
 
 const ReviewCard = ({userReview}: Props) => {
   return (
-    <div className='relative rounded-2xl overflow-hidden bg-white/95 backdrop-blur-sm p-8 m-3 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 group'>
+    <div className='relative rounded-3xl overflow-hidden bg-white/95 backdrop-blur-sm p-8 m-3 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 group'>
         {/* Quote Icon */}
         <div className='absolute top-6 right-6 w-12 h-12 bg-gradient-to-br from-primary-100 to-primary-200 rounded-full flex items-center justify-center opacity-20 group-hover:opacity-30 transition-opacity duration-300'>
             <FaQuoteRight className='w-5 h-5 text-primary'/>
@@ -28,12 +28,12 @@ const ReviewCard = ({userReview}: Props) => {
         </div>
         
         {/* Review Text */}
-        <blockquote className='text-midnight text-base leading-relaxed mb-8 font-body relative z-10'>
+        <blockquote className='text-midnight text-base leading-relaxed mb-6 font-body relative z-10'>
             "{userReview.review}"
         </blockquote>
         
         {/* Divider */}
-        <div className='h-px bg-gradient-to-r from-transparent via-mist to-transparent mb-6'></div>
+        <div className='h-px bg-brand-celestial/20 mb-6'></div>
         
         {/* User Info */}
         <div className='flex items-center'>

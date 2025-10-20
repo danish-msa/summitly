@@ -236,6 +236,7 @@ const Properties = () => {
           heading='Properties' 
           subheading='Latest Properties' 
           description='Explore our latest property listings to find your perfect home, investment opportunity, or commercial space.' 
+          
         />
         
          <div className='flex flex-col lg:flex-row gap-4 mt-8 sm:gap-5'>

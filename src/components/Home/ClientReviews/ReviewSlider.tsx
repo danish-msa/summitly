@@ -36,7 +36,7 @@ const ReviewSlider = () => {
         autoPlay={true} 
         autoPlaySpeed={4000} 
         infinite={true}
-        showDots={true}
+        showDots={false}
         dotListClass="custom-dot-list-style"
         itemClass="carousel-item-padding-40-px"
         containerClass="carousel-container"
@@ -44,7 +44,7 @@ const ReviewSlider = () => {
         customRightArrow={<CustomRightArrow />}
       >
         {userReviewData.map((userReview) => (
-            <div key={userReview.id} className="px-2">
+            <div key={userReview.id} className="p-2">
                 <ReviewCard userReview={userReview} />
             </div>
         ))}

@@ -60,7 +60,7 @@ const Home: React.FC = () => {
             {/* <Condos /> */}
             <BuildingFeature />
             
-            <ApartmentType />
+            {/* <ApartmentType /> */}
             {/* <OurAgents /> */}
             <ExploreHotCities />
             <ConnectWithUs />
