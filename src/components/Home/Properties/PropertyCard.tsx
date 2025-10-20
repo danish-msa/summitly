@@ -8,6 +8,7 @@ import { ArrowUpRight } from 'lucide-react';
 interface PropertyListing {
   mlsNumber: string;
   listPrice: number;
+  type: string; // "Lease" for rentals, "Sale" for sales
   images: {
     imageUrl: string;
     imageUrls?: string[];
@@ -39,12 +40,18 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
   const images = property.images.imageUrls || [property.images.imageUrl];
   const totalImages = images.length;
   
-  // Format price with proper currency
+  // Format price based on property type
+  const isRental = property.type === 'Lease' || property.type?.toLowerCase().includes('lease');
+  
   const formattedPrice = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0
   }).format(property.listPrice);
+  
+  const priceDisplay = isRental 
+    ? `${formattedPrice}/month` 
+    : formattedPrice;
 
   // Use fallback image if error
   const imageSrc = imgError ? '/placeholder.svg' : images[currentImageIndex];
@@ -137,10 +144,15 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
           )}
           
           {/* Price Badge */}
-          <div className='absolute bottom-4 right-4'>
+          <div className='absolute bottom-4 right-4 flex flex-col items-end gap-1'>
             <span className='bg-black/60 text-primary-foreground px-4 py-1 rounded-md font-bold text-base shadow-lg backdrop-blur-sm'>
-              {formattedPrice}
+              {priceDisplay}
             </span>
+            {isRental && (
+              <Badge variant="secondary" className="text-xs bg-secondary/20 text-secondary border-secondary/30">
+                For Rent
+              </Badge>
+            )}
           </div>
         </div>
         

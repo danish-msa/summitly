@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 interface PropertyListing {
   mlsNumber: string;
   listPrice: number;
+  type: string; // "Lease" for rentals, "Sale" for sales
   images: {
     imageUrl: string;
     imageUrls?: string[];
@@ -37,11 +38,18 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
   const images = property.images.imageUrls || [property.images.imageUrl];
   const totalImages = images.length;
   
+  // Format price based on property type
+  const isRental = property.type === 'Lease' || property.type?.toLowerCase().includes('lease');
+  
   const formattedPrice = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0
   }).format(property.listPrice);
+  
+  const priceDisplay = isRental 
+    ? `${formattedPrice}/month` 
+    : formattedPrice;
 
   const imageSrc = imgError ? '/placeholder.svg' : images[currentImageIndex];
 
@@ -78,36 +86,36 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
 
   return (
     <div className="group cursor-pointer w-full">
-      <div className='bg-card rounded-3xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 border border-border/50'>
+      <div className='bg-card rounded-3xl overflow-hidden transition-all duration-500 border border-border/50' style={{ boxShadow: '0 8px 16px 0 rgba(0, 0, 0, 0.05)' }}>
         {/* Image Section */}
         <div className='relative h-62 w-full overflow-hidden'>
           <img 
             src={imageSrc} 
             alt={`${property.details.propertyType} in ${property.address.city || 'Unknown City'}`}
-            className='w-full h-full object-cover group-hover:scale-110 transition-transform duration-700'
+            className='w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 p-2 rounded-3xl'
             onError={() => setImgError(true)}
           />
           
           {/* Gradient overlay */}
-          <div className='absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20' />
+          {/* <div className='absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20' /> */}
           
           {/* Top badges row */}
           <div className='absolute top-5 left-5 flex items-center gap-2'>
-            <Badge className="bg-secondary/95 backdrop-blur-sm text-secondary-foreground hover:bg-secondary border-0 rounded-full px-4 py-1.5 text-xs font-medium shadow-lg">
+            <Badge className="bg-brand-smoky-gray backdrop-blur-sm text-white hover:bg-brand-smoky-gray border-0 rounded-full px-4 py-1.5 text-xs font-light">
               {property.details.propertyType}
             </Badge>
           </div>
           
           {/* Date badge - top right */}
           <div className='absolute top-5 right-5 flex items-center gap-2'>
-            <Badge variant="secondary" className="bg-card/95 backdrop-blur-sm hover:bg-card border-0 text-dark rounded-full px-4 py-1.5 text-xs font-semibold shadow-lg">
+            <Badge variant="secondary" className="bg-card/95 backdrop-blur-sm hover:bg-card border-0 text-dark rounded-full px-4 py-1.5 text-xs font-medium">
               {formatListingDate(property.listedDate)}
             </Badge>
           </div>
           
           {/* FOR SALE badge - bottom left */}
           <div className='absolute bottom-5 left-5'>
-            <Badge className="bg-accent hover:bg-accent text-accent-foreground border-0 rounded-md px-4 py-2 text-xs font-bold shadow-lg">
+            <Badge className="bg-[#22C06A] text-white border-0 rounded-md px-2 py-1 text-xs font-medium shadow-lg">
               {property.status || 'FOR SALE'}
             </Badge>
           </div>
@@ -115,7 +123,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
           {/* Like Button - moved to bottom right, outside image carousel controls */}
           <button
             onClick={toggleLike}
-            className='absolute bottom-5 right-5 p-3 rounded-full bg-card/95 backdrop-blur-sm hover:bg-card transition-all duration-200 shadow-lg z-20'
+            className='absolute bottom-5 right-5 p-2 rounded-full bg-card/95 backdrop-blur-sm hover:bg-card transition-all duration-200 shadow-lg'
           >
             <Heart 
               className={cn(
@@ -155,45 +163,54 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
         <div className='p-4'>
           {/* Price */}
           <div className='mb-3 flex items-center justify-between'>
-            <h3 className='text-2xl font-bold text-foreground'>{formattedPrice}</h3>
-            <p className='text-sm text-muted-foreground mt-0.5'>
-              ${Math.round(property.listPrice / 12).toLocaleString()}/month*
-            </p>
+            <div className="flex items-center gap-2">
+              <h3 className='text-xl font-bold text-foreground'>{priceDisplay}</h3>
+              {isRental && (
+                <Badge variant="secondary" className="text-xs">
+                  For Rent
+                </Badge>
+              )}
+            </div>
+            {!isRental && (
+              <p className='text-xs bg-brand-celestial/20 py-1 px-2 rounded-md mt-0.5'>
+                ${Math.round(property.listPrice / 12).toLocaleString()}/month*
+              </p>
+            )}
           </div>
           
           {/* Property Title/Name - placeholder, you can add this to the interface */}
-          <h4 className='text-sm font-semibold text-foreground mb-2 line-clamp-1'>
+          <h4 className='text-sm font-body font-medium text-foreground mb-2 line-clamp-1'>
             Premium {property.details.propertyType}
           </h4>
           
           {/* Location */}
           <div className='flex items-start mb-4'>
             <MapPin className='mr-1 text-muted-foreground flex-shrink-0 mt-0.5' size={12} />
-            <p className='text-xs text-foreground line-clamp-1'>{property.address.location}</p>
+            <p className='text-xs font-light text-foreground line-clamp-1'>{property.address.location}</p>
           </div>
           
           {/* Property Details */}
           <div className='flex items-center gap-4'>
             {property.details.numBedrooms > 0 && (
               <div className='flex items-center gap-2 text-foreground'>
-                <Bed className='text-muted-foreground' size={18} />
-                <span className='text-sm font-medium'>{property.details.numBedrooms}+{Math.max(0, property.details.numBedrooms - 2)} Bed</span>
+                <Bed className='text-muted-foreground' size={12} />
+                <span className='text-xs font-light'>{property.details.numBedrooms}+{Math.max(0, property.details.numBedrooms - 2)} Bed</span>
               </div>
             )}
             
             {property.details.numBathrooms > 0 && (
               <div className='flex items-center gap-2 text-foreground'>
-                <Bath className='text-muted-foreground' size={18} />
-                <span className='text-sm font-medium'>{property.details.numBathrooms} Bath</span>
+                <Bath className='text-muted-foreground' size={12} />
+                <span className='text-xs font-light'>{property.details.numBathrooms} Bath</span>
               </div>
             )}
             
             <div className='flex items-center gap-2 text-foreground'>
-              <Maximize2 className='text-muted-foreground' size={18} />
-              <span className='text-sm font-medium'>
+              <Maximize2 className='text-muted-foreground' size={12} />
+              <span className='text-xs font-light'>
                 {typeof property.details.sqft === 'number' 
                   ? property.details.sqft.toLocaleString() 
-                  : property.details.sqft}...
+                  : property.details.sqft} sqft
               </span>
             </div>
           </div>

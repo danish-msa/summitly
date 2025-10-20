@@ -183,6 +183,7 @@ export const fetchPropertyListings = async (): Promise<PropertyListing[]> => {
         mlsNumber: listing.mlsNumber || '',
         status: listing.status || 'Active',
         class: listing.class || 'residential',
+        type: listing.type || 'Sale', // Default to Sale if not specified
         listPrice: listing.listPrice || 0,
         listDate: listing.listDate || new Date().toISOString(),
         lastStatus: listing.lastStatus || '',
@@ -388,6 +389,7 @@ export const getListings = async (params: Record<string, string | number>): Prom
       mlsNumber: listing.mlsNumber || '',
       status: listing.status || 'Active',
       class: listing.class || 'residential',
+      type: listing.type || 'Sale', // Default to Sale if not specified
       listPrice: listing.listPrice || 0,
       listDate: listing.listDate || new Date().toISOString(),
       lastStatus: listing.lastStatus || '',
