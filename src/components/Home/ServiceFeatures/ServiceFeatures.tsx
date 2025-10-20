@@ -197,10 +197,10 @@ export default function ServiceFeatures() {
               key={service.id}
               onClick={() => setActiveService(service.id)}
               className={`
-                flex items-center gap-2 px-4 sm:px-6 py-3 rounded-full font-medium transition-all duration-300
+                flex items-center gap-2 px-4 sm:px-6 py-3 rounded-xl font-medium transition-all duration-300
                 ${activeService === service.id 
-                  ? 'bg-primary text-primary-foreground shadow-lg' 
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
+                  ? 'bg-brand-celestial text-white shadow-lg' 
+                  : 'bg-brand-icy-blue text-muted-foreground hover:bg-muted/80 hover:text-foreground'
                 }
               `}
               whileHover={{ scale: 1.05 }}
@@ -228,21 +228,25 @@ export default function ServiceFeatures() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
-                className={`${feature.colorClass} border rounded-2xl p-8 transition-all duration-300 hover:scale-105 hover:shadow-lg group`}
+                className={`${feature.colorClass} border rounded-2xl px-6 py-4 transition-all duration-300 hover:scale-105 hover:translate-y-1 hover:shadow-md group`}
               >
-                {/* Icon Container */}
-                <motion.div 
-                  className="bg-white/80 backdrop-blur-sm rounded-xl p-4 w-fit mb-6 shadow-sm border border-white/50 group-hover:shadow-md group-hover:bg-white transition-all duration-300"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <feature.icon className={`w-6 h-6 ${feature.iconColorClass}`} />
-                </motion.div>
-                
-                {/* Content */}
-                <h3 className="text-xl font-semibold mb-3 text-foreground group-hover:text-primary transition-colors duration-300">
-                  {feature.title}
-                </h3>
+
+                <div className='flex items-center gap-2'>
+                    {/* Icon Container */}
+                    <motion.div 
+                      className="bg-white/80 backdrop-blur-sm rounded-xl p-2 w-fit mb-2 shadow-sm border border-white/50 transition-all duration-300"
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <feature.icon className={`w-6 h-6 ${feature.iconColorClass}`} />
+                    </motion.div>
+                    
+                    {/* Content */}
+                    <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors duration-300">
+                      {feature.title}
+                    </h3>
+                    
+                </div>
                 
                 <p className="text-muted-foreground leading-relaxed">
                   {feature.description}
