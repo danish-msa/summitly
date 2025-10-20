@@ -230,7 +230,7 @@ const Properties = () => {
   if (error) return <div className="text-center py-10 text-red-500">{error}</div>;
 
   return (
-    <div className='pt-12 sm:pt-16 pb-12 sm:pb-16 bg-white'>
+    <div className='pt-12 sm:pt-16 pb-12 sm:pb-16'>
       <div className='max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8'>
         <SectionHeading 
           heading='Properties' 
