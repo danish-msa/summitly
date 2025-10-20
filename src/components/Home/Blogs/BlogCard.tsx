@@ -24,7 +24,7 @@ const BlogCard = ({ blog }: Props) => {
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
         {/* Date Badge */}
-        <div className="absolute top-4 left-4 bg-primary/95 backdrop-blur-sm text-primary-foreground rounded-full px-4 py-2 flex items-center gap-2 shadow-lg z-10">
+        <div className="absolute top-4 left-4 bg-brand-glacier/95 backdrop-blur-sm text-black rounded-full px-4 py-2 flex items-center gap-2 shadow-lg z-10">
           <Calendar className="w-4 h-4" />
           <span className="text-sm font-medium">{blog.date}</span>
         </div>
