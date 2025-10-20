@@ -3,6 +3,14 @@
 import React, { useState } from 'react';
 import { FaChevronDown, FaHome, FaMapMarkerAlt } from 'react-icons/fa';
 
+// Custom type for filter change events
+type FilterChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement> | {
+  target: {
+    name: string;
+    value: { location: string; area: string } | string;
+  };
+};
+
 // Location data structure
 interface Location {
   id: string;
@@ -55,7 +63,7 @@ interface FiltersProps {
     location: string;
     locationArea: string;
   };
-  handleFilterChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  handleFilterChange: (e: FilterChangeEvent) => void;
   resetFilters: () => void;
   communities: string[];
 }
@@ -99,7 +107,7 @@ const PropertyFilters: React.FC<FiltersProps> = ({
         name: 'locationAndArea',
         value: { location: locationId, area: area }
       }
-    } as any;
+    } as { target: { name: string; value: { location: string; area: string } } };
     handleFilterChange(event);
     setActiveDropdown(null);
   };
@@ -178,12 +186,6 @@ const PropertyFilters: React.FC<FiltersProps> = ({
     }
   };
 
-  // Use the resetFilters from props
-  const handleResetClick = () => {
-    resetFilters();
-    setActiveDropdown(null);
-    setLocationSearchQuery("");
-  };
 
   return (
     <div className="w-full flex flex-col md:flex-row md:flex-wrap items-center gap-4">
@@ -267,7 +269,7 @@ const PropertyFilters: React.FC<FiltersProps> = ({
                                 area: location.areas?.[0] || 'all' 
                               }
                             }
-                          } as any;
+                          } as { target: { name: string; value: { location: string; area: string } } };
                           handleFilterChange(event);
                         }}
                         className={`

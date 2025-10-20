@@ -6,6 +6,14 @@ import PropertyFilters from './PropertyFilters';
 import SellRentToggle from './SellRentToggle';
 import { PropertyListing } from '@/data/types'; // Import the interface from types.ts
 
+// Custom type for filter change events
+type FilterChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement> | {
+  target: {
+    name: string;
+    value: { location: string; area: string } | string;
+  };
+};
+
 const Properties = () => {
   const [allProperties, setAllProperties] = useState<PropertyListing[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<PropertyListing[]>([]);
@@ -184,18 +192,18 @@ const Properties = () => {
   }, [allProperties, filters, listingType]);
 
   // Handle filter changes
-  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement> | any) => {
+  const handleFilterChange = (e: FilterChangeEvent) => {
     const { name, value } = e.target;
     
     // Handle special case for location and area selection
-    if (name === 'locationAndArea') {
+    if (name === 'locationAndArea' && typeof value === 'object' && 'location' in value && 'area' in value) {
       console.log('Setting location and area:', { location: value.location, area: value.area });
       setFilters({
         ...filters,
         location: value.location,
         locationArea: value.area
       });
-    } else {
+    } else if (typeof value === 'string') {
       setFilters({
         ...filters,
         [name]: value
