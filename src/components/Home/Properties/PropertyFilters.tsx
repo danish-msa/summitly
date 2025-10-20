@@ -71,7 +71,6 @@ interface FiltersProps {
 const PropertyFilters: React.FC<FiltersProps> = ({ 
   filters, 
   handleFilterChange, 
-  resetFilters,
   communities
 }) => {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -173,7 +172,7 @@ const PropertyFilters: React.FC<FiltersProps> = ({
           name: 'locationAndArea',
           value: { location: 'all', area: 'all' }
         }
-      } as any;
+      } as { target: { name: string; value: { location: string; area: string } } };
       handleFilterChange(event);
     } else {
       const event = {
