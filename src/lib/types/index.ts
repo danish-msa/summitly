@@ -101,6 +101,7 @@ export interface PropertyListing {
     mlsNumber: string;
     status: string;
     class: string;
+    type: string; // "Lease" for rentals, "Sale" for sales
     listPrice: number; // Note: this is lowercase 'p' in listprice
     listDate: string;
     lastStatus: string;
