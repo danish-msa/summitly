@@ -7,7 +7,7 @@ type Props = {
     id: number;
     date: string;
     title: string;
-    shortDescription: string;
+    excerpt: string;
     image: string;
     category?: string;
     author: string;
@@ -49,7 +49,7 @@ const BlogCard = ({ blog }: Props) => {
 
         {/* Description */}
         <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-          {blog.shortDescription}
+          {blog.excerpt}
         </p>
 
         {/* Read More Link */}

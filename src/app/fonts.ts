@@ -1,4 +1,5 @@
 import localFont from 'next/font/local'
+import { Inter } from 'next/font/google'
 
 // Geometos Neue - Main heading font
 export const geometosNeue = localFont({
@@ -106,5 +107,12 @@ export const garamondPro = localFont({
     },
   ],
   variable: '--font-garamond-pro',
+  display: 'swap',
+})
+
+// Inter - Testing font for headings
+export const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
   display: 'swap',
 })

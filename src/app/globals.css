@@ -7,6 +7,7 @@
   --font-geometos-neue: var(--font-geometos-neue);
   --font-bauziet: var(--font-bauziet);
   --font-garamond-pro: var(--font-garamond-pro);
+  --font-inter: var(--font-inter);
 }
 
 @layer components {
@@ -170,6 +171,10 @@
   .font-numbers {
     font-family: var(--font-garamond-pro), serif;
     @apply font-medium;
+  }
+  
+  .font-inter {
+    font-family: var(--font-inter), sans-serif;
   }
 
   /* Hero Gradient Background */

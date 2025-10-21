@@ -12,7 +12,7 @@ const Hero = () => {
                 <span className='w-2 h-2 bg-secondary rounded-full'></span>
                 The Best Real Estate Service in Canada
             </span>
-            <h1 className='font-bauziet capitalize text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-tight font-extrabold text-center text-black px-2'>
+            <h1 className='font-inter capitalize text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-tight text-center text-black px-2' style={{ fontWeight: 700 }}>
                 Canada's #1 place to <br /> <span className='text-brand-celestial'>buy, sell, and rent</span>
             </h1>
             <p className='text-sm sm:text-base md:text-lg mt-4 text-black/90 text-center px-4 max-w-2xl'>
