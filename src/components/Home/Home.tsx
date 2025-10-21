@@ -18,6 +18,9 @@ import ExploreHotCities from './ExploreHotCities/ExploreHotCities';
 import ServiceFeatures from './ServiceFeatures/ServiceFeatures';
 import PropertyCategories from './PropertyCategories/PropertyCategories';
 import PropertyDiscovery from './PropertyDiscovery/PropertyDiscovery';
+import FAQ from './FAQ/FAQ';
+import CallToAction3 from './CallToAction3/CallToAction3';
+import ContactMethods from './ContactMethods/ContactMethods';
 
 const Home: React.FC = () => {
 
@@ -42,12 +45,13 @@ const Home: React.FC = () => {
             {/* <BuyerAndSeller /> */}
             <Properties />
             {/* <WhatWeDo /> */}
-            <CallToAction2 />
+            <CallToAction3 />
             {/* <FeatureGrid /> */}
             <ServiceFeatures />
             
             
             <PropertyDiscovery />
+            <CallToAction2 />
             
             
             {/* <BuyingPowerCalculator /> */}
@@ -65,6 +69,8 @@ const Home: React.FC = () => {
             <ConnectWithUs />
             <ClientReviews />
             <Blogs />
+            <FAQ />
+            <ContactMethods />
         </div>
     );
 };

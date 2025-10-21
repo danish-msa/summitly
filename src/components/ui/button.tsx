@@ -10,7 +10,8 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "btn-gradient-default text-brand-midnight border-0",
+          // "btn-gradient-default text-brand-midnight border-0",
+          "bg-brand-celestial hover:bg-brand-midnight text-white border-0",
         destructive:
           "btn-gradient-destructive text-red-800 border-0",
         outline:
