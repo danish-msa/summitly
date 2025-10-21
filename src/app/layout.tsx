@@ -6,7 +6,7 @@ import ScrollToTop from "@/components/Helper/ScrollToTop";
 import GoogleMapsProvider from '@/providers/GoogleMapsProvider';
 import QueryProvider from '@/components/providers/QueryProvider';
 import SessionProvider from '@/components/providers/SessionProvider';
-import { geometosNeue, bauziet, garamondPro, inter } from './fonts';
+import { geometosNeue, bauziet, garamondPro, rubik, outfit } from './fonts';
 
 export const metadata: Metadata = {
   title: "Real Estate Project",
@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geometosNeue.variable} ${bauziet.variable} ${garamondPro.variable} ${inter.variable}`}>
+      <body className={`${geometosNeue.variable} ${bauziet.variable} ${garamondPro.variable} ${rubik.variable} ${outfit.variable}`}>
         <SessionProvider>
           <QueryProvider>
             <ResponsiveNav />

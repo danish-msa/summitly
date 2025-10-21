@@ -233,7 +233,7 @@ const Properties = () => {
     <div className='pt-12 sm:pt-16 pb-12 sm:pb-16'>
       <div className='max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8'>
         <SectionHeading 
-          heading='Properties' 
+          heading='Browse the Latest Properties' 
           subheading='Latest Properties' 
           description='Explore our latest property listings to find your perfect home, investment opportunity, or commercial space.' 
           

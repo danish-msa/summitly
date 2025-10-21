@@ -1,5 +1,5 @@
 import localFont from 'next/font/local'
-import { Inter } from 'next/font/google'
+import { Rubik, Outfit } from 'next/font/google'
 
 // Geometos Neue - Main heading font
 export const geometosNeue = localFont({
@@ -110,9 +110,18 @@ export const garamondPro = localFont({
   display: 'swap',
 })
 
-// Inter - Testing font for headings
-export const inter = Inter({
+// Rubik - Testing font for headings
+export const rubik = Rubik({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-rubik',
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  display: 'swap',
+})
+
+// Outfit - Testing font for headings
+export const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
   display: 'swap',
 })

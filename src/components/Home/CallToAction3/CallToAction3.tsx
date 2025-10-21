@@ -4,7 +4,7 @@ import { Phone, Mail } from "lucide-react";
 export const CallToAction3 = () => {
   return (
     <section className="w-full py-16 px-4">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-[1300px] mx-auto">
         <div className="bg-card border border-border rounded-2xl p-8 md:p-10 shadow-sm">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-6">

@@ -291,7 +291,7 @@ const PropertyFilters: React.FC<FiltersProps> = ({
 
                 {/* Right Column - Areas */}
                 <div className="col-span-3 bg-white p-3">
-                  {currentLocation && (
+                  {currentLocation ? (
                     <div className="space-y-1">
                       {currentLocation.areas?.map((area, idx) => {
                         const searchQuery = locationSearchQuery.toLowerCase();
@@ -316,6 +316,12 @@ const PropertyFilters: React.FC<FiltersProps> = ({
                           </button>
                         );
                       })}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                      <FaMapMarkerAlt className="h-8 w-8 text-gray-300 mb-3" />
+                      <p className="text-sm text-gray-500 mb-1">Select a location</p>
+                      <p className="text-xs text-gray-400">Choose a region to see available areas</p>
                     </div>
                   )}
                 </div>

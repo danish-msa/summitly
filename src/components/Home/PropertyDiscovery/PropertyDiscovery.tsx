@@ -160,7 +160,7 @@ const PropertyDiscovery: React.FC = () => {
               onClick={() => setActiveTab('rent')}
               className={`px-8 py-3 rounded-full font-semibold transition-all duration-300 ${
                 activeTab === 'rent'
-                  ? 'btn-gradient-default text-midnight shadow-md'
+                  ? ''
                   : 'text-smoky-gray hover:text-midnight'
               }`}
             >
@@ -171,7 +171,7 @@ const PropertyDiscovery: React.FC = () => {
               onClick={() => setActiveTab('sale')}
               className={`px-8 py-3 rounded-full font-semibold transition-all duration-300 ${
                 activeTab === 'sale'
-                  ? 'btn-gradient-default text-midnight shadow-md'
+                  ? ''
                   : 'text-smoky-gray hover:text-midnight'
               }`}
             >
@@ -191,14 +191,14 @@ const PropertyDiscovery: React.FC = () => {
         {/* Categories Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {currentCategories.map((category) => (
-            <Card key={category.id} className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md bg-white/95 backdrop-blur-sm">
+            <Card key={category.id} className="group hover:shadow-xl transition-all duration-300 border-0 bg-white/95 backdrop-blur-sm rounded-xl">
               <CardHeader className="pb-4">
                 <div className="flex items-center space-x-3 mb-2">
-                  <div className="p-2 bg-gradient-to-br from-brand-tide to-brand-glacier rounded-lg text-primary">
+                  <div className="p-2 border border-brand-mist rounded-lg text-primary">
                     {category.icon}
                   </div>
                   <div>
-                    <CardTitle className="text-md font-bold text-midnight group-hover:text-primary transition-colors font-heading">
+                    <CardTitle className="text-md font-bold text-brand-cb-blue group-hover:text-primary transition-colors font-body">
                       {category.title}
                     </CardTitle>
                     <p className="text-xs text-smoky-gray font-body">
@@ -215,7 +215,7 @@ const PropertyDiscovery: React.FC = () => {
                     <button
                       key={index}
                       onClick={() => handleCityClick(city)}
-                      className="w-full p-2 text-left rounded-lg hover:bg-gradient-to-r hover:from-brand-tide hover:to-brand-glacier transition-all duration-300 text-smoky-gray hover:text-primary border border-transparent hover:border-primary-200 font-body"
+                      className="w-full p-2 text-left rounded-lg hover:bg-brand-tide transition-all duration-300 text-smoky-gray hover:text-primary border border-transparent hover:border-primary-200 font-body"
                     >
                       <span className="flex items-center gap-2">
                         <ArrowRight className="w-4 h-4" />
