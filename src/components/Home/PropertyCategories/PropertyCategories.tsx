@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { ButtonColorful } from '@/components/ui/button-colorful';
 import Image from 'next/image';
+import { useLocationDetection } from '@/hooks/useLocationDetection';
 
 interface PropertyCategory {
   id: number;
@@ -72,6 +73,11 @@ const propertyCategories: PropertyCategory[] = [
 ];
 
 const PropertyCategories = () => {
+  const { location } = useLocationDetection();
+  
+  // Get display location - use detected location or fallback to Henderson, NV
+  const displayLocation = location ? location.fullLocation : "Henderson, NV";
+
   return (
     <section className="py-16 bg-background">
       <div className="max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -84,7 +90,7 @@ const PropertyCategories = () => {
           className=" mb-12"
         >
           <h2 className="text-3xl sm:text-3xl lg:text-3xl font-bold text-foreground mb-4">
-            Browse homes in <span className="text-primary">Henderson, NV</span>
+            Browse homes in <span className="text-primary">{displayLocation}</span>
           </h2>
         </motion.div>
 

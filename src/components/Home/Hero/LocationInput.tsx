@@ -3,8 +3,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import usePlacesAutocomplete, { getGeocode, getLatLng } from 'use-places-autocomplete';
 import { Input } from '@/components/ui/input';
-import { Search, MapPin, Building, Home } from 'lucide-react';
+import { Search, MapPin, Building, Home, Locate } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useLocationDetection } from '@/hooks/useLocationDetection';
 interface LocationInputProps {
   onSelect: (place: string) => void;
   placeholder: string;
@@ -99,6 +100,7 @@ const getBadgeColor = (type: CategorizedLocation['type']) => {
 const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { location, detectLocation, isLoading: locationLoading } = useLocationDetection();
 
   const {
     ready,
@@ -154,6 +156,26 @@ const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) 
       console.error('Error: ', error);
     }
   };
+
+  // Handle location detection
+  const handleLocationDetection = () => {
+    if (location) {
+      // If location is already detected, use it
+      setValue(location.fullLocation, false);
+      onSelect(location.fullLocation);
+    } else {
+      // Detect location
+      detectLocation();
+    }
+  };
+
+  // Auto-fill with detected location when available
+  useEffect(() => {
+    if (location && !value) {
+      setValue(location.fullLocation, false);
+      onSelect(location.fullLocation);
+    }
+  }, [location, value, onSelect]);
 
   // Organize results by category with priority order
   const organizeResults = (suggestions: { place_id: string; description: string }[]) => {
@@ -218,8 +240,23 @@ const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) 
           disabled={!ready}
           placeholder={placeholder}
           onFocus={() => setIsOpen(true)}
-          className="pl-4 pr-12 h-12 text-base"
+          className="pl-12 pr-12 h-12 text-base"
         />
+        {/* Location detection button */}
+        <button
+          type="button"
+          onClick={handleLocationDetection}
+          disabled={locationLoading}
+          className="absolute inset-y-0 left-0 flex items-center pl-3 hover:bg-gray-100 rounded-full transition-colors"
+          title={location ? `Use my location: ${location.fullLocation}` : "Detect my location"}
+        >
+          {locationLoading ? (
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-secondary"></div>
+          ) : (
+            <Locate className="h-4 w-4 text-secondary" />
+          )}
+        </button>
+        {/* Search button */}
         <div className="absolute inset-y-0 right-0 flex items-center pr-1">
           <Search className="h-10 w-10 p-2 rounded-full text-white btn-gradient-dark cursor-pointer transition-colors" />
         </div>

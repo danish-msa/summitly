@@ -5,6 +5,7 @@ import PropertyCard from '@/components/Helper/PropertyCard';
 import PropertyFilters from './PropertyFilters';
 import SellRentToggle from './SellRentToggle';
 import { PropertyListing } from '@/data/types'; // Import the interface from types.ts
+import { useLocationDetection } from '@/hooks/useLocationDetection';
 
 // Custom type for filter change events
 type FilterChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement> | {
@@ -27,6 +28,56 @@ const Properties = () => {
     location: 'all',
     locationArea: 'all'
   });
+  
+  // Location detection
+  const { location, isLoading: locationLoading } = useLocationDetection();
+
+  // Function to match detected location with available locations
+  const matchLocationWithFilters = (detectedLocation: { city: string; area: string; fullLocation: string }) => {
+    // Define the available locations (same as in PropertyFilters)
+    const availableLocations = [
+      { id: "gta", name: "Greater Toronto Area", areas: ["All of GTA", "Toronto", "Durham", "Halton", "Peel", "York"] },
+      { id: "toronto", name: "Toronto", areas: ["All of Toronto", "Etobicoke", "North York", "Scarborough", "Toronto & East York"] },
+      { id: "durham", name: "Durham", areas: ["All of Durham", "Ajax", "Pickering", "Whitby", "Oshawa"] },
+      { id: "halton", name: "Halton", areas: ["All of Halton", "Burlington", "Oakville", "Milton"] },
+      { id: "peel", name: "Peel", areas: ["All of Peel", "Brampton", "Mississauga", "Caledon"] },
+      { id: "york", name: "York", areas: ["All of York", "Markham", "Vaughan", "Richmond Hill", "Aurora"] },
+      { id: "outside-gta", name: "Outside GTA", areas: ["All Outside GTA", "Hamilton", "Niagara", "Barrie", "Kitchener-Waterloo"] }
+    ];
+
+    // Try to find a match
+    for (const loc of availableLocations) {
+      // Check if the detected city matches any location name
+      if (detectedLocation.city.toLowerCase().includes(loc.name.toLowerCase()) || 
+          loc.name.toLowerCase().includes(detectedLocation.city.toLowerCase())) {
+        return { location: loc.id, area: loc.areas[0] || 'all' };
+      }
+      
+      // Check if any area matches
+      for (const area of loc.areas) {
+        if (detectedLocation.area.toLowerCase().includes(area.toLowerCase()) ||
+            area.toLowerCase().includes(detectedLocation.area.toLowerCase())) {
+          return { location: loc.id, area };
+        }
+      }
+    }
+    
+    return null; // No match found
+  };
+
+  // Auto-populate filters when location is detected
+  useEffect(() => {
+    if (location && filters.location === 'all') {
+      const matchedLocation = matchLocationWithFilters(location);
+      if (matchedLocation) {
+        setFilters(prev => ({
+          ...prev,
+          location: matchedLocation.location,
+          locationArea: matchedLocation.area
+        }));
+      }
+    }
+  }, [location, filters.location]);
 
   useEffect(() => {
     const loadProperties = async () => {

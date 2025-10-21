@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { FaChevronDown, FaHome, FaMapMarkerAlt } from 'react-icons/fa';
+import { Navigation } from 'lucide-react';
+import { useLocationDetection } from '@/hooks/useLocationDetection';
 
 // Custom type for filter change events
 type FilterChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement> | {
@@ -75,6 +77,7 @@ const PropertyFilters: React.FC<FiltersProps> = ({
 }) => {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [locationSearchQuery, setLocationSearchQuery] = useState("");
+  const { location, detectLocation, isLoading: locationLoading } = useLocationDetection();
   
   // For direct button selection
   const handlePropertyTypeSelect = (value: string) => {
@@ -109,6 +112,51 @@ const PropertyFilters: React.FC<FiltersProps> = ({
     } as { target: { name: string; value: { location: string; area: string } } };
     handleFilterChange(event);
     setActiveDropdown(null);
+  };
+
+  // Handle location detection
+  const handleUseMyLocation = () => {
+    if (location) {
+      // If location is already detected, try to match it with available locations
+      const matchedLocation = matchLocationWithFilters(location);
+      if (matchedLocation) {
+        const event = {
+          target: {
+            name: 'locationAndArea',
+            value: { location: matchedLocation.location, area: matchedLocation.area }
+          }
+        } as { target: { name: string; value: { location: string; area: string } } };
+        handleFilterChange(event);
+        setActiveDropdown(null);
+      }
+    } else {
+      // Detect location
+      detectLocation();
+    }
+  };
+
+  // Function to match detected location with available locations
+  const matchLocationWithFilters = (detectedLocation: { city: string; area: string; fullLocation: string }) => {
+    // Try to find a match
+    for (const loc of LOCATIONS) {
+      // Check if the detected city matches any location name
+      if (detectedLocation.city.toLowerCase().includes(loc.name.toLowerCase()) || 
+          loc.name.toLowerCase().includes(detectedLocation.city.toLowerCase())) {
+        return { location: loc.id, area: loc.areas?.[0] || 'all' };
+      }
+      
+      // Check if any area matches
+      if (loc.areas) {
+        for (const area of loc.areas) {
+          if (detectedLocation.area.toLowerCase().includes(area.toLowerCase()) ||
+              area.toLowerCase().includes(detectedLocation.area.toLowerCase())) {
+            return { location: loc.id, area };
+          }
+        }
+      }
+    }
+    
+    return null; // No match found
   };
 
   const toggleDropdown = (dropdown: string) => {
@@ -249,6 +297,27 @@ const PropertyFilters: React.FC<FiltersProps> = ({
                     </button>
                   )}
                 </div>
+              </div>
+
+              {/* Use My Location Button */}
+              <div className="px-4 py-2 border-b border-gray-200">
+                <button
+                  onClick={handleUseMyLocation}
+                  disabled={locationLoading}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-secondary bg-secondary/10 hover:bg-secondary/20 rounded-md transition-colors disabled:opacity-50"
+                >
+                  {locationLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-secondary border-t-transparent"></div>
+                      <span>Detecting location...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Navigation className="h-4 w-4" />
+                      <span>{location ? `Use my location: ${location.fullLocation}` : "Use my location"}</span>
+                    </>
+                  )}
+                </button>
               </div>
 
               {/* Two Column Layout */}
