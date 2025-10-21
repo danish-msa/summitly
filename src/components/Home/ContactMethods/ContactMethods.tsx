@@ -1,3 +1,4 @@
+import SectionHeading from "@/components/Helper/SectionHeading";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Headphones, MapPin, Phone } from "lucide-react";
 
@@ -36,16 +37,10 @@ export const ContactMethods = () => {
   return (
     <section className="w-full py-16 px-4">
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-semibold text-foreground mb-4">
-            Get in touch with us
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Choose your preferred way to connect with our real estate team. We're here to help you find your perfect home.
-          </p>
-        </div>
+        <SectionHeading heading="Get in touch with us" subheading="Contact Methods" description="Choose your preferred way to connect with our real estate team. We're here to help you find your perfect home." />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-10">
           {contactOptions.map((option) => {
             const Icon = option.icon;
             return (
