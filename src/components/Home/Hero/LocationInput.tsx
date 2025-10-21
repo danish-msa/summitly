@@ -136,7 +136,7 @@ const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) 
   };
 
   // Organize results by category
-  const organizeResults = (suggestions: any[]) => {
+  const organizeResults = (suggestions: { place_id: string; description: string }[]) => {
     const categorized = suggestions.map(({ place_id, description }) => {
       const type = categorizeLocation(description);
       return {
