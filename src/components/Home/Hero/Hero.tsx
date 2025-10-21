@@ -3,7 +3,7 @@ import BannerSearch from './BannerSearch'
 
 const Hero = () => {
   return (
-    <div className='w-full flex-col lg:flex-row flex justify-center items-center mb-10 min-h-[600px] sm:min-h-[700px] lg:h-[800px] z-50 relative mx-auto bg-[url("/images/HomeBackground.png")] bg-cover bg-center bg-no-repeat'>
+    <div className='w-full flex-col lg:flex-row flex justify-center items-center mb-10 min-h-[600px] sm:min-h-[700px] lg:h-[800px] z-50 relative mx-auto bg-[url("/images/HomeBannerImage.jpg")] bg-cover bg-center bg-no-repeat'>
         {/* Overlay */}
         {/* <div className='absolute inset-0 bg-black bg-opacity-50'></div> */}
 
