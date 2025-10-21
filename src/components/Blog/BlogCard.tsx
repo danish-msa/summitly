@@ -6,7 +6,7 @@ interface BlogCardProps extends BlogPost {
   onClick?: () => void;
 }
 
-const BlogCard = ({ image, date, title, excerpt, tags, large = false, author, readTime, onClick }: BlogCardProps) => {
+const BlogCard = ({ image, date, title, excerpt, tags, large = false, readTime, onClick }: BlogCardProps) => {
   return (
     <article 
       className={`group cursor-pointer ${large ? 'lg:col-span-1' : ''}`}
