@@ -21,11 +21,17 @@ interface CategorizedLocation {
 const categorizeLocation = (description: string): CategorizedLocation['type'] => {
   const lowerDesc = description.toLowerCase();
   
-  // Check for specific address patterns
-  if (lowerDesc.includes('street') || lowerDesc.includes('avenue') || lowerDesc.includes('road') || 
-      lowerDesc.includes('drive') || lowerDesc.includes('lane') || lowerDesc.includes('boulevard') ||
-      lowerDesc.includes('crescent') || lowerDesc.includes('place') || lowerDesc.includes('court') ||
-      lowerDesc.includes('way') || lowerDesc.includes('circle') || lowerDesc.includes('trail')) {
+  // Check for landmark patterns first (most specific)
+  if (lowerDesc.includes('airport') || lowerDesc.includes('mall') || lowerDesc.includes('center') || 
+      lowerDesc.includes('plaza') || lowerDesc.includes('station') || lowerDesc.includes('hospital') ||
+      lowerDesc.includes('school') || lowerDesc.includes('university') || lowerDesc.includes('park') ||
+      lowerDesc.includes('library') || lowerDesc.includes('museum') || lowerDesc.includes('theater') ||
+      lowerDesc.includes('zoo') || lowerDesc.includes('outlets') || lowerDesc.includes('islands')) {
+    return 'landmark';
+  }
+  
+  // Check for specific address patterns (street numbers + street names)
+  if (lowerDesc.match(/\d+\s+(street|avenue|road|drive|lane|boulevard|crescent|place|court|way|circle|trail|st|ave|rd|dr|blvd|cres|pl|ct|cir|trl)/)) {
     return 'address';
   }
   
@@ -35,25 +41,29 @@ const categorizeLocation = (description: string): CategorizedLocation['type'] =>
     return 'neighborhood';
   }
   
-  // Check for city patterns
-  if (lowerDesc.includes('city') || lowerDesc.includes('town') || lowerDesc.includes('municipality') ||
-      lowerDesc.includes('village') || lowerDesc.includes('hamlet') || 
-      // Check if it's just a city name (no street numbers or specific addresses)
-      (!lowerDesc.match(/\d/) && !lowerDesc.includes('street') && !lowerDesc.includes('avenue') && 
-       !lowerDesc.includes('road') && !lowerDesc.includes('drive') && lowerDesc.split(',').length <= 2)) {
+  // Check for city patterns - be more restrictive
+  // Only consider it a city if it's a simple pattern like "City, Province, Country"
+  // and doesn't contain specific street names or landmarks
+  const parts = lowerDesc.split(',').map(part => part.trim());
+  
+  // Must have exactly 3 parts: City, Province, Country
+  if (parts.length === 3 && 
+      // Last part should be "canada"
+      parts[2] === 'canada' &&
+      // Second part should be a province code
+      ['on', 'bc', 'ab', 'mb', 'sk', 'qc', 'ns', 'nb', 'nl', 'pe', 'yt', 'nt', 'nu'].includes(parts[1]) &&
+      // First part should not contain street names or landmarks
+      !lowerDesc.includes('street') && !lowerDesc.includes('avenue') && !lowerDesc.includes('road') &&
+      !lowerDesc.includes('drive') && !lowerDesc.includes('lane') && !lowerDesc.includes('boulevard') &&
+      !lowerDesc.includes('outlets') && !lowerDesc.includes('zoo') && !lowerDesc.includes('airport') &&
+      !lowerDesc.includes('islands') && !lowerDesc.includes('premium') && !lowerDesc.includes('meadowvale') &&
+      // Should not contain numbers (street numbers)
+      !lowerDesc.match(/\d/)) {
     return 'city';
   }
   
-  // Check for landmark patterns
-  if (lowerDesc.includes('mall') || lowerDesc.includes('center') || lowerDesc.includes('plaza') ||
-      lowerDesc.includes('station') || lowerDesc.includes('airport') || lowerDesc.includes('hospital') ||
-      lowerDesc.includes('school') || lowerDesc.includes('university') || lowerDesc.includes('park') ||
-      lowerDesc.includes('library') || lowerDesc.includes('museum') || lowerDesc.includes('theater')) {
-    return 'landmark';
-  }
-  
-  // Default to landmark for other types
-  return 'landmark';
+  // Default to address for everything else
+  return 'address';
 };
 
 const getLocationIcon = (type: CategorizedLocation['type']) => {
@@ -98,11 +108,21 @@ const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) 
     clearSuggestions,
   } = usePlacesAutocomplete({
     requestOptions: {
-      componentRestrictions: { country: 'ca' },
-      types: ['address']
+      componentRestrictions: { country: 'ca' }
     },
     debounce: 300,
   });
+
+  // Debug: Log suggestion patterns
+  useEffect(() => {
+    if (data && data.length > 0) {
+      console.log('Sample suggestions for analysis:', data.slice(0, 5).map(item => ({
+        description: item.description,
+        place_id: item.place_id,
+        categorized_as: categorizeLocation(item.description)
+      })));
+    }
+  }, [data]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -135,7 +155,7 @@ const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) 
     }
   };
 
-  // Organize results by category
+  // Organize results by category with priority order
   const organizeResults = (suggestions: { place_id: string; description: string }[]) => {
     const categorized = suggestions.map(({ place_id, description }) => {
       const type = categorizeLocation(description);
@@ -157,7 +177,20 @@ const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) 
       return acc;
     }, {} as Record<string, CategorizedLocation[]>);
 
-    return grouped;
+    // Define priority order: cities first, then neighborhoods, then addresses, then landmarks
+    const priorityOrder = ['city', 'neighborhood', 'address', 'landmark'];
+    
+    // Create ordered result object
+    const orderedResults: Record<string, CategorizedLocation[]> = {};
+    
+    // Add categories in priority order
+    priorityOrder.forEach(type => {
+      if (grouped[type] && grouped[type].length > 0) {
+        orderedResults[type] = grouped[type];
+      }
+    });
+
+    return orderedResults;
   };
 
   const getTypeLabel = (type: string) => {
