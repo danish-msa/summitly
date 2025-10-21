@@ -114,7 +114,7 @@ const Nav = ({ openNav }: Props) => {
           isVisible ? " " : "shadow-none"
         )}
       >
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo */}
             <motion.div
@@ -159,7 +159,7 @@ const Nav = ({ openNav }: Props) => {
                       className="relative"
                     >
                       <motion.button
-                        className="flex items-center space-x-1 px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide"
+                        className="flex items-center space-x-1 px-4 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
@@ -195,7 +195,7 @@ const Nav = ({ openNav }: Props) => {
                                 >
                                   <Link
                                     href={subLink.url}
-                                    className="flex items-center space-x-3 px-4 py-3 text-base font-medium text-foreground hover:bg-brand-tide rounded-lg transition-colors group"
+                                    className="flex items-center space-x-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-brand-tide rounded-lg transition-colors group"
                                   >
                                     <div className="w-8 h-8 flex items-center justify-center bg-muted rounded-lg text-lg group-hover:bg-bg-brand-tide group-hover:text-primary-foreground transition-colors">
                                       {getSubLinkIcon(subLink.label)}
@@ -214,7 +214,7 @@ const Nav = ({ openNav }: Props) => {
                   ) : (
                     <Link href={link.url}>
                       <motion.div
-                        className="px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide"
+                        className="px-4 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
@@ -267,7 +267,7 @@ const Nav = ({ openNav }: Props) => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
               >
-                <ButtonColorful label='Submit Property' href='/submit-property' variant='gradient' />
+                <ButtonColorful label='Submit Property' href='/submit-property' variant='default' className='bg-primary hover:bg-brand-midnight' />
               </motion.div>
 
               {/* Mobile Menu Button */}

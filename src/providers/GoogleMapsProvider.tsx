@@ -22,9 +22,17 @@ const GoogleMapsProvider: React.FC<GoogleMapsProviderProps> = ({ children, apiKe
   const [loadError, setLoadError] = useState<Error | null>(null);
 
   useEffect(() => {
+    // Debug: Log API key status
+    console.log('Google Maps API Key:', apiKey ? 'Present' : 'Missing');
+    
     // Skip if already loaded or no API key
     if (window.google?.maps || !apiKey || document.querySelector('script[src*="maps.googleapis.com/maps/api"]')) {
-      setIsLoaded(true);
+      if (!apiKey) {
+        console.error('Google Maps API key is missing!');
+        setLoadError(new Error('Google Maps API key is missing'));
+      } else {
+        setIsLoaded(true);
+      }
       return;
     }
 
