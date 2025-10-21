@@ -48,17 +48,14 @@ export const useLocationDetection = (): UseLocationDetectionReturn => {
       
       let city = '';
       let area = '';
-      let province = '';
       
-      // Extract city, area, and province from address components
-      addressComponents.forEach((component: any) => {
+      // Extract city and area from address components
+      addressComponents.forEach((component: { types: string[]; long_name: string; short_name: string }) => {
         const types = component.types;
         if (types.includes('locality') || types.includes('administrative_area_level_2')) {
           city = component.long_name;
         } else if (types.includes('sublocality') || types.includes('sublocality_level_1')) {
           area = component.long_name;
-        } else if (types.includes('administrative_area_level_1')) {
-          province = component.short_name;
         }
       });
 
