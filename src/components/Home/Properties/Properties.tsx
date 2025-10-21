@@ -30,7 +30,7 @@ const Properties = () => {
   });
   
   // Location detection
-  const { location, isLoading: locationLoading } = useLocationDetection();
+  const { location } = useLocationDetection();
 
   // Function to match detected location with available locations
   const matchLocationWithFilters = (detectedLocation: { city: string; area: string; fullLocation: string }) => {
