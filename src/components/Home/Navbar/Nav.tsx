@@ -1,7 +1,7 @@
 "use client";
 import { navLinks } from '@/lib/constants/navigation';
 import Link from 'next/link';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaUserCircle } from 'react-icons/fa';
 import { HiBars3BottomRight } from 'react-icons/hi2';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +18,9 @@ type Props = {
 const Nav = ({ openNav }: Props) => {
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [isAtTop, setIsAtTop] = useState(true);
 
   const handleDropdownToggle = (id: number) => {
     setOpenDropdown((prev) => (prev === id ? null : id));
@@ -26,6 +29,55 @@ const Nav = ({ openNav }: Props) => {
   const handleLoginClick = () => {
     setShowLoginModal(true);
   };
+
+  // Scroll detection for navbar visibility and background
+  useEffect(() => {
+    let ticking = false;
+    
+    const controlNavbar = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          const scrollDifference = Math.abs(currentScrollY - lastScrollY);
+          
+          // Update isAtTop state
+          setIsAtTop(currentScrollY < 50);
+          
+          // Only trigger if scroll difference is significant (prevents flickering)
+          if (scrollDifference > 5) {
+            // Show navbar when scrolling up or at the top
+            if (currentScrollY < lastScrollY || currentScrollY < 100) {
+              setIsVisible(true);
+            } 
+            // Hide navbar when scrolling down (but not at the very top)
+            else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+              setIsVisible(false);
+            }
+            
+            setLastScrollY(currentScrollY);
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', controlNavbar, { passive: true });
+    return () => window.removeEventListener('scroll', controlNavbar);
+  }, [lastScrollY]);
+
+  // Update body padding based on navbar state
+  useEffect(() => {
+    if (isAtTop) {
+      document.body.style.paddingTop = '0';
+    } else {
+      document.body.style.paddingTop = '4rem';
+    }
+    
+    return () => {
+      document.body.style.paddingTop = '0';
+    };
+  }, [isAtTop]);
 
   const getSubLinkIcon = (label: string) => {
     const labelLower = label.toLowerCase();
@@ -45,10 +97,21 @@ const Nav = ({ openNav }: Props) => {
     <>
       <motion.div
         initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        animate={{ 
+          opacity: 1, 
+          y: isVisible ? 0 : -100,
+          scale: isVisible ? 1 : 0.95
+        }}
+        transition={{ 
+          duration: 0.3,
+          ease: "easeInOut"
+        }}
         className={cn(
-          "relative w-full absolute top-0 left-0 right-0 z-[9999] border-b border-border/40 shadow-sm  backdrop-blur-sm"
+          "fixed w-full top-0 left-0 right-0 z-[9999] transition-all duration-300",
+          isAtTop 
+            ? "bg-transparent backdrop-blur-none shadow-none border-transparent" 
+            : "bg-background/95 backdrop-blur-sm border-b border-border/40",
+          isVisible ? " " : "shadow-none"
         )}
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

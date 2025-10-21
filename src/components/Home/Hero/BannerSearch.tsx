@@ -40,16 +40,16 @@ const BannerSearch = () => {
       <div className="banner-search shadow-2xl">
         <div className="tabs">
           <button
-            className={activeTab === 'rent' ? 'active' : ''} 
-            onClick={() => setActiveTab('rent')}
-          >
-            Rent
-          </button>
-          <button
             className={activeTab === 'buy' ? 'active' : ''}
             onClick={() => setActiveTab('buy')}
           >
             Buy
+          </button>
+          <button
+            className={activeTab === 'rent' ? 'active' : ''} 
+            onClick={() => setActiveTab('rent')}
+          >
+            Rent
           </button>
           <button
             className={activeTab === 'sell' ? 'active' : ''}
@@ -73,8 +73,8 @@ const BannerSearch = () => {
 
         <div className="search-form">
           <GoogleMapsWrapper>
-            {activeTab === 'rent' && <RentForm />}
             {activeTab === 'buy' && <BuyForm />}
+            {activeTab === 'rent' && <RentForm />}
             {activeTab === 'sell' && <SellForm />}
             {activeTab === 'mortgage' && <MortgageForm />}
             {activeTab === 'home-value' && <HomeValueForm />}

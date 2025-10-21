@@ -204,3 +204,27 @@ export interface PropertyFilters {
   page?: number;
   limit?: number;
 }
+
+// Blog interfaces
+export interface BlogPost {
+  id: number;
+  image: string;
+  date: string;
+  title: string;
+  excerpt: string;
+  tags: string[];
+  large?: boolean;
+  content?: string;
+  author?: string;
+  readTime?: string;
+  featured?: boolean;
+}
+
+export interface BlogFilters {
+  tag?: string;
+  author?: string;
+  search?: string;
+  featured?: boolean;
+  page?: number;
+  limit?: number;
+}

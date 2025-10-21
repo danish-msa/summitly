@@ -6,7 +6,9 @@ import {
   City,
   ApiListing,
   ListingsResponse,
-  PropertyTypesResponse
+  PropertyTypesResponse,
+  BlogPost,
+  BlogFilters
 } from './types';
 
 
@@ -766,31 +768,138 @@ export const buildings = [
 export const blogs = [
   {
     id: 1,
-    date: "02 Apr 2024",
-    comment: "Comments (3)",
-    title: "Find the Perfect Advertiser for Your Needs",
-    shortDescription:
-      "Find the right advertiser to effectively boost your business.",
-    image: "/images/p1.jpg",
+    image: "/images/c1.jpg",
+    date: "Olivia Rhye • 20 Jan 2024",
+    title: "Conversations with: London Maer & Co.",
+    excerpt: "How a mother-daughter design duo created a studio of their own. See how they turned their creativity into a successful design business that serves clients worldwide.",
+    tags: ["Design", "Research"],
+    large: true,
+    featured: true,
+    author: "Olivia Rhye",
+    readTime: "5 min read",
+    content: "Full article content would go here..."
   },
   {
     id: 2,
-    date: "05 Apr 2024",
-    comment: "Comments (2)",
-    title: "Maximize Your Business Growth with Smart Marketing",
-    shortDescription:
-      "Grow your business using smart, effective marketing strategies.",
-    image: "/images/p2.jpg",
+    image: "/images/c2.jpg",
+    date: "Phoenix Baker • 19 Jan 2024",
+    title: "6 Interesting Ways to Use a 3D Character in Procreate",
+    excerpt: "Unleash creativity with 6 innovative ways to use 3D characters in your digital art projects. From concept to final render.",
+    tags: ["Design", "Product"],
+    author: "Phoenix Baker",
+    readTime: "3 min read",
+    content: "Full article content would go here..."
   },
   {
     id: 3,
-    date: "10 Apr 2024",
-    comment: "Comments (5)",
-    title: "Tips for Choosing the Right Property to Invest In",
-    shortDescription:
-      "Select the best properties for secure and profitable investments.",
-    image: "/images/p3.jpg",
+    image: "/images/c3.jpg",
+    date: "Lana Steiner • 18 Jan 2024",
+    title: "Intro to Run a Successful Design Sprint",
+    excerpt: "Starting a new design sprint can be daunting but with the right approach, you can lead your team to breakthrough solutions.",
+    tags: ["Product"],
+    author: "Lana Steiner",
+    readTime: "7 min read",
+    content: "Full article content would go here..."
   },
+  {
+    id: 4,
+    image: "/images/c4.jpg",
+    date: "Natali Craig • 17 Jan 2024",
+    title: "Migrating from Craft to Webflow: Process & Tips",
+    excerpt: "Learn the complete process of migrating your design workflow from Craft to Webflow with these expert tips and best practices.",
+    tags: ["Tools"],
+    author: "Natali Craig",
+    readTime: "4 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 5,
+    image: "/images/c5.jpg",
+    date: "Candice Wu • 16 Jan 2024",
+    title: "Minimal Organics — Shampoo + Alternatives & Treatment",
+    excerpt: "Discover sustainable beauty products that are good for your hair and the environment. A comprehensive guide to organic hair care.",
+    tags: ["Design", "Research"],
+    author: "Candice Wu",
+    readTime: "6 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 6,
+    image: "/images/c6.jpg",
+    date: "Alec Whitten • 1 Jan 2023",
+    title: "A Continually Unfolding History → Where We Work by Hand",
+    excerpt: "Explore the evolution of craftsmanship and how traditional methods inspire modern design practices in our digital age.",
+    tags: ["Design", "Research"],
+    author: "Alec Whitten",
+    readTime: "8 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 7,
+    image: "/images/c1.jpg",
+    date: "Demi Wilkinson • 15 Jan 2023",
+    title: "Cognitive Dissonance Theory - Cool Course for UX Designers",
+    excerpt: "Understanding psychological principles that influence user behavior and design decisions. Essential knowledge for modern UX designers.",
+    tags: ["Design", "Research"],
+    author: "Demi Wilkinson",
+    readTime: "9 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 8,
+    image: "/images/c2.jpg",
+    date: "Candice Wu • 10 Jan 2023",
+    title: "How Remote Work Drastically Increased My Quality of Life →",
+    excerpt: "Personal insights on the benefits of remote work and tips for maintaining work-life balance in a distributed team environment.",
+    tags: ["Product", "Tools"],
+    author: "Candice Wu",
+    readTime: "5 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 9,
+    image: "/images/c3.jpg",
+    date: "Orlando Diggs • 8 Jan 2023",
+    title: "Poroschic Interview with Designer : Jasmin Santos",
+    excerpt: "An in-depth conversation about design philosophy, creative process, and career journey with renowned designer Jasmin Santos.",
+    tags: ["Design"],
+    author: "Orlando Diggs",
+    readTime: "12 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 10,
+    image: "/images/c4.jpg",
+    date: "Kate Morrison • 5 Jan 2023",
+    title: "Improve Your UI Design Skills with Copy",
+    excerpt: "Learn how better copywriting can elevate your design work and user experience. The intersection of design and content strategy.",
+    tags: ["Design", "Tools"],
+    author: "Kate Morrison",
+    readTime: "6 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 11,
+    image: "/images/c5.jpg",
+    date: "Koray Okumus • 3 Jan 2023",
+    title: "The Design Dilemma is Real! UX Versus the Enemy of Creativity",
+    excerpt: "Balancing user experience requirements with creative freedom in modern design. Finding the sweet spot between usability and innovation.",
+    tags: ["Research"],
+    author: "Koray Okumus",
+    readTime: "7 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 12,
+    image: "/images/c6.jpg",
+    date: "Sarah Johnson • 28 Dec 2022",
+    title: "Building Design Systems That Scale",
+    excerpt: "Creating design systems that grow with your product and team. Best practices for maintaining consistency across large organizations.",
+    tags: ["Design", "Product"],
+    author: "Sarah Johnson",
+    readTime: "10 min read",
+    content: "Full article content would go here..."
+  }
 ];
 
 export const userReviewData = [
@@ -858,3 +967,78 @@ export const services = [
     serviceURL: "/mortgage",
   }
 ];
+
+// Blog utility functions
+export const getBlogPosts = (filters: BlogFilters = {}): BlogPost[] => {
+  let filteredBlogs = [...blogs];
+
+  // Filter by tag
+  if (filters.tag) {
+    filteredBlogs = filteredBlogs.filter(blog => 
+      blog.tags.some(tag => tag.toLowerCase().includes(filters.tag!.toLowerCase()))
+    );
+  }
+
+  // Filter by author
+  if (filters.author) {
+    filteredBlogs = filteredBlogs.filter(blog => 
+      blog.author?.toLowerCase().includes(filters.author!.toLowerCase())
+    );
+  }
+
+  // Filter by search term
+  if (filters.search) {
+    const searchTerm = filters.search.toLowerCase();
+    filteredBlogs = filteredBlogs.filter(blog => 
+      blog.title.toLowerCase().includes(searchTerm) ||
+      blog.excerpt.toLowerCase().includes(searchTerm) ||
+      blog.tags.some(tag => tag.toLowerCase().includes(searchTerm))
+    );
+  }
+
+  // Filter by featured
+  if (filters.featured !== undefined) {
+    filteredBlogs = filteredBlogs.filter(blog => blog.featured === filters.featured);
+  }
+
+  return filteredBlogs;
+};
+
+export const getRecentBlogPosts = (limit: number = 5): BlogPost[] => {
+  return blogs
+    .sort((a, b) => new Date(b.date.split('•')[1].trim()).getTime() - new Date(a.date.split('•')[1].trim()).getTime())
+    .slice(0, limit);
+};
+
+export const getFeaturedBlogPost = (): BlogPost | null => {
+  return blogs.find(blog => blog.featured) || null;
+};
+
+export const getBlogPostById = (id: number): BlogPost | null => {
+  return blogs.find(blog => blog.id === id) || null;
+};
+
+export const getBlogTags = (): string[] => {
+  const allTags = blogs.flatMap(blog => blog.tags);
+  return [...new Set(allTags)].sort();
+};
+
+export const getBlogAuthors = (): string[] => {
+  const allAuthors = blogs.map(blog => blog.author).filter(Boolean) as string[];
+  return [...new Set(allAuthors)].sort();
+};
+
+export const getPaginatedBlogPosts = (filters: BlogFilters = {}, page: number = 1, limit: number = 6) => {
+  const filteredBlogs = getBlogPosts(filters);
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  
+  return {
+    posts: filteredBlogs.slice(startIndex, endIndex),
+    totalPosts: filteredBlogs.length,
+    totalPages: Math.ceil(filteredBlogs.length / limit),
+    currentPage: page,
+    hasNextPage: endIndex < filteredBlogs.length,
+    hasPrevPage: page > 1
+  };
+};
