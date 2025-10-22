@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { FaChevronDown, FaHome } from 'react-icons/fa';
-import { IndividualFilterProps, PROPERTY_TYPES } from '@/lib/types/filters';
+import { IndividualFilterProps, FilterChangeEvent, PROPERTY_TYPES } from '@/lib/types/filters';
 
 const PropertyTypeFilter: React.FC<IndividualFilterProps> = ({ 
   filters, 

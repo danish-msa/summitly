@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { FaChevronDown, FaBath } from 'react-icons/fa';
-import { IndividualFilterProps } from '@/lib/types/filters';
+import { IndividualFilterProps, FilterChangeEvent } from '@/lib/types/filters';
 
 const BathroomFilter: React.FC<IndividualFilterProps> = ({ 
   filters, 

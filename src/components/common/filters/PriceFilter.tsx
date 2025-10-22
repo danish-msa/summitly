@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { FaChevronDown, FaDollarSign } from 'react-icons/fa';
-import { IndividualFilterProps } from '@/lib/types/filters';
+import { IndividualFilterProps, FilterChangeEvent } from '@/lib/types/filters';
 
 const PriceFilter: React.FC<IndividualFilterProps> = ({ 
   filters, 
