@@ -9,8 +9,8 @@ interface BasicInfoProps {
 
 const BasicInfo: React.FC<BasicInfoProps> = ({ property }) => {
   // Format the full address
-  const fullAddress = property.address.location || 
-    `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim();
+  // const fullAddress = property.address.location || 
+  //   `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim();
 
   // Format the price
   const formatPrice = (price: number) => {
