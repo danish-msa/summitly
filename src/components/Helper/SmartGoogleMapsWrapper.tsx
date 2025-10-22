@@ -4,31 +4,52 @@ import React, { useState, useEffect } from 'react';
 import { useGoogleMaps } from '@/providers/GoogleMapsProvider';
 import GoogleMapsLoading from '@/components/common/GoogleMapsLoading';
 
-interface GoogleMapsWrapperProps {
+interface SmartGoogleMapsWrapperProps {
   children: React.ReactNode;
-  showLoadingImmediately?: boolean;
 }
 
-const GoogleMapsWrapper: React.FC<GoogleMapsWrapperProps> = ({ 
-  children, 
-  showLoadingImmediately = false 
-}) => {
+const SmartGoogleMapsWrapper: React.FC<SmartGoogleMapsWrapperProps> = ({ children }) => {
   const { isLoaded, loadError, isLoading } = useGoogleMaps();
   const [showLoading, setShowLoading] = useState(false);
+  const [userInteracted, setUserInteracted] = useState(false);
 
-  // Only show loading animation if explicitly requested or after a longer delay
+  // Listen for user interactions that might need Google Maps
   useEffect(() => {
-    if (isLoading && !isLoaded) {
-      const delay = showLoadingImmediately ? 100 : 2000; // 2 seconds delay for non-immediate cases
-      const timer = setTimeout(() => {
+    const handleUserInteraction = () => {
+      if (!userInteracted && (isLoading || !isLoaded)) {
+        setUserInteracted(true);
         setShowLoading(true);
-      }, delay);
-      
-      return () => clearTimeout(timer);
-    } else {
+      }
+    };
+
+    // Listen for focus events on location inputs
+    const locationInputs = document.querySelectorAll('input[placeholder*="location"], input[placeholder*="address"], input[placeholder*="city"]');
+    locationInputs.forEach(input => {
+      input.addEventListener('focus', handleUserInteraction);
+    });
+
+    // Listen for clicks on location-related buttons
+    const locationButtons = document.querySelectorAll('button[title*="location"], button[title*="detect"]');
+    locationButtons.forEach(button => {
+      button.addEventListener('click', handleUserInteraction);
+    });
+
+    return () => {
+      locationInputs.forEach(input => {
+        input.removeEventListener('focus', handleUserInteraction);
+      });
+      locationButtons.forEach(button => {
+        button.removeEventListener('click', handleUserInteraction);
+      });
+    };
+  }, [userInteracted, isLoading, isLoaded]);
+
+  // Hide loading when Google Maps is loaded
+  useEffect(() => {
+    if (isLoaded) {
       setShowLoading(false);
     }
-  }, [isLoading, isLoaded, showLoadingImmediately]);
+  }, [isLoaded]);
 
   if (loadError) {
     return (
@@ -59,4 +80,4 @@ const GoogleMapsWrapper: React.FC<GoogleMapsWrapperProps> = ({
   return <>{children}</>;
 };
 
-export default GoogleMapsWrapper;
+export default SmartGoogleMapsWrapper;

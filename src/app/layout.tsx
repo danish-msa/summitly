@@ -31,7 +31,7 @@ export default function RootLayout({
           <QueryProvider>
             <ResponsiveNav />
             
-            <GoogleMapsProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}>
+            <GoogleMapsProvider>
               {children}
             </GoogleMapsProvider>
             

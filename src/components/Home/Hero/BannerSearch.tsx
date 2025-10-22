@@ -5,7 +5,7 @@ import RentForm from './RentForm';
 import SellForm from './SellForm';
 import MortgageForm from './MortgageForm';
 import HomeValueForm from './HomeValueForm';
-import GoogleMapsWrapper from '@/components/Helper/GoogleMapsWrapper';
+import SmartGoogleMapsWrapper from '@/components/Helper/SmartGoogleMapsWrapper';
 
 // Define proper types for the context
 type LocationSuggestion = {
@@ -72,13 +72,13 @@ const BannerSearch = () => {
         </div>
 
         <div className="search-form">
-          <GoogleMapsWrapper>
+          <SmartGoogleMapsWrapper>
             {activeTab === 'buy' && <BuyForm />}
             {activeTab === 'rent' && <RentForm />}
             {activeTab === 'sell' && <SellForm />}
             {activeTab === 'mortgage' && <MortgageForm />}
             {activeTab === 'home-value' && <HomeValueForm />}
-          </GoogleMapsWrapper>
+          </SmartGoogleMapsWrapper>
         </div>
       </div>
     </LocationSuggestionsContext.Provider>

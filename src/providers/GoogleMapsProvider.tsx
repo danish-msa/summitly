@@ -1,65 +1,60 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, createContext, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { LoadScript } from '@react-google-maps/api';
 
 interface GoogleMapsContextType {
   isLoaded: boolean;
-  loadError: Error | null;
+  loadError: Error | undefined;
+  isLoading: boolean;
 }
 
-export const GoogleMapsContext = createContext<GoogleMapsContextType>({
+const GoogleMapsContext = createContext<GoogleMapsContextType>({
   isLoaded: false,
-  loadError: null
+  loadError: undefined,
+  isLoading: true,
 });
 
+export const useGoogleMaps = () => {
+  const context = useContext(GoogleMapsContext);
+  if (!context) {
+    throw new Error('useGoogleMaps must be used within a GoogleMapsProvider');
+  }
+  return context;
+};
+
 interface GoogleMapsProviderProps {
-  children: ReactNode;
-  apiKey: string;
+  children: React.ReactNode;
 }
 
-const GoogleMapsProvider: React.FC<GoogleMapsProviderProps> = ({ children, apiKey }) => {
+export const GoogleMapsProvider: React.FC<GoogleMapsProviderProps> = ({ children }) => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [loadError, setLoadError] = useState<Error | null>(null);
+  const [loadError, setLoadError] = useState<Error | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Debug: Log API key status
-    console.log('Google Maps API Key:', apiKey ? 'Present' : 'Missing');
-    
-    // Skip if already loaded or no API key
-    if (window.google?.maps || !apiKey || document.querySelector('script[src*="maps.googleapis.com/maps/api"]')) {
-      if (!apiKey) {
-        console.error('Google Maps API key is missing!');
-        setLoadError(new Error('Google Maps API key is missing'));
-      } else {
-        setIsLoaded(true);
-      }
-      return;
-    }
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-    script.async = true;
-    script.defer = true;
-    
-    script.onload = () => {
-      setIsLoaded(true);
-    };
-    
-    script.onerror = () => {
-      setLoadError(new Error('Failed to load Google Maps API'));
-    };
-    
-    document.head.appendChild(script);
-    
-    return () => {
-      // Don't remove the script on unmount as it might be needed by other components
-    };
-  }, [apiKey]);
+  const handleLoad = () => {
+    setIsLoaded(true);
+    setIsLoading(false);
+  };
+
+  const handleError = (error: Error) => {
+    setLoadError(error);
+    setIsLoading(false);
+  };
 
   return (
-    <GoogleMapsContext.Provider value={{ isLoaded, loadError }}>
-      {children}
-    </GoogleMapsContext.Provider>
+    <LoadScript
+      googleMapsApiKey={apiKey}
+      libraries={['places']}
+      onLoad={handleLoad}
+      onError={handleError}
+    >
+      <GoogleMapsContext.Provider value={{ isLoaded, loadError, isLoading }}>
+        {children}
+      </GoogleMapsContext.Provider>
+    </LoadScript>
   );
 };
 

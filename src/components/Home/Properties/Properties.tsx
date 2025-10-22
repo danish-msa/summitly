@@ -277,8 +277,84 @@ const Properties = () => {
     });
   };
 
-  if (loading) return <div className="text-center py-10">Loading properties...</div>;
-  if (error) return <div className="text-center py-10 text-red-500">{error}</div>;
+  if (loading) return (
+    <div className="pt-12 sm:pt-16 pb-12 sm:pb-16">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="relative mb-6">
+            {/* Property-themed loading spinner */}
+            <div className="relative w-16 h-16">
+              {/* Outer ring */}
+              <div className="absolute inset-0 border-4 border-gray-200 rounded-full animate-spin-slow"></div>
+              
+              {/* Middle ring */}
+              <div className="absolute inset-2 border-3 border-gray-300 rounded-full animate-spin-reverse"></div>
+              
+              {/* Inner ring */}
+              <div className="absolute inset-4 border-2 border-secondary rounded-full animate-spin animate-pulse-glow"></div>
+              
+              {/* Center house icon */}
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                <div className="w-4 h-4 bg-secondary rounded-sm animate-pulse-glow"></div>
+              </div>
+            </div>
+          </div>
+          
+          <h3 className="text-lg font-semibold text-gray-800 mb-2 animate-fade-in">
+            Loading Properties...
+          </h3>
+          <p className="text-sm text-gray-600 mb-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            Fetching the latest listings for you
+          </p>
+          
+          {/* Progress indicator */}
+          <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden mb-4">
+            <div className="h-full bg-gradient-to-r from-secondary via-blue-500 to-secondary rounded-full animate-progress-fill"></div>
+          </div>
+          
+          {/* Loading steps */}
+          <div className="mt-4 space-y-2 text-xs text-gray-500">
+            <div className="flex items-center justify-center space-x-2 animate-fade-in" style={{ animationDelay: '0.5s' }}>
+              <div className="w-1.5 h-1.5 bg-secondary rounded-full animate-pulse"></div>
+              <span className="font-medium">Searching properties</span>
+            </div>
+            <div className="flex items-center justify-center space-x-2 animate-fade-in" style={{ animationDelay: '1s' }}>
+              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+              <span className="font-medium">Loading images</span>
+            </div>
+            <div className="flex items-center justify-center space-x-2 animate-fade-in" style={{ animationDelay: '1.5s' }}>
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="font-medium">Preparing results</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+  
+  if (error) return (
+    <div className="pt-12 sm:pt-16 pb-12 sm:pb-16">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-red-800 mb-2">Error Loading Properties</h3>
+          <p className="text-sm text-red-600 text-center mb-4">
+            {error}
+          </p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className='pt-12 sm:pt-16 pb-12 sm:pb-16'>
