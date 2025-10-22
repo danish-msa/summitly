@@ -6,6 +6,7 @@ import PropertyCard from '@/components/Helper/PropertyCard';
 import { PropertyListing } from '@/lib/types';
 import { FaSort } from 'react-icons/fa';
 import ListingFilters from './ListingFilters';
+import { LOCATIONS } from '@/lib/types/filters';
 
 const Listings = () => {
   const [properties, setProperties] = useState<PropertyListing[]>([]);
@@ -13,6 +14,8 @@ const Listings = () => {
   const [selectedProperty, setSelectedProperty] = useState<PropertyListing | null>(null);
   const [communities, setCommunities] = useState<string[]>([]);
   const [filters, setFilters] = useState({
+    location: 'all',
+    locationArea: 'all',
     minPrice: 0,
     maxPrice: 1000000,
     bedrooms: 0,
@@ -101,12 +104,24 @@ const Listings = () => {
   };
 
   // Update filters
-  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleFilterChange = (e: { target: { name: string; value: string | number | { location: string; area: string } } }) => {
     const { name, value } = e.target;
-    setFilters({
-      ...filters,
-      [name]: ['propertyType', 'community', 'listingType'].includes(name) ? value : Number(value)
-    });
+    
+    // Handle location and area updates together
+    if (name === 'locationAndArea' && typeof value === 'object' && 'location' in value && 'area' in value) {
+      setFilters({
+        ...filters,
+        location: value.location,
+        locationArea: value.area
+      });
+    } else {
+      // Handle individual field updates
+      setFilters({
+        ...filters,
+        [name]: ['propertyType', 'community', 'listingType', 'location', 'locationArea'].includes(name) ? value : Number(value)
+      });
+    }
+    
     // Reset to first page when filters change
     setPagination({
       ...pagination,
@@ -117,6 +132,8 @@ const Listings = () => {
   // Reset all filters
   const resetFilters = () => {
     setFilters({
+      location: 'all',
+      locationArea: 'all',
       minPrice: 0,
       maxPrice: 1000000,
       bedrooms: 0,
@@ -200,6 +217,7 @@ const Listings = () => {
         handleFilterChange={handleFilterChange}
         resetFilters={resetFilters}
         communities={communities}
+        locations={LOCATIONS}
       />
       
       {/* Results Header */}
