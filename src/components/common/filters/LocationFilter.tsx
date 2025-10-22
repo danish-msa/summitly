@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FaChevronDown, FaMapMarkerAlt } from 'react-icons/fa';
 import { Navigation } from 'lucide-react';
 import { useLocationDetection } from '@/hooks/useLocationDetection';
-import { IndividualFilterProps, LOCATIONS } from '@/lib/types/filters';
+import { IndividualFilterProps, LOCATIONS, FilterChangeEvent } from '@/lib/types/filters';
 
 const LocationFilter: React.FC<IndividualFilterProps> = ({ 
   filters, 
@@ -14,6 +14,24 @@ const LocationFilter: React.FC<IndividualFilterProps> = ({
   const [activeDropdown, setActiveDropdown] = useState<boolean>(false);
   const [locationSearchQuery, setLocationSearchQuery] = useState("");
   const { location, detectLocation, isLoading: locationLoading } = useLocationDetection();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setActiveDropdown(false);
+      }
+    };
+
+    if (activeDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [activeDropdown]);
 
   // Handle location selection
   const handleLocationSelect = (locationId: string, area: string) => {
@@ -107,7 +125,7 @@ const LocationFilter: React.FC<IndividualFilterProps> = ({
   };
 
   return (
-    <div className="relative w-full sm:w-auto">
+    <div className="relative w-full sm:w-auto" ref={dropdownRef}>
       <button 
         className={`w-full bg-white flex items-center gap-2 px-4 py-2 rounded-full border ${activeDropdown ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
         onClick={() => setActiveDropdown(!activeDropdown)}
@@ -207,6 +225,7 @@ const LocationFilter: React.FC<IndividualFilterProps> = ({
                         }
                       } as FilterChangeEvent;
                       handleFilterChange(event);
+                      setActiveDropdown(false);
                     }}
                     className={`
                       w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all

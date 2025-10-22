@@ -10,7 +10,7 @@ interface PropertyListing {
   type: string; // "Lease" for rentals, "Sale" for sales
   images: {
     imageUrl: string;
-    imageUrls?: string[];
+    allImages: string[];
   };
   details: {
     propertyType: string;
@@ -35,7 +35,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   
-  const images = property.images.imageUrls || [property.images.imageUrl];
+  const images = property.images.allImages || [property.images.imageUrl];
   const totalImages = images.length;
   
   // Format price based on property type

@@ -1,12 +1,13 @@
 "use client";
 
 import React from 'react';
-import { FilterComponentProps } from '@/lib/types/filters';
+import { FilterComponentProps, FilterChangeEvent } from '@/lib/types/filters';
 import GlobalFilters from '@/components/common/filters/GlobalFilters';
 
 const PropertyFilters: React.FC<FilterComponentProps> = ({ 
   filters, 
   handleFilterChange, 
+  resetFilters,
   communities,
   locations
 }) => {
@@ -16,32 +17,7 @@ const PropertyFilters: React.FC<FilterComponentProps> = ({
         <GlobalFilters
           filters={filters}
           handleFilterChange={handleFilterChange}
-          resetFilters={() => {
-            // Reset all filters to default values
-            const resetEvent = {
-              target: {
-                name: 'locationAndArea',
-                value: { location: 'all', area: 'all' }
-              }
-            } as FilterChangeEvent;
-            handleFilterChange(resetEvent);
-            
-            const propertyTypeEvent = {
-              target: {
-                name: 'propertyType',
-                value: 'all'
-              }
-            } as FilterChangeEvent;
-            handleFilterChange(propertyTypeEvent);
-            
-            const communityEvent = {
-              target: {
-                name: 'community',
-                value: 'all'
-              }
-            } as FilterChangeEvent;
-            handleFilterChange(communityEvent);
-          }}
+          resetFilters={resetFilters}
           communities={communities}
           locations={locations}
           showLocation={true}

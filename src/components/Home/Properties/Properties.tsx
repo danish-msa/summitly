@@ -6,14 +6,8 @@ import PropertyFilters from './PropertyFilters';
 import SellRentToggle from './SellRentToggle';
 import { PropertyListing } from '@/data/types'; // Import the interface from types.ts
 import { useLocationDetection } from '@/hooks/useLocationDetection';
-
-// Custom type for filter change events
-type FilterChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement> | {
-  target: {
-    name: string;
-    value: { location: string; area: string } | string;
-  };
-};
+import { useGlobalFilters } from '@/hooks/useGlobalFilters';
+import { FilterChangeEvent, LOCATIONS } from '@/lib/types/filters';
 
 const Properties = () => {
   const [allProperties, setAllProperties] = useState<PropertyListing[]>([]);
@@ -22,42 +16,30 @@ const Properties = () => {
   const [error, setError] = useState<string | null>(null);
   const [communities, setCommunities] = useState<string[]>([]);
   const [listingType, setListingType] = useState<'sell' | 'rent'>('sell');
-  const [filters, setFilters] = useState({
-    propertyType: 'all',
-    community: 'all',
-    location: 'all',
-    locationArea: 'all'
-  });
+  
+  // Use global filters hook
+  const { filters, handleFilterChange, resetFilters } = useGlobalFilters();
   
   // Location detection
   const { location } = useLocationDetection();
 
   // Function to match detected location with available locations
   const matchLocationWithFilters = (detectedLocation: { city: string; area: string; fullLocation: string }) => {
-    // Define the available locations (same as in PropertyFilters)
-    const availableLocations = [
-      { id: "gta", name: "Greater Toronto Area", areas: ["All of GTA", "Toronto", "Durham", "Halton", "Peel", "York"] },
-      { id: "toronto", name: "Toronto", areas: ["All of Toronto", "Etobicoke", "North York", "Scarborough", "Toronto & East York"] },
-      { id: "durham", name: "Durham", areas: ["All of Durham", "Ajax", "Pickering", "Whitby", "Oshawa"] },
-      { id: "halton", name: "Halton", areas: ["All of Halton", "Burlington", "Oakville", "Milton"] },
-      { id: "peel", name: "Peel", areas: ["All of Peel", "Brampton", "Mississauga", "Caledon"] },
-      { id: "york", name: "York", areas: ["All of York", "Markham", "Vaughan", "Richmond Hill", "Aurora"] },
-      { id: "outside-gta", name: "Outside GTA", areas: ["All Outside GTA", "Hamilton", "Niagara", "Barrie", "Kitchener-Waterloo"] }
-    ];
-
-    // Try to find a match
-    for (const loc of availableLocations) {
+    // Use the same LOCATIONS data as the filter components
+    for (const loc of LOCATIONS) {
       // Check if the detected city matches any location name
       if (detectedLocation.city.toLowerCase().includes(loc.name.toLowerCase()) || 
           loc.name.toLowerCase().includes(detectedLocation.city.toLowerCase())) {
-        return { location: loc.id, area: loc.areas[0] || 'all' };
+        return { location: loc.id, area: loc.areas?.[0] || 'all' };
       }
       
       // Check if any area matches
-      for (const area of loc.areas) {
-        if (detectedLocation.area.toLowerCase().includes(area.toLowerCase()) ||
-            area.toLowerCase().includes(detectedLocation.area.toLowerCase())) {
-          return { location: loc.id, area };
+      if (loc.areas) {
+        for (const area of loc.areas) {
+          if (detectedLocation.area.toLowerCase().includes(area.toLowerCase()) ||
+              area.toLowerCase().includes(detectedLocation.area.toLowerCase())) {
+            return { location: loc.id, area };
+          }
         }
       }
     }
@@ -70,14 +52,16 @@ const Properties = () => {
     if (location && filters.location === 'all') {
       const matchedLocation = matchLocationWithFilters(location);
       if (matchedLocation) {
-        setFilters(prev => ({
-          ...prev,
-          location: matchedLocation.location,
-          locationArea: matchedLocation.area
-        }));
+        const event = {
+          target: {
+            name: 'locationAndArea',
+            value: { location: matchedLocation.location, area: matchedLocation.area }
+          }
+        } as FilterChangeEvent;
+        handleFilterChange(event);
       }
     }
-  }, [location, filters.location]);
+  }, [location, filters.location, handleFilterChange]);
 
   useEffect(() => {
     const loadProperties = async () => {
@@ -223,6 +207,36 @@ const Properties = () => {
       }
     }
 
+    // Filter by price range
+    if (filters.minPrice > 0 || filters.maxPrice < 2000000) {
+      filtered = filtered.filter(property => {
+        const price = property.listPrice;
+        return price >= filters.minPrice && price <= filters.maxPrice;
+      });
+    }
+
+    // Filter by bedrooms
+    if (filters.bedrooms > 0) {
+      filtered = filtered.filter(property => {
+        const bedrooms = property.details.numBedrooms || 0;
+        if (filters.bedrooms === 5) {
+          return bedrooms >= 5; // 5+ bedrooms
+        }
+        return bedrooms === filters.bedrooms;
+      });
+    }
+
+    // Filter by bathrooms
+    if (filters.bathrooms > 0) {
+      filtered = filtered.filter(property => {
+        const bathrooms = property.details.numBathrooms || 0;
+        if (filters.bathrooms === 4) {
+          return bathrooms >= 4; // 4+ bathrooms
+        }
+        return bathrooms === filters.bathrooms;
+      });
+    }
+
     // Debug: Log filtering results
     if (filters.location !== 'all') {
       console.log('Current filter state:', filters);
@@ -242,39 +256,9 @@ const Properties = () => {
     setFilteredProperties(filtered);
   }, [allProperties, filters, listingType]);
 
-  // Handle filter changes
-  const handleFilterChange = (e: FilterChangeEvent) => {
-    const { name, value } = e.target;
-    
-    // Handle special case for location and area selection
-    if (name === 'locationAndArea' && typeof value === 'object' && 'location' in value && 'area' in value) {
-      console.log('Setting location and area:', { location: value.location, area: value.area });
-      setFilters({
-        ...filters,
-        location: value.location,
-        locationArea: value.area
-      });
-    } else if (typeof value === 'string') {
-      setFilters({
-        ...filters,
-        [name]: value
-      });
-    }
-  };
-
   // Handle listing type change (sell/rent)
   const handleListingTypeChange = (type: 'sell' | 'rent') => {
     setListingType(type);
-  };
-
-  // Reset all filters
-  const resetFilters = () => {
-    setFilters({
-      propertyType: 'all',
-      community: 'all',
-      location: 'all',
-      locationArea: 'all'
-    });
   };
 
   if (loading) return (
@@ -374,6 +358,7 @@ const Properties = () => {
                handleFilterChange={handleFilterChange}
                resetFilters={resetFilters}
                communities={communities}
+               locations={LOCATIONS}
              />
            </div>
            
