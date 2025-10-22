@@ -39,7 +39,7 @@ export const useGlobalFilters = (initialFilters?: Partial<FilterState>) => {
     }));
   }, []);
 
-  const setFilter = useCallback((name: keyof FilterState, value: any) => {
+  const setFilter = useCallback((name: keyof FilterState, value: FilterState[keyof FilterState]) => {
     setFilters(prev => ({
       ...prev,
       [name]: value
