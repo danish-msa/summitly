@@ -1,7 +1,5 @@
 import React from 'react'
 import Image from 'next/image'
-import { ButtonColorful } from '@/components/ui/button-colorful'
-import { Button } from '@/components/ui/button'
 
 const CallToAction = () => {
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { FilterComponentProps, FilterChangeEvent } from '@/lib/types/filters';
+import { FilterComponentProps } from '@/lib/types/filters';
 import GlobalFilters from '@/components/common/filters/GlobalFilters';
 
 const PropertyFilters: React.FC<FilterComponentProps> = ({ 
