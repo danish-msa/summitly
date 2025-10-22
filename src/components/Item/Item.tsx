@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Banner from './Banner/Banner'
 import ItemBody from './ItemBody/ItemBody'
+import BasicInfo from './ItemBody/BasicInfo'
 import { fetchPropertyListings } from '@/lib/api/properties'
 import { PropertyListing } from '@/lib/types'
 
@@ -48,9 +49,20 @@ const Item: React.FC = () => {
   }
 
   return (
-    <div className='overflow-hidden bg-white'>
-      <Banner property={property} />
-      <ItemBody property={property} />
+    <div className='bg-background'>
+      <div className='container-1400 mt-28 mb-28'>
+        <div className='flex flex-row gap-6'>
+          <div className='w-[70%]'>
+            <Banner property={property} />
+          </div>
+          <div className='w-[30%]'>
+            <BasicInfo property={property} />
+          </div>
+        </div>
+        <div className='mt-6'>
+          <ItemBody property={property} />
+        </div>
+      </div>
     </div>
   )
 }

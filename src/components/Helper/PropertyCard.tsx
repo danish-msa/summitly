@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Bed, Bath, Maximize2, MapPin, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 // Mock data type based on your original interface
 interface PropertyListing {
@@ -85,8 +86,12 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
   };
 
   return (
-    <div className="group cursor-pointer w-full">
-      <div className='bg-card rounded-3xl overflow-hidden transition-all duration-500 border border-border/50' style={{ boxShadow: '0 8px 16px 0 rgba(0, 0, 0, 0.05)' }}>
+    <Link 
+      href={`/property/${property.mlsNumber}`} 
+      className="group cursor-pointer w-full block hover:scale-105 transition-transform duration-300"
+      aria-label={`View details for ${property.details.propertyType} at ${property.address.city}`}
+    >
+      <div className='bg-card rounded-3xl overflow-hidden transition-all duration-500 border border-border/50 hover:border-primary/30 hover:shadow-xl' style={{ boxShadow: '0 8px 16px 0 rgba(0, 0, 0, 0.05)' }}>
         {/* Image Section */}
         <div className='relative h-62 w-full overflow-hidden'>
           <img 
@@ -96,8 +101,6 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
             onError={() => setImgError(true)}
           />
           
-          {/* Gradient overlay */}
-          {/* <div className='absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20' /> */}
           
           {/* Top badges row */}
           <div className='absolute top-5 left-5 flex items-center gap-2'>
@@ -215,7 +218,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
           </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 

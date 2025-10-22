@@ -116,11 +116,77 @@ export default {
           to: {
             height: '0'
           }
+        },
+        'spin-slow': {
+          from: {
+            transform: 'rotate(0deg)'
+          },
+          to: {
+            transform: 'rotate(360deg)'
+          }
+        },
+        'spin-reverse': {
+          from: {
+            transform: 'rotate(360deg)'
+          },
+          to: {
+            transform: 'rotate(0deg)'
+          }
+        },
+        'pulse-glow': {
+          '0%, 100%': {
+            boxShadow: '0 0 0 0 rgba(59, 130, 246, 0.4)'
+          },
+          '50%': {
+            boxShadow: '0 0 0 10px rgba(59, 130, 246, 0)'
+          }
+        },
+        'map-grid': {
+          '0%': {
+            opacity: '0.1'
+          },
+          '50%': {
+            opacity: '0.3'
+          },
+          '100%': {
+            opacity: '0.1'
+          }
+        },
+        'location-pin': {
+          '0%, 100%': {
+            transform: 'translate(-50%, -50%) scale(1)'
+          },
+          '50%': {
+            transform: 'translate(-50%, -50%) scale(1.2)'
+          }
+        },
+        'progress-fill': {
+          '0%': {
+            width: '0%'
+          },
+          '100%': {
+            width: '100%'
+          }
+        },
+        'shimmer': {
+          '0%': {
+            backgroundPosition: '-200px 0'
+          },
+          '100%': {
+            backgroundPosition: 'calc(200px + 100%) 0'
+          }
         }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out'
+        'accordion-up': 'accordion-up 0.2s ease-out',
+        'spin-slow': 'spin-slow 3s linear infinite',
+        'spin-reverse': 'spin-reverse 2s linear infinite',
+        'pulse-glow': 'pulse-glow 2s infinite',
+        'map-grid': 'map-grid 2s infinite',
+        'location-pin': 'location-pin 1.5s infinite',
+        'progress-fill': 'progress-fill 3s ease-out forwards',
+        'shimmer': 'shimmer 1.5s infinite'
       }
     }
   },

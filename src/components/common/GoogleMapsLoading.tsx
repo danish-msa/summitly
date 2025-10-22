@@ -25,17 +25,32 @@ const GoogleMapsLoading: React.FC<GoogleMapsLoadingProps> = ({
         {/* Main spinner with enhanced animations */}
         <div className="relative w-20 h-20">
           {/* Outer ring - represents map boundaries */}
-          <div className="absolute inset-0 border-4 border-gray-200 rounded-full animate-spin-slow"></div>
+          <div 
+            className="absolute inset-0 border-4 border-gray-200 rounded-full"
+            style={{ animation: 'spin 3s linear infinite' }}
+          ></div>
           
           {/* Middle ring - represents zoom levels */}
-          <div className="absolute inset-2 border-3 border-gray-300 rounded-full animate-spin-reverse"></div>
+          <div 
+            className="absolute inset-2 border-3 border-gray-300 rounded-full"
+            style={{ animation: 'spin 2s linear infinite reverse' }}
+          ></div>
           
           {/* Inner ring - represents location pin */}
-          <div className="absolute inset-4 border-2 border-secondary rounded-full animate-spin animate-pulse-glow"></div>
+          <div 
+            className="absolute inset-4 border-2 border-blue-500 rounded-full"
+            style={{ animation: 'spin 1s linear infinite, pulse 2s infinite' }}
+          ></div>
           
           {/* Center pin with enhanced animation */}
-          <div className="absolute top-1/2 left-1/2 animate-location-pin">
-            <div className="w-4 h-4 bg-secondary rounded-full shadow-lg animate-pulse-glow"></div>
+          <div 
+            className="absolute top-1/2 left-1/2"
+            style={{ animation: 'pulse 1.5s infinite' }}
+          >
+            <div 
+              className="w-4 h-4 bg-blue-500 rounded-full shadow-lg"
+              style={{ animation: 'pulse 2s infinite' }}
+            ></div>
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full"></div>
           </div>
         </div>

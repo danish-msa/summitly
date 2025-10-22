@@ -3,7 +3,6 @@ import React from 'react';
 import Hero from './Hero/Hero';
 import Properties from './Properties/Properties';
 import CityProperties from './CityProperties/CityProperties';
-import BuildingFeature from './BuildingFeature/BuildingFeature';
 import ClientReviews from './ClientReviews/ClientReviews';
 import Blogs from './Blogs/Blogs';
 import AOS from 'aos';
@@ -21,6 +20,7 @@ import PropertyDiscovery from './PropertyDiscovery/PropertyDiscovery';
 import FAQ from './FAQ/FAQ';
 import CallToAction3 from './CallToAction3/CallToAction3';
 import ContactMethods from './ContactMethods/ContactMethods';
+import { RecommendationsSection } from './Recommendations/RecommendationsSection';
 
 const Home: React.FC = () => {
 
@@ -44,6 +44,7 @@ const Home: React.FC = () => {
             <FeaturedIn />
             {/* <BuyerAndSeller /> */}
             <Properties />
+            
             {/* <WhatWeDo /> */}
             <CallToAction3 />
             {/* <FeatureGrid /> */}
@@ -60,8 +61,9 @@ const Home: React.FC = () => {
             <CallToAction />
             
             <WhyChooseUs />
+            <RecommendationsSection />
             {/* <Condos /> */}
-            <BuildingFeature />
+            {/* <BuildingFeature /> */}
             
             {/* <ApartmentType /> */}
             {/* <OurAgents /> */}

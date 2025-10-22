@@ -24,14 +24,22 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
       {/* Modern Spinner with Real Estate Theme */}
       <div className="relative">
         {/* Outer ring */}
-        <div className={`${sizeClasses[size]} border-4 border-gray-200 rounded-full animate-spin`}></div>
+        <div 
+          className={`${sizeClasses[size]} border-4 border-gray-200 rounded-full`}
+          style={{ animation: 'spin 3s linear infinite' }}
+        ></div>
         
         {/* Inner ring with brand color */}
-        <div className={`absolute top-0 left-0 ${sizeClasses[size]} border-4 border-transparent border-t-secondary rounded-full animate-spin`} 
-             style={{ animationDuration: '1s' }}></div>
+        <div 
+          className={`absolute top-0 left-0 ${sizeClasses[size]} border-4 border-transparent border-t-blue-500 rounded-full`}
+          style={{ animation: 'spin 1s linear infinite' }}
+        ></div>
         
         {/* Center dot */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-secondary rounded-full animate-pulse"></div>
+        <div 
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-blue-500 rounded-full"
+          style={{ animation: 'pulse 2s infinite' }}
+        ></div>
       </div>
       
       {/* Loading message with modern typography */}

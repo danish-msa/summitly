@@ -105,7 +105,12 @@
   body {
     font-family: var(--font-bauziet), sans-serif;
   }
-
+  .container-1300{
+    @apply max-w-[1300px] mx-auto;
+  }
+  .container-1400{
+    @apply max-w-[1400px] mx-auto;
+  }
   /* Apply Outfit font to headings */
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-outfit), sans-serif;
@@ -448,23 +453,6 @@
   }
 }
 
-@keyframes spin-slow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes spin-reverse {
-  from {
-    transform: rotate(360deg);
-  }
-  to {
-    transform: rotate(0deg);
-  }
-}
 
 .animate-fade-in {
   animation: fade-in 0.6s ease-out forwards;
@@ -491,12 +479,4 @@
   background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
   background-size: 200px 100%;
   animation: shimmer 1.5s infinite;
-}
-
-.animate-spin-slow {
-  animation: spin-slow 3s linear infinite;
-}
-
-.animate-spin-reverse {
-  animation: spin-reverse 2s linear infinite;
 }

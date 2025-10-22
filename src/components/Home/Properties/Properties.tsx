@@ -269,17 +269,29 @@ const Properties = () => {
             {/* Property-themed loading spinner */}
             <div className="relative w-16 h-16">
               {/* Outer ring */}
-              <div className="absolute inset-0 border-4 border-gray-200 rounded-full animate-spin-slow"></div>
+              <div 
+                className="absolute inset-0 border-4 border-gray-200 rounded-full"
+                style={{ animation: 'spin 3s linear infinite' }}
+              ></div>
               
               {/* Middle ring */}
-              <div className="absolute inset-2 border-3 border-gray-300 rounded-full animate-spin-reverse"></div>
+              <div 
+                className="absolute inset-2 border-3 border-gray-300 rounded-full"
+                style={{ animation: 'spin 2s linear infinite reverse' }}
+              ></div>
               
               {/* Inner ring */}
-              <div className="absolute inset-4 border-2 border-secondary rounded-full animate-spin animate-pulse-glow"></div>
+              <div 
+                className="absolute inset-4 border-2 border-blue-500 rounded-full"
+                style={{ animation: 'spin 1s linear infinite, pulse 2s infinite' }}
+              ></div>
               
               {/* Center house icon */}
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                <div className="w-4 h-4 bg-secondary rounded-sm animate-pulse-glow"></div>
+                <div 
+                  className="w-4 h-4 bg-blue-500 rounded-sm"
+                  style={{ animation: 'pulse 2s infinite' }}
+                ></div>
               </div>
             </div>
           </div>
@@ -293,7 +305,10 @@ const Properties = () => {
           
           {/* Progress indicator */}
           <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden mb-4">
-            <div className="h-full bg-gradient-to-r from-secondary via-blue-500 to-secondary rounded-full animate-progress-fill"></div>
+            <div 
+              className="h-full bg-gradient-to-r from-blue-500 via-blue-600 to-blue-500 rounded-full"
+              style={{ animation: 'progress-fill 3s ease-out forwards' }}
+            ></div>
           </div>
           
           {/* Loading steps */}
