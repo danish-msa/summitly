@@ -73,11 +73,31 @@ const SmartGoogleMapsWrapper: React.FC<SmartGoogleMapsWrapperProps> = ({ childre
     );
   }
 
-  if (showLoading) {
-    return <GoogleMapsLoading />;
-  }
-
-  return <>{children}</>;
+  return (
+    <div className="relative">
+      {children}
+      {showLoading && (
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white rounded-xl shadow-lg p-6 max-w-sm mx-4">
+            <div className="flex flex-col items-center">
+              {/* Modern loading spinner */}
+              <div className="relative w-12 h-12 mb-4">
+                <div className="absolute inset-0 border-4 border-gray-200 rounded-full animate-spin"></div>
+                <div className="absolute inset-0 border-4 border-transparent border-t-primary rounded-full animate-spin"></div>
+              </div>
+              
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                Loading Maps...
+              </h3>
+              <p className="text-sm text-gray-600 text-center">
+                Preparing location services for you
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default SmartGoogleMapsWrapper;

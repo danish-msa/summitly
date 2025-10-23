@@ -3,14 +3,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
-  Home, 
-  Calendar, 
-  DollarSign, 
+  Home,  
   MapPin, 
   Ruler, 
   Car, 
-  Droplet, 
-  Wind, 
   Zap,
   Building2,
   TrendingUp,
