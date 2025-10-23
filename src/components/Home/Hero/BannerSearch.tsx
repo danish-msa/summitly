@@ -31,7 +31,7 @@ export const LocationSuggestionsContext = React.createContext<{
 });
 
 const BannerSearch = () => {
-  const [activeTab, setActiveTab] = useState('rent'); // Default tab
+  const [activeTab, setActiveTab] = useState('buy'); // Default tab
   const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
 

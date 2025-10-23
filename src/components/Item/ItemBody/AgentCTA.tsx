@@ -6,17 +6,17 @@ import { Badge } from '@/components/ui/badge'
 
 const AgentCTA: React.FC = () => {
   return (
-    <Card className="w-full shadow-lg border-0 bg-gradient-to-br from-brand-icy-blue/40 to-brand-bright-blue/40">
+    <Card className="w-full shadow-lg border-0 bg-brand-celestial">
       <CardContent className="p-6">
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/40 rounded-full mb-4">
             <User className="h-8 w-8 text-primary" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">
+          <h3 className="text-xl font-bold text-white mb-2">
             Connect with an Agent
           </h3>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-white">
             Get personalized assistance from our expert real estate professionals
           </p>
         </div>
@@ -97,12 +97,12 @@ const AgentCTA: React.FC = () => {
         <div className="mt-6 pt-4 border-t">
           <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span>24/7 Support</span>
+              <div className="w-2 h-2 bg-white rounded-full"></div>
+              <span className='text-white'>24/7 Support</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span>Free Consultation</span>
+              <div className="w-2 h-2 bg-white rounded-full"></div>
+              <span className='text-white'>Free Consultation</span>
             </div>
           </div>
         </div>

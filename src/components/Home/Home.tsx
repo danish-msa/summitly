@@ -9,7 +9,6 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 import ConnectWithUs from './ConnectWithUs/ConnectWithUs';
 import WhyChooseUs from './WhyChooseUs/WhyChooseUs';
-import FeaturedIn from './FeaturedIn/FeaturedIn';
 import AsSeenOn from './AsSeenOn/AsSeenOn';
 import CallToAction from './CallToAction/CallToAction';
 import CallToAction2 from '../About/CallToAction/CallToAction';
@@ -40,13 +39,13 @@ const Home: React.FC = () => {
             <Hero />
             <AsSeenOn />
             <PropertyCategories />
-            
-            <FeaturedIn />
+            <CallToAction3 />
+            {/* <FeaturedIn /> */}
             {/* <BuyerAndSeller /> */}
             <Properties />
             
             {/* <WhatWeDo /> */}
-            <CallToAction3 />
+            
             {/* <FeatureGrid /> */}
             <ServiceFeatures />
             

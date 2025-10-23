@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Bed, Bath, Maximize2, MapPin, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Bed, Bath, Maximize2, MapPin, Heart, ChevronLeft, ChevronRight, MoreVertical, Share2, EyeOff } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -35,6 +37,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
   const [imgError, setImgError] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
   
   const images = property.images.allImages || [property.images.imageUrl];
   const totalImages = images.length;
@@ -85,6 +88,43 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
     setIsLiked(!isLiked);
   };
 
+  const handleShare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Create share URL
+    const shareUrl = `${window.location.origin}/property/${property.mlsNumber}`;
+    const shareText = `Check out this ${property.details.propertyType} for ${priceDisplay} in ${property.address.city}`;
+    
+    // Use Web Share API if available, otherwise fallback to clipboard
+    if (navigator.share) {
+      navigator.share({
+        title: `${property.details.propertyType} - ${priceDisplay}`,
+        text: shareText,
+        url: shareUrl,
+      }).catch(console.error);
+    } else {
+      // Fallback to clipboard
+      navigator.clipboard.writeText(`${shareText} - ${shareUrl}`).then(() => {
+        // You could add a toast notification here
+        console.log('Property link copied to clipboard');
+      }).catch(console.error);
+    }
+  };
+
+  const handleHide = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsHidden(true);
+    // You could add additional logic here like API calls to hide the property
+    console.log('Property hidden:', property.mlsNumber);
+  };
+
+  // Don't render if hidden
+  if (isHidden) {
+    return null;
+  }
+
   return (
     <Link 
       href={`/property/${property.mlsNumber}`} 
@@ -109,11 +149,35 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
             </Badge>
           </div>
           
-          {/* Date badge - top right */}
+          {/* Date badge and Menu - top right */}
           <div className='absolute top-5 right-5 flex items-center gap-2'>
             <Badge variant="secondary" className="bg-card/95 backdrop-blur-sm hover:bg-card border-0 text-dark rounded-full px-4 py-1.5 text-xs font-medium">
               {formatListingDate(property.listedDate)}
             </Badge>
+            
+            {/* 3-dot Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 bg-card/95 backdrop-blur-sm hover:bg-card/90 border-0 rounded-full shadow-lg"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreVertical className="h-4 w-4 text-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={handleShare} className="cursor-pointer">
+                  <Share2 className="mr-2 h-4 w-4" />
+                  <span>Share</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleHide} className="cursor-pointer">
+                  <EyeOff className="mr-2 h-4 w-4" />
+                  <span>Hide</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           
           {/* FOR SALE badge - bottom left */}

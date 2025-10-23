@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import usePlacesAutocomplete, { getGeocode, getLatLng } from 'use-places-autocomplete';
 import { Input } from '@/components/ui/input';
-import { Search, MapPin, Building, Home, Locate } from 'lucide-react';
+import { Search, MapPin, Building, Home, Locate, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useLocationDetection } from '@/hooks/useLocationDetection';
 interface LocationInputProps {
@@ -14,22 +14,13 @@ interface LocationInputProps {
 interface CategorizedLocation {
   id: string;
   description: string;
-  type: 'city' | 'neighborhood' | 'address' | 'landmark';
+  type: 'city' | 'neighborhood' | 'address';
   icon: React.ReactNode;
   badgeColor: string;
 }
 
 const categorizeLocation = (description: string): CategorizedLocation['type'] => {
   const lowerDesc = description.toLowerCase();
-  
-  // Check for landmark patterns first (most specific)
-  if (lowerDesc.includes('airport') || lowerDesc.includes('mall') || lowerDesc.includes('center') || 
-      lowerDesc.includes('plaza') || lowerDesc.includes('station') || lowerDesc.includes('hospital') ||
-      lowerDesc.includes('school') || lowerDesc.includes('university') || lowerDesc.includes('park') ||
-      lowerDesc.includes('library') || lowerDesc.includes('museum') || lowerDesc.includes('theater') ||
-      lowerDesc.includes('zoo') || lowerDesc.includes('outlets') || lowerDesc.includes('islands')) {
-    return 'landmark';
-  }
   
   // Check for specific address patterns (street numbers + street names)
   if (lowerDesc.match(/\d+\s+(street|avenue|road|drive|lane|boulevard|crescent|place|court|way|circle|trail|st|ave|rd|dr|blvd|cres|pl|ct|cir|trl)/)) {
@@ -44,7 +35,7 @@ const categorizeLocation = (description: string): CategorizedLocation['type'] =>
   
   // Check for city patterns - be more restrictive
   // Only consider it a city if it's a simple pattern like "City, Province, Country"
-  // and doesn't contain specific street names or landmarks
+  // and doesn't contain specific street names
   const parts = lowerDesc.split(',').map(part => part.trim());
   
   // Must have exactly 3 parts: City, Province, Country
@@ -53,11 +44,9 @@ const categorizeLocation = (description: string): CategorizedLocation['type'] =>
       parts[2] === 'canada' &&
       // Second part should be a province code
       ['on', 'bc', 'ab', 'mb', 'sk', 'qc', 'ns', 'nb', 'nl', 'pe', 'yt', 'nt', 'nu'].includes(parts[1]) &&
-      // First part should not contain street names or landmarks
+      // First part should not contain street names
       !lowerDesc.includes('street') && !lowerDesc.includes('avenue') && !lowerDesc.includes('road') &&
       !lowerDesc.includes('drive') && !lowerDesc.includes('lane') && !lowerDesc.includes('boulevard') &&
-      !lowerDesc.includes('outlets') && !lowerDesc.includes('zoo') && !lowerDesc.includes('airport') &&
-      !lowerDesc.includes('islands') && !lowerDesc.includes('premium') && !lowerDesc.includes('meadowvale') &&
       // Should not contain numbers (street numbers)
       !lowerDesc.match(/\d/)) {
     return 'city';
@@ -75,8 +64,6 @@ const getLocationIcon = (type: CategorizedLocation['type']) => {
       return <MapPin className="h-4 w-4" />;
     case 'address':
       return <Home className="h-4 w-4" />;
-    case 'landmark':
-      return <MapPin className="h-4 w-4" />;
     default:
       return <MapPin className="h-4 w-4" />;
   }
@@ -90,8 +77,6 @@ const getBadgeColor = (type: CategorizedLocation['type']) => {
       return 'bg-green-100 text-green-800 border-green-200';
     case 'address':
       return 'bg-purple-100 text-purple-800 border-purple-200';
-    case 'landmark':
-      return 'bg-orange-100 text-orange-800 border-orange-200';
     default:
       return 'bg-gray-100 text-gray-800 border-gray-200';
   }
@@ -99,6 +84,7 @@ const getBadgeColor = (type: CategorizedLocation['type']) => {
 
 const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { location, detectLocation, isLoading: locationLoading } = useLocationDetection();
 
@@ -140,6 +126,7 @@ const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setValue(e.target.value);
     setIsOpen(true);
+    setHasUserInteracted(true); // Mark that user has started typing
   };
 
   const handleSelect = async (address: string) => {
@@ -169,13 +156,21 @@ const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) 
     }
   };
 
-  // Auto-fill with detected location when available
+  // Handle clearing the input
+  const handleClear = () => {
+    setValue('', false);
+    setHasUserInteracted(false);
+    clearSuggestions();
+    setIsOpen(false);
+  };
+
+  // Auto-fill with detected location only on initial load and if user hasn't interacted
   useEffect(() => {
-    if (location && !value) {
+    if (location && !hasUserInteracted && value === '') {
       setValue(location.fullLocation, false);
       onSelect(location.fullLocation);
     }
-  }, [location, value, onSelect]);
+  }, [location, hasUserInteracted, value, onSelect]);
 
   // Organize results by category with priority order
   const organizeResults = (suggestions: { place_id: string; description: string }[]) => {
@@ -199,8 +194,8 @@ const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) 
       return acc;
     }, {} as Record<string, CategorizedLocation[]>);
 
-    // Define priority order: cities first, then neighborhoods, then addresses, then landmarks
-    const priorityOrder = ['city', 'neighborhood', 'address', 'landmark'];
+    // Define priority order: cities first, then neighborhoods, then addresses
+    const priorityOrder = ['city', 'neighborhood', 'address'];
     
     // Create ordered result object
     const orderedResults: Record<string, CategorizedLocation[]> = {};
@@ -223,8 +218,6 @@ const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) 
         return 'Neighborhoods';
       case 'address':
         return 'Addresses';
-      case 'landmark':
-        return 'Landmarks';
       default:
         return 'Other';
     }
@@ -256,8 +249,18 @@ const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) 
             <Locate className="h-4 w-4 text-secondary" />
           )}
         </button>
-        {/* Search button */}
-        <div className="absolute inset-y-0 right-0 flex items-center pr-1">
+        {/* Clear and Search buttons */}
+        <div className="absolute inset-y-0 right-0 flex items-center pr-1 space-x-1">
+          {value && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors"
+              title="Clear location"
+            >
+              <X className="h-4 w-4 text-gray-500" />
+            </button>
+          )}
           <Search className="h-10 w-10 p-2 rounded-full text-white btn-gradient-dark cursor-pointer transition-colors" />
         </div>
       </div>

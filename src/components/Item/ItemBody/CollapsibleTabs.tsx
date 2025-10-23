@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
-import Overview from './Overview'
 import Features from './Features'
 import Location from './Location'
 import Demographics from './Demographics'
+import PropertyListingDetails from './PropertyListingDetails'
+import { generateMockListingData } from './mockListingData'
 import { PropertyListing } from '@/lib/types'
 
 interface CollapsibleTabsProps {
@@ -17,7 +18,7 @@ interface TabSection {
 }
 
 const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property }) => {
-  const [expandedTabs, setExpandedTabs] = useState<Set<string>>(new Set(['overview']));
+  const [expandedTabs, setExpandedTabs] = useState<Set<string>>(new Set(['listing-details']));
 
   const toggleTab = (tabId: string) => {
     setExpandedTabs(prev => {
@@ -33,9 +34,13 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property }) => {
 
   const sections: TabSection[] = [
     {
-      id: 'overview',
-      label: 'Overview',
-      content: <Overview property={property} />
+      id: 'listing-details',
+      label: 'Listing Details',
+      content: (
+        <div className="mt-4">
+          <PropertyListingDetails data={generateMockListingData()} />
+        </div>
+      )
     },
     {
       id: 'description',
