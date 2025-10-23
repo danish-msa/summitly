@@ -128,7 +128,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
   return (
     <Link 
       href={`/property/${property.mlsNumber}`} 
-      className="group cursor-pointer w-full block hover:scale-105 transition-transform duration-300"
+      className="group cursor-pointer w-full block transition-transform duration-300"
       aria-label={`View details for ${property.details.propertyType} at ${property.address.city}`}
     >
       <div className='bg-card rounded-3xl overflow-hidden transition-all duration-500 border border-border/50 hover:border-primary/30 hover:shadow-xl' style={{ boxShadow: '0 8px 16px 0 rgba(0, 0, 0, 0.05)' }}>

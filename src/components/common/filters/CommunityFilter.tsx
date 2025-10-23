@@ -43,7 +43,7 @@ const CommunityFilter: React.FC<IndividualFilterProps> = ({
   return (
     <div className="relative w-full sm:w-auto filter-dropdown">
       <button 
-        className={`w-full bg-white flex items-center gap-2 px-4 py-2 rounded-full border ${activeDropdown ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
+        className={`w-full bg-white flex items-center gap-2 px-4 py-2 rounded-lg border ${activeDropdown ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
         onClick={() => setActiveDropdown(!activeDropdown)}
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">

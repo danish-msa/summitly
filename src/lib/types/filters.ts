@@ -25,12 +25,19 @@ export interface FilterState {
   
   // Listing type
   listingType: string;
+  
+  // Advanced filters
+  minSquareFeet?: number;
+  maxSquareFeet?: number;
+  yearBuilt?: string;
+  features?: string[];
+  listingDate?: string;
 }
 
 export interface FilterChangeEvent {
   target: {
     name: string;
-    value: string | number | { location: string; area: string };
+    value: string | number | string[] | { location: string; area: string };
   };
 }
 

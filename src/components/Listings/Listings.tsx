@@ -104,7 +104,7 @@ const Listings = () => {
   };
 
   // Update filters
-  const handleFilterChange = (e: { target: { name: string; value: string | number | { location: string; area: string } } }) => {
+  const handleFilterChange = (e: { target: { name: string; value: string | number | string[] | { location: string; area: string } } }) => {
     const { name, value } = e.target;
     
     // Handle location and area updates together
@@ -118,7 +118,7 @@ const Listings = () => {
       // Handle individual field updates
       setFilters({
         ...filters,
-        [name]: ['propertyType', 'community', 'listingType', 'location', 'locationArea'].includes(name) ? value : Number(value)
+        [name]: ['propertyType', 'community', 'listingType', 'location', 'locationArea', 'features'].includes(name) ? value : Number(value)
       });
     }
     
@@ -221,9 +221,9 @@ const Listings = () => {
       />
       
       {/* Results Header */}
-      <div className="w-[95%] mx-auto flex flex-col sm:flex-row justify-between items-center mb-6">
+      <div className="container mx-auto px-4 flex flex-col sm:flex-row justify-between items-center mb-4">
         <div className="mb-4 sm:mb-0">
-          <span className="text-gray-700 font-medium">
+          <span className="text-gray-700 font-medium text-sm">
             Active Listings ({pagination.totalResults > 0 ? `${pagination.totalResults.toLocaleString()})` : `${properties.length} results`}
           </span>
         </div>
@@ -248,7 +248,7 @@ const Listings = () => {
       </div>
       
       {/* Property Listings */}
-      <div className="w-[95%] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {properties.length > 0 ? (
           properties.map((property) => (
             <div 

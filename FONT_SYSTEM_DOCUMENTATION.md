@@ -3,97 +3,86 @@
 ## Overview
 This website uses a three-font system designed for optimal typography hierarchy and brand consistency:
 
-1. **Geometos** - For heading elements
-2. **Roboto** - For body text  
-3. **EB Garamond** - For subheads, captions, initial caps, numbers, and decorative elements
+1. **Outfit** - For heading elements
+2. **Bauziet** - For body text  
+3. **Garamond Pro** - For subheads, captions, initial caps, numbers, and decorative elements
 
 ## Font Implementation
 
-### 1. Geometos (Headings)
+### 1. Outfit (Headings)
 - **Purpose**: All heading elements (h1-h6)
-- **Implementation**: Local font files in `/public/fonts/`
-- **Weights Available**: 200, 300, 400, 700, 800, 900, 950
-- **CSS Variable**: `--font-geometos-neue`
-- **Tailwind Class**: `font-geometos` or `font-geometosNeue`
-
-### 2. Roboto (Body Text)
-- **Purpose**: All body text, paragraphs, and general content
 - **Implementation**: Google Fonts via Next.js
-- **Weights Available**: 100, 300, 400, 500, 700, 900
-- **CSS Variable**: `--font-roboto`
-- **Tailwind Class**: `font-roboto` or `font-sans` (default)
+- **Weights Available**: 300, 400, 500, 600, 700, 800, 900
+- **CSS Variable**: `--font-outfit`
+- **Tailwind Class**: `font-outfit`
 
-### 3. EB Garamond (Decorative Elements)
+### 2. Bauziet (Body Text)
+- **Purpose**: All body text, paragraphs, and general content
+- **Implementation**: Local font files in `/public/fonts/Bauziet/`
+- **Weights Available**: 300, 400, 500, 600, 700
+- **CSS Variable**: `--font-bauziet`
+- **Tailwind Class**: `font-bauziet` or `font-sans` (default)
+
+### 3. Garamond Pro (Decorative Elements)
 - **Purpose**: Subheads, captions, initial caps, numbers, and accessorizing elements
-- **Implementation**: Google Fonts via Next.js (free alternative to Adobe Garamond Pro)
-- **Weights Available**: 400, 500, 600, 700
-- **CSS Variable**: `--font-garamond`
-- **Tailwind Class**: `font-garamond`
+- **Implementation**: Local font files in `/public/fonts/Garamond Pro/`
+- **Weights Available**: 400, 700 (with italic variants)
+- **CSS Variable**: `--font-garamond-pro`
+- **Tailwind Class**: `font-garamond` or `font-garamondPro`
 
 ## Usage Guidelines
 
 ### Automatic Font Assignment
-- **Headings (h1-h6)**: Automatically use Geometos
-- **Body text (p, div, span, etc.)**: Automatically use Roboto
+- **Headings (h1-h6)**: Automatically use Outfit
+- **Body text (p, div, span, etc.)**: Automatically use Bauziet
 - **Numbers and decorative text**: Use utility classes
 
 ### Utility Classes
 
 #### Font Family Classes
 ```css
-.font-heading     /* Geometos for headings */
-.font-body        /* Roboto for body text */
-.font-subhead     /* Garamond for subheads */
-.font-caption     /* Garamond for captions (with small text) */
-.font-initial-cap /* Garamond for large initial caps */
-.font-numbers     /* Garamond for numbers */
+.font-heading     /* Outfit for headings */
+.font-body        /* Bauziet for body text */
+.font-subhead     /* Garamond Pro for subheads */
+.font-caption     /* Garamond Pro for captions (with small text) */
+.font-initial-cap /* Garamond Pro for large initial caps */
+.font-numbers     /* Garamond Pro for numbers */
 ```
 
 #### Usage Examples
 ```jsx
-// Heading with Geometos (automatic)
+// Heading with Outfit (automatic)
 <h1>Main Title</h1>
 
-// Body text with Roboto (automatic)
-<p>This is body text using Roboto.</p>
+// Body text with Bauziet (automatic)
+<p>This is body text using Bauziet.</p>
 
-// Subhead with Garamond
+// Subhead with Garamond Pro
 <h2 className="font-subhead">Section Subtitle</h2>
 
-// Caption with Garamond
+// Caption with Garamond Pro
 <span className="font-caption">Image caption text</span>
 
-// Initial cap with Garamond
+// Initial cap with Garamond Pro
 <span className="font-initial-cap">D</span>rop cap text
 
-// Numbers with Garamond
+// Numbers with Garamond Pro
 <span className="font-numbers">$1,250,000</span>
 ```
 
-## Adobe Garamond Pro Integration
+## Garamond Pro Integration
 
 ### Current Setup
-- **EB Garamond** is used as a free, open-source alternative to Adobe Garamond Pro
-- EB Garamond closely resembles Adobe Garamond Pro in appearance
-- No licensing restrictions for web usage
+- **Garamond Pro** is implemented using local font files
+- Font files are located in `/public/fonts/Garamond Pro/`
+- Includes Regular, Italic, Bold, and Bold Italic variants
+- No licensing restrictions for web usage (assuming proper licensing)
 
-### To Use Adobe Garamond Pro Instead
-If you want to use the actual Adobe Garamond Pro font:
-
-1. **Get Adobe Fonts License**: Ensure you have proper licensing through Adobe Fonts
-2. **Add to Adobe Fonts Project**: Create a web project in Adobe Fonts
-3. **Update Implementation**: Replace EB Garamond with Adobe Garamond Pro in `layout.tsx`
-
-```jsx
-// Example Adobe Garamond Pro implementation
-import { Adobe_Garamond_Pro } from "next/font/google";
-
-const adobeGaramond = Adobe_Garamond_Pro({
-  weight: ['400', '500', '600', '700'],
-  variable: "--font-garamond",
-  subsets: ["latin"],
-});
-```
+### Font Files Available
+- `AGaramondPro-Regular.otf` (400 weight, normal)
+- `AGaramondPro-Italic.otf` (400 weight, italic)
+- `AGaramondPro-Bold.otf` (700 weight, normal)
+- `AGaramondPro-BoldItalic.otf` (700 weight, italic)
 
 ## File Structure
 
@@ -104,7 +93,10 @@ src/
 │   ├── fonts.ts            # Local font definitions
 │   └── globals.css         # Font CSS variables and utility classes
 ├── public/
-│   └── fonts/              # Local Geometos font files
+│   └── fonts/              # Local font files
+│       ├── Bauziet/        # Bauziet font files
+│       ├── Garamond Pro/    # Garamond Pro font files
+│       └── Geometos Neue/   # Geometos Neue font files (available but not used)
 └── tailwind.config.ts      # Tailwind font family configuration
 ```
 
@@ -112,9 +104,9 @@ src/
 
 ```css
 :root {
-  --font-geometos: 'GeometosNeue', sans-serif;
-  --font-roboto: 'Roboto', sans-serif;
-  --font-garamond: 'EB Garamond', serif;
+  --font-outfit: 'Outfit', sans-serif;
+  --font-bauziet: 'Bauziet', sans-serif;
+  --font-garamond-pro: 'Garamond Pro', serif;
 }
 ```
 
@@ -128,17 +120,17 @@ src/
 
 ## Migration Notes
 
-- **From Poppins**: The site previously used Poppins for body text, now uses Roboto
-- **Geometos**: Already implemented and working correctly
-- **New Addition**: EB Garamond is newly added for decorative elements
+- **From Roboto**: The site previously used Roboto for body text, now uses Bauziet
+- **From Geometos**: Previously used Geometos for headings, now uses Outfit
+- **Garamond Pro**: Implemented for decorative elements using local font files
 
 ## Testing
 
 To verify font implementation:
 
-1. Check that headings use Geometos
-2. Verify body text uses Roboto
-3. Test utility classes for Garamond elements
+1. Check that headings use Outfit
+2. Verify body text uses Bauziet
+3. Test utility classes for Garamond Pro elements
 4. Ensure fonts load properly across different devices
 5. Validate accessibility with screen readers
 

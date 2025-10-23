@@ -1,6 +1,11 @@
 export const generateMockListingData = () => ({
   keyFacts: {
     "Property Type": "Single Family",
+    "fOfeic": "Residential",
+    "Class": "A",
+    "CommercialProperty": "No",
+    "Type": "Lease",
+    "Price per Sq Ft": "$198",
     "Year Built": "2018",
     "Lot Size": "0.25 acres",
     "Square Feet": "2,450",

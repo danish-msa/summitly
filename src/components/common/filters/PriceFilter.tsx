@@ -41,11 +41,11 @@ const PriceFilter: React.FC<IndividualFilterProps> = ({
   return (
     <div className="relative w-full sm:w-auto">
       <button 
-        className={`w-full sm:w-auto bg-white flex items-center gap-2 px-4 py-2 rounded-full border ${activeDropdown ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
+        className={`w-full sm:w-auto bg-white flex items-center gap-2 px-4 py-2 rounded-lg border ${activeDropdown ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
         onClick={() => setActiveDropdown(!activeDropdown)}
       >
         <FaDollarSign className="text-secondary" />
-        <span className="text-sm md:text-base">{formatPrice(filters.minPrice)} - {formatPrice(filters.maxPrice)}</span>
+        <span className="text-sm">{formatPrice(filters.minPrice)} - {formatPrice(filters.maxPrice)}</span>
         <FaChevronDown className={`ml-1 transition-transform ${activeDropdown ? 'rotate-180' : ''}`} />
       </button>
       

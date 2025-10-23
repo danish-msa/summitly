@@ -24,7 +24,7 @@ const BedroomFilter: React.FC<IndividualFilterProps> = ({
 
   // Get display text for bedrooms
   const getBedroomText = () => {
-    if (filters.bedrooms === 0) return 'Any Beds';
+    if (filters.bedrooms === 0) return 'All';
     if (filters.bedrooms === 5) return '5+ Beds';
     return `${filters.bedrooms} Beds`;
   };
@@ -43,11 +43,11 @@ const BedroomFilter: React.FC<IndividualFilterProps> = ({
   return (
     <div className="relative w-full sm:w-auto">
       <button 
-        className={`w-full bg-white flex items-center gap-2 px-4 py-2 rounded-full border ${activeDropdown ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
+        className={`w-full bg-white flex items-center gap-2 px-4 py-2 rounded-lg border ${activeDropdown ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
         onClick={() => setActiveDropdown(!activeDropdown)}
       >
         <FaBed className="text-secondary" />
-        <span className="text-sm md:text-base">{getBedroomText()}</span>
+        <span className="text-sm">{getBedroomText()}</span>
         {filters.bedrooms !== 0 && (
           <button
             onClick={(e) => {

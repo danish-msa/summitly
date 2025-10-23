@@ -24,7 +24,7 @@ const BathroomFilter: React.FC<IndividualFilterProps> = ({
 
   // Get display text for bathrooms
   const getBathroomText = () => {
-    if (filters.bathrooms === 0) return 'Any Baths';
+    if (filters.bathrooms === 0) return 'All';
     if (filters.bathrooms === 4) return '4+ Baths';
     return `${filters.bathrooms} Baths`;
   };
@@ -43,11 +43,11 @@ const BathroomFilter: React.FC<IndividualFilterProps> = ({
   return (
     <div className="relative w-full sm:w-auto">
       <button 
-        className={`w-full bg-white flex items-center gap-2 px-4 py-2 rounded-full border ${activeDropdown ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
+        className={`w-full bg-white flex items-center gap-2 px-4 py-2 rounded-lg border ${activeDropdown ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
         onClick={() => setActiveDropdown(!activeDropdown)}
       >
         <FaBath className="text-secondary" />
-        <span className="text-sm md:text-base">{getBathroomText()}</span>
+        <span className="text-sm">{getBathroomText()}</span>
         {filters.bathrooms !== 0 && (
           <button
             onClick={(e) => {
