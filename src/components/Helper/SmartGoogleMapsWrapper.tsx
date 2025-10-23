@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useGoogleMaps } from '@/providers/GoogleMapsProvider';
-import GoogleMapsLoading from '@/components/common/GoogleMapsLoading';
 
 interface SmartGoogleMapsWrapperProps {
   children: React.ReactNode;
