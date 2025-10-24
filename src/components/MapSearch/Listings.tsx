@@ -27,7 +27,7 @@ const Listings = () => {
     east: number;
     west: number;
   } | null>(null);
-  const [mapFilterEnabled, setMapFilterEnabled] = useState(false);
+  const [mapFilterEnabled] = useState(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
