@@ -115,10 +115,6 @@ const Listings = () => {
     setMapBounds(bounds);
   };
 
-  // Toggle map filtering
-  const toggleMapFiltering = () => {
-    setMapFilterEnabled(!mapFilterEnabled);
-  };
 
   // Filter properties based on map bounds if enabled
   const filteredProperties = mapFilterEnabled && mapBounds 

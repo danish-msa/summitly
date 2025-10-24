@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { ChevronDown, Plus, Footprints, Car, Gamepad2, ShoppingBag, Church, Dumbbell, Utensils, MoreHorizontal } from "lucide-react";
+import { ChevronDown, Footprints, Car, Gamepad2, ShoppingBag, Church, Dumbbell, Utensils, MoreHorizontal } from "lucide-react";
 import {
   Select,
   SelectContent,

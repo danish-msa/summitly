@@ -15,9 +15,6 @@ const SellRentToggle: React.FC<SellRentToggleProps> = ({
 }) => {
   const [hoveredOption, setHoveredOption] = useState<string | null>(null);
 
-  const handleToggle = () => {
-    onListingTypeChange(listingType === 'sell' ? 'rent' : 'sell');
-  };
 
   return (
     <div className="flex items-center gap-4">

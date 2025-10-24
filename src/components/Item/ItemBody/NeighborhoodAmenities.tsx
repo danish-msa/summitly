@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { ChevronDown, Plus, Footprints, Car, Trees, Shield, Bus } from "lucide-react";
+import { ChevronDown, Footprints, Car, Trees, Shield, Bus } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -263,74 +261,6 @@ const CategoryIcon = ({ category, rating }: { category: string; rating?: number 
   );
 };
 
-const RatingBadge = ({ rating }: { rating?: number }) => {
-  if (!rating) {
-    return (
-      <div className="relative flex h-16 w-16 items-center justify-center">
-        <svg className="h-16 w-16 transform -rotate-90" viewBox="0 0 36 36">
-          <path
-            className="text-gray-200"
-            stroke="currentColor"
-            strokeWidth="3"
-            fill="none"
-            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-          />
-        </svg>
-        <div className="absolute flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-500">
-          N/A
-        </div>
-      </div>
-    );
-  }
-
-  const getRatingColor = (rating: number) => {
-    if (rating >= 7) return "text-green-500";
-    if (rating >= 5) return "text-yellow-500";
-    return "text-red-500";
-  };
-
-  const getRatingBgColor = (rating: number) => {
-    if (rating >= 7) return "bg-green-50";
-    if (rating >= 5) return "bg-yellow-50";
-    return "bg-red-50";
-  };
-
-  const circumference = 2 * Math.PI * 15.9155; // radius = 15.9155
-  const strokeDasharray = circumference;
-  const strokeDashoffset = circumference - (rating / 10) * circumference;
-
-  return (
-    <div className="relative flex h-16 w-16 items-center justify-center">
-      <svg className="h-16 w-16 transform -rotate-90" viewBox="0 0 36 36">
-        {/* Background circle */}
-        <path
-          className="text-gray-200"
-          stroke="currentColor"
-          strokeWidth="3"
-          fill="none"
-          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-        />
-        {/* Progress circle */}
-        <path
-          className={getRatingColor(rating)}
-          stroke="currentColor"
-          strokeWidth="3"
-          fill="none"
-          strokeLinecap="round"
-          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-          strokeDasharray={strokeDasharray}
-          strokeDashoffset={strokeDashoffset}
-          style={{
-            transition: 'stroke-dashoffset 0.5s ease-in-out',
-          }}
-        />
-      </svg>
-      <div className={`absolute flex h-12 w-12 items-center justify-center rounded-full ${getRatingBgColor(rating)} text-lg font-bold ${getRatingColor(rating)}`}>
-        {rating}
-      </div>
-    </div>
-  );
-};
 
 export const NeighborhoodAmenities = ({ address = "80 Esther Lorrie Drive" }) => {
   const [activeTab, setActiveTab] = useState("schools");

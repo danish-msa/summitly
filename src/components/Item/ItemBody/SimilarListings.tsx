@@ -253,7 +253,7 @@ const SimilarListings = ({ currentProperty }: SimilarListingsProps) => {
               transform: `translateX(-${currentSlide * (100 / getSlidesPerView())}%)`,
             }}
           >
-            {filteredProperties.map((property, index) => (
+             {filteredProperties.map((property) => (
               <div 
                 key={property.mlsNumber} 
                 className="flex-shrink-0"

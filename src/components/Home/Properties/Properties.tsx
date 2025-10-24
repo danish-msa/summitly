@@ -277,9 +277,6 @@ const Properties = () => {
     setCurrentSlide(prev => prev > 0 ? prev - 1 : maxPosition);
   };
 
-  const goToSlide = (slideIndex: number) => {
-    setCurrentSlide(slideIndex);
-  };
 
   // Get number of slides per view based on screen size
   const getSlidesPerView = () => {
@@ -470,7 +467,7 @@ const Properties = () => {
                     transform: `translateX(-${currentSlide * (100 / getSlidesPerView())}%)`,
                   }}
                 >
-                  {filteredProperties.map((property, index) => (
+                  {filteredProperties.map((property) => (
                     <div 
                       key={property.mlsNumber} 
                       className="flex-shrink-0"

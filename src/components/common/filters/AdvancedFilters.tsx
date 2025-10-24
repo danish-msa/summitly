@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { X, Filter } from "lucide-react";
+import { Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -22,7 +22,7 @@ interface AdvancedFiltersProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   filters: FilterState;
-  onFilterChange: (e: { target: { name: string; value: any } }) => void;
+  onFilterChange: (e: { target: { name: string; value: string | number } }) => void;
   onApplyFilters: () => void;
   onResetAdvanced: () => void;
 }

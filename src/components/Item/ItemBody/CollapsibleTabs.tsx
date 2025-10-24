@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
-import Features from './Features'
 import Location from './Location'
 import Demographics from './Demographics'
 import PropertyListingDetails from './PropertyListingDetails'

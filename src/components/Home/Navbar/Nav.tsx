@@ -9,7 +9,6 @@ import AuthModal from '@/components/Auth/AuthModal';
 // import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import { ButtonColorful } from '@/components/ui/button-colorful';
 
 type Props = {
   openNav: () => void;

@@ -1,7 +1,6 @@
 import React from 'react'
 import { PropertyListing } from '@/lib/types'
 import CollapsibleTabs from './CollapsibleTabs'
-import AgentCTA from './AgentCTA'
 
 interface ItemBodyProps {
   property: PropertyListing;
