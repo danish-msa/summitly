@@ -84,7 +84,9 @@ const getBadgeColor = (type: CategorizedLocation['type']) => {
 
 const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [hasUserInteracted, setHasUserInteracted] = useState(false);
+  const [animatedPlaceholder, setAnimatedPlaceholder] = useState('');
+  const [currentTextIndex, setCurrentTextIndex] = useState(0);
+  const [isTyping, setIsTyping] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { location, detectLocation, isLoading: locationLoading } = useLocationDetection();
 
@@ -100,6 +102,42 @@ const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) 
     },
     debounce: 300,
   });
+
+  // Typing animation effect
+  useEffect(() => {
+    if (!isTyping) return;
+
+    const typingInterval = setInterval(() => {
+      if (currentTextIndex < placeholder.length) {
+        setAnimatedPlaceholder(prev => prev + placeholder[currentTextIndex]);
+        setCurrentTextIndex(prev => prev + 1);
+      } else {
+        // Wait a bit before starting to delete
+        setTimeout(() => {
+          setIsTyping(false);
+        }, 2000);
+      }
+    }, 100);
+
+    return () => clearInterval(typingInterval);
+  }, [currentTextIndex, placeholder, isTyping]);
+
+  // Deleting animation effect
+  useEffect(() => {
+    if (isTyping) return;
+
+    const deletingInterval = setInterval(() => {
+      if (animatedPlaceholder.length > 0) {
+        setAnimatedPlaceholder(prev => prev.slice(0, -1));
+      } else {
+        // Reset for next cycle
+        setCurrentTextIndex(0);
+        setIsTyping(true);
+      }
+    }, 50);
+
+    return () => clearInterval(deletingInterval);
+  }, [animatedPlaceholder, isTyping]);
 
   // Debug: Log suggestion patterns
   useEffect(() => {
@@ -126,7 +164,6 @@ const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setValue(e.target.value);
     setIsOpen(true);
-    setHasUserInteracted(true); // Mark that user has started typing
   };
 
   const handleSelect = async (address: string) => {
@@ -147,8 +184,7 @@ const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) 
   // Handle location detection
   const handleLocationDetection = () => {
     if (location) {
-      // If location is already detected, use it
-      setValue(location.fullLocation, false);
+      // If location is already detected, just call onSelect without setting the input value
       onSelect(location.fullLocation);
     } else {
       // Detect location
@@ -159,18 +195,9 @@ const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) 
   // Handle clearing the input
   const handleClear = () => {
     setValue('', false);
-    setHasUserInteracted(false);
     clearSuggestions();
     setIsOpen(false);
   };
-
-  // Auto-fill with detected location only on initial load and if user hasn't interacted
-  useEffect(() => {
-    if (location && !hasUserInteracted && value === '') {
-      setValue(location.fullLocation, false);
-      onSelect(location.fullLocation);
-    }
-  }, [location, hasUserInteracted, value, onSelect]);
 
   // Organize results by category with priority order
   const organizeResults = (suggestions: { place_id: string; description: string }[]) => {
@@ -231,7 +258,7 @@ const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) 
           value={value}
           onChange={handleInput}
           disabled={!ready}
-          placeholder={placeholder}
+          placeholder={animatedPlaceholder}
           onFocus={() => setIsOpen(true)}
           className="pl-12 pr-12 h-12 text-base"
         />
@@ -240,7 +267,7 @@ const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) 
           type="button"
           onClick={handleLocationDetection}
           disabled={locationLoading}
-          className="absolute inset-y-0 left-0 flex items-center pl-3 hover:bg-gray-100 rounded-full transition-colors"
+          className="absolute inset-y-0 left-0 h-8 top-1/2 transform -translate-y-1/2 hover:bg-gray-100 flex items-center p-2 ml-2 hover:text-secondary rounded-full transition-colors"
           title={location ? `Use my location: ${location.fullLocation}` : "Detect my location"}
         >
           {locationLoading ? (

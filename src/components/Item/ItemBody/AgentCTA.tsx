@@ -6,23 +6,23 @@ import { Badge } from '@/components/ui/badge'
 
 const AgentCTA: React.FC = () => {
   return (
-    <Card className="w-full shadow-lg border-0 bg-brand-celestial">
+    <Card className="w-full shadow-lg border-0 bg-brand-mist/50 sticky top-2">
       <CardContent className="p-6">
         {/* Header */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white/40 rounded-full mb-4">
             <User className="h-8 w-8 text-primary" />
           </div>
-          <h3 className="text-xl font-bold text-white mb-2">
+          <h3 className="text-xl font-bold mb-2">
             Connect with an Agent
           </h3>
-          <p className="text-sm text-white">
+          <p className="text-sm">
             Get personalized assistance from our expert real estate professionals
           </p>
         </div>
 
         {/* Agent Info */}
-        <div className="bg-white/60 backdrop-blur-lg rounded-lg p-4 mb-6 shadow-sm">
+        <div className="bg-brand-tide backdrop-blur-lg rounded-lg p-4 mb-6 shadow-sm">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-full flex items-center justify-center">
               <span className="text-white font-semibold text-lg">JD</span>
@@ -46,36 +46,31 @@ const AgentCTA: React.FC = () => {
         </div>
 
         {/* Contact Options */}
-        <div className="space-y-3 mb-6">
-          <Button 
-            className="w-full bg-primary hover:bg-primary/90 text-white h-12 text-base font-medium"
-            size="lg"
+        <div className="flex justify-center gap-4 mb-6">
+          <button 
+            className="flex items-center justify-center w-12 h-12 bg-primary hover:bg-primary/90 text-white rounded-full transition-all duration-200 hover:scale-105 shadow-lg"
+            title="Call Now"
           >
-            <Phone className="h-5 w-5 mr-2" />
-            Call Now
-          </Button>
+            <Phone className="h-5 w-5" />
+          </button>
           
-          <Button 
-            variant="outline" 
-            className="w-full bg-white/60 backdrop-blur-lg text-primary hover:bg-brand-celestial hover:text-white h-12 text-base font-medium"
-            size="lg"
+          <button 
+            className="flex items-center justify-center w-12 h-12 bg-white/60 backdrop-blur-lg text-primary hover:bg-brand-celestial hover:text-white rounded-full transition-all duration-200 hover:scale-105 shadow-lg"
+            title="Start Chat"
           >
-            <MessageCircle className="h-5 w-5 mr-2" />
-            Start Chat
-          </Button>
+            <MessageCircle className="h-5 w-5" />
+          </button>
           
-          <Button 
-            variant="outline" 
-            className="w-full bg-white/60 backdrop-blur-lg text-primary hover:bg-brand-celestial hover:text-white h-12 text-base font-medium"
-            size="lg"
+          <button 
+            className="flex items-center justify-center w-12 h-12 bg-white/60 backdrop-blur-lg text-primary hover:bg-brand-celestial hover:text-white rounded-full transition-all duration-200 hover:scale-105 shadow-lg"
+            title="Send Email"
           >
-            <Mail className="h-5 w-5 mr-2" />
-            Send Email
-          </Button>
+            <Mail className="h-5 w-5" />
+          </button>
         </div>
 
         {/* Quick Actions */}
-        <div className="border-t pt-4 bg-white/80 rounded-lg p-4">
+        <div className="border-t pt-4 bg-white/40 rounded-lg p-4">
           <h5 className="font-semibold text-gray-900 mb-3 text-sm">Quick Actions</h5>
           <div className="space-y-2">
             <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-white transition-colors text-left">
@@ -97,12 +92,12 @@ const AgentCTA: React.FC = () => {
         <div className="mt-6 pt-4 border-t">
           <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-white rounded-full"></div>
-              <span className='text-white'>24/7 Support</span>
+              <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+              <span>24/7 Support</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-white rounded-full"></div>
-              <span className='text-white'>Free Consultation</span>
+              <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+              <span>Free Consultation</span>
             </div>
           </div>
         </div>

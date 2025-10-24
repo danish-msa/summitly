@@ -4,6 +4,10 @@ import Features from './Features'
 import Location from './Location'
 import Demographics from './Demographics'
 import PropertyListingDetails from './PropertyListingDetails'
+import { NeighborhoodAmenities } from './NeighborhoodAmenities'
+import { LifestyleAmenities } from './LifestyleAmenities'
+import { MortgageCalculator } from './MortgageCalculator'
+import SimilarListings from './SimilarListings'
 import { generateMockListingData } from './mockListingData'
 import { PropertyListing } from '@/lib/types'
 
@@ -18,7 +22,7 @@ interface TabSection {
 }
 
 const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property }) => {
-  const [expandedTabs, setExpandedTabs] = useState<Set<string>>(new Set(['listing-details']));
+  const [expandedTabs, setExpandedTabs] = useState<Set<string>>(new Set(['listing-details', 'description', 'features', 'lifestyle', 'location', 'demographics', 'tools', 'similar']));
 
   const toggleTab = (tabId: string) => {
     setExpandedTabs(prev => {
@@ -47,16 +51,26 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property }) => {
       label: 'Description',
       content: (
         <div className="mt-4">
+          <h3 className="text-lg font-semibold text-gray-900">About this property</h3>
           <p className="text-gray-500 font-light">{property.lot.legalDescription}</p>
         </div>
       )
     },
     {
       id: 'features',
-      label: 'Amenities & Features',
+      label: 'Neighborhood Amenities',
       content: (
         <div className="mt-4">
-          <Features />
+          <NeighborhoodAmenities address={property.address.location || `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim()} />
+        </div>
+      )
+    },
+    {
+      id: 'lifestyle',
+      label: 'Lifestyle Amenities',
+      content: (
+        <div className="mt-4">
+          <LifestyleAmenities address={property.address.location || `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim()} />
         </div>
       )
     },
@@ -77,6 +91,24 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property }) => {
           <Demographics />
         </div>
       )
+    },
+    {
+      id: 'tools',
+      label: 'Tools',
+      content: (
+        <div className="mt-4">
+          <MortgageCalculator />
+        </div>
+      )
+    },
+    {
+      id: 'similar',
+      label: 'Similar Properties',
+      content: (
+        <div className="mt-4">
+          <SimilarListings currentProperty={property} />
+        </div>
+      )
     }
   ];
 
@@ -93,9 +125,15 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property }) => {
             {/* Tab Header */}
             <button
               onClick={() => toggleTab(section.id)}
-              className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className={`w-full px-6 py-4 text-left flex items-center justify-between transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20 ${
+                isExpanded 
+                  ? 'bg-blue-50 border-l-4 border-l-primary' 
+                  : 'hover:bg-gray-50'
+              }`}
             >
-              <span className="text-lg font-semibold text-gray-900">
+              <span className={`text-lg font-semibold ${
+                isExpanded ? 'text-primary' : 'text-gray-900'
+              }`}>
                 {section.label}
               </span>
               <div className="flex items-center">

@@ -35,7 +35,7 @@ const ListingFilters: React.FC<FilterComponentProps> = ({
   };
 
   return (
-    <div className="container mx-auto bg-white rounded-lg p-4 flex flex-col md:flex-row md:flex-wrap justify-between items-start md:items-center mt-8 mb-6 gap-4">
+    <div className="container mx-auto bg-white rounded-lg p-4 flex flex-col md:flex-row md:flex-wrap justify-between items-start md:items-center mt-8 mb-2 gap-4">
       <h2 className='text-black text-xl mb-2 md:mb-0'>{getLocationTitle()}</h2><br/>
       <GlobalFilters
         filters={filters}

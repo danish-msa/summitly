@@ -1,6 +1,6 @@
 import React from 'react'
 import { PropertyListing } from '@/lib/types'
-import { MapPin, Bed, Bath, Maximize2, Calendar, DollarSign } from 'lucide-react'
+import { MapPin, Calendar } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 interface BasicInfoProps {
@@ -32,7 +32,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ property }) => {
   };
 
   return (
-    <div className="w-full h-full bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+    <div className="w-full bg-white p-6 rounded-xl shadow-sm border border-gray-100">
       
       {/* Price and Status */}
       <div className="mb-6">
@@ -51,67 +51,18 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ property }) => {
         </div>
       </div>
 
-      {/* Property Details */}
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Property Details</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-            <Bed className="h-5 w-5 text-primary" />
-            <div>
-              <span className="text-sm text-gray-600">Bedrooms</span>
-              <p className="font-semibold text-gray-900">{property.details.numBedrooms}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-            <Bath className="h-5 w-5 text-primary" />
-            <div>
-              <span className="text-sm text-gray-600">Bathrooms</span>
-              <p className="font-semibold text-gray-900">{property.details.numBathrooms}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-            <Maximize2 className="h-5 w-5 text-primary" />
-            <div>
-              <span className="text-sm text-gray-600">Square Feet</span>
-              <p className="font-semibold text-gray-900">
-                {typeof property.details.sqft === 'number' 
-                  ? property.details.sqft.toLocaleString() 
-                  : property.details.sqft}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-            <DollarSign className="h-5 w-5 text-primary" />
-            <div>
-              <span className="text-sm text-gray-600">Price per Sq Ft</span>
-              <p className="font-semibold text-gray-900">
-                {typeof property.details.sqft === 'number' 
-                  ? formatPrice(property.listPrice / property.details.sqft)
-                  : 'N/A'}
-              </p>
-            </div>
-          </div>
-        </div>
+      {/* Estimated Value Section */}
+      <div className="mb-6 flex items-center gap-2 text-sm text-gray-600">
+        <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+        </svg>
+        <span className="text-green-600 font-semibold">
+          {formatPrice(property.listPrice * 1.06)}
+        </span>
+        <span>Estimated value as of Oct 2025</span>
       </div>
 
-      {/* Property Type and Class */}
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-3">Property Information</h3>
-        <div className="space-y-2">
-          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-            <span className="text-sm text-gray-600">Property Type</span>
-            <span className="text-sm font-medium text-gray-900">{property.details.propertyType}</span>
-          </div>
-          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-            <span className="text-sm text-gray-600">Class</span>
-            <span className="text-sm font-medium text-gray-900">{property.class}</span>
-          </div>
-          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-            <span className="text-sm text-gray-600">Type</span>
-            <span className="text-sm font-medium text-gray-900">{property.type}</span>
-          </div>
-        </div>
-      </div>
+      
 
       {/* Quick Actions */}
       <div className="space-y-3">

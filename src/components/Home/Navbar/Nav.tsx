@@ -90,6 +90,8 @@ const Nav = ({ openNav }: Props) => {
     if (labelLower.includes('agent')) return '👤';
     if (labelLower.includes('about')) return 'ℹ️';
     if (labelLower.includes('contact')) return '📞';
+    if (labelLower.includes('blog')) return '📝';
+    if (labelLower.includes('faq')) return '❓';
     return '📋';
   };
 
@@ -159,7 +161,7 @@ const Nav = ({ openNav }: Props) => {
                       className="relative"
                     >
                       <motion.button
-                        className="flex items-center space-x-1 px-4 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide"
+                        className="flex items-center space-x-1 px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
@@ -214,7 +216,7 @@ const Nav = ({ openNav }: Props) => {
                   ) : (
                     <Link href={link.url}>
                       <motion.div
-                        className="px-4 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide"
+                        className="px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
@@ -250,7 +252,7 @@ const Nav = ({ openNav }: Props) => {
               {/* Login Button */}
               <motion.button
                 onClick={handleLoginClick}
-                className="hidden md:flex items-center space-x-2 px-3 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-accent/50"
+                className="hidden md:flex items-center space-x-2 px-3 py-2 text-base font-medium bg-brand-cb-blue text-white hover:bg-brand-midnight transition-colors rounded-lg hover:bg-accent/50"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 initial={{ opacity: 0, x: 20 }}
@@ -262,13 +264,13 @@ const Nav = ({ openNav }: Props) => {
               </motion.button>
 
               {/* Submit Property Button */}
-              <motion.div
+              {/* <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
               >
                 <ButtonColorful label='Submit Property' href='/submit-property' variant='default' className='bg-primary hover:bg-brand-midnight' />
-              </motion.div>
+              </motion.div> */}
 
               {/* Mobile Menu Button */}
               <motion.button

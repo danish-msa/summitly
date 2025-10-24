@@ -7,12 +7,14 @@ import { PropertyListing } from '@/lib/types';
 import { FaSort } from 'react-icons/fa';
 import ListingFilters from './ListingFilters';
 import { LOCATIONS } from '@/lib/types/filters';
+import SellRentToggle from '@/components/common/filters/SellRentToggle';
 
 const Listings = () => {
   const [properties, setProperties] = useState<PropertyListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProperty, setSelectedProperty] = useState<PropertyListing | null>(null);
   const [communities, setCommunities] = useState<string[]>([]);
+  const [listingType, setListingType] = useState<'sell' | 'rent'>('sell');
   const [filters, setFilters] = useState({
     location: 'all',
     locationArea: 'all',
@@ -198,6 +200,12 @@ const Listings = () => {
     }
   };
 
+  // Handle listing type change
+  const handleListingTypeChange = (type: 'sell' | 'rent') => {
+    setListingType(type);
+    // You can add additional logic here to filter properties based on listing type
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto py-20 px-4">
@@ -222,29 +230,39 @@ const Listings = () => {
       
       {/* Results Header */}
       <div className="container mx-auto px-4 flex flex-col sm:flex-row justify-between items-center mb-4">
-        <div className="mb-4 sm:mb-0">
+        <div className="mb-4 sm:mb-0 flex items-center gap-4">
           <span className="text-gray-700 font-medium text-sm">
             Active Listings ({pagination.totalResults > 0 ? `${pagination.totalResults.toLocaleString()})` : `${properties.length} results`}
           </span>
+          
         </div>
         
         {/* Sort Options */}
-        <div className="flex items-center">
-          <FaSort className="mr-2 text-gray-600" />
-          <label className="mr-2 text-gray-700">Sort by:</label>
-          <select
-            value={sortOption}
-            onChange={handleSortChange}
-            className="p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
-          >
-            <option value="newest">Newest</option>
-            <option value="price-asc">Price (Low to High)</option>
-            <option value="price-desc">Price (High to Low)</option>
-            <option value="beds-desc">Most Bedrooms</option>
-            <option value="baths-desc">Most Bathrooms</option>
-            <option value="sqft-desc">Largest Size</option>
-          </select>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div className="flex items-center px-3 py-2 border-r border-gray-200">
+              <FaSort className="mr-2 text-gray-500 w-4 h-4" />
+              <span className="text-sm font-medium text-gray-700">Sort by:</span>
+            </div>
+            <select
+              value={sortOption}
+              onChange={handleSortChange}
+              className="px-4 py-2 bg-transparent border-0 text-sm font-medium text-gray-700 focus:ring-0 focus:outline-none cursor-pointer"
+            >
+              <option value="newest">Newest</option>
+              <option value="price-asc">Price (Low to High)</option>
+              <option value="price-desc">Price (High to Low)</option>
+              <option value="beds-desc">Most Bedrooms</option>
+              <option value="baths-desc">Most Bathrooms</option>
+              <option value="sqft-desc">Largest Size</option>
+            </select>
+          </div>
+          <SellRentToggle 
+            listingType={listingType}
+            onListingTypeChange={handleListingTypeChange}
+          />
         </div>
+        
       </div>
       
       {/* Property Listings */}

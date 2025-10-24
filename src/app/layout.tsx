@@ -9,8 +9,8 @@ import SessionProvider from '@/components/providers/SessionProvider';
 import { geometosNeue, bauziet, garamondPro, rubik, outfit } from './fonts';
 
 export const metadata: Metadata = {
-  title: "Real Estate Project",
-  description: "Real Estate Website using Next.js",
+  title: "Summit Realty",
+  description: "Summit Realty is a real estate company that provides a wide range of services to its clients. We are a team of experienced real estate agents who are dedicated to helping you find the perfect home or investment property.",
   viewport: {
     width: 'device-width',
     initialScale: 1,

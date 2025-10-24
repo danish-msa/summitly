@@ -18,7 +18,7 @@ const AsSeenOn = () => {
                 alt={`Press logo ${index + 1}`}
                 width={120}
                 height={40}
-                className="h-6 md:h-8 w-auto opacity-70 hover:opacity-100 transition-opacity"
+                className="h-6 md:h-20 w-auto opacity-70 hover:opacity-100 transition-opacity"
                 priority={false}
               />
             ))}

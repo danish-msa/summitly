@@ -35,8 +35,8 @@ const CityProperties = () => {
     <div className='pt-16 pb-16 bg-white'>
       <div className='max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8'>
         <SectionHeading 
-          heading='Our Location For You' 
-          subheading='Explore Cities' 
+          heading='Explore Popular Cities' 
+          subheading='Popular Cities' 
           description='Discover properties in these popular cities and find your ideal home in a location that suits your lifestyle.'
         />
         <div className='mt-7 md:mt-20'>

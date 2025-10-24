@@ -7,6 +7,7 @@ import ItemBody from './ItemBody/ItemBody'
 import BasicInfo from './ItemBody/BasicInfo'
 import { fetchPropertyListings } from '@/lib/api/properties'
 import { PropertyListing } from '@/lib/types'
+import AgentCTA from './ItemBody/AgentCTA'
 
 // Remove the local Property interface definition
 
@@ -52,15 +53,17 @@ const Item: React.FC = () => {
     <div className='bg-background'>
       <div className='container-1400 mt-28 mb-28'>
         <div className='flex flex-row gap-6'>
-          <div className='w-[70%]'>
+          <div className='w-[70%] flex flex-col gap-6'>
             <Banner property={property} />
+            <ItemBody property={property} />
           </div>
-          <div className='w-[30%]'>
+          <div className='w-[30%] flex flex-col items-start gap-6'>
             <BasicInfo property={property} />
+            <AgentCTA />
           </div>
         </div>
         <div className='mt-6'>
-          <ItemBody property={property} />
+          
         </div>
       </div>
     </div>

@@ -144,7 +144,7 @@ const Listings = () => {
   return (
     <div className="container mx-auto pt-10 pb-24 px-4">
       {/* Global Filters */}
-      <div className="bg-white rounded-lg p-4 flex flex-col md:flex-row md:flex-wrap justify-between items-start md:items-center mt-8 md:mt-12 mb-2 gap-4">
+      <div className="bg-white rounded-lg p-4 flex flex-col md:flex-row md:flex-wrap justify-between items-start md:items-center mt-8 mb-2 gap-4">
         <GlobalFilters
           filters={filters}
           handleFilterChange={handleFilterChange}

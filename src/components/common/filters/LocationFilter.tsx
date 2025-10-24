@@ -42,7 +42,7 @@ const LocationFilter: React.FC<IndividualFilterProps> = ({
       }
     } as FilterChangeEvent;
     handleFilterChange(event);
-    setActiveDropdown(false);
+    // Removed setActiveDropdown(false) to keep dropdown open
   };
 
   // Handle location detection
@@ -57,7 +57,7 @@ const LocationFilter: React.FC<IndividualFilterProps> = ({
           }
         } as FilterChangeEvent;
         handleFilterChange(event);
-        setActiveDropdown(false);
+        // Removed setActiveDropdown(false) to keep dropdown open
       }
     } else {
       detectLocation();
@@ -225,7 +225,7 @@ const LocationFilter: React.FC<IndividualFilterProps> = ({
                         }
                       } as FilterChangeEvent;
                       handleFilterChange(event);
-                      setActiveDropdown(false);
+                      // Removed setActiveDropdown(false) to keep dropdown open
                     }}
                     className={`
                       w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all

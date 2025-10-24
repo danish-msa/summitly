@@ -5,7 +5,7 @@ export const CallToAction3 = () => {
   return (
     <section className="w-full pb-16 px-4">
       <div className="max-w-[1300px] mx-auto">
-        <div className="bg-brand-glacier/20 border border-border rounded-2xl p-8 md:p-10 shadow-sm">
+        <div className="bg-white border border-border rounded-2xl p-8 md:p-10 shadow-sm">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-6">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0">
@@ -27,11 +27,11 @@ export const CallToAction3 = () => {
               </div>
             </div>
             <div className="flex flex-wrap gap-3 justify-center md:justify-end">
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" className="gap-2 w-full">
                 <Phone className="w-4 h-4" />
                 Call Us
               </Button>
-              <Button className="gap-2">
+              <Button className="gap-2 w-full">
                 <Mail className="w-4 h-4" />
                 Get in touch
               </Button>

@@ -3,10 +3,14 @@ import { BiEnvelope, BiPhoneCall } from 'react-icons/bi'
 import { FaFacebookF, FaInstagram, FaTwitter, FaYoutube } from 'react-icons/fa'
 import Image from 'next/image'
 import Link from 'next/link'
+import { ContactMethods } from '../ContactMethods/ContactMethods'
 
 const Footer = () => {
   return (
     <>
+    <ContactMethods />
+
+
     <div className='w-full py-8 sm:py-10 bg-secondary '>
         <div className='w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-4 sm:gap-6 justify-between items-center'>
             <div className='w-full md:w-[50%] text-white text-center md:text-left'>

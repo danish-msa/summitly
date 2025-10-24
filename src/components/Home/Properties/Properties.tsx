@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import SectionHeading from '@/components/Helper/SectionHeading';
 import { fetchPropertyListings } from '@/data/data';
 import PropertyCard from '@/components/Helper/PropertyCard';
 import PropertyFilters from './PropertyFilters';
-import SellRentToggle from './SellRentToggle';
+import SellRentToggle from '@/components/common/filters/SellRentToggle';
 import { PropertyListing } from '@/data/types'; // Import the interface from types.ts
 import { useLocationDetection } from '@/hooks/useLocationDetection';
 import { useGlobalFilters } from '@/hooks/useGlobalFilters';
 import { FilterChangeEvent, LOCATIONS } from '@/lib/types/filters';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const Properties = () => {
   const [allProperties, setAllProperties] = useState<PropertyListing[]>([]);
@@ -16,6 +17,8 @@ const Properties = () => {
   const [error, setError] = useState<string | null>(null);
   const [communities, setCommunities] = useState<string[]>([]);
   const [listingType, setListingType] = useState<'sell' | 'rent'>('sell');
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const sliderRef = useRef<HTMLDivElement>(null);
   
   // Use global filters hook
   const { filters, handleFilterChange, resetFilters } = useGlobalFilters();
@@ -261,6 +264,43 @@ const Properties = () => {
     setListingType(type);
   };
 
+  // Slider navigation functions - move one property at a time
+  const nextSlide = () => {
+    const slidesPerView = getSlidesPerView();
+    const maxPosition = Math.max(0, filteredProperties.length - slidesPerView);
+    setCurrentSlide(prev => prev < maxPosition ? prev + 1 : 0);
+  };
+
+  const prevSlide = () => {
+    const slidesPerView = getSlidesPerView();
+    const maxPosition = Math.max(0, filteredProperties.length - slidesPerView);
+    setCurrentSlide(prev => prev > 0 ? prev - 1 : maxPosition);
+  };
+
+  const goToSlide = (slideIndex: number) => {
+    setCurrentSlide(slideIndex);
+  };
+
+  // Get number of slides per view based on screen size
+  const getSlidesPerView = () => {
+    if (typeof window === 'undefined') return 4;
+    if (window.innerWidth < 640) return 1; // sm
+    if (window.innerWidth < 1024) return 2; // lg
+    if (window.innerWidth < 1280) return 3; // xl
+    return 4; // 2xl+
+  };
+
+  // Calculate total possible positions (one property at a time)
+  const getTotalPositions = () => {
+    const slidesPerView = getSlidesPerView();
+    return Math.max(1, filteredProperties.length - slidesPerView + 1);
+  };
+
+  // Reset slide when filtered properties change
+  useEffect(() => {
+    setCurrentSlide(0);
+  }, [filteredProperties]);
+
   if (loading) return (
     <div className="pt-12 sm:pt-16 pb-12 sm:pb-16">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -374,6 +414,7 @@ const Properties = () => {
                resetFilters={resetFilters}
                communities={communities}
                locations={LOCATIONS}
+               showAdvanced={false}
              />
            </div>
            
@@ -396,24 +437,66 @@ const Properties = () => {
 
          
         
-        {/* Properties Grid */}
-        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 mt-8 sm:mt-10'>
-          {filteredProperties.length > 0 ? (
-            filteredProperties.slice(0, 8).map((property) => (
-              <PropertyCard key={property.mlsNumber} property={property} />
-            ))
-          ) : (
-            <div className="col-span-full text-center py-10">
-              <p className="text-gray-500 text-lg">No properties match your current filters.</p>
-              <button 
-                onClick={resetFilters}
-                className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-secondary transition-colors"
+        {/* Properties Slider */}
+        {filteredProperties.length > 0 ? (
+          <div className="mt-8 sm:mt-10">
+            {/* Slider Container */}
+            <div className="relative">
+              {/* Navigation Buttons */}
+              <button
+                onClick={prevSlide}
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110"
+                disabled={currentSlide === 0}
               >
-                Reset Filters
+                <ChevronLeft className="h-5 w-5 text-gray-600" />
               </button>
+              
+              <button
+                onClick={nextSlide}
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110"
+                disabled={currentSlide >= getTotalPositions() - 1}
+              >
+                <ChevronRight className="h-5 w-5 text-gray-600" />
+              </button>
+
+              {/* Slider */}
+              <div 
+                ref={sliderRef}
+                className="overflow-hidden"
+              >
+                <div 
+                  className="flex transition-transform duration-700 ease-in-out"
+                  style={{
+                    transform: `translateX(-${currentSlide * (100 / getSlidesPerView())}%)`,
+                  }}
+                >
+                  {filteredProperties.map((property, index) => (
+                    <div 
+                      key={property.mlsNumber} 
+                      className="flex-shrink-0"
+                      style={{ width: `${100 / getSlidesPerView()}%` }}
+                    >
+                      <div className="px-2">
+                        <PropertyCard property={property} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          )}
-        </div>
+
+          </div>
+        ) : (
+          <div className="text-center py-10 mt-8 sm:mt-10">
+            <p className="text-gray-500 text-lg">No properties match your current filters.</p>
+            <button 
+              onClick={resetFilters}
+              className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-secondary transition-colors"
+            >
+              Reset Filters
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

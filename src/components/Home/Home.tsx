@@ -12,13 +12,10 @@ import WhyChooseUs from './WhyChooseUs/WhyChooseUs';
 import AsSeenOn from './AsSeenOn/AsSeenOn';
 import CallToAction from './CallToAction/CallToAction';
 import CallToAction2 from '../About/CallToAction/CallToAction';
-import ExploreHotCities from './ExploreHotCities/ExploreHotCities';
 import ServiceFeatures from './ServiceFeatures/ServiceFeatures';
 import PropertyCategories from './PropertyCategories/PropertyCategories';
-import PropertyDiscovery from './PropertyDiscovery/PropertyDiscovery';
 import FAQ from './FAQ/FAQ';
 import CallToAction3 from './CallToAction3/CallToAction3';
-import ContactMethods from './ContactMethods/ContactMethods';
 import { RecommendationsSection } from './Recommendations/RecommendationsSection';
 
 const Home: React.FC = () => {
@@ -50,8 +47,9 @@ const Home: React.FC = () => {
             <ServiceFeatures />
             
             
-            <PropertyDiscovery />
+            {/* <PropertyDiscovery /> */}
             <CallToAction2 />
+            <RecommendationsSection />
             
             
             {/* <BuyingPowerCalculator /> */}
@@ -60,18 +58,16 @@ const Home: React.FC = () => {
             <CallToAction />
             
             <WhyChooseUs />
-            <RecommendationsSection />
             {/* <Condos /> */}
             {/* <BuildingFeature /> */}
             
             {/* <ApartmentType /> */}
             {/* <OurAgents /> */}
-            <ExploreHotCities />
+            {/* <ExploreHotCities /> */}
             <ConnectWithUs />
             <ClientReviews />
             <Blogs />
             <FAQ />
-            <ContactMethods />
         </div>
     );
 };

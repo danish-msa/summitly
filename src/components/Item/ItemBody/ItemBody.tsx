@@ -11,14 +11,7 @@ const ItemBody: React.FC<ItemBodyProps> = ({ property }) => {
 
   return (
     <div className='w-full h-full relative'>
-      <div className='flex flex-row gap-6'>
-          <div className='w-[70%]'>
-            <CollapsibleTabs property={property} />
-          </div>
-          <div className='w-[30%]'>
-            <AgentCTA />
-          </div>
-        </div>
+      <CollapsibleTabs property={property} />
     </div>
   )
 }

@@ -4,12 +4,17 @@ import React from 'react';
 import { FilterComponentProps } from '@/lib/types/filters';
 import GlobalFilters from '@/components/common/filters/GlobalFilters';
 
-const PropertyFilters: React.FC<FilterComponentProps> = ({ 
+interface PropertyFiltersProps extends FilterComponentProps {
+  showAdvanced?: boolean;
+}
+
+const PropertyFilters: React.FC<PropertyFiltersProps> = ({ 
   filters, 
   handleFilterChange, 
   resetFilters,
   communities,
-  locations
+  locations,
+  showAdvanced = true
 }) => {
   return (
     <div className="w-full flex flex-col md:flex-row md:flex-wrap items-center gap-4">
@@ -26,6 +31,7 @@ const PropertyFilters: React.FC<FilterComponentProps> = ({
           showPrice={false}
           showBedrooms={false}
           showBathrooms={false}
+          showAdvanced={showAdvanced}
           layout="horizontal"
           className="w-full md:w-auto"
         />
