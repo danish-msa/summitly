@@ -86,7 +86,7 @@ const SmartGoogleMapsWrapper: React.FC<SmartGoogleMapsWrapperProps> = ({ childre
               </div>
               
               <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                Loading Maps...
+                Launching Summitly...
               </h3>
               <p className="text-sm text-gray-600 text-center">
                 Preparing location services for you
