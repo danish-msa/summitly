@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
-import Location from './Location'
 import Demographics from './Demographics'
 import PropertyListingDetails from './PropertyListingDetails'
 import { NeighborhoodAmenities } from './NeighborhoodAmenities'
@@ -74,21 +73,25 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property }) => {
         </div>
       )
     },
-    {
-      id: 'location',
-      label: 'Map Location',
-      content: (
-        <div className="mt-4">
-          <Location property={property} />
-        </div>
-      )
-    },
+    // {
+    //   id: 'location',
+    //   label: 'Map Location',
+    //   content: (
+    //     <div className="mt-4">
+    //       <Location property={property} />
+    //     </div>
+    //   )
+    // },
     {
       id: 'demographics',
-      label: 'Demographics',
+      label: 'Neighbourhood Demographics',
       content: (
         <div className="mt-4">
-          <Demographics />
+          <Demographics 
+            latitude={property.map.latitude} 
+            longitude={property.map.longitude} 
+            address={property.address.location || `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim()} 
+          />
         </div>
       )
     },
@@ -139,7 +142,7 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property }) => {
               onClick={() => toggleTab(section.id)}
               className={`w-full px-6 py-4 text-left flex items-center justify-between transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20 ${
                 isExpanded 
-                  ? 'bg-blue-50 border-l-4 border-l-primary' 
+                  ? 'bg-brand-tide/50 border-l-4 border-l-primary' 
                   : 'hover:bg-gray-50'
               }`}
             >

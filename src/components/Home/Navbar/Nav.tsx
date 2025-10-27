@@ -116,7 +116,7 @@ const Nav = ({ openNav }: Props) => {
         )}
       >
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16 lg:h-20">
+          <div className="flex items-center justify-between h-14 lg:h-16">
             {/* Logo */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -184,7 +184,7 @@ const Nav = ({ openNav }: Props) => {
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
                             transition={{ duration: 0.2 }}
-                            className="absolute top-full left-0 mt-2 w-80 bg-background border border-border rounded-xl shadow-xl z-[9999] overflow-hidden"
+                            className="absolute top-full left-0 mt-2 w-80 bg-white rounded-xl shadow-xl z-[9999] overflow-hidden"
                           >
                             <div className="p-2">
                               {link.subLinks.map((subLink, subIndex) => (

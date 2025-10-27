@@ -288,20 +288,20 @@ export default function PropertyListingDetails({ data }: ListingDetailsProps) {
                 {data.rooms.map((room, index) => (
                   <div
                     key={index}
-                    className="p-4 bg-muted/30 rounded-lg border hover:border-primary/50 transition-colors"
+                    className="p-4 bg-brand-celestial/10 rounded-lg transition-colors"
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <h4 className="font-semibold text-lg">{room.name}</h4>
                         <p className="text-sm text-muted-foreground">{room.dimensions}</p>
                       </div>
-                      <Badge variant="outline">{room.level}</Badge>
+                      <Badge variant="default" className="bg-brand-celestial text-white">{room.level}</Badge>
                     </div>
                     <div className="flex flex-wrap gap-2 mt-3">
                       {room.features.map((feature, idx) => (
                         <span
                           key={idx}
-                          className="text-xs bg-background px-2 py-1 rounded border"
+                          className="text-xs bg-brand-mist px-2 py-1 rounded border"
                         >
                           {feature}
                         </span>

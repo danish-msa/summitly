@@ -8,6 +8,7 @@ import BasicInfo from './ItemBody/BasicInfo'
 import { fetchPropertyListings } from '@/lib/api/properties'
 import { PropertyListing } from '@/lib/types'
 import AgentCTA from './ItemBody/AgentCTA'
+import LoadingSpinner from '@/components/common/LoadingSpinner'
 
 // Remove the local Property interface definition
 
@@ -42,7 +43,11 @@ const Item: React.FC = () => {
   }, [propertyId]);
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading property details...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" message="Loading property details..." />
+      </div>
+    );
   }
 
   if (error || !property) {
