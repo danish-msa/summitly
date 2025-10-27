@@ -37,7 +37,7 @@ const MapSearchBox: React.FC<MapSearchBoxProps> = ({
     setIsOpen(true);
   };
 
-  const handleSelect = (suggestion: { description: string }) => {
+  const handleSelect = (suggestion: { description: string; place_id: string; structured_formatting?: { main_text?: string; secondary_text?: string } }) => {
     setValue(suggestion.description, false);
     clearSuggestions();
     setIsOpen(false);
@@ -113,7 +113,7 @@ const MapSearchBox: React.FC<MapSearchBoxProps> = ({
       {/* Suggestions Dropdown */}
       {isOpen && status === 'OK' && data.length > 0 && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-          {data.map((suggestion: { description: string; place_id: string }, index: number) => (
+          {data.map((suggestion: { description: string; place_id: string; structured_formatting?: { main_text?: string; secondary_text?: string } }, index: number) => (
             <div
               key={index}
               onClick={() => handleSelect(suggestion)}
