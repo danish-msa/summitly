@@ -20,6 +20,13 @@ interface MarketAnalyticsProps {
   propertyClass: string;
 }
 
+interface ChartParam {
+  axisValue: string;
+  seriesName: string;
+  value: number;
+  color: string;
+}
+
 // Generate realistic market data based on location demographics
 const generateMarketData = (locationData: ProcessedLocation | null, propertyClass: string) => {
   const months: string[] = [];
@@ -29,7 +36,7 @@ const generateMarketData = (locationData: ProcessedLocation | null, propertyClas
   const startDate = new Date(2020, 0, 1);
   const endDate = new Date(2025, 9, 1);
   
-  let currentDate = new Date(startDate);
+  const currentDate = new Date(startDate);
   
   // Base values based on property class and location demographics
   let basePrice = 650000;
@@ -178,7 +185,7 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
   const [locationData, setLocationData] = useState<ProcessedLocation | null>(null);
   const [chartKey, setChartKey] = useState(0); // Force chart re-render on data change
   
-  const { searchLocations, getLocationStats } = useLocationData();
+  const { searchLocations } = useLocationData();
   
   // Extract coordinates from property address for API calls
   const [latitude, longitude] = useMemo(() => {
@@ -373,9 +380,9 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
         fontSize: 12,
       },
       padding: 12,
-      formatter: (params: any) => {
+      formatter: (params: ChartParam[]) => {
         let result = `<div style="font-weight: 600; margin-bottom: 8px;">${params[0].axisValue}</div>`;
-        params.forEach((param: any) => {
+        params.forEach((param: ChartParam) => {
           const value = param.seriesName === 'Median Sold Price' 
             ? `$${(param.value / 1000).toFixed(0)}K`
             : `${param.value.toFixed(0)} Days`;
@@ -607,9 +614,9 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
           fontSize: 12,
         },
         padding: 12,
-        formatter: (params: any) => {
+        formatter: (params: ChartParam[]) => {
           let result = `<div style="font-weight: 600; margin-bottom: 8px;">${params[0].axisValue}</div>`;
-          params.forEach((param: any) => {
+          params.forEach((param: ChartParam) => {
             result += `
               <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
                 <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${param.color};"></span>
@@ -754,9 +761,9 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
           fontSize: 12,
         },
         padding: 12,
-        formatter: (params: any) => {
+        formatter: (params: ChartParam[]) => {
           let result = `<div style="font-weight: 600; margin-bottom: 8px;">${params[0].axisValue}</div>`;
-          params.forEach((param: any) => {
+          params.forEach((param: ChartParam) => {
             const price = param.value.toLocaleString('en-US', {
               style: 'currency',
               currency: 'USD',

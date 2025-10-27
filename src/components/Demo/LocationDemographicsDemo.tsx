@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ProcessedLocation, LocationStats } from '@/data/types';
+import { ProcessedLocation } from '@/data/types';
 import { useLocationData, useLocationDemographics, useLocationSearch } from '@/hooks/useLocationData';
 
 /**
@@ -11,24 +11,18 @@ const LocationDemographicsDemo: React.FC = () => {
   const [showHierarchy, setShowHierarchy] = useState(false);
   
   const {
-    locations,
-    loading,
-    error,
-    fetchLocations,
     getPopularLocations,
-    getLocationsByType,
     getLocationHierarchy,
     updateFilters
   } = useLocationData();
 
-  const { stats, loading: statsLoading } = useLocationDemographics(selectedLocation);
+  const { stats, loading: statsLoading } = useLocationDemographics(selectedLocation || undefined);
   
   const {
     query,
     results,
     isSearching,
-    search,
-    clearSearch
+    search
   } = useLocationSearch();
 
   // Initialize with sample data
@@ -36,59 +30,8 @@ const LocationDemographicsDemo: React.FC = () => {
     // In a real app, you'd call fetchLocations with your API key
     // fetchLocations('your-api-key');
     
-    // For demo, we'll use mock data
-    const mockLocations: ProcessedLocation[] = [
-      {
-        id: 'area-toronto',
-        name: 'Toronto',
-        type: 'area',
-        activeCount: 3312,
-        coordinates: { lat: 43.653226, lng: -79.3831843 },
-        demographics: {
-          residential: 2000,
-          condo: 1000,
-          commercial: 312,
-          total: 3312
-        },
-        children: [
-          {
-            id: 'city-toronto-downtown',
-            name: 'Downtown Toronto',
-            type: 'city',
-            parent: 'Toronto',
-            activeCount: 1200,
-            coordinates: { lat: 43.653226, lng: -79.3831843 },
-            demographics: {
-              residential: 600,
-              condo: 500,
-              commercial: 100,
-              total: 1200
-            },
-            children: [
-              {
-                id: 'neighborhood-annex',
-                name: 'Annex',
-                type: 'neighborhood',
-                parent: 'Downtown Toronto',
-                activeCount: 67,
-                coordinates: { lat: 43.6740289, lng: -79.3960032 },
-                demographics: {
-                  residential: 40,
-                  condo: 25,
-                  commercial: 2,
-                  total: 67
-                }
-              }
-            ]
-          }
-        ]
-      }
-    ];
-    
-    // Set mock data
-    setTimeout(() => {
-      // This would normally be set by the hook after API call
-    }, 1000);
+    // For demo purposes, we'll use the hook's built-in functionality
+    // The mock data is handled by the hook itself
   }, []);
 
   const handleLocationSelect = (location: ProcessedLocation) => {

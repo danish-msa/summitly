@@ -96,30 +96,7 @@ const commuteMethodData = [
 const NeighbourhoodDemographics = ({ latitude, longitude, address }: { latitude?: number | null, longitude?: number | null, address?: string }) => {
   const [activeTab, setActiveTab] = useState("income");
 
-  const getChartData = (tab: string) => {
-    switch (tab) {
-      case "income":
-        return householdIncomeData;
-      case "age":
-        return ageData;
-      case "occupation":
-        return occupationData;
-      case "ethnicity":
-        return ethnicityData;
-      case "language":
-        return languageData;
-      case "yearBuilt":
-        return yearBuiltData;
-      case "propertyType":
-        return propertyTypeData;
-      case "commute":
-        return commuteMethodData;
-      default:
-        return householdIncomeData;
-    }
-  };
-
-  const getPieChartOption = (data: any[], title: string) => {
+  const getPieChartOption = (data: Array<{name: string, value: number}>, title: string) => {
     return {
       tooltip: {
         trigger: "item",

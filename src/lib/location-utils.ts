@@ -1,11 +1,14 @@
 import { 
   LocationsResponse, 
   ProcessedLocation, 
-  LocationDemographics, 
   LocationStats,
   LocationFilters,
   LocationCoordinates,
-  LocationPolygon
+  LocationPolygon,
+  City,
+  Area,
+  PropertyClass,
+  Neighborhood
 } from '@/data/types';
 
 /**
@@ -206,14 +209,14 @@ export class LocationDataProcessor {
   /**
    * Calculate total count for an area
    */
-  private static calculateTotalCount(cities: any[]): number {
+  private static calculateTotalCount(cities: City[]): number {
     return cities.reduce((total, city) => total + city.activeCount, 0);
   }
 
   /**
    * Calculate center coordinates for an area
    */
-  private static calculateCenterCoordinates(cities: any[]): LocationCoordinates {
+  private static calculateCenterCoordinates(cities: City[]): LocationCoordinates {
     if (cities.length === 0) return { lat: 0, lng: 0 };
     
     const totalLat = cities.reduce((sum, city) => sum + city.location.lat, 0);
@@ -228,7 +231,7 @@ export class LocationDataProcessor {
   /**
    * Create polygon for an area (simplified - uses city boundaries)
    */
-  private static createAreaPolygon(cities: any[]): LocationPolygon | undefined {
+  private static createAreaPolygon(cities: City[]): LocationPolygon | undefined {
     if (cities.length === 0) return undefined;
     
     // For now, return the first city's polygon as area polygon
@@ -239,7 +242,7 @@ export class LocationDataProcessor {
   /**
    * Calculate demographics for an area
    */
-  private static calculateAreaDemographics(area: any, propertyClass: string): any {
+  private static calculateAreaDemographics(area: Area, propertyClass: string): {residential: number, condo: number, commercial: number, total: number} {
     const totalCount = this.calculateTotalCount(area.cities);
     
     return {
@@ -253,7 +256,7 @@ export class LocationDataProcessor {
   /**
    * Calculate demographics for a city
    */
-  private static calculateCityDemographics(city: any, propertyClass: string): any {
+  private static calculateCityDemographics(city: City, propertyClass: string): {residential: number, condo: number, commercial: number, total: number} {
     return {
       residential: propertyClass === 'residential' ? city.activeCount : 0,
       condo: propertyClass === 'condo' ? city.activeCount : 0,
@@ -265,7 +268,7 @@ export class LocationDataProcessor {
   /**
    * Calculate demographics for a neighborhood
    */
-  private static calculateNeighborhoodDemographics(neighborhood: any, propertyClass: string): any {
+  private static calculateNeighborhoodDemographics(neighborhood: Neighborhood, propertyClass: string): {residential: number, condo: number, commercial: number, total: number} {
     return {
       residential: propertyClass === 'residential' ? neighborhood.activeCount : 0,
       condo: propertyClass === 'condo' ? neighborhood.activeCount : 0,
