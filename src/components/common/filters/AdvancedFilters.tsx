@@ -22,7 +22,7 @@ interface AdvancedFiltersProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   filters: FilterState;
-  onFilterChange: (e: { target: { name: string; value: string | number } }) => void;
+  onFilterChange: (e: { target: { name: string; value: string | number | string[] } }) => void;
   onApplyFilters: () => void;
   onResetAdvanced: () => void;
 }

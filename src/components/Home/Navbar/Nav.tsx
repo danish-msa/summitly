@@ -131,7 +131,7 @@ const Nav = ({ openNav }: Props) => {
                   className="relative"
                 >
                   <Image
-                    src="/images/LogoBlue.png"
+                    src="/images/logo/LogoBlue.png"
                     alt="Summitly Logo"
                     width={200}
                     height={60}

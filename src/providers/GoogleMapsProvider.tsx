@@ -32,26 +32,28 @@ const LoadingElement = () => {
   return (
     <div className="fixed inset-0 bg-white z-50 flex items-center justify-center">
       <div className="flex flex-col items-center">
-        {/* Modern loading spinner */}
-        <div className="relative w-16 h-16 mb-6">
-          <div className="absolute inset-0 border-4 border-gray-200 rounded-full animate-spin"></div>
-          <div className="absolute inset-0 border-4 border-transparent border-t-blue-600 rounded-full animate-spin"></div>
-        </div>
+        {/* Logo */}
+        <img 
+          src="/images/logo/logo_vertical.png" 
+          alt="Summitly Logo" 
+          className="h-auto w-20 mb-4"
+        />
         
-        <h3 className="text-xl font-semibold text-gray-800 mb-2">
-        Launching Summitly.....
-        </h3>
-        <p className="text-sm text-gray-600 text-center max-w-sm">
-          Preparing location services for you
-        </p>
-        
-        {/* Progress dots */}
-        <div className="flex space-x-2 mt-4">
-          <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
-          <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-          <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+        {/* Loading bar */}
+        <div className="w-64 h-1 bg-gray-200 rounded-full overflow-hidden">
+          <div className="h-full bg-blue-600 rounded-full animate-pulse" style={{
+            animation: 'loading-bar 2s ease-in-out infinite'
+          }}></div>
         </div>
       </div>
+      
+      <style jsx>{`
+        @keyframes loading-bar {
+          0% { width: 0%; }
+          50% { width: 70%; }
+          100% { width: 100%; }
+        }
+      `}</style>
     </div>
   );
 };
