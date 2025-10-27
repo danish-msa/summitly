@@ -228,3 +228,114 @@ export interface BlogFilters {
   page?: number;
   limit?: number;
 }
+
+// Repliers Locations API Interfaces
+export interface LocationCoordinates {
+  lat: number;
+  lng: number;
+}
+
+export interface LocationPolygon {
+  coordinates: number[][][]; // Array of coordinate arrays for polygon boundaries
+}
+
+export interface Neighborhood {
+  name: string;
+  activeCount: number;
+  location: LocationCoordinates;
+  coordinates?: LocationPolygon;
+}
+
+export interface City {
+  name: string;
+  activeCount: number;
+  location: LocationCoordinates;
+  state: string;
+  coordinates: LocationPolygon;
+  neighborhoods: Neighborhood[];
+}
+
+export interface Area {
+  name: string;
+  cities: City[];
+}
+
+export interface PropertyClass {
+  name: string; // "residential", "condo", "commercial"
+  areas: Area[];
+}
+
+export interface Board {
+  boardId: number;
+  name: string;
+  updatedOn: string;
+  classes: PropertyClass[];
+}
+
+export interface LocationsResponse {
+  boards: Board[];
+}
+
+// Organized Location Data for Demographics
+export interface LocationDemographics {
+  // Geographic hierarchy
+  area: string;
+  city: string;
+  neighborhood?: string;
+  
+  // Property counts by class
+  residential: number;
+  condo: number;
+  commercial: number;
+  
+  // Geographic data
+  coordinates: LocationCoordinates;
+  polygon?: LocationPolygon;
+  
+  // Additional metadata
+  state?: string;
+  lastUpdated: string;
+}
+
+// Location Search Filters
+export interface LocationFilters {
+  area?: string;
+  city?: string;
+  class?: 'residential' | 'condo' | 'commercial';
+  neighborhood?: string;
+  search?: string;
+}
+
+// Processed Location Data for UI
+export interface ProcessedLocation {
+  id: string;
+  name: string;
+  type: 'area' | 'city' | 'neighborhood';
+  parent?: string; // Parent location name
+  activeCount: number;
+  coordinates: LocationCoordinates;
+  polygon?: LocationPolygon;
+  children?: ProcessedLocation[]; // Sub-locations
+  demographics: {
+    residential: number;
+    condo: number;
+    commercial: number;
+    total: number;
+  };
+}
+
+// Location Statistics for Demographics
+export interface LocationStats {
+  totalProperties: number;
+  residentialCount: number;
+  condoCount: number;
+  commercialCount: number;
+  averagePrice?: number;
+  medianPrice?: number;
+  priceRange?: {
+    min: number;
+    max: number;
+  };
+  marketTrend?: 'rising' | 'falling' | 'stable';
+  lastUpdated: string;
+}

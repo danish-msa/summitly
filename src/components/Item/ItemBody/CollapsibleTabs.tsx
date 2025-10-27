@@ -6,6 +6,7 @@ import PropertyListingDetails from './PropertyListingDetails'
 import { NeighborhoodAmenities } from './NeighborhoodAmenities'
 import { LifestyleAmenities } from './LifestyleAmenities'
 import { MortgageCalculator } from './MortgageCalculator'
+import { MarketAnalytics } from './MarketAnalytics'
 import SimilarListings from './SimilarListings'
 import { generateMockListingData } from './mockListingData'
 import { PropertyListing } from '@/lib/types'
@@ -21,7 +22,7 @@ interface TabSection {
 }
 
 const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property }) => {
-  const [expandedTabs, setExpandedTabs] = useState<Set<string>>(new Set(['listing-details', 'description', 'features', 'lifestyle', 'location', 'demographics', 'tools', 'similar']));
+  const [expandedTabs, setExpandedTabs] = useState<Set<string>>(new Set(['listing-details', 'description', 'features', 'lifestyle', 'location', 'demographics', 'market-analytics', 'tools', 'similar']));
 
   const toggleTab = (tabId: string) => {
     setExpandedTabs(prev => {
@@ -88,6 +89,18 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property }) => {
       content: (
         <div className="mt-4">
           <Demographics />
+        </div>
+      )
+    },
+    {
+      id: 'market-analytics',
+      label: 'Market Analytics',
+      content: (
+        <div className="mt-4">
+          <MarketAnalytics 
+            propertyAddress={property.address.location || `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim()}
+            propertyClass={property.class || 'residential'}
+          />
         </div>
       )
     },

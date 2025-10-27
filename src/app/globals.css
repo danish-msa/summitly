@@ -357,6 +357,12 @@
     --accent-foreground: 0 0% 98%; /* White text on accent */
     --destructive: 0 84.2% 60.2%; /* Red for destructive actions */
     --destructive-foreground: 0 0% 98%; /* White text on destructive */
+    
+    /* Chart Colors */
+    --chart-price: 220 100% 50%; /* Blue for price line */
+    --chart-days: 160 100% 40%; /* Green for days on market */
+    --chart-grid: 220 25% 85%; /* Light gray for grid lines */
+    --secondary-glow: 220 100% 60%; /* Glow effect color */
     --border: 220 25% 85%; /* #BECAD7 - MIST */
     --input: 220 25% 90%; /* #DAE1E8 - GLACIER */
     --ring: 220 100% 20%; /* #012169 - CB BLUE for focus rings */
