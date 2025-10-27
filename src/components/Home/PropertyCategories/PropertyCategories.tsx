@@ -18,56 +18,56 @@ const propertyCategories: PropertyCategory[] = [
     id: 1,
     title: "New Listings",
     count: 951,
-    image: "/images/newlistings.jpeg",
+    image: "/images/PropertyCategories/newlistings.jpeg",
     href: "/listings?type=new"
   },
   {
     id: 2,
     title: "Price Reduced",
     count: 754,
-    image: "/images/pricereduced.jpeg",
+    image: "/images/propertycategories/pricereduced.jpeg",
     href: "/listings?type=reduced"
   },
   {
     id: 3,
     title: "Open Houses",
     count: 58,
-    image: "/images/openhouses.jpeg",
+    image: "/images/propertycategories/openhouses.jpeg",
     href: "/listings?type=open-houses"
   },
   {
     id: 4,
     title: "Recently Sold",
     count: 1287,
-    image: "/images/recentlysold.jpeg",
+    image: "/images/propertycategories/recentlysold.jpeg",
     href: "/listings?type=sold"
   },
   {
     id: 5,
     title: "New Construction",
     count: 889,
-    image: "/images/newconstruction.jpeg",
+    image: "/images/propertycategories/newconstruction.jpeg",
     href: "/listings?type=construction"
   },
   {
     id: 6,
     title: "New Home Communities",
     count: 72,
-    image: "/images/newhomecommunities.jpeg",
+    image: "/images/propertycategories/newhomecommunities.jpeg",
     href: "/listings?type=communities"
   },
   {
     id: 7,
     title: "Land",
     count: 142,
-    image: "/images/land.jpeg",
+    image: "/images/propertycategories/land.jpeg",
     href: "/listings?type=land"
   },
   {
     id: 8,
     title: "Foreclosures",
     count: 13,
-    image: "/images/foreclosures.jpeg",
+    image: "/images/propertycategories/foreclosures.jpeg",
     href: "/listings?type=foreclosures"
   }
 ];

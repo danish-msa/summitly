@@ -14,7 +14,7 @@ const AsSeenOn = () => {
             {['press_1.svg', 'press_2.svg', 'press_3.svg', 'press_4.svg'].map((fileName, index) => (
               <Image
                 key={fileName}
-                src={`/images/${fileName}`}
+                src={`/images/media/${fileName}`}
                 alt={`Press logo ${index + 1}`}
                 width={120}
                 height={40}

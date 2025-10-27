@@ -298,7 +298,7 @@ export const fetchTopCities = async (): Promise<City[]> => {
       .slice(0, 6)
       .map(([cityName, count], index) => ({
         id: index + 1,
-        image: `/images/c${(index % 6) + 1}.jpg`,
+        image: `/images/cities/c${(index % 6) + 1}.jpg`,
         cityName,
         numberOfProperties: count
       }));
@@ -506,7 +506,7 @@ export const agents: Agent[] = [
     phone: "(555) 123-4567",
     email: "sarah.johnson@example.com",
     bio: "With over 15 years of experience in the real estate market, Sarah specializes in luxury properties and has a keen eye for investment opportunities.",
-    image: "/images/agent-1.jpg",
+    image: "/images/agents/agent-1.jpg",
     socialMedia: {
       facebook: "https://facebook.com/sarahjohnson",
       twitter: "https://twitter.com/sarahjohnson",
@@ -526,7 +526,7 @@ export const agents: Agent[] = [
     phone: "(555) 234-5678",
     email: "michael.chen@example.com",
     bio: "Michael has helped countless businesses find their perfect commercial space. His background in business administration gives him unique insights into client needs.",
-    image: "/images/agent-2.jpg",
+    image: "/images/agents/agent-2.jpg",
     socialMedia: {
       facebook: "https://facebook.com/michaelchen",
       linkedin: "https://linkedin.com/in/michaelchen"
@@ -544,7 +544,7 @@ export const agents: Agent[] = [
     phone: "(555) 345-6789",
     email: "jessica.rodriguez@example.com",
     bio: "Jessica is passionate about helping families find their dream homes. Her attention to detail and negotiation skills have earned her a loyal client base.",
-    image: "/images/agent-3.jpg",
+    image: "/images/agents/agent-3.jpg",
     socialMedia: {
       instagram: "https://instagram.com/jessicarodriguez",
       facebook: "https://facebook.com/jessicarodriguez",
@@ -563,7 +563,7 @@ export const agents: Agent[] = [
     phone: "(555) 456-7890",
     email: "david.thompson@example.com",
     bio: "David specializes in high-end properties and has a network of exclusive clients. His background in interior design helps clients visualize potential in every space.",
-    image: "/images/agent-4.jpg",
+    image: "/images/agents/agent-4.jpg",
     socialMedia: {
       linkedin: "https://linkedin.com/in/davidthompson",
       instagram: "https://instagram.com/davidthompson"
@@ -768,7 +768,7 @@ export const buildings = [
 export const blogs = [
   {
     id: 1,
-    image: "/images/c1.jpg",
+    image: "/images/blogs/c1.jpg",
     date: "Olivia Rhye • 20 Jan 2024",
     title: "Conversations with: London Maer & Co.",
     excerpt: "How a mother-daughter design duo created a studio of their own. See how they turned their creativity into a successful design business that serves clients worldwide.",
@@ -781,7 +781,7 @@ export const blogs = [
   },
   {
     id: 2,
-    image: "/images/c2.jpg",
+    image: "/images/blogs/c2.jpg",
     date: "Phoenix Baker • 19 Jan 2024",
     title: "6 Interesting Ways to Use a 3D Character in Procreate",
     excerpt: "Unleash creativity with 6 innovative ways to use 3D characters in your digital art projects. From concept to final render.",
@@ -792,7 +792,7 @@ export const blogs = [
   },
   {
     id: 3,
-    image: "/images/c3.jpg",
+    image: "/images/blogs/c3.jpg",
     date: "Lana Steiner • 18 Jan 2024",
     title: "Intro to Run a Successful Design Sprint",
     excerpt: "Starting a new design sprint can be daunting but with the right approach, you can lead your team to breakthrough solutions.",
@@ -803,7 +803,7 @@ export const blogs = [
   },
   {
     id: 4,
-    image: "/images/c4.jpg",
+    image: "/images/blogs/c4.jpg",
     date: "Natali Craig • 17 Jan 2024",
     title: "Migrating from Craft to Webflow: Process & Tips",
     excerpt: "Learn the complete process of migrating your design workflow from Craft to Webflow with these expert tips and best practices.",
@@ -814,7 +814,7 @@ export const blogs = [
   },
   {
     id: 5,
-    image: "/images/c5.jpg",
+    image: "/images/blogs/c5.jpg",
     date: "Candice Wu • 16 Jan 2024",
     title: "Minimal Organics — Shampoo + Alternatives & Treatment",
     excerpt: "Discover sustainable beauty products that are good for your hair and the environment. A comprehensive guide to organic hair care.",
@@ -825,7 +825,7 @@ export const blogs = [
   },
   {
     id: 6,
-    image: "/images/c6.jpg",
+    image: "/images/blogs/c6.jpg",
     date: "Alec Whitten • 1 Jan 2023",
     title: "A Continually Unfolding History → Where We Work by Hand",
     excerpt: "Explore the evolution of craftsmanship and how traditional methods inspire modern design practices in our digital age.",
@@ -836,7 +836,7 @@ export const blogs = [
   },
   {
     id: 7,
-    image: "/images/c1.jpg",
+    image: "/images/blogs/c1.jpg",
     date: "Demi Wilkinson • 15 Jan 2023",
     title: "Cognitive Dissonance Theory - Cool Course for UX Designers",
     excerpt: "Understanding psychological principles that influence user behavior and design decisions. Essential knowledge for modern UX designers.",
@@ -847,7 +847,7 @@ export const blogs = [
   },
   {
     id: 8,
-    image: "/images/c2.jpg",
+    image: "/images/blogs/c2.jpg",
     date: "Candice Wu • 10 Jan 2023",
     title: "How Remote Work Drastically Increased My Quality of Life →",
     excerpt: "Personal insights on the benefits of remote work and tips for maintaining work-life balance in a distributed team environment.",
@@ -858,7 +858,7 @@ export const blogs = [
   },
   {
     id: 9,
-    image: "/images/c3.jpg",
+    image: "/images/blogs/c3.jpg",
     date: "Orlando Diggs • 8 Jan 2023",
     title: "Poroschic Interview with Designer : Jasmin Santos",
     excerpt: "An in-depth conversation about design philosophy, creative process, and career journey with renowned designer Jasmin Santos.",
@@ -869,7 +869,7 @@ export const blogs = [
   },
   {
     id: 10,
-    image: "/images/c4.jpg",
+    image: "/images/blogs/c4.jpg",
     date: "Kate Morrison • 5 Jan 2023",
     title: "Improve Your UI Design Skills with Copy",
     excerpt: "Learn how better copywriting can elevate your design work and user experience. The intersection of design and content strategy.",
@@ -880,7 +880,7 @@ export const blogs = [
   },
   {
     id: 11,
-    image: "/images/c5.jpg",
+    image: "/images/blogs/c5.jpg",
     date: "Koray Okumus • 3 Jan 2023",
     title: "The Design Dilemma is Real! UX Versus the Enemy of Creativity",
     excerpt: "Balancing user experience requirements with creative freedom in modern design. Finding the sweet spot between usability and innovation.",
@@ -891,7 +891,7 @@ export const blogs = [
   },
   {
     id: 12,
-    image: "/images/c6.jpg",
+    image: "/images/blogs/c6.jpg",
     date: "Sarah Johnson • 28 Dec 2022",
     title: "Building Design Systems That Scale",
     excerpt: "Creating design systems that grow with your product and team. Best practices for maintaining consistency across large organizations.",
@@ -907,7 +907,7 @@ export const userReviewData = [
     id: 1,
     name: "John Doe",
     profession: "Real Estate Agent",
-    userImage: "/images/u1.jpg",
+    userImage: "/images/testimonials/u1.jpg",
     review:
       "A wonderful experience! The platform made it easy to find exactly what I needed.",
   },
@@ -915,7 +915,7 @@ export const userReviewData = [
     id: 2,
     name: "Mike Smith",
     profession: "Property Investor",
-    userImage: "/images/u2.jpg",
+    userImage: "/images/testimonials/u2.jpg",
     review:
       "Great selection of properties and seamless process. Highly recommended for anyone looking to invest.",
   },
@@ -923,7 +923,7 @@ export const userReviewData = [
     id: 3,
     name: "Alex Johnson",
     profession: "Home Buyer",
-    userImage: "/images/u3.jpg",
+    userImage: "/images/testimonials/u3.jpg",
     review:
       "The website helped me find my dream home quickly and hassle-free. Exceptional service!",
   },
@@ -931,7 +931,7 @@ export const userReviewData = [
     id: 4,
     name: "Emily Clark",
     profession: "Interior Designer",
-    userImage: "/images/u4.jpg",
+    userImage: "/images/testimonials/u4.jpg",
     review:
       "Fantastic range of properties with clear details. The best platform for home and design inspiration!",
   },

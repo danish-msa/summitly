@@ -37,37 +37,29 @@ const Home: React.FC = () => {
             <AsSeenOn />
             <PropertyCategories />
             <CallToAction3 />
-            {/* <FeaturedIn /> */}
-            {/* <BuyerAndSeller /> */}
             <Properties />
-            
-            {/* <WhatWeDo /> */}
-            
-            {/* <FeatureGrid /> */}
             <ServiceFeatures />
-            
-            
-            {/* <PropertyDiscovery /> */}
             <CallToAction2 />
             <RecommendationsSection />
-            
-            
-            {/* <BuyingPowerCalculator /> */}
-            {/* <SavingsCalculation /> */}
             <CityProperties />
             <CallToAction />
-            
             <WhyChooseUs />
-            {/* <Condos /> */}
-            {/* <BuildingFeature /> */}
-            
-            {/* <ApartmentType /> */}
-            {/* <OurAgents /> */}
-            {/* <ExploreHotCities /> */}
             <ConnectWithUs />
             <ClientReviews />
             <Blogs />
             <FAQ />
+            {/* <Condos /> */}
+            {/* <BuildingFeature /> */}
+            {/* <ApartmentType /> */}
+            {/* <OurAgents /> */}
+            {/* <ExploreHotCities /> */}
+            {/* <BuyingPowerCalculator /> */}
+            {/* <SavingsCalculation /> */}
+            {/* <PropertyDiscovery /> */}
+            {/* <WhatWeDo /> */}
+            {/* <FeatureGrid /> */}
+            {/* <FeaturedIn /> */}
+            {/* <BuyerAndSeller /> */}
         </div>
     );
 };
