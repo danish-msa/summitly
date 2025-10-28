@@ -4,7 +4,8 @@ import Demographics from './Demographics'
 import PropertyListingDetails from './PropertyListingDetails'
 import { NeighborhoodAmenities } from './NeighborhoodAmenities'
 import { LifestyleAmenities } from './LifestyleAmenities'
-import { MortgageCalculator } from './MortgageCalculator'
+// import { MortgageCalculator } from './MortgageCalculator'
+import { MortgageCalculator } from '@/components/Calculator'
 import { MarketAnalytics } from './MarketAnalytics'
 import SimilarListings from './SimilarListings'
 import { generateMockListingData } from './mockListingData'
@@ -112,6 +113,7 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property }) => {
       label: 'Tools',
       content: (
         <div className="mt-4">
+          {/* <MortgageCalculator /> */}
           <MortgageCalculator />
         </div>
       )
