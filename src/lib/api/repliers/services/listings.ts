@@ -30,7 +30,7 @@ export interface ListingsParams {
   status?: string | string[];
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface ListingsResult {

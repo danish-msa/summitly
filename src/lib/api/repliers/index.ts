@@ -66,7 +66,7 @@ export const RepliersAPI = {
   client: {
     getStats: () => repliersClient.getStats(),
     clearCache: () => repliersClient.clearCache(),
-    configure: (config: any) => repliersClient.configure(config),
+    configure: (config: Partial<typeof API_CONFIG>) => repliersClient.configure(config),
   },
 };
 

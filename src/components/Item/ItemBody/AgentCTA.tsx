@@ -1,5 +1,5 @@
 import React from 'react'
-import { Phone, Mail, MessageCircle, User, Star, ArrowRight } from 'lucide-react'
+import { Phone, Mail, MessageCircle, User, Star } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 

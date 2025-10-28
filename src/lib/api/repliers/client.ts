@@ -11,8 +11,6 @@
  * - Performance monitoring
  */
 
-import { toast } from 'sonner';
-
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
@@ -44,7 +42,7 @@ const API_CONFIG = {
 // TYPES
 // ============================================================================
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data: T | null;
   error: ApiError | null;
   cached: boolean;
@@ -60,9 +58,9 @@ export interface ApiError {
 
 export interface RequestConfig {
   endpoint: string;
-  params?: Record<string, any>;
+  params?: Record<string, unknown>;
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
-  body?: any;
+  body?: unknown;
   authMethod?: 'header' | 'query';
   cache?: boolean;
   cacheDuration?: number;
@@ -73,15 +71,15 @@ export interface RequestConfig {
 }
 
 interface CacheEntry {
-  data: any;
+  data: unknown;
   timestamp: number;
   expiresAt: number;
 }
 
 interface QueuedRequest {
   config: RequestConfig;
-  resolve: (value: any) => void;
-  reject: (reason: any) => void;
+  resolve: (value: unknown) => void;
+  reject: (reason: unknown) => void;
   priority: 'high' | 'normal' | 'low';
   attempts: number;
 }
@@ -115,11 +113,11 @@ class RepliersAPIClient {
   // PUBLIC API
   // ==========================================================================
 
-  async request<T = any>(config: RequestConfig): Promise<ApiResponse<T>> {
+  async request<T = unknown>(config: RequestConfig): Promise<ApiResponse<T>> {
     this.stats.totalRequests++;
 
     if (!API_CONFIG.apiKey) {
-      return this.createErrorResponse('API_KEY_MISSING', 'API key not configured', false);
+      return this.createErrorResponse('API_KEY_MISSING', 'API key not configured', false) as ApiResponse<T>;
     }
 
     // Check cache
@@ -127,15 +125,15 @@ class RepliersAPIClient {
       const cached = this.getFromCache(config);
       if (cached) {
         this.stats.cachedRequests++;
-        return { data: cached, error: null, cached: true, timestamp: Date.now() };
+        return { data: cached as T, error: null, cached: true, timestamp: Date.now() };
       }
     }
 
     // Add to queue
-    return new Promise((resolve, reject) => {
+    return new Promise<ApiResponse<T>>((resolve, reject) => {
       this.requestQueue.push({
         config,
-        resolve,
+        resolve: resolve as (value: unknown) => void,
         reject,
         priority: config.priority || 'normal',
         attempts: 0,
@@ -236,7 +234,7 @@ class RepliersAPIClient {
       clearTimeout(timeout);
 
       if (!response.ok) {
-        throw this.createHttpError(response.status, response.statusText, await response.text());
+        throw this.createHttpError(response.status, response.statusText);
       }
 
       const data = await response.json();
@@ -310,7 +308,7 @@ class RepliersAPIClient {
     return `${config.endpoint}:${JSON.stringify(config.params || {})}`;
   }
 
-  private getFromCache(config: RequestConfig): any | null {
+  private getFromCache(config: RequestConfig): unknown | null {
     const key = this.getCacheKey(config);
     const entry = this.cache.get(key);
 
@@ -322,7 +320,7 @@ class RepliersAPIClient {
     return entry.data;
   }
 
-  private saveToCache(config: RequestConfig, data: any): void {
+  private saveToCache(config: RequestConfig, data: unknown): void {
     const key = this.getCacheKey(config);
     const duration = config.cacheDuration || API_CONFIG.defaultCacheDuration;
     
@@ -346,7 +344,7 @@ class RepliersAPIClient {
   // ERROR HANDLING
   // ==========================================================================
 
-  private createHttpError(status: number, statusText: string, details: string): ApiError {
+  private createHttpError(status: number, statusText: string): ApiError {
     const errorMap: Record<number, { code: string; message: string; retryable: boolean }> = {
       400: { code: 'BAD_REQUEST', message: 'Invalid request', retryable: false },
       401: { code: 'UNAUTHORIZED', message: 'Invalid API key', retryable: false },
@@ -427,6 +425,6 @@ export { API_CONFIG };
 
 // Expose for debugging
 if (typeof window !== 'undefined') {
-  (window as any).repliersClient = repliersClient;
+  (window as unknown as Record<string, unknown>).repliersClient = repliersClient;
 }
 

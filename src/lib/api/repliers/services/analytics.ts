@@ -37,7 +37,7 @@ export interface MarketDataResponse {
     avgPrice?: { count: number; mth?: Record<string, { count: number }> };
     avgDays?: { count: number; mth?: Record<string, { count: number }> };
   };
-  listings: any[];
+  listings: unknown[];
 }
 
 export interface MarketData {

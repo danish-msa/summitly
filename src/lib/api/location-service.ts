@@ -123,7 +123,7 @@ export class RepliersLocationsAPI {
     try {
       await this.fetchLocations();
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }

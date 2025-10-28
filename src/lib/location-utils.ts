@@ -7,7 +7,6 @@ import {
   LocationPolygon,
   City,
   Area,
-  PropertyClass,
   Neighborhood
 } from '@/data/types';
 
