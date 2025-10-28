@@ -114,7 +114,7 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property }) => {
       content: (
         <div className="mt-4">
           {/* <MortgageCalculator /> */}
-          <MortgageCalculator />
+          <MortgageCalculator property={property} />
         </div>
       )
     },
@@ -165,7 +165,7 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property }) => {
             {/* Tab Content */}
             <div 
               className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
+                isExpanded ? 'opacity-100' : 'max-h-0 opacity-0'
               }`}
             >
               <div className="px-6 pb-6">
