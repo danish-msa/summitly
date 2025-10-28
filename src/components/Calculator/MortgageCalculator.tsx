@@ -198,6 +198,27 @@ const MortgageCalculator = ({
             </div>
           </div>
 
+          {/* Property Type Selector */}
+          <div className="mb-6">
+            <Label className="text-sm font-medium mb-3 block">Type of house</Label>
+            <div className="flex gap-4">
+              <Button
+                variant={propertyType === "House" ? "default" : "outline"}
+                onClick={() => setPropertyType("House")}
+                className="min-w-[100px] rounded-lg"
+              >
+                House
+              </Button>
+              <Button
+                variant={propertyType === "Condo" ? "default" : "outline"}
+                onClick={() => setPropertyType("Condo")}
+                className="min-w-[100px] rounded-lg"
+              >
+                Condo
+              </Button>
+            </div>
+          </div>
+
           {/* Scenarios Table */}
           <div className="overflow-x-auto mb-8">
             <table className="w-full">
@@ -284,10 +305,119 @@ const MortgageCalculator = ({
             </table>
           </div>
 
-          {/* Individual Controls for Each Scenario */}
+          {/* First Time Home Buyer */}
+          <div className="mb-6">
+            <Label className="text-sm font-medium mb-3 block">Are you a first time home buyer?</Label>
+            <div className="flex gap-4">
+              <Button
+                variant={isFirstTimeBuyer ? "default" : "outline"}
+                onClick={() => setIsFirstTimeBuyer(true)}
+                className="min-w-[100px] rounded-lg"
+              >
+                Yes
+              </Button>
+              <Button
+                variant={!isFirstTimeBuyer ? "default" : "outline"}
+                onClick={() => setIsFirstTimeBuyer(false)}
+                className="min-w-[100px] rounded-lg"
+              >
+                No
+              </Button>
+            </div>
+            {isFirstTimeBuyer && (
+              <div className="mt-4 p-4 bg-secondary/30 rounded-lg flex justify-between items-center">
+                <span className="text-sm">Rebate</span>
+                <span className="font-bold">{formatCurrency(rebateAmount)}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Payment Display - Integrated into main table */}
           <div className="overflow-x-auto mb-8">
             <table className="w-full">
+              <thead>
+                <tr className="">
+                  <th className="text-left py-3 px-2 w-48"></th>
+                  {calculatedScenarios.map((scenario, idx) => (
+                    <th key={idx} className="text-center py-3 px-2">
+                      <div className="font-semibold">{scenario.downPercent.toFixed(1)}%</div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
               <tbody className="divide-y">
+                <tr>
+                  <td className="py-3 px-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">Down payment</span>
+                      <Tooltip.Provider>
+                        <Tooltip.Root>
+                          <Tooltip.Trigger asChild>
+                            <Info className="h-4 w-4 text-muted-foreground" />
+                          </Tooltip.Trigger>
+                          <Tooltip.Portal>
+                            <Tooltip.Content className="bg-gray-800 text-white px-2 py-1 rounded text-xs max-w-xs">
+                              <p>The minimum down payment in Canada is 5% of the home price</p>
+                              <Tooltip.Arrow className="fill-gray-800" />
+                            </Tooltip.Content>
+                          </Tooltip.Portal>
+                        </Tooltip.Root>
+                      </Tooltip.Provider>
+                    </div>
+                  </td>
+                  {scenarios.map((scenario, idx) => (
+                    <td key={idx} className="text-center py-3 px-2">
+                      <div className="flex flex-col gap-1">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={scenario.downPercent}
+                          onChange={(e) => updateScenario(idx, { downPercent: Number(e.target.value) })}
+                          className="text-center h-8 text-sm rounded-lg"
+                        />
+                        <Input
+                          type="number"
+                          value={Math.round(scenario.downAmount)}
+                          onChange={(e) => updateScenario(idx, { downAmount: Number(e.target.value) })}
+                          className="text-center h-8 text-sm rounded-lg"
+                        />
+                      </div>
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="py-3 px-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">CMHC</span>
+                      <Tooltip.Provider>
+                        <Tooltip.Root>
+                          <Tooltip.Trigger asChild>
+                            <Info className="h-4 w-4 text-muted-foreground" />
+                          </Tooltip.Trigger>
+                          <Tooltip.Portal>
+                            <Tooltip.Content className="bg-gray-800 text-white px-2 py-1 rounded text-xs max-w-xs">
+                              <p>Mortgage default insurance required when down payment is less than 20%</p>
+                              <Tooltip.Arrow className="fill-gray-800" />
+                            </Tooltip.Content>
+                          </Tooltip.Portal>
+                        </Tooltip.Root>
+                      </Tooltip.Provider>
+                    </div>
+                  </td>
+                  {calculatedScenarios.map((scenario, idx) => (
+                    <td key={idx} className="text-center py-3 px-2 text-accent">
+                      {formatCurrency(scenario.cmhc)}
+                    </td>
+                  ))}
+                </tr>
+                <tr className="bg-secondary/20">
+                  <td className="py-3 px-2 font-medium text-sm">Total mortgage</td>
+                  {calculatedScenarios.map((scenario, idx) => (
+                    <td key={idx} className="text-center py-3 px-2 font-bold">
+                      {formatCurrency(scenario.totalMortgage)}
+                    </td>
+                  ))}
+                </tr>
                 <tr>
                   <td className="py-3 px-2 w-48">
                     <div className="flex items-center gap-2">
@@ -388,17 +518,9 @@ const MortgageCalculator = ({
                     </td>
                   ))}
                 </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* Payment Display */}
-          <div className="overflow-x-auto mb-8">
-            <table className="w-full">
-              <thead>
                 <tr className="bg-secondary/20 border-y-2">
-                  <th className="text-left py-3 px-2 w-48">
-                    <span className="flex items-center gap-2">
+                  <td className="py-3 px-2">
+                    <span className="flex items-center gap-2 font-bold text-lg">
                       Mortgage payment
                       <Tooltip.Provider>
                         <Tooltip.Root>
@@ -414,14 +536,148 @@ const MortgageCalculator = ({
                         </Tooltip.Root>
                       </Tooltip.Provider>
                     </span>
-                  </th>
+                  </td>
                   {calculatedScenarios.map((scenario, idx) => (
-                    <th key={idx} className="text-center py-3 px-2 font-bold text-primary text-lg">
+                    <td key={idx} className="text-center py-3 px-2 font-bold text-primary text-lg">
                       {formatCurrency(scenario.payment)}
-                    </th>
+                    </td>
                   ))}
                 </tr>
-              </thead>
+                <tr>
+                  <td className="py-3 px-2">
+                    <span className="text-sm">Property tax</span>
+                  </td>
+                  {calculatedScenarios.map((scenario, idx) => (
+                    <td key={idx} className="text-center py-3 px-2">
+                      <Input
+                        type="number"
+                        value={propertyTax}
+                        onChange={(e) => setPropertyTax(Number(e.target.value))}
+                        className="text-center h-8 text-sm rounded-lg"
+                      />
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="py-3 px-2">
+                    <span className="text-sm">Monthly debt payments</span>
+                  </td>
+                  {calculatedScenarios.map((scenario, idx) => (
+                    <td key={idx} className="text-center py-3 px-2">
+                      <Input
+                        type="number"
+                        value={monthlyDebt}
+                        onChange={(e) => setMonthlyDebt(Number(e.target.value))}
+                        className="text-center h-8 text-sm rounded-lg"
+                      />
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="py-3 px-2">
+                    <span className="text-sm">Utilities</span>
+                  </td>
+                  {calculatedScenarios.map((scenario, idx) => (
+                    <td key={idx} className="text-center py-3 px-2">
+                      <Input
+                        type="number"
+                        value={utilities}
+                        onChange={(e) => setUtilities(Number(e.target.value))}
+                        className="text-center h-8 text-sm rounded-lg"
+                      />
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="py-3 px-2">
+                    <span className="text-sm">Property insurance</span>
+                  </td>
+                  {calculatedScenarios.map((scenario, idx) => (
+                    <td key={idx} className="text-center py-3 px-2">
+                      <Input
+                        type="number"
+                        value={propertyInsurance}
+                        onChange={(e) => setPropertyInsurance(Number(e.target.value))}
+                        className="text-center h-8 text-sm rounded-lg"
+                      />
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="py-3 px-2">
+                    <span className="text-sm">Phone</span>
+                  </td>
+                  {calculatedScenarios.map((scenario, idx) => (
+                    <td key={idx} className="text-center py-3 px-2">
+                      <Input
+                        type="number"
+                        value={phone}
+                        onChange={(e) => setPhone(Number(e.target.value))}
+                        className="text-center h-8 text-sm rounded-lg"
+                      />
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="py-3 px-2">
+                    <span className="text-sm">Cable</span>
+                  </td>
+                  {calculatedScenarios.map((scenario, idx) => (
+                    <td key={idx} className="text-center py-3 px-2">
+                      <Input
+                        type="number"
+                        value={cable}
+                        onChange={(e) => setCable(Number(e.target.value))}
+                        className="text-center h-8 text-sm rounded-lg"
+                      />
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="py-3 px-2">
+                    <span className="text-sm">Internet</span>
+                  </td>
+                  {calculatedScenarios.map((scenario, idx) => (
+                    <td key={idx} className="text-center py-3 px-2">
+                      <Input
+                        type="number"
+                        value={internet}
+                        onChange={(e) => setInternet(Number(e.target.value))}
+                        className="text-center h-8 text-sm rounded-lg"
+                      />
+                    </td>
+                  ))}
+                </tr>
+                {propertyType === "Condo" && (
+                  <tr>
+                    <td className="py-3 px-2">
+                      <span className="text-sm">Condo fees</span>
+                    </td>
+                    {calculatedScenarios.map((scenario, idx) => (
+                      <td key={idx} className="text-center py-3 px-2">
+                        <Input
+                          type="number"
+                          value={condoFees}
+                          onChange={(e) => setCondoFees(Number(e.target.value))}
+                          className="text-center h-8 text-sm rounded-lg"
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                )}
+                <tr className="bg-primary/10 border-y-2">
+                  <td className="py-3 px-2 font-bold text-lg">
+                    <span className="flex items-center gap-2">
+                      Total monthly expenses
+                    </span>
+                  </td>
+                  {calculatedScenarios.map((scenario, idx) => (
+                    <td key={idx} className="text-center py-3 px-2 font-bold text-lg text-accent">
+                      {formatCurrency(scenario.payment + propertyTax + monthlyDebt + utilities + propertyInsurance + phone + cable + internet + (propertyType === "Condo" ? condoFees : 0))}
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
             </table>
           </div>
 
@@ -554,143 +810,6 @@ const MortgageCalculator = ({
                   <div className="border-t pt-3 flex justify-between items-center">
                     <span className="font-bold text-lg">Cash needed to close</span>
                     <span className="font-bold text-lg text-accent">{formatCurrency(totalCashToClose)}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </Card>
-
-          {/* Monthly Expenses Section */}
-          <Card className="mb-6">
-            <button
-              onClick={() => setMonthlyExpensesExpanded(!monthlyExpensesExpanded)}
-              className="w-full p-4 flex items-center justify-between hover:bg-secondary/20 transition-colors"
-            >
-              <h3 className="text-lg font-bold">Monthly expenses</h3>
-              {monthlyExpensesExpanded ? <ChevronUp /> : <ChevronDown />}
-            </button>
-            
-            {monthlyExpensesExpanded && (
-              <div className="p-4 border-t space-y-4">
-                <div className="mb-4">
-                  <Label className="text-sm font-medium mb-3 block">Type of house</Label>
-                  <div className="flex gap-4">
-                    <Button
-                      variant={propertyType === "House" ? "default" : "outline"}
-                      onClick={() => setPropertyType("House")}
-                      className="min-w-[100px]"
-                    >
-                      House
-                    </Button>
-                    <Button
-                      variant={propertyType === "Condo" ? "default" : "outline"}
-                      onClick={() => setPropertyType("Condo")}
-                      className="min-w-[100px]"
-                    >
-                      Condo
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <Label>Mortgage payment</Label>
-                    <span className="font-bold">{formatCurrency(calculatedScenarios[0].payment)}</span>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <Label htmlFor="propertyTax">Property tax</Label>
-                    <Input
-                      id="propertyTax"
-                      type="number"
-                      value={propertyTax}
-                      onChange={(e) => setPropertyTax(Number(e.target.value))}
-                      className="w-32 text-right"
-                    />
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <Label htmlFor="monthlyDebt">Monthly debt payments</Label>
-                    <Input
-                      id="monthlyDebt"
-                      type="number"
-                      value={monthlyDebt}
-                      onChange={(e) => setMonthlyDebt(Number(e.target.value))}
-                      className="w-32 text-right"
-                    />
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <Label htmlFor="utilities">Utilities</Label>
-                    <Input
-                      id="utilities"
-                      type="number"
-                      value={utilities}
-                      onChange={(e) => setUtilities(Number(e.target.value))}
-                      className="w-32 text-right"
-                    />
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <Label htmlFor="propertyInsurance">Property insurance</Label>
-                    <Input
-                      id="propertyInsurance"
-                      type="number"
-                      value={propertyInsurance}
-                      onChange={(e) => setPropertyInsurance(Number(e.target.value))}
-                      className="w-32 text-right"
-                    />
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      type="number"
-                      value={phone}
-                      onChange={(e) => setPhone(Number(e.target.value))}
-                      className="w-32 text-right"
-                    />
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <Label htmlFor="cable">Cable</Label>
-                    <Input
-                      id="cable"
-                      type="number"
-                      value={cable}
-                      onChange={(e) => setCable(Number(e.target.value))}
-                      className="w-32 text-right"
-                    />
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <Label htmlFor="internet">Internet</Label>
-                    <Input
-                      id="internet"
-                      type="number"
-                      value={internet}
-                      onChange={(e) => setInternet(Number(e.target.value))}
-                      className="w-32 text-right"
-                    />
-                  </div>
-
-                  {propertyType === "Condo" && (
-                    <div className="flex justify-between items-center">
-                      <Label htmlFor="condoFees">Condo fees</Label>
-                      <Input
-                        id="condoFees"
-                        type="number"
-                        value={condoFees}
-                        onChange={(e) => setCondoFees(Number(e.target.value))}
-                        className="w-32 text-right"
-                      />
-                    </div>
-                  )}
-                  
-                  <div className="border-t pt-3 flex justify-between items-center">
-                    <span className="font-bold text-lg">Monthly expenses</span>
-                    <span className="font-bold text-lg text-accent">{formatCurrency(monthlyExpenses)}</span>
                   </div>
                 </div>
               </div>
