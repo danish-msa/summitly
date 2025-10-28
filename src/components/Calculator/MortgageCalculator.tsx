@@ -100,12 +100,11 @@ const MortgageCalculator = ({
       const newPropertyType = property.details?.propertyType?.toLowerCase().includes('condo') ? "Condo" : "House";
       setPropertyType(newPropertyType);
       
-      // Update scenarios with new price
-      const newScenarios = scenarios.map(s => ({
+      // Update scenarios with new price using functional update
+      setScenarios(prevScenarios => prevScenarios.map(s => ({
         ...s,
         downAmount: newPrice * (s.downPercent / 100)
-      }));
-      setScenarios(newScenarios);
+      })));
     }
   }, [property, initialHomePrice, initialLocation]);
 
