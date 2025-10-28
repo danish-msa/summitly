@@ -28,7 +28,7 @@ import * as ListingsService from './services/listings';
 import * as PropertyTypesService from './services/property-types';
 import * as CitiesService from './services/cities';
 import * as AnalyticsService from './services/analytics';
-import { repliersClient } from './client';
+import { repliersClient, API_CONFIG } from './client';
 
 /**
  * Unified API Interface
