@@ -182,40 +182,6 @@ const MortgageCalculator = ({
     }
   };
 
-  const generateAmortizationSchedule = (principal: number, rate: number, years: number) => {
-    const monthlyRate = rate / 100 / 12;
-    const numberOfPayments = years * 12;
-    const monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) / 
-                          (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
-    
-    const schedule = [];
-    let balance = principal;
-    
-    for (let year = 0; year < years; year++) {
-      let yearlyInterest = 0;
-      let yearlyPrincipal = 0;
-      
-      for (let month = 0; month < 12; month++) {
-        const interestPayment = balance * monthlyRate;
-        const principalPayment = monthlyPayment - interestPayment;
-        
-        yearlyInterest += interestPayment;
-        yearlyPrincipal += principalPayment;
-        balance -= principalPayment;
-      }
-      
-      schedule.push({
-        year: year + 1,
-        balance: Math.max(0, balance),
-        interest: yearlyInterest,
-        principal: yearlyPrincipal,
-        totalPayment: yearlyInterest + yearlyPrincipal
-      });
-    }
-    
-    return schedule;
-  };
-
   const calculatedScenarios: CalculatedScenario[] = scenarios.map(scenario => {
     const loanAmount = homePrice - scenario.downAmount;
     const cmhc = calculateCMHC(scenario.downPercent, loanAmount);

@@ -69,10 +69,10 @@ const AmortizationChart = ({ principal, rate, years, paymentFrequency }: Amortiz
           color: '#999'
         }
       },
-      formatter: function(params: any) {
+      formatter: function(params: Array<{axisValue: string, seriesName: string, value: number, marker: string}>) {
         const payment = params[0].axisValue;
         let result = `Payment ${payment}<br/>`;
-        params.forEach((param: any) => {
+        params.forEach((param: {axisValue: string, seriesName: string, value: number, marker: string}) => {
           const value = new Intl.NumberFormat('en-CA', { 
             style: 'currency', 
             currency: 'CAD',
