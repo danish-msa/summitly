@@ -18,7 +18,7 @@ export const fetchPropertyTypes = async (): Promise<PropertyType[]> => {
       method: 'GET',
       headers: {
         accept: 'application/json',
-        'REPLIERS-API-KEY': 'wPBzfSTENIwtX6fXv6JZC2tR7tMUVT'
+        'REPLIERS-API-KEY': process.env.NEXT_PUBLIC_REPLIERS_API_KEY || ''
       }
     };
 
@@ -70,7 +70,7 @@ export const fetchPropertyClasses = async (): Promise<PropertyClass[]> => {
       method: 'GET',
       headers: {
         accept: 'application/json',
-        'REPLIERS-API-KEY': 'wPBzfSTENIwtX6fXv6JZC2tR7tMUVT'
+        'REPLIERS-API-KEY': process.env.NEXT_PUBLIC_REPLIERS_API_KEY || ''
       }
     };
 
@@ -126,7 +126,7 @@ export const fetchPropertyListings = async (): Promise<PropertyListing[]> => {
       method: 'GET',
       headers: {
         accept: 'application/json',
-        'REPLIERS-API-KEY': 'wPBzfSTENIwtX6fXv6JZC2tR7tMUVT'
+        'REPLIERS-API-KEY': process.env.NEXT_PUBLIC_REPLIERS_API_KEY || ''
       }
     };
 
@@ -269,7 +269,7 @@ export const fetchTopCities = async (): Promise<City[]> => {
       method: 'GET',
       headers: {
         accept: 'application/json',
-        'REPLIERS-API-KEY': 'wPBzfSTENIwtX6fXv6JZC2tR7tMUVT'
+        'REPLIERS-API-KEY': process.env.NEXT_PUBLIC_REPLIERS_API_KEY || ''
       }
     };
 
@@ -322,7 +322,7 @@ export const getListings = async (params: Record<string, string | number>): Prom
       method: 'GET',
       headers: {
         accept: 'application/json',
-        'REPLIERS-API-KEY': 'wPBzfSTENIwtX6fXv6JZC2tR7tMUVT'
+        'REPLIERS-API-KEY': process.env.NEXT_PUBLIC_REPLIERS_API_KEY || ''
       }
     };
 
