@@ -241,15 +241,15 @@ export async function getSoldPriceTrends(params: AnalyticsParams): Promise<SoldP
   const averagePrices: number[] = [];
 
   const stats = response.data.statistics;
-  const soldPriceMonths = Object.keys(stats.soldPrice?.mth || {});
+  const soldPriceMonths = Object.keys(stats.avgPrice?.mth || {});
 
   soldPriceMonths.sort().forEach((month) => {
     const date = new Date(month + '-01');
     months.push(date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
 
-    const monthData = stats.soldPrice?.mth?.[month];
-    medianPrices.push(monthData?.med || 0);
-    averagePrices.push(monthData?.avg || 0);
+    const monthData = stats.avgPrice?.mth?.[month];
+    medianPrices.push(monthData?.count || 0);
+    averagePrices.push(monthData?.count || 0);
   });
 
   return { months, medianPrices, averagePrices };
