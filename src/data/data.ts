@@ -303,7 +303,7 @@ export const fetchTopCities = async (): Promise<City[]> => {
         numberOfProperties: count
       }));
     
-    return sortedCities;
+    return sortedCities as City[];
   } catch (error) {
     console.error('Error fetching top cities:', error);
     return []; // Return empty array instead of fallback data
