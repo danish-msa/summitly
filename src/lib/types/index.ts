@@ -303,3 +303,25 @@ export interface SearchParams {
   page?: number;
   limit?: number;
 }
+
+// Repliers API specific types
+export interface RepliersPropertyClass {
+  name: string; // "residential", "condo", "commercial"
+  areas: Area[];
+}
+
+export interface Area {
+  name: string;
+  cities: City[];
+}
+
+export interface Board {
+  boardId: number;
+  name: string;
+  updatedOn: string;
+  classes: RepliersPropertyClass[];
+}
+
+export interface LocationsResponse {
+  boards: Board[];
+}

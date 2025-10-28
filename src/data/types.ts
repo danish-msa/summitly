@@ -260,7 +260,7 @@ export interface Area {
   cities: City[];
 }
 
-export interface PropertyClass {
+export interface RepliersPropertyClass {
   name: string; // "residential", "condo", "commercial"
   areas: Area[];
 }
@@ -269,7 +269,7 @@ export interface Board {
   boardId: number;
   name: string;
   updatedOn: string;
-  classes: PropertyClass[];
+  classes: RepliersPropertyClass[];
 }
 
 export interface LocationsResponse {

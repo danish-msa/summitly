@@ -11,6 +11,7 @@ export type {
   ListingsResponse,
   PropertyType,
   PropertyClass,
+  RepliersPropertyClass,
   PropertyTypesResponse,
   City,
 } from '@/lib/types';
