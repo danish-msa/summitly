@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { ChevronDown, ChevronUp, Info, DollarSign, MapPin, Percent } from "lucide-react";
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { PropertyListing } from "@/lib/types";
@@ -261,6 +262,23 @@ const DownPaymentCalculator = ({
                   className="pl-7 h-11 sm:h-12 text-base sm:text-lg border border-gray-300 rounded-lg"
                 />
               </div>
+              <Slider
+                value={[homePrice]}
+                onValueChange={([value]) => {
+                  setHomePrice(value);
+                  // Update all down amounts based on percentages
+                  const newScenarios = scenarios.map(s => ({
+                    ...s,
+                    downAmount: value * (s.downPercent / 100)
+                  }));
+                  setScenarios(newScenarios);
+                }}
+                min={100000}
+                max={2500000}
+                step={10000}
+                className="mt-2"
+              />
+              <p className="text-xs text-gray-500">$100k - $2.5M</p>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
@@ -314,6 +332,15 @@ const DownPaymentCalculator = ({
                     <Percent className="h-3 w-3" />
                   </span>
                 </div>
+                <Slider
+                  value={[scenarios[0].downPercent]}
+                  onValueChange={([value]) => updateScenario(0, { downPercent: value })}
+                  min={5}
+                  max={100}
+                  step={0.5}
+                  className="mt-2"
+                />
+                <p className="text-xs text-gray-500">5% - 100%</p>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
                     <DollarSign className="h-3 w-3" />
