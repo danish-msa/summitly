@@ -5,8 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { ChevronDown, ChevronUp, DollarSign, Percent, Info } from "lucide-react";
-import * as Tooltip from '@radix-ui/react-tooltip';
+import { ChevronDown, ChevronUp, DollarSign, Percent } from "lucide-react";
 import { useMemoizedCalculation } from './useRentVsBuyCalculation';
 import RentVsBuyChart from './RentVsBuyChart';
 
