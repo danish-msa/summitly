@@ -89,8 +89,6 @@ const RentVsBuyCalculator = ({ className = "" }: RentVsBuyCalculatorProps) => {
   };
 
   // Calculate net costs and gains
-  const buyNetCost = selectedYearData.buyCost - (selectedYearData.buyEquity - downPayment);
-  const rentNetCost = selectedYearData.rentCost - (selectedYearData.rentInvestment - downPayment);
   const rentGain = selectedYearData.rentCost < selectedYearData.buyCost 
     ? selectedYearData.buyCost - selectedYearData.rentCost 
     : 0;

@@ -1,4 +1,4 @@
-import { Home, DollarSign, TrendingUp, Scale } from "lucide-react";
+import { Home, DollarSign, TrendingUp } from "lucide-react";
 
 export interface CalculatorConfig {
   slug: string;

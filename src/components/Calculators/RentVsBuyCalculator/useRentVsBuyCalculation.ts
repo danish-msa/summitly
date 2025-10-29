@@ -51,10 +51,6 @@ export function useMemoizedCalculation(params: CalculationParams): CalculationRe
     const monthlyRate = mortgageRate / 100 / 12;
     const numberOfPayments = amortization * 12;
 
-    // Monthly mortgage payment
-    const monthlyPayment = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) / 
-                          (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
-
     // Calculate CMHC insurance if down payment < 20%
     const cmhcInsurance = downPaymentPercent < 20 
       ? (downPaymentPercent >= 15 ? loanAmount * 0.028 :
@@ -150,6 +146,7 @@ export function useMemoizedCalculation(params: CalculationParams): CalculationRe
     params.annualInsurance,
     params.annualMaintenance,
     params.closingCosts,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   ]);
 }
 

@@ -8,7 +8,6 @@ import {
   Bookmark, 
   MessageSquare, 
   Linkedin,
-  X,
   CheckIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";

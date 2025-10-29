@@ -4,9 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calculator, Home, TrendingUp, DollarSign, PieChart, Building, Car, GraduationCap } from "lucide-react";
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Home, TrendingUp, DollarSign, PieChart, Building } from "lucide-react";
 
 interface CalculatorCard {
   id: string;
