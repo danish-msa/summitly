@@ -32,11 +32,19 @@ const RentVsBuyChart = ({ data }: RentVsBuyChartProps) => {
         trigger: 'axis',
         formatter: (params: echarts.TooltipComponentFormatterCallbackParams) => {
           const paramsArray = Array.isArray(params) ? params : [params];
-          const year = (paramsArray[0]?.axisValue as number) || 1;
-          const yearData = data[year - 1];
+          const firstParam = paramsArray[0];
+          if (!firstParam || firstParam.dataIndex === undefined) {
+            return '';
+          }
+          const year = firstParam.dataIndex + 1; // dataIndex is 0-based, year is 1-based
+          const yearData = data[firstParam.dataIndex];
+          if (!yearData) {
+            return '';
+          }
           let tooltip = `<strong>Year ${year}</strong><br/>`;
           
           paramsArray.forEach((param) => {
+            if (!param) return;
             if (param.seriesName === 'Buy Cost') {
               tooltip += `Buy Cost: ${new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(yearData.buyCost)}<br/>`;
             } else if (param.seriesName === 'Rent Cost') {
