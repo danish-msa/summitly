@@ -31,13 +31,13 @@ interface PropertyListing {
 
 interface PropertyCardProps {
   property: PropertyListing;
+  onHide?: () => void;
 }
 
-const PropertyCard = ({ property }: PropertyCardProps) => {
+const PropertyCard = ({ property, onHide }: PropertyCardProps) => {
   const [imgError, setImgError] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
-  const [isHidden, setIsHidden] = useState(false);
   
   const images = property.images.allImages || [property.images.imageUrl];
   const totalImages = images.length;
@@ -115,15 +115,12 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
   const handleHide = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsHidden(true);
+    if (onHide) {
+      onHide();
+    }
     // You could add additional logic here like API calls to hide the property
     console.log('Property hidden:', property.mlsNumber);
   };
-
-  // Don't render if hidden
-  if (isHidden) {
-    return null;
-  }
 
   return (
     <Link 
@@ -131,7 +128,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
       className="group cursor-pointer w-full block transition-transform duration-300"
       aria-label={`View details for ${property.details.propertyType} at ${property.address.city}`}
     >
-      <div className='bg-card rounded-3xl overflow-hidden transition-all duration-500 border border-border/50 hover:border-primary/30 hover:shadow-xl' style={{ boxShadow: '0 8px 16px 0 rgba(0, 0, 0, 0.05)' }}>
+      <div className='bg-card rounded-3xl overflow-hidden transition-all duration-500 hover:shadow-xl' style={{ boxShadow: '0 8px 16px 0 rgba(0, 0, 0, 0.05)' }}>
         {/* Image Section */}
         <div className='relative h-62 w-full overflow-hidden'>
           <img 

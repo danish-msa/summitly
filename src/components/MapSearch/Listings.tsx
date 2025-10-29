@@ -5,6 +5,7 @@ import { getListings } from '@/lib/api/properties';
 import { FaMapMarkerAlt, FaList } from 'react-icons/fa';
 import PropertyCard from '@/components/Helper/PropertyCard';
 import { useGlobalFilters } from '@/hooks/useGlobalFilters';
+import { useHiddenProperties } from '@/hooks/useHiddenProperties';
 import GlobalFilters from '@/components/common/filters/GlobalFilters';
 import { LOCATIONS } from '@/lib/types/filters';
 import dynamic from 'next/dynamic';
@@ -37,6 +38,9 @@ const Listings = () => {
 
   // Use global filters
   const { filters, handleFilterChange, resetFilters } = useGlobalFilters();
+
+  // Use hidden properties hook
+  const { hideProperty, getVisibleProperties } = useHiddenProperties();
 
   // Load properties with filters applied
   useEffect(() => {
@@ -127,6 +131,9 @@ const Listings = () => {
       })
     : properties;
 
+  // Get visible properties (filtered properties minus hidden ones)
+  const visibleProperties = getVisibleProperties(filteredProperties);
+
   if (loading) {
     return (
       <div className="container mx-auto py-20 px-4">
@@ -190,18 +197,21 @@ const Listings = () => {
             {/* Results Count */}
             <div className="hidden sm:flex items-center mb-2">
               <span className="text-gray-700 font-medium text-sm">
-                {filteredProperties.length} results
+                {visibleProperties.length} results
               </span>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              {filteredProperties.length > 0 ? (
-                filteredProperties.map((property) => (
+              {visibleProperties.length > 0 ? (
+                visibleProperties.map((property) => (
                   <div 
                     key={property.mlsNumber}
                     className={`cursor-pointer transition-all ${selectedProperty?.mlsNumber === property.mlsNumber ? 'ring-2 ring-secondary' : ''}`}
                     onClick={() => handlePropertyClick(property)}
                   >
-                    <PropertyCard property={property} />
+                    <PropertyCard 
+                      property={property} 
+                      onHide={() => hideProperty(property.mlsNumber)}
+                    />
                   </div>
                 ))
               ) : (
@@ -217,7 +227,7 @@ const Listings = () => {
         {(viewMode === 'map' || viewMode === 'split') && (
           <div className={`${viewMode === 'split' ? 'md:w-1/2' : 'w-full'} bg-gray-100 rounded-lg overflow-hidden`} style={{ height: viewMode === 'split' ? 'calc(100vh - 200px)' : '70vh' }}>
             <GooglePropertyMap 
-              properties={filteredProperties}
+              properties={visibleProperties}
               selectedProperty={selectedProperty}
               onPropertySelect={handlePropertyClick}
               onBoundsChange={handleMapBoundsChange}

@@ -1,15 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { MapPin, Users, Layers, Eye, Heart, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PropertyListing } from '@/lib/types';
 import BannerGallery from './BannerGallery';
+import ShareModal from './ShareModal';
 
 interface BannerProps {
     property: PropertyListing;
 }
 
 const Banner: React.FC<BannerProps> = ({ property }) => {
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    
     // Create property title from property details
     const propertyTitle = `${property.details.propertyType} in ${property.address.city || 'Unknown Location'}`;
     
@@ -35,7 +38,12 @@ const Banner: React.FC<BannerProps> = ({ property }) => {
                             </div>
                         </div>
                         <div className="flex gap-2">
-                            <Button variant="default" size="sm" className="gap-2">
+                            <Button 
+                                variant="default" 
+                                size="sm" 
+                                className="gap-2"
+                                onClick={() => setIsShareModalOpen(true)}
+                            >
                                 <Share2 className="h-4 w-4" />
                                 Share
                             </Button>
@@ -77,6 +85,12 @@ const Banner: React.FC<BannerProps> = ({ property }) => {
                 <BannerGallery property={property} />
             </div>
 
+            {/* Share Modal */}
+            <ShareModal 
+                isOpen={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
+                property={property}
+            />
         </div>
     );
 };

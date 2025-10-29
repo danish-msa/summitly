@@ -27,7 +27,7 @@ export const navLinks = [
       label: 'Tools',
       url: '#',
       subLinks: [
-        { id: 61, label: 'Down Payment Calculator', url: '/down-payment-calculator' },
+        { id: 61, label: 'Down Payment Calculator', url: '/calculators/down-payment' },
       ],
     },
     {

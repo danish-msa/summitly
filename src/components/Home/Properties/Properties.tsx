@@ -7,6 +7,7 @@ import SellRentToggle from '@/components/common/filters/SellRentToggle';
 import { PropertyListing } from '@/data/types'; // Import the interface from types.ts
 import { useLocationDetection } from '@/hooks/useLocationDetection';
 import { useGlobalFilters } from '@/hooks/useGlobalFilters';
+import { useHiddenProperties } from '@/hooks/useHiddenProperties';
 import { FilterChangeEvent, LOCATIONS } from '@/lib/types/filters';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -22,6 +23,9 @@ const Properties = () => {
   
   // Use global filters hook
   const { filters, handleFilterChange, resetFilters } = useGlobalFilters();
+  
+  // Use hidden properties hook
+  const { hideProperty, getVisibleProperties } = useHiddenProperties();
   
   // Location detection
   const { location } = useLocationDetection();
@@ -264,16 +268,19 @@ const Properties = () => {
     setListingType(type);
   };
 
+  // Get visible properties (filtered properties minus hidden ones)
+  const visibleProperties = getVisibleProperties(filteredProperties);
+
   // Slider navigation functions - move one property at a time
   const nextSlide = () => {
     const slidesPerView = getSlidesPerView();
-    const maxPosition = Math.max(0, filteredProperties.length - slidesPerView);
+    const maxPosition = Math.max(0, visibleProperties.length - slidesPerView);
     setCurrentSlide(prev => prev < maxPosition ? prev + 1 : 0);
   };
 
   const prevSlide = () => {
     const slidesPerView = getSlidesPerView();
-    const maxPosition = Math.max(0, filteredProperties.length - slidesPerView);
+    const maxPosition = Math.max(0, visibleProperties.length - slidesPerView);
     setCurrentSlide(prev => prev > 0 ? prev - 1 : maxPosition);
   };
 
@@ -290,13 +297,13 @@ const Properties = () => {
   // Calculate total possible positions (one property at a time)
   const getTotalPositions = () => {
     const slidesPerView = getSlidesPerView();
-    return Math.max(1, filteredProperties.length - slidesPerView + 1);
+    return Math.max(1, visibleProperties.length - slidesPerView + 1);
   };
 
-  // Reset slide when filtered properties change
+  // Reset slide when visible properties change
   useEffect(() => {
     setCurrentSlide(0);
-  }, [filteredProperties]);
+  }, [visibleProperties]);
 
   if (loading) return (
     <div className="pt-12 sm:pt-16 pb-12 sm:pb-16">
@@ -426,7 +433,7 @@ const Properties = () => {
              {/* Results count */}
              <div className="flex items-center relative">
                <span className="text-gray-600 text-xs w-48 absolute top-8 right-0 text-right">
-                 Showing {filteredProperties.length} of {allProperties.length} properties
+                 Showing {visibleProperties.length} of {allProperties.length} properties
                </span>
              </div>
            </div>
@@ -435,7 +442,7 @@ const Properties = () => {
          
         
         {/* Properties Slider */}
-        {filteredProperties.length > 0 ? (
+        {visibleProperties.length > 0 ? (
           <div className="mt-8 sm:mt-10">
             {/* Slider Container */}
             <div className="relative">
@@ -467,14 +474,17 @@ const Properties = () => {
                     transform: `translateX(-${currentSlide * (100 / getSlidesPerView())}%)`,
                   }}
                 >
-                  {filteredProperties.map((property) => (
+                  {visibleProperties.map((property) => (
                     <div 
                       key={property.mlsNumber} 
                       className="flex-shrink-0"
                       style={{ width: `${100 / getSlidesPerView()}%` }}
                     >
                       <div className="px-2">
-                        <PropertyCard property={property} />
+                        <PropertyCard 
+                          property={property} 
+                          onHide={() => hideProperty(property.mlsNumber)}
+                        />
                       </div>
                     </div>
                   ))}

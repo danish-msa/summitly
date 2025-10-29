@@ -3,6 +3,7 @@ import { fetchPropertyListings } from '@/data/data';
 import PropertyCard from '@/components/Helper/PropertyCard';
 import { PropertyListing } from '@/data/types';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useHiddenProperties } from '@/hooks/useHiddenProperties';
 
 interface SimilarListingsProps {
   currentProperty: PropertyListing;
@@ -16,6 +17,12 @@ const SimilarListings = ({ currentProperty }: SimilarListingsProps) => {
   const [listingType, setListingType] = useState<'sale' | 'sold'>('sale');
   const [currentSlide, setCurrentSlide] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
+
+  // Use hidden properties hook
+  const { hideProperty, getVisibleProperties } = useHiddenProperties();
+
+  // Get visible properties (filtered properties minus hidden ones)
+  const visibleProperties = getVisibleProperties(filteredProperties);
 
   useEffect(() => {
     const loadProperties = async () => {
@@ -77,13 +84,13 @@ const SimilarListings = ({ currentProperty }: SimilarListingsProps) => {
   // Slider navigation functions
   const nextSlide = () => {
     const slidesPerView = getSlidesPerView();
-    const maxPosition = Math.max(0, filteredProperties.length - slidesPerView);
+    const maxPosition = Math.max(0, visibleProperties.length - slidesPerView);
     setCurrentSlide(prev => prev < maxPosition ? prev + 1 : 0);
   };
 
   const prevSlide = () => {
     const slidesPerView = getSlidesPerView();
-    const maxPosition = Math.max(0, filteredProperties.length - slidesPerView);
+    const maxPosition = Math.max(0, visibleProperties.length - slidesPerView);
     setCurrentSlide(prev => prev > 0 ? prev - 1 : maxPosition);
   };
 
@@ -99,13 +106,13 @@ const SimilarListings = ({ currentProperty }: SimilarListingsProps) => {
   // Calculate total possible positions
   const getTotalPositions = () => {
     const slidesPerView = getSlidesPerView();
-    return Math.max(1, filteredProperties.length - slidesPerView + 1);
+    return Math.max(1, visibleProperties.length - slidesPerView + 1);
   };
 
-  // Reset slide when filtered properties change
+  // Reset slide when visible properties change
   useEffect(() => {
     setCurrentSlide(0);
-  }, [filteredProperties]);
+  }, [visibleProperties]);
 
   if (loading) {
     return (
@@ -219,7 +226,7 @@ const SimilarListings = ({ currentProperty }: SimilarListingsProps) => {
       {/* Results Count */}
       <div className="mb-4">
         <p className="text-sm text-gray-600">
-          Showing {filteredProperties.length} {listingType === 'sale' ? 'properties for sale' : 'recently sold properties'}
+          Showing {visibleProperties.length} {listingType === 'sale' ? 'properties for sale' : 'recently sold properties'}
         </p>
       </div>
 
@@ -253,14 +260,17 @@ const SimilarListings = ({ currentProperty }: SimilarListingsProps) => {
               transform: `translateX(-${currentSlide * (100 / getSlidesPerView())}%)`,
             }}
           >
-             {filteredProperties.map((property) => (
+             {visibleProperties.map((property) => (
               <div 
                 key={property.mlsNumber} 
                 className="flex-shrink-0"
                 style={{ width: `${100 / getSlidesPerView()}%` }}
               >
                 <div className="px-2">
-                  <PropertyCard property={property} />
+                  <PropertyCard 
+                    property={property} 
+                    onHide={() => hideProperty(property.mlsNumber)}
+                  />
                 </div>
               </div>
             ))}

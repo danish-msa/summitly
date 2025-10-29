@@ -8,6 +8,8 @@ import { FaSort } from 'react-icons/fa';
 import ListingFilters from './ListingFilters';
 import { LOCATIONS } from '@/lib/types/filters';
 import SellRentToggle from '@/components/common/filters/SellRentToggle';
+import Pagination from '../ui/pagination';
+import { useHiddenProperties } from '@/hooks/useHiddenProperties';
 
 const Listings = () => {
   const [properties, setProperties] = useState<PropertyListing[]>([]);
@@ -33,6 +35,12 @@ const Listings = () => {
     totalResults: 0,
     resultsPerPage: 12
   });
+
+  // Use hidden properties hook
+  const { hideProperty, getVisibleProperties } = useHiddenProperties();
+
+  // Get visible properties (properties minus hidden ones)
+  const visibleProperties = getVisibleProperties(properties);
 
   // Load properties with filters applied
   useEffect(() => {
@@ -266,15 +274,18 @@ const Listings = () => {
       </div>
       
       {/* Property Listings */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {properties.length > 0 ? (
-          properties.map((property) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-10">
+        {visibleProperties.length > 0 ? (
+          visibleProperties.map((property) => (
             <div 
               key={property.mlsNumber}
               className={`cursor-pointer transition-all ${selectedProperty?.mlsNumber === property.mlsNumber ? 'ring-2 ring-secondary' : ''}`}
               onClick={() => handlePropertyClick(property)}
             >
-              <PropertyCard property={property} />
+              <PropertyCard 
+                property={property} 
+                onHide={() => hideProperty(property.mlsNumber)}
+              />
             </div>
           ))
         ) : (
@@ -291,58 +302,14 @@ const Listings = () => {
       </div>
       
       {/* Pagination */}
-      {pagination.totalPages > 1 && (
-        <div className="flex justify-center mt-10">
-          <nav className="flex items-center">
-            <button
-              onClick={() => handlePageChange(pagination.currentPage - 1)}
-              disabled={pagination.currentPage === 1}
-              className={`px-3 py-1 rounded-l-md border ${pagination.currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
-            >
-              Previous
-            </button>
-            
-            {/* Page Numbers */}
-            <div className="flex">
-              {[...Array(Math.min(5, pagination.totalPages))].map((_, i) => {
-                // Show pages around current page
-                let pageNum;
-                if (pagination.totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (pagination.currentPage <= 3) {
-                  pageNum = i + 1;
-                } else if (pagination.currentPage >= pagination.totalPages - 2) {
-                  pageNum = pagination.totalPages - 4 + i;
-                } else {
-                  pageNum = pagination.currentPage - 2 + i;
-                }
-                
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => handlePageChange(pageNum)}
-                    className={`px-3 py-1 border-t border-b ${
-                      pagination.currentPage === pageNum 
-                        ? 'bg-primary text-white' 
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
-            </div>
-            
-            <button
-              onClick={() => handlePageChange(pagination.currentPage + 1)}
-              disabled={pagination.currentPage === pagination.totalPages}
-              className={`px-3 py-1 rounded-r-md border ${pagination.currentPage === pagination.totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
-            >
-              Next
-            </button>
-          </nav>
-        </div>
-      )}
+      <Pagination
+        currentPage={pagination.currentPage}
+        totalPages={pagination.totalPages}
+        onPageChange={handlePageChange}
+        showFirstLast={false}
+        showPrevNext={false}
+        maxVisiblePages={5}
+      />
     </div>
   );
 };

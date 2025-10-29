@@ -8,7 +8,7 @@ import CommunityFilter from './CommunityFilter';
 import PriceFilter from './PriceFilter';
 import BedroomFilter from './BedroomFilter';
 import BathroomFilter from './BathroomFilter';
-import AdvancedFilters from './AdvancedFilters';
+import EnhancedAdvancedFilters from './EnhancedAdvancedFilters';
 import SellRentToggle from './SellRentToggle';
 
 interface GlobalFiltersProps extends FilterComponentProps {
@@ -108,7 +108,7 @@ const GlobalFilters: React.FC<GlobalFiltersProps> = ({
   // Add Advanced Filters button
   if (showAdvanced) {
     filterComponents.push(
-      <AdvancedFilters
+      <EnhancedAdvancedFilters
         key="advanced"
         open={advancedOpen}
         onOpenChange={setAdvancedOpen}
