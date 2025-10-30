@@ -15,14 +15,9 @@ type Props = {
 };
 
 const Nav = ({ openNav }: Props) => {
-  const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
   const [showSidePanel, setShowSidePanel] = useState(false);
-
-  const handleDropdownToggle = (id: number) => {
-    setOpenDropdown((prev) => (prev === id ? null : id));
-  };
 
   const handleLoginClick = () => {
     setShowLoginModal(true);

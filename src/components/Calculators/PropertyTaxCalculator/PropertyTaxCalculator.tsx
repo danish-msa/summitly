@@ -11,6 +11,7 @@ import { Info, DollarSign, MapPin, Home, Building, TreePine, Table2, BarChart3, 
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { PropertyListing } from "@/lib/types";
 import ReactECharts from "echarts-for-react";
+import * as echarts from 'echarts';
 import { toast } from "sonner";
 
 interface PropertyTaxCalculatorProps {
@@ -323,9 +324,18 @@ const PropertyTaxCalculator = ({
         axisPointer: {
           type: "shadow"
         },
-        formatter: (params: any) => {
-          const item = params[0];
-          return `${item.name}: ${formatCurrency(item.value)} (${item.data.percentage}%)`;
+        formatter: (params: echarts.TooltipComponentFormatterCallbackParams) => {
+          const paramsArray = Array.isArray(params) ? params : [params];
+          const firstParam = paramsArray[0];
+          if (!firstParam) {
+            return '';
+          }
+          const item = firstParam as echarts.TooltipComponentFormatterCallbackParams & {
+            data?: { percentage?: string };
+          };
+          const value = typeof item.value === 'number' ? item.value : 0;
+          const percentage = item.data?.percentage || '0';
+          return `${item.name}: ${formatCurrency(value)} (${percentage}%)`;
         },
         backgroundColor: "rgba(255, 255, 255, 0.95)",
         borderColor: "#e5e7eb",
@@ -906,7 +916,7 @@ const PropertyTaxCalculator = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {taxCalculation.cityTaxBreakdown.map((item, index) => (
+                    {taxCalculation.cityTaxBreakdown.map((item) => (
                       <tr key={item.category} className="hover:bg-gray-50">
                         <td className="py-3 px-2">
                           <div>
