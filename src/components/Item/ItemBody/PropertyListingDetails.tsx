@@ -98,24 +98,24 @@ export default function PropertyListingDetails({ data }: ListingDetailsProps) {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex flex-col items-center justify-center text-center p-4 bg-brand-cb-blue/20 rounded-lg border">
-              <p className="text-sm text-muted-foreground mb-2">Lower Range</p>
-              <p className="text-2xl font-bold text-foreground">
+            <div className="flex flex-col items-center justify-center text-center p-4 bg-purple-50 rounded-lg">
+              <p className="text-sm text-purple-500 mb-2">Lower Range</p>
+              <p className="text-2xl font-bold text-purple-600">
                 {formatPrice(data.pricePrediction.lower)}
               </p>
             </div>
-            <div className="flex flex-col items-center justify-center text-center p-4 bg-brand-tide rounded-lg border-2 border-primary">
-              <p className="text-sm text-primary font-medium mb-2">Mid Range</p>
-              <p className="text-3xl font-bold text-primary">
+            <div className="flex flex-col items-center justify-center text-center p-4 bg-green-50 rounded-lg">
+              <p className="text-sm text-green-600 font-medium mb-2">Mid Range</p>
+              <p className="text-3xl font-bold text-green-600">
                 {formatPrice(data.pricePrediction.mid)}
               </p>
               <Badge variant="secondary" className="mt-2">
                 Confidence: {data.pricePrediction.confidence}%
               </Badge>
             </div>
-            <div className="flex flex-col items-center justify-center text-center p-4 bg-brand-celestial/20 rounded-lg border">
-              <p className="text-sm text-muted-foreground mb-2">Higher Range</p>
-              <p className="text-2xl font-bold text-foreground">
+            <div className="flex flex-col items-center justify-center text-center p-4 bg-red-50 rounded-lg">
+              <p className="text-sm text-red-600 font-medium mb-2">Higher Range</p>
+              <p className="text-2xl font-bold text-red-600">
                 {formatPrice(data.pricePrediction.higher)}
               </p>
             </div>

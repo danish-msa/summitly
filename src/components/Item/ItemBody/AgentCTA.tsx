@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 
 const AgentCTA: React.FC = () => {
   return (
-    <Card className="w-full shadow-lg border-0 bg-gradient-to-b from-brand-celestial to-brand-cb-blue sticky top-2">
+    <Card className="w-full shadow-lg border-0 bg-gradient-to-b from-brand-celestial to-brand-cb-blue sticky top-[120px] lg:top-[150px]">
       <CardContent className="p-6">
         {/* Header */}
         <div className="text-center mb-6">

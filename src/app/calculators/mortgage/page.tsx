@@ -24,10 +24,7 @@ const MortgageCalculatorPage = () => {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <CalculatorSidebar
-              aboutConfig={{
-                icon: config.icon,
-                ...config.about,
-              }}
+              aboutConfig={config.about}
               tips={config.tips}
               relatedCalculators={config.related}
             />

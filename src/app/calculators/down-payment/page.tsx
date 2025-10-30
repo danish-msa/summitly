@@ -24,10 +24,7 @@ const DownPaymentCalculatorPage = () => {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <CalculatorSidebar
-              aboutConfig={{
-                icon: config.icon,
-                ...config.about,
-              }}
+              aboutConfig={config.about}
               tips={config.tips}
               relatedCalculators={config.related}
             />
@@ -36,7 +33,7 @@ const DownPaymentCalculatorPage = () => {
           {/* Main Calculator */}
           <div className="lg:col-span-3">
             <Card>
-              <CardHeader>
+              <CardHeader className="border-b border-gray-100 bg-brand-icy-blue rounded-t-xl">
                 <CardTitle className="text-2xl">{config.title}</CardTitle>
                 <CardDescription>
                   {config.about.description}

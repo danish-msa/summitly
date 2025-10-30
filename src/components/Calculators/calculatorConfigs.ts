@@ -1,4 +1,4 @@
-import { Home, DollarSign, TrendingUp } from "lucide-react";
+import { Home, DollarSign, TrendingUp, Building } from "lucide-react";
 
 export interface CalculatorConfig {
   slug: string;
@@ -6,6 +6,7 @@ export interface CalculatorConfig {
   title: string;
   subtitle: string;
   about: {
+    icon: typeof Home;
     description: string;
     features: string[];
     estimatedTime: string;
@@ -31,6 +32,7 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
     title: "Mortgage Calculator",
     subtitle: "Calculate your mortgage payments and costs",
     about: {
+      icon: Home,
       description: "Our comprehensive mortgage calculator helps you understand all the costs associated with buying a home in Canada.",
       features: [
         "Monthly mortgage payments",
@@ -81,6 +83,7 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
     title: "Down Payment Calculator",
     subtitle: "Calculate your down payment requirements and savings goals",
     about: {
+      icon: DollarSign,
       description: "Calculate how much you need for a down payment and explore different scenarios to reach your home buying goals.",
       features: [
         "Required down payment amount",
@@ -131,6 +134,7 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
     title: "Rent vs Buy Calculator",
     subtitle: "Compare the costs of renting vs buying a home",
     about: {
+      icon: TrendingUp,
       description: "Determine whether renting or buying makes more financial sense for you by comparing total costs, equity growth, and investment opportunities over time.",
       features: [
         "Breakeven horizon calculation",
@@ -165,15 +169,72 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
         href: "/calculators/mortgage",
         icon: Home,
         title: "Mortgage Calculator",
-        status: "Available",
+        status: "available",
       },
       {
         href: "/calculators/down-payment",
         icon: DollarSign,
         title: "Down Payment Calculator",
-        status: "Available",
+        status: "available",
       },
     ],
   },
+  "property-tax": {
+    slug: "property-tax",
+    icon: Building,
+    title: "Property Tax Calculator",
+    subtitle: "Calculate your annual property taxes for residential and commercial properties",
+    about: {
+      icon: Building,
+      description: "Estimate your property taxes using official 2025 tax rates for Toronto and other major Ontario municipalities. Includes all property types and special considerations.",
+      features: [
+        "2025 official tax rates",
+        "Multiple property types",
+        "First-time buyer rebates",
+        "Payment schedule options",
+        "Special charges inclusion",
+        "Market value estimation"
+      ],
+      estimatedTime: "3-5 minutes",
+      difficulty: "Easy"
+    },
+    tips: [
+      {
+        title: "Use Accurate Assessment",
+        description: "Your MPAC assessment value is the most accurate base for calculations. Check your property tax bill for the current assessment.",
+        color: "blue"
+      },
+      {
+        title: "Consider Special Charges",
+        description: "Don't forget BIA levies, local improvement charges, and other special assessments that may apply to your property.",
+        color: "green"
+      },
+      {
+        title: "First-Time Buyer Benefits",
+        description: "If you're a first-time buyer, you may be eligible for rebates that can significantly reduce your property taxes.",
+        color: "purple"
+      }
+    ],
+    related: [
+      {
+        href: "/calculators/mortgage",
+        icon: Home,
+        title: "Mortgage Calculator",
+        status: "available"
+      },
+      {
+        href: "/calculators/down-payment",
+        icon: DollarSign,
+        title: "Down Payment Calculator",
+        status: "available"
+      },
+      {
+        href: "/calculators/rent-vs-buy",
+        icon: TrendingUp,
+        title: "Rent vs Buy Calculator",
+        status: "available"
+      }
+    ]
+  }
 };
 

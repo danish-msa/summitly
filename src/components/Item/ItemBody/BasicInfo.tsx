@@ -68,7 +68,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ property }) => {
       <div className="space-y-3">
         <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
         <div className="grid grid-cols-2 gap-3">
-          <button className="flex items-center justify-center gap-2 p-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+          <button className="flex items-center justify-center gap-2 p-3 bg-brand-celestial text-white rounded-lg hover:bg-brand-midnight transition-colors">
             <MapPin className="h-4 w-4" />
             View on Map
           </button>

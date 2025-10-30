@@ -15,7 +15,6 @@ interface CalculatorCard {
   category: string;
   status: 'available' | 'coming-soon';
   features: string[];
-  estimatedTime: string;
 }
 
 const calculators: CalculatorCard[] = [
@@ -28,7 +27,6 @@ const calculators: CalculatorCard[] = [
     category: 'Real Estate',
     status: 'available',
     features: ['Payment calculations', 'Land transfer tax', 'CMHC insurance', 'Amortization schedule', 'Interest rate risk analysis'],
-    estimatedTime: '2-3 minutes'
   },
   {
     id: 'down-payment',
@@ -39,7 +37,6 @@ const calculators: CalculatorCard[] = [
     category: 'Real Estate',
     status: 'available',
     features: ['Savings timeline', 'Investment scenarios', 'Government programs', 'First-time buyer benefits'],
-    estimatedTime: '1-2 minutes'
   },
   {
     id: 'rent-vs-buy',
@@ -50,18 +47,16 @@ const calculators: CalculatorCard[] = [
     category: 'Real Estate',
     status: 'available',
     features: ['Cost comparison', 'Market analysis', 'ROI calculations', 'Break-even analysis'],
-    estimatedTime: '3-4 minutes'
   },
   {
     id: 'property-tax',
     title: 'Property Tax Calculator',
-    description: 'Estimate your annual property tax based on location and property value.',
+    description: 'Calculate your annual property taxes using official 2025 rates for Toronto and major Ontario municipalities.',
     icon: Building,
     href: '/calculators/property-tax',
     category: 'Real Estate',
-    status: 'coming-soon',
-    features: ['Municipal rates', 'Assessment values', 'Tax exemptions', 'Payment schedules'],
-    estimatedTime: '1 minute'
+    status: 'available',
+    features: ['2025 official rates', 'Multiple property types', 'First-time buyer rebates', 'Payment schedules'],
   },
   {
     id: 'budget',
@@ -72,7 +67,6 @@ const calculators: CalculatorCard[] = [
     category: 'Planning',
     status: 'coming-soon',
     features: ['Total cost breakdown', 'Monthly affordability', 'Emergency fund planning', 'Moving costs'],
-    estimatedTime: '2-3 minutes'
   }
 ];
 
@@ -86,7 +80,7 @@ const CalculatorsPage = () => {
     : calculators.filter(calc => calc.category === selectedCategory);
 
   return (
-    <div>
+    <div className="bg-white">
       {/* Header */}
       <header className="border-b bg-gradient-to-b from-brand-icy-blue to-brand-glacier mt-20 pt-16 pb-8">
         <div className="max-w-[1300px] mx-auto px-4 text-center md:px-8">
@@ -99,17 +93,17 @@ const CalculatorsPage = () => {
           </p>
         </div>
       </header>
-      <div className="container-1400 mx-auto mt-8">
+      <div className="container-1300 mx-auto mt-8">
         {/* Category Filter */}
         <div className="flex flex-wrap justify-center gap-2 mb-8">
           {categories.map((category) => (
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-full text-base font-medium transition-all ${
                 selectedCategory === category
-                  ? 'bg-primary text-white shadow-md'
-                  : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+                  ? 'bg-brand-celestial rounded-lg text-white shadow-md'
+                  : 'bg-white rounded-lg text-gray-600 hover:bg-gray-50 border border-gray-200'
               }`}
             >
               {category}
@@ -118,14 +112,26 @@ const CalculatorsPage = () => {
         </div>
 
         {/* Calculators Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {filteredCalculators.map((calculator) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+          {filteredCalculators.map((calculator, index) => {
             const IconComponent = calculator.icon;
+            
+            // Different light background colors for each card
+            const cardStyles = [
+              { bg: 'bg-purple-50', title: 'text-purple-700', button: 'bg-purple-600 hover:bg-purple-700', icon: 'bg-purple-100 text-purple-600' },      // Mortgage Calculator
+              { bg: 'bg-green-50', title: 'text-green-700', button: 'bg-green-600 hover:bg-green-700', icon: 'bg-green-100 text-green-600' },    // Down Payment Calculator
+              { bg: 'bg-blue-50', title: 'text-blue-700', button: 'bg-blue-600 hover:bg-blue-700', icon: 'bg-blue-100 text-blue-600' },    // Rent vs Buy Calculator
+              { bg: 'bg-orange-50', title: 'text-orange-700', button: 'bg-orange-600 hover:bg-orange-700', icon: 'bg-orange-100 text-orange-600' },     // Property Tax Calculator
+              { bg: 'bg-pink-50', title: 'text-pink-700', button: 'bg-pink-600 hover:bg-pink-700', icon: 'bg-pink-100 text-pink-600' },        // Home Buying Budget
+            ];
+            
+            const cardStyle = cardStyles[index % cardStyles.length];
+            
             return (
               <Card 
                 key={calculator.id} 
-                className={`group hover:shadow-xl transition-all duration-300 ${
-                  calculator.status === 'coming-soon' ? 'opacity-75' : 'hover:scale-105'
+                className={`group hover:shadow-xl rounded-3xl border-none transition-all duration-300 ${cardStyle.bg} ${
+                  calculator.status === 'coming-soon' ? 'opacity-75' : 'hover:scale-101'
                 }`}
               >
                 <CardHeader className="pb-4">
@@ -133,13 +139,13 @@ const CalculatorsPage = () => {
                     <div className="flex items-center space-x-3">
                       <div className={`p-3 rounded-lg ${
                         calculator.status === 'available' 
-                          ? 'bg-primary/10 text-primary' 
+                          ? cardStyle.icon
                           : 'bg-gray-100 text-gray-400'
                       }`}>
                         <IconComponent className="h-6 w-6" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg">{calculator.title}</CardTitle>
+                        <CardTitle className={`text-lg ${cardStyle.title}`}>{calculator.title}</CardTitle>
                         <Badge 
                           variant={calculator.status === 'available' ? 'default' : 'secondary'}
                           className="text-xs"
@@ -174,17 +180,11 @@ const CalculatorsPage = () => {
                       </ul>
                     </div>
 
-                    {/* Time Estimate */}
-                    <div className="flex items-center text-xs text-gray-500">
-                      <Clock className="h-3 w-3 mr-1" />
-                      Estimated time: {calculator.estimatedTime}
-                    </div>
-
                     {/* Action Button */}
                     <div className="pt-2">
                       {calculator.status === 'available' ? (
                         <Link href={calculator.href}>
-                          <button className="w-full bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors font-medium">
+                          <button className={`w-full text-white py-2 px-4 rounded-lg transition-colors font-medium ${cardStyle.button}`}>
                             Use Calculator
                           </button>
                         </Link>
@@ -230,12 +230,5 @@ const CalculatorsPage = () => {
     </div>
   );
 };
-
-// Clock icon component
-const Clock = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-);
 
 export default CalculatorsPage;

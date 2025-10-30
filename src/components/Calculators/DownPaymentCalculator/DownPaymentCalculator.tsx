@@ -7,9 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { ChevronDown, ChevronUp, Info, DollarSign, MapPin, Percent } from "lucide-react";
+import { Info, DollarSign, MapPin, Percent } from "lucide-react";
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { PropertyListing } from "@/lib/types";
+import CashToCloseSection from "../CashToCloseSection";
+import MonthlyExpensesSection from "../MonthlyExpensesSection";
 
 interface ScenarioSettings {
   downPercent: number;
@@ -60,7 +62,7 @@ const DownPaymentCalculator = ({
   const [homePrice, setHomePrice] = useState(defaultPrice);
   const [location, setLocation] = useState(defaultLocation);
   const [isFirstTimeBuyer, setIsFirstTimeBuyer] = useState(false);
-  const [propertyType, setPropertyType] = useState(
+  const [propertyType, setPropertyType] = useState<"House" | "Condo">(
     property?.details?.propertyType?.toLowerCase().includes('condo') ? "Condo" : "House"
   );
   
@@ -89,8 +91,6 @@ const DownPaymentCalculator = ({
   const [internet, setInternet] = useState(60);
   const [condoFees, setCondoFees] = useState(0);
   
-  const [cashToCloseExpanded, setCashToCloseExpanded] = useState(false);
-  const [monthlyExpensesExpanded, setMonthlyExpensesExpanded] = useState(false);
   const [selectedScenarioIndex, setSelectedScenarioIndex] = useState(0);
 
   // Update home price and location when property changes
@@ -774,387 +774,54 @@ const DownPaymentCalculator = ({
           </div>
 
           {/* Cash to Close Section */}
-          <Card className="mb-6">
-            <button
-              onClick={() => setCashToCloseExpanded(!cashToCloseExpanded)}
-              className="w-full p-4 flex items-center justify-between rounded-xl hover:bg-brand-mist/20 transition-colors"
-            >
-              <h3 className="text-lg font-bold">Cash needed to close</h3>
-              {cashToCloseExpanded ? <ChevronUp /> : <ChevronDown />}
-            </button>
-            
-            {cashToCloseExpanded && (
-              <div className="p-4 border-t space-y-4">
-                <p className="text-sm text-muted-foreground mb-4">
-                  When you purchase a house, there are a number of costs you will need to pay upfront. Some are required, and others are optional.
-                </p>
-                <div className="flex flex-col lg:flex-row gap-4 items-start">
-                  {/* Down payment options - Hidden on mobile */}
-                  <div className="hidden lg:block w-full lg:w-1/2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100 shadow-sm">
-                    <h4 className="font-semibold mb-3 text-sm sm:text-base">Down payment options</h4>
-                    <div className="mb-4">
-                      <Label className="text-sm font-medium mb-2 block">Select Scenario</Label>
-                      <Select 
-                        value={selectedScenarioIndex.toString()} 
-                        onValueChange={(value) => setSelectedScenarioIndex(Number(value))}
-                      >
-                        <SelectTrigger className="bg-white w-full h-10">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {scenarios.map((scenario, idx) => (
-                            <SelectItem key={idx} value={idx.toString()}>
-                              Scenario {idx + 1} - {scenario.downPercent.toFixed(1)}% down ({formatCurrency(scenario.downAmount)})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="w-full lg:w-1/2 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-100 shadow-sm">
-                    <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <Label className="text-sm">Down payment</Label>
-                      <span className="font-bold text-sm sm:text-base">{formatCurrency(calculatedScenarios[0].downAmount)}</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <Label className="text-sm">Provincial Land Transfer Tax</Label>
-                      <span className="font-bold text-sm sm:text-base">{formatCurrency(landTransferTaxCalculation.provincial)}</span>
-                    </div>
-                    
-                    {location.toLowerCase().includes('toronto') && (
-                      <div className="flex justify-between items-center">
-                        <Label className="text-sm">Municipal Land Transfer Tax (Toronto)</Label>
-                        <span className="font-bold text-sm sm:text-base">{formatCurrency(landTransferTaxCalculation.municipal)}</span>
-                      </div>
-                    )}
-                    
-                    {landTransferTaxCalculation.rebate > 0 && (
-                      <div className="flex justify-between items-center text-accent">
-                        <Label className="text-sm">First-Time Buyer Rebate</Label>
-                        <span className="font-bold text-sm sm:text-base">-{formatCurrency(landTransferTaxCalculation.rebate)}</span>
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-between items-center border-t pt-2">
-                      <Label className="font-bold text-sm sm:text-base">Net Land Transfer Tax</Label>
-                      <span className="font-bold text-sm sm:text-base">{formatCurrency(landTransferTaxCalculation.netPayable)}</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <Label htmlFor="pstOnInsurance">PST on mortgage insurance</Label>
-                      <div className="relative">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500">
-                          <DollarSign className="h-3 w-3" />
-                        </span>
-                        <Input
-                          id="pstOnInsurance"
-                          type="number"
-                          value={pstOnInsurance}
-                          onChange={(e) => setPstOnInsurance(Number(e.target.value))}
-                          className="w-32 text-right bg-white rounded-lg pl-6"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <Label htmlFor="lawyerFees">Lawyer fees</Label>
-                      <div className="relative">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500">
-                          <DollarSign className="h-3 w-3" />
-                        </span>
-                        <Input
-                          id="lawyerFees"
-                          type="number"
-                          value={lawyerFees}
-                          onChange={(e) => setLawyerFees(Number(e.target.value))}
-                          className="w-32 text-right bg-white rounded-lg pl-6"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <Label htmlFor="titleInsurance">Title insurance</Label>
-                      <div className="relative">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500">
-                          <DollarSign className="h-3 w-3" />
-                        </span>
-                        <Input
-                          id="titleInsurance"
-                          type="number"
-                          value={titleInsurance}
-                          onChange={(e) => setTitleInsurance(Number(e.target.value))}
-                          className="w-32 text-right bg-white rounded-lg pl-6"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <Label htmlFor="homeInspection">Home inspection</Label>
-                      <div className="relative">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500">
-                          <DollarSign className="h-3 w-3" />
-                        </span>
-                        <Input
-                          id="homeInspection"
-                          type="number"
-                          value={homeInspection}
-                          onChange={(e) => setHomeInspection(Number(e.target.value))}
-                          className="w-32 text-right bg-white rounded-lg pl-6"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <Label htmlFor="appraisalFees">Appraisal fees</Label>
-                      <div className="relative">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500">
-                          <DollarSign className="h-3 w-3" />
-                        </span>
-                        <Input
-                          id="appraisalFees"
-                          type="number"
-                          value={appraisalFees}
-                          onChange={(e) => setAppraisalFees(Number(e.target.value))}
-                          className="w-32 text-right bg-white rounded-lg pl-6"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="border-t pt-3 flex justify-between items-center">
-                      <span className="font-bold text-lg">Cash needed to close</span>
-                      <span className="font-bold text-lg text-accent">{formatCurrency(totalCashToClose)}</span>
-                    </div>
-                  </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </Card>
+          <CashToCloseSection
+            downAmount={calculatedScenarios[selectedScenarioIndex].downAmount}
+            landTransferTaxCalculation={landTransferTaxCalculation}
+            location={location}
+            pstOnInsurance={pstOnInsurance}
+            lawyerFees={lawyerFees}
+            titleInsurance={titleInsurance}
+            homeInspection={homeInspection}
+            appraisalFees={appraisalFees}
+            scenarios={scenarios}
+            selectedScenarioIndex={selectedScenarioIndex}
+            setPstOnInsurance={setPstOnInsurance}
+            setLawyerFees={setLawyerFees}
+            setTitleInsurance={setTitleInsurance}
+            setHomeInspection={setHomeInspection}
+            setAppraisalFees={setAppraisalFees}
+            setSelectedScenarioIndex={setSelectedScenarioIndex}
+            totalCashToClose={totalCashToClose}
+            formatCurrency={formatCurrency}
+          />
 
           {/* Monthly Expenses Section */}
-          <Card className="mb-6">
-            <button
-              onClick={() => setMonthlyExpensesExpanded(!monthlyExpensesExpanded)}
-              className="w-full p-4 flex items-center justify-between rounded-xl hover:bg-brand-mist/20 transition-colors"
-            >
-              <h3 className="text-lg font-bold">Monthly expenses</h3>
-              {monthlyExpensesExpanded ? <ChevronUp /> : <ChevronDown />}
-            </button>
-            
-            {monthlyExpensesExpanded && (
-              <div className="p-4 border-t space-y-4">
-                {/* Type of house - Mobile only */}
-                <div className="lg:hidden mb-4">
-                  <h4 className="font-semibold mb-3 text-sm">Type of house</h4>
-                  <div className="flex gap-4">
-                    <Button
-                      variant={propertyType === "House" ? "default" : "outline"}
-                      onClick={() => setPropertyType("House")}
-                      className="min-w-[100px] rounded-lg"
-                    >
-                      House
-                    </Button>
-                    <Button
-                      variant={propertyType === "Condo" ? "default" : "outline"}
-                      onClick={() => setPropertyType("Condo")}
-                      className="min-w-[100px] rounded-lg"
-                    >
-                      Condo
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex flex-col lg:flex-row gap-4 items-start">
-                  {/* Down payment options - Hidden on mobile */}
-                  <div className="hidden lg:block w-full lg:w-1/2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100 shadow-sm">
-                    <div className="mb-4">
-                    <h4 className="font-semibold mb-3">Type of house</h4>
-                      <div className="flex gap-4">
-                        <Button
-                          variant={propertyType === "House" ? "default" : "outline"}
-                          onClick={() => setPropertyType("House")}
-                          className="min-w-[100px] rounded-lg"
-                        >
-                          House
-                        </Button>
-                        <Button
-                          variant={propertyType === "Condo" ? "default" : "outline"}
-                          onClick={() => setPropertyType("Condo")}
-                          className="min-w-[100px] rounded-lg"
-                        >
-                          Condo
-                        </Button>
-                      </div>
-                    </div>
-                    <h4 className="font-semibold mb-3">Down payment options</h4>
-                    <div className="mb-4">
-                      <Label className="text-sm font-medium mb-2 block">Select Scenario</Label>
-                      <Select 
-                        value={selectedScenarioIndex.toString()} 
-                        onValueChange={(value) => setSelectedScenarioIndex(Number(value))}
-                      >
-                        <SelectTrigger className="bg-white w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {scenarios.map((scenario, idx) => (
-                            <SelectItem key={idx} value={idx.toString()}>
-                              Scenario {idx + 1} - {scenario.downPercent.toFixed(1)}% down ({formatCurrency(scenario.downAmount)})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="w-full lg:w-1/2 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-100 shadow-sm">
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <Label>Mortgage payment</Label>
-                        <span className="font-bold">{formatCurrency(calculatedScenarios[0].payment)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <Label htmlFor="propertyTax">Property tax</Label>
-                        <div className="relative">
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500">
-                            <DollarSign className="h-3 w-3" />
-                          </span>
-                          <Input
-                            id="propertyTax"
-                            type="number"
-                            value={propertyTax}
-                            onChange={(e) => setPropertyTax(Number(e.target.value))}
-                            className="w-32 text-right bg-white rounded-lg pl-6"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <Label htmlFor="monthlyDebt">Monthly debt payments</Label>
-                        <div className="relative">
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500">
-                            <DollarSign className="h-3 w-3" />
-                          </span>
-                          <Input
-                            id="monthlyDebt"
-                            type="number"
-                            value={monthlyDebt}
-                            onChange={(e) => setMonthlyDebt(Number(e.target.value))}
-                            className="w-32 text-right bg-white rounded-lg pl-6"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <Label htmlFor="utilities">Utilities</Label>
-                        <div className="relative">
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500">
-                            <DollarSign className="h-3 w-3" />
-                          </span>
-                          <Input
-                            id="utilities"
-                            type="number"
-                            value={utilities}
-                            onChange={(e) => setUtilities(Number(e.target.value))}
-                            className="w-32 text-right bg-white rounded-lg pl-6"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <Label htmlFor="propertyInsurance">Property insurance</Label>
-                        <div className="relative">
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500">
-                            <DollarSign className="h-3 w-3" />
-                          </span>
-                          <Input
-                            id="propertyInsurance"
-                            type="number"
-                            value={propertyInsurance}
-                            onChange={(e) => setPropertyInsurance(Number(e.target.value))}
-                            className="w-32 text-right bg-white rounded-lg pl-6"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <Label htmlFor="phone">Phone</Label>
-                        <div className="relative">
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500">
-                            <DollarSign className="h-3 w-3" />
-                          </span>
-                          <Input
-                            id="phone"
-                            type="number"
-                            value={phone}
-                            onChange={(e) => setPhone(Number(e.target.value))}
-                            className="w-32 text-right bg-white rounded-lg pl-6"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <Label htmlFor="cable">Cable</Label>
-                        <div className="relative">
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500">
-                            <DollarSign className="h-3 w-3" />
-                          </span>
-                          <Input
-                            id="cable"
-                            type="number"
-                            value={cable}
-                            onChange={(e) => setCable(Number(e.target.value))}
-                            className="w-32 text-right bg-white rounded-lg pl-6"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <Label htmlFor="internet">Internet</Label>
-                        <div className="relative">
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500">
-                            <DollarSign className="h-3 w-3" />
-                          </span>
-                          <Input
-                            id="internet"
-                            type="number"
-                            value={internet}
-                            onChange={(e) => setInternet(Number(e.target.value))}
-                            className="w-32 text-right bg-white rounded-lg pl-6"
-                          />
-                        </div>
-                      </div>
-
-                      {propertyType === "Condo" && (
-                        <div className="flex justify-between items-center">
-                          <Label htmlFor="condoFees">Condo fees</Label>
-                          <div className="relative">
-                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500">
-                              <DollarSign className="h-3 w-3" />
-                            </span>
-                            <Input
-                              id="condoFees"
-                              type="number"
-                              value={condoFees}
-                              onChange={(e) => setCondoFees(Number(e.target.value))}
-                              className="w-32 text-right bg-white rounded-lg pl-6"
-                            />
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div className="border-t pt-3 flex justify-between items-center">
-                        <span className="font-bold text-lg">Monthly expenses</span>
-                        <span className="font-bold text-lg text-accent">{formatCurrency(monthlyExpenses)}</span>
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-            )}
-          </Card>
+          <MonthlyExpensesSection
+            mortgagePayment={calculatedScenarios[selectedScenarioIndex].payment}
+            propertyTax={propertyTax}
+            monthlyDebt={monthlyDebt}
+            utilities={utilities}
+            propertyInsurance={propertyInsurance}
+            phone={phone}
+            cable={cable}
+            internet={internet}
+            condoFees={condoFees}
+            propertyType={propertyType}
+            scenarios={scenarios}
+            selectedScenarioIndex={selectedScenarioIndex}
+            setPropertyTax={setPropertyTax}
+            setMonthlyDebt={setMonthlyDebt}
+            setUtilities={setUtilities}
+            setPropertyInsurance={setPropertyInsurance}
+            setPhone={setPhone}
+            setCable={setCable}
+            setInternet={setInternet}
+            setCondoFees={setCondoFees}
+            setPropertyType={setPropertyType}
+            setSelectedScenarioIndex={setSelectedScenarioIndex}
+            monthlyExpenses={monthlyExpenses}
+            formatCurrency={formatCurrency}
+          />
       </div>
     </div>
   );
