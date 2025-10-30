@@ -327,15 +327,19 @@ const PropertyTaxCalculator = ({
         formatter: (params: echarts.TooltipComponentFormatterCallbackParams) => {
           const paramsArray = Array.isArray(params) ? params : [params];
           const firstParam = paramsArray[0];
-          if (!firstParam) {
+          if (!firstParam || typeof firstParam !== 'object') {
             return '';
           }
-          const item = firstParam as echarts.TooltipComponentFormatterCallbackParams & {
-            data?: { percentage?: string };
+          // For bar chart tooltips with axis trigger, params contain data about the series
+          const item = firstParam as {
+            value?: number;
+            name?: string;
+            data?: { percentage?: string; value?: number };
           };
-          const value = typeof item.value === 'number' ? item.value : 0;
+          const value = item.value || (item.data?.value) || 0;
           const percentage = item.data?.percentage || '0';
-          return `${item.name}: ${formatCurrency(value)} (${percentage}%)`;
+          const name = item.name || '';
+          return `${name}: ${formatCurrency(value)} (${percentage}%)`;
         },
         backgroundColor: "rgba(255, 255, 255, 0.95)",
         borderColor: "#e5e7eb",
