@@ -1,125 +1,27 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Info, DollarSign, MapPin, Home, Building, TreePine, Table2, BarChart3, Download, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
+import { Info, DollarSign, MapPin, Table2, BarChart3, Download, ChevronDown, ChevronUp } from "lucide-react";
 import * as Tooltip from '@radix-ui/react-tooltip';
-import { PropertyListing } from "@/lib/types";
 import ReactECharts from "echarts-for-react";
-import * as echarts from 'echarts';
 import { toast } from "sonner";
-
-interface PropertyTaxCalculatorProps {
-  property?: PropertyListing;
-  initialAssessmentValue?: number;
-  initialLocation?: string;
-  className?: string;
-}
-
-// 2025 Property Tax Rates for Toronto (from official source)
-const TORONTO_TAX_RATES = {
-  residential: {
-    cityRate: 0.592653,
-    educationRate: 0.153000,
-    cityBuildingFund: 0.008434,
-    totalRate: 0.754087
-  },
-  multiResidential: {
-    cityRate: 1.036734,
-    educationRate: 0.153000,
-    cityBuildingFund: 0.007571,
-    totalRate: 1.197305
-  },
-  newMultiResidential: {
-    cityRate: 0.592653,
-    educationRate: 0.153000,
-    cityBuildingFund: 0.008434,
-    totalRate: 0.754087
-  },
-  commercial: {
-    cityRate: 1.385397,
-    educationRate: 0.880000,
-    cityBuildingFund: 0.010081,
-    totalRate: 2.275478
-  },
-  industrial: {
-    cityRate: 1.483217,
-    educationRate: 0.880000,
-    cityBuildingFund: 0.021086,
-    totalRate: 2.384303
-  },
-  farmlands: {
-    cityRate: 0.148163,
-    educationRate: 0.038250,
-    cityBuildingFund: 0.002109,
-    totalRate: 0.188522
-  },
-  managedForests: {
-    cityRate: 0.148163,
-    educationRate: 0.038250,
-    cityBuildingFund: 0.002109,
-    totalRate: 0.188522
-  }
-};
-
-// Major Ontario municipalities with estimated tax rates (relative to Toronto)
-const MUNICIPALITIES = {
-  "Toronto, ON": { multiplier: 1.0, name: "Toronto" },
-  "Mississauga, ON": { multiplier: 0.85, name: "Mississauga" },
-  "Brampton, ON": { multiplier: 0.82, name: "Brampton" },
-  "Hamilton, ON": { multiplier: 0.78, name: "Hamilton" },
-  "London, ON": { multiplier: 0.75, name: "London" },
-  "Markham, ON": { multiplier: 0.88, name: "Markham" },
-  "Vaughan, ON": { multiplier: 0.90, name: "Vaughan" },
-  "Kitchener, ON": { multiplier: 0.80, name: "Kitchener" },
-  "Windsor, ON": { multiplier: 0.72, name: "Windsor" },
-  "Ottawa, ON": { multiplier: 0.95, name: "Ottawa" }
-};
-
-const PROPERTY_TYPES = [
-  { value: "residential", label: "Residential", icon: Home, description: "Single-family homes, townhouses" },
-  { value: "multiResidential", label: "Multi-Residential", icon: Building, description: "Apartment buildings, rental properties" },
-  { value: "newMultiResidential", label: "New Multi-Residential", icon: Building, description: "New rental properties (15% reduction)" },
-  { value: "commercial", label: "Commercial", icon: Building, description: "Office buildings, retail spaces" },
-  { value: "industrial", label: "Industrial", icon: Building, description: "Manufacturing, warehouses" },
-  { value: "farmlands", label: "Farmlands", icon: TreePine, description: "Agricultural properties" },
-  { value: "managedForests", label: "Managed Forests", icon: TreePine, description: "Forest management properties" }
-];
-
-const PAYMENT_SCHEDULES = [
-  { value: "monthly", label: "Monthly (12 payments)", multiplier: 1/12 },
-  { value: "quarterly", label: "Quarterly (4 payments)", multiplier: 1/4 },
-  { value: "semi-annually", label: "Semi-annually (2 payments)", multiplier: 1/2 },
-  { value: "annually", label: "Annually (1 payment)", multiplier: 1 }
-];
-
-// Detailed City Tax Breakdown by Service Category (based on Toronto's 2025 structure)
-const CITY_TAX_BREAKDOWN = {
-  transit: { percentage: 19.58905092, description: "Public transit operations and infrastructure" },
-  police: { percentage: 17.26876205, description: "Police services and law enforcement" },
-  capitalInvestments: { percentage: 12.42697027, description: "Capital investments & corporate financing" },
-  socialPrograms: { percentage: 11.29160849, description: "Cost shared social programs" },
-  fireParamedic: { percentage: 9.589725851, description: "Fire and paramedic services" },
-  otherOperations: { percentage: 9.18202488, description: "Other city operations" },
-  otherAgencies: { percentage: 8.981232679, description: "Other agencies and boards" },
-  governance: { percentage: 8.92323073, description: "Governance and corporate services" },
-  transportation: { percentage: 4.170445582, description: "Transportation infrastructure" }
-};
-
-// Helper functions for number formatting with commas
-const formatNumberWithCommas = (value: number): string => {
-  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-};
-
-const parseNumberFromString = (value: string): number => {
-  const cleaned = value.replace(/[^\d.]/g, '');
-  return Number(cleaned) || 0;
-};
+import { PropertyTaxCalculatorProps } from "./types";
+import { MUNICIPALITIES, PROPERTY_TYPES, PAYMENT_SCHEDULES } from "./constants";
+import { formatNumberWithCommas, parseNumberFromString, formatCurrency } from "./utils";
+import { calculatePropertyTaxes } from "./calculations";
+import { getPieChartOption, getHorizontalBarChartOption } from "./chartOptions";
+import { 
+  downloadCSV, 
+  downloadChartAsPNG, 
+  prepareOverallTaxTableData, 
+  prepareCityBreakdownTableData 
+} from "./exportUtils";
 
 const PropertyTaxCalculator = ({ 
   property,
@@ -146,9 +48,12 @@ const PropertyTaxCalculator = ({
   const [useMarketValueEstimate, setUseMarketValueEstimate] = useState(false);
   const [viewMode, setViewMode] = useState<"table" | "chart">("chart");
   const [cityBreakdownViewMode, setCityBreakdownViewMode] = useState<"table" | "chart">("chart");
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isOverallTaxExpanded, setIsOverallTaxExpanded] = useState(true);
   const [isCityBreakdownExpanded, setIsCityBreakdownExpanded] = useState(true);
+  
+  // Refs for chart instances
+  const overallTaxChartRef = useRef<ReactECharts | null>(null);
+  const cityBreakdownChartRef = useRef<ReactECharts | null>(null);
 
   // Update assessment and market value when property changes
   useEffect(() => {
@@ -168,246 +73,17 @@ const PropertyTaxCalculator = ({
   }, [property, initialAssessmentValue, initialLocation]);
 
   // Calculate property taxes
-  const calculatePropertyTaxes = () => {
-    const currentAssessment = useMarketValueEstimate ? marketValue * 0.85 : assessmentValue;
-    const municipality = MUNICIPALITIES[location as keyof typeof MUNICIPALITIES] || MUNICIPALITIES["Toronto, ON"];
-    const baseRates = TORONTO_TAX_RATES[propertyType as keyof typeof TORONTO_TAX_RATES] || TORONTO_TAX_RATES.residential;
-    
-    // Apply municipality multiplier
-    const adjustedRates = {
-      cityRate: baseRates.cityRate * municipality.multiplier,
-      educationRate: baseRates.educationRate * municipality.multiplier,
-      cityBuildingFund: baseRates.cityBuildingFund * municipality.multiplier,
-      totalRate: baseRates.totalRate * municipality.multiplier
-    };
-
-    const cityLevy = (currentAssessment * adjustedRates.cityRate) / 100;
-    const educationLevy = (currentAssessment * adjustedRates.educationRate) / 100;
-    const cityBuildingFund = (currentAssessment * adjustedRates.cityBuildingFund) / 100;
-    
-    // Calculate detailed city tax breakdown
-    const cityTaxBreakdown = Object.entries(CITY_TAX_BREAKDOWN).map(([key, data]) => ({
-      category: key,
-      description: data.description,
-      amount: (cityLevy * data.percentage) / 100,
-      percentageOfCityTax: data.percentage,
-      percentageOfPropertyValue: (data.percentage * adjustedRates.cityRate) / 100,
-      percentageOfTotalTax: (data.percentage * adjustedRates.cityRate) / adjustedRates.totalRate * 100
-    }));
-    
-    let totalTax = cityLevy + educationLevy + cityBuildingFund;
-    
-    // Apply first-time buyer rebate (if applicable for residential properties)
-    let rebate = 0;
-    if (isFirstTimeBuyer && propertyType === "residential") {
-      rebate = Math.min(cityLevy * 0.15, 1000); // 15% rebate up to $1000
-    }
-    
-    totalTax = Math.max(0, totalTax - rebate);
-    
-    // Add special charges
-    if (hasSpecialCharges) {
-      totalTax += specialCharges;
-    }
-
-    // Calculate percentages
-    const cityTaxPercentageOfTotal = (cityLevy / totalTax) * 100;
-    const educationTaxPercentageOfTotal = (educationLevy / totalTax) * 100;
-    const cityBuildingFundPercentageOfTotal = (cityBuildingFund / totalTax) * 100;
-    const totalTaxPercentageOfPropertyValue = (totalTax / currentAssessment) * 100;
-
-    return {
-      assessmentValue: currentAssessment,
-      cityLevy,
-      educationLevy,
-      cityBuildingFund,
-      cityTaxBreakdown,
-      rebate,
-      specialCharges: hasSpecialCharges ? specialCharges : 0,
-      totalTax,
-      paymentAmount: totalTax * (PAYMENT_SCHEDULES.find(s => s.value === paymentSchedule)?.multiplier || 1/12),
-      rates: adjustedRates,
-      percentages: {
-        cityTaxPercentageOfTotal,
-        educationTaxPercentageOfTotal,
-        cityBuildingFundPercentageOfTotal,
-        totalTaxPercentageOfPropertyValue
-      }
-    };
-  };
-
-  const taxCalculation = calculatePropertyTaxes();
-
-  const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('en-CA', { 
-      style: 'currency', 
-      currency: 'CAD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
-  };
-
-  // Chart helper functions
-  const getPieChartOption = (data: Array<{name: string, value: number, color?: string}>, title: string) => {
-    return {
-      tooltip: {
-        trigger: "item",
-        formatter: "{b}: {c} ({d}%)",
-        backgroundColor: "rgba(255, 255, 255, 0.95)",
-        borderColor: "#e5e7eb",
-        textStyle: {
-          color: "#1f2937",
-        },
-      },
-      legend: {
-        orient: "vertical",
-        left: "left",
-        textStyle: {
-          color: "#1f2937",
-        },
-        formatter: (name: string) => {
-          const item = data.find((d) => d.name === name);
-          return item ? `${name} (${item.value}%)` : name;
-        },
-      },
-      series: [
-        {
-          name: title,
-          type: "pie",
-          radius: ["40%", "70%"],
-          avoidLabelOverlap: true,
-          itemStyle: {
-            borderRadius: 8,
-            borderColor: "#ffffff",
-            borderWidth: 2,
-          },
-          label: {
-            show: true,
-            position: "outside",
-            formatter: "{d}%",
-            color: "#1f2937",
-          },
-          labelLine: {
-            show: true,
-            length: 15,
-            length2: 10,
-          },
-          emphasis: {
-            label: {
-              show: true,
-              fontSize: 16,
-              fontWeight: "bold",
-            },
-            itemStyle: {
-              shadowBlur: 10,
-              shadowOffsetX: 0,
-              shadowColor: "rgba(0, 0, 0, 0.5)",
-            },
-          },
-          data: data.map((item, index) => ({
-            value: item.value,
-            name: item.name,
-            itemStyle: {
-              color: item.color || `hsl(${(index * 360) / data.length}, 70%, 60%)`,
-            },
-          })),
-        },
-      ],
-    };
-  };
-
-  // Chart helper functions
-  const getHorizontalBarChartOption = (data: Array<{name: string, amount: number, percentageOfCityTax: number, color?: string}>, title: string) => {
-    return {
-      tooltip: {
-        trigger: "axis",
-        axisPointer: {
-          type: "shadow"
-        },
-        formatter: (params: echarts.TooltipComponentFormatterCallbackParams) => {
-          const paramsArray = Array.isArray(params) ? params : [params];
-          const firstParam = paramsArray[0];
-          if (!firstParam || typeof firstParam !== 'object') {
-            return '';
-          }
-          // For bar chart tooltips with axis trigger, params contain data about the series
-          const item = firstParam as {
-            value?: number;
-            name?: string;
-            data?: { percentage?: string; value?: number };
-          };
-          const value = item.value || (item.data?.value) || 0;
-          const percentage = item.data?.percentage || '0';
-          const name = item.name || '';
-          return `${name}: ${formatCurrency(value)} (${percentage}%)`;
-        },
-        backgroundColor: "rgba(255, 255, 255, 0.95)",
-        borderColor: "#e5e7eb",
-        textStyle: {
-          color: "#1f2937",
-        },
-      },
-      grid: {
-        left: "15%",
-        right: "10%",
-        top: "10%",
-        bottom: "10%",
-        containLabel: true
-      },
-      xAxis: {
-        type: "value",
-        axisLabel: {
-          formatter: (value: number) => formatCurrency(value)
-        },
-        axisLine: {
-          lineStyle: {
-            color: "#e5e7eb"
-          }
-        },
-        splitLine: {
-          lineStyle: {
-            color: "#f3f4f6"
-          }
-        }
-      },
-      yAxis: {
-        type: "category",
-        data: data.map(item => item.name),
-        axisLine: {
-          lineStyle: {
-            color: "#e5e7eb"
-          }
-        },
-        axisLabel: {
-          color: "#1f2937",
-          fontSize: 12
-        }
-      },
-      series: [
-        {
-          name: title,
-          type: "bar",
-          data: data.map((item, index) => ({
-            value: item.amount,
-            name: item.name,
-            percentage: item.percentageOfCityTax.toFixed(1),
-            itemStyle: {
-              color: item.color || `hsl(${(index * 360) / data.length}, 70%, 60%)`,
-              borderRadius: [0, 4, 4, 0]
-            }
-          })),
-          barWidth: "60%",
-          emphasis: {
-            itemStyle: {
-              shadowBlur: 10,
-              shadowOffsetX: 0,
-              shadowColor: "rgba(0, 0, 0, 0.5)",
-            }
-          }
-        }
-      ]
-    };
-  };
+  const taxCalculation = calculatePropertyTaxes({
+    assessmentValue,
+    marketValue,
+    location,
+    propertyType,
+    isFirstTimeBuyer,
+    paymentSchedule,
+    hasSpecialCharges,
+    specialCharges,
+    useMarketValueEstimate
+  });
 
   // Button handlers
   const handleToggleView = () => {
@@ -418,17 +94,28 @@ const PropertyTaxCalculator = ({
     setCityBreakdownViewMode(cityBreakdownViewMode === "table" ? "chart" : "table");
   };
 
-  const handleDownload = () => {
-    toast.info("Download functionality coming soon!");
+  // Handle download for Overall Tax Structure
+  const handleOverallTaxDownload = () => {
+    if (viewMode === "table") {
+      const tableData = prepareOverallTaxTableData(taxCalculation);
+      downloadCSV(tableData, `Property_Tax_Structure_${new Date().toISOString().split('T')[0]}`);
+      toast.success("Tax structure data downloaded as CSV");
+    } else {
+      downloadChartAsPNG(overallTaxChartRef, `Property_Tax_Structure_Chart_${new Date().toISOString().split('T')[0]}`);
+      toast.success("Tax structure chart downloaded as PNG");
+    }
   };
 
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    // Simulate refresh
-    setTimeout(() => {
-      setIsRefreshing(false);
-      toast.success("Data refreshed!");
-    }, 1000);
+  // Handle download for City Tax Breakdown
+  const handleCityBreakdownDownload = () => {
+    if (cityBreakdownViewMode === "table") {
+      const tableData = prepareCityBreakdownTableData(taxCalculation);
+      downloadCSV(tableData, `City_Tax_Breakdown_${new Date().toISOString().split('T')[0]}`);
+      toast.success("City tax breakdown data downloaded as CSV");
+    } else {
+      downloadChartAsPNG(cityBreakdownChartRef, `City_Tax_Breakdown_Chart_${new Date().toISOString().split('T')[0]}`);
+      toast.success("City tax breakdown chart downloaded as PNG");
+    }
   };
 
   // Prepare data for pie chart
@@ -707,15 +394,16 @@ const PropertyTaxCalculator = ({
             className="w-full p-4 flex items-center justify-between rounded-xl hover:bg-gray-50 transition-colors"
           >
             <h3 className="text-xl font-bold">Overall Tax Structure</h3>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2">
+            {isOverallTaxExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+          </button>
+          
+          {isOverallTaxExpanded && (
+            <div className="p-6 border-t">
+              <div className="flex justify-end gap-2 mb-4">
                 <Button
                   variant={viewMode === "table" ? "default" : "outline"}
                   size="icon"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleToggleView();
-                  }}
+                  onClick={() => handleToggleView()}
                   className="h-9 w-9 rounded-lg transition-all duration-300"
                   title={viewMode === "chart" ? "Switch to table view" : "Switch to chart view"}
                 >
@@ -724,48 +412,13 @@ const PropertyTaxCalculator = ({
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toast.info("Trend analysis coming soon!");
-                  }}
-                  className="h-9 w-9 rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-                  title="Trend analysis"
-                >
-                  <BarChart3 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDownload();
-                  }}
+                  onClick={handleOverallTaxDownload}
                   className="h-9 w-9 rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-300"
                   title="Download data"
                 >
                   <Download className="h-4 w-4" />
                 </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRefresh();
-                  }}
-                  disabled={isRefreshing}
-                  className="h-9 w-9 rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-                  title="Refresh data"
-                >
-                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                </Button>
               </div>
-              {isOverallTaxExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-            </div>
-          </button>
-          
-          {isOverallTaxExpanded && (
-            <div className="p-6 border-t">
-
             {viewMode === "table" ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -831,6 +484,7 @@ const PropertyTaxCalculator = ({
             ) : (
               <div className="h-[500px]">
                 <ReactECharts
+                  ref={overallTaxChartRef}
                   option={getPieChartOption(taxStructureData, "Tax Structure")}
                   style={{ height: "100%", width: "100%" }}
                   opts={{ renderer: "canvas" }}
@@ -848,15 +502,16 @@ const PropertyTaxCalculator = ({
             className="w-full p-4 flex items-center justify-between rounded-xl hover:bg-gray-50 transition-colors"
           >
             <h3 className="text-xl font-bold">City Tax Breakdown Analysis</h3>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2">
+            {isCityBreakdownExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+          </button>
+          
+          {isCityBreakdownExpanded && (
+            <div className="p-6 border-t">
+              <div className="flex justify-end gap-2 mb-4">
                 <Button
                   variant={cityBreakdownViewMode === "table" ? "default" : "outline"}
                   size="icon"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCityBreakdownToggleView();
-                  }}
+                  onClick={() => handleCityBreakdownToggleView()}
                   className="h-9 w-9 rounded-lg transition-all duration-300"
                   title={cityBreakdownViewMode === "chart" ? "Switch to table view" : "Switch to chart view"}
                 >
@@ -865,48 +520,13 @@ const PropertyTaxCalculator = ({
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toast.info("Trend analysis coming soon!");
-                  }}
-                  className="h-9 w-9 rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-                  title="Trend analysis"
-                >
-                  <BarChart3 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDownload();
-                  }}
+                  onClick={handleCityBreakdownDownload}
                   className="h-9 w-9 rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-300"
                   title="Download data"
                 >
                   <Download className="h-4 w-4" />
                 </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRefresh();
-                  }}
-                  disabled={isRefreshing}
-                  className="h-9 w-9 rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-                  title="Refresh data"
-                >
-                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                </Button>
               </div>
-              {isCityBreakdownExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-            </div>
-          </button>
-          
-          {isCityBreakdownExpanded && (
-            <div className="p-6 border-t">
-
             {cityBreakdownViewMode === "table" ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -947,6 +567,7 @@ const PropertyTaxCalculator = ({
             ) : (
               <div className="h-[600px]">
                 <ReactECharts
+                  ref={cityBreakdownChartRef}
                   option={getHorizontalBarChartOption(cityBreakdownData, "City Tax Breakdown")}
                   style={{ height: "100%", width: "100%" }}
                   opts={{ renderer: "canvas" }}

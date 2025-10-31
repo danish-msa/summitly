@@ -8,10 +8,8 @@ import { Slider } from "@/components/ui/slider";
 import { ChevronDown, ChevronUp, DollarSign, Percent } from "lucide-react";
 import { useMemoizedCalculation } from './useRentVsBuyCalculation';
 import RentVsBuyChart from './RentVsBuyChart';
-
-interface RentVsBuyCalculatorProps {
-  className?: string;
-}
+import { RentVsBuyCalculatorProps } from './types';
+import { formatNumberWithCommas, parseNumberFromString, formatCurrency, formatYearsMonths } from './utils';
 
 const RentVsBuyCalculator = ({ className = "" }: RentVsBuyCalculatorProps) => {
   // Main inputs
@@ -56,36 +54,6 @@ const RentVsBuyCalculator = ({ className = "" }: RentVsBuyCalculatorProps) => {
   // Get data for selected year
   const selectedYearData = calculations.yearlyData[selectedYear - 1] || calculations.yearlyData[0];
   const downPayment = homePrice * (downPaymentPercent / 100);
-
-  const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('en-CA', { 
-      style: 'currency', 
-      currency: 'CAD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
-  };
-
-  const formatYearsMonths = (years: number): string => {
-    const wholeYears = Math.floor(years);
-    const months = Math.round((years - wholeYears) * 12);
-    if (months === 0) {
-      return `${wholeYears} ${wholeYears === 1 ? 'year' : 'years'}`;
-    }
-    if (wholeYears === 0) {
-      return `${months} ${months === 1 ? 'month' : 'months'}`;
-    }
-    return `${wholeYears} ${wholeYears === 1 ? 'year' : 'years'} and ${months} ${months === 1 ? 'month' : 'months'}`;
-  };
-
-  const formatNumberWithCommas = (value: number): string => {
-    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  };
-
-  const parseNumberFromString = (value: string): number => {
-    const cleaned = value.replace(/[^\d.]/g, '');
-    return Number(cleaned) || 0;
-  };
 
   // Calculate net costs and gains
   const rentGain = selectedYearData.rentCost < selectedYearData.buyCost 
