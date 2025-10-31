@@ -1,4 +1,4 @@
-import { Home, DollarSign, TrendingUp, Building } from "lucide-react";
+import { Home, DollarSign, TrendingUp, Building, Calculator } from "lucide-react";
 
 export interface CalculatorConfig {
   slug: string;
@@ -235,6 +235,64 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
         status: "available"
       }
     ]
+  },
+  affordability: {
+    slug: "affordability",
+    icon: Calculator,
+    title: "House Affordability Calculator",
+    subtitle: "Calculate how much house you can afford based on your income",
+    about: {
+      icon: Calculator,
+      description: "Use our affordability calculator to estimate a comfortable mortgage amount based on your current budget. Enter details about your income, down payment and monthly debts to determine how much to spend on a house.",
+      features: [
+        "Calculate from income or payment",
+        "DTI ratio calculations (36/43 rule)",
+        "Monthly payment breakdown",
+        "PMI calculations",
+        "Property taxes and insurance",
+        "HOA fees support",
+        "Advanced customization options",
+      ],
+      estimatedTime: "2-3 minutes",
+      difficulty: "Beginner",
+    },
+    tips: [
+      {
+        title: "DTI Ratio Guidelines",
+        description: "Lenders typically use a 36/43 rule: monthly housing costs should be ≤36% of income, and total debt ≤43% of income.",
+        color: "blue",
+      },
+      {
+        title: "20% Down Payment",
+        description: "A 20% down payment eliminates PMI (Private Mortgage Insurance), saving you hundreds per month.",
+        color: "green",
+      },
+      {
+        title: "Consider All Costs",
+        description: "Don't forget property taxes, insurance, HOA fees, and maintenance when calculating affordability.",
+        color: "purple",
+      },
+    ],
+    related: [
+      {
+        href: "/calculators/mortgage",
+        icon: Home,
+        title: "Mortgage Calculator",
+        status: "Available",
+      },
+      {
+        href: "/calculators/down-payment",
+        icon: DollarSign,
+        title: "Down Payment Calculator",
+        status: "Available",
+      },
+      {
+        href: "/calculators/rent-vs-buy",
+        icon: TrendingUp,
+        title: "Rent vs Buy Calculator",
+        status: "Available",
+      },
+    ],
   }
 };
 

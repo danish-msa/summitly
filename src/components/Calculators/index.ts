@@ -1,5 +1,6 @@
 export { default as MortgageCalculator } from './MortgageCalculator/MortgageCalculator';
 export { default as DownPaymentCalculator } from './DownPaymentCalculator/DownPaymentCalculator';
+export { default as HouseAffordabilityCalculator } from './HouseAffordabilityCalculator/HouseAffordabilityCalculator';
 export { default as InterestRateChart } from './InterestRateChart';
 export { default as AmortizationChart } from './AmortizationChart';
 export { default as AboutCalculatorCard } from './AboutCalculatorCard';

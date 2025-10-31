@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Home, TrendingUp, DollarSign, PieChart, Building } from "lucide-react";
+import { Home, TrendingUp, DollarSign, PieChart, Building, Calculator } from "lucide-react";
 
 interface CalculatorCard {
   id: string;
@@ -57,6 +57,16 @@ const calculators: CalculatorCard[] = [
     category: 'Real Estate',
     status: 'available',
     features: ['2025 official rates', 'Multiple property types', 'First-time buyer rebates', 'Payment schedules'],
+  },
+  {
+    id: 'affordability',
+    title: 'House Affordability Calculator',
+    description: 'Calculate how much house you can afford based on your income, debts, and down payment.',
+    icon: Calculator,
+    href: '/calculators/affordability',
+    category: 'Real Estate',
+    status: 'available',
+    features: ['DTI ratio calculations', 'Monthly payment breakdown', 'PMI calculations', 'Advanced customization'],
   },
   {
     id: 'budget',
@@ -122,6 +132,7 @@ const CalculatorsPage = () => {
               { bg: 'bg-green-50', title: 'text-green-700', button: 'bg-green-600 hover:bg-green-700', icon: 'bg-green-100 text-green-600' },    // Down Payment Calculator
               { bg: 'bg-blue-50', title: 'text-blue-700', button: 'bg-blue-600 hover:bg-blue-700', icon: 'bg-blue-100 text-blue-600' },    // Rent vs Buy Calculator
               { bg: 'bg-orange-50', title: 'text-orange-700', button: 'bg-orange-600 hover:bg-orange-700', icon: 'bg-orange-100 text-orange-600' },     // Property Tax Calculator
+              { bg: 'bg-teal-50', title: 'text-teal-700', button: 'bg-teal-600 hover:bg-teal-700', icon: 'bg-teal-100 text-teal-600' },        // Affordability Calculator
               { bg: 'bg-pink-50', title: 'text-pink-700', button: 'bg-pink-600 hover:bg-pink-700', icon: 'bg-pink-100 text-pink-600' },        // Home Buying Budget
             ];
             

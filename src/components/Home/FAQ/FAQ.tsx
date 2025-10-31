@@ -83,7 +83,7 @@ export function FAQ() {
 
 
         <Accordion type="single" collapsible className="w-full mt-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
             {displayedFaqs.map((faq) => (
               <AccordionItem
                 key={faq.id}

@@ -9,6 +9,7 @@ import AuthModal from '@/components/Auth/AuthModal';
 // import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { ChevronDown } from 'lucide-react';
 
 type Props = {
   openNav: () => void;
@@ -18,6 +19,8 @@ const Nav = ({ openNav }: Props) => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
   const [showSidePanel, setShowSidePanel] = useState(false);
+  const [showBuyDropdown, setShowBuyDropdown] = useState(false);
+  const [showRentDropdown, setShowRentDropdown] = useState(false);
 
   const handleLoginClick = () => {
     setShowLoginModal(true);
@@ -141,9 +144,14 @@ const Nav = ({ openNav }: Props) => {
 
               {/* Buy, Rent, Mortgage - Desktop Only */}
               <nav className="hidden lg:flex items-center space-x-1">
-                <Link href="/buy">
+                {/* Buy Dropdown */}
+                <div
+                  className="relative"
+                  onMouseEnter={() => setShowBuyDropdown(true)}
+                  onMouseLeave={() => setShowBuyDropdown(false)}
+                >
                   <motion.div
-                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide"
+                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide flex items-center gap-1 cursor-pointer"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     initial={{ opacity: 0, y: -20 }}
@@ -151,11 +159,123 @@ const Nav = ({ openNav }: Props) => {
                     transition={{ duration: 0.5, delay: 0.1 }}
                   >
                     Buy
+                    <ChevronDown className={cn("w-4 h-4 transition-transform", showBuyDropdown && "rotate-180")} />
                   </motion.div>
-                </Link>
-                <Link href="/rent">
+                  
+                  <AnimatePresence>
+                    {showBuyDropdown && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute top-full left-0 mt-2 w-[600px] bg-white border border-gray-200 rounded-xl shadow-xl z-[10000] p-6"
+                      >
+                        <div className="grid grid-cols-3 gap-6">
+                          {/* For Sale Column */}
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wide">For Sale</h3>
+                            <ul className="space-y-2">
+                              <li>
+                                <Link href="/buy?type=houses" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                  Houses
+                                </Link>
+                              </li>
+                              <li>
+                                <Link href="/buy?type=townhouses" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                  Townhouses
+                                </Link>
+                              </li>
+                              <li>
+                                <Link href="/buy?type=condos" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                  Condos
+                                </Link>
+                              </li>
+                              <li>
+                                <Link href="/buy?type=mobile-homes" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                  Mobile Homes
+                                </Link>
+                              </li>
+                              <li>
+                                <Link href="/buy?type=open-houses" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                  Open Houses
+                                </Link>
+                              </li>
+                              <li>
+                                <Link href="/buy" className="block py-2 text-sm font-medium text-primary hover:font-bold rounded-md transition-colors">
+                                  All Homes For Sale
+                                </Link>
+                              </li>
+                            </ul>
+                          </div>
+
+                          {/* New Homes Column */}
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wide">New Homes</h3>
+                            <ul className="space-y-2">
+                              <li>
+                                <Link href="/new-homes/discover" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                  Discover Your New Home
+                                </Link>
+                              </li>
+                              <li>
+                                <Link href="/new-homes" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                  New Homes For Sale
+                                </Link>
+                              </li>
+                              <li>
+                                <Link href="/new-homes/communities" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                  New Home Communities
+                                </Link>
+                              </li>
+                              <li>
+                                <Link href="/new-homes/news" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                  New Construction News
+                                </Link>
+                              </li>
+                            </ul>
+                          </div>
+
+                          {/* Buying Resources Column */}
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wide">Buying Resources</h3>
+                            <ul className="space-y-2">
+                              <li>
+                                <Link href="/calculators/affordability" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                  How Much Home Can I Afford
+                                </Link>
+                              </li>
+                              <li>
+                                <Link href="/calculators" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                  Mortgage Calculator
+                                </Link>
+                              </li>
+                              <li>
+                                <Link href="/buying-guide" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                  Buying Guide
+                                </Link>
+                              </li>
+                              <li>
+                                <Link href="/articles?category=home-buying" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                  Home Buying Articles
+                                </Link>
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Rent Dropdown */}
+                <div
+                  className="relative"
+                  onMouseEnter={() => setShowRentDropdown(true)}
+                  onMouseLeave={() => setShowRentDropdown(false)}
+                >
                   <motion.div
-                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide"
+                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide flex items-center gap-1 cursor-pointer"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     initial={{ opacity: 0, y: -20 }}
@@ -163,9 +283,56 @@ const Nav = ({ openNav }: Props) => {
                     transition={{ duration: 0.5, delay: 0.2 }}
                   >
                     Rent
+                    <ChevronDown className={cn("w-4 h-4 transition-transform", showRentDropdown && "rotate-180")} />
                   </motion.div>
-                </Link>
-                <Link href="/calculators">
+                  
+                  <AnimatePresence>
+                    {showRentDropdown && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute top-full left-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl z-[10000] p-4"
+                      >
+                        <ul className="space-y-2">
+                          <li>
+                            <Link href="/rent?type=houses" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                              Houses
+                            </Link>
+                          </li>
+                          <li>
+                            <Link href="/rent?type=townhouses" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                              Townhouses
+                            </Link>
+                          </li>
+                          <li>
+                            <Link href="/rent?type=condos" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                              Condos
+                            </Link>
+                          </li>
+                          <li>
+                            <Link href="/rent?type=apartments" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                              Apartments
+                            </Link>
+                          </li>
+                          <li>
+                            <Link href="/rent" className="block py-2 text-sm font-medium text-primary hover:font-bold rounded-md transition-colors">
+                              All Rentals For Sale
+                            </Link>
+                          </li>
+                        </ul>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Mortgage Link */}
+                <a 
+                  href="https://mortgagesquad.ca" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
                   <motion.div
                     className="px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide"
                     whileHover={{ scale: 1.02 }}
@@ -176,7 +343,7 @@ const Nav = ({ openNav }: Props) => {
                   >
                     Mortgage
                   </motion.div>
-                </Link>
+                </a>
               </nav>
             </div>
 
@@ -221,7 +388,7 @@ const Nav = ({ openNav }: Props) => {
               {/* Login / Signup Button */}
               <motion.button
                 onClick={handleLoginClick}
-                className="flex items-center space-x-2 px-3 py-2 text-sm lg:text-base font-medium bg-brand-cb-blue text-white hover:bg-brand-midnight transition-colors rounded-lg"
+                className="flex items-center space-x-2 px-3 py-2 text-sm lg:text-base font-medium bg-brand-cb-blue text-white hover:bg-white hover:text-brand-cb-blue transition-colors rounded-lg"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 initial={{ opacity: 0, x: 20 }}
@@ -236,7 +403,7 @@ const Nav = ({ openNav }: Props) => {
               {/* Side Panel Menu Button - Desktop Only */}
               <motion.button
                 onClick={handleSidePanelToggle}
-                className="hidden lg:flex p-2 text-foreground hover:text-primary transition-colors rounded-lg hover:bg-accent/50"
+                className="hidden lg:flex p-2 text-foreground hover:text-primary transition-colors rounded-lg hover:bg-white"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 initial={{ opacity: 0, x: 20 }}
