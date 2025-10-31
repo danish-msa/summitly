@@ -7,15 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Info, DollarSign, Percent, ChevronDown, ChevronUp, Calculator, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Table2, BarChart3 } from "lucide-react";
+
+import { Info, DollarSign, Percent, ChevronDown, ChevronUp, TrendingUp, AlertCircle, CheckCircle2, Table2, BarChart3 } from "lucide-react";
 import * as Tooltip from '@radix-ui/react-tooltip';
 import ReactECharts from "echarts-for-react";
 
@@ -369,7 +362,7 @@ const HouseAffordabilityCalculator = () => {
     return {
       tooltip: {
         trigger: "item",
-        formatter: (params: any) => {
+        formatter: (params: { name: string; value: number; percent: number }) => {
           return `${params.name}: ${formatCurrency(params.value)} (${params.percent}%)`;
         },
         backgroundColor: "rgba(255, 255, 255, 0.95)",
