@@ -28,35 +28,6 @@ const unslugifyCityName = (slug: string): string => {
     .join(' ');
 };
 
-// Helper function to get city coordinates (fallback to Toronto)
-const getCityCoordinates = (cityName: string): { lat: number; lng: number } => {
-  // Common Canadian cities coordinates
-  const cityCoords: Record<string, { lat: number; lng: number }> = {
-    'Toronto': { lat: 43.6532, lng: -79.3832 },
-    'Mississauga': { lat: 43.5890, lng: -79.6441 },
-    'Brampton': { lat: 43.7315, lng: -79.7624 },
-    'Markham': { lat: 43.8561, lng: -79.3370 },
-    'Vaughan': { lat: 43.8367, lng: -79.4982 },
-    'Richmond Hill': { lat: 43.8828, lng: -79.4403 },
-    'Oakville': { lat: 43.4675, lng: -79.6877 },
-    'Burlington': { lat: 43.3256, lng: -79.7990 },
-    'Ajax': { lat: 43.8500, lng: -79.0200 },
-    'Pickering': { lat: 43.8374, lng: -79.0864 },
-    'Whitby': { lat: 43.8975, lng: -78.9428 },
-    'Oshawa': { lat: 43.8971, lng: -78.8658 },
-    'Cheshire': { lat: 53.2004, lng: -2.8976 }, // UK location, adjust as needed
-  };
-
-  const normalizedName = cityName.toLowerCase();
-  for (const [city, coords] of Object.entries(cityCoords)) {
-    if (city.toLowerCase() === normalizedName) {
-      return coords;
-    }
-  }
-
-  // Default to Toronto if city not found
-  return { lat: 43.6532, lng: -79.3832 };
-};
 
 const CityPage: React.FC = () => {
   const params = useParams();

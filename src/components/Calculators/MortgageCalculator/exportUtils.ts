@@ -34,7 +34,7 @@ export const downloadCSV = (data: Array<Record<string, string | number>>, filena
 };
 
 // Utility function to download chart as PNG (for AmortizationChart component)
-export const downloadChartAsPNG = (chartElement: HTMLElement | null, _filename: string) => {
+export const downloadChartAsPNG = (chartElement: HTMLElement | null) => {
   if (!chartElement) {
     toast.error("Chart not available for download");
     return;

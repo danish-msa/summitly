@@ -123,7 +123,7 @@ const HouseAffordabilityCalculator = () => {
     dtiBackEnd,
     dtiFrontEnd,
   };
-  const budgetStatus = getBudgetStatus(currentPrice, results.maxHomePrice, params, results);
+  const budgetStatus = getBudgetStatus(currentPrice, results.maxHomePrice, params);
   const StatusIcon = budgetStatus.icon;
 
 

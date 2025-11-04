@@ -155,8 +155,7 @@ export const calculateFromIncome = (params: CalculationParams): AffordabilityRes
 export const getBudgetStatus = (
   priceToCheck: number,
   maxHomePrice: number,
-  params: CalculationParams,
-  _results: AffordabilityResults
+  params: CalculationParams
 ): BudgetStatus => {
   if (priceToCheck === 0 || maxHomePrice === 0) {
     return {

@@ -117,7 +117,7 @@ const mockAreasData: Area[] = [
   },
 ];
 
-export const AreaSelector: React.FC<AreaSelectorProps> = ({ properties: _properties = [], cityName }) => {
+export const AreaSelector: React.FC<AreaSelectorProps> = ({ cityName }) => {
   const [showAll, setShowAll] = useState(false);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const [expandedNeighborhoods, setExpandedNeighborhoods] = useState(true);
@@ -132,7 +132,7 @@ export const AreaSelector: React.FC<AreaSelectorProps> = ({ properties: _propert
     if (areasData.length > 0 && !selectedArea) {
       setSelectedArea(areasData[0].name);
     }
-  }, [selectedArea, areasData.length]);
+  }, [selectedArea, areasData]);
 
   return (
     <div className="bg-white p-4 rounded-lg space-y-4">
