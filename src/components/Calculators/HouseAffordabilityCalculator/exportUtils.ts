@@ -115,8 +115,8 @@ export const prepareAmortizationTableData = (schedule: AmortizationScheduleEntry
 };
 
 // Prepare table data for Principal vs Interest CSV export
-export const preparePrincipalVsInterestTableData = (schedule: AmortizationScheduleEntry[]) => {
-  const tableData = schedule.map(entry => {
+export const preparePrincipalVsInterestTableData = (schedule: AmortizationScheduleEntry[]): Array<Record<string, string | number>> => {
+  const tableData: Array<Record<string, string | number>> = schedule.map(entry => {
     const totalPaid = entry.cumulativePrincipal + entry.cumulativeInterest;
     const principalPercent = totalPaid > 0 ? (entry.cumulativePrincipal / totalPaid) * 100 : 0;
     const interestPercent = totalPaid > 0 ? (entry.cumulativeInterest / totalPaid) * 100 : 0;
