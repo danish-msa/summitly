@@ -1,5 +1,6 @@
 import { AffordabilityResults, BudgetStatus, CalculationParams } from './types';
 import { formatCurrency } from './utils';
+import { AlertCircle, CheckCircle2, Info, TrendingUp } from "lucide-react";
 
 // Calculate monthly mortgage payment (P&I)
 export const calculateMonthlyPayment = (loanAmount: number, rate: number, termYears: number): number => {
