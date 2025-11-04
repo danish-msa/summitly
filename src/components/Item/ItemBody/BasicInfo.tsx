@@ -9,7 +9,7 @@ interface BasicInfoProps {
   rawProperty?: SinglePropertyListingResponse | null;
 }
 
-const BasicInfo: React.FC<BasicInfoProps> = ({ property: _property, rawProperty: _rawProperty }) => {
+const BasicInfo: React.FC<BasicInfoProps> = () => {
 
   const handleRequestTour = () => {
     // Handle tour request logic
