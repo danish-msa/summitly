@@ -97,8 +97,9 @@ export default function EstimateHistorySection({ propertyAddress }: EstimateHist
       shadowBlur: 20,
       shadowColor: 'rgba(0, 0, 0, 0.1)',
       shadowOffsetY: 4,
-      formatter: (params: any) => {
-        const data = params[0];
+      formatter: (params: unknown) => {
+        const paramsArray = params as Array<{ value: number; name: string }>;
+        const data = paramsArray[0];
         const month = chartData.find(item => item.value === data.value)?.month || data.name;
         return `
           <div style="font-weight: 700; font-size: 14px; color: #1e293b; margin-bottom: 6px;">${month}</div>

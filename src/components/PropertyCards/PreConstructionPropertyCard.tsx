@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Bed, Bath, Maximize2, MapPin, Heart, ChevronLeft, ChevronRight, MoreVertical, Share2, EyeOff, Calendar, TrendingUp, FileText } from 'lucide-react';
+import { Bed, Bath, Maximize2, MapPin, Heart, ChevronLeft, ChevronRight, MoreVertical, Share2, EyeOff, Calendar, TrendingUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import type { PreConstructionProperty, PreConstructionPropertyCardProps } from './types';
+import type { PreConstructionPropertyCardProps } from './types';
 
 const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstructionPropertyCardProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);

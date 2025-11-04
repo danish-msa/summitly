@@ -1,5 +1,4 @@
-import { PropertyListing } from '@/lib/types';
-import { PropertyHistoryProps, GroupedHistoryRecord, ListingHistoryRecord } from './types';
+import { PropertyHistoryProps, GroupedHistoryRecord } from './types';
 import { formatDate, getTimeAgo, getDaysOnMarket, getPropertyAddress } from './utils';
 import ListingTimeline from './ListingTimeline';
 import EstimateHistorySection from './EstimateHistorySection';

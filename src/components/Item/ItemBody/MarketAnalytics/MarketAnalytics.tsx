@@ -120,10 +120,6 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
     averagePrices: soldPriceData.averagePrices || [],
   };
   
-  // Only show chart if we have valid data
-  const hasValidData = marketData.months.length > 0 && marketData.prices.length > 0 && marketData.days.length > 0;
-  const hasListingsData = listingsDataFormatted.months.length > 0 && listingsDataFormatted.newListings.length > 0 && listingsDataFormatted.closedListings.length > 0;
-  
   // Determine if we're using API data or mock data
   const usingAPIData = !apiError && (apiMarketData || apiListingsData);
   const isLoading = apiLoading;

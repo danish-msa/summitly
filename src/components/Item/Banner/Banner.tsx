@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Heart, Share2, Calendar } from "lucide-react";
+import { MapPin, Heart, Share2, Calendar, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PropertyListing } from '@/lib/types';
@@ -41,6 +41,12 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty }) => {
         });
     };
 
+    const handleGetPreQualified = () => {
+        // Handle pre-qualification logic
+        console.log('Get pre-qualified clicked');
+        // You can add navigation to mortgage calculator or pre-qualification page
+    };
+
     return (
         <div className="">
             
@@ -79,6 +85,16 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty }) => {
                                     <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0" />
                                     <span className="text-sm font-medium sm:text-base">{fullAddress}</span>
                                 </div>
+                                
+                                {/* Get Pre-Qualified Button */}
+                                <Button 
+                                    onClick={handleGetPreQualified}
+                                    variant="outline"
+                                    className="w-full sm:w-auto border-brand-celestial/30 text-brand-celestial hover:bg-brand-celestial/10 hover:border-brand-celestial font-medium py-2.5 px-4 rounded-lg transition-colors"
+                                >
+                                    <CreditCard className="h-4 w-4 mr-2" />
+                                    Get Pre-Qualified
+                                </Button>
                             </div>
                         </div>
 

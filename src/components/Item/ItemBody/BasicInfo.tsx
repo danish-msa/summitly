@@ -1,41 +1,15 @@
 import React from 'react'
 import { PropertyListing } from '@/lib/types'
 import { MapPin, Calendar, User, CreditCard } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import QualityScore from './QualityScore'
 import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/single-listing'
-import type { ImageInsights } from '@/lib/api/repliers/types/single-listing'
-import { getMockImageInsights } from '@/data/mock-image-insights'
 
 interface BasicInfoProps {
   property: PropertyListing;
   rawProperty?: SinglePropertyListingResponse | null;
 }
 
-const BasicInfo: React.FC<BasicInfoProps> = ({ property, rawProperty }) => {
-  // Format the full address
-  // const fullAddress = property.address.location || 
-  //   `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim();
-
-  // Format the price
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
-
-  // Format the date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+const BasicInfo: React.FC<BasicInfoProps> = ({ property: _property, rawProperty: _rawProperty }) => {
 
   const handleRequestTour = () => {
     // Handle tour request logic

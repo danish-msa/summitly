@@ -1,5 +1,3 @@
-import type { ProcessedLocation } from "@/data/types";
-
 export interface MarketAnalyticsProps {
   propertyAddress: string;
   propertyClass: string;

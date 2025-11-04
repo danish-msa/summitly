@@ -9,7 +9,6 @@ import { MarketAnalytics } from './MarketAnalytics'
 import SimilarListings from './SimilarListings'
 import { generateMockListingData } from './mockListingData'
 import { PropertyListing } from '@/lib/types'
-import SectionNavigation from './SectionNavigation'
 import PropertyHistory from './PropertyHistory'
 
 interface CollapsibleTabsProps {
@@ -54,8 +53,8 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property }) => {
       });
     };
 
-    window.addEventListener('expandSection' as any, handleSectionNavigation as EventListener);
-    return () => window.removeEventListener('expandSection' as any, handleSectionNavigation as EventListener);
+    window.addEventListener('expandSection' as keyof WindowEventMap, handleSectionNavigation as EventListener);
+    return () => window.removeEventListener('expandSection' as keyof WindowEventMap, handleSectionNavigation as EventListener);
   }, []);
 
   const sections: TabSection[] = [
@@ -133,12 +132,6 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property }) => {
       )
     }
   ];
-
-  // Extract section metadata for navigation
-  const navigationSections = sections.map(section => ({
-    id: section.id,
-    label: section.label
-  }));
 
   return (
     <div className="w-full">
