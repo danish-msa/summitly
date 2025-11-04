@@ -84,8 +84,8 @@ export const preparePaymentBreakdownTableData = (
 };
 
 // Prepare table data for Amortization Schedule CSV export
-export const prepareAmortizationTableData = (schedule: AmortizationScheduleEntry[]) => {
-  const tableData = schedule.map(entry => ({
+export const prepareAmortizationTableData = (schedule: AmortizationScheduleEntry[]): Array<Record<string, string | number>> => {
+  const tableData: Array<Record<string, string | number>> = schedule.map(entry => ({
     "Month": entry.month,
     "Total Payment (P&I)": formatCurrency(entry.totalPayment),
     "Interest Paid": formatCurrency(entry.interestPaid),
