@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
@@ -117,7 +117,7 @@ const mockAreasData: Area[] = [
   },
 ];
 
-export const AreaSelector: React.FC<AreaSelectorProps> = ({ properties = [], cityName }) => {
+export const AreaSelector: React.FC<AreaSelectorProps> = ({ properties: _properties = [], cityName }) => {
   const [showAll, setShowAll] = useState(false);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const [expandedNeighborhoods, setExpandedNeighborhoods] = useState(true);
@@ -125,7 +125,6 @@ export const AreaSelector: React.FC<AreaSelectorProps> = ({ properties = [], cit
   // Use mock data for now
   const areasData = mockAreasData;
 
-  const displayedAreas = showAll ? areasData : areasData.slice(0, 1);
   const selectedAreaData = areasData.find((area) => area.name === selectedArea || (selectedArea === null && areasData.length > 0));
 
   // Set default selected area on first render
@@ -133,7 +132,7 @@ export const AreaSelector: React.FC<AreaSelectorProps> = ({ properties = [], cit
     if (areasData.length > 0 && !selectedArea) {
       setSelectedArea(areasData[0].name);
     }
-  }, [selectedArea]);
+  }, [selectedArea, areasData.length]);
 
   return (
     <div className="bg-white p-4 rounded-lg space-y-4">

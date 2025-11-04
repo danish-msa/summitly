@@ -1,6 +1,5 @@
 import { AffordabilityResults, BudgetStatus, CalculationParams } from './types';
 import { formatCurrency } from './utils';
-import { AlertCircle, CheckCircle2, Info, TrendingUp } from "lucide-react";
 
 // Calculate monthly mortgage payment (P&I)
 export const calculateMonthlyPayment = (loanAmount: number, rate: number, termYears: number): number => {
@@ -157,7 +156,7 @@ export const getBudgetStatus = (
   priceToCheck: number,
   maxHomePrice: number,
   params: CalculationParams,
-  results: AffordabilityResults
+  _results: AffordabilityResults
 ): BudgetStatus => {
   if (priceToCheck === 0 || maxHomePrice === 0) {
     return {

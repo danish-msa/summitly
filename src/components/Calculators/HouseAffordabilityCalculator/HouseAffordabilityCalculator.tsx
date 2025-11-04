@@ -8,14 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 
-import { Info, DollarSign, Percent, ChevronDown, ChevronUp, TrendingUp, AlertCircle, CheckCircle2, Table2, BarChart3, Download } from "lucide-react";
+import { Info, DollarSign, Percent, ChevronDown, ChevronUp, Table2, BarChart3, Download } from "lucide-react";
 import * as Tooltip from '@radix-ui/react-tooltip';
 import ReactECharts from "echarts-for-react";
 
 import { AffordabilityResults, CalculationParams } from './types';
 import { formatCurrency, formatNumber, parseNumberFromString } from './utils';
 import { calculateMonthlyPayment, calculateFromIncome, getBudgetStatus, getAmortizationSchedule } from './calculations';
-import { getPieChartOption, getAmortizationChartOption, getPrincipalVsInterestChartOption } from './chartOptions';
+import { getPieChartOption } from './chartOptions';
 import { getPaymentBreakdownData } from './dataHelpers';
 import { downloadCSV, downloadChartAsPNG, preparePaymentBreakdownTableData, prepareAmortizationTableData, preparePrincipalVsInterestTableData } from './exportUtils';
 
@@ -99,7 +99,7 @@ const HouseAffordabilityCalculator = () => {
   }, [
     annualIncome, monthlyDebts, downPaymentPercent, downPaymentAmount, interestRate, loanTerm,
     propertyTaxRate, insuranceRate, hoaFees, showAdvanced, annualPropertyTax,
-    annualInsurance, pmiRate, dtiBackEnd, dtiFrontEnd
+    annualInsurance, pmiRate, dtiBackEnd, dtiFrontEnd, sliderPrice
   ]);
 
 

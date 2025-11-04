@@ -1,4 +1,3 @@
-import { AlertCircle, CheckCircle2, Info, TrendingUp } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
 export interface AffordabilityResults {

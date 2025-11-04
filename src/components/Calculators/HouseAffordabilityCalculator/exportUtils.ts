@@ -99,8 +99,6 @@ export const prepareAmortizationTableData = (schedule: AmortizationScheduleEntry
   if (schedule.length > 0) {
     const finalRow = schedule[schedule.length - 1];
     const totalPaid = finalRow.cumulativePrincipal + finalRow.cumulativeInterest;
-    const principalPercent = totalPaid > 0 ? (finalRow.cumulativePrincipal / totalPaid) * 100 : 0;
-    const interestPercent = totalPaid > 0 ? (finalRow.cumulativeInterest / totalPaid) * 100 : 0;
 
     tableData.push({
       "Month": "TOTALS",

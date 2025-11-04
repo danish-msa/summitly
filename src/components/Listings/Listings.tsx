@@ -29,7 +29,6 @@ const Listings = () => {
   });
   const [sortOption, setSortOption] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -85,7 +84,6 @@ const Listings = () => {
         }
         
         // Update pagination info
-        setTotalPages(data.numPages || 1);
         setTotalResults(data.count || data.listings.length);
         setHasMore(page < (data.numPages || 1));
         
@@ -116,7 +114,7 @@ const Listings = () => {
       setLoading(false);
       setIsLoadingMore(false);
     }
-  }, [filters, communities.length]);
+  }, [filters, communities.length, isLoadingMore]);
 
   // Initial load and when filters change
   useEffect(() => {

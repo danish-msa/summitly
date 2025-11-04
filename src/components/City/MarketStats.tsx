@@ -18,13 +18,11 @@ export const MarketStats: React.FC<MarketStatsProps> = ({ cityName, properties =
   const [isExpanded, setIsExpanded] = useState(true);
   const [dataView, setDataView] = useState<"sold" | "rented">("sold");
   const [downtownProperties, setDowntownProperties] = useState<PropertyListing[]>([]);
-  const [loadingDowntown, setLoadingDowntown] = useState(false);
 
   // Fetch Downtown properties
   useEffect(() => {
     const fetchDowntownProperties = async () => {
       if (cityName.toLowerCase() !== "downtown") {
-        setLoadingDowntown(true);
         try {
           const listingsData = await getListings({
             status: "A",
@@ -43,8 +41,6 @@ export const MarketStats: React.FC<MarketStatsProps> = ({ cityName, properties =
           setDowntownProperties(downtown);
         } catch (error) {
           console.error("Error fetching downtown properties:", error);
-        } finally {
-          setLoadingDowntown(false);
         }
       }
     };
@@ -142,7 +138,7 @@ export const MarketStats: React.FC<MarketStatsProps> = ({ cityName, properties =
             color: "rgba(0, 0, 0, 0.1)",
           },
         },
-        formatter: (params: any) => {
+        formatter: (params: Array<{ value: number; name: string }>) => {
           const value = params[0].value;
           const period = params[0].name;
           return `

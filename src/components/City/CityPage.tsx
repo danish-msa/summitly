@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import Map from '@/components/ui/map';
 import { getListings } from '@/lib/api/properties';
 import PropertyCard from '@/components/Helper/PropertyCard';
 import { PropertyListing } from '@/lib/types';
@@ -102,10 +101,7 @@ const CityPage: React.FC = () => {
     return unslugifyCityName(citySlug);
   }, [citySlug]);
 
-  // Get city coordinates
-  const cityCoordinates = useMemo(() => {
-    return getCityCoordinates(cityName);
-  }, [cityName]);
+  // City coordinates are calculated when needed
 
   useEffect(() => {
     const loadCityData = async () => {
