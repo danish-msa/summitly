@@ -120,7 +120,7 @@ export function transformListing(listing: ApiListing): PropertyListing {
     listPrice: listing.listPrice || 0,
     listDate: listing.listDate || new Date().toISOString(),
     lastStatus: listing.lastStatus || '',
-    soldPrice: listing.soldPrice || '',
+    soldPrice: typeof listing.soldPrice === 'string' ? listing.soldPrice : (listing.soldPrice ? String(listing.soldPrice) : ''),
     soldDate: listing.soldDate || '',
     
     address: {
@@ -167,7 +167,7 @@ export function transformListing(listing: ApiListing): PropertyListing {
       legalDescription: listing.lot?.legalDescription || '',
       measurement: listing.lot?.measurement || '',
       width: listing.lot?.width || 0,
-      size: listing.lot?.size || 0,
+      size: typeof listing.lot?.size === 'string' ? parseFloat(listing.lot?.size) : (listing.lot?.size ? Number(listing.lot?.size) : 0),
       source: listing.lot?.source || '',
       dimensionsSource: listing.lot?.dimensionsSource || '',
       dimensions: listing.lot?.dimensions || '',
@@ -298,7 +298,7 @@ export async function getListingDetails(mlsNumber: string): Promise<PropertyList
     return null;
   }
 
-  return transformListing(response.data);
+  return transformListing(response.data as ApiListing);
 }
 
 /**
