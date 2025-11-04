@@ -121,7 +121,7 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
   };
   
   // Determine if we're using API data or mock data
-  const usingAPIData = !apiError && (apiMarketData || apiListingsData);
+  const usingAPIData = Boolean(!apiError && (apiMarketData || apiListingsData));
   const isLoading = apiLoading;
   
   const handleRefresh = () => {
