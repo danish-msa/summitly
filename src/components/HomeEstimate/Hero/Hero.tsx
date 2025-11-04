@@ -13,7 +13,7 @@ const HomeEstimatorBanner = () => {
   };
 
   return (
-    <div className="w-full flex-col flex justify-center items-center pt-28 md:pt-[10vw] pb-[4vw] bg-[url('/images/banner2.webp')] bg-cover bg-center relative mx-auto">
+    <div className="w-full flex-col flex justify-center items-center mt-16 pt-28 md:pt-20 pb-20 bg-[url('/images/banner2.webp')] bg-cover bg-center relative mx-auto">
       {/* Overlay */}
       <div className="absolute inset-0 bg-black bg-opacity-50"></div>
       
@@ -27,7 +27,6 @@ const HomeEstimatorBanner = () => {
         </p>
         
         <GlobalSearch onSuggestionSelect={handleSuggestionSelect} />
-
       </div>
     </div>
   );

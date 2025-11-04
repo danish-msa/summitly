@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Home, Building2, TrendingUp, Search } from "lucide-react";
 import SectionHeading from "@/components/Helper/SectionHeading";
+import { useLocationDetection } from "@/hooks/useLocationDetection";
 
 interface Recommendation {
   title: string;
@@ -19,24 +20,25 @@ interface RecommendationCategory {
   recommendations: Recommendation[];
 }
 
-const recommendationsData: RecommendationCategory[] = [
+// Base recommendation data templates
+const baseRecommendationsData: RecommendationCategory[] = [
   {
     id: "real-estate",
     label: "Real Estate",
     icon: <Home className="w-4 h-4" />,
     recommendations: [
-      { title: "Browse all homes", subtitle: "Toronto real estate", link: "/listings" },
-      { title: "Luxury properties", subtitle: "GTA luxury homes", link: "/listings?propertyType=luxury" },
-      { title: "New listings", subtitle: "Latest Toronto listings", link: "/listings?sort=newest" },
+      { title: "Browse all homes", subtitle: "{location} real estate", link: "/listings" },
+      { title: "Luxury properties", subtitle: "{location} luxury homes", link: "/listings?propertyType=luxury" },
+      { title: "New listings", subtitle: "Latest {location} listings", link: "/listings?sort=newest" },
       { title: "Price reduced", subtitle: "Reduced price homes", link: "/listings?sort=price-reduced" },
-      { title: "Open houses", subtitle: "Toronto open houses", link: "/listings?type=open-house" },
-      { title: "Foreclosures", subtitle: "GTA foreclosure deals", link: "/listings?type=foreclosure" },
-      { title: "Waterfront properties", subtitle: "Toronto waterfront homes", link: "/listings?feature=waterfront" },
-      { title: "Historic homes", subtitle: "GTA heritage properties", link: "/listings?feature=historic" },
-      { title: "New construction", subtitle: "Toronto new builds", link: "/listings?type=new-construction" },
-      { title: "Investment properties", subtitle: "GTA rental investments", link: "/listings?type=investment" },
-      { title: "Condo developments", subtitle: "Toronto new condos", link: "/listings?propertyType=condo&type=new" },
-      { title: "Townhouses", subtitle: "GTA townhouse listings", link: "/listings?propertyType=townhouse" },
+      { title: "Open houses", subtitle: "{location} open houses", link: "/listings?type=open-house" },
+      { title: "Foreclosures", subtitle: "{location} foreclosure deals", link: "/listings?type=foreclosure" },
+      { title: "Waterfront properties", subtitle: "{location} waterfront homes", link: "/listings?feature=waterfront" },
+      { title: "Historic homes", subtitle: "{location} heritage properties", link: "/listings?feature=historic" },
+      { title: "New construction", subtitle: "{location} new builds", link: "/listings?type=new-construction" },
+      { title: "Investment properties", subtitle: "{location} rental investments", link: "/listings?type=investment" },
+      { title: "Condo developments", subtitle: "{location} new condos", link: "/listings?propertyType=condo&type=new" },
+      { title: "Townhouses", subtitle: "{location} townhouse listings", link: "/listings?propertyType=townhouse" },
     ],
   },
   {
@@ -44,18 +46,18 @@ const recommendationsData: RecommendationCategory[] = [
     label: "Rentals",
     icon: <Building2 className="w-4 h-4" />,
     recommendations: [
-      { title: "Rental Buildings", subtitle: "Toronto apartments for rent", link: "/listings?type=rental" },
-      { title: "Condos for rent", subtitle: "GTA condos for rent", link: "/listings?type=rental&propertyType=condo" },
-      { title: "Houses for rent", subtitle: "Toronto houses for rent", link: "/listings?type=rental&propertyType=house" },
-      { title: "Studio apartments", subtitle: "Toronto studios for rent", link: "/listings?type=rental&bedrooms=0" },
-      { title: "Luxury rentals", subtitle: "GTA luxury rentals", link: "/listings?type=rental&propertyType=luxury" },
-      { title: "Pet friendly", subtitle: "Toronto pet friendly rentals", link: "/listings?type=rental&petFriendly=true" },
-      { title: "Furnished rentals", subtitle: "GTA furnished apartments", link: "/listings?type=rental&furnished=true" },
-      { title: "Short term rentals", subtitle: "Toronto short term leases", link: "/listings?type=rental&lease=short-term" },
-      { title: "Student housing", subtitle: "GTA student accommodations", link: "/listings?type=rental&target=students" },
-      { title: "Corporate housing", subtitle: "Toronto corporate rentals", link: "/listings?type=rental&target=corporate" },
-      { title: "Basement apartments", subtitle: "GTA basement rentals", link: "/listings?type=rental&propertyType=basement" },
-      { title: "Room rentals", subtitle: "Toronto room shares", link: "/listings?type=rental&propertyType=room" },
+      { title: "Rental Buildings", subtitle: "{location} apartments for rent", link: "/listings?type=rental" },
+      { title: "Condos for rent", subtitle: "{location} condos for rent", link: "/listings?type=rental&propertyType=condo" },
+      { title: "Houses for rent", subtitle: "{location} houses for rent", link: "/listings?type=rental&propertyType=house" },
+      { title: "Studio apartments", subtitle: "{location} studios for rent", link: "/listings?type=rental&bedrooms=0" },
+      { title: "Luxury rentals", subtitle: "{location} luxury rentals", link: "/listings?type=rental&propertyType=luxury" },
+      { title: "Pet friendly", subtitle: "{location} pet friendly rentals", link: "/listings?type=rental&petFriendly=true" },
+      { title: "Furnished rentals", subtitle: "{location} furnished apartments", link: "/listings?type=rental&furnished=true" },
+      { title: "Short term rentals", subtitle: "{location} short term leases", link: "/listings?type=rental&lease=short-term" },
+      { title: "Student housing", subtitle: "{location} student accommodations", link: "/listings?type=rental&target=students" },
+      { title: "Corporate housing", subtitle: "{location} corporate rentals", link: "/listings?type=rental&target=corporate" },
+      { title: "Basement apartments", subtitle: "{location} basement rentals", link: "/listings?type=rental&propertyType=basement" },
+      { title: "Room rentals", subtitle: "{location} room shares", link: "/listings?type=rental&propertyType=room" },
     ],
   },
   {
@@ -63,18 +65,18 @@ const recommendationsData: RecommendationCategory[] = [
     label: "Mortgage Rates",
     icon: <TrendingUp className="w-4 h-4" />,
     recommendations: [
-      { title: "Current mortgage rates", subtitle: "Ontario mortgage rates", link: "/mortgage-rates" },
-      { title: "30-year fixed rates", subtitle: "Toronto mortgage rates", link: "/mortgage-rates?type=30-year" },
-      { title: "15-year fixed rates", subtitle: "GTA mortgage rates", link: "/mortgage-rates?type=15-year" },
-      { title: "FHA loan rates", subtitle: "Ontario FHA rates", link: "/mortgage-rates?type=fha" },
-      { title: "First-time buyer", subtitle: "Toronto first-time buyer programs", link: "/first-time-buyer" },
-      { title: "Refinancing", subtitle: "GTA refinancing options", link: "/refinancing" },
-      { title: "Variable rates", subtitle: "Ontario variable mortgages", link: "/mortgage-rates?type=variable" },
-      { title: "Jumbo loans", subtitle: "Toronto jumbo mortgages", link: "/mortgage-rates?type=jumbo" },
-      { title: "Construction loans", subtitle: "GTA construction financing", link: "/mortgage-rates?type=construction" },
-      { title: "Investment loans", subtitle: "Toronto investment mortgages", link: "/mortgage-rates?type=investment" },
-      { title: "HELOC rates", subtitle: "Ontario home equity lines", link: "/mortgage-rates?type=heloc" },
-      { title: "Reverse mortgages", subtitle: "GTA reverse mortgage options", link: "/mortgage-rates?type=reverse" },
+      { title: "Current mortgage rates", subtitle: "{location} mortgage rates", link: "/mortgage-rates" },
+      { title: "30-year fixed rates", subtitle: "{location} mortgage rates", link: "/mortgage-rates?type=30-year" },
+      { title: "15-year fixed rates", subtitle: "{location} mortgage rates", link: "/mortgage-rates?type=15-year" },
+      { title: "FHA loan rates", subtitle: "{location} FHA rates", link: "/mortgage-rates?type=fha" },
+      { title: "First-time buyer", subtitle: "{location} first-time buyer programs", link: "/first-time-buyer" },
+      { title: "Refinancing", subtitle: "{location} refinancing options", link: "/refinancing" },
+      { title: "Variable rates", subtitle: "{location} variable mortgages", link: "/mortgage-rates?type=variable" },
+      { title: "Jumbo loans", subtitle: "{location} jumbo mortgages", link: "/mortgage-rates?type=jumbo" },
+      { title: "Construction loans", subtitle: "{location} construction financing", link: "/mortgage-rates?type=construction" },
+      { title: "Investment loans", subtitle: "{location} investment mortgages", link: "/mortgage-rates?type=investment" },
+      { title: "HELOC rates", subtitle: "{location} home equity lines", link: "/mortgage-rates?type=heloc" },
+      { title: "Reverse mortgages", subtitle: "{location} reverse mortgage options", link: "/mortgage-rates?type=reverse" },
     ],
   },
   {
@@ -98,8 +100,42 @@ const recommendationsData: RecommendationCategory[] = [
   },
 ];
 
+// Default location values
+const defaultLocation = { city: "Toronto", area: "GTA", displayName: "Toronto" };
+
 export const RecommendationsSection = () => {
   const [activeTab, setActiveTab] = useState("real-estate");
+  const { location } = useLocationDetection();
+
+  // Generate location display name
+  const locationDisplayName = useMemo(() => {
+    if (location) {
+      // Format: "Area, City" or just "City" if no area
+      if (location.area && location.area !== location.city) {
+        return `${location.area}, ${location.city}`;
+      }
+      return location.city || defaultLocation.displayName;
+    }
+    return defaultLocation.displayName;
+  }, [location]);
+
+  // Generate dynamic recommendations based on location
+  const recommendationsData = useMemo(() => {
+    return baseRecommendationsData.map((category) => ({
+      ...category,
+      recommendations: category.recommendations.map((rec) => {
+        // For browse tab, keep original subtitles as they are city-specific
+        if (category.id === "browse") {
+          return rec;
+        }
+        // For other tabs, replace {location} placeholder with actual location
+        return {
+          ...rec,
+          subtitle: rec.subtitle.replace(/{location}/g, locationDisplayName),
+        };
+      }),
+    }));
+  }, [locationDisplayName]);
 
   return (
     <section className="w-full py-16 px-4 bg-white">

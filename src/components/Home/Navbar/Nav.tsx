@@ -9,7 +9,8 @@ import AuthModal from '@/components/Auth/AuthModal';
 // import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Search, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 type Props = {
   openNav: () => void;
@@ -21,6 +22,7 @@ const Nav = ({ openNav }: Props) => {
   const [showSidePanel, setShowSidePanel] = useState(false);
   const [showBuyDropdown, setShowBuyDropdown] = useState(false);
   const [showRentDropdown, setShowRentDropdown] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
 
   const handleLoginClick = () => {
     setShowLoginModal(true);
@@ -32,6 +34,10 @@ const Nav = ({ openNav }: Props) => {
 
   const handleSidePanelClose = () => {
     setShowSidePanel(false);
+  };
+
+  const handleSearchClear = () => {
+    setSearchValue('');
   };
 
   // Scroll detection for navbar background only
@@ -345,6 +351,33 @@ const Nav = ({ openNav }: Props) => {
                   </motion.div>
                 </a>
               </nav>
+            </div>
+
+            {/* Middle: Search Input Field */}
+            <div className="hidden lg:flex flex-1 max-w-md mx-6">
+              <div className="relative w-full">
+                <Input
+                  type="text"
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  placeholder="Search ..."
+                  className="pl-3 pr-12 h-10 text-base"
+                />
+                {/* Clear and Search buttons */}
+                <div className="absolute inset-y-0 right-0 flex items-center pr-1 space-x-1">
+                  {searchValue && (
+                    <button
+                      type="button"
+                      onClick={handleSearchClear}
+                      className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors"
+                      title="Clear search"
+                    >
+                      <X className="h-4 w-4 text-gray-500" />
+                    </button>
+                  )}
+                  <Search className="h-8 w-8 p-2 rounded-full text-white btn-gradient-dark cursor-pointer transition-colors" />
+                </div>
+              </div>
             </div>
 
             {/* Right Side: Listings, Map Search, Login, Side Panel Button */}

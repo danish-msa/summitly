@@ -16,7 +16,7 @@ const Hero = () => {
                 Canada's #1 place to <br /> <span className='text-brand-celestial'>buy, sell, and rent</span>
             </h1>
             <p className='text-sm sm:text-base md:text-lg mt-4 text-black/90 text-center px-4 max-w-2xl'>
-            Find homes you'll love with fast search, real photos, and trusted data.
+                Find homes you'll love with fast search, real photos, and trusted data.
             </p>
             <p>Search <span className='text-brand-celestial text-lg sm:text-xl md:text-2xl font-bold'>336,092</span> listings from trusted REALTORS®</p>
             <div className='mt-8 sm:mt-8 w-full max-w-4xl z-40 -mb-16 sm:-mb-20 lg:-mb-28 px-4'>

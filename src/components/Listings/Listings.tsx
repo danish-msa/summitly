@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { getListings } from '@/lib/api/properties';
 import PropertyCard from '@/components/Helper/PropertyCard';
 import { PropertyListing } from '@/lib/types';
@@ -8,7 +8,6 @@ import { FaSort } from 'react-icons/fa';
 import ListingFilters from './ListingFilters';
 import { LOCATIONS } from '@/lib/types/filters';
 import SellRentToggle from '@/components/common/filters/SellRentToggle';
-import Pagination from '../ui/pagination';
 import { useHiddenProperties } from '@/hooks/useHiddenProperties';
 
 const Listings = () => {
@@ -29,12 +28,13 @@ const Listings = () => {
     listingType: 'all'
   });
   const [sortOption, setSortOption] = useState('newest');
-  const [pagination, setPagination] = useState({
-    currentPage: 1,
-    totalPages: 1,
-    totalResults: 0,
-    resultsPerPage: 12
-  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const resultsPerPage = 12;
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   // Use hidden properties hook
   const { hideProperty, getVisibleProperties } = useHiddenProperties();
@@ -42,71 +42,116 @@ const Listings = () => {
   // Get visible properties (properties minus hidden ones)
   const visibleProperties = getVisibleProperties(properties);
 
-  // Load properties with filters applied
-  useEffect(() => {
-    const loadProperties = async () => {
-      // Only show loading indicator on initial load, not when filtering
-      if (properties.length === 0) {
-        setLoading(true);
-      }
+  // Load properties function
+  const loadProperties = useCallback(async (page: number, append: boolean = false) => {
+    if (isLoadingMore && append) return; // Prevent multiple simultaneous loads
+    
+    if (append) {
+      setIsLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
+    
+    try {
+      // Build API parameters based on filters
+      const params: Record<string, string | number> = {
+        resultsPerPage,
+        pageNum: page,
+        status: "A" // Active listings
+      };
       
-      try {
-        // Build API parameters based on filters
-        const params: Record<string, string | number> = {
-          resultsPerPage: pagination.resultsPerPage,
-          pageNum: pagination.currentPage,
-          status: "A" // Active listings
-        };
-        
-        // Only add filters if they have values
-        if (filters.minPrice > 0) params.minPrice = filters.minPrice;
-        if (filters.maxPrice < 1000000) params.maxPrice = filters.maxPrice;
-        if (filters.bedrooms > 0) params.minBedrooms = filters.bedrooms;
-        if (filters.bathrooms > 0) params.minBaths = filters.bathrooms;
-        if (filters.propertyType !== 'all') params.propertyType = filters.propertyType;
-        if (filters.community !== 'all') params.community = filters.community;
-        if (filters.listingType !== 'all') params.listingType = filters.listingType;
-        
-        console.log('Fetching with params:', params);
-        
-        // Call the API with the parameters
-        const data = await getListings(params);
-        console.log('API response:', data);
-        
-        if (data && data.listings) {
-          setProperties(data.listings);
-          
-          // Update pagination info
-          setPagination({
-            ...pagination,
-            totalPages: data.numPages || 1,
-            totalResults: data.count || data.listings.length
-          });
-          
-          // Extract unique communities from the data
-          if (communities.length === 0) {
-            const uniqueCommunities = Array.from(
-              new Set(
-                data.listings
-                  .map(listing => listing.address.neighborhood)
-                  .filter(Boolean) as string[]
-              )
-            ).sort();
-            setCommunities(uniqueCommunities);
-          }
+      // Only add filters if they have values
+      if (filters.minPrice > 0) params.minPrice = filters.minPrice;
+      if (filters.maxPrice < 1000000) params.maxPrice = filters.maxPrice;
+      if (filters.bedrooms > 0) params.minBedrooms = filters.bedrooms;
+      if (filters.bathrooms > 0) params.minBaths = filters.bathrooms;
+      if (filters.propertyType !== 'all') params.propertyType = filters.propertyType;
+      if (filters.community !== 'all') params.community = filters.community;
+      if (filters.listingType !== 'all') params.listingType = filters.listingType;
+      
+      console.log('Fetching with params:', params);
+      
+      // Call the API with the parameters
+      const data = await getListings(params);
+      console.log('API response:', data);
+      
+      if (data && data.listings) {
+        if (append) {
+          // Append new listings to existing ones
+          setProperties(prev => [...prev, ...data.listings]);
         } else {
+          // Replace listings (initial load or filter change)
+          setProperties(data.listings);
+        }
+        
+        // Update pagination info
+        setTotalPages(data.numPages || 1);
+        setTotalResults(data.count || data.listings.length);
+        setHasMore(page < (data.numPages || 1));
+        
+        // Extract unique communities from the data
+        if (communities.length === 0) {
+          const uniqueCommunities = Array.from(
+            new Set(
+              data.listings
+                .map(listing => listing.address.neighborhood)
+                .filter(Boolean) as string[]
+            )
+          ).sort();
+          setCommunities(uniqueCommunities);
+        }
+      } else {
+        if (!append) {
           setProperties([]);
         }
-      } catch (error) {
-        console.error('Error loading properties:', error);
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error('Error loading properties:', error);
+      if (!append) {
         setProperties([]);
-      } finally {
-        setLoading(false);
+      }
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+      setIsLoadingMore(false);
+    }
+  }, [filters, communities.length]);
+
+  // Initial load and when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+    setHasMore(true);
+    // Reset properties when filters change
+    setProperties([]);
+    loadProperties(1, false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
+
+  // Load more when scrolling
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore && !loading) {
+          const nextPage = currentPage + 1;
+          setCurrentPage(nextPage);
+          loadProperties(nextPage, true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
       }
     };
-
-    loadProperties();
-  }, [filters, pagination.currentPage, pagination.resultsPerPage]);
+  }, [hasMore, isLoadingMore, loading, currentPage, loadProperties]);
 
   // Handle property card click
   const handlePropertyClick = (property: PropertyListing) => {
@@ -132,11 +177,6 @@ const Listings = () => {
       });
     }
     
-    // Reset to first page when filters change
-    setPagination({
-      ...pagination,
-      currentPage: 1
-    });
   };
 
   // Reset all filters
@@ -151,10 +191,6 @@ const Listings = () => {
       propertyType: 'all',
       community: 'all',
       listingType: 'all'
-    });
-    setPagination({
-      ...pagination,
-      currentPage: 1
     });
   };
 
@@ -196,17 +232,6 @@ const Listings = () => {
     setProperties(sortedProperties);
   };
 
-  // Handle pagination
-  const handlePageChange = (newPage: number) => {
-    if (newPage > 0 && newPage <= pagination.totalPages) {
-      setPagination({
-        ...pagination,
-        currentPage: newPage
-      });
-      // Scroll to top when changing pages
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
 
   // Handle listing type change
   const handleListingTypeChange = (type: 'sell' | 'rent') => {
@@ -240,7 +265,7 @@ const Listings = () => {
       <div className="container mx-auto px-4 flex flex-col sm:flex-row justify-between items-center mb-4">
         <div className="mb-4 sm:mb-0 flex items-center gap-4">
           <span className="text-gray-700 font-medium text-sm">
-            Active Listings ({pagination.totalResults > 0 ? `${pagination.totalResults.toLocaleString()})` : `${properties.length} results`}
+            Active Listings ({totalResults > 0 ? `${totalResults.toLocaleString()}` : `${properties.length}`} results)
           </span>
           
         </div>
@@ -301,15 +326,19 @@ const Listings = () => {
         )}
       </div>
       
-      {/* Pagination */}
-      <Pagination
-        currentPage={pagination.currentPage}
-        totalPages={pagination.totalPages}
-        onPageChange={handlePageChange}
-        showFirstLast={false}
-        showPrevNext={false}
-        maxVisiblePages={5}
-      />
+      {/* Infinite Scroll Observer Target */}
+      <div ref={observerTarget} className="h-10 flex items-center justify-center">
+        {isLoadingMore && (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-secondary"></div>
+          </div>
+        )}
+        {!hasMore && visibleProperties.length > 0 && (
+          <div className="text-center py-8 text-gray-500">
+            <p>No more listings to load.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
