@@ -10,6 +10,7 @@
 
 import { repliersClient, API_CONFIG } from '../client';
 import type { PropertyListing, ApiListing, ListingsResponse } from '@/lib/types';
+import type { SinglePropertyListingResponse } from '../types/single-listing';
 
 // ============================================================================
 // TYPES
@@ -281,9 +282,10 @@ export async function getSimilarListings(params: {
 
 /**
  * Fetch listing details by MLS number
+ * Returns the full API response structure for a single property listing
  */
 export async function getListingDetails(mlsNumber: string): Promise<PropertyListing | null> {
-  const response = await repliersClient.request<ApiListing>({
+  const response = await repliersClient.request<SinglePropertyListingResponse | ApiListing>({
     endpoint: `/listings/${mlsNumber}`,
     authMethod: 'header',
     cache: true,
@@ -297,5 +299,26 @@ export async function getListingDetails(mlsNumber: string): Promise<PropertyList
   }
 
   return transformListing(response.data);
+}
+
+/**
+ * Fetch raw listing details by MLS number
+ * Returns the complete API response without transformation
+ */
+export async function getRawListingDetails(mlsNumber: string): Promise<SinglePropertyListingResponse | null> {
+  const response = await repliersClient.request<SinglePropertyListingResponse>({
+    endpoint: `/listings/${mlsNumber}`,
+    authMethod: 'header',
+    cache: true,
+    cacheDuration: 10 * 60 * 1000, // 10 minutes
+    priority: 'high',
+  });
+
+  if (response.error || !response.data) {
+    console.error('Failed to fetch raw listing details:', response.error?.message);
+    return null;
+  }
+
+  return response.data;
 }
 

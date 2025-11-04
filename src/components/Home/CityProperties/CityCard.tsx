@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { BsArrowRightCircle } from 'react-icons/bs';
-import BlurImage from '../../Helper/BlurImage';
 
 interface City {
   id: number;
@@ -24,11 +23,24 @@ const slugifyCityName = (cityName: string): string => {
 
 const CityCard = ({ city }: CityCardProps) => {
   const citySlug = slugifyCityName(city.cityName);
+  const [imageError, setImageError] = useState(false);
   
   return (
     <Link href={`/city/${citySlug}`}>
       <div className='relative rounded-lg overflow-hidden m-2 group cursor-pointer'>
-          <BlurImage src={city.image} alt={city.cityName} width={700} height={700} className='rounded-2xl w-full h-[250px] object-cover'/>
+          {imageError ? (
+            <div className='w-full h-[250px] bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center'>
+              <span className='text-gray-400 text-sm'>{city.cityName}</span>
+            </div>
+          ) : (
+            <img
+              src={city.image}
+              alt={city.cityName}
+              className='rounded-2xl w-full h-[250px] object-cover'
+              onError={() => setImageError(true)}
+              loading="lazy"
+            />
+          )}
           <div className='absolute bottom-2 left-2 right-2 rounded-xl px-4 pt-4 pb-4 bg-white text-black flex justify-between items-center'>
             <div className='flex flex-col'>
               <p className='text-sm'>{city.numberOfProperties} Properties</p>

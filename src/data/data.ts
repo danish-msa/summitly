@@ -298,7 +298,7 @@ export const fetchTopCities = async (): Promise<City[]> => {
       .slice(0, 6)
       .map(([cityName, count], index) => ({
         id: index + 1,
-        image: `/images/cities/c${(index % 6) + 1}.jpg`,
+        image: `/images/c${(index % 6) + 1}.jpg`,
         cityName,
         numberOfProperties: count
       }));

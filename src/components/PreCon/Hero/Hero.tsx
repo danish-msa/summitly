@@ -1,13 +1,15 @@
 "use client";
-import GlobalSearch from '@/components/common/GlobalSearch';
-import { PropertySuggestion } from '@/hooks/usePropertySearch';
+import GlobalLocationSearch from '@/components/common/GlobalLocationSearch';
 import React from 'react'
 
 const Hero = () => {
-  const handleSuggestionSelect = (property: PropertySuggestion) => {
-    console.log('Selected Property:', property);
+  const handleLocationSelect = (address: string, coordinates?: { lat: number; lng: number }) => {
+    console.log('Selected Location:', address);
+    if (coordinates) {
+      console.log('Coordinates:', coordinates);
+    }
     // You can add navigation logic here, e.g.:
-    // router.push(`/property/${property.id}`);
+    // router.push(`/search?location=${encodeURIComponent(address)}`);
   };
   return (
     <div className="w-full flex-col flex justify-center items-center mt-16 pt-28 md:pt-20 pb-20 bg-[url('/images/banner2.webp')] bg-cover bg-center relative mx-auto">
@@ -22,8 +24,11 @@ const Hero = () => {
         <p className="text-lg md:text-xl text-center mb-8">
           Discover top-tier pre-construction properties in Canada’s most sought-after locations.
         </p>
-        
-        <GlobalSearch onSuggestionSelect={handleSuggestionSelect} />
+        <GlobalLocationSearch 
+          onSelect={handleLocationSelect} 
+          placeholder="Enter location to search pre-construction properties"
+          className='bg-white rounded-full' 
+        />
       </div>
     </div>
   )

@@ -6,12 +6,12 @@ import { Search, MapPin, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { usePropertySearch, PropertySuggestion } from '@/hooks/usePropertySearch';
 
-interface GlobalSearchProps {
+interface GlobalPropertySearchProps {
   onSuggestionSelect: (property: PropertySuggestion) => void;
   placeholder?: string;
 }
 
-const GlobalSearch: React.FC<GlobalSearchProps> = ({ onSuggestionSelect, placeholder = "Enter your property address" }) => {
+const GlobalPropertySearch: React.FC<GlobalPropertySearchProps> = ({ onSuggestionSelect, placeholder = "Enter your property address" }) => {
   const { searchTerm, setSearchTerm, suggestions, loading } = usePropertySearch();
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -150,4 +150,5 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ onSuggestionSelect, placeho
   );
 };
 
-export default GlobalSearch;
+export default GlobalPropertySearch;
+

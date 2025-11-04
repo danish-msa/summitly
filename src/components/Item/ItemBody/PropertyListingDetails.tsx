@@ -10,8 +10,18 @@ import {
   Zap,
   Building2,
   TrendingUp,
-  History,
-  Info
+  Info,
+  Calendar,
+  Maximize2,
+  Layers,
+  TreePine,
+  Waves,
+  Wind,
+  Snowflake,
+  Sun,
+  Droplet,
+  Gauge,
+  DoorOpen
 } from "lucide-react";
 
 interface ListingDetailsProps {
@@ -66,6 +76,84 @@ export default function PropertyListingDetails({ data }: ListingDetailsProps) {
     }).format(price);
   };
 
+  // Get appropriate icon for fact key
+  const getFactIcon = (key: string) => {
+    const keyLower = key.toLowerCase();
+    
+    // Year/Built related
+    if (keyLower.includes('year') || keyLower.includes('built')) {
+      return Calendar;
+    }
+    
+    // Size/Dimensions related
+    if (keyLower.includes('size') || keyLower.includes('sqft') || keyLower.includes('square') || keyLower.includes('area')) {
+      return Maximize2;
+    }
+    
+    // Lot/Land related
+    if (keyLower.includes('lot') || keyLower.includes('land') || keyLower.includes('acre')) {
+      return TreePine;
+    }
+    
+    // Stories/Levels
+    if (keyLower.includes('stor') || keyLower.includes('level') || keyLower.includes('floor')) {
+      return Layers;
+    }
+    
+    // Property Type
+    if (keyLower.includes('type') || keyLower.includes('property')) {
+      return Home;
+    }
+    
+    // Rooms
+    if (keyLower.includes('room')) {
+      return DoorOpen;
+    }
+    
+    // Bedrooms
+    if (keyLower.includes('bed')) {
+      return Home;
+    }
+    
+    // Bathrooms
+    if (keyLower.includes('bath')) {
+      return Droplet;
+    }
+    
+    // Parking
+    if (keyLower.includes('parking') || keyLower.includes('garage')) {
+      return Car;
+    }
+    
+    // Heating
+    if (keyLower.includes('heat')) {
+      return Sun;
+    }
+    
+    // Cooling/AC
+    if (keyLower.includes('cool') || keyLower.includes('ac') || keyLower.includes('air')) {
+      return Snowflake;
+    }
+    
+    // Water
+    if (keyLower.includes('water')) {
+      return Waves;
+    }
+    
+    // View
+    if (keyLower.includes('view')) {
+      return Wind;
+    }
+    
+    // Status
+    if (keyLower.includes('status') || keyLower.includes('condition')) {
+      return Gauge;
+    }
+    
+    // Default
+    return Info;
+  };
+
   return (
     <div className="w-full space-y-6">
       {/* Key Facts Section */}
@@ -78,12 +166,20 @@ export default function PropertyListingDetails({ data }: ListingDetailsProps) {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Object.entries(data.keyFacts).map(([key, value]) => (
-              <div key={key} className="space-y-1">
-                <p className="text-sm text-muted-foreground">{key}</p>
-                <p className="font-semibold">{value}</p>
-              </div>
-            ))}
+            {Object.entries(data.keyFacts).map(([key, value]) => {
+              const Icon = getFactIcon(key);
+              return (
+                <div key={key} className="flex items-center gap-3 hover:shadow-sm transition-shadow">
+                  <div className="w-10 h-10 rounded-lg bg-brand-celestial/20 flex items-center justify-center flex-shrink-0">
+                    <Icon className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <p className="text-sm text-muted-foreground">{key}</p>
+                    <p className="font-semibold text-foreground">{value}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
@@ -139,10 +235,9 @@ export default function PropertyListingDetails({ data }: ListingDetailsProps) {
 
       {/* Tabbed Content */}
       <Tabs defaultValue="details" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-4 h-12">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3 h-12">
           <TabsTrigger value="details" className="py-2">Property Details</TabsTrigger>
           <TabsTrigger value="rooms" className="py-2">Rooms</TabsTrigger>
-          <TabsTrigger value="history" className="py-2">Listing History</TabsTrigger>
           <TabsTrigger value="comparable" className="hidden lg:block py-2">
             Comparable Sales
           </TabsTrigger>
@@ -309,72 +404,6 @@ export default function PropertyListingDetails({ data }: ListingDetailsProps) {
                     </div>
                   </div>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Listing History Tab */}
-        <TabsContent value="history">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <History className="h-5 w-5" />
-                Listing History
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                        Date Start
-                      </th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                        Date End
-                      </th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                        List Price
-                      </th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                        Price
-                      </th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                        Event
-                      </th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                        Listing ID
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.listingHistory.map((record, index) => (
-                      <tr key={index} className="border-b hover:bg-muted/50 transition-colors">
-                        <td className="py-3 px-4 text-sm">{record.dateStart}</td>
-                        <td className="py-3 px-4 text-sm">{record.dateEnd}</td>
-                        <td className="py-3 px-4 text-sm font-medium">{record.listPrice}</td>
-                        <td className="py-3 px-4 text-sm font-medium">{record.price}</td>
-                        <td className="py-3 px-4">
-                          <Badge
-                            variant={
-                              record.event === "Sold"
-                                ? "default"
-                                : record.event === "For Sale"
-                                ? "secondary"
-                                : "outline"
-                            }
-                          >
-                            {record.event}
-                          </Badge>
-                        </td>
-                        <td className="py-3 px-4 text-sm text-muted-foreground">
-                          {record.listingId}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               </div>
             </CardContent>
           </Card>

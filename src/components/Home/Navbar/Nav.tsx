@@ -361,7 +361,7 @@ const Nav = ({ openNav }: Props) => {
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
                   placeholder="Search ..."
-                  className="pl-3 pr-12 h-10 text-base"
+                  className="pl-3 pr-12 h-10 text-base bg-white/50 z-10"
                 />
                 {/* Clear and Search buttons */}
                 <div className="absolute inset-y-0 right-0 flex items-center pr-1 space-x-1">

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import ResponsiveNav from "@/components/Home/Navbar/ResponsiveNav";
 import Footer from "@/components/Home/Footer/Footer";
@@ -11,12 +11,13 @@ import { geometosNeue, bauziet, garamondPro, rubik, outfit } from './fonts';
 export const metadata: Metadata = {
   title: "Summit Realty",
   description: "Summit Realty is a real estate company that provides a wide range of services to its clients. We are a team of experienced real estate agents who are dedicated to helping you find the perfect home or investment property.",
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({

@@ -9,6 +9,8 @@ const BlurImage: React.FC<ImageProps> = (props) => {
       {...props}
       placeholder="blur"
       blurDataURL={defaultBlurDataURL}
+      unoptimized={typeof props.src === 'string' && props.src.startsWith('/images/')}
+      alt={props.alt || ''}
     />
   );
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import GlobalSearch from '@/components/common/GlobalSearch';
+import GlobalPropertySearch from '@/components/common/GlobalPropertySearch';
 import { PropertySuggestion } from '@/hooks/usePropertySearch';
 
 const HomeEstimatorBanner = () => {
@@ -26,7 +26,7 @@ const HomeEstimatorBanner = () => {
           Get an instant home value estimate and get in the know about your most precious asset.
         </p>
         
-        <GlobalSearch onSuggestionSelect={handleSuggestionSelect} />
+        <GlobalPropertySearch onSuggestionSelect={handleSuggestionSelect} />
       </div>
     </div>
   );

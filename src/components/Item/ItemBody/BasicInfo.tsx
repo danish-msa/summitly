@@ -1,13 +1,19 @@
 import React from 'react'
 import { PropertyListing } from '@/lib/types'
-import { MapPin, Calendar } from 'lucide-react'
+import { MapPin, Calendar, User, CreditCard } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import QualityScore from './QualityScore'
+import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/single-listing'
+import type { ImageInsights } from '@/lib/api/repliers/types/single-listing'
+import { getMockImageInsights } from '@/data/mock-image-insights'
 
 interface BasicInfoProps {
   property: PropertyListing;
+  rawProperty?: SinglePropertyListingResponse | null;
 }
 
-const BasicInfo: React.FC<BasicInfoProps> = ({ property }) => {
+const BasicInfo: React.FC<BasicInfoProps> = ({ property, rawProperty }) => {
   // Format the full address
   // const fullAddress = property.address.location || 
   //   `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim();
@@ -31,38 +37,54 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ property }) => {
     });
   };
 
+  const handleRequestTour = () => {
+    // Handle tour request logic
+    console.log('Request tour clicked');
+    // You can add navigation or modal logic here
+  };
+
+  const handleGetPreQualified = () => {
+    // Handle pre-qualification logic
+    console.log('Get pre-qualified clicked');
+    // You can add navigation to mortgage calculator or pre-qualification page
+  };
+
   return (
     <div className="w-full bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-      
-      {/* Price and Status */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-3xl font-bold text-gray-900">
-            {formatPrice(property.listPrice)}
-          </span>
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
-            <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-green-500"></span>
-            {property.status || 'Active'}
-          </Badge>
+      {/* Request a Tour Section */}
+      <div className="space-y-3 mb-6 pb-6 border-b border-gray-200">
+        <div className="flex items-center gap-2 mb-2">
+          <User className="h-5 w-5 text-brand-celestial" />
+          <h3 className="text-lg font-semibold text-gray-900">Tour with a local agent</h3>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Calendar className="h-4 w-4" />
-          <span>Listed on {formatDate(property.listDate)}</span>
-        </div>
+        <p className="text-sm text-gray-600">
+          Schedule a personalized tour with one of our experienced local agents and explore this property in person.
+        </p>
+        <Button 
+          onClick={handleRequestTour}
+          className="w-full bg-brand-celestial hover:bg-brand-midnight text-white font-semibold py-6 rounded-lg transition-colors"
+        >
+          Request a Tour
+        </Button>
       </div>
 
-      {/* Estimated Value Section */}
-      <div className="mb-6 flex items-center gap-2 text-sm text-gray-600">
-        <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-        </svg>
-        <span className="text-green-600 font-semibold">
-          {formatPrice(property.listPrice * 1.06)}
-        </span>
-        <span>Estimated value as of Oct 2025</span>
+      {/* Get Pre-Qualified Section */}
+      <div className="space-y-3 mb-6 pb-6 border-b border-gray-200">
+        <div className="flex items-center gap-2 mb-2">
+          <CreditCard className="h-5 w-5 text-brand-celestial" />
+          <h3 className="text-lg font-semibold text-gray-900">Get Pre-Qualified</h3>
+        </div>
+        <p className="text-sm text-gray-600">
+          Find out how much you can afford and get pre-qualified for a mortgage in minutes.
+        </p>
+        <Button 
+          onClick={handleGetPreQualified}
+          variant="outline"
+          className="w-full border-brand-celestial text-brand-celestial hover:bg-brand-celestial hover:text-white font-semibold py-6 rounded-lg transition-colors"
+        >
+          Get Pre-Qualified
+        </Button>
       </div>
-
-      
 
       {/* Quick Actions */}
       <div className="space-y-3">
