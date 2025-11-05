@@ -1,4 +1,4 @@
-import type { PreConstructionProperty } from '../PropertyCards/types';
+import type { PreConstructionProperty } from '../../PropertyCards/types';
 import { PropertyListing } from '@/lib/types';
 
 /**
