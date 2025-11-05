@@ -13,12 +13,6 @@ import ProjectMapView from './components/ProjectMapView';
 const PreConstructionProjects = () => {
   const [viewMode, setViewMode] = useState<'list' | 'split' | 'map'>('list');
   const [selectedProject, setSelectedProject] = useState<PreConstructionProperty | null>(null);
-  const [mapBounds, setMapBounds] = useState<{
-    north: number;
-    south: number;
-    east: number;
-    west: number;
-  } | null>(null);
   
   // Use custom hook for project management
   const {
@@ -36,9 +30,10 @@ const PreConstructionProjects = () => {
     setSelectedProject(project);
   };
 
-  // Handle map bounds change
-  const handleMapBoundsChange = (bounds: {north: number; south: number; east: number; west: number}) => {
-    setMapBounds(bounds);
+  // Handle map bounds change (currently unused, but required by map component)
+  const handleMapBoundsChange = (_bounds: {north: number; south: number; east: number; west: number}) => {
+    // Map bounds are tracked but not currently used for filtering
+    // This can be implemented in the future if needed
   };
 
   // Find selected property for map
