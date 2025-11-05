@@ -32,6 +32,10 @@ export interface FilterState {
   yearBuilt?: string;
   features?: string[];
   listingDate?: string;
+  
+  // Pre-construction specific filters
+  builder?: string;
+  preConStatus?: string;
 }
 
 export interface FilterChangeEvent {
@@ -66,7 +70,9 @@ export const DEFAULT_FILTER_STATE: FilterState = {
   maxPrice: 2000000,
   bedrooms: 0,
   bathrooms: 0,
-  listingType: 'all'
+  listingType: 'all',
+  builder: 'all',
+  preConStatus: 'all'
 };
 
 // Location data

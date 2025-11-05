@@ -175,40 +175,40 @@ const Nav = ({ openNav }: Props) => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ duration: 0.2 }}
-                        className="absolute top-full left-0 mt-2 w-[600px] bg-white border border-gray-200 rounded-xl shadow-xl z-[10000] p-6"
+                        className="absolute top-full left-0 mt-2 w-[800px] bg-white border border-gray-200 rounded-xl shadow-xl z-[10000] px-2 py-4"
                       >
                         <div className="grid grid-cols-3 gap-6">
                           {/* For Sale Column */}
                           <div>
-                            <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wide">For Sale</h3>
+                            <span className="block text-sm font-semibold text-gray-900 uppercase tracking-wide p-2">For Sale</span>
                             <ul className="space-y-2">
                               <li>
-                                <Link href="/buy?type=houses" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                <Link href="/buy?type=houses" className="block py-2 text-sm text-gray-700 hover:bg-brand-icy-blue px-2 rounded-md transition-colors">
                                   Houses
                                 </Link>
                               </li>
                               <li>
-                                <Link href="/buy?type=townhouses" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                <Link href="/buy?type=townhouses" className="block py-2 text-sm text-gray-700 hover:bg-brand-icy-blue px-2 rounded-md transition-colors">
                                   Townhouses
                                 </Link>
                               </li>
                               <li>
-                                <Link href="/buy?type=condos" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                <Link href="/buy?type=condos" className="block py-2 text-sm text-gray-700 hover:bg-brand-icy-blue px-2 rounded-md transition-colors">
                                   Condos
                                 </Link>
                               </li>
                               <li>
-                                <Link href="/buy?type=mobile-homes" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                <Link href="/buy?type=mobile-homes" className="block py-2 text-sm text-gray-700 hover:bg-brand-icy-blue px-2 rounded-md transition-colors">
                                   Mobile Homes
                                 </Link>
                               </li>
                               <li>
-                                <Link href="/buy?type=open-houses" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                <Link href="/buy?type=open-houses" className="block py-2 text-sm text-gray-700 hover:bg-brand-icy-blue px-2 rounded-md transition-colors">
                                   Open Houses
                                 </Link>
                               </li>
                               <li>
-                                <Link href="/buy" className="block py-2 text-sm font-medium text-primary hover:font-bold rounded-md transition-colors">
+                                <Link href="/buy" className="block py-2 text-sm font-medium text-primary hover:bg-brand-icy-blue px-2 rounded-md transition-colors">
                                   All Homes For Sale
                                 </Link>
                               </li>
@@ -217,25 +217,25 @@ const Nav = ({ openNav }: Props) => {
 
                           {/* New Homes Column */}
                           <div>
-                            <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wide">New Homes</h3>
+                            <span className="block text-sm font-semibold text-gray-900 uppercase tracking-wide p-2">New Homes</span>
                             <ul className="space-y-2">
                               <li>
-                                <Link href="/new-homes/discover" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                <Link href="/new-homes/discover" className="block py-2 text-sm text-gray-700 hover:bg-brand-icy-blue px-2 rounded-md transition-colors">
                                   Discover Your New Home
                                 </Link>
                               </li>
                               <li>
-                                <Link href="/new-homes" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                <Link href="/new-homes" className="block py-2 text-sm text-gray-700 hover:bg-brand-icy-blue px-2 rounded-md transition-colors">
                                   New Homes For Sale
                                 </Link>
                               </li>
                               <li>
-                                <Link href="/new-homes/communities" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                <Link href="/new-homes/communities" className="block py-2 text-sm text-gray-700 hover:bg-brand-icy-blue px-2 rounded-md transition-colors">
                                   New Home Communities
                                 </Link>
                               </li>
                               <li>
-                                <Link href="/new-homes/news" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                <Link href="/new-homes/news" className="block py-2 text-sm text-gray-700 hover:bg-brand-icy-blue px-2 rounded-md transition-colors">
                                   New Construction News
                                 </Link>
                               </li>
@@ -244,25 +244,25 @@ const Nav = ({ openNav }: Props) => {
 
                           {/* Buying Resources Column */}
                           <div>
-                            <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wide">Buying Resources</h3>
+                            <span className="block text-sm font-semibold text-gray-900 uppercase tracking-wide p-2">Buying Resources</span>
                             <ul className="space-y-2">
                               <li>
-                                <Link href="/calculators/affordability" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                <Link href="/calculators/affordability" className="block py-2 text-sm text-gray-700 hover:bg-brand-icy-blue px-2 rounded-md transition-colors">
                                   How Much Home Can I Afford
                                 </Link>
                               </li>
                               <li>
-                                <Link href="/calculators" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                <Link href="/calculators" className="block py-2 text-sm text-gray-700 hover:bg-brand-icy-blue px-2 rounded-md transition-colors">
                                   Mortgage Calculator
                                 </Link>
                               </li>
                               <li>
-                                <Link href="/buying-guide" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                <Link href="/buying-guide" className="block py-2 text-sm text-gray-700 hover:bg-brand-icy-blue px-2 rounded-md transition-colors">
                                   Buying Guide
                                 </Link>
                               </li>
                               <li>
-                                <Link href="/articles?category=home-buying" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                                <Link href="/articles?category=home-buying" className="block py-2 text-sm text-gray-700 hover:bg-brand-icy-blue px-2 rounded-md transition-colors">
                                   Home Buying Articles
                                 </Link>
                               </li>
@@ -299,31 +299,31 @@ const Nav = ({ openNav }: Props) => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ duration: 0.2 }}
-                        className="absolute top-full left-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl z-[10000] p-4"
+                        className="absolute top-full left-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl z-[10000] p-2"
                       >
                         <ul className="space-y-2">
                           <li>
-                            <Link href="/rent?type=houses" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                            <Link href="/rent?type=houses" className="block py-2 text-sm text-gray-700 hover:bg-brand-icy-blue px-2 rounded-md transition-colors">
                               Houses
                             </Link>
                           </li>
                           <li>
-                            <Link href="/rent?type=townhouses" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                            <Link href="/rent?type=townhouses" className="block py-2 text-sm text-gray-700 hover:bg-brand-icy-blue px-2 rounded-md transition-colors">
                               Townhouses
                             </Link>
                           </li>
                           <li>
-                            <Link href="/rent?type=condos" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                            <Link href="/rent?type=condos" className="block py-2 text-sm text-gray-700 hover:bg-brand-icy-blue px-2 rounded-md transition-colors">
                               Condos
                             </Link>
                           </li>
                           <li>
-                            <Link href="/rent?type=apartments" className="block py-2 text-sm text-gray-700 hover:font-bold rounded-md transition-colors">
+                            <Link href="/rent?type=apartments" className="block py-2 text-sm text-gray-700 hover:bg-brand-icy-blue px-2 rounded-md transition-colors">
                               Apartments
                             </Link>
                           </li>
                           <li>
-                            <Link href="/rent" className="block py-2 text-sm font-medium text-primary hover:font-bold rounded-md transition-colors">
+                            <Link href="/rent" className="block py-2 text-sm font-medium text-primary hover:bg-brand-icy-blue px-2 rounded-md transition-colors">
                               All Rentals For Sale
                             </Link>
                           </li>

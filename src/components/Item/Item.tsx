@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useState, useRef } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, usePathname } from 'next/navigation'
 import Banner from './Banner/Banner'
 import ItemBody from './ItemBody/ItemBody'
 import BasicInfo from './ItemBody/BasicInfo'
@@ -12,13 +12,111 @@ import AgentCTA from './ItemBody/AgentCTA'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import BannerGallery from './Banner/BannerGallery'
 import SectionNavigation from './ItemBody/SectionNavigation'
+import SimilarListings from './ItemBody/SimilarListings'
+
+// Mock pre-construction data
+const getMockPreConData = () => ({
+  projectName: 'Luxury Heights Condominiums',
+  developer: 'Premium Developments Inc.',
+  startingPrice: 450000,
+  status: 'selling' as const,
+  completion: {
+    date: 'Q4 2025',
+    progress: 35
+  },
+  details: {
+    bedroomRange: '1-3',
+    bathroomRange: '1-2',
+    sqftRange: '650-1,200',
+    totalUnits: 150,
+    availableUnits: 45
+  },
+  features: ['Rooftop Terrace', 'Gym', 'Pool', 'Concierge'],
+  depositStructure: '5% on signing, 10% within 6 months',
+  description: 'Experience luxury living at its finest. Luxury Heights Condominiums offers a perfect blend of modern design and premium amenities. Located in the heart of the city, this pre-construction project features spacious units with stunning views, world-class amenities, and a prime location close to shopping, dining, and entertainment. Don\'t miss this opportunity to own a piece of luxury before completion.'
+});
+
+// Create mock property for pre-con projects
+const createMockPreConProperty = (propertyId: string): PropertyListing => {
+  const mockPreConData = getMockPreConData();
+  
+  return {
+    mlsNumber: propertyId,
+    status: mockPreConData.status,
+    class: 'residential',
+    type: 'Sale',
+    listPrice: mockPreConData.startingPrice,
+    listDate: new Date().toISOString(),
+    lastStatus: mockPreConData.status,
+    soldPrice: '',
+    soldDate: '',
+    address: {
+      area: null,
+      city: 'Toronto',
+      country: 'Canada',
+      district: null,
+      majorIntersection: null,
+      neighborhood: 'Downtown',
+      streetDirection: null,
+      streetName: 'Main Street',
+      streetNumber: '123',
+      streetSuffix: null,
+      unitNumber: null,
+      zip: 'M5H 2N2',
+      state: 'Ontario',
+      communityCode: null,
+      streetDirectionPrefix: null,
+      addressKey: null,
+      location: '123 Main Street, Toronto, Ontario M5H 2N2'
+    },
+    map: {
+      latitude: 43.6532,
+      longitude: -79.3832,
+      point: null
+    },
+    details: {
+      numBathrooms: 2,
+      numBathroomsPlus: 2,
+      numBedrooms: 2,
+      numBedroomsPlus: 2,
+      propertyType: mockPreConData.details.bedroomRange ? 'Condominium' : 'Condo',
+      sqft: 850
+    },
+    updatedOn: new Date().toISOString(),
+    lot: {
+      acres: 0,
+      depth: 0,
+      irregular: 0,
+      legalDescription: mockPreConData.description,
+      measurement: '',
+      width: 0,
+      size: 0,
+      source: '',
+      dimensionsSource: '',
+      dimensions: '',
+      squareFeet: 850,
+      features: '',
+      taxLot: ''
+    },
+    boardId: 0,
+    images: {
+      imageUrl: '/images/p1.jpg',
+      allImages: ['/images/p1.jpg', '/images/p2.jpg', '/images/p3.jpg', '/images/p3.jpg', '/images/p1.jpg']
+    },
+    preCon: mockPreConData
+  };
+};
 
 // Remove the local Property interface definition
 
 const Item: React.FC = () => {
   const params = useParams();
+  const pathname = usePathname();
   const propertyId = params?.id as string || '';
   const bannerRef = useRef<HTMLDivElement>(null);
+  
+  // Check if this is a pre-construction project based on route
+  const isPreCon = pathname?.includes('/pre-construction/') || false;
   
   const [property, setProperty] = useState<PropertyListing | null>(null);
   const [rawProperty, setRawProperty] = useState<SinglePropertyListingResponse | null>(null);
@@ -28,19 +126,26 @@ const Item: React.FC = () => {
   useEffect(() => {
     const fetchPropertyDetails = async () => {
       try {
-        // Fetch both regular listing and raw listing for imageInsights
-        const [listings, rawListing] = await Promise.all([
-          fetchPropertyListings(),
-          getRawListingDetails(propertyId)
-        ]);
-        
-        const foundProperty = listings.find(p => p.mlsNumber === propertyId);
-        
-        if (foundProperty) {
-          setProperty(foundProperty);
-          setRawProperty(rawListing);
+        if (isPreCon) {
+          // For pre-con projects, use mock data
+          const mockProperty = createMockPreConProperty(propertyId);
+          setProperty(mockProperty);
+          setRawProperty(null);
         } else {
-          setError('Property not found');
+          // Fetch both regular listing and raw listing for imageInsights
+          const [listings, rawListing] = await Promise.all([
+            fetchPropertyListings(),
+            getRawListingDetails(propertyId)
+          ]);
+          
+          const foundProperty = listings.find(p => p.mlsNumber === propertyId);
+          
+          if (foundProperty) {
+            setProperty(foundProperty);
+            setRawProperty(rawListing);
+          } else {
+            setError('Property not found');
+          }
         }
       } catch (err) {
         setError('Failed to load property details');
@@ -51,7 +156,7 @@ const Item: React.FC = () => {
     };
 
     fetchPropertyDetails();
-  }, [propertyId]);
+  }, [propertyId, isPreCon]);
 
   if (loading) {
     return (
@@ -66,16 +171,16 @@ const Item: React.FC = () => {
   }
 
   // Define navigation sections that match CollapsibleTabs
+  // Hide 'history' section for pre-con projects
   const navigationSections = [
     { id: 'description', label: 'Description' },
     { id: 'listing-details', label: 'Listing Details' },
-    { id: 'history', label: 'History' },
+    ...(isPreCon ? [] : [{ id: 'history', label: 'History' }]),
     { id: 'features', label: 'Neighborhood' },
     { id: 'lifestyle', label: 'Lifestyle' },
     { id: 'demographics', label: 'Demographics' },
     { id: 'market-analytics', label: 'Market Analytics' },
-    { id: 'tools', label: 'Tools' },
-    { id: 'similar', label: 'Similar Properties' },
+    { id: 'tools', label: 'Tools' }
   ];
 
   return (
@@ -89,16 +194,16 @@ const Item: React.FC = () => {
       <SectionNavigation sections={navigationSections} />
       <div className='container-1400'>
           <div ref={bannerRef}>
-            <Banner property={property} rawProperty={rawProperty} />
+            <Banner property={property} rawProperty={rawProperty} isPreCon={isPreCon} />
           </div>
         
         
         <div className='flex flex-row gap-4'>
           <div className='w-[70%] flex flex-col gap-6'>
-            <ItemBody property={property} />
+            <ItemBody property={property} isPreCon={isPreCon} />
           </div>
           <div className='w-[30%] flex flex-col items-start gap-6'>
-            <BasicInfo property={property} rawProperty={rawProperty} />
+            <BasicInfo property={property} rawProperty={rawProperty} isPreCon={isPreCon} />
             <AgentCTA />
           </div>
         </div>
@@ -106,6 +211,12 @@ const Item: React.FC = () => {
           
         </div>
       </div>
+
+      {!isPreCon && (
+        <div className='container-1400 mt-20 mb-4'>
+          <SimilarListings currentProperty={property} />
+        </div>
+      )}
     </div>
   )
 }

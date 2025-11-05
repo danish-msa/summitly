@@ -145,7 +145,7 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full px-6 pb-6">
       <HeaderSection
         propertyAddress={propertyAddress}
         propertyClass={propertyClass}

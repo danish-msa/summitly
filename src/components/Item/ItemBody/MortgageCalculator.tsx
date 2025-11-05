@@ -70,11 +70,13 @@ export const MortgageCalculator = () => {
     <div className="w-full max-w-6xl mx-auto">
       <div className="flex gap-8">
         {/* Calculator Section - Left */}
-        <Card className="w-[60%] border-none shadow-none">
-          <CardHeader>
-            <CardTitle className="text-xl">Mortgage Calculator</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-8">
+        <div className="w-[60%] p-4">
+          {/* Header */}
+          <div>
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Mortgage Calculator</h2>
+            <p className="text-muted-foreground">Calculate your monthly mortgage payments</p>
+          </div>
+          <div className="space-y-8">
             {/* Property Price - Both Input and Slider */}
             <div className="space-y-4">
               <div className="flex justify-between items-center">
@@ -181,15 +183,15 @@ export const MortgageCalculator = () => {
                 <span>50%</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Results Section - Right */}
-        <Card className="w-[40%] border-none bg-brand-icy-blue">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Mortgage Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="w-[40%] bg-brand-icy-blue p-4 rounded-lg">
+          <div className="pb-4">
+            <h2 className="text-lg font-semibold">Mortgage Details</h2>
+          </div>
+          <div className="space-y-4">
             {/* Detailed Breakdown */}
             <div className="space-y-3">
               <div className="flex justify-between items-center py-1 border-b border-gray-100">
@@ -227,8 +229,8 @@ export const MortgageCalculator = () => {
                 <li>• Consider property taxes and insurance</li>
               </ul>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Layers, ChevronLeft, ChevronRight } from "lucide-react";
+import { Layers, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PropertyListing } from '@/lib/types';
+import Map from "@/components/ui/map";
 import Lightbox from "yet-another-react-lightbox";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen";
@@ -14,7 +15,7 @@ interface BannerGalleryProps {
 }
 
 // Image categories for filtering
-type ImageCategory = 'all' | 'interior' | 'exterior' | 'amenities' | 'floorplan';
+type ImageCategory = 'all' | 'interior' | 'exterior' | 'amenities' | 'floorplan' | 'map';
 
 interface CategorizedImage {
     src: string;
@@ -202,8 +203,8 @@ const BannerGallery: React.FC<BannerGalleryProps> = ({ property }) => {
 
             {/* Full-Screen Gallery Modal */}
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <DialogContent className="w-full max-w-[90%] h-full p-0 gap-0 z-[9999] bg-background">
-                    <DialogHeader className="px-6 py-4 border-b">
+                <DialogContent className="w-full max-w-none h-full p-0 gap-0 z-[9999] bg-background flex flex-col">
+                    <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
                         <div className="flex items-center justify-between">
                             <DialogTitle className="text-2xl font-semibold">
                                 Property Gallery
@@ -211,9 +212,9 @@ const BannerGallery: React.FC<BannerGalleryProps> = ({ property }) => {
                         </div>
                     </DialogHeader>
 
-                    <div className="flex-1 overflow-y-auto">
-                        <Tabs defaultValue="all" className="w-full" onValueChange={(value) => setActiveCategory(value as ImageCategory)}>
-                            <div className="sticky top-0 bg-background z-10 px-6 pt-4 pb-2 border-b">
+                    <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+                        <Tabs defaultValue="all" className="w-full h-full flex flex-col" onValueChange={(value) => setActiveCategory(value as ImageCategory)}>
+                            <div className="sticky top-0 bg-background z-10 px-6 pt-4 pb-2 border-b flex-shrink-0">
                                 <TabsList className="w-full justify-start">
                                     <TabsTrigger value="all" className="gap-2">
                                         All
@@ -243,12 +244,16 @@ const BannerGallery: React.FC<BannerGalleryProps> = ({ property }) => {
                                             <span className="text-xs text-muted-foreground">({categoryCounts.floorplan})</span>
                                         </TabsTrigger>
                                     )}
+                                    <TabsTrigger value="map" className="gap-2">
+                                        <MapPin className="h-4 w-4" />
+                                        Map
+                                    </TabsTrigger>
                                 </TabsList>
                             </div>
 
-                            <TabsContent value={activeCategory} className="mt-0 p-6">
+                            <TabsContent value="all" className="mt-0 p-6 overflow-y-auto flex-1">
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                                    {filteredImages.map((image, index) => (
+                                    {categorizedImages.map((image, index) => (
                                         <div
                                             key={index}
                                             className="group relative aspect-video overflow-hidden rounded-lg cursor-pointer bg-muted"
@@ -268,6 +273,143 @@ const BannerGallery: React.FC<BannerGalleryProps> = ({ property }) => {
                                             </div>
                                         </div>
                                     ))}
+                                </div>
+                            </TabsContent>
+                            {categoryCounts.exterior > 0 && (
+                                <TabsContent value="exterior" className="mt-0 p-6 overflow-y-auto flex-1">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                        {categorizedImages.filter(img => img.category === 'exterior').map((image, index) => {
+                                            const originalIndex = categorizedImages.findIndex(img => img.src === image.src && img.category === image.category);
+                                            return (
+                                                <div
+                                                    key={index}
+                                                    className="group relative aspect-video overflow-hidden rounded-lg cursor-pointer bg-muted"
+                                                    onClick={() => handleImageClick(originalIndex)}
+                                                >
+                                                    <img
+                                                        src={image.src}
+                                                        alt={image.alt}
+                                                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                        onError={() => handleImageError(originalIndex)}
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+                                                    <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                        <div className="bg-black/70 backdrop-blur-sm rounded px-2 py-1 text-xs text-white">
+                                                            Click to enlarge
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </TabsContent>
+                            )}
+                            {categoryCounts.interior > 0 && (
+                                <TabsContent value="interior" className="mt-0 p-6 overflow-y-auto flex-1">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                        {categorizedImages.filter(img => img.category === 'interior').map((image, index) => {
+                                            const originalIndex = categorizedImages.findIndex(img => img.src === image.src && img.category === image.category);
+                                            return (
+                                                <div
+                                                    key={index}
+                                                    className="group relative aspect-video overflow-hidden rounded-lg cursor-pointer bg-muted"
+                                                    onClick={() => handleImageClick(originalIndex)}
+                                                >
+                                                    <img
+                                                        src={image.src}
+                                                        alt={image.alt}
+                                                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                        onError={() => handleImageError(originalIndex)}
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+                                                    <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                        <div className="bg-black/70 backdrop-blur-sm rounded px-2 py-1 text-xs text-white">
+                                                            Click to enlarge
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </TabsContent>
+                            )}
+                            {categoryCounts.amenities > 0 && (
+                                <TabsContent value="amenities" className="mt-0 p-6 overflow-y-auto flex-1">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                        {categorizedImages.filter(img => img.category === 'amenities').map((image, index) => {
+                                            const originalIndex = categorizedImages.findIndex(img => img.src === image.src && img.category === image.category);
+                                            return (
+                                                <div
+                                                    key={index}
+                                                    className="group relative aspect-video overflow-hidden rounded-lg cursor-pointer bg-muted"
+                                                    onClick={() => handleImageClick(originalIndex)}
+                                                >
+                                                    <img
+                                                        src={image.src}
+                                                        alt={image.alt}
+                                                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                        onError={() => handleImageError(originalIndex)}
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+                                                    <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                        <div className="bg-black/70 backdrop-blur-sm rounded px-2 py-1 text-xs text-white">
+                                                            Click to enlarge
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </TabsContent>
+                            )}
+                            {categoryCounts.floorplan > 0 && (
+                                <TabsContent value="floorplan" className="mt-0 p-6 overflow-y-auto flex-1">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                        {categorizedImages.filter(img => img.category === 'floorplan').map((image, index) => {
+                                            const originalIndex = categorizedImages.findIndex(img => img.src === image.src && img.category === image.category);
+                                            return (
+                                                <div
+                                                    key={index}
+                                                    className="group relative aspect-video overflow-hidden rounded-lg cursor-pointer bg-muted"
+                                                    onClick={() => handleImageClick(originalIndex)}
+                                                >
+                                                    <img
+                                                        src={image.src}
+                                                        alt={image.alt}
+                                                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                        onError={() => handleImageError(originalIndex)}
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+                                                    <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                        <div className="bg-black/70 backdrop-blur-sm rounded px-2 py-1 text-xs text-white">
+                                                            Click to enlarge
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </TabsContent>
+                            )}
+                            <TabsContent value="map" className="mt-0 flex-1 overflow-hidden p-0">
+                                <div className="w-full h-full overflow-hidden">
+                                    <Map
+                                        latitude={property.map.latitude || undefined}
+                                        longitude={property.map.longitude || undefined}
+                                        address={property.address.location || `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim()}
+                                        height="100%"
+                                        width="100%"
+                                        zoom={15}
+                                        showControls={true}
+                                        showFullscreen={true}
+                                        showExternalLink={true}
+                                        showMarker={true}
+                                        markerTitle={property.address.location || `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}`.trim()}
+                                        markerDescription={`${property.details.propertyType} - ${property.listPrice ? `$${property.listPrice.toLocaleString()}` : ''}`}
+                                        className="w-full h-full"
+                                        borderRadius="lg"
+                                        currentProperty={property}
+                                    />
                                 </div>
                             </TabsContent>
                         </Tabs>

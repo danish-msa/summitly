@@ -5,14 +5,16 @@ import PropertyListingDetails from './PropertyListingDetails'
 import { NeighborhoodAmenities } from './NeighborhoodAmenities'
 import { LifestyleAmenities } from './LifestyleAmenities'
 import { MortgageCalculator } from './MortgageCalculator'
+import AffordabilityCalculator from './AffordabilityCalculator'
 import { MarketAnalytics } from './MarketAnalytics'
-import SimilarListings from './SimilarListings'
 import { generateMockListingData } from './mockListingData'
 import { PropertyListing } from '@/lib/types'
 import PropertyHistory from './PropertyHistory'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface CollapsibleTabsProps {
   property: PropertyListing;
+  isPreCon?: boolean;
 }
 
 interface TabSection {
@@ -21,9 +23,13 @@ interface TabSection {
   content: React.ReactNode;
 }
 
-const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property }) => {
+const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property, isPreCon = false }) => {
+  const defaultExpanded = isPreCon 
+    ? ['listing-details', 'description', 'features', 'lifestyle', 'location', 'demographics', 'market-analytics', 'tools']
+    : ['listing-details', 'description', 'features', 'lifestyle', 'location', 'demographics', 'market-analytics', 'tools', 'history'];
+  
   const [expandedTabs, setExpandedTabs] = useState<Set<string>>(
-    new Set(['listing-details', 'description', 'features', 'lifestyle', 'location', 'demographics', 'market-analytics', 'tools', 'similar', 'history'])
+    new Set(defaultExpanded)
   );
 
   const toggleTab = (tabId: string) => {
@@ -63,8 +69,14 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property }) => {
       label: 'Description',
       content: (
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">About this property</h3>
-          <p className="text-gray-500 font-light">{property.lot.legalDescription}</p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">
+            {isPreCon ? 'About this project' : 'About this property'}
+          </h3>
+          <p className="text-gray-500 font-light">
+            {isPreCon && property.preCon?.description 
+              ? property.preCon.description 
+              : property.lot.legalDescription}
+          </p>
         </div>
       )
     },
@@ -75,13 +87,13 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property }) => {
         <PropertyListingDetails data={generateMockListingData()} />
       )
     },
-    {
+    ...(isPreCon ? [] : [{
       id: 'history',
       label: 'Property History',
       content: (
         <PropertyHistory listingHistory={generateMockListingData().listingHistory} property={property} />
       )
-    },
+    }]),
     {
       id: 'features',
       label: 'Neighborhood Amenities',
@@ -121,14 +133,18 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property }) => {
       id: 'tools',
       label: 'Tools',
       content: (
-        <MortgageCalculator />
-      )
-    },
-    {
-      id: 'similar',
-      label: 'Similar Properties',
-      content: (
-        <SimilarListings currentProperty={property} />
+        <Tabs defaultValue="mortgage" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 h-12 p-1">
+            <TabsTrigger value="mortgage" className="py-2 text-base">Mortgage Calculator</TabsTrigger>
+            <TabsTrigger value="affordability" className="py-2 text-base">Affordability Calculator</TabsTrigger>
+          </TabsList>
+          <TabsContent value="mortgage" className="mt-6">
+            <MortgageCalculator />
+          </TabsContent>
+          <TabsContent value="affordability" className="mt-6">
+            <AffordabilityCalculator propertyPrice={property.listPrice || 0} />
+          </TabsContent>
+        </Tabs>
       )
     }
   ];

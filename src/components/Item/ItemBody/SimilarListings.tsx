@@ -100,7 +100,7 @@ const SimilarListings = ({ currentProperty }: SimilarListingsProps) => {
     if (window.innerWidth < 640) return 1; // sm
     if (window.innerWidth < 1024) return 2; // lg
     if (window.innerWidth < 1280) return 3; // xl
-    return 3; // 2xl+
+    return 4; // 2xl+
   };
 
   // Calculate total possible positions

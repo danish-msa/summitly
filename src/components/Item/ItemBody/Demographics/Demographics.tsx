@@ -10,7 +10,7 @@ const NeighbourhoodDemographics = ({ latitude, longitude, address }: Demographic
 
   return (
     <div className="w-full">
-      <div className="">
+      <div className="p-6">
         <p className="text-sm text-muted-foreground mb-1">
           Gain quick insights into local demographics with Statistics Canada's data on this Dissemination Area. 
           A dissemination area is essentially a small neighbourhood consisting of 400 to 700 residents.

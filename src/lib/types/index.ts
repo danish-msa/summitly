@@ -600,6 +600,26 @@ export interface PropertyListing {
         imageUrl: string;
         allImages: string[];
     };
+    preCon?: {
+        projectName: string;
+        developer: string;
+        startingPrice: number;
+        status: 'selling' | 'coming-soon' | 'sold-out';
+        completion: {
+            date: string;
+            progress: number;
+        };
+        details: {
+            bedroomRange: string;
+            bathroomRange: string;
+            sqftRange: string;
+            totalUnits: number;
+            availableUnits: number;
+        };
+        features: string[];
+        depositStructure?: string;
+        description: string;
+    };
 }
 
 // Update City interface to better match the property data

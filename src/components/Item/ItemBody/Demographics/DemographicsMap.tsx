@@ -17,7 +17,6 @@ export const DemographicsMap = ({ latitude, longitude, address }: DemographicsMa
           height="256px"
           width="100%"
           zoom={16}
-          mapType="roadmap"
           showControls={true}
           showFullscreen={true}
           showExternalLink={true}

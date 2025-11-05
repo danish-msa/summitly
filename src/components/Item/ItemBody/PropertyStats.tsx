@@ -6,9 +6,12 @@ import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/sin
 interface PropertyStatsProps {
   property: PropertyListing;
   rawProperty?: SinglePropertyListingResponse | null;
+  isPreCon?: boolean;
 }
 
-const PropertyStats: React.FC<PropertyStatsProps> = ({ property, rawProperty }) => {
+const PropertyStats: React.FC<PropertyStatsProps> = ({ property, rawProperty, isPreCon = false }) => {
+  // Get pre-con specific data if available
+  const preConData = property.preCon;
   // Format square footage
   const formatSqft = (sqft: number | string | null | undefined) => {
     if (!sqft) return 'N/A';
@@ -62,17 +65,23 @@ const PropertyStats: React.FC<PropertyStatsProps> = ({ property, rawProperty }) 
     {
       icon: Bed,
       label: 'Bedrooms',
-      value: `${property.details.numBedrooms} Bed${property.details.numBedrooms !== 1 ? 's' : ''}`,
+      value: isPreCon && preConData?.details?.bedroomRange 
+        ? preConData.details.bedroomRange 
+        : `${property.details.numBedrooms} Bed${property.details.numBedrooms !== 1 ? 's' : ''}`,
     },
     {
       icon: Bath,
       label: 'Bathrooms',
-      value: `${property.details.numBathrooms} Bath${property.details.numBathrooms !== 1 ? 's' : ''}`,
+      value: isPreCon && preConData?.details?.bathroomRange 
+        ? preConData.details.bathroomRange 
+        : `${property.details.numBathrooms} Bath${property.details.numBathrooms !== 1 ? 's' : ''}`,
     },
     {
       icon: Maximize2,
       label: 'Size',
-      value: formatSqft(property.details.sqft),
+      value: isPreCon && preConData?.details?.sqftRange 
+        ? preConData.details.sqftRange 
+        : formatSqft(property.details.sqft),
     },
     {
       icon: Car,

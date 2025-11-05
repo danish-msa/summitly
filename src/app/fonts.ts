@@ -116,6 +116,8 @@ export const rubik = Rubik({
   variable: '--font-rubik',
   weight: ['300', '400', '500', '600', '700', '800', '900'],
   display: 'swap',
+  preload: true,
+  adjustFontFallback: true,
 })
 
 // Outfit - Testing font for headings
@@ -124,4 +126,6 @@ export const outfit = Outfit({
   variable: '--font-outfit',
   weight: ['300', '400', '500', '600', '700', '800', '900'],
   display: 'swap',
+  preload: true,
+  adjustFontFallback: true,
 })

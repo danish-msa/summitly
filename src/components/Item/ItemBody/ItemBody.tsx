@@ -4,13 +4,14 @@ import CollapsibleTabs from './CollapsibleTabs'
 
 interface ItemBodyProps {
   property: PropertyListing;
+  isPreCon?: boolean;
 }
 
-const ItemBody: React.FC<ItemBodyProps> = ({ property }) => {
+const ItemBody: React.FC<ItemBodyProps> = ({ property, isPreCon = false }) => {
 
   return (
     <div className='w-full h-full relative'>
-      <CollapsibleTabs property={property} />
+      <CollapsibleTabs property={property} isPreCon={isPreCon} />
     </div>
   )
 }

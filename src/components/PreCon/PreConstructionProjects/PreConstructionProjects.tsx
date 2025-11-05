@@ -1,157 +1,55 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import SectionHeading from '@/components/Helper/SectionHeading';
-import { PreConstructionPropertyCard } from '@/components/PropertyCards';
-import type { PreConstructionProperty } from '@/components/PropertyCards/types';
-
-// Mock data for pre-construction projects
-// In a real app, this would come from an API or data service
-const mockPreConProjects: PreConstructionProperty[] = [
-  {
-    id: '1',
-    projectName: 'Luxury Heights Condominiums',
-    developer: 'Premium Developments Inc.',
-    startingPrice: 450000,
-    images: [
-      '/images/p1.jpg',
-      '/images/p2.jpg',
-      '/images/p3.jpg',
-    ],
-    address: {
-      street: '123 Main Street',
-      city: 'Toronto',
-      province: 'Ontario',
-    },
-    details: {
-      propertyType: 'Condominium',
-      bedroomRange: '1-3',
-      bathroomRange: '1-2',
-      sqftRange: '650-1,200',
-      totalUnits: 150,
-      availableUnits: 45,
-    },
-    completion: {
-      date: 'Q4 2025',
-      progress: 35,
-    },
-    features: ['Rooftop Terrace', 'Gym', 'Pool', 'Concierge'],
-    depositStructure: '5% on signing, 10% within 6 months',
-    status: 'selling',
-  },
-  {
-    id: '2',
-    projectName: 'Waterfront Residences',
-    developer: 'Ocean View Developments',
-    startingPrice: 680000,
-    images: [
-      '/images/p2.jpg',
-      '/images/p3.jpg',
-      '/images/p4.jpg',
-    ],
-    address: {
-      street: '456 Harbor Drive',
-      city: 'Vancouver',
-      province: 'British Columbia',
-    },
-    details: {
-      propertyType: 'Condominium',
-      bedroomRange: '2-4',
-      bathroomRange: '2-3',
-      sqftRange: '1,000-1,800',
-      totalUnits: 200,
-      availableUnits: 120,
-    },
-    completion: {
-      date: 'Q2 2026',
-      progress: 15,
-    },
-    features: ['Waterfront Views', 'Marina Access', 'Spa', 'Restaurant'],
-    depositStructure: '10% on signing, 5% every 6 months',
-    status: 'selling',
-  },
-  {
-    id: '3',
-    projectName: 'Urban Loft District',
-    developer: 'Metro Builders',
-    startingPrice: 320000,
-    images: [
-      '/images/p3.jpg',
-      '/images/p4.jpg',
-      '/images/p5.jpg',
-    ],
-    address: {
-      street: '789 Downtown Ave',
-      city: 'Montreal',
-      province: 'Quebec',
-    },
-    details: {
-      propertyType: 'Loft',
-      bedroomRange: '1-2',
-      bathroomRange: '1-2',
-      sqftRange: '550-950',
-      totalUnits: 80,
-      availableUnits: 25,
-    },
-    completion: {
-      date: 'Q3 2025',
-      progress: 60,
-    },
-    features: ['Exposed Brick', 'High Ceilings', 'Rooftop Garden'],
-    depositStructure: '5% on signing',
-    status: 'selling',
-  },
-  {
-    id: '4',
-    projectName: 'Mountain View Estates',
-    developer: 'Alpine Homes',
-    startingPrice: 850000,
-    images: [
-      '/images/p4.jpg',
-      '/images/p5.jpg',
-      '/images/p6.jpg',
-    ],
-    address: {
-      street: '321 Mountain Road',
-      city: 'Calgary',
-      province: 'Alberta',
-    },
-    details: {
-      propertyType: 'Townhouse',
-      bedroomRange: '3-5',
-      bathroomRange: '2.5-4',
-      sqftRange: '1,500-2,500',
-      totalUnits: 50,
-      availableUnits: 12,
-    },
-    completion: {
-      date: 'Q1 2026',
-      progress: 25,
-    },
-    features: ['Mountain Views', 'Garage', 'Backyard', 'Fireplace'],
-    depositStructure: '10% on signing, 5% at closing',
-    status: 'coming-soon',
-  },
-];
+import type { PreConstructionProperty } from '../PropertyCards/types';
+import GlobalFilters from '@/components/common/filters/GlobalFilters';
+import { LOCATIONS } from '@/lib/types/filters';
+import { PropertyListing } from '@/lib/types';
+import { usePreConProjects } from './hooks/usePreConProjects';
+import ViewToggle from './components/ViewToggle';
+import ProjectList from './components/ProjectList';
+import ProjectMapView from './components/ProjectMapView';
 
 const PreConstructionProjects = () => {
-  const [projects] = useState<PreConstructionProperty[]>(mockPreConProjects);
-  const [hiddenProjects, setHiddenProjects] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<'list' | 'split' | 'map'>('list');
+  const [selectedProject, setSelectedProject] = useState<PreConstructionProperty | null>(null);
+  const [mapBounds, setMapBounds] = useState<{
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  } | null>(null);
+  
+  // Use custom hook for project management
+  const {
+    filteredProjects: visibleProjects,
+    mapProperties,
+    communities,
+    filters,
+    handleFilterChange,
+    resetFilters,
+    handleHide
+  } = usePreConProjects();
 
-  const handleHide = (projectId: string) => {
-    setHiddenProjects((prev) => {
-      const newSet = new Set(prev);
-      newSet.add(projectId);
-      return newSet;
-    });
+  // Handle project click for map
+  const handleProjectClick = (project: PreConstructionProperty) => {
+    setSelectedProject(project);
   };
 
-  const visibleProjects = projects.filter(
-    (project) => !hiddenProjects.has(project.id)
-  );
+  // Handle map bounds change
+  const handleMapBoundsChange = (bounds: {north: number; south: number; east: number; west: number}) => {
+    setMapBounds(bounds);
+  };
+
+  // Find selected property for map
+  const selectedPropertyForMap = useMemo(() => {
+    if (!selectedProject) return null;
+    return mapProperties.find(p => p.mlsNumber === selectedProject.id) || null;
+  }, [selectedProject, mapProperties]);
 
   return (
-    <section className="py-16 md:py-20 bg-background">
+    <section className="py-16 bg-background">
       <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading
           heading="Featured Pre-Construction Projects"
@@ -160,15 +58,54 @@ const PreConstructionProjects = () => {
           position="center"
         />
 
+        {/* Global Filters with View Toggle */}
+        <div className="mt-8 mb-4">
+          <div className="flex flex-col md:flex-row md:flex-wrap justify-between items-start md:items-center gap-4">
+            <GlobalFilters
+              filters={filters}
+              handleFilterChange={handleFilterChange}
+              resetFilters={resetFilters}
+              communities={communities}
+              locations={LOCATIONS}
+              isPreCon={true}
+              showLocation={true}
+              showPropertyType={true}
+              showCommunity={false}
+              showPrice={true}
+              showBedrooms={true}
+              showBathrooms={true}
+              showAdvanced={false}
+              layout="horizontal"
+              className="w-full md:w-auto"
+            />
+            <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+          </div>
+        </div>
+
         {visibleProjects.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-4 mt-12">
-            {visibleProjects.map((project) => (
-              <PreConstructionPropertyCard
-                key={project.id}
-                property={project}
-                onHide={() => handleHide(project.id)}
+          <div className={`flex ${viewMode === 'map' ? 'flex-col' : viewMode === 'list' ? 'flex-col' : 'flex-col md:flex-row'} gap-6`}>
+            {/* Project Listings */}
+            {(viewMode === 'list' || viewMode === 'split') && (
+              <ProjectList
+                projects={visibleProjects}
+                selectedProject={selectedProject}
+                viewMode={viewMode}
+                onProjectClick={handleProjectClick}
+                onHide={handleHide}
               />
-            ))}
+            )}
+
+            {/* Map View */}
+            {(viewMode === 'map' || viewMode === 'split') && (
+              <ProjectMapView
+                mapProperties={mapProperties}
+                selectedPropertyForMap={selectedPropertyForMap}
+                visibleProjects={visibleProjects}
+                viewMode={viewMode}
+                onProjectClick={handleProjectClick}
+                onBoundsChange={handleMapBoundsChange}
+              />
+            )}
           </div>
         ) : (
           <div className="text-center py-12">

@@ -7,13 +7,14 @@ import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/sin
 interface BasicInfoProps {
   property: PropertyListing;
   rawProperty?: SinglePropertyListingResponse | null;
+  isPreCon?: boolean;
 }
 
-const BasicInfo: React.FC<BasicInfoProps> = () => {
+const BasicInfo: React.FC<BasicInfoProps> = ({ isPreCon = false }) => {
 
   const handleRequestTour = () => {
     // Handle tour request logic
-    console.log('Request tour clicked');
+    console.log(isPreCon ? 'Book appointment clicked' : 'Request tour clicked');
     // You can add navigation or modal logic here
   };
 
@@ -25,20 +26,24 @@ const BasicInfo: React.FC<BasicInfoProps> = () => {
 
   return (
     <div className="w-full bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-      {/* Request a Tour Section */}
+      {/* Request a Tour / Book Appointment Section */}
       <div className="space-y-3 mb-6 pb-6 border-b border-gray-200">
         <div className="flex items-center gap-2 mb-2">
           <User className="h-5 w-5 text-brand-celestial" />
-          <h3 className="text-lg font-semibold text-gray-900">Tour with a local agent</h3>
+          <h3 className="text-lg font-semibold text-gray-900">
+            {isPreCon ? 'Book an appointment' : 'Tour with a local agent'}
+          </h3>
         </div>
         <p className="text-sm text-gray-600">
-          Schedule a personalized tour with one of our experienced local agents and explore this property in person.
+          {isPreCon 
+            ? 'Schedule an appointment with one of our experienced agents to learn more about this pre-construction project.'
+            : 'Schedule a personalized tour with one of our experienced local agents and explore this property in person.'}
         </p>
         <Button 
           onClick={handleRequestTour}
           className="w-full bg-brand-celestial hover:bg-brand-midnight text-white font-semibold py-6 rounded-lg transition-colors"
         >
-          Request a Tour
+          {isPreCon ? 'Book Appointment' : 'Request a Tour'}
         </Button>
       </div>
 

@@ -8,7 +8,7 @@ const PreConCTA = () => {
     <section className="py-16 md:py-24 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Info Section */}
-        <div className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 rounded-2xl p-8 md:p-12 text-center relative overflow-hidden">
+        <div className="bg-gradient-to-r from-brand-celestial/40 via-green-50/50 to-purple-50 rounded-2xl p-8 md:p-12 text-center relative overflow-hidden">
           {/* Decorative background elements */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
@@ -44,7 +44,7 @@ const PreConCTA = () => {
                 </p>
               </div>
 
-              <div className="flex flex-col items-center p-4 bg-blue-50 rounded-xl backdrop-blur-sm border border-border/50">
+              <div className="flex flex-col items-center p-4 bg-brand-celestial/20 rounded-xl backdrop-blur-sm border border-border/50">
                 <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mb-3">
                   <TrendingUp className="w-6 h-6 text-accent" />
                 </div>

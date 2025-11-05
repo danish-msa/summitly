@@ -10,6 +10,8 @@ import BedroomFilter from './BedroomFilter';
 import BathroomFilter from './BathroomFilter';
 import EnhancedAdvancedFilters from './EnhancedAdvancedFilters';
 import SellRentToggle from './SellRentToggle';
+import BuilderFilter from './BuilderFilter';
+import PreConStatusFilter from './PreConStatusFilter';
 
 interface GlobalFiltersProps extends FilterComponentProps {
   showLocation?: boolean;
@@ -20,6 +22,7 @@ interface GlobalFiltersProps extends FilterComponentProps {
   showBathrooms?: boolean;
   showAdvanced?: boolean;
   showSellRentToggle?: boolean;
+  isPreCon?: boolean; // Flag to show pre-construction specific filters
   layout?: 'horizontal' | 'vertical';
   className?: string;
 }
@@ -38,6 +41,7 @@ const GlobalFilters: React.FC<GlobalFiltersProps> = ({
   showBathrooms = true,
   showAdvanced = true,
   showSellRentToggle = false,
+  isPreCon = false,
   layout = 'horizontal',
   className = ''
 }) => {
@@ -91,6 +95,16 @@ const GlobalFilters: React.FC<GlobalFiltersProps> = ({
   if (showBathrooms) {
     filterComponents.push(
       <BathroomFilter key="bathrooms" {...commonProps} />
+    );
+  }
+
+  // Add Pre-Construction specific filters
+  if (isPreCon) {
+    filterComponents.push(
+      <BuilderFilter key="builder" {...commonProps} />
+    );
+    filterComponents.push(
+      <PreConStatusFilter key="preConStatus" {...commonProps} />
     );
   }
 

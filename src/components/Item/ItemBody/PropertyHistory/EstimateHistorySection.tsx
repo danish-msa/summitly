@@ -212,7 +212,7 @@ export default function EstimateHistorySection({ propertyAddress }: EstimateHist
   }), [chartData]);
 
   return (
-    <div className="mt-8">
+    <div className="mt-8 p-6">
       <div className="mb-6">
         <h2 className="mb-2 text-3xl font-bold text-gray-900">Estimate History</h2>
         <p className="text-sm text-gray-600">

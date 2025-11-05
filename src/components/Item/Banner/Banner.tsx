@@ -10,13 +10,17 @@ import PropertyStats from '../ItemBody/PropertyStats';
 interface BannerProps {
     property: PropertyListing;
     rawProperty?: SinglePropertyListingResponse | null;
+    isPreCon?: boolean;
 }
 
-const Banner: React.FC<BannerProps> = ({ property, rawProperty }) => {
+const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false }) => {
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     
-    // Create property title from property details
-    const propertyTitle = `${property.details.propertyType} in ${property.address.city || 'Unknown Location'}`;
+    // For pre-con, use project name if available, otherwise use property type
+    const preConData = property.preCon;
+    const propertyTitle = isPreCon && preConData?.projectName 
+        ? preConData.projectName 
+        : `${property.details.propertyType} in ${property.address.city || 'Unknown Location'}`;
     
     // Format the full address
     const fullAddress = property.address.location || 
@@ -54,32 +58,42 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty }) => {
                 {/* Header Section */}
                 <div>
                     {/* Two Column Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                         {/* First Column */}
-                        <div className="flex flex-col gap-4">
+                        <div className="flex flex-col gap-4 col-span-2">
                             {/* Heading with MLS and Status */}
                             <div className="mb-2 flex flex-wrap items-center gap-3">
                                 <h1 className="text-2xl font-bold text-foreground sm:text-3xl lg:text-4xl">
                                     {propertyTitle}
                                 </h1>
-                                {/* MLS Number - Same line as heading */}
-                                <span className="text-base text-muted-foreground font-normal">
-                                    MLS # <span className="text-gray-600">{property.mlsNumber}</span>
-                                </span>
-                                <Badge className="bg-primary/10 text-primary hover:bg-primary/20">
+                                {/* MLS Number or Project ID - Same line as heading */}
+                                {!isPreCon && (
+                                    <span className="text-base text-muted-foreground font-normal">
+                                        MLS # <span className="text-gray-600">{property.mlsNumber}</span>
+                                    </span>
+                                )}
+                                <Badge className="bg-primary/10 text-primary hover:bg-primary/20 uppercase py-1 px-4">
                                     <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-primary"></span>
-                                    {property.status || 'Active'}
+                                    {isPreCon ? (preConData?.status || property.status || 'Selling') : (property.status || 'Active')}
                                 </Badge>
                             </div>
 
                             {/* Property Type and Address */}
                             <div>
-                                {/* Property Type */}
-                                <div className="mb-2">
-                                    <span className="text-base font-medium text-gray-700">
-                                        Condo / Townhouse
-                                    </span>
-                                </div>
+                                {/* Developer for pre-con, Property Type for regular */}
+                                {isPreCon && preConData?.developer ? (
+                                    <div className="mb-2">
+                                        <span className="text-base font-medium text-gray-700">
+                                            Developer: {preConData.developer}
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <div className="mb-2">
+                                        <span className="text-base font-medium text-gray-700">
+                                            {property.details.propertyType}
+                                        </span>
+                                    </div>
+                                )}
                                 {/* Address */}
                                 <div className="flex items-start gap-2 text-primary mb-4">
                                     <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0" />
@@ -104,24 +118,35 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty }) => {
                             <div className="flex flex-col justify-end items-end gap-2">
                                 <div className="mb-2">
                                     <div className="text-3xl font-bold text-primary text-right">
-                                        {formatPrice(property.listPrice)}
+                                        {isPreCon && preConData?.startingPrice 
+                                            ? `Starting from ${formatPrice(preConData.startingPrice)}`
+                                            : formatPrice(property.listPrice)}
                                     </div>
-                                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                                        <Calendar className="h-4 w-4" />
-                                        <span>Listed on {formatDate(property.listDate)}</span>
-                                    </div>
+                                    {isPreCon && preConData?.completion?.date ? (
+                                        <div className="flex justify-end items-center gap-2 text-sm text-gray-600">
+                                            <Calendar className="h-4 w-4" />
+                                            <span>Completion: {preConData.completion.date}</span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                            <Calendar className="h-4 w-4" />
+                                            <span>Listed on {formatDate(property.listDate)}</span>
+                                        </div>
+                                    )}
                                 </div>
 
-                                {/* Estimated Value Section */}
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                    <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                                    </svg>
-                                    <span className="text-green-600 font-semibold">
-                                        {formatPrice(property.listPrice * 1.06)}
-                                    </span>
-                                    <span>Estimated value as of Oct 2025</span>
-                                </div>
+                                {/* Estimated Value Section - Only for regular properties */}
+                                {!isPreCon && (
+                                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                                        <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                        <span className="text-green-600 font-semibold">
+                                            {formatPrice(property.listPrice * 1.06)}
+                                        </span>
+                                        <span>Estimated value as of Oct 2025</span>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Share and Save Buttons */}
@@ -144,7 +169,7 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty }) => {
                     </div>
 
                     {/* Property Stats Grid */}
-                    <PropertyStats property={property} rawProperty={rawProperty} />
+                    <PropertyStats property={property} rawProperty={rawProperty} isPreCon={isPreCon} />
                 </div>
             </div>
             
