@@ -10,7 +10,7 @@ import PreConFAQ from './FAQ/FAQ'
 import PreConstructionJourney from './PreConstructionJourney/PreConstructionJourney'
 import { InsightsSection } from './Insights/InsightsSection'
 import { Testimonials } from './Testimonials/Testimonials'
-import CardComparison from './CardComparison/CardComparison'
+// import CardComparison from './CardComparison/CardComparison'
 
 const PreCon: React.FC = () => {
   return (
