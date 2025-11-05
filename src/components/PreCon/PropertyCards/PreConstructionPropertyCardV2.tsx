@@ -190,7 +190,7 @@ const PreConstructionPropertyCardV2 = ({ property, onHide, className }: PreConst
           {/* Content Section */}
           <div className="p-5 flex flex-col flex-1 bg-white">
             {/* Two Column Layout */}
-            <div className="flex items-start justify-between gap-4 mb-4 pb-4 border-b border-gray-100">
+            <div className="flex items-start justify-between gap-4 pb-4">
               {/* Left Side - Developer Info & Property Details */}
               <div className="flex flex-col gap-3 flex-1">
                 {/* Developer Info */}
