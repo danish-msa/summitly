@@ -13,6 +13,12 @@ import ProjectMapView from './components/ProjectMapView';
 const PreConstructionProjects = () => {
   const [viewMode, setViewMode] = useState<'list' | 'split' | 'map'>('list');
   const [selectedProject, setSelectedProject] = useState<PreConstructionProperty | null>(null);
+  const [mapBounds, setMapBounds] = useState<{
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  } | null>(null);
   
   // Use custom hook for project management
   const {
