@@ -17,6 +17,7 @@ import PropertyCategories from './PropertyCategories/PropertyCategories';
 import FAQ from './FAQ/FAQ';
 import CallToAction3 from './CallToAction3/CallToAction3';
 import { RecommendationsSection } from './Recommendations/RecommendationsSection';
+import PreConstruction from './PreConstruction/PreConstruction';
 
 const Home: React.FC = () => {
 
@@ -38,6 +39,7 @@ const Home: React.FC = () => {
             <PropertyCategories />
             <CallToAction3 />
             <Properties />
+            <PreConstruction />
             <ServiceFeatures />
             <CallToAction2 />
             <RecommendationsSection />
