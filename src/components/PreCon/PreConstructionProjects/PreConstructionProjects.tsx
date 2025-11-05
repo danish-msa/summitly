@@ -5,7 +5,6 @@ import SectionHeading from '@/components/Helper/SectionHeading';
 import type { PreConstructionProperty } from '../PropertyCards/types';
 import GlobalFilters from '@/components/common/filters/GlobalFilters';
 import { LOCATIONS } from '@/lib/types/filters';
-import { PropertyListing } from '@/lib/types';
 import { usePreConProjects } from './hooks/usePreConProjects';
 import ViewToggle from './components/ViewToggle';
 import ProjectList from './components/ProjectList';
@@ -14,12 +13,6 @@ import ProjectMapView from './components/ProjectMapView';
 const PreConstructionProjects = () => {
   const [viewMode, setViewMode] = useState<'list' | 'split' | 'map'>('list');
   const [selectedProject, setSelectedProject] = useState<PreConstructionProperty | null>(null);
-  const [mapBounds, setMapBounds] = useState<{
-    north: number;
-    south: number;
-    east: number;
-    west: number;
-  } | null>(null);
   
   // Use custom hook for project management
   const {

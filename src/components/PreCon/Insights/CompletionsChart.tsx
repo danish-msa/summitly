@@ -75,7 +75,7 @@ export function CompletionsChart({ data }: CompletionsChartProps) {
         label: {
           show: true,
           position: "top",
-          formatter: (params: any) => {
+          formatter: (params: { value: number }) => {
             const value = params.value;
             if (value >= 1000) {
               return `${(value / 1000).toFixed(1)}k`;
@@ -95,7 +95,7 @@ export function CompletionsChart({ data }: CompletionsChartProps) {
       textStyle: {
         color: isDark ? "#fff" : "#000",
       },
-      formatter: (params: any) => {
+      formatter: (params: Array<{ name: string; value: number }>) => {
         const param = params[0];
         return `<div style="padding: 4px 8px;">
           <div style="font-weight: 600; margin-bottom: 4px;">${param.name}</div>

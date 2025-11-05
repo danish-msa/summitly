@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { GoogleMap, useJsApiLoader, OverlayView } from '@react-google-maps/api';
-import { MapPin, Navigation, Maximize2, Minimize2, ExternalLink, Loader2 } from "lucide-react";
+import { Navigation, Maximize2, Minimize2, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { PropertyListing } from "@/lib/types";
@@ -31,10 +31,6 @@ interface MapProps {
   
   // Loading state
   loading?: boolean;
-  
-  // Custom marker
-  markerTitle?: string;
-  markerDescription?: string;
   
   // Current property (to highlight it)
   currentProperty?: PropertyListing;
@@ -76,8 +72,6 @@ const Map: React.FC<MapProps> = ({
   className = "",
   borderRadius = "lg",
   loading = false,
-  markerTitle,
-  markerDescription,
   currentProperty,
 }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -136,8 +130,8 @@ const Map: React.FC<MapProps> = ({
           existing.map.longitude
         );
         
-        // If too close (less than ~100m), skip this listing
-        if (distance < 0.1) {
+        // If too close, skip this listing
+        if (distance < minDistance) {
           tooClose = true;
           break;
         }
