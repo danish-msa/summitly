@@ -354,22 +354,6 @@ const Properties = () => {
               style={{ animation: 'progress-fill 3s ease-out forwards' }}
             ></div>
           </div>
-          
-          {/* Loading steps */}
-          <div className="mt-4 space-y-2 text-xs text-gray-500">
-            <div className="flex items-center justify-center space-x-2 animate-fade-in" style={{ animationDelay: '0.5s' }}>
-              <div className="w-1.5 h-1.5 bg-secondary rounded-full animate-pulse"></div>
-              <span className="font-medium">Searching properties</span>
-            </div>
-            <div className="flex items-center justify-center space-x-2 animate-fade-in" style={{ animationDelay: '1s' }}>
-              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
-              <span className="font-medium">Loading images</span>
-            </div>
-            <div className="flex items-center justify-center space-x-2 animate-fade-in" style={{ animationDelay: '1.5s' }}>
-              <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="font-medium">Preparing results</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>
