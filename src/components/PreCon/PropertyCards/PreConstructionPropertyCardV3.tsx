@@ -7,7 +7,6 @@ import type { PreConstructionPropertyCardProps } from './types';
 
 const PreConstructionPropertyCardV3 = ({ 
   property,
-  onHide: _onHide,
   className 
 }: PreConstructionPropertyCardProps) => {
   const location = `${property.address.street}, ${property.address.city}, ${property.address.province}`;
