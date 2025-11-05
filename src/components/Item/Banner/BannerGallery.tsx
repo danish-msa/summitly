@@ -404,8 +404,6 @@ const BannerGallery: React.FC<BannerGalleryProps> = ({ property }) => {
                                         showFullscreen={true}
                                         showExternalLink={true}
                                         showMarker={true}
-                                        markerTitle={property.address.location || `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}`.trim()}
-                                        markerDescription={`${property.details.propertyType} - ${property.listPrice ? `$${property.listPrice.toLocaleString()}` : ''}`}
                                         className="w-full h-full"
                                         borderRadius="lg"
                                         currentProperty={property}
