@@ -2,6 +2,7 @@ import React from 'react'
 import Hero from './Hero/Hero'
 import ConnectWithUs from '../Home/ConnectWithUs/ConnectWithUs'
 import AsSeenOn from '../Home/AsSeenOn/AsSeenOn'
+import FeaturedProjects from './FeaturedProjects/FeaturedProjects'
 import PreConstructionProjects from './PreConstructionProjects/PreConstructionProjects'
 import PreConCTA from './PreConCTA/PreConCTA'
 import PreConCallToAction from './CallToAction/CallToAction'
@@ -16,11 +17,13 @@ const PreCon: React.FC = () => {
     <div className='overflow-hidden'>
       <Hero />
       <AsSeenOn />
-      <PreConstructionProjects />
-      <CardComparison />
-      <PreConstructionJourney />
+      <FeaturedProjects />
       <PreConCallToAction />
+      <PreConstructionJourney />
       <InsightsSection />
+      <PreConstructionProjects />
+      {/* <CardComparison /> */}
+      
       <Testimonials />
       <PreConCTA />
       <PreConFAQ />

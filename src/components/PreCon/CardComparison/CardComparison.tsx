@@ -4,7 +4,8 @@ import React from 'react';
 import { 
   PreConstructionPropertyCard, 
   PreConstructionPropertyCardV2, 
-  PreConstructionPropertyCardV3 
+  PreConstructionPropertyCardV3,
+  FeaturedPropertyCard 
 } from '../PropertyCards';
 import type { PreConstructionProperty } from '../PropertyCards/types';
 import SectionHeading from '@/components/Helper/SectionHeading';
@@ -97,6 +98,45 @@ const CardComparison: React.FC = () => {
                 property={sampleProperty}
                 onHide={() => {}}
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Featured Property Cards Row */}
+        <div className="mt-16">
+          <SectionHeading
+            heading="Featured Property Cards"
+            subheading="Horizontal Layout"
+            description="Horizontal card design optimized for featured properties - 2 cards per row"
+            position="center"
+          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mt-12">
+            {/* Featured Card 1 */}
+            <div className="flex flex-col">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-foreground mb-2">Featured Card Design</h3>
+                <p className="text-sm text-muted-foreground">Horizontal layout with image on left and content on right</p>
+              </div>
+              <div className="flex-1">
+                <FeaturedPropertyCard
+                  property={sampleProperty}
+                  onHide={() => {}}
+                />
+              </div>
+            </div>
+
+            {/* Featured Card 2 */}
+            <div className="flex flex-col">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-foreground mb-2">Featured Card Design</h3>
+                <p className="text-sm text-muted-foreground">Horizontal layout with image on left and content on right</p>
+              </div>
+              <div className="flex-1">
+                <FeaturedPropertyCard
+                  property={sampleProperty}
+                  onHide={() => {}}
+                />
+              </div>
             </div>
           </div>
         </div>

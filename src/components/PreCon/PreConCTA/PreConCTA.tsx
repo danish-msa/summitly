@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 const PreConCTA = () => {
   return (
-    <section className="py-16 md:py-24 bg-background">
+    <section className="py-16 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Info Section */}
         <div className="bg-gradient-to-r from-brand-celestial/40 via-green-50/50 to-purple-50 rounded-2xl p-8 md:p-12 text-center relative overflow-hidden">

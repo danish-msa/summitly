@@ -47,8 +47,8 @@ const PreConstructionProjects = () => {
     <section className="py-16 bg-background">
       <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          heading="Featured Pre-Construction Projects"
-          subheading="Pre-Construction"
+          heading="All Pre-Construction Projects"
+          subheading="All Pre-Construction Projects"
           description="Discover the best pre-construction homes across Canada"
           position="center"
         />
