@@ -240,24 +240,6 @@ const FeaturedPropertyCard = ({ property, onHide, className }: PreConstructionPr
               </div>
             </div>
 
-            {/* Key Info Grid */}
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg">
-                <Calendar className="text-primary flex-shrink-0 mt-0.5" size={16} />
-                <div>
-                  <p className="text-xs text-muted-foreground">Completion</p>
-                  <p className="text-sm font-semibold text-foreground">{property.completion.date}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg">
-                <TrendingUp className="text-accent flex-shrink-0 mt-0.5" size={16} />
-                <div>
-                  <p className="text-xs text-muted-foreground">Available</p>
-                  <p className="text-sm font-semibold text-foreground">{property.details.availableUnits}/{property.details.totalUnits}</p>
-                </div>
-              </div>
-            </div>
-
             {/* Construction Progress */}
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
