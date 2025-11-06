@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Search, Locate, X } from 'lucide-react';
 import { cn } from '@/lib/utils';

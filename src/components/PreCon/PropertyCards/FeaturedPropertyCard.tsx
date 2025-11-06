@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import type { PreConstructionPropertyCardProps } from './types';
 
-const FeaturedPropertyCard = ({ property, onHide, className }: PreConstructionPropertyCardProps) => {
+const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCardProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [imgError, setImgError] = useState(false);

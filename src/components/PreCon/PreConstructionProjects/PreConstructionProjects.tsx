@@ -3,26 +3,21 @@
 import React, { useState, useMemo } from 'react';
 import SectionHeading from '@/components/Helper/SectionHeading';
 import type { PreConstructionProperty } from '../PropertyCards/types';
-import GlobalFilters from '@/components/common/filters/GlobalFilters';
-import { LOCATIONS } from '@/lib/types/filters';
 import { usePreConProjects } from './hooks/usePreConProjects';
-import ViewToggle from './components/ViewToggle';
 import ProjectList from './components/ProjectList';
 import ProjectMapView from './components/ProjectMapView';
 import PropertyTypeToggle from './components/PropertyTypeToggle';
 
 const PreConstructionProjects = () => {
-  const [viewMode, setViewMode] = useState<'list' | 'split' | 'map'>('list');
+  const [viewMode] = useState<'list' | 'split' | 'map'>('list');
   const [selectedProject, setSelectedProject] = useState<PreConstructionProperty | null>(null);
   
   // Use custom hook for project management
   const {
     filteredProjects: visibleProjects,
     mapProperties,
-    communities,
     filters,
     handleFilterChange,
-    resetFilters,
     allProjects
   } = usePreConProjects();
 
