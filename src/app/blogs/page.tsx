@@ -19,6 +19,8 @@ const BlogsPage = () => {
 
   // Initialize from URL params
   useEffect(() => {
+    if (!searchParams) return;
+    
     const categoryParam = searchParams.get('category');
     const searchParam = searchParams.get('search');
     
