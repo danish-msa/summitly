@@ -1,4 +1,4 @@
-import type { PreConstructionProperty } from '../../PropertyCards/types';
+import type { PreConstructionProperty } from '../PropertyCards/types';
 
 // Mock data for Platinum Access VIP Condos
 export const platinumVIPProjects: PreConstructionProperty[] = [
