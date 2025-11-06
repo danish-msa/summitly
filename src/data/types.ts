@@ -213,6 +213,7 @@ export interface BlogPost {
   title: string;
   excerpt: string;
   tags: string[];
+  category?: string;
   large?: boolean;
   content?: string;
   author?: string;
@@ -224,6 +225,7 @@ export interface BlogFilters {
   tag?: string;
   author?: string;
   search?: string;
+  category?: string;
   featured?: boolean;
   page?: number;
   limit?: number;

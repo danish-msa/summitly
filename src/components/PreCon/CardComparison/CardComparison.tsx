@@ -40,6 +40,7 @@ const sampleProperty: PreConstructionProperty = {
     date: 'Q4 2025',
     progress: 35,
   },
+  occupancyYear: 2026,
   features: ['Rooftop Terrace', 'Gym', 'Pool', 'Concierge'],
   depositStructure: '5% on signing, 10% within 6 months',
   status: 'selling',

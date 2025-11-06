@@ -1,16 +1,58 @@
 "use client";
-import GlobalLocationSearch from '@/components/common/GlobalLocationSearch';
-import React from 'react'
+import SearchBar from '@/components/common/SearchBar';
+import PreConSuggestions, { PreConCity, PreConLaunch } from '@/components/PreCon/Search/PreConSuggestions';
+import { preConCities, preConLaunches } from '@/components/PreCon/Search/preConSearchData';
+import { preConCityProjectsData } from '@/components/PreCon/PreConCityProperties/preConCityProjectsData';
+import React, { useState, useRef, useEffect, useMemo } from 'react'
 
 const Hero = () => {
-  const handleLocationSelect = (address: string, coordinates?: { lat: number; lng: number }) => {
-    console.log('Selected Location:', address);
-    if (coordinates) {
-      console.log('Coordinates:', coordinates);
-    }
-    // You can add navigation logic here, e.g.:
-    // router.push(`/search?location=${encodeURIComponent(address)}`);
+  const [searchValue, setSearchValue] = useState('');
+  const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  // Handle click outside to close suggestions
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setIsSuggestionsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSearchFocus = () => {
+    setIsSuggestionsOpen(true);
   };
+
+  const handleCitySelect = (city: PreConCity) => {
+    setSearchValue(city.name);
+    setIsSuggestionsOpen(false);
+    console.log('Selected City:', city);
+    // You can add navigation logic here, e.g.:
+    // router.push(`/pre-construction?city=${city.id}`);
+  };
+
+  const handleLaunchSelect = (launch: PreConLaunch) => {
+    setSearchValue(launch.title);
+    setIsSuggestionsOpen(false);
+    console.log('Selected Launch:', launch);
+    // You can add navigation logic here, e.g.:
+    // router.push(`/pre-construction/launches/${launch.id}`);
+  };
+
+  // Merge cities with project counts from mock data
+  const citiesWithCounts = useMemo(() => {
+    return preConCities.map((city) => {
+      const projectData = preConCityProjectsData.find((p) => p.id === city.id);
+      return {
+        ...city,
+        numberOfProjects: projectData?.numberOfProjects,
+      };
+    });
+  }, []);
+
   return (
     <div className="w-full flex-col flex justify-center items-center mt-16 pt-28 md:pt-20 pb-20 bg-[url('/images/pre-con-hero.webp')] bg-cover bg-center relative mx-auto">
       {/* Overlay */}
@@ -24,11 +66,23 @@ const Hero = () => {
         <p className="text-lg  md:text-xl text-center mb-8">
           Get first access to floor plans, pricing, and VIP incentives before public release.
         </p>
-        <GlobalLocationSearch 
-          onSelect={handleLocationSelect} 
-          placeholder="Enter location to search pre-construction properties"
-          className='bg-white/90 rounded-full max-w-xl' 
-        />
+        <div ref={searchContainerRef} className="relative w-full max-w-xl">
+          <SearchBar
+            value={searchValue}
+            onChange={setSearchValue}
+            onFocus={handleSearchFocus}
+            placeholder="Enter location to search pre-construction properties"
+            className='bg-white/90 rounded-full'
+            showLocationButton={false}
+          />
+          <PreConSuggestions
+            cities={citiesWithCounts}
+            launches={preConLaunches}
+            onCitySelect={handleCitySelect}
+            onLaunchSelect={handleLaunchSelect}
+            isOpen={isSuggestionsOpen}
+          />
+        </div>
       </div>
     </div>
   )

@@ -1,20 +1,12 @@
+"use client";
+
 import React from 'react';
 import Carousel from 'react-multi-carousel';
 import 'react-multi-carousel/lib/styles.css';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { PreConstructionPropertyCardV3 } from '../../PropertyCards';
-import type { PreConstructionProperty } from '../../PropertyCards/types';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-
-type ViewMode = 'list' | 'split' | 'map';
-
-interface ProjectListProps {
-  projects: PreConstructionProperty[];
-  selectedProject: PreConstructionProperty | null;
-  viewMode: ViewMode;
-  onProjectClick: (project: PreConstructionProperty) => void;
-}
+import { PreConstructionPropertyCardV3 } from '../PropertyCards';
+import SectionHeading from '@/components/Helper/SectionHeading';
+import { platinumVIPProjects } from './platinumVIPProjectsData';
 
 // Custom Arrow Components
 const CustomLeftArrow = ({ onClick }: { onClick?: () => void }) => (
@@ -37,12 +29,7 @@ const CustomRightArrow = ({ onClick }: { onClick?: () => void }) => (
   </button>
 );
 
-const ProjectList: React.FC<ProjectListProps> = ({
-  projects,
-  selectedProject,
-  viewMode,
-  onProjectClick
-}) => {
+const PlatinumAccessVIP: React.FC = () => {
   const responsive = {
     superLargeDesktop: {
       breakpoint: { max: 4000, min: 1536 },
@@ -67,17 +54,16 @@ const ProjectList: React.FC<ProjectListProps> = ({
   };
 
   return (
-    <div className={`${viewMode === 'split' ? 'md:w-1/2' : 'w-full'} overflow-y-auto`} style={{ maxHeight: viewMode === 'split' ? 'calc(100vh - 300px)' : 'auto' }}>
-      {/* Results Count */}
-      {/* <div className="hidden sm:flex items-center mb-2">
-        <span className="text-gray-700 font-medium text-sm">
-          {projects.length} results
-        </span>
-      </div> */}
-      
-      {/* Projects Display */}
-      {viewMode === 'list' ? (
-        <div className="relative">
+    <section className="py-16 bg-background">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionHeading
+          heading="Platinum Access VIP Condos"
+          subheading="Platinum Access VIP"
+          description="Exclusive VIP access to the most prestigious pre-construction condominium projects with premium amenities and luxury living"
+          position="center"
+        />
+
+        <div className="mt-12 relative">
           <Carousel
             responsive={responsive}
             infinite={true}
@@ -94,48 +80,19 @@ const ProjectList: React.FC<ProjectListProps> = ({
             customRightArrow={<CustomRightArrow />}
             arrows={true}
           >
-            {projects.map((project) => (
-              <div 
-                key={project.id}
-                className={`px-2 cursor-pointer transition-all ${selectedProject?.id === project.id ? 'ring-2 ring-secondary' : ''}`}
-                onClick={() => onProjectClick(project)}
-              >
+            {platinumVIPProjects.map((property) => (
+              <div key={property.id} className="px-2">
                 <PreConstructionPropertyCardV3
-                  property={project}
+                  property={property}
                 />
               </div>
             ))}
           </Carousel>
         </div>
-      ) : (
-        <div className={`grid ${viewMode === 'split' ? 'grid-cols-2' : 'grid-cols-1 lg:grid-cols-4'} gap-6 md:gap-4`}>
-          {projects.map((project) => (
-            <div 
-              key={project.id}
-              className={`cursor-pointer transition-all ${selectedProject?.id === project.id ? 'ring-2 ring-secondary' : ''}`}
-              onClick={() => onProjectClick(project)}
-            >
-              <PreConstructionPropertyCardV3
-                property={project}
-              />
-            </div>
-          ))}
-        </div>
-      )}
-      
-      {/* View All Projects Button - Only show in list view */}
-      {viewMode === 'list' && (
-        <div className="flex justify-center mt-12">
-          <Link href="/pre-con">
-            <Button variant="outline" size="lg" className="px-8">
-              View All Projects
-            </Button>
-          </Link>
-        </div>
-      )}
-    </div>
+      </div>
+    </section>
   );
 };
 
-export default ProjectList;
+export default PlatinumAccessVIP;
 

@@ -10,7 +10,10 @@ import PreConFAQ from './FAQ/FAQ'
 import PreConstructionJourney from './PreConstructionJourney/PreConstructionJourney'
 import { InsightsSection } from './Insights/InsightsSection'
 import { Testimonials } from './Testimonials/Testimonials'
-import CardComparison from './CardComparison/CardComparison'
+import { NewHomesRecommendations } from './NewHomesRecommendations/NewHomesRecommendations'
+import PreConCityProperties from './PreConCityProperties/PreConCityProperties'
+import PlatinumAccessVIP from './PlatinumAccessVIP/PlatinumAccessVIP'
+import PreConBlogs from './Blogs/PreConBlogs'
 
 const PreCon: React.FC = () => {
   return (
@@ -22,8 +25,10 @@ const PreCon: React.FC = () => {
       <PreConstructionJourney />
       <InsightsSection />
       <PreConstructionProjects />
-      <CardComparison />
-      
+      <NewHomesRecommendations />
+      <PreConCityProperties />
+      <PlatinumAccessVIP />
+      <PreConBlogs />
       <Testimonials />
       <PreConCTA />
       <PreConFAQ />

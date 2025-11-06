@@ -41,7 +41,7 @@ export function AreaSelector({ areas, selectedArea, onAreaChange }: AreaSelector
           className="w-full justify-between bg-card hover:bg-muted/50 transition-colors"
         >
           <span className="font-medium">{selectedAreaData?.name}</span>
-          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronDown className="ml-0 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[300px] p-0 bg-card border-border" align="end">

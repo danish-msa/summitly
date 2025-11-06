@@ -1,34 +1,46 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import BlogHeader from "@/components/Blog/BlogHeader";
 import RecentPosts from "@/components/Blog/RecentPosts";
 import AllPosts from "@/components/Blog/AllPosts";
 import SimplePagination from "@/components/Blog/SimplePagination";
-import { getPaginatedBlogPosts, getBlogTags, getBlogAuthors } from "@/data/data";
+import { getPaginatedBlogPosts, getBlogCategories } from "@/data/data";
 import { BlogFilters } from "@/data/types";
 
 const BlogsPage = () => {
+  const searchParams = useSearchParams();
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState<BlogFilters>({});
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedTag, setSelectedTag] = useState("");
-  const [selectedAuthor, setSelectedAuthor] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [postsPerPage] = useState(6);
 
+  // Initialize from URL params
+  useEffect(() => {
+    const categoryParam = searchParams.get('category');
+    const searchParam = searchParams.get('search');
+    
+    if (categoryParam) {
+      setSelectedCategory(categoryParam);
+    }
+    if (searchParam) {
+      setSearchTerm(searchParam);
+    }
+  }, [searchParams]);
+
   const paginatedData = getPaginatedBlogPosts(filters, currentPage, postsPerPage);
-  const availableTags = getBlogTags();
-  const availableAuthors = getBlogAuthors();
+  const availableCategories = getBlogCategories();
 
   useEffect(() => {
     const newFilters: BlogFilters = {};
     if (searchTerm) newFilters.search = searchTerm;
-    if (selectedTag) newFilters.tag = selectedTag;
-    if (selectedAuthor) newFilters.author = selectedAuthor;
+    if (selectedCategory) newFilters.category = selectedCategory;
     
     setFilters(newFilters);
     setCurrentPage(1); // Reset to first page when filters change
-  }, [searchTerm, selectedTag, selectedAuthor]);
+  }, [searchTerm, selectedCategory]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -42,8 +54,7 @@ const BlogsPage = () => {
 
   const clearFilters = () => {
     setSearchTerm("");
-    setSelectedTag("");
-    setSelectedAuthor("");
+    setSelectedCategory("");
   };
 
   return (
@@ -64,24 +75,13 @@ const BlogsPage = () => {
               />
               
               <select
-                value={selectedTag}
-                onChange={(e) => setSelectedTag(e.target.value)}
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               >
-                <option value="">All Tags</option>
-                {availableTags.map(tag => (
-                  <option key={tag} value={tag}>{tag}</option>
-                ))}
-              </select>
-              
-              <select
-                value={selectedAuthor}
-                onChange={(e) => setSelectedAuthor(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              >
-                <option value="">All Authors</option>
-                {availableAuthors.map(author => (
-                  <option key={author} value={author}>{author}</option>
+                <option value="">All Categories</option>
+                {availableCategories.map(category => (
+                  <option key={category} value={category}>{category}</option>
                 ))}
               </select>
               

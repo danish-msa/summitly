@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Home, Building2, TrendingUp, Search } from "lucide-react";
+import { Home, Building2, TrendingUp, Hammer, User } from "lucide-react";
 import SectionHeading from "@/components/Helper/SectionHeading";
 import { useLocationDetection } from "@/hooks/useLocationDetection";
 
@@ -61,8 +61,27 @@ const baseRecommendationsData: RecommendationCategory[] = [
     ],
   },
   {
-    id: "mortgage",
-    label: "Mortgage Rates",
+    id: "pre-construction",
+    label: "Pre-Construction",
+    icon: <Hammer className="w-4 h-4" />,
+    recommendations: [
+      { title: "New Homes", subtitle: "{location} pre-construction homes", link: "/pre-construction?type=homes" },
+      { title: "New Condos", subtitle: "{location} pre-construction condos", link: "/pre-construction?type=condos" },
+      { title: "VIP Access", subtitle: "{location} VIP pre-construction", link: "/pre-construction?type=vip" },
+      { title: "Now Selling", subtitle: "{location} pre-construction selling", link: "/pre-construction?status=selling" },
+      { title: "Coming Soon", subtitle: "{location} upcoming projects", link: "/pre-construction?status=coming-soon" },
+      { title: "Toronto Projects", subtitle: "Pre-construction in Toronto", link: "/pre-construction?location=toronto" },
+      { title: "Mississauga Projects", subtitle: "Pre-construction in Mississauga", link: "/pre-construction?location=mississauga" },
+      { title: "Brampton Projects", subtitle: "Pre-construction in Brampton", link: "/pre-construction?location=brampton" },
+      { title: "Markham Projects", subtitle: "Pre-construction in Markham", link: "/pre-construction?location=markham" },
+      { title: "Vaughan Projects", subtitle: "Pre-construction in Vaughan", link: "/pre-construction?location=vaughan" },
+      { title: "Oakville Projects", subtitle: "Pre-construction in Oakville", link: "/pre-construction?location=oakville" },
+      { title: "Hamilton Projects", subtitle: "Pre-construction in Hamilton", link: "/pre-construction?location=hamilton" },
+    ],
+  },
+  {
+    id: "mortgages",
+    label: "Mortgages",
     icon: <TrendingUp className="w-4 h-4" />,
     recommendations: [
       { title: "Current mortgage rates", subtitle: "{location} mortgage rates", link: "/mortgage-rates" },
@@ -80,22 +99,22 @@ const baseRecommendationsData: RecommendationCategory[] = [
     ],
   },
   {
-    id: "browse",
-    label: "Browse Homes",
-    icon: <Search className="w-4 h-4" />,
+    id: "agents",
+    label: "Agents",
+    icon: <User className="w-4 h-4" />,
     recommendations: [
-      { title: "Toronto", subtitle: "Browse homes in Toronto", link: "/listings?location=toronto" },
-      { title: "Mississauga", subtitle: "Browse homes in Mississauga", link: "/listings?location=mississauga" },
-      { title: "Brampton", subtitle: "Browse homes in Brampton", link: "/listings?location=brampton" },
-      { title: "Markham", subtitle: "Browse homes in Markham", link: "/listings?location=markham" },
-      { title: "Vaughan", subtitle: "Browse homes in Vaughan", link: "/listings?location=vaughan" },
-      { title: "Richmond Hill", subtitle: "Browse homes in Richmond Hill", link: "/listings?location=richmond-hill" },
-      { title: "Oakville", subtitle: "Browse homes in Oakville", link: "/listings?location=oakville" },
-      { title: "Burlington", subtitle: "Browse homes in Burlington", link: "/listings?location=burlington" },
-      { title: "Ajax", subtitle: "Browse homes in Ajax", link: "/listings?location=ajax" },
-      { title: "Pickering", subtitle: "Browse homes in Pickering", link: "/listings?location=pickering" },
-      { title: "Whitby", subtitle: "Browse homes in Whitby", link: "/listings?location=whitby" },
-      { title: "Oshawa", subtitle: "Browse homes in Oshawa", link: "/listings?location=oshawa" },
+      { title: "Find an agent", subtitle: "{location} real estate agents", link: "/agents" },
+      { title: "Top agents", subtitle: "{location} top rated agents", link: "/agents?sort=top-rated" },
+      { title: "Toronto agents", subtitle: "Real estate agents in Toronto", link: "/agents?location=toronto" },
+      { title: "Mississauga agents", subtitle: "Real estate agents in Mississauga", link: "/agents?location=mississauga" },
+      { title: "Brampton agents", subtitle: "Real estate agents in Brampton", link: "/agents?location=brampton" },
+      { title: "Markham agents", subtitle: "Real estate agents in Markham", link: "/agents?location=markham" },
+      { title: "Vaughan agents", subtitle: "Real estate agents in Vaughan", link: "/agents?location=vaughan" },
+      { title: "Oakville agents", subtitle: "Real estate agents in Oakville", link: "/agents?location=oakville" },
+      { title: "Become an agent", subtitle: "Join our agent network", link: "/agents/become-agent" },
+      { title: "Agent resources", subtitle: "Tools and resources for agents", link: "/agents/resources" },
+      { title: "Agent directory", subtitle: "Browse all agents", link: "/agents/directory" },
+      { title: "Contact an agent", subtitle: "Get in touch with an agent", link: "/agents/contact" },
     ],
   },
 ];
@@ -124,8 +143,12 @@ export const RecommendationsSection = () => {
     return baseRecommendationsData.map((category) => ({
       ...category,
       recommendations: category.recommendations.map((rec) => {
-        // For browse tab, keep original subtitles as they are city-specific
-        if (category.id === "browse") {
+        // For agents tab, some recommendations are city-specific, keep them as is
+        if (category.id === "agents" && rec.subtitle.includes("in ")) {
+          return rec;
+        }
+        // For pre-construction tab, some recommendations are city-specific
+        if (category.id === "pre-construction" && rec.subtitle.includes("in ")) {
           return rec;
         }
         // For other tabs, replace {location} placeholder with actual location
@@ -148,12 +171,12 @@ export const RecommendationsSection = () => {
 
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
-          <TabsList className="grid grid-cols-2 md:grid-cols-4 h-auto gap-2 bg-brand-glacier/30 p-2 rounded-xl">
+          <TabsList className="grid grid-cols-2 md:grid-cols-5 h-auto gap-2 bg-brand-glacier/30 p-2 rounded-xl">
             {recommendationsData.map((category) => (
               <TabsTrigger
                 key={category.id}
                 value={category.id}
-                className="data-[state=active]:bg-brand-mist data-[state=active]:text-primary flex items-center gap-2 py-3 rounded-lg transition-all duration-300"
+                className="data-[state=active]:bg-white data-[state=active]:text-primary text-base flex items-center gap-2 py-3 rounded-lg transition-all duration-300"
               >
                 {category.icon}
                 <span className="hidden sm:inline">{category.label}</span>

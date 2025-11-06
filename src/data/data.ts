@@ -773,6 +773,7 @@ export const blogs = [
     title: "Conversations with: London Maer & Co.",
     excerpt: "How a mother-daughter design duo created a studio of their own. See how they turned their creativity into a successful design business that serves clients worldwide.",
     tags: ["Design", "Research"],
+    category: "Design",
     large: true,
     featured: true,
     author: "Olivia Rhye",
@@ -786,6 +787,7 @@ export const blogs = [
     title: "6 Interesting Ways to Use a 3D Character in Procreate",
     excerpt: "Unleash creativity with 6 innovative ways to use 3D characters in your digital art projects. From concept to final render.",
     tags: ["Design", "Product"],
+    category: "Design",
     author: "Phoenix Baker",
     readTime: "3 min read",
     content: "Full article content would go here..."
@@ -797,6 +799,7 @@ export const blogs = [
     title: "Intro to Run a Successful Design Sprint",
     excerpt: "Starting a new design sprint can be daunting but with the right approach, you can lead your team to breakthrough solutions.",
     tags: ["Product"],
+    category: "Product",
     author: "Lana Steiner",
     readTime: "7 min read",
     content: "Full article content would go here..."
@@ -808,6 +811,7 @@ export const blogs = [
     title: "Migrating from Craft to Webflow: Process & Tips",
     excerpt: "Learn the complete process of migrating your design workflow from Craft to Webflow with these expert tips and best practices.",
     tags: ["Tools"],
+    category: "Tools",
     author: "Natali Craig",
     readTime: "4 min read",
     content: "Full article content would go here..."
@@ -819,6 +823,7 @@ export const blogs = [
     title: "Minimal Organics — Shampoo + Alternatives & Treatment",
     excerpt: "Discover sustainable beauty products that are good for your hair and the environment. A comprehensive guide to organic hair care.",
     tags: ["Design", "Research"],
+    category: "Lifestyle",
     author: "Candice Wu",
     readTime: "6 min read",
     content: "Full article content would go here..."
@@ -830,6 +835,7 @@ export const blogs = [
     title: "A Continually Unfolding History → Where We Work by Hand",
     excerpt: "Explore the evolution of craftsmanship and how traditional methods inspire modern design practices in our digital age.",
     tags: ["Design", "Research"],
+    category: "Design",
     author: "Alec Whitten",
     readTime: "8 min read",
     content: "Full article content would go here..."
@@ -841,6 +847,7 @@ export const blogs = [
     title: "Cognitive Dissonance Theory - Cool Course for UX Designers",
     excerpt: "Understanding psychological principles that influence user behavior and design decisions. Essential knowledge for modern UX designers.",
     tags: ["Design", "Research"],
+    category: "Design",
     author: "Demi Wilkinson",
     readTime: "9 min read",
     content: "Full article content would go here..."
@@ -852,6 +859,7 @@ export const blogs = [
     title: "How Remote Work Drastically Increased My Quality of Life →",
     excerpt: "Personal insights on the benefits of remote work and tips for maintaining work-life balance in a distributed team environment.",
     tags: ["Product", "Tools"],
+    category: "Lifestyle",
     author: "Candice Wu",
     readTime: "5 min read",
     content: "Full article content would go here..."
@@ -863,6 +871,7 @@ export const blogs = [
     title: "Poroschic Interview with Designer : Jasmin Santos",
     excerpt: "An in-depth conversation about design philosophy, creative process, and career journey with renowned designer Jasmin Santos.",
     tags: ["Design"],
+    category: "Design",
     author: "Orlando Diggs",
     readTime: "12 min read",
     content: "Full article content would go here..."
@@ -874,6 +883,7 @@ export const blogs = [
     title: "Improve Your UI Design Skills with Copy",
     excerpt: "Learn how better copywriting can elevate your design work and user experience. The intersection of design and content strategy.",
     tags: ["Design", "Tools"],
+    category: "Design",
     author: "Kate Morrison",
     readTime: "6 min read",
     content: "Full article content would go here..."
@@ -885,6 +895,7 @@ export const blogs = [
     title: "The Design Dilemma is Real! UX Versus the Enemy of Creativity",
     excerpt: "Balancing user experience requirements with creative freedom in modern design. Finding the sweet spot between usability and innovation.",
     tags: ["Research"],
+    category: "Design",
     author: "Koray Okumus",
     readTime: "7 min read",
     content: "Full article content would go here..."
@@ -896,8 +907,130 @@ export const blogs = [
     title: "Building Design Systems That Scale",
     excerpt: "Creating design systems that grow with your product and team. Best practices for maintaining consistency across large organizations.",
     tags: ["Design", "Product"],
+    category: "Product",
     author: "Sarah Johnson",
     readTime: "10 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 13,
+    image: "/images/blogs/c1.jpg",
+    date: "Michael Chen • 25 Jan 2024",
+    title: "Complete Guide to Buying Pre-Construction Homes in Canada",
+    excerpt: "Everything you need to know about purchasing pre-construction properties, from initial deposits to final occupancy. Learn about the benefits, risks, and essential steps to secure your dream home.",
+    tags: ["Pre-construction", "Home Buying", "Real Estate"],
+    category: "Pre-construction",
+    author: "Michael Chen",
+    readTime: "12 min read",
+    content: "Full article content would go here...",
+    featured: true
+  },
+  {
+    id: 14,
+    image: "/images/blogs/c2.jpg",
+    date: "Sarah Martinez • 22 Jan 2024",
+    title: "Understanding Deposit Structures in Pre-Construction Projects",
+    excerpt: "Navigate the complexities of deposit schedules for pre-construction condos and homes. Learn about typical payment structures, what to expect, and how to protect your investment.",
+    tags: ["Pre-construction", "Investment", "Finance"],
+    category: "Pre-construction",
+    author: "Sarah Martinez",
+    readTime: "8 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 15,
+    image: "/images/blogs/c3.jpg",
+    date: "David Kim • 20 Jan 2024",
+    title: "Top 10 Pre-Construction Condos in Toronto for 2024",
+    excerpt: "Discover the most exciting pre-construction condo developments in Toronto. From luxury waterfront projects to affordable downtown options, find your perfect investment opportunity.",
+    tags: ["Pre-construction", "Toronto", "Condos"],
+    category: "Pre-construction",
+    author: "David Kim",
+    readTime: "10 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 16,
+    image: "/images/blogs/c4.jpg",
+    date: "Jennifer Lee • 18 Jan 2024",
+    title: "VIP Access Programs: Getting Early Access to Pre-Construction Projects",
+    excerpt: "Learn how VIP access programs work and why they're essential for securing the best units and pricing in high-demand pre-construction developments. Tips for joining exclusive programs.",
+    tags: ["Pre-construction", "VIP", "Investment"],
+    category: "Pre-construction",
+    author: "Jennifer Lee",
+    readTime: "7 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 17,
+    image: "/images/blogs/c5.jpg",
+    date: "Robert Taylor • 15 Jan 2024",
+    title: "Pre-Construction vs Resale: Which is Right for You?",
+    excerpt: "Compare the advantages and disadvantages of buying pre-construction versus resale properties. Make an informed decision based on your lifestyle, budget, and investment goals.",
+    tags: ["Pre-construction", "Home Buying", "Real Estate"],
+    category: "Pre-construction",
+    author: "Robert Taylor",
+    readTime: "9 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 18,
+    image: "/images/blogs/c6.jpg",
+    date: "Emily Rodriguez • 12 Jan 2024",
+    title: "What to Look for in a Pre-Construction Developer",
+    excerpt: "Essential factors to consider when choosing a developer for your pre-construction purchase. Learn about track records, reputation, and red flags to avoid.",
+    tags: ["Pre-construction", "Developers", "Investment"],
+    category: "Pre-construction",
+    author: "Emily Rodriguez",
+    readTime: "6 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 19,
+    image: "/images/blogs/c1.jpg",
+    date: "James Wilson • 10 Jan 2024",
+    title: "Timeline Expectations: From Purchase to Occupancy in Pre-Construction",
+    excerpt: "Understand the typical timeline for pre-construction projects, including key milestones, potential delays, and what to expect during each phase of development.",
+    tags: ["Pre-construction", "Timeline", "Home Buying"],
+    category: "Pre-construction",
+    author: "James Wilson",
+    readTime: "8 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 20,
+    image: "/images/blogs/c2.jpg",
+    date: "Lisa Anderson • 8 Jan 2024",
+    title: "Financing Pre-Construction Properties: Mortgage Options and Strategies",
+    excerpt: "Navigate the unique financing challenges of pre-construction purchases. Learn about construction mortgages, rate holds, and financial planning strategies.",
+    tags: ["Pre-construction", "Finance", "Mortgage"],
+    category: "Pre-construction",
+    author: "Lisa Anderson",
+    readTime: "11 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 21,
+    image: "/images/blogs/c3.jpg",
+    date: "Mark Thompson • 5 Jan 2024",
+    title: "Best Pre-Construction Investment Markets in Canada for 2024",
+    excerpt: "Explore the top Canadian cities and regions for pre-construction real estate investment. Market analysis, growth projections, and investment opportunities.",
+    tags: ["Pre-construction", "Investment", "Canada"],
+    category: "Pre-construction",
+    author: "Mark Thompson",
+    readTime: "10 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 22,
+    image: "/images/blogs/c4.jpg",
+    date: "Amanda White • 3 Jan 2024",
+    title: "Floor Plan Selection: Choosing the Right Unit in Pre-Construction",
+    excerpt: "Expert tips for selecting the perfect floor plan for your needs. Consider factors like layout, orientation, views, and future resale value when making your choice.",
+    tags: ["Pre-construction", "Home Buying", "Design"],
+    category: "Pre-construction",
+    author: "Amanda White",
+    readTime: "7 min read",
     content: "Full article content would go here..."
   }
 ];
@@ -986,6 +1119,13 @@ export const getBlogPosts = (filters: BlogFilters = {}): BlogPost[] => {
     );
   }
 
+  // Filter by category
+  if (filters.category) {
+    filteredBlogs = filteredBlogs.filter(blog => 
+      blog.category?.toLowerCase() === filters.category!.toLowerCase()
+    );
+  }
+
   // Filter by search term
   if (filters.search) {
     const searchTerm = filters.search.toLowerCase();
@@ -1026,6 +1166,11 @@ export const getBlogTags = (): string[] => {
 export const getBlogAuthors = (): string[] => {
   const allAuthors = blogs.map(blog => blog.author).filter(Boolean) as string[];
   return [...new Set(allAuthors)].sort();
+};
+
+export const getBlogCategories = (): string[] => {
+  const allCategories = blogs.map(blog => blog.category).filter(Boolean) as string[];
+  return [...new Set(allCategories)].sort();
 };
 
 export const getPaginatedBlogPosts = (filters: BlogFilters = {}, page: number = 1, limit: number = 6) => {

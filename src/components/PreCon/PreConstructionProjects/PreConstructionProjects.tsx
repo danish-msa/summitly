@@ -9,6 +9,7 @@ import { usePreConProjects } from './hooks/usePreConProjects';
 import ViewToggle from './components/ViewToggle';
 import ProjectList from './components/ProjectList';
 import ProjectMapView from './components/ProjectMapView';
+import PropertyTypeToggle from './components/PropertyTypeToggle';
 
 const PreConstructionProjects = () => {
   const [viewMode, setViewMode] = useState<'list' | 'split' | 'map'>('list');
@@ -22,7 +23,7 @@ const PreConstructionProjects = () => {
     filters,
     handleFilterChange,
     resetFilters,
-    handleHide
+    allProjects
   } = usePreConProjects();
 
   // Handle project click for map
@@ -56,7 +57,7 @@ const PreConstructionProjects = () => {
         {/* Global Filters with View Toggle */}
         <div className="mt-8 mb-4">
           <div className="flex flex-col md:flex-row md:flex-wrap justify-between items-start md:items-center gap-4">
-            <GlobalFilters
+            {/* <GlobalFilters
               filters={filters}
               handleFilterChange={handleFilterChange}
               resetFilters={resetFilters}
@@ -64,7 +65,7 @@ const PreConstructionProjects = () => {
               locations={LOCATIONS}
               isPreCon={true}
               showLocation={true}
-              showPropertyType={true}
+              showPropertyType={false}
               showCommunity={false}
               showPrice={true}
               showBedrooms={true}
@@ -72,9 +73,16 @@ const PreConstructionProjects = () => {
               showAdvanced={false}
               layout="horizontal"
               className="w-full md:w-auto"
-            />
-            <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+            /> */}
+            {/* <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} /> */}
           </div>
+          
+          {/* Property Type Toggle */}
+          <PropertyTypeToggle
+            filters={filters}
+            handleFilterChange={handleFilterChange}
+            projects={allProjects}
+          />
         </div>
 
         {visibleProjects.length > 0 ? (
@@ -86,7 +94,6 @@ const PreConstructionProjects = () => {
                 selectedProject={selectedProject}
                 viewMode={viewMode}
                 onProjectClick={handleProjectClick}
-                onHide={handleHide}
               />
             )}
 

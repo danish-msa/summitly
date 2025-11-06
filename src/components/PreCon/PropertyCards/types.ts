@@ -24,6 +24,7 @@ export interface PreConstructionProperty {
     date: string; // e.g., "Q4 2025"
     progress: number; // 0-100
   };
+  occupancyYear?: number; // e.g., 2026, 2027
   features: string[];
   depositStructure?: string; // e.g., "5% on signing"
   status: 'selling' | 'coming-soon' | 'sold-out';

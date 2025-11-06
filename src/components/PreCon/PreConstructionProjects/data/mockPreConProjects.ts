@@ -87,7 +87,7 @@ export const mockPreConProjects: PreConstructionProperty[] = [
       longitude: -73.5673,
     },
     details: {
-      propertyType: 'Loft',
+      propertyType: 'House',
       bedroomRange: '1-2',
       bathroomRange: '1-2',
       sqftRange: '550-950',

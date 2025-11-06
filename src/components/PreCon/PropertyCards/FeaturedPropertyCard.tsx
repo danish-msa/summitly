@@ -1,11 +1,9 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Bed, Bath, Maximize2, MapPin, Heart, ChevronLeft, ChevronRight, MoreVertical, Share2, EyeOff, Building2 } from 'lucide-react';
+import { Bed, Bath, Maximize2, MapPin, Heart, ChevronLeft, ChevronRight, Building2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import type { PreConstructionPropertyCardProps } from './types';
@@ -44,32 +42,6 @@ const FeaturedPropertyCard = ({ property, onHide, className }: PreConstructionPr
     setIsLiked(!isLiked);
   };
 
-  const handleShare = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const shareUrl = `${window.location.origin}/pre-construction/${property.id}`;
-    const shareText = `Check out ${property.projectName} - Pre-construction starting from ${formattedPrice}`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: property.projectName,
-        text: shareText,
-        url: shareUrl,
-      }).catch(console.error);
-    } else {
-      navigator.clipboard.writeText(`${shareText} - ${shareUrl}`).then(() => {
-        console.log('Link copied to clipboard');
-      }).catch(console.error);
-    }
-  };
-
-  const handleHide = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (onHide) {
-      onHide();
-    }
-  };
 
   const handleRegisterInterest = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -100,7 +72,7 @@ const FeaturedPropertyCard = ({ property, onHide, className }: PreConstructionPr
       >
         {/* Image Section - Left */}
         <div className="relative overflow-hidden bg-muted flex-shrink-0 w-2/5">
-          <div className="relative h-full min-h-[280px]">
+          <div className="relative h-full">
             <img 
               src={imageSrc}
               alt={`${property.projectName} - ${property.developer}`}
@@ -137,34 +109,11 @@ const FeaturedPropertyCard = ({ property, onHide, className }: PreConstructionPr
                   )} 
                 />
               </button>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 bg-card/95 backdrop-blur-sm hover:bg-card"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <MoreVertical className="h-3.5 w-3.5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={handleShare} className="cursor-pointer">
-                    <Share2 className="mr-2 h-4 w-4" />
-                    <span>Share</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleHide} className="cursor-pointer">
-                    <EyeOff className="mr-2 h-4 w-4" />
-                    <span>Hide</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
 
             {/* Image Counter */}
             {totalImages > 1 && (
-              <div className="absolute bottom-3 right-3">
+              <div className="absolute bottom-16 right-3">
                 <div className="bg-black/60 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium">
                   {currentImageIndex + 1}/{totalImages}
                 </div>
@@ -188,19 +137,26 @@ const FeaturedPropertyCard = ({ property, onHide, className }: PreConstructionPr
                 </button>
               </>
             )}
+
+            {/* Address at bottom of image */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 via-black/50 to-transparent">
+              <div className="flex items-start">
+                <MapPin className="mr-2 text-white flex-shrink-0 mt-0.5" size={16} />
+                <p className="text-sm text-white line-clamp-2">
+                  {property.address.street}, {property.address.city}, {property.address.province}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Content Section - Right */}
-        <div className="p-6 flex flex-col flex-1 justify-between">
+        <div className="p-6 flex flex-col flex-1">
           {/* Top Section */}
           <div className="flex-1">
             {/* Status Badges */}
             <div className="flex items-center gap-2 flex-wrap mb-3">
               {getStatusBadge()}
-              <Badge variant="outline" className="text-xs">
-                Pre-Construction
-              </Badge>
             </div>
 
             {/* Project Name */}
@@ -209,18 +165,10 @@ const FeaturedPropertyCard = ({ property, onHide, className }: PreConstructionPr
             </h3>
 
             {/* Developer */}
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 mb-4">
               <Building2 className="text-muted-foreground" size={16} />
               <p className="text-sm text-muted-foreground">
                 {property.developer}
-              </p>
-            </div>
-
-            {/* Location */}
-            <div className="flex items-start mb-4">
-              <MapPin className="mr-2 text-muted-foreground flex-shrink-0 mt-0.5" size={16} />
-              <p className="text-sm text-foreground line-clamp-2">
-                {property.address.street}, {property.address.city}, {property.address.province}
               </p>
             </div>
 
@@ -239,19 +187,10 @@ const FeaturedPropertyCard = ({ property, onHide, className }: PreConstructionPr
                 <span className="text-sm text-foreground font-medium">{property.details.sqftRange} sqft</span>
               </div>
             </div>
-
-            {/* Construction Progress */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">Construction Progress</p>
-                <p className="text-sm font-semibold text-foreground">{property.completion.progress}%</p>
-              </div>
-              <Progress value={property.completion.progress} className="h-2" />
-            </div>
           </div>
 
           {/* Bottom Section */}
-          <div className="flex items-center justify-between pt-4 border-t border-border">
+          <div className="flex items-end justify-between">
             {/* Price */}
             <div>
               <p className="text-xs text-muted-foreground mb-1">Starting from</p>
