@@ -10,7 +10,7 @@ type Props = {
     excerpt: string;
     image: string;
     category?: string;
-    author: string;
+    author?: string;
   };
 };
 
