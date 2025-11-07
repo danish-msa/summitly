@@ -1,7 +1,9 @@
-import React from 'react'
+import React, { useMemo, useState } from 'react'
 import { PropertyListing } from '@/lib/types'
-import { MapPin, Calendar, User, CreditCard } from 'lucide-react'
+import { MapPin, Calendar, User, CreditCard, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import ScheduleTourModal from './ScheduleTourModal'
+import RequestInfoModal from './RequestInfoModal'
 import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/single-listing'
 
 interface BasicInfoProps {
@@ -11,11 +13,59 @@ interface BasicInfoProps {
 }
 
 const BasicInfo: React.FC<BasicInfoProps> = ({ isPreCon = false }) => {
+  const [isScheduleTourModalOpen, setIsScheduleTourModalOpen] = useState(false);
+  const [isRequestInfoModalOpen, setIsRequestInfoModalOpen] = useState(false);
 
-  const handleRequestTour = () => {
-    // Handle tour request logic
-    console.log(isPreCon ? 'Book appointment clicked' : 'Request tour clicked');
-    // You can add navigation or modal logic here
+  // Calculate the nearest available date and time
+  const getNearestAvailableDateTime = useMemo(() => {
+    const now = new Date();
+    const currentHour = now.getHours();
+    
+    // Available time slots (in 24-hour format)
+    const availableTimes = [9, 10, 11, 14, 15, 16, 17, 19]; // 9 AM, 10 AM, 11 AM, 2 PM, 3 PM, 4 PM, 5 PM, 7 PM
+    
+    // Find next available time today
+    let nextTime = availableTimes.find(time => time > currentHour);
+    let targetDate = new Date(now);
+    let targetTime = nextTime || availableTimes[0];
+    
+    // If no time available today, move to next day
+    if (!nextTime) {
+      targetDate.setDate(targetDate.getDate() + 1);
+      targetTime = availableTimes[0];
+    }
+    
+    // Skip weekends (Saturday = 6, Sunday = 0)
+    while (targetDate.getDay() === 0 || targetDate.getDay() === 6) {
+      targetDate.setDate(targetDate.getDate() + 1);
+    }
+    
+    // Format date
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayName = dayNames[targetDate.getDay()];
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthName = monthNames[targetDate.getMonth()];
+    const day = targetDate.getDate();
+    
+    // Format time
+    const hour12 = targetTime > 12 ? targetTime - 12 : targetTime;
+    const ampm = targetTime >= 12 ? 'PM' : 'AM';
+    const formattedTime = `${hour12}:00${ampm}`;
+    
+    return {
+      date: `${dayName}, ${monthName} ${day}`,
+      shortDate: dayName,
+      time: formattedTime,
+      fullDateTime: targetDate
+    };
+  }, []);
+
+  const handleScheduleTour = () => {
+    setIsScheduleTourModalOpen(true);
+  };
+
+  const handleRequestInfo = () => {
+    setIsRequestInfoModalOpen(true);
   };
 
   const handleGetPreQualified = () => {
@@ -25,60 +75,47 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ isPreCon = false }) => {
   };
 
   return (
-    <div className="w-full bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+    <div className="w-full border border-gray-100">
       {/* Request a Tour / Book Appointment Section */}
-      <div className="space-y-3 mb-6 pb-6 border-b border-gray-200">
-        <div className="flex items-center gap-2 mb-2">
-          <User className="h-5 w-5 text-brand-celestial" />
-          <h3 className="text-lg font-semibold text-gray-900">
-            {isPreCon ? 'Book an appointment' : 'Tour with a local agent'}
-          </h3>
-        </div>
-        <p className="text-sm text-gray-600">
-          {isPreCon 
-            ? 'Schedule an appointment with one of our experienced agents to learn more about this pre-construction project.'
-            : 'Schedule a personalized tour with one of our experienced local agents and explore this property in person.'}
-        </p>
-        <Button 
-          onClick={handleRequestTour}
-          className="w-full bg-brand-celestial hover:bg-brand-midnight text-white font-semibold py-6 rounded-lg transition-colors"
-        >
-          {isPreCon ? 'Book Appointment' : 'Request a Tour'}
-        </Button>
-      </div>
-
-      {/* Get Pre-Qualified Section */}
-      <div className="space-y-3 mb-6 pb-6 border-b border-gray-200">
-        <div className="flex items-center gap-2 mb-2">
-          <CreditCard className="h-5 w-5 text-brand-celestial" />
-          <h3 className="text-lg font-semibold text-gray-900">Get Pre-Qualified</h3>
-        </div>
-        <p className="text-sm text-gray-600">
-          Find out how much you can afford and get pre-qualified for a mortgage in minutes.
-        </p>
-        <Button 
-          onClick={handleGetPreQualified}
-          variant="outline"
-          className="w-full border-brand-celestial text-brand-celestial hover:bg-brand-celestial hover:text-white font-semibold py-6 rounded-lg transition-colors"
-        >
-          Get Pre-Qualified
-        </Button>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="space-y-3">
-        <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
-        <div className="grid grid-cols-2 gap-3">
-          <button className="flex items-center justify-center gap-2 p-3 bg-brand-celestial text-white rounded-lg hover:bg-brand-midnight transition-colors">
-            <MapPin className="h-4 w-4" />
-            View on Map
-          </button>
-          <button className="flex items-center justify-center gap-2 p-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-            <Calendar className="h-4 w-4" />
+      <div className="space-y-3 mb-6 pb-6 border-b border-gray-200 bg-white p-6 rounded-xl shadow-sm ">
+        <h3 className="text-lg text-center font-semibold text-gray-900">
+          <span className="text-gray-700">
+            Request a tour as early as<br />{' '}
+            <span className=" text-gray-900">
+              {getNearestAvailableDateTime.shortDate} at {getNearestAvailableDateTime.time}
+            </span>
+          </span>
+        </h3>
+        {/* Two Buttons */}
+        <div className="flex flex-col gap-3">
+          <Button 
+            onClick={handleScheduleTour}
+            className="flex-1 bg-brand-celestial hover:bg-brand-midnight text-white font-semibold py-4 rounded-lg transition-colors"
+          >
+            <Calendar className="h-4 w-4 mr-2" />
             Schedule Tour
-          </button>
+          </Button>
+          <Button 
+            onClick={handleRequestInfo}
+            variant="outline"
+            className="flex-1 border-brand-celestial text-brand-celestial hover:bg-brand-celestial hover:text-white font-semibold py-4 rounded-lg transition-colors"
+          >
+            Request Info
+          </Button>
         </div>
       </div>
+
+      {/* Schedule Tour Modal */}
+      <ScheduleTourModal 
+        open={isScheduleTourModalOpen} 
+        onOpenChange={setIsScheduleTourModalOpen} 
+      />
+
+      {/* Request Info Modal */}
+      <RequestInfoModal 
+        open={isRequestInfoModalOpen} 
+        onOpenChange={setIsRequestInfoModalOpen} 
+      />
     </div>
   )
 }

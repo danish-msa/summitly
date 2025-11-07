@@ -10,6 +10,7 @@ import { MarketAnalytics } from './MarketAnalytics'
 import { generateMockListingData } from './mockListingData'
 import { PropertyListing } from '@/lib/types'
 import PropertyHistory from './PropertyHistory'
+import Description from './Description'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface CollapsibleTabsProps {
@@ -25,8 +26,8 @@ interface TabSection {
 
 const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property, isPreCon = false }) => {
   const defaultExpanded = isPreCon 
-    ? ['listing-details', 'description', 'features', 'lifestyle', 'location', 'demographics', 'market-analytics', 'tools']
-    : ['listing-details', 'description', 'features', 'lifestyle', 'location', 'demographics', 'market-analytics', 'tools', 'history'];
+    ? ['listing-details', 'description', 'features', 'lifestyle', 'location', 'demographics', 'market-analytics', 'calculators']
+    : ['listing-details', 'description', 'features', 'lifestyle', 'location', 'demographics', 'market-analytics', 'calculators', 'history'];
   
   const [expandedTabs, setExpandedTabs] = useState<Set<string>>(
     new Set(defaultExpanded)
@@ -68,16 +69,7 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property, isPreCon = 
       id: 'description',
       label: 'Description',
       content: (
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">
-            {isPreCon ? 'About this project' : 'About this property'}
-          </h3>
-          <p className="text-gray-500 font-light">
-            {isPreCon && property.preCon?.description 
-              ? property.preCon.description 
-              : property.lot.legalDescription}
-          </p>
-        </div>
+        <Description property={property} isPreCon={isPreCon} />
       )
     },
     {
@@ -130,8 +122,8 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property, isPreCon = 
       )
     },
     {
-      id: 'tools',
-      label: 'Tools',
+      id: 'calculators',
+      label: 'Calculators',
       content: (
         <Tabs defaultValue="mortgage" className="w-full">
           <TabsList className="grid w-full grid-cols-2 h-12 p-1">
@@ -170,11 +162,11 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property, isPreCon = 
                   onClick={() => toggleTab(section.id)}
                   className={`w-full px-6 py-4 text-left flex items-center justify-between transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20 ${
                     isExpanded 
-                      ? 'border-l-4 border-l-primary' 
+                      ? 'border-l-4 border-l-primary bg-gradient-to-r from-brand-celestial/10 to-brand-celestial/40 border-b-0' 
                       : 'hover:bg-gray-50'
                   }`}
                 >
-                  <span className={`text-lg font-semibold ${
+                  <span className={`text-xl font-semibold ${
                     isExpanded ? 'text-primary' : 'text-gray-900'
                   }`}>
                     {section.label}

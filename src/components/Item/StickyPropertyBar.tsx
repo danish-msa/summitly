@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Share2, Calendar, MapPin } from 'lucide-react';
+import { Heart, Share2, Calendar, MapPin, Bed, Bath, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PropertyListing } from '@/lib/types';
 import ShareModal from './Banner/ShareModal';
@@ -16,15 +16,38 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
   const [isVisible, setIsVisible] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [sectionNavHeight, setSectionNavHeight] = useState(64); // Default SectionNavigation height
+
+  // Calculate SectionNavigation height
+  useEffect(() => {
+    const calculateSectionNavHeight = () => {
+      const sectionNav = document.querySelector('[data-section-navigation]');
+      if (sectionNav) {
+        setSectionNavHeight(sectionNav.getBoundingClientRect().height);
+      }
+    };
+
+    calculateSectionNavHeight();
+    window.addEventListener('resize', calculateSectionNavHeight);
+    // Use MutationObserver to watch for changes in SectionNavigation
+    const observer = new MutationObserver(calculateSectionNavHeight);
+    const sectionNav = document.querySelector('[data-section-navigation]');
+    if (sectionNav) {
+      observer.observe(sectionNav, { childList: true, subtree: true, attributes: true });
+    }
+
+    return () => {
+      window.removeEventListener('resize', calculateSectionNavHeight);
+      observer.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
       if (bannerRef.current) {
         const bannerBottom = bannerRef.current.offsetTop + bannerRef.current.offsetHeight;
-        // Navbar height: h-14 (56px) mobile, h-16 (64px) desktop
-        const navbarHeight = window.innerWidth >= 1024 ? 64 : 56;
-        // Show property bar when banner bottom has passed the viewport top + navbar
-        const scrollPosition = window.scrollY + navbarHeight;
+        // SectionNavigation height (sticky at top)
+        const scrollPosition = window.scrollY + sectionNavHeight;
         
         if (scrollPosition >= bannerBottom) {
           setIsVisible(true);
@@ -46,11 +69,14 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
     };
-  }, [bannerRef]);
+  }, [bannerRef, sectionNavHeight]);
 
   const propertyTitle = `${property.details.propertyType} in ${property.address.city || 'Unknown Location'}`;
   const fullAddress = property.address.location || 
     `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim();
+  const shortAddress = property.address.city 
+    ? `${property.address.city}${property.address.state ? `, ${property.address.state}` : ''}`
+    : 'Unknown Location';
   
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-CA', {
@@ -58,6 +84,34 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
       currency: 'CAD',
       maximumFractionDigits: 0,
     }).format(price);
+  };
+
+  const formatSqft = (sqft: number | string | null | undefined) => {
+    if (!sqft) return 'N/A';
+    const num = typeof sqft === 'string' ? parseInt(sqft) : sqft;
+    if (isNaN(num)) return 'N/A';
+    return typeof sqft === 'number' ? sqft.toLocaleString() : sqft;
+  };
+
+  const getBedrooms = () => {
+    if (property.preCon?.details?.bedroomRange) {
+      return property.preCon.details.bedroomRange;
+    }
+    return `${property.details.numBedrooms} Bed${property.details.numBedrooms !== 1 ? 's' : ''}`;
+  };
+
+  const getBathrooms = () => {
+    if (property.preCon?.details?.bathroomRange) {
+      return property.preCon.details.bathroomRange;
+    }
+    return `${property.details.numBathrooms} Bath${property.details.numBathrooms !== 1 ? 's' : ''}`;
+  };
+
+  const getSquareFeet = () => {
+    if (property.preCon?.details?.sqftRange) {
+      return property.preCon.details.sqftRange;
+    }
+    return `${formatSqft(property.details.sqft)} sqft`;
   };
 
   const handleSave = () => {
@@ -79,46 +133,56 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -150, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="fixed top-14 lg:top-16 left-0 right-0 z-[9998] bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg"
+            style={{ top: `${sectionNavHeight}px` }}
+            className="fixed left-0 right-0 z-[9998] bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg"
           >
             <div className="container-1400 mx-auto px-4">
-              <div className="flex items-center justify-between h-16 lg:h-15 gap-3 lg:gap-4">
-                {/* Left Side: Property Info - Stacked */}
-                <div className="flex flex-col justify-center gap-1 flex-1 min-w-0">
-                  {/* Property Title - Always visible */}
-                  <div className="flex-shrink-0">
-                    <h2 className="text-sm lg:text-base font-bold text-foreground truncate">
-                      {propertyTitle}
-                    </h2>
-                  </div>
-
-                  {/* Address - Always visible */}
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0 min-w-0">
-                    <MapPin className="h-3 w-3 flex-shrink-0" />
-                    <span className="truncate">{fullAddress}</span>
+              <div className="flex items-center justify-between h-16 lg:h-15 gap-3 lg:gap-8">
+                {/* Price */}
+                <div className="flex-shrink-0">
+                  <div className="text-base lg:text-lg xl:text-3xl font-bold text-primary whitespace-nowrap">
+                    {formatPrice(property.listPrice)}
                   </div>
                 </div>
 
-                {/* Middle: Price */}
-                <div className="flex-shrink-0">
-                  <div className="text-base lg:text-lg xl:text-xl font-bold text-primary whitespace-nowrap">
-                    {formatPrice(property.listPrice)}
+                {/* Property Stats (Beds, Baths, Sqft) */}
+                <div className="hidden md:flex justify-start items-center gap-4 lg:gap-6 flex-shrink-0">
+                  {/* Beds */}
+                  <div className="flex items-center gap-1.5">
+                    <Bed className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-base text-foreground whitespace-nowrap">
+                      {getBedrooms()}
+                    </span>
+                  </div>
+
+                  {/* Baths */}
+                  <div className="flex items-center gap-1.5">
+                    <Bath className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-base text-foreground whitespace-nowrap">
+                      {getBathrooms()}
+                    </span>
+                  </div>
+
+                  {/* Square Feet */}
+                  <div className="flex items-center gap-1.5">
+                    <Maximize2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-base text-foreground whitespace-nowrap">
+                      {getSquareFeet()}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Address */}
+                <div className="flex flex-col justify-center gap-1 flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0 min-w-0">
+                    <MapPin className="h-5 w-5 flex-shrink-0" />
+                    <span className="truncate text-base">{shortAddress}</span>
                   </div>
                 </div>
 
                 {/* Right Side: Action Buttons */}
                 <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
-                  {/* Save Button */}
-                  <Button
-                    variant={isSaved ? "default" : "outline"}
-                    size="default"
-                    onClick={handleSave}
-                    className="gap-2"
-                  >
-                    <Heart className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
-                    <span className="hidden sm:inline">Save</span>
-                  </Button>
-
+                  
                   {/* Schedule Tour Button */}
                   <Button
                     variant="default"
@@ -131,16 +195,7 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
                     <span className="sm:hidden">Tour</span>
                   </Button>
 
-                  {/* Share Button */}
-                  <Button
-                    variant="outline"
-                    size="default"
-                    onClick={() => setIsShareModalOpen(true)}
-                    className="gap-2"
-                  >
-                    <Share2 className="h-4 w-4" />
-                    <span className="hidden sm:inline">Share</span>
-                  </Button>
+                  
                 </div>
               </div>
             </div>

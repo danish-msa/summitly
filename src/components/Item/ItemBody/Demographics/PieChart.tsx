@@ -11,7 +11,7 @@ export const PieChart = ({ data, title }: PieChartProps) => {
   const option = createPieChartOption(data, title);
 
   return (
-    <div className="h-[500px]">
+    <div className="h-[350px]">
       <ReactECharts
         option={option}
         style={{ height: "100%", width: "100%" }}

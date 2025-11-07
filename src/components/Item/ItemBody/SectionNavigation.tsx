@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
+import { Heart, Share2 } from 'lucide-react'
+import { PropertyListing } from '@/lib/types'
+import ShareModal from '../Banner/ShareModal'
 
 interface Section {
   id: string;
@@ -9,28 +12,23 @@ interface Section {
 interface SectionNavigationProps {
   sections: Section[];
   onSectionClick?: (sectionId: string) => void;
+  property?: PropertyListing;
 }
 
 const SectionNavigation: React.FC<SectionNavigationProps> = ({ 
   sections, 
-  onSectionClick
+  onSectionClick,
+  property
 }) => {
   const [activeSection, setActiveSection] = useState<string>(sections[0]?.id || '');
-  const [navbarHeight, setNavbarHeight] = useState<number>(56); // Default mobile height
+  const [isSaved, setIsSaved] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const isScrollingRef = useRef(false);
 
-  // Calculate navbar height based on window width
-  useEffect(() => {
-    const calculateNavbarHeight = () => {
-      // Navbar height: h-14 (56px) mobile, h-16 (64px) desktop
-      const height = window.innerWidth >= 1024 ? 64 : 56;
-      setNavbarHeight(height);
-    };
-
-    calculateNavbarHeight();
-    window.addEventListener('resize', calculateNavbarHeight);
-    return () => window.removeEventListener('resize', calculateNavbarHeight);
-  }, []);
+  const handleSave = () => {
+    setIsSaved(!isSaved);
+    // Add save functionality here
+  };
 
   // Navigation bar height (this component itself)
   const navigationBarHeight = 64; // Approximate height of the navigation bar
@@ -48,8 +46,8 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
       // Mark that we're programmatically scrolling to prevent scroll handler interference
       isScrollingRef.current = true;
       
-      // Total offset: navbar + navigation bar + some padding
-      const totalOffset = navbarHeight + navigationBarHeight + 20;
+      // Total offset: navigation bar + some padding
+      const totalOffset = navigationBarHeight + 20;
       const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
       const offsetPosition = elementPosition - totalOffset;
 
@@ -75,7 +73,7 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
       // Skip if we're programmatically scrolling
       if (isScrollingRef.current) return;
 
-      const totalOffset = navbarHeight + navigationBarHeight + 20;
+      const totalOffset = navigationBarHeight + 20;
       const viewportTop = window.scrollY + totalOffset;
       
       // Find the section that's currently at or above the viewport top
@@ -140,12 +138,12 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
       clearTimeout(timeoutId);
       window.removeEventListener('scroll', throttledHandleScroll);
     };
-  }, [sections, navbarHeight, navigationBarHeight]);
+  }, [sections, navigationBarHeight]);
 
   return (
     <div 
-      className="sticky z-50 bg-white border-b border-gray-200 shadow-sm mb-6"
-      style={{ top: `${navbarHeight}px` }}
+      data-section-navigation
+      className="sticky top-0 bg-white border-b border-gray-200 shadow-sm mb-6 z-50"
     >
       <div className="container-1400 mx-auto">
         <div className="flex items-center gap-2 overflow-x-auto py-4 scrollbar-hide">
@@ -163,8 +161,44 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
               {section.label}
             </Button>
           ))}
+          
+          {/* Save and Share Buttons */}
+          {property && (
+            <>
+              <div className="ml-auto flex items-center gap-2 flex-shrink-0">
+                <Button
+                  variant={isSaved ? "default" : "outline"}
+                  size="default"
+                  onClick={handleSave}
+                  className="gap-2"
+                >
+                  <Heart className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+                  <span className="hidden sm:inline">Save</span>
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={() => setIsShareModalOpen(true)}
+                  className="gap-2"
+                >
+                  <Share2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Share</span>
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </div>
+      
+      {/* Share Modal */}
+      {property && (
+        <ShareModal 
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          property={property}
+        />
+      )}
     </div>
   );
 };

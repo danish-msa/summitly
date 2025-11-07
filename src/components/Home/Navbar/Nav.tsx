@@ -2,6 +2,7 @@
 import { navLinks } from '@/lib/constants/navigation';
 import Link from 'next/link';
 import React, { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { FaUserCircle } from 'react-icons/fa';
 import { HiBars3BottomRight } from 'react-icons/hi2';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,6 +18,9 @@ type Props = {
 };
 
 const Nav = ({ openNav }: Props) => {
+  const pathname = usePathname();
+  const isPropertyPage = pathname?.includes('/property/') || pathname?.includes('/pre-construction/');
+  
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
   const [showSidePanel, setShowSidePanel] = useState(false);
@@ -40,8 +44,10 @@ const Nav = ({ openNav }: Props) => {
     setSearchValue('');
   };
 
-  // Scroll detection for navbar background only
+  // Scroll detection for navbar background only (disabled on property pages)
   useEffect(() => {
+    if (isPropertyPage) return; // Disable sticky behavior on property pages
+    
     const controlNavbar = () => {
       const currentScrollY = window.scrollY;
       setIsAtTop(currentScrollY < 50);
@@ -51,10 +57,15 @@ const Nav = ({ openNav }: Props) => {
     controlNavbar(); // Check initial position
     
     return () => window.removeEventListener('scroll', controlNavbar);
-  }, []);
+  }, [isPropertyPage]);
 
-  // Update body padding based on navbar state
+  // Update body padding based on navbar state (disabled on property pages)
   useEffect(() => {
+    if (isPropertyPage) {
+      document.body.style.paddingTop = '0';
+      return;
+    }
+    
     if (isAtTop) {
       document.body.style.paddingTop = '0';
     } else {
@@ -64,7 +75,7 @@ const Nav = ({ openNav }: Props) => {
     return () => {
       document.body.style.paddingTop = '0';
     };
-  }, [isAtTop]);
+  }, [isAtTop, isPropertyPage]);
 
   // Handle ESC key to close side panel and prevent body scroll
   useEffect(() => {
@@ -112,8 +123,11 @@ const Nav = ({ openNav }: Props) => {
           ease: "easeInOut"
         }}
         className={cn(
-          "fixed w-full top-0 left-0 right-0 z-[9999] transition-all duration-300",
-          isAtTop 
+          "w-full top-0 left-0 right-0 z-[9999] transition-all duration-300",
+          isPropertyPage 
+            ? "relative" // Use relative positioning on property pages
+            : "fixed", // Use fixed positioning on other pages
+          isAtTop && !isPropertyPage
             ? "bg-transparent backdrop-blur-none shadow-none border-transparent" 
             : "bg-background/95 backdrop-blur-sm border-b border-border/40"
         )}

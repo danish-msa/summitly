@@ -82,22 +82,7 @@ const PropertyStats: React.FC<PropertyStatsProps> = ({ property, rawProperty, is
       value: isPreCon && preConData?.details?.sqftRange 
         ? preConData.details.sqftRange 
         : formatSqft(property.details.sqft),
-    },
-    {
-      icon: Car,
-      label: 'Total Parking Spaces',
-      value: getParkingSpaces(),
-    },
-    {
-      icon: Compass,
-      label: 'View',
-      value: getView(),
-    },
-    {
-      icon: Receipt,
-      label: 'Maintenance Fees',
-      value: getMaintenanceFees(),
-    },
+    }
   ];
 
   return (

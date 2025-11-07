@@ -2,6 +2,8 @@ import { PropertyHistoryProps, GroupedHistoryRecord } from './types';
 import { formatDate, getTimeAgo, getDaysOnMarket, getPropertyAddress } from './utils';
 import ListingTimeline from './ListingTimeline';
 import EstimateHistorySection from './EstimateHistorySection';
+import { Button } from '@/components/ui/button';
+import { History, MessageCircle } from 'lucide-react';
 
 export default function PropertyHistory({ listingHistory, property }: PropertyHistoryProps) {
   // Get property address
@@ -27,10 +29,25 @@ export default function PropertyHistory({ listingHistory, property }: PropertyHi
   });
 
   return (
-    <>
+    <div className="w-full">
       <ListingTimeline groupedHistory={groupedHistory} propertyAddress={propertyAddress} />
       <EstimateHistorySection propertyAddress={propertyAddress} />
-    </>
+      
+      {/* Call to Action */}
+      <div className="flex justify-center pt-6 pb-4">
+        <Button 
+          variant="default" 
+          className="bg-gradient-to-r from-brand-celestial to-brand-cb-blue hover:bg-brand-midnight text-white px-8 py-6 text-base rounded-lg gap-2"
+          onClick={() => {
+            // Add handler for CTA click
+            console.log('Need more history details about this property');
+          }}
+        >
+          <History className="h-5 w-5" />
+          Need more history details about this property
+        </Button>
+      </div>
+    </div>
   );
 }
 

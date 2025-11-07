@@ -25,11 +25,18 @@ export const createPieChartOption = (data: ChartDataItem[], title: string) => {
         return item ? `${name} (${item.value}${title.includes('Type') ? '%' : ''})` : name;
       },
     },
+    grid: {
+      top: 10,
+      bottom: 10,
+      left: 10,
+      right: 10,
+    },
     series: [
       {
         name: title,
         type: "pie" as const,
         radius: ["40%", "70%"],
+        center: ['60%', '40%'],
         avoidLabelOverlap: true,
         itemStyle: {
           borderRadius: 8,
@@ -50,7 +57,7 @@ export const createPieChartOption = (data: ChartDataItem[], title: string) => {
         emphasis: {
           label: {
             show: true,
-            fontSize: 16,
+            fontSize: 20,
             fontWeight: "bold" as const,
           },
           itemStyle: {

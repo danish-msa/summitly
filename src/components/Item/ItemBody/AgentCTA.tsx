@@ -1,71 +1,54 @@
 import React from 'react'
-import { Phone, Mail, MessageCircle, User, Star } from 'lucide-react'
+import { Phone, Mail, MessageCircle, User } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 
 const AgentCTA: React.FC = () => {
   return (
-    <Card className="w-full shadow-lg border-0 bg-gradient-to-b from-brand-celestial to-brand-cb-blue sticky top-[120px] lg:top-[150px]">
+    <Card 
+      data-agent-cta
+      className="w-full shadow-lg border-0 bg-gradient-to-b from-brand-celestial to-brand-cb-blue"
+    >
       <CardContent className="p-6">
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/40 rounded-full mb-4">
-            <User className="h-8 w-8 text-primary" />
-          </div>
-          <h3 className="text-xl font-bold mb-2 text-white">
-            Connect with an Agent
-          </h3>
-          <p className="text-sm text-white">
-            Get personalized assistance from our expert real estate professionals
-          </p>
-        </div>
-
-        {/* Agent Info */}
-        <div className="bg-brand-tide backdrop-blur-lg rounded-lg p-4 mb-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold text-lg">JD</span>
-            </div>
-            <div className="flex-1">
-              <h4 className="font-semibold text-gray-900">John Doe</h4>
-              <p className="text-sm text-gray-600">Senior Real Estate Agent</p>
-              <div className="flex items-center gap-1 mt-1">
-                <div className="flex">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
-                <span className="text-xs text-gray-500 ml-1">4.9 (127 reviews)</span>
+        {/* Header with Contact Icons */}
+        <div className="flex items-center justify-between gap-4 mb-6">
+          {/* Header Text */}
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="inline-flex items-center justify-center w-8 h-8 bg-white/40 rounded-full flex-shrink-0">
+                <User className="h-4 w-4 text-primary" />
               </div>
+              <h3 className="text-xl font-bold text-white">
+                Connect with an Agent
+              </h3>
             </div>
+            <p className="text-sm text-white">
+              Get personalized assistance from our expert real estate professionals
+            </p>
           </div>
-          <Badge variant="secondary" className="text-xs">
-            Available Now
-          </Badge>
-        </div>
 
-        {/* Contact Options */}
-        <div className="flex justify-center gap-4 mb-6">
-          <button 
-            className="flex items-center justify-center w-12 h-12 bg-brand-celestial hover:bg-white/50 hover:text-primary text-white rounded-full transition-all duration-200 hover:scale-105 shadow-lg"
-            title="Call Now"
-          >
-            <Phone className="h-5 w-5" />
-          </button>
-          
-          <button 
-            className="flex items-center justify-center w-12 h-12 bg-brand-celestial backdrop-blur-lg text-white hover:bg-white/50 hover:text-primary rounded-full transition-all duration-200 hover:scale-105 shadow-lg"
-            title="Start Chat"
-          >
-            <MessageCircle className="h-5 w-5" />
-          </button>
-          
-          <button 
-            className="flex items-center justify-center w-12 h-12 bg-brand-celestial backdrop-blur-lg text-white hover:bg-white/50 hover:text-primary rounded-full transition-all duration-200 hover:scale-105 shadow-lg"
-            title="Send Email"
-          >
-            <Mail className="h-5 w-5" />
-          </button>
+          {/* Contact Options */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <button 
+              className="flex items-center justify-center w-12 h-12 bg-brand-celestial hover:bg-white/50 hover:text-primary text-white rounded-full transition-all duration-200 hover:scale-105 shadow-lg"
+              title="Call Now"
+            >
+              <Phone className="h-5 w-5" />
+            </button>
+            
+            <button 
+              className="flex items-center justify-center w-12 h-12 bg-brand-celestial backdrop-blur-lg text-white hover:bg-white/50 hover:text-primary rounded-full transition-all duration-200 hover:scale-105 shadow-lg"
+              title="Start Chat"
+            >
+              <MessageCircle className="h-5 w-5" />
+            </button>
+            
+            <button 
+              className="flex items-center justify-center w-12 h-12 bg-brand-celestial backdrop-blur-lg text-white hover:bg-white/50 hover:text-primary rounded-full transition-all duration-200 hover:scale-105 shadow-lg"
+              title="Send Email"
+            >
+              <Mail className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {/* Quick Actions */}

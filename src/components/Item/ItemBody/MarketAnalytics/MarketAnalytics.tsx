@@ -11,6 +11,8 @@ import { MarketChartSection } from './MarketChartSection';
 import { ListingsChartSection } from './ListingsChartSection';
 import { SoldPriceChartSection } from './SoldPriceChartSection';
 import { TableView } from './TableView';
+import { Button } from "@/components/ui/button";
+import { UserCheck } from "lucide-react";
 
 export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({ 
   propertyAddress, 
@@ -203,6 +205,21 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
           soldPriceData={soldPriceDataFormatted}
         />
       )}
+
+      {/* Call to Action */}
+      <div className="flex justify-center pt-6 pb-4">
+        <Button 
+          variant="default" 
+          className="bg-gradient-to-r from-brand-celestial to-brand-cb-blue hover:bg-brand-midnight text-white px-8 py-6 text-base rounded-lg gap-2"
+          onClick={() => {
+            // Add handler for CTA click
+            console.log('Connect me with a market expert');
+          }}
+        >
+          <UserCheck className="h-5 w-5" />
+          Connect me with a market expert
+        </Button>
+      </div>
     </div>
   );
 };

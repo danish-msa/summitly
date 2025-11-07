@@ -43,9 +43,9 @@ export const DemographicsTabs = ({ activeTab, onTabChange }: DemographicsTabsPro
       </TabsList>
 
       {tabConfigs.map((tab) => (
-        <TabsContent key={tab.value} value={tab.value} className="mt-6">
-          <div className="py-6">
-            <h3 className="text-xl font-semibold mb-4">{tab.title}</h3>
+        <TabsContent key={tab.value} value={tab.value} className="mt-4">
+          <div className="pt-2 pb-4">
+            <h3 className="text-xl font-semibold mb-2">{tab.title}</h3>
             <PieChart data={tab.data} title={tab.label} />
           </div>
         </TabsContent>

@@ -9,10 +9,12 @@ import { fetchPropertyListings, getRawListingDetails } from '@/lib/api/propertie
 import { PropertyListing } from '@/lib/types'
 import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/single-listing'
 import AgentCTA from './ItemBody/AgentCTA'
+import PropertyAlerts from './ItemBody/PropertyAlerts'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import BannerGallery from './Banner/BannerGallery'
 import SectionNavigation from './ItemBody/SectionNavigation'
 import SimilarListings from './ItemBody/SimilarListings'
+import StickyPropertyBar from './StickyPropertyBar'
 
 // Mock pre-construction data
 const getMockPreConData = () => ({
@@ -141,7 +143,12 @@ const Item: React.FC = () => {
           const foundProperty = listings.find(p => p.mlsNumber === propertyId);
           
           if (foundProperty) {
-            setProperty(foundProperty);
+            // Merge openHouse data from rawProperty into property
+            const propertyWithOpenHouse = {
+              ...foundProperty,
+              openHouse: rawListing?.openHouse || foundProperty.openHouse
+            };
+            setProperty(propertyWithOpenHouse);
             setRawProperty(rawListing);
           } else {
             setError('Property not found');
@@ -180,31 +187,38 @@ const Item: React.FC = () => {
     { id: 'lifestyle', label: 'Lifestyle' },
     { id: 'demographics', label: 'Demographics' },
     { id: 'market-analytics', label: 'Market Analytics' },
-    { id: 'tools', label: 'Tools' }
+    { id: 'calculators', label: 'Calculators' }
   ];
 
   return (
     <div className='bg-background'>
       {/* Sticky Property Bar */}
-      {/* <StickyPropertyBar property={property} bannerRef={bannerRef} /> */}
+      <StickyPropertyBar property={property} bannerRef={bannerRef} />
       <div className='container-1400 mt-20 mb-4'>
         <BannerGallery property={property} />
       </div>
       {/* Sticky Navigation Panel */}
-      <SectionNavigation sections={navigationSections} />
+      <SectionNavigation sections={navigationSections} property={property} />
       <div className='container-1400'>
-          <div ref={bannerRef}>
-            <Banner property={property} rawProperty={rawProperty} isPreCon={isPreCon} />
-          </div>
+          
         
         
-        <div className='flex flex-row gap-4'>
-          <div className='w-[70%] flex flex-col gap-6'>
+        <div className='flex flex-row gap-8'>
+          <div className='w-[75%] flex flex-col gap-6'>
+            <div ref={bannerRef}>
+              <Banner property={property} rawProperty={rawProperty} isPreCon={isPreCon} />
+            </div>
             <ItemBody property={property} isPreCon={isPreCon} />
           </div>
-          <div className='w-[30%] flex flex-col items-start gap-6'>
+          <div className='w-[25%] flex flex-col items-start gap-6'>
             <BasicInfo property={property} rawProperty={rawProperty} isPreCon={isPreCon} />
-            <AgentCTA />
+            {/* <AgentCTA /> */}
+            <PropertyAlerts 
+              propertyId={property.mlsNumber} 
+              cityName={property.address.city || 'this area'}
+              propertyType={property.details.propertyType || 'property'}
+              neighborhood={property.address.neighborhood || undefined}
+            />
           </div>
         </div>
         <div className='mt-6'>

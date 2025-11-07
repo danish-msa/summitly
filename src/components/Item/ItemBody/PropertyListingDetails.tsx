@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { 
   Home,  
   MapPin, 
@@ -21,7 +22,8 @@ import {
   Sun,
   Droplet,
   Gauge,
-  DoorOpen
+  DoorOpen,
+  MessageCircle
 } from "lucide-react";
 
 interface ListingDetailsProps {
@@ -436,6 +438,21 @@ export default function PropertyListingDetails({ data }: ListingDetailsProps) {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Call to Action */}
+      <div className="flex justify-center pt-6">
+        <Button 
+          variant="default" 
+          className="bg-gradient-to-r from-brand-celestial to-brand-cb-blue hover:bg-brand-midnight text-white px-8 py-6 text-base rounded-lg gap-2"
+          onClick={() => {
+            // Add handler for CTA click
+            console.log('I want more info about this home');
+          }}
+        >
+          <MessageCircle className="h-5 w-5" />
+          I want more info about this home
+        </Button>
+      </div>
     </div>
   );
 }

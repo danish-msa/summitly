@@ -171,7 +171,7 @@ const AffordabilityCalculator = ({ propertyPrice = 1999000 }: AffordabilityCalcu
         </div>
 
         {/* Input Fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Label htmlFor="annualIncome">Annual Income</Label>
@@ -195,7 +195,7 @@ const AffordabilityCalculator = ({ propertyPrice = 1999000 }: AffordabilityCalcu
                 type="number"
                 value={data.annualIncome}
                 onChange={(e) => updateField('annualIncome', e.target.value)}
-                className="pl-7"
+                className="pl-7 rounded-lg"
               />
             </div>
           </div>
@@ -222,7 +222,7 @@ const AffordabilityCalculator = ({ propertyPrice = 1999000 }: AffordabilityCalcu
                 step="0.01"
                 value={data.interestRate}
                 onChange={(e) => updateField('interestRate', e.target.value)}
-                className="pr-7"
+                className="pr-7 rounded-lg"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
             </div>
@@ -250,7 +250,7 @@ const AffordabilityCalculator = ({ propertyPrice = 1999000 }: AffordabilityCalcu
                 type="number"
                 value={data.monthlyDebts}
                 onChange={(e) => updateField('monthlyDebts', e.target.value)}
-                className="pl-7"
+                className="pl-7 rounded-lg"
               />
             </div>
           </div>
@@ -260,7 +260,7 @@ const AffordabilityCalculator = ({ propertyPrice = 1999000 }: AffordabilityCalcu
               value={data.mortgageTerm.toString()}
               onValueChange={(value) => updateField('mortgageTerm', value)}
             >
-              <SelectTrigger id="mortgageTerm">
+              <SelectTrigger id="mortgageTerm" className="rounded-lg">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -294,7 +294,7 @@ const AffordabilityCalculator = ({ propertyPrice = 1999000 }: AffordabilityCalcu
                 type="number"
                 value={data.downPayment}
                 onChange={(e) => updateField('downPayment', e.target.value)}
-                className="pl-7"
+                className="pl-7 rounded-lg"
               />
             </div>
           </div>
@@ -321,7 +321,7 @@ const AffordabilityCalculator = ({ propertyPrice = 1999000 }: AffordabilityCalcu
                 type="number"
                 value={data.propertyPrice}
                 onChange={(e) => updateField('propertyPrice', e.target.value)}
-                className="pl-7"
+                className="pl-7 rounded-lg"
               />
             </div>
           </div>

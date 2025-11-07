@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Layers, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
+import React, { useState, useMemo } from 'react';
+import { Layers, ChevronLeft, ChevronRight, MapPin, Calendar } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -107,6 +108,103 @@ const BannerGallery: React.FC<BannerGalleryProps> = ({ property }) => {
         );
     };
 
+    // Check if there's an upcoming open house
+    const hasUpcomingOpenHouse = useMemo(() => {
+        // Debug: Log openHouse data
+        console.log('Open House Data:', property.openHouse);
+        
+        if (!property.openHouse || property.openHouse.length === 0) {
+            console.log('No openHouse data found');
+            return false;
+        }
+
+        const now = new Date();
+        // Reset time to start of day for comparison
+        now.setHours(0, 0, 0, 0);
+        
+        const hasUpcoming = property.openHouse.some(oh => {
+            if (!oh.date) {
+                console.log('Open house entry missing date:', oh);
+                return false;
+            }
+            
+            try {
+                // Parse the date and check if it's in the future
+                const openHouseDate = new Date(oh.date);
+                
+                // Check if date is valid
+                if (isNaN(openHouseDate.getTime())) {
+                    console.log('Invalid date:', oh.date);
+                    return false;
+                }
+                
+                // Reset time to start of day for comparison
+                openHouseDate.setHours(0, 0, 0, 0);
+                
+                // If time is provided, combine date and time
+                if (oh.startTime) {
+                    const timeParts = oh.startTime.split(':');
+                    if (timeParts.length >= 2) {
+                        const hours = parseInt(timeParts[0], 10);
+                        const minutes = parseInt(timeParts[1], 10);
+                        if (!isNaN(hours) && !isNaN(minutes)) {
+                            openHouseDate.setHours(hours, minutes, 0, 0);
+                        }
+                    }
+                }
+                
+                const isUpcoming = openHouseDate >= now;
+                const isNotCancelled = oh.status !== 'cancelled' && oh.status !== 'Cancelled';
+                const shouldShow = isUpcoming && isNotCancelled;
+                
+                console.log('Open house check:', {
+                    date: oh.date,
+                    startTime: oh.startTime,
+                    parsedDate: openHouseDate,
+                    now,
+                    isUpcoming,
+                    status: oh.status,
+                    isNotCancelled,
+                    shouldShow
+                });
+                
+                return shouldShow;
+            } catch (error) {
+                console.error('Error parsing open house date:', error, oh);
+                return false;
+            }
+        });
+        
+        console.log('Has upcoming open house:', hasUpcoming);
+        return hasUpcoming;
+    }, [property.openHouse]);
+
+    // Get the next open house date
+    const nextOpenHouse = useMemo(() => {
+        if (!property.openHouse || property.openHouse.length === 0) {
+            return null;
+        }
+
+        const now = new Date();
+        const upcoming = property.openHouse
+            .filter(oh => {
+                if (!oh.date) return false;
+                const openHouseDate = new Date(oh.date);
+                if (oh.startTime) {
+                    const [hours, minutes] = oh.startTime.split(':').map(Number);
+                    openHouseDate.setHours(hours || 0, minutes || 0, 0, 0);
+                }
+                return openHouseDate >= now && oh.status !== 'cancelled';
+            })
+            .sort((a, b) => {
+                const dateA = new Date(a.date || '');
+                const dateB = new Date(b.date || '');
+                return dateA.getTime() - dateB.getTime();
+            })[0];
+
+        return upcoming || null;
+    }, [property.openHouse]);
+
     return (
         <>
             {/* 50-50 Split Layout: Slider Left + 2x2 Grid Right */}
@@ -119,6 +217,29 @@ const BannerGallery: React.FC<BannerGalleryProps> = ({ property }) => {
                         className="h-full w-full object-cover transition-all duration-300"
                         onError={() => handleImageError(currentSlideIndex)}
                     />
+                    
+                    {/* Open House Badge */}
+                    {(hasUpcomingOpenHouse || (property.openHouse && property.openHouse.length > 0)) && (
+                        <Badge className="absolute top-4 left-4 bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 shadow-lg z-50 flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            <span>Open House</span>
+                            {nextOpenHouse?.date ? (
+                                <span className="ml-1 text-xs opacity-90">
+                                    {new Date(nextOpenHouse.date).toLocaleDateString('en-US', { 
+                                        month: 'short', 
+                                        day: 'numeric' 
+                                    })}
+                                </span>
+                            ) : property.openHouse && property.openHouse.length > 0 && property.openHouse[0]?.date ? (
+                                <span className="ml-1 text-xs opacity-90">
+                                    {new Date(property.openHouse[0].date).toLocaleDateString('en-US', { 
+                                        month: 'short', 
+                                        day: 'numeric' 
+                                    })}
+                                </span>
+                            ) : null}
+                        </Badge>
+                    )}
                     
                     {/* Previous Button */}
                     <button

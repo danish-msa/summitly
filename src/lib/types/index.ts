@@ -600,6 +600,13 @@ export interface PropertyListing {
         imageUrl: string;
         allImages: string[];
     };
+    openHouse?: Array<{
+        date?: string;
+        startTime?: string;
+        endTime?: string;
+        type?: string;
+        status?: string;
+    }>;
     preCon?: {
         projectName: string;
         developer: string;
