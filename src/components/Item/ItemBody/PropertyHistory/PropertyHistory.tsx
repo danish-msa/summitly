@@ -3,7 +3,7 @@ import { formatDate, getTimeAgo, getDaysOnMarket, getPropertyAddress } from './u
 import ListingTimeline from './ListingTimeline';
 import EstimateHistorySection from './EstimateHistorySection';
 import { Button } from '@/components/ui/button';
-import { History, MessageCircle } from 'lucide-react';
+import { History } from 'lucide-react';
 
 export default function PropertyHistory({ listingHistory, property }: PropertyHistoryProps) {
   // Get property address

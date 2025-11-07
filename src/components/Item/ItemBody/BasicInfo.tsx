@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { PropertyListing } from '@/lib/types'
-import { MapPin, Calendar, User, CreditCard, Clock } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import ScheduleTourModal from './ScheduleTourModal'
 import RequestInfoModal from './RequestInfoModal'
@@ -12,7 +12,7 @@ interface BasicInfoProps {
   isPreCon?: boolean;
 }
 
-const BasicInfo: React.FC<BasicInfoProps> = ({ isPreCon = false }) => {
+const BasicInfo: React.FC<BasicInfoProps> = () => {
   const [isScheduleTourModalOpen, setIsScheduleTourModalOpen] = useState(false);
   const [isRequestInfoModalOpen, setIsRequestInfoModalOpen] = useState(false);
 
@@ -25,8 +25,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ isPreCon = false }) => {
     const availableTimes = [9, 10, 11, 14, 15, 16, 17, 19]; // 9 AM, 10 AM, 11 AM, 2 PM, 3 PM, 4 PM, 5 PM, 7 PM
     
     // Find next available time today
-    let nextTime = availableTimes.find(time => time > currentHour);
-    let targetDate = new Date(now);
+    const nextTime = availableTimes.find(time => time > currentHour);
+    const targetDate = new Date(now);
     let targetTime = nextTime || availableTimes[0];
     
     // If no time available today, move to next day
@@ -66,12 +66,6 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ isPreCon = false }) => {
 
   const handleRequestInfo = () => {
     setIsRequestInfoModalOpen(true);
-  };
-
-  const handleGetPreQualified = () => {
-    // Handle pre-qualification logic
-    console.log('Get pre-qualified clicked');
-    // You can add navigation to mortgage calculator or pre-qualification page
   };
 
   return (

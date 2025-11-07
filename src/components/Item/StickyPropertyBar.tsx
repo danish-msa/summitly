@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Share2, Calendar, MapPin, Bed, Bath, Maximize2 } from 'lucide-react';
+import { Calendar, Bed, Bath, Maximize2, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PropertyListing } from '@/lib/types';
 import ShareModal from './Banner/ShareModal';
@@ -14,7 +14,6 @@ interface StickyPropertyBarProps {
 
 const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerRef }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [sectionNavHeight, setSectionNavHeight] = useState(64); // Default SectionNavigation height
 
@@ -71,9 +70,6 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
     };
   }, [bannerRef, sectionNavHeight]);
 
-  const propertyTitle = `${property.details.propertyType} in ${property.address.city || 'Unknown Location'}`;
-  const fullAddress = property.address.location || 
-    `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim();
   const shortAddress = property.address.city 
     ? `${property.address.city}${property.address.state ? `, ${property.address.state}` : ''}`
     : 'Unknown Location';
@@ -112,11 +108,6 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
       return property.preCon.details.sqftRange;
     }
     return `${formatSqft(property.details.sqft)} sqft`;
-  };
-
-  const handleSave = () => {
-    setIsSaved(!isSaved);
-    // Add save functionality here
   };
 
   const handleScheduleTour = () => {

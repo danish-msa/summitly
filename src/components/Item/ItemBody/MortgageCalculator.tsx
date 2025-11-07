@@ -134,7 +134,7 @@ export const MortgageCalculator = () => {
         fontSize: 13,
         fontWeight: 500,
       },
-      formatter: (params: any) => {
+      formatter: (params: { value: number; name: string }) => {
         const percentage = ((params.value / results.totalMonthlyPayment) * 100).toFixed(1);
         return `
           <div style="font-weight: 600; font-size: 14px; color: #1e293b; margin-bottom: 6px;">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bed, Bath, Maximize2, Car, Compass, Receipt } from 'lucide-react';
+import { Bed, Bath, Maximize2 } from 'lucide-react';
 import { PropertyListing } from '@/lib/types';
 import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/single-listing';
 
@@ -22,24 +22,6 @@ const PropertyStats: React.FC<PropertyStatsProps> = ({ property, rawProperty, is
     if (num >= 800 && num < 900) return '800-899 sqft';
     if (num >= 900 && num < 1000) return '900-999 sqft';
     return `${num} sqft`;
-  };
-
-  // Get parking spaces from raw property or use default
-  const getParkingSpaces = () => {
-    if (rawProperty?.details?.numGarageSpaces) {
-      const garage = rawProperty.details.numGarageSpaces;
-      const total = rawProperty.details.numParkingSpaces || garage;
-      return `${total} (${garage} Garage)`;
-    }
-    if (rawProperty?.details?.numParkingSpaces) {
-      return `${rawProperty.details.numParkingSpaces} (${rawProperty.details.numParkingSpaces} Garage)`;
-    }
-    return '1 (1 Garage)'; // Default
-  };
-
-  // Get view from raw property
-  const getView = () => {
-    return rawProperty?.details?.viewType || 'North-East';
   };
 
   // Get maintenance fees from raw property (condo fees)

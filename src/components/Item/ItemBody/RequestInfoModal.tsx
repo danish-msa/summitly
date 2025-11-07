@@ -16,8 +16,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import AgentCTA from './AgentCTA';
-import { Separator } from '@/components/ui/separator';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Enter your name.'),

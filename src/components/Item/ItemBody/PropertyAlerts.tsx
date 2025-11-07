@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Bell } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface AlertOptions {
@@ -19,7 +18,6 @@ interface PropertyAlertsProps {
 }
 
 const PropertyAlerts: React.FC<PropertyAlertsProps> = ({ 
-  propertyId,
   cityName = 'this area',
   propertyType = 'property',
   neighborhood
