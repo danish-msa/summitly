@@ -194,7 +194,7 @@ const Item: React.FC = () => {
     <div className='bg-background'>
       {/* Sticky Property Bar */}
       <StickyPropertyBar property={property} bannerRef={bannerRef} />
-      <div className='container-1400 mt-20 mb-4'>
+      <div className='container-1400 mt-20 mb-4'  >
         <BannerGallery property={property} />
       </div>
       {/* Sticky Navigation Panel */}

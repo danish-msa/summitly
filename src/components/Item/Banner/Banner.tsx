@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { MapPin, Heart, Share2, Calendar, CreditCard, Bed, Bath, Maximize2, Megaphone, Home, Building2, Info } from "lucide-react";
+import { MapPin, Calendar, CreditCard, Bed, Bath, Maximize2, Megaphone, Building2, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PropertyListing } from '@/lib/types';
 import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/single-listing';
 import ShareModal from './ShareModal';
-import PropertyStats from '../ItemBody/PropertyStats';
 import ScheduleTourModal from '../ItemBody/ScheduleTourModal';
 
 interface BannerProps {
@@ -15,15 +14,12 @@ interface BannerProps {
     isPreCon?: boolean;
 }
 
-const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false }) => {
+const Banner: React.FC<BannerProps> = ({ property, isPreCon = false }) => {
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [isScheduleTourModalOpen, setIsScheduleTourModalOpen] = useState(false);
     
     // For pre-con, use project name if available, otherwise use property type
     const preConData = property.preCon;
-    const propertyTitle = isPreCon && preConData?.projectName 
-        ? preConData.projectName 
-        : `${property.details.propertyType} in ${property.address.city || 'Unknown Location'}`;
     
     // Format the full address
     const fullAddress = property.address.location || 
@@ -43,16 +39,6 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false
             maximumFractionDigits: 0,
         }).format(price);
     };
-
-    // Format the date
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-    };
-
 
     const handleGetPreQualified = () => {
         // Handle pre-qualification logic
