@@ -9,7 +9,7 @@ interface PropertyStatsProps {
   isPreCon?: boolean;
 }
 
-const PropertyStats: React.FC<PropertyStatsProps> = ({ property, rawProperty, isPreCon = false }) => {
+const PropertyStats: React.FC<PropertyStatsProps> = ({ property, isPreCon = false }) => {
   // Get pre-con specific data if available
   const preConData = property.preCon;
   // Format square footage
