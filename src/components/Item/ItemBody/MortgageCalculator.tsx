@@ -133,14 +133,15 @@ export const MortgageCalculator = () => {
         fontSize: 13,
         fontWeight: 500,
       },
-      formatter: (params: { value: number; name: string }) => {
+      formatter: (params: { value: number; name: string; color?: string; itemStyle?: { color?: string } }) => {
         const percentage = ((params.value / results.totalMonthlyPayment) * 100).toFixed(1);
+        const color = params.color || params.itemStyle?.color || '#6366f1';
         return `
           <div style="font-weight: 600; font-size: 14px; color: #1e293b; margin-bottom: 6px;">
             ${params.name}
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ${params.color};"></span>
+            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ${color};"></span>
             <span style="font-weight: 600; font-size: 16px; color: #1e293b;">${formatCurrency(params.value)}</span>
             <span style="color: #64748b; font-size: 12px;">(${percentage}%)</span>
           </div>
