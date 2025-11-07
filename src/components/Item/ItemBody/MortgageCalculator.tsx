@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -33,11 +33,7 @@ export const MortgageCalculator = () => {
     monthlyPMI: 0,
   });
 
-  useEffect(() => {
-    calculateMortgage();
-  }, [homePrice, downPayment, interestRate, loanLength, monthlyPropertyTax, monthlyHomeInsurance, monthlyHOA]);
-
-  const calculateMortgage = () => {
+  const calculateMortgage = useCallback(() => {
     const downPaymentAmount = downPayment;
     const mortgageAmount = homePrice - downPaymentAmount;
     const monthlyRate = interestRate / 100 / 12;
@@ -64,7 +60,6 @@ export const MortgageCalculator = () => {
 
     const totalPayment = monthlyPrincipalAndInterest * numberOfPayments;
     const totalInterest = totalPayment - mortgageAmount;
-    const totalPMI = monthlyPMI * numberOfPayments;
     const totalCost = totalPayment + downPaymentAmount + (monthlyPropertyTax + monthlyHomeInsurance + monthlyHOA + monthlyPMI) * numberOfPayments;
 
     setResults({
@@ -77,7 +72,11 @@ export const MortgageCalculator = () => {
       totalMonthlyPayment: totalMonthlyPayment,
       monthlyPMI: monthlyPMI,
     });
-  };
+  }, [homePrice, downPayment, interestRate, loanLength, monthlyPropertyTax, monthlyHomeInsurance, monthlyHOA]);
+
+  useEffect(() => {
+    calculateMortgage();
+  }, [calculateMortgage]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-CA", {

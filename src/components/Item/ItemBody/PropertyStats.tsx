@@ -24,25 +24,6 @@ const PropertyStats: React.FC<PropertyStatsProps> = ({ property, rawProperty, is
     return `${num} sqft`;
   };
 
-  // Get maintenance fees from raw property (condo fees)
-  const getMaintenanceFees = () => {
-    const hoaFee = rawProperty?.details?.HOAFee;
-    const condoFee = rawProperty?.condominium?.fees?.maintenance;
-    
-    if (hoaFee) {
-      const amount = typeof hoaFee === 'string' ? parseFloat(hoaFee) : hoaFee;
-      if (!isNaN(amount)) {
-        return `$${amount.toFixed(1)}`;
-      }
-    }
-    
-    if (condoFee) {
-      return `$${condoFee.toFixed(1)}`;
-    }
-    
-    return '$602.9'; // Default
-  };
-
   const stats = [
     {
       icon: Bed,
