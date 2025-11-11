@@ -15,7 +15,7 @@ interface BannerProps {
     isPreCon?: boolean;
 }
 
-const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false }) => {
+const Banner: React.FC<BannerProps> = ({ property, isPreCon = false }) => {
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [isScheduleTourModalOpen, setIsScheduleTourModalOpen] = useState(false);
     
