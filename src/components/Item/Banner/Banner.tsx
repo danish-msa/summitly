@@ -54,7 +54,7 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false }) => {
         // Handle pre-qualification logic
         console.log('Get pre-qualified clicked');
         // You can add navigation to mortgage calculator or pre-qualification page
-    };
+    }; 
 
     const handleScheduleTour = () => {
         setIsScheduleTourModalOpen(true);
