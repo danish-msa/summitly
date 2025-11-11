@@ -298,11 +298,6 @@ function WatchlistContent() {
       }
 
       try {
-        // Collect all MLS numbers from alerts that have them
-        const mlsNumbers = alerts
-          .filter(alert => alert.mlsNumber)
-          .map(alert => alert.mlsNumber!)
-        
         // Fetch all properties
         const allProperties = await fetchPropertyListings()
         
