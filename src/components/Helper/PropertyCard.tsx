@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Bed, Bath, Maximize2, MapPin, Heart, ChevronLeft, ChevronRight, MoreVertical, Share2, EyeOff, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -47,7 +47,31 @@ const PropertyCard = ({ property, onHide }: PropertyCardProps) => {
   const { checkIsSaved, saveProperty, unsaveProperty, isSaving, isUnsaving } = useSavedProperties();
   const isSaved = checkIsSaved(property.mlsNumber);
   
-  const images = property.images.allImages || [property.images.imageUrl];
+  // Get images array with proper fallbacks
+  const images = useMemo(() => {
+    const allImages = property.images?.allImages || [];
+    const imageUrl = property.images?.imageUrl || '';
+    
+    // Combine all images and filter out empty/invalid URLs
+    const validImages = [
+      ...allImages,
+      ...(imageUrl && !allImages.includes(imageUrl) ? [imageUrl] : [])
+    ].filter(url => url && typeof url === 'string' && url.trim() !== '');
+    
+    // If no valid images, use fallback images
+    if (validImages.length === 0) {
+      return [
+        '/images/p1.jpg',
+        '/images/p2.jpg',
+        '/images/p3.jpg',
+        '/images/p4.jpg',
+        '/images/p5.jpg',
+      ];
+    }
+    
+    return validImages;
+  }, [property.images]);
+  
   const totalImages = images.length;
   
   // Format price based on property type
@@ -63,7 +87,15 @@ const PropertyCard = ({ property, onHide }: PropertyCardProps) => {
     ? `${formattedPrice}/month` 
     : formattedPrice;
 
-  const imageSrc = imgError ? '/placeholder.svg' : images[currentImageIndex];
+  // Get current image with fallback
+  const imageSrc = useMemo(() => {
+    if (imgError || !images[currentImageIndex]) {
+      // Try fallback images
+      const fallbackIndex = currentImageIndex % 5;
+      return `/images/p${fallbackIndex + 1}.jpg`;
+    }
+    return images[currentImageIndex];
+  }, [images, currentImageIndex, imgError]);
 
   const formatListingDate = (dateString?: string) => {
     if (!dateString) return 'TODAY';
@@ -81,12 +113,14 @@ const PropertyCard = ({ property, onHide }: PropertyCardProps) => {
   const nextImage = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setImgError(false); // Reset error when changing images
     setCurrentImageIndex((prev) => (prev + 1) % totalImages);
   };
 
   const prevImage = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setImgError(false); // Reset error when changing images
     setCurrentImageIndex((prev) => (prev - 1 + totalImages) % totalImages);
   };
 
@@ -176,7 +210,21 @@ const PropertyCard = ({ property, onHide }: PropertyCardProps) => {
             src={imageSrc} 
             alt={`${property.details.propertyType} in ${property.address.city || 'Unknown City'}`}
             className='w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 p-2 rounded-3xl'
-            onError={() => setImgError(true)}
+            onError={(e) => {
+              // Only set error if it's not already a fallback image
+              if (!imageSrc.includes('/images/p')) {
+                setImgError(true);
+                // Try to load fallback immediately
+                const fallbackIndex = currentImageIndex % 5;
+                (e.target as HTMLImageElement).src = `/images/p${fallbackIndex + 1}.jpg`;
+              }
+            }}
+            onLoad={() => {
+              // Reset error if image loads successfully
+              if (imgError) {
+                setImgError(false);
+              }
+            }}
           />
           
           
