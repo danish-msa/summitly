@@ -4,12 +4,12 @@ import { useSession } from 'next-auth/react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import { useSavedProperties } from '@/hooks/useSavedProperties'
-import { useAllPropertyAlerts, usePropertyAlerts } from '@/hooks/usePropertyAlerts'
+import { useAllPropertyAlerts } from '@/hooks/usePropertyAlerts'
 import { fetchPropertyListings } from '@/lib/api/properties'
 import PropertyCard from '@/components/Helper/PropertyCard'
 import { PropertyListing } from '@/lib/types'
 import { useState } from 'react'
-import { Heart, Search, Loader2, MapPin, Calendar, Layers, Image as ImageIcon, Bell, Trash2 } from 'lucide-react'
+import { Heart, Search, Loader2, MapPin, Calendar, Layers, Image as ImageIcon, Bell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -285,22 +285,74 @@ export default function DashboardPage() {
 
 // Watchlist Content Component
 function WatchlistContent() {
-  const { alerts, isLoading } = useAllPropertyAlerts()
-  const { deleteAlert, isDeleting } = usePropertyAlerts()
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const { alerts, isLoading: isLoadingAlerts } = useAllPropertyAlerts()
+  const [properties, setProperties] = useState<PropertyListing[]>([])
+  const [isLoadingProperties, setIsLoadingProperties] = useState(true)
 
-  const handleDelete = async (id: string) => {
-    setDeletingId(id)
-    try {
-      await deleteAlert(id, undefined)
-    } catch (error) {
-      console.error('Error deleting alert:', error)
-    } finally {
-      setDeletingId(null)
+  // Fetch properties based on alerts
+  useEffect(() => {
+    const fetchWatchlistProperties = async () => {
+      if (alerts.length === 0) {
+        setIsLoadingProperties(false)
+        return
+      }
+
+      try {
+        // Collect all MLS numbers from alerts that have them
+        const mlsNumbers = alerts
+          .filter(alert => alert.mlsNumber)
+          .map(alert => alert.mlsNumber!)
+        
+        // Fetch all properties
+        const allProperties = await fetchPropertyListings()
+        
+        // Filter properties that match alert criteria
+        const watchlistProperties = allProperties.filter(property => {
+          // Check if property matches any alert
+          return alerts.some(alert => {
+            // If alert has MLS number, match by MLS number
+            if (alert.mlsNumber && property.mlsNumber === alert.mlsNumber) {
+              return true
+            }
+            // If alert has city/neighborhood, match by location
+            if (alert.cityName || alert.neighborhood) {
+              const matchesCity = !alert.cityName || 
+                property.address.city?.toLowerCase() === alert.cityName.toLowerCase()
+              const matchesNeighborhood = !alert.neighborhood || 
+                property.address.neighborhood?.toLowerCase() === alert.neighborhood.toLowerCase()
+              
+              if (matchesCity && matchesNeighborhood) {
+                // Also check property type if specified
+                if (alert.propertyType) {
+                  return property.details.propertyType?.toLowerCase() === alert.propertyType.toLowerCase()
+                }
+                return true
+              }
+            }
+            return false
+          })
+        })
+
+        // Remove duplicates based on MLS number
+        const uniqueProperties = watchlistProperties.filter(
+          (property, index, self) =>
+            index === self.findIndex(p => p.mlsNumber === property.mlsNumber)
+        )
+
+        setProperties(uniqueProperties)
+      } catch (error) {
+        console.error('Error fetching watchlist properties:', error)
+      } finally {
+        setIsLoadingProperties(false)
+      }
     }
-  }
 
-  if (isLoading) {
+    if (!isLoadingAlerts) {
+      fetchWatchlistProperties()
+    }
+  }, [alerts, isLoadingAlerts])
+
+  if (isLoadingAlerts || isLoadingProperties) {
     return (
       <div className="mb-8">
         <div className="flex items-center justify-center py-12">
@@ -329,6 +381,36 @@ function WatchlistContent() {
     )
   }
 
+  if (properties.length === 0) {
+    return (
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-semibold text-foreground">
+            Property Alerts
+          </h2>
+          <Link href="/listings">
+            <Button variant="outline">
+              <Search className="h-4 w-4 mr-2" />
+              Browse More Properties
+            </Button>
+          </Link>
+        </div>
+        <div className="bg-card rounded-lg p-12 border border-border text-center">
+          <Bell className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+          <h3 className="text-xl font-semibold text-foreground mb-2">
+            No properties found
+          </h3>
+          <p className="text-muted-foreground mb-6">
+            No properties match your current alerts. Try browsing properties to set up new alerts.
+          </p>
+          <Link href="/listings">
+            <Button>Browse Properties</Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-6">
@@ -343,80 +425,13 @@ function WatchlistContent() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {alerts.map((alert) => (
-          <div
-            key={alert.id}
-            className="bg-card rounded-lg border border-border p-6 hover:shadow-md transition-shadow"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Bell className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">
-                    {alert.mlsNumber ? 'Property Watch' : 'Area Alerts'}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {alert.neighborhood || alert.cityName || 'Unknown location'}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => handleDelete(alert.id)}
-                disabled={deletingId === alert.id || isDeleting}
-                className="p-2 hover:bg-destructive/10 rounded-lg transition-colors disabled:opacity-50"
-              >
-                {deletingId === alert.id ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-destructive" />
-                ) : (
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                )}
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {alert.watchProperty && (
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="h-2 w-2 rounded-full bg-primary" />
-                  <span className="text-muted-foreground">Watching property updates</span>
-                </div>
-              )}
-              {alert.newProperties && (
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="h-2 w-2 rounded-full bg-green-500" />
-                  <span className="text-muted-foreground">New properties in area</span>
-                </div>
-              )}
-              {alert.soldListings && (
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="h-2 w-2 rounded-full bg-blue-500" />
-                  <span className="text-muted-foreground">Sold listings notifications</span>
-                </div>
-              )}
-              {alert.expiredListings && (
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="h-2 w-2 rounded-full bg-orange-500" />
-                  <span className="text-muted-foreground">Expired listings notifications</span>
-                </div>
-              )}
-            </div>
-
-            {alert.propertyType && (
-              <div className="mt-4 pt-4 border-t border-border">
-                <span className="text-xs text-muted-foreground">
-                  Property Type: <span className="font-medium">{alert.propertyType}</span>
-                </span>
-              </div>
-            )}
-
-            <div className="mt-4 pt-4 border-t border-border">
-              <span className="text-xs text-muted-foreground">
-                Created {new Date(alert.createdAt).toLocaleDateString()}
-              </span>
-            </div>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {properties.map((property) => (
+          <PropertyCard
+            key={property.mlsNumber}
+            property={property}
+            onHide={() => {}}
+          />
         ))}
       </div>
     </div>
