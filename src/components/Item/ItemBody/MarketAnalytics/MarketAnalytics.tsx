@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { useLocationData } from "@/hooks/useLocationData";
-import { useMarketAnalytics } from "@/hooks/useMarketAnalytics";
 import type { ProcessedLocation } from "@/data/types";
 import { MarketAnalyticsProps, MarketData, ListingsData, SoldPriceData } from './types';
-import { generateMarketData, generateListingsData, generateSoldPriceData, extractCoordinates } from './dataGenerators';
+import { generateMarketData, generateListingsData, generateSoldPriceData } from './dataGenerators';
 import { MarketChartSection } from './MarketChartSection';
 import { ListingsChartSection } from './ListingsChartSection';
 import { SoldPriceChartSection } from './SoldPriceChartSection';
@@ -25,26 +24,6 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
   const [chartKey, setChartKey] = useState(0); // Force chart re-render on data change
   
   const { searchLocations } = useLocationData();
-  
-  // Extract coordinates from property address for API calls
-  const [latitude, longitude] = useMemo(() => {
-    return extractCoordinates(propertyAddress);
-  }, [propertyAddress]);
-  
-  // Disabled API calls - using mock data only
-  const { 
-    marketData: apiMarketData, 
-    listingsData: apiListingsData, 
-    soldPriceData: apiSoldPriceData,
-    loading: apiLoading, 
-    error: apiError, 
-    refetch: refetchAPI 
-  } = useMarketAnalytics({
-    latitude,
-    longitude,
-    propertyClass,
-    enabled: false, // Disabled API calls - using mock data only
-  });
   
   // Find location data based on property address
   useEffect(() => {
@@ -82,15 +61,15 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
   // Always use mock data (API calls disabled)
   const chartData = useMemo(() => {
     return generateMarketData(locationData, propertyClass);
-  }, [locationData, propertyClass, chartKey]);
+  }, [locationData, propertyClass]);
 
   const listingsData = useMemo(() => {
     return generateListingsData(locationData);
-  }, [locationData, chartKey]);
+  }, [locationData]);
 
   const soldPriceData = useMemo(() => {
     return generateSoldPriceData(locationData);
-  }, [locationData, chartKey]);
+  }, [locationData]);
   
   // Ensure data arrays are always valid
   const marketData: MarketData = {
@@ -112,8 +91,6 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
   };
   
   // Always using mock data (API calls disabled)
-  const usingAPIData = false;
-  const isLoading = false;
   
   const handleRefresh = () => {
     setIsRefreshing(true);
