@@ -125,7 +125,7 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property, isPreCon = 
       id: 'calculators',
       label: 'Calculators',
       content: (
-        <Tabs defaultValue="mortgage" className="w-full">
+        <Tabs defaultValue="mortgage" className="w-full mt-6">
           <TabsList className="grid w-full grid-cols-2 h-12 p-1">
             <TabsTrigger value="mortgage" className="py-2 text-base">Mortgage Calculator</TabsTrigger>
             <TabsTrigger value="affordability" className="py-2 text-base">Affordability Calculator</TabsTrigger>
@@ -162,7 +162,7 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property, isPreCon = 
                   onClick={() => toggleTab(section.id)}
                   className={`w-full px-6 py-4 text-left flex items-center justify-between transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20 ${
                     isExpanded 
-                      ? 'border-l-4 border-l-primary bg-gradient-to-r from-brand-celestial/10 to-brand-celestial/40 border-b-0' 
+                      ? 'border-l-4 border-l-primary bg-gradient-to-r from-brand-celestial/10 to-brand-celestial/20 border-b-0' 
                       : 'hover:bg-gray-50'
                   }`}
                 >

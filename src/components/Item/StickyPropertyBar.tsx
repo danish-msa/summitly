@@ -128,10 +128,10 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
             className="fixed left-0 right-0 z-[9998] bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg"
           >
             <div className="container-1400 mx-auto px-4">
-              <div className="flex items-center justify-between h-16 lg:h-15 gap-3 lg:gap-8">
+              <div className="flex items-center justify-between py-2 gap-3 lg:gap-8">
                 {/* Price */}
                 <div className="flex-shrink-0">
-                  <div className="text-base lg:text-lg xl:text-3xl font-bold text-primary whitespace-nowrap">
+                  <div className="text-base lg:text-lg xl:text-2xl font-bold text-primary whitespace-nowrap">
                     {formatPrice(property.listPrice)}
                   </div>
                 </div>

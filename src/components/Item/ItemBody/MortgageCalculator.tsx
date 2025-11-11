@@ -151,7 +151,7 @@ export const MortgageCalculator = () => {
     legend: {
       orient: 'horizontal',
       left: 'center',
-      bottom: '20',
+      bottom: '10',
       itemGap: 10,
       textStyle: {
         color: '#475569',
@@ -177,7 +177,7 @@ export const MortgageCalculator = () => {
       {
         name: 'Monthly Payment',
         type: 'pie',
-        radius: ['40%', '60%'],
+        radius: ['55%', '80%'],
         center: ['50%', '40%'],
         avoidLabelOverlap: false,
         itemStyle: {
@@ -187,6 +187,9 @@ export const MortgageCalculator = () => {
         },
         label: {
           show: false,
+        },
+        labelLine: {
+          show: false
         },
         emphasis: {
           label: {
@@ -201,13 +204,36 @@ export const MortgageCalculator = () => {
             shadowColor: 'rgba(0, 0, 0, 0.2)'
           }
         },
-        labelLine: {
-          show: false
-        },
         data: chartData,
         animationType: 'scale',
         animationEasing: 'elasticOut',
         animationDelay: (idx: number) => idx * 100,
+      }
+    ],
+    graphic: [
+      {
+        type: 'text',
+        left: 'center',
+        top: '35%',
+        style: {
+          text: 'Total Monthly Payment',
+          fontSize: 14,
+          fontWeight: 700,
+          fill: '#000',
+          textAlign: 'center',
+        }
+      },
+      {
+        type: 'text',
+        left: 'center',
+        top: '40%',
+        style: {
+          text: formatCurrency(results.totalMonthlyPayment),
+          fontSize: 26,
+          fontWeight: 700,
+          fill: '#1e293b',
+          textAlign: 'center',
+        }
       }
     ]
   }), [chartData, results.totalMonthlyPayment]);
@@ -346,20 +372,12 @@ export const MortgageCalculator = () => {
         <div className="w-[40%] rounded-lg">
           
           {/* Pie Chart */}
-          <div className="w-full h-auto">
+          <div className="w-full h-[400px]">
             <ReactECharts
               option={chartOption}
-              style={{ height: '100%', width: '100%' }}
+              style={{ height: '450px', width: '100%' }}
               opts={{ renderer: 'svg' }}
             />
-          </div>
-
-          {/* Total Monthly Payment */}
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="flex justify-between items-center bg-brand-glacier rounded-lg px-4 py-3">
-              <span className="text-gray-900 font-semibold text-sm">Total Monthly Payment</span>
-              <span className="text-lg font-bold text-primary">{formatCurrency(results.totalMonthlyPayment)}</span>
-            </div>
           </div>
         </div>
       </div>

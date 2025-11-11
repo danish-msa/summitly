@@ -14,7 +14,7 @@ const SimilarListings = ({ currentProperty }: SimilarListingsProps) => {
   const [filteredProperties, setFilteredProperties] = useState<PropertyListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [listingType, setListingType] = useState<'sale' | 'sold'>('sale');
+  const [listingType, setListingType] = useState<'sale' | 'sold' | 'rent'>('sale');
   const [currentSlide, setCurrentSlide] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
 
@@ -54,7 +54,7 @@ const SimilarListings = ({ currentProperty }: SimilarListingsProps) => {
         const propertyType = property.type;
         return propertyType !== 'Lease' && !propertyType?.toLowerCase().includes('lease');
       });
-    } else {
+    } else if (listingType === 'sold') {
       // Similar sold: properties that are sold - try multiple possible statuses
       filtered = filtered.filter(property => {
         const propertyType = property.type?.toLowerCase() || '';
@@ -68,6 +68,12 @@ const SimilarListings = ({ currentProperty }: SimilarListingsProps) => {
                propertyStatus.includes('completed') ||
                propertyStatus.includes('finalized');
       });
+    } else if (listingType === 'rent') {
+      // Rent comparables: type === "Lease" or includes "lease"
+      filtered = filtered.filter(property => {
+        const propertyType = property.type?.toLowerCase() || '';
+        return propertyType.includes('lease') || propertyType === 'rent';
+      });
     }
     
     // Limit to 12 properties for performance
@@ -77,7 +83,7 @@ const SimilarListings = ({ currentProperty }: SimilarListingsProps) => {
   }, [allProperties, listingType, currentProperty]);
 
   // Handle listing type change
-  const handleListingTypeChange = (type: 'sale' | 'sold') => {
+  const handleListingTypeChange = (type: 'sale' | 'sold' | 'rent') => {
     setListingType(type);
   };
 
@@ -114,6 +120,24 @@ const SimilarListings = ({ currentProperty }: SimilarListingsProps) => {
     setCurrentSlide(0);
   }, [visibleProperties]);
 
+  // Get heading text based on listing type and property location
+  const getHeadingText = () => {
+    const neighborhood = currentProperty.address.neighborhood || '';
+    const city = currentProperty.address.city || '';
+    const location = [neighborhood, city].filter(Boolean).join(', ') || 'this area';
+    
+    switch (listingType) {
+      case 'sale':
+        return `Properties for Sale in ${location}`;
+      case 'sold':
+        return `Similar Sold Properties in ${location}`;
+      case 'rent':
+        return `Rental Properties in ${location}`;
+      default:
+        return `Similar Properties in ${location}`;
+    }
+  };
+
   if (loading) {
     return (
       <div className="py-8">
@@ -137,8 +161,9 @@ const SimilarListings = ({ currentProperty }: SimilarListingsProps) => {
     return (
       <div className="py-8">
         {/* Header with Toggle */}
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold text-gray-900">Similar Properties</h3>
+        <h3 className="text-xl font-semibold text-gray-900 mb-4 text-center">{getHeadingText()}</h3>
+          <div className="flex flex-col items-center gap-4 mb-6">
+          
           
           {/* Toggle Buttons */}
           <div className="flex bg-gray-100 rounded-lg p-1">
@@ -162,6 +187,16 @@ const SimilarListings = ({ currentProperty }: SimilarListingsProps) => {
             >
               Similar Sold
             </button>
+            <button
+              onClick={() => handleListingTypeChange('rent')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                listingType === 'rent'
+                  ? 'bg-white text-primary shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Rent
+            </button>
           </div>
         </div>
 
@@ -173,12 +208,14 @@ const SimilarListings = ({ currentProperty }: SimilarListingsProps) => {
             </svg>
           </div>
           <h4 className="text-lg font-medium text-gray-900 mb-2">
-            No {listingType === 'sale' ? 'Properties for Sale' : 'Recently Sold Properties'} Found
+            No {listingType === 'sale' ? 'Properties for Sale' : listingType === 'sold' ? 'Recently Sold Properties' : 'Rental Properties'} Found
           </h4>
           <p className="text-gray-500 mb-4">
             {listingType === 'sale' 
               ? 'There are currently no similar properties available for sale in this area.'
-              : 'There are currently no recently sold properties similar to this one.'
+              : listingType === 'sold'
+              ? 'There are currently no recently sold properties similar to this one.'
+              : 'There are currently no rental properties similar to this one.'
             }
           </p>
           <button
@@ -195,9 +232,8 @@ const SimilarListings = ({ currentProperty }: SimilarListingsProps) => {
   return (
     <div className="py-8">
       {/* Header with Toggle */}
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-semibold text-gray-900">Similar Properties</h3>
-        
+      <h3 className="text-xl font-semibold text-gray-900 mb-4 text-center">{getHeadingText()}</h3>
+      <div className="flex flex-col items-center gap-4 mb-6">
         {/* Toggle Buttons */}
         <div className="flex bg-gray-100 rounded-lg p-1">
           <button
@@ -220,14 +256,17 @@ const SimilarListings = ({ currentProperty }: SimilarListingsProps) => {
           >
             Similar Sold
           </button>
+          <button
+            onClick={() => handleListingTypeChange('rent')}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+              listingType === 'rent'
+                ? 'bg-white text-primary shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Rent
+          </button>
         </div>
-      </div>
-
-      {/* Results Count */}
-      <div className="mb-4">
-        <p className="text-sm text-gray-600">
-          Showing {visibleProperties.length} {listingType === 'sale' ? 'properties for sale' : 'recently sold properties'}
-        </p>
       </div>
 
       {/* Slider Container */}

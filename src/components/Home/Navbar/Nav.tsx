@@ -7,6 +7,8 @@ import { FaUserCircle } from 'react-icons/fa';
 import { HiBars3BottomRight } from 'react-icons/hi2';
 import { motion, AnimatePresence } from 'framer-motion';
 import AuthModal from '@/components/Auth/AuthModal';
+import { UserProfileDropdown } from '@/components/common/UserProfileDropdown';
+import { useSession } from 'next-auth/react';
 // import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -19,6 +21,7 @@ type Props = {
 
 const Nav = ({ openNav }: Props) => {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const isPropertyPage = pathname?.includes('/property/') || pathname?.includes('/pre-construction/');
   
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -123,7 +126,7 @@ const Nav = ({ openNav }: Props) => {
           ease: "easeInOut"
         }}
         className={cn(
-          "w-full top-0 left-0 right-0 z-[9999] transition-all duration-300",
+          "w-full top-0 left-0 right-0 z-[99] transition-all duration-300",
           isPropertyPage 
             ? "relative" // Use relative positioning on property pages
             : "fixed", // Use fixed positioning on other pages
@@ -432,20 +435,30 @@ const Nav = ({ openNav }: Props) => {
                 </Link>
               </motion.div>
 
-              {/* Login / Signup Button */}
-              <motion.button
-                onClick={handleLoginClick}
-                className="flex items-center space-x-2 px-3 py-2 text-sm lg:text-base font-medium bg-brand-cb-blue text-white hover:bg-white hover:text-brand-cb-blue transition-colors rounded-lg"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.6 }}
-              >
-                <FaUserCircle className="w-4 h-4" />
-                <span className="hidden sm:inline">Login / Signup</span>
-                <span className="sm:hidden">Login</span>
-              </motion.button>
+              {/* Login / Signup Button or User Profile */}
+              {session ? (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.6 }}
+                >
+                  <UserProfileDropdown />
+                </motion.div>
+              ) : (
+                <motion.button
+                  onClick={handleLoginClick}
+                  className="flex items-center space-x-2 px-3 py-2 text-sm lg:text-base font-medium bg-brand-cb-blue text-white hover:bg-white hover:text-brand-cb-blue transition-colors rounded-lg"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.6 }}
+                >
+                  <FaUserCircle className="w-4 h-4" />
+                  <span className="hidden sm:inline">Login / Signup</span>
+                  <span className="sm:hidden">Login</span>
+                </motion.button>
+              )}
 
               {/* Side Panel Menu Button - Desktop Only */}
               <motion.button

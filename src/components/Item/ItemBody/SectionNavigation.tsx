@@ -1,8 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { Heart, Share2 } from 'lucide-react'
+import { Heart, Share2, Video, Images, ArrowUp, MessageCircle, CheckCircle2, XCircle } from 'lucide-react'
 import { PropertyListing } from '@/lib/types'
 import ShareModal from '../Banner/ShareModal'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useSession } from 'next-auth/react'
+import { useSavedProperties } from '@/hooks/useSavedProperties'
+import { toast } from '@/hooks/use-toast'
+import { useRouter } from 'next/navigation'
+import AuthModal from '@/components/Auth/AuthModal'
 
 interface Section {
   id: string;
@@ -20,18 +26,118 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
   onSectionClick,
   property
 }) => {
+  const { data: session } = useSession()
+  const router = useRouter()
   const [activeSection, setActiveSection] = useState<string>(sections[0]?.id || '');
-  const [isSaved, setIsSaved] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [isScrolledPastBanner, setIsScrolledPastBanner] = useState(false);
+  const [navigationBarHeight, setNavigationBarHeight] = useState(64);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const isScrollingRef = useRef(false);
+  const navBarRef = useRef<HTMLDivElement>(null);
 
-  const handleSave = () => {
-    setIsSaved(!isSaved);
-    // Add save functionality here
+  const { checkIsSaved, saveProperty, unsaveProperty, isSaving, isUnsaving } = useSavedProperties()
+  const isSaved = property ? checkIsSaved(property.mlsNumber) : false;
+
+  const handleSave = async () => {
+    if (!property) return;
+
+    // If not logged in, show auth modal
+    if (!session) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    try {
+      if (isSaved) {
+        await unsaveProperty(property.mlsNumber);
+        toast({
+          title: "Property Removed",
+          description: "Property has been removed from your saved list.",
+          icon: <XCircle className="h-5 w-5 text-gray-600" />,
+        });
+      } else {
+        await saveProperty({ mlsNumber: property.mlsNumber });
+        toast({
+          title: "Property Saved",
+          description: "Property has been added to your saved list.",
+          variant: "success",
+          icon: <Heart className="h-5 w-5 text-green-600 fill-green-600" />,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to save property. Please try again.",
+        variant: "destructive",
+        icon: <XCircle className="h-5 w-5 text-red-600" />,
+      });
+    }
   };
 
-  // Navigation bar height (this component itself)
-  const navigationBarHeight = 64; // Approximate height of the navigation bar
+  const handleVideoClick = () => {
+    setIsVideoModalOpen(true);
+  };
+
+  const handleGalleryClick = () => {
+    // Dispatch custom event to open gallery modal
+    const galleryEvent = new CustomEvent('openGallery');
+    window.dispatchEvent(galleryEvent);
+  };
+
+  const handleScrollToBanner = () => {
+    const bannerElement = document.querySelector('[data-banner-section]');
+    if (bannerElement) {
+      const elementPosition = bannerElement.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = elementPosition - 100; // Offset for navbar
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    } else {
+      // Fallback to top if element not found
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const handleContactClick = () => {
+    const contactElement = document.getElementById('contact-section');
+    if (contactElement) {
+      const elementPosition = contactElement.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = elementPosition - navigationBarHeight - 20; // Offset for navbar
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // Calculate navigation bar height dynamically
+  useEffect(() => {
+    const calculateNavHeight = () => {
+      if (navBarRef.current) {
+        setNavigationBarHeight(navBarRef.current.getBoundingClientRect().height);
+      }
+    };
+
+    calculateNavHeight();
+    window.addEventListener('resize', calculateNavHeight);
+    
+    // Use MutationObserver to watch for changes in the navigation bar
+    const observer = new MutationObserver(calculateNavHeight);
+    if (navBarRef.current) {
+      observer.observe(navBarRef.current, { childList: true, subtree: true, attributes: true });
+    }
+
+    return () => {
+      window.removeEventListener('resize', calculateNavHeight);
+      observer.disconnect();
+    };
+  }, []);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -66,6 +172,22 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
       }
     }
   };
+
+  // Track if scrolled past banner
+  useEffect(() => {
+    const handleBannerScroll = () => {
+      // Check if we've scrolled past the banner (assuming banner is at top)
+      const scrollY = window.scrollY;
+      // Banner is typically at the top, so if we've scrolled more than 400px, we're past it
+      setIsScrolledPastBanner(scrollY > 400);
+    };
+
+    window.addEventListener('scroll', handleBannerScroll, { passive: true });
+    handleBannerScroll(); // Initial check
+    return () => {
+      window.removeEventListener('scroll', handleBannerScroll);
+    };
+  }, []);
 
   // Track active section on scroll
   useEffect(() => {
@@ -142,11 +264,43 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
 
   return (
     <div 
+      ref={navBarRef}
       data-section-navigation
-      className="sticky top-0 bg-white border-b border-gray-200 shadow-sm mb-6 z-50"
+      className="sticky top-0 bg-white border-b border-gray-200 shadow-sm mb-4 z-50"
     >
       <div className="container-1400 mx-auto">
-        <div className="flex items-center gap-2 overflow-x-auto py-4 scrollbar-hide">
+        <div className="flex items-center gap-2 overflow-x-auto py-2 scrollbar-hide">
+          {/* Video, Gallery, and Scroll to Top Icons */}
+          {property && (
+            <div className="flex items-center gap-2 flex-shrink-0 mr-2 border-r border-gray-200 pr-3">
+              <button
+                onClick={handleVideoClick}
+                className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-primary transition-all duration-200"
+                aria-label="Play property video"
+              >
+                <Video className="h-5 w-5" />
+              </button>
+              
+              <button
+                onClick={handleGalleryClick}
+                className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-primary transition-all duration-200"
+                aria-label="Open image gallery"
+              >
+                <Images className="h-5 w-5" />
+              </button>
+              
+              {isScrolledPastBanner && (
+                <button
+                  onClick={handleScrollToBanner}
+                  className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-primary transition-all duration-200"
+                  aria-label="Scroll to top"
+                >
+                  <ArrowUp className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+          )}
+
           {sections.map((section) => (
             <Button
               key={section.id}
@@ -162,29 +316,38 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
             </Button>
           ))}
           
-          {/* Save and Share Buttons */}
+          {/* Contact, Save and Share Icons */}
           {property && (
             <>
-              <div className="ml-auto flex items-center gap-2 flex-shrink-0">
-                <Button
-                  variant={isSaved ? "default" : "outline"}
-                  size="default"
-                  onClick={handleSave}
-                  className="gap-2"
+              <div className="ml-auto flex items-center gap-3 flex-shrink-0">
+                <button
+                  onClick={handleContactClick}
+                  className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-primary transition-all duration-200"
+                  aria-label="Contact us"
                 >
-                  <Heart className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
-                  <span className="hidden sm:inline">Save</span>
-                </Button>
+                  <MessageCircle className="h-5 w-5" />
+                </button>
                 
-                <Button
-                  variant="outline"
-                  size="default"
-                  onClick={() => setIsShareModalOpen(true)}
-                  className="gap-2"
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving || isUnsaving}
+                  className={`p-2 rounded-lg transition-all duration-200 ${
+                    isSaved 
+                      ? 'bg-red-50 text-red-600 hover:bg-red-100' 
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-red-600'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  aria-label="Save property"
                 >
-                  <Share2 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Share</span>
-                </Button>
+                  <Heart className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
+                </button>
+                
+                <button
+                  onClick={() => setIsShareModalOpen(true)}
+                  className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-primary transition-all duration-200"
+                  aria-label="Share property"
+                >
+                  <Share2 className="h-5 w-5" />
+                </button>
               </div>
             </>
           )}
@@ -199,6 +362,33 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
           property={property}
         />
       )}
+
+      {/* Video Modal */}
+      {property && (
+        <Dialog open={isVideoModalOpen} onOpenChange={setIsVideoModalOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Property Video</DialogTitle>
+            </DialogHeader>
+            <div className="aspect-video bg-black rounded-lg flex items-center justify-center">
+              {/* Video player placeholder - replace with actual video URL */}
+              <div className="text-white text-center">
+                <Video className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                <p className="text-lg">Video player will be embedded here</p>
+                <p className="text-sm text-gray-400 mt-2">
+                  Add video URL from property data
+                </p>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+      />
     </div>
   );
 };

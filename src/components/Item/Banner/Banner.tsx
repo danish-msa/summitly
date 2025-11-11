@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Calendar, CreditCard, Bed, Bath, Maximize2, Megaphone, Building2, Info } from "lucide-react";
+import { Calendar, CreditCard, Bed, Bath, Maximize2, Megaphone, Building2, Info, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -7,6 +7,7 @@ import { PropertyListing } from '@/lib/types';
 import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/single-listing';
 import ShareModal from './ShareModal';
 import ScheduleTourModal from '../ItemBody/ScheduleTourModal';
+import RatingsOverview from '../ItemBody/QualityScore';
 
 interface BannerProps {
     property: PropertyListing;
@@ -14,7 +15,7 @@ interface BannerProps {
     isPreCon?: boolean;
 }
 
-const Banner: React.FC<BannerProps> = ({ property, isPreCon = false }) => {
+const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false }) => {
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [isScheduleTourModalOpen, setIsScheduleTourModalOpen] = useState(false);
     
@@ -38,6 +39,15 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false }) => {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
         }).format(price);
+    };
+
+    // Format price change in simplified format (e.g., $105K instead of $105,150)
+    const formatPriceChange = (dollars: number) => {
+        const thousands = Math.abs(dollars) / 1000;
+        // Round to 1 decimal place if needed, but show as integer if it's a whole number
+        const rounded = Math.round(thousands * 10) / 10;
+        const formatted = rounded % 1 === 0 ? rounded.toString() : rounded.toFixed(1);
+        return `$${formatted}K`;
     };
 
     const handleGetPreQualified = () => {
@@ -74,6 +84,29 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false }) => {
         return `${sqft.toLocaleString()} SqFt`;
     };
 
+    // Get days on market
+    const getDaysOnMarket = () => {
+        if (rawProperty?.daysOnMarket !== undefined) {
+            return rawProperty.daysOnMarket;
+        }
+        // Fallback: calculate from listDate if available
+        if (property.listDate) {
+            const listDate = new Date(property.listDate);
+            const today = new Date();
+            const diffTime = Math.abs(today.getTime() - listDate.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
+        }
+        return null;
+    };
+
+    const daysOnMarket = getDaysOnMarket();
+
+    // Calculate price change in dollars for estimated price
+    const estimatedPrice = property.listPrice * 1.06;
+    const priceChangeDollars = estimatedPrice - property.listPrice;
+    const isPriceRising = priceChangeDollars > 0;
+
     return (
         <div className="">
             
@@ -83,11 +116,11 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false }) => {
                     {/* Two Column Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* First Column */}
-                        <div className="flex flex-col gap-4 col-span-2">
+                        <div className="flex flex-col gap-2 col-span-2 items-start">
                             {/* Heading with MLS and Status */}
                             <div className="flex flex-wrap items-center gap-3">
                                 
-                                <h1 className="text-2xl font-bold text-foreground sm:text-3xl lg:text-4xl">
+                                <h1 className="text-2xl font-bold text-foreground sm:text-3xl lg:text-3xl">
                                     {shortAddress}
                                 </h1>
                                 <Badge className="bg-primary/10 text-primary hover:bg-primary/20 uppercase py-1 px-4">
@@ -95,45 +128,45 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false }) => {
                                     {isPreCon ? (preConData?.status || property.status || 'Selling') : (property.status || 'Active')}
                                 </Badge>
                             </div>
-                            <div className="flex flex-col gap-2">
-                                
+                            <div className="flex flex-col gap-2 justify-start">
+                                {/* Address */}
+                                <div className="flex items-start text-primary">
+                                    {/* <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0" /> */}
+                                    <span className="text-sm font-medium sm:text-lg max-w-xl">{fullAddress}</span>
+                                </div>
                                 {/* MLS Number or Project ID - Same line as heading */}
-                                {/* {!isPreCon && (
+                                {!isPreCon && (
                                     <span className="text-base text-muted-foreground font-normal">
                                         MLS # <span className="text-gray-600">{property.mlsNumber}</span>
                                     </span>
-                                )} */}
-                                {/* Address */}
-                                <div className="flex items-start gap-2 text-primary mb-4">
-                                    <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0" />
-                                    <span className="text-sm font-medium sm:text-lg">{fullAddress}</span>
-                                </div>
+                                )}
+                                
                                 {/* Property Stats with Icons - Above Price */}
-                                <div className="flex items-center gap-4 sm:gap-6 mb-2">
+                                <div className="flex items-center gap-4 sm:gap-6 mt-2">
                                     {/* property type */}
-                                    <div className="flex flex-col items-center gap-1">
+                                    <div className="flex flex-row items-center gap-1">
                                         <Building2 className="h-6 w-6 text-primary" />
                                         <span className="text-sm text-foreground font-medium">Detached</span>
                                     </div>
                                     {/* Beds */}
-                                    <div className="flex flex-col items-center gap-1">
+                                    <div className="flex flex-row items-center gap-1">
                                         <Bed className="h-6 w-6 text-primary" />
                                         <span className="text-sm text-foreground font-medium">{getBedrooms()}</span>
                                     </div>
 
                                     {/* Baths */}
-                                    <div className="flex flex-col items-center gap-1">
+                                    <div className="flex flex-row items-center gap-1">
                                         <Bath className="h-6 w-6 text-primary" />
                                         <span className="text-sm text-foreground font-medium">{getBathrooms()}</span>
                                     </div>
 
                                     {/* Square Feet */}
-                                    <div className="flex flex-col items-center gap-1">
+                                    <div className="flex flex-row items-center gap-1">
                                         <Maximize2 className="h-6 w-6 text-primary" />
                                         <span className="text-sm text-foreground font-medium">{getSquareFeet()}</span>
                                     </div>
                                 </div>
-
+                                <RatingsOverview />
                                 {/* Developer for pre-con, Property Type for regular */}
                                 {/* {isPreCon && preConData?.developer ? (
                                     <div className="mb-2">
@@ -160,63 +193,80 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false }) => {
                         </div>
 
                         {/* Second Column */}
-                        <div className="flex flex-col gap-2 justify-start items-end">
-                        <h1 className="text-2xl font-bold text-foreground sm:text-3xl lg:text-4xl">
-                                {isPreCon && preConData?.startingPrice 
-                                    ? `Starting from ${formatPrice(preConData.startingPrice)}`
-                                    : formatPrice(property.listPrice)}
-                                </h1>
-                                {/* Estimated Value Section - Only for regular properties */}
-                                {!isPreCon && (
-                                    <div className="text-sm text-gray-600 flex flex-col items-end gap-1">
-                                        <span className="flex items-center gap-1">
-                                            <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fillRule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                                            </svg>
-                                            <span className="text-green-600 font-semibold">
-                                                {formatPrice(property.listPrice * 1.06)}
-                                            </span>
+                        <div className="flex flex-col gap-4 justify-start items-end">
+                            {/* Two Price Blocks Side by Side */}
+                            
+                                {/* Listed Price Block */}
+                                <div className="flex flex-col gap-1 items-end">
+                                    <span className="text-xs text-gray-600 font-medium uppercase">Listed Price</span>
+                                    <div className="text-xl font-bold text-foreground sm:text-3xl">
+                                        {isPreCon && preConData?.startingPrice 
+                                            ? `Starting from ${formatPrice(preConData.startingPrice)}`
+                                            : formatPrice(property.listPrice)}
+                                    </div>
+                                    {/* {!isPreCon && daysOnMarket !== null && ( */}
+                                        <span className="text-xs text-gray-500">
+                                            21 days on market
                                         </span>
-                                        
-                                        <span>Estimated value as of Oct 2025</span>
+                                    {/* )} */}
+                                </div>
+
+                                {/* Estimated Price Block */}
+                                {!isPreCon && (
+                                    <div className="flex flex-col gap-1 items-end">
+                                        <span className="text-xs text-gray-600 font-medium uppercase">Estimated Price</span>
+                                        <div className="text-lg font-bold text-green-700 sm:text-xl">
+                                            {formatPrice(estimatedPrice)}
+                                        </div>
+                                        <div className="flex items-center flex-row gap-1 mb-2">
+                                            {isPriceRising ? (
+                                                <>
+                                                    <ArrowUp className="h-3 w-3 text-green-600" />
+                                                    <span className="text-xs text-green-600 font-medium">
+                                                        +{formatPriceChange(priceChangeDollars)}
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <ArrowDown className="h-3 w-3 text-red-600" />
+                                                    <span className="text-xs text-red-600 font-medium">
+                                                        {formatPriceChange(priceChangeDollars)}
+                                                    </span>
+                                                </>
+                                            )}
+                                            <span className="text-xs text-gray-500">as of Oct 2025</span>
+                                        </div>
+                                        {/* Get Pre-Qualified Button */}
+                                        <Button 
+                                            onClick={handleGetPreQualified}
+                                            variant="outline"
+                                            className="w-full sm:w-auto font-medium py-2.5 bg-green-600 text-white px-4 rounded-lg transition-colors"
+                                        >
+                                            <CreditCard className="h-4 w-4 mr-2" />
+                                            Get Pre-Qualified
+                                        </Button>
                                     </div>
                                 )}
 
-                            {/* Get Pre-Qualified Button */}
-                            <Button 
-                                onClick={handleGetPreQualified}
-                                variant="outline"
-                                className="w-full sm:w-auto font-medium py-2.5 bg-green-600 text-white px-4 rounded-lg transition-colors"
-                            >
-                                <CreditCard className="h-4 w-4 mr-2" />
-                                Get Pre-Qualified
-                            </Button>
+                            
                         </div>
                     </div>
-                    {/* Announcement Message */}
-                    <div className="flex items-center gap-4 mb-4 p-3 bg-white rounded-lg">
-                        <Megaphone className="h-6 w-6 text-red-600 flex-shrink-0" />
-                        <span className="text-lg text-red-900 font-medium flex-1">
-                            Prices are changing. Get a free home estimate
-                        </span>
-                        <Button variant="default" className="rounded-lg bg-red-600 text-white">
-                            Find Home Estimate
-                        </Button>
-                    </div>
                     
-                    {/* Open House and CTA Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        {/* Open House Section - Hardcoded for UI purposes */}
-                        <div className="flex items-center justify-start gap-4 p-4 bg-gradient-to-r from-brand-celestial/10 to-brand-cb-blue/10 rounded-lg">
-                            {/* <Home className="h-6 w-6 text-blue-600 flex-shrink-0" /> */}
-                            <div className="">
-                                <div className="text-lg font-semibold text-blue-900 mb-1">
-                                    There is an Open House!
-                                </div>
-                                <div className="text-base text-blue-800">
-                                    Come visit this property on Saturday, November 08, 12:00 PM to 02:00 PM.
-                                </div>
+                    
+                    {/* home estimate and CTA Row */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                        {/* Announcement Message */}
+                        <div className="flex flex-col gap-4 p-3 bg-white rounded-lg">
+                            <div className="flex gap-2">
+                                <Megaphone className="h-6 w-6 text-red-600 flex-shrink-0" />
+                                <span className="text-lg text-red-900 font-medium flex-1">
+                                    Prices are changing. Get a free home estimate
+                                </span>
                             </div>
+                            
+                            <Button variant="default" className="w-full sm:w-auto rounded-lg bg-red-600 text-white">
+                                Find Home Estimate
+                            </Button>
                         </div>
 
                         {/* CTA Block */}

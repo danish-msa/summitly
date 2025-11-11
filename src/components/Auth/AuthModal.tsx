@@ -55,17 +55,17 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           </button>
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">
-              {isLogin ? 'Welcome Back' : 'Create Account'}
+              Welcome to Summitly!
             </h2>
             <p className="text-gray-600 mt-2">
-              {isLogin ? 'Please login to your account' : 'Please fill in your details'}
+              Get started on your real estate journey today.
             </p>
           </div>
           
           {isLogin ? (
-            <LoginForm onRegisterClick={() => setIsLogin(false)} />
+            <LoginForm onRegisterClick={() => setIsLogin(false)} onClose={onClose} />
           ) : (
-            <RegisterForm onLoginClick={() => setIsLogin(true)} />
+            <RegisterForm onLoginClick={() => setIsLogin(true)} onClose={onClose} />
           )}
         </div>
       </div>

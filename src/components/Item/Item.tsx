@@ -14,6 +14,8 @@ import BannerGallery from './Banner/BannerGallery'
 import SectionNavigation from './ItemBody/SectionNavigation'
 import SimilarListings from './ItemBody/SimilarListings'
 import StickyPropertyBar from './StickyPropertyBar'
+import Breadcrumbs from './Breadcrumbs'
+import { ContactSection } from './ItemBody/ContactSection'
 
 // Mock pre-construction data
 const getMockPreConData = () => ({
@@ -193,25 +195,24 @@ const Item: React.FC = () => {
     <div className='bg-background'>
       {/* Sticky Property Bar */}
       <StickyPropertyBar property={property} bannerRef={bannerRef} />
-      <div className='container-1400 mt-20 mb-4'  >
+      <div className='container-1400 mt-5 mb-4'>
+        {/* Breadcrumbs */}
+        <Breadcrumbs property={property} isPreCon={isPreCon} />
         <BannerGallery property={property} />
       </div>
       {/* Sticky Navigation Panel */}
       <SectionNavigation sections={navigationSections} property={property} />
       <div className='container-1400'>
           
-        
-        
         <div className='flex flex-row gap-8'>
           <div className='w-[75%] flex flex-col gap-6'>
-            <div ref={bannerRef}>
+            <div ref={bannerRef} data-banner-section>
               <Banner property={property} rawProperty={rawProperty} isPreCon={isPreCon} />
             </div>
             <ItemBody property={property} isPreCon={isPreCon} />
           </div>
-          <div className='w-[25%] flex flex-col items-start gap-6'>
+          <div className='w-[25%] flex flex-col gap-4 items-start gap-0 sticky top-[130px] self-start'>
             <BasicInfo property={property} rawProperty={rawProperty} isPreCon={isPreCon} />
-            {/* <AgentCTA /> */}
             <PropertyAlerts 
               propertyId={property.mlsNumber} 
               cityName={property.address.city || 'this area'}
@@ -226,9 +227,14 @@ const Item: React.FC = () => {
       </div>
 
       {!isPreCon && (
-        <div className='container-1400 mt-20 mb-4'>
-          <SimilarListings currentProperty={property} />
-        </div>
+        <>
+          <div className='container-1400 mt-20 mb-4'>
+            <ContactSection />
+          </div>
+          <div className='container-1400 mt-20 mb-4'>
+            <SimilarListings currentProperty={property} />
+          </div>
+        </>
       )}
     </div>
   )

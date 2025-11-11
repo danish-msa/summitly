@@ -71,20 +71,20 @@ const BasicInfo: React.FC<BasicInfoProps> = () => {
   return (
     <div className="w-full border border-gray-100">
       {/* Request a Tour / Book Appointment Section */}
-      <div className="space-y-3 mb-6 pb-6 border-b border-gray-200 bg-white p-6 rounded-xl shadow-sm ">
-        <h3 className="text-lg text-center font-semibold text-gray-900">
+      <div className="space-y-3 pb-6 border-b border-gray-200 bg-white p-6 rounded-xl shadow-sm ">
+        <div className="text-base text-center font-regular text-gray-900">
           <span className="text-gray-700">
             Request a tour as early as<br />{' '}
-            <span className=" text-gray-900">
+            <span className=" font-semibold text-gray-900">
               {getNearestAvailableDateTime.shortDate} at {getNearestAvailableDateTime.time}
             </span>
           </span>
-        </h3>
+        </div>
         {/* Two Buttons */}
         <div className="flex flex-col gap-3">
           <Button 
             onClick={handleScheduleTour}
-            className="flex-1 bg-brand-celestial hover:bg-brand-midnight text-white font-semibold py-4 rounded-lg transition-colors"
+            className="flex-1 bg-brand-celestial hover:bg-brand-midnight text-white font-semibold py-2 rounded-lg transition-colors"
           >
             <Calendar className="h-4 w-4 mr-2" />
             Schedule Tour
@@ -92,7 +92,7 @@ const BasicInfo: React.FC<BasicInfoProps> = () => {
           <Button 
             onClick={handleRequestInfo}
             variant="outline"
-            className="flex-1 border-brand-celestial text-brand-celestial hover:bg-brand-celestial hover:text-white font-semibold py-4 rounded-lg transition-colors"
+            className="flex-1 border-brand-celestial text-brand-celestial hover:bg-brand-celestial hover:text-white font-semibold py-2 rounded-lg transition-colors"
           >
             Request Info
           </Button>

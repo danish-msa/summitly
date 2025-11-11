@@ -6,6 +6,7 @@ import ScrollToTop from "@/components/Helper/ScrollToTop";
 import GoogleMapsProvider from '@/providers/GoogleMapsProvider';
 import QueryProvider from '@/components/providers/QueryProvider';
 import SessionProvider from '@/components/providers/SessionProvider';
+import { Toaster } from '@/components/ui/toaster';
 import { geometosNeue, bauziet, garamondPro, rubik, outfit } from './fonts';
 
 export const metadata: Metadata = {
@@ -38,6 +39,7 @@ export default function RootLayout({
             
             <Footer />
             <ScrollToTop />
+            <Toaster />
           </QueryProvider>
         </SessionProvider>
       </body>

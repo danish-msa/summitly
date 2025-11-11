@@ -237,10 +237,10 @@ export default function PropertyListingDetails({ data }: ListingDetailsProps) {
 
       {/* Tabbed Content */}
       <Tabs defaultValue="details" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3 h-12">
-          <TabsTrigger value="details" className="py-2">Property Details</TabsTrigger>
-          <TabsTrigger value="rooms" className="py-2">Rooms</TabsTrigger>
-          <TabsTrigger value="comparable" className="hidden lg:block py-2">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3">
+          <TabsTrigger value="details">Property Details</TabsTrigger>
+          <TabsTrigger value="rooms">Rooms</TabsTrigger>
+          <TabsTrigger value="comparable" className="hidden lg:block">
             Comparable Sales
           </TabsTrigger>
         </TabsList>
