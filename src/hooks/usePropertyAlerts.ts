@@ -73,10 +73,10 @@ export function usePropertyAlerts(mlsNumber?: string, cityName?: string, neighbo
 
   // Delete alert mutation
   const deleteAlertMutation = useMutation({
-    mutationFn: async (id?: string, mlsNum?: string) => {
+    mutationFn: async ({ id, mlsNumber }: { id?: string; mlsNumber?: string }) => {
       const params = new URLSearchParams()
       if (id) params.append('id', id)
-      if (mlsNum) params.append('mlsNumber', mlsNum)
+      if (mlsNumber) params.append('mlsNumber', mlsNumber)
       
       const response = await fetch(`/api/alerts/delete?${params.toString()}`, {
         method: 'DELETE',
