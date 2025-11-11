@@ -74,10 +74,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onLoginClick, onClose }) =>
       // Redirect to dashboard
       router.push('/dashboard');
       router.refresh();
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Something went wrong. Please try again."
       toast({
         title: "Registration Failed",
-        description: error.message || "Something went wrong. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -98,7 +99,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onLoginClick, onClose }) =>
         callbackUrl: '/dashboard',
       });
       // Note: We won't reach here because of redirect, but this handles the click
-    } catch (error) {
+    } catch {
       setIsGoogleLoading(false);
       toast({
         title: "Google Sign In Failed",

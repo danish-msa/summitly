@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Layers, ChevronLeft, ChevronRight, MapPin, Map as MapIcon, Navigation } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

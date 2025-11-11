@@ -25,7 +25,11 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    const where: any = {
+    const where: {
+      userId: string
+      id?: string
+      mlsNumber?: string
+    } = {
       userId: session.user.id,
     }
 
@@ -40,10 +44,11 @@ export async function DELETE(request: NextRequest) {
     })
 
     return NextResponse.json({ success: true }, { status: 200 })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error deleting alert:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to delete alert'
     return NextResponse.json(
-      { error: error?.message || 'Failed to delete alert' },
+      { error: errorMessage },
       { status: 500 }
     )
   }

@@ -90,12 +90,13 @@ const PropertyAlerts: React.FC<PropertyAlertsProps> = ({
         variant: "success",
         icon: <Heart className="h-5 w-5 text-green-600 fill-green-600" />,
       });
-    } catch (error: any) {
+    } catch (error) {
       // Revert on error
       setAlertOptions(alertOptions);
+      const errorMessage = error instanceof Error ? error.message : "Failed to update alert. Please try again."
       toast({
         title: "Error",
-        description: error?.message || "Failed to update alert. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     }

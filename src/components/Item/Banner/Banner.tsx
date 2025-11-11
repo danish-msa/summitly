@@ -100,8 +100,6 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false
         return null;
     };
 
-    const daysOnMarket = getDaysOnMarket();
-
     // Calculate price change in dollars for estimated price
     const estimatedPrice = property.listPrice * 1.06;
     const priceChangeDollars = estimatedPrice - property.listPrice;

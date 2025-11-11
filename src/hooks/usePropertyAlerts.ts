@@ -107,7 +107,6 @@ export function usePropertyAlerts(mlsNumber?: string, cityName?: string, neighbo
 // Hook to get all user's alerts (for dashboard)
 export function useAllPropertyAlerts() {
   const { data: session } = useSession()
-  const queryClient = useQueryClient()
 
   const { data: alerts = [], isLoading } = useQuery<PropertyWatchlist[]>({
     queryKey: ['allPropertyAlerts', session?.user?.id],

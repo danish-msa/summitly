@@ -67,10 +67,11 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ alert }, { status: 200 })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error saving alert:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to save alert'
     return NextResponse.json(
-      { error: error?.message || 'Failed to save alert' },
+      { error: errorMessage },
       { status: 500 }
     )
   }

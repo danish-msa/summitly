@@ -18,7 +18,7 @@ const getRatingLevel = (rating: number): { color: string; label: string } => {
 
 export const RatingBar = ({ label, rating, className }: RatingBarProps) => {
   const [isHovered, setIsHovered] = useState(false);
-  const { color, label: ratingLabel } = getRatingLevel(rating);
+  const { label: ratingLabel } = getRatingLevel(rating);
   const segments = 5;
   const filledSegments = Math.round((rating / 5) * segments);
 

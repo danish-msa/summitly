@@ -76,7 +76,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onRegisterClick, onClose }) => {
       // Redirect to dashboard
       router.push('/dashboard');
       router.refresh();
-    } catch (error) {
+    } catch {
       toast({
         title: "Login Failed",
         description: "Something went wrong. Please try again.",
@@ -104,7 +104,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onRegisterClick, onClose }) => {
         callbackUrl: '/dashboard',
       });
       // Note: We won't reach here because of redirect, but this handles the click
-    } catch (error) {
+    } catch {
       setIsGoogleLoading(false);
       toast({
         title: "Google Sign In Failed",

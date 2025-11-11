@@ -1,5 +1,4 @@
 import { RatingBar } from "./RatingBar";
-import { Card } from "@/components/ui/card";
 
 interface RatingData {
   label: string;

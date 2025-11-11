@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { Heart, Share2, Video, Images, ArrowUp, MessageCircle, CheckCircle2, XCircle } from 'lucide-react'
+import { Heart, Share2, Video, Images, ArrowUp, MessageCircle, XCircle } from 'lucide-react'
 import { PropertyListing } from '@/lib/types'
 import ShareModal from '../Banner/ShareModal'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -27,7 +27,6 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
   property
 }) => {
   const { data: session } = useSession()
-  const router = useRouter()
   const [activeSection, setActiveSection] = useState<string>(sections[0]?.id || '');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
@@ -66,10 +65,11 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
           icon: <Heart className="h-5 w-5 text-green-600 fill-green-600" />,
         });
       }
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to save property. Please try again."
       toast({
         title: "Error",
-        description: error?.message || "Failed to save property. Please try again.",
+        description: errorMessage,
         variant: "destructive",
         icon: <XCircle className="h-5 w-5 text-red-600" />,
       });

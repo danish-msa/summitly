@@ -19,11 +19,9 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 
 export function UserProfileDropdown() {
   const { data: session } = useSession()
-  const router = useRouter()
 
   if (!session?.user) {
     return null

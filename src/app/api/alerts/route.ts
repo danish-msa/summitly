@@ -19,7 +19,12 @@ export async function GET(request: NextRequest) {
     const cityName = searchParams.get('cityName')
     const neighborhood = searchParams.get('neighborhood')
 
-    const where: any = {
+    const where: {
+      userId: string
+      mlsNumber?: string
+      cityName?: string
+      neighborhood?: string
+    } = {
       userId: session.user.id,
     }
 
@@ -39,10 +44,11 @@ export async function GET(request: NextRequest) {
     })
 
     return NextResponse.json({ alerts }, { status: 200 })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching alerts:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch alerts'
     return NextResponse.json(
-      { error: error?.message || 'Failed to fetch alerts' },
+      { error: errorMessage },
       { status: 500 }
     )
   }
