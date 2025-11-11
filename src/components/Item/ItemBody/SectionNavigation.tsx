@@ -7,7 +7,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useSession } from 'next-auth/react'
 import { useSavedProperties } from '@/hooks/useSavedProperties'
 import { toast } from '@/hooks/use-toast'
-import { useRouter } from 'next/navigation'
 import AuthModal from '@/components/Auth/AuthModal'
 
 interface Section {

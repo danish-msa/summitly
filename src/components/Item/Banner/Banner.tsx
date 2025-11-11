@@ -84,22 +84,6 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false
         return `${sqft.toLocaleString()} SqFt`;
     };
 
-    // Get days on market
-    const getDaysOnMarket = () => {
-        if (rawProperty?.daysOnMarket !== undefined) {
-            return rawProperty.daysOnMarket;
-        }
-        // Fallback: calculate from listDate if available
-        if (property.listDate) {
-            const listDate = new Date(property.listDate);
-            const today = new Date();
-            const diffTime = Math.abs(today.getTime() - listDate.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            return diffDays;
-        }
-        return null;
-    };
-
     // Calculate price change in dollars for estimated price
     const estimatedPrice = property.listPrice * 1.06;
     const priceChangeDollars = estimatedPrice - property.listPrice;
