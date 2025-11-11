@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Calendar, CreditCard, Bed, Bath, Maximize2, Megaphone, Building2, Info, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PropertyListing } from '@/lib/types';
 import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/single-listing';
 import ShareModal from './ShareModal';
@@ -179,7 +178,7 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false }) => {
                             {/* Two Price Blocks Side by Side */}
                             
                                 {/* Listed Price Block */}
-                                <div className="flex flex-col gap-1 items-end">
+                                <div className="flex flex-col gap-1 items-end  rounded-lg bg-white p-4">
                                     <span className="text-xs text-gray-600 font-medium uppercase">Listed Price</span>
                                     <div className="text-xl font-bold text-foreground sm:text-3xl">
                                         {isPreCon && preConData?.startingPrice 
@@ -195,7 +194,7 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false }) => {
 
                                 {/* Estimated Price Block */}
                                 {!isPreCon && (
-                                    <div className="flex flex-col gap-1 items-end">
+                                    <div className="flex flex-col gap-1 items-end bg-gradient-to-r from-green-100 to-brand-cb-blue/30 rounded-lg p-4">
                                         <span className="text-xs text-gray-600 font-medium uppercase">Estimated Price</span>
                                         <div className="text-lg font-bold text-green-700 sm:text-xl">
                                             {formatPrice(estimatedPrice)}
@@ -218,6 +217,10 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false }) => {
                                             )}
                                             <span className="text-xs text-gray-500">as of Oct 2025</span>
                                         </div>
+                                        
+                                    </div>
+                                    
+                                )}
                                         {/* Get Pre-Qualified Button */}
                                         <Button 
                                             onClick={handleGetPreQualified}
@@ -227,9 +230,6 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false }) => {
                                             <CreditCard className="h-4 w-4 mr-2" />
                                             Get Pre-Qualified
                                         </Button>
-                                    </div>
-                                )}
-
                             
                         </div>
                     </div>
@@ -239,7 +239,7 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                         {/* Announcement Message */}
                         <div className="flex flex-col gap-4 p-3 bg-white rounded-lg">
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 flex-1">
                                 <Megaphone className="h-6 w-6 text-red-600 flex-shrink-0" />
                                 <span className="text-lg text-red-900 font-medium flex-1">
                                     Prices are changing. Get a free home estimate
@@ -257,16 +257,6 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false }) => {
                                 <span className="text-base font-semibold text-gray-900">
                                     We estimate this home will sell faster than 85% nearby.
                                 </span>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <button type="button" className="flex-shrink-0">
-                                            <Info className="h-4 w-4 text-gray-600 hover:text-gray-800 cursor-help" />
-                                        </button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-80 p-4 text-sm text-gray-700 leading-relaxed">
-                                        We use data from nearby home sales, property details and engagement to estimate how fast a home will sell. The property features and home sales data comes from BNYMLS.
-                                    </PopoverContent>
-                                </Popover>
                             </div>
                             <Button 
                                 onClick={handleScheduleTour}

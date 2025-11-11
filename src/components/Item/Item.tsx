@@ -205,13 +205,13 @@ const Item: React.FC = () => {
       <div className='container-1400'>
           
         <div className='flex flex-row gap-8'>
-          <div className='w-[75%] flex flex-col gap-6'>
+          <div className='w-[70%] flex flex-col gap-6'>
             <div ref={bannerRef} data-banner-section>
               <Banner property={property} rawProperty={rawProperty} isPreCon={isPreCon} />
             </div>
             <ItemBody property={property} isPreCon={isPreCon} />
           </div>
-          <div className='w-[25%] flex flex-col gap-4 items-start gap-0 sticky top-[130px] self-start'>
+          <div className='w-[30%] flex flex-col gap-4 items-start gap-0 sticky top-[130px] self-start'>
             <BasicInfo property={property} rawProperty={rawProperty} isPreCon={isPreCon} />
             <PropertyAlerts 
               propertyId={property.mlsNumber} 

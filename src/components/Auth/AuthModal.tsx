@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import LoginForm from '@/components/Auth/LoginForm';
 import RegisterForm from '@/components/Auth/RegisterForm';
 
@@ -25,9 +26,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
   if (!isMounted) return null;
 
-  return (
+  const modalContent = (
     <div 
-      className="fixed inset-0 z-[999] overflow-y-auto"
+      className="fixed inset-0 z-[9999] overflow-y-auto"
       style={{
         opacity: isMounted ? 1 : 0,
         transition: 'opacity 300ms ease-in-out'
@@ -40,7 +41,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           onClick={onClose}
         />
         <div 
-          className="bg-white rounded-lg p-8 w-full max-w-md relative transform overflow-hidden z-[1000]"
+          className="bg-white rounded-lg p-8 w-full max-w-md relative transform overflow-hidden z-[10000]"
           style={{
             transform: `translateY(${isOpen ? '0' : '-20px'}) scale(${isOpen ? '1' : '0.95'})`,
             opacity: isOpen ? 1 : 0,
@@ -71,6 +72,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       </div>
     </div>
   );
+
+  // Use portal to render modal at document body level, outside of any container
+  if (typeof window !== 'undefined') {
+    return createPortal(modalContent, document.body);
+  }
+
+  return null;
 };
 
 export default AuthModal;
