@@ -298,7 +298,7 @@ function WatchlistContent() {
       }
 
       try {
-        // Fetch all properties
+        // Fetch all propertiess
         const allProperties = await fetchPropertyListings()
         
         // Filter properties that match alert criteria
