@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { Bed, Bath, Maximize2, MapPin, Heart, ChevronLeft, ChevronRight, MoreVertical, Share2, EyeOff } from 'lucide-react';
+import { Bed, Bath, Maximize2, MapPin, Heart, ChevronLeft, ChevronRight, MoreVertical, Share2, EyeOff, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { useSavedProperties } from '@/hooks/useSavedProperties';
+import { useSession } from 'next-auth/react';
+import { toast } from '@/hooks/use-toast';
+import AuthModal from '@/components/Auth/AuthModal';
 
 // Mock data type based on your original interface
 interface PropertyListing {
@@ -37,7 +41,11 @@ interface PropertyCardProps {
 const PropertyCard = ({ property, onHide }: PropertyCardProps) => {
   const [imgError, setImgError] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  
+  const { data: session } = useSession();
+  const { checkIsSaved, saveProperty, unsaveProperty, isSaving, isUnsaving } = useSavedProperties();
+  const isSaved = checkIsSaved(property.mlsNumber);
   
   const images = property.images.allImages || [property.images.imageUrl];
   const totalImages = images.length;
@@ -82,10 +90,42 @@ const PropertyCard = ({ property, onHide }: PropertyCardProps) => {
     setCurrentImageIndex((prev) => (prev - 1 + totalImages) % totalImages);
   };
 
-  const toggleLike = (e: React.MouseEvent) => {
+  const handleSave = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsLiked(!isLiked);
+
+    // If not logged in, show auth modal
+    if (!session) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    try {
+      if (isSaved) {
+        await unsaveProperty(property.mlsNumber);
+        toast({
+          title: "Property Removed",
+          description: "Property has been removed from your saved list.",
+          icon: <XCircle className="h-5 w-5 text-gray-600" />,
+        });
+      } else {
+        await saveProperty({ mlsNumber: property.mlsNumber });
+        toast({
+          title: "Property Saved",
+          description: "Property has been added to your saved list.",
+          variant: "success",
+          icon: <Heart className="h-5 w-5 text-green-600 fill-green-600" />,
+        });
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to save property. Please try again."
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+        icon: <XCircle className="h-5 w-5 text-red-600" />,
+      });
+    }
   };
 
   const handleShare = (e: React.MouseEvent) => {
@@ -123,12 +163,13 @@ const PropertyCard = ({ property, onHide }: PropertyCardProps) => {
   };
 
   return (
-    <Link 
-      href={`/property/${property.mlsNumber}`} 
-      className="group cursor-pointer w-full block transition-transform duration-300"
-      aria-label={`View details for ${property.details.propertyType} at ${property.address.city}`}
-    >
-      <div className='bg-card rounded-3xl overflow-hidden transition-all duration-500 hover:shadow-xl' style={{ boxShadow: '0 8px 16px 0 rgba(0, 0, 0, 0.05)' }}>
+    <>
+      <Link 
+        href={`/property/${property.mlsNumber}`} 
+        className="group cursor-pointer w-full block transition-transform duration-300"
+        aria-label={`View details for ${property.details.propertyType} at ${property.address.city}`}
+      >
+        <div className='bg-card rounded-3xl overflow-hidden transition-all duration-500 hover:shadow-xl' style={{ boxShadow: '0 8px 16px 0 rgba(0, 0, 0, 0.05)' }}>
         {/* Image Section */}
         <div className='relative h-62 w-full overflow-hidden'>
           <img 
@@ -184,15 +225,19 @@ const PropertyCard = ({ property, onHide }: PropertyCardProps) => {
             </Badge>
           </div>
           
-          {/* Like Button - moved to bottom right, outside image carousel controls */}
+          {/* Save Button - moved to bottom right, outside image carousel controls */}
           <button
-            onClick={toggleLike}
-            className='absolute bottom-5 right-5 p-2 rounded-full bg-card/95 backdrop-blur-sm hover:bg-card transition-all duration-200 shadow-lg'
+            onClick={handleSave}
+            disabled={isSaving || isUnsaving}
+            className={cn(
+              'absolute bottom-5 right-5 p-2 rounded-full bg-card/95 backdrop-blur-sm hover:bg-card transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed',
+              isSaved && 'bg-red-50/95 hover:bg-red-50'
+            )}
           >
             <Heart 
               className={cn(
                 "w-5 h-5 transition-all duration-200",
-                isLiked ? "fill-red-500 text-red-500" : "text-muted-foreground"
+                isSaved ? "fill-red-500 text-red-500" : "text-muted-foreground"
               )} 
             />
           </button>
@@ -279,7 +324,14 @@ const PropertyCard = ({ property, onHide }: PropertyCardProps) => {
           </div>
         </div>
       </div>
-    </Link>
+      </Link>
+      
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+      />
+    </>
   );
 };
 
