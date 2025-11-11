@@ -38,8 +38,8 @@ const Description: React.FC<DescriptionProps> = ({ property, isPreCon = false })
   const displayedPoints = isExpanded ? allBulletPoints : allBulletPoints.slice(0, 8);
 
   return (
-    <div className="w-full flex flex-col md:flex-row gap-4 justify-between mt-10">
-      <div className="mb-4">
+    <div className="w-full flex flex-col  md:flex-row gap-4 justify-between mt-10">
+      <div className="mb-4 flex-1">
         <h3 className="text-lg font-semibold text-gray-900 mb-3">
           {isPreCon ? 'About this project' : 'About this property'}
         </h3>
