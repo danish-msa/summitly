@@ -31,7 +31,7 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
     return extractCoordinates(propertyAddress);
   }, [propertyAddress]);
   
-  // Use Repliers API with fallback to mock data
+  // Disabled API calls - using mock data only
   const { 
     marketData: apiMarketData, 
     listingsData: apiListingsData, 
@@ -43,7 +43,7 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
     latitude,
     longitude,
     propertyClass,
-    enabled: true, // Enable API calls
+    enabled: false, // Disabled API calls - using mock data only
   });
   
   // Find location data based on property address
@@ -79,30 +79,18 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
     findLocationData();
   }, [propertyAddress, searchLocations]);
   
-  // Use API data if available, otherwise fallback to mock data
+  // Always use mock data (API calls disabled)
   const chartData = useMemo(() => {
-    if (apiMarketData && !apiError) {
-      return apiMarketData;
-    }
-    // Fallback to mock data
     return generateMarketData(locationData, propertyClass);
-  }, [apiMarketData, apiError, locationData, propertyClass, chartKey]);
+  }, [locationData, propertyClass, chartKey]);
 
   const listingsData = useMemo(() => {
-    if (apiListingsData && !apiError) {
-      return apiListingsData;
-    }
-    // Fallback to mock data
     return generateListingsData(locationData);
-  }, [apiListingsData, apiError, locationData, chartKey]);
+  }, [locationData, chartKey]);
 
   const soldPriceData = useMemo(() => {
-    if (apiSoldPriceData && !apiError) {
-      return apiSoldPriceData;
-    }
-    // Fallback to mock data
     return generateSoldPriceData(locationData);
-  }, [apiSoldPriceData, apiError, locationData, chartKey]);
+  }, [locationData, chartKey]);
   
   // Ensure data arrays are always valid
   const marketData: MarketData = {
@@ -123,18 +111,15 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
     averagePrices: soldPriceData.averagePrices || [],
   };
   
-  // Determine if we're using API data or mock data
-  const usingAPIData = Boolean(!apiError && (apiMarketData || apiListingsData));
-  const isLoading = apiLoading;
+  // Always using mock data (API calls disabled)
+  const usingAPIData = false;
+  const isLoading = false;
   
   const handleRefresh = () => {
     setIsRefreshing(true);
-    setChartKey(prev => prev + 1); // Force chart re-render
+    setChartKey(prev => prev + 1); // Force chart re-render with new mock data
     
-    // Refetch API data
-    refetchAPI();
-    
-    toast.success(usingAPIData ? "Market data refreshed from API!" : "Market data refreshed!");
+    toast.success("Market data refreshed!");
     setTimeout(() => setIsRefreshing(false), 1000);
   };
 
@@ -298,13 +283,8 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
                     </div>
                   )}
                   <div className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
-                    {isLoading ? 'Loading...' : usingAPIData ? 'Live Data' : 'Sample Data'}
+                    Sample Data
                   </div>
-                  {apiError && (
-                    <div className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">
-                      {apiError}
-                    </div>
-                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -368,13 +348,8 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
                     Track market activity with new listings and closed sales
                   </p>
                   <div className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
-                    {isLoading ? 'Loading...' : usingAPIData ? 'Live Data' : 'Sample Data'}
+                    Sample Data
                   </div>
-                  {apiError && (
-                    <div className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">
-                      {apiError}
-                    </div>
-                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -438,13 +413,8 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
                     Track median and average sold prices over time
                   </p>
                   <div className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
-                    {isLoading ? 'Loading...' : usingAPIData ? 'Live Data' : 'Sample Data'}
+                    Sample Data
                   </div>
-                  {apiError && (
-                    <div className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">
-                      {apiError}
-                    </div>
-                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2">
