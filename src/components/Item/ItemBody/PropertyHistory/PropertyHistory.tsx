@@ -1,9 +1,12 @@
 import { PropertyHistoryProps, GroupedHistoryRecord } from './types';
 import { formatDate, getTimeAgo, getDaysOnMarket, getPropertyAddress } from './utils';
 import ListingTimeline from './ListingTimeline';
+import PriceChange from './PriceChange';
+import TaxHistory from './TaxHistory';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import EstimateHistorySection from './EstimateHistorySection';
 import { Button } from '@/components/ui/button';
-import { History } from 'lucide-react';
+import { HistoryIcon } from 'lucide-react';
 
 export default function PropertyHistory({ listingHistory, property }: PropertyHistoryProps) {
   // Get property address
@@ -29,8 +32,26 @@ export default function PropertyHistory({ listingHistory, property }: PropertyHi
   });
 
   return (
-    <div className="w-full">
-      <ListingTimeline groupedHistory={groupedHistory} propertyAddress={propertyAddress} />
+    <div className="w-full mt-5">
+      <Tabs defaultValue="timeline" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 h-12 p-1 mb-6">
+          <TabsTrigger value="timeline" className="py-2 text-base">Listing Timeline</TabsTrigger>
+          <TabsTrigger value="price" className="py-2 text-base">Price Change</TabsTrigger>
+          <TabsTrigger value="tax" className="py-2 text-base">Tax History</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="timeline" className="mt-0">
+          <ListingTimeline groupedHistory={groupedHistory} propertyAddress={propertyAddress} />
+        </TabsContent>
+        
+        <TabsContent value="price" className="mt-0">
+          <PriceChange groupedHistory={groupedHistory} propertyAddress={propertyAddress} />
+        </TabsContent>
+        
+        <TabsContent value="tax" className="mt-0">
+          <TaxHistory property={property} propertyAddress={propertyAddress} />
+        </TabsContent>
+      </Tabs>
       <EstimateHistorySection propertyAddress={propertyAddress} />
       
       {/* Call to Action */}
@@ -43,7 +64,7 @@ export default function PropertyHistory({ listingHistory, property }: PropertyHi
             console.log('Need more history details about this property');
           }}
         >
-          <History className="h-5 w-5" />
+          <HistoryIcon className="h-5 w-5" />
           Need more history details about this property
         </Button>
       </div>

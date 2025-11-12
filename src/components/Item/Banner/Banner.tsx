@@ -12,9 +12,10 @@ interface BannerProps {
     property: PropertyListing;
     rawProperty?: SinglePropertyListingResponse | null;
     isPreCon?: boolean;
+    isRent?: boolean;
 }
 
-const Banner: React.FC<BannerProps> = ({ property, isPreCon = false }) => {
+const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = false }) => {
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [isScheduleTourModalOpen, setIsScheduleTourModalOpen] = useState(false);
     
@@ -106,7 +107,11 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false }) => {
                                 </h1>
                                 <Badge className="bg-primary/10 text-primary hover:bg-primary/20 uppercase py-1 px-4">
                                     <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-primary"></span>
-                                    {isPreCon ? (preConData?.status || property.status || 'Selling') : (property.status || 'Active')}
+                                    {isPreCon 
+                                        ? (preConData?.status || property.status || 'Selling')
+                                        : isRent
+                                        ? (property.status || 'Available')
+                                        : (property.status || 'Active')}
                                 </Badge>
                             </div>
                             <div className="flex flex-col gap-2 justify-start">
@@ -116,9 +121,14 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false }) => {
                                     <span className="text-sm font-medium sm:text-lg max-w-xl">{fullAddress}</span>
                                 </div>
                                 {/* MLS Number or Project ID - Same line as heading */}
-                                {!isPreCon && (
+                                {!isPreCon && !isRent && (
                                     <span className="text-base text-muted-foreground font-normal">
                                         MLS # <span className="text-gray-600">{property.mlsNumber}</span>
+                                    </span>
+                                )}
+                                {isRent && (
+                                    <span className="text-base text-muted-foreground font-normal">
+                                        Listing ID: <span className="text-gray-600">{property.mlsNumber}</span>
                                     </span>
                                 )}
                                 
@@ -179,21 +189,30 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false }) => {
                             
                                 {/* Listed Price Block */}
                                 <div className="flex flex-col gap-1 items-end  rounded-lg bg-white p-4">
-                                    <span className="text-xs text-gray-600 font-medium uppercase">Listed Price</span>
+                                    <span className="text-xs text-gray-600 font-medium uppercase">
+                                        {isRent ? 'Monthly Rent' : isPreCon ? 'Starting Price' : 'Listed Price'}
+                                    </span>
                                     <div className="text-xl font-bold text-foreground sm:text-3xl">
                                         {isPreCon && preConData?.startingPrice 
                                             ? `Starting from ${formatPrice(preConData.startingPrice)}`
+                                            : isRent
+                                            ? `${formatPrice(property.listPrice)}/month`
                                             : formatPrice(property.listPrice)}
                                     </div>
-                                    {/* {!isPreCon && daysOnMarket !== null && ( */}
+                                    {!isPreCon && !isRent && (
                                         <span className="text-xs text-gray-500">
                                             21 days on market
                                         </span>
-                                    {/* )} */}
+                                    )}
+                                    {isRent && (
+                                        <span className="text-xs text-gray-500">
+                                            Available now
+                                        </span>
+                                    )}
                                 </div>
 
-                                {/* Estimated Price Block */}
-                                {!isPreCon && (
+                                {/* Estimated Price Block - Only for buy properties */}
+                                {!isPreCon && !isRent && (
                                     <div className="flex flex-col gap-1 items-end bg-gradient-to-r from-green-100 to-brand-cb-blue/30 rounded-lg p-4">
                                         <span className="text-xs text-gray-600 font-medium uppercase">Estimated Price</span>
                                         <div className="text-lg font-bold text-green-700 sm:text-xl">
@@ -221,7 +240,8 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false }) => {
                                     </div>
                                     
                                 )}
-                                        {/* Get Pre-Qualified Button */}
+                                        {/* Get Pre-Qualified Button - Only for buy properties */}
+                                        {!isRent && (
                                         <Button 
                                             onClick={handleGetPreQualified}
                                             variant="outline"
@@ -230,6 +250,7 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false }) => {
                                             <CreditCard className="h-4 w-4 mr-2" />
                                             Get Pre-Qualified
                                         </Button>
+                                        )}
                             
                         </div>
                     </div>

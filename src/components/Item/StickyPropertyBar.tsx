@@ -74,6 +74,9 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
     ? `${property.address.city}${property.address.state ? `, ${property.address.state}` : ''}`
     : 'Unknown Location';
   
+  // Check if this is a rental property
+  const isRental = property.type === 'Lease' || property.type?.toLowerCase().includes('lease');
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-CA', {
       style: 'currency',
@@ -132,7 +135,9 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
                 {/* Price */}
                 <div className="flex-shrink-0">
                   <div className="text-base lg:text-lg xl:text-2xl font-bold text-primary whitespace-nowrap">
-                    {formatPrice(property.listPrice)}
+                    {isRental 
+                      ? `${formatPrice(property.listPrice)}/mo`
+                      : formatPrice(property.listPrice)}
                   </div>
                 </div>
 

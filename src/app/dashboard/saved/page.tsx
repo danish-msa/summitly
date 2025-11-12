@@ -1,0 +1,120 @@
+"use client"
+
+import { Card, CardContent } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { useSavedProperties } from '@/hooks/useSavedProperties'
+import { fetchPropertyListings } from '@/lib/api/properties'
+import { useState, useEffect } from 'react'
+import { PropertyListing } from '@/lib/types'
+import PropertyCard from '@/components/Helper/PropertyCard'
+import { Loader2 } from 'lucide-react'
+
+const savedSearches = [
+  { id: 1, name: "Downtown Condos", criteria: "2-3 bed, $500K-$800K, Downtown", results: 24 },
+  { id: 2, name: "Family Homes", criteria: "3-4 bed, $800K-$1.2M, Suburbs", results: 18 },
+  { id: 3, name: "Investment Properties", criteria: "Any, $300K-$600K, All areas", results: 45 },
+]
+
+export default function Saved() {
+  const { savedProperties, isLoading: isLoadingSaved } = useSavedProperties()
+  const [properties, setProperties] = useState<PropertyListing[]>([])
+  const [isLoadingProperties, setIsLoadingProperties] = useState(true)
+
+  useEffect(() => {
+    const fetchProperties = async () => {
+      if (savedProperties.length === 0) {
+        setIsLoadingProperties(false)
+        return
+      }
+
+      try {
+        const allProperties = await fetchPropertyListings()
+        const savedMlsNumbers = savedProperties.map((sp) => sp.mlsNumber)
+        const savedPropertyListings = allProperties.filter((p) =>
+          savedMlsNumbers.includes(p.mlsNumber)
+        )
+        setProperties(savedPropertyListings)
+      } catch (error) {
+        console.error('Error fetching saved properties:', error)
+      } finally {
+        setIsLoadingProperties(false)
+      }
+    }
+
+    if (!isLoadingSaved) {
+      fetchProperties()
+    }
+  }, [savedProperties, isLoadingSaved])
+
+  if (isLoadingSaved || isLoadingProperties) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-3xl font-bold text-foreground">Saved Properties</h2>
+        <p className="text-muted-foreground">Manage your saved homes and searches</p>
+      </div>
+      <Tabs defaultValue="homes" className="w-full">
+        <TabsList>
+          <TabsTrigger value="homes">Saved Homes</TabsTrigger>
+          <TabsTrigger value="searches">Saved Searches</TabsTrigger>
+        </TabsList>
+        <TabsContent value="homes" className="mt-6">
+          {properties.length === 0 ? (
+            <div className="bg-card rounded-lg p-12 border border-border text-center">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                No saved properties yet
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                Start saving properties you're interested in to see them here.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {properties.map((property) => (
+                <PropertyCard
+                  key={property.mlsNumber}
+                  property={property}
+                  onHide={() => {}}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+        <TabsContent value="searches" className="mt-6">
+          <div className="space-y-4">
+            {savedSearches.map((search) => (
+              <Card key={search.id} className="shadow-md hover:shadow-lg transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-bold text-lg text-foreground mb-2">{search.name}</h3>
+                      <p className="text-sm text-muted-foreground mb-2">{search.criteria}</p>
+                      <Badge variant="secondary">{search.results} results</Badge>
+                    </div>
+                    <div className="flex gap-2">
+                      <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">
+                        View Results
+                      </button>
+                      <button className="px-4 py-2 border border-border rounded-lg hover:bg-muted">
+                        Edit
+                      </button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}
+

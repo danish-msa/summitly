@@ -2,11 +2,12 @@
 
 import { useSession, signOut } from 'next-auth/react'
 import { 
+  LayoutDashboard,
   Heart, 
-  MapPin, 
-  Calendar, 
-  Layers, 
-  User, 
+  Bell,
+  MessageSquare,
+  Calendar,
+  Settings,
   ArrowRightFromLine 
 } from 'lucide-react'
 import {
@@ -62,66 +63,43 @@ export function UserProfileDropdown() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <Link href="/dashboard/saved-properties">
+        <Link href="/dashboard">
+          <DropdownMenuItem>
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            <span>Dashboard</span>
+          </DropdownMenuItem>
+        </Link>
+        <Link href="/dashboard/saved">
           <DropdownMenuItem>
             <Heart className="mr-2 h-4 w-4" />
             <span>Saved Properties</span>
           </DropdownMenuItem>
         </Link>
-        <Link href="/dashboard/saved-images">
+        <Link href="/dashboard/alerts">
           <DropdownMenuItem>
-            <div className="mr-2 h-4 w-4 relative flex items-center justify-center">
-              <div className="absolute inset-0 border border-current rounded-sm"></div>
-              <Heart className="h-2.5 w-2.5" fill="currentColor" />
-            </div>
-            <span>Saved Images</span>
+            <Bell className="mr-2 h-4 w-4" />
+            <span>Alerts</span>
           </DropdownMenuItem>
         </Link>
-        <Link href="/dashboard/saved-areas">
+        <Link href="/dashboard/chat">
           <DropdownMenuItem>
-            <MapPin className="mr-2 h-4 w-4" />
-            <span>Saved Areas</span>
+            <MessageSquare className="mr-2 h-4 w-4" />
+            <span>Chat</span>
           </DropdownMenuItem>
         </Link>
-        <Link href="/dashboard/saved-communities">
+        <Link href="/dashboard/tours">
           <DropdownMenuItem>
-            <div className="mr-2 h-4 w-4 relative">
-              <MapPin className="h-4 w-4" />
-              <Heart className="h-2 w-2 absolute top-0 left-0.5" fill="currentColor" />
-            </div>
-            <span>Saved Communities</span>
-          </DropdownMenuItem>
-        </Link>
-        <Link href="/dashboard/watchlist">
-          <DropdownMenuItem>
-            <Heart className="mr-2 h-4 w-4" />
-            <span>Watchlist</span>
-          </DropdownMenuItem>
-        </Link>
-        <Link href="/dashboard/planned-open-houses">
-          <DropdownMenuItem>
-            <div className="mr-2 h-4 w-4 relative">
-              <Calendar className="h-4 w-4 absolute" />
-              <div className="absolute top-0.5 left-1 flex gap-0.5">
-                <div className="h-1 w-1 rounded-full bg-current"></div>
-                <div className="h-1 w-1 rounded-full bg-current"></div>
-                <div className="h-1 w-1 rounded-full bg-current"></div>
-              </div>
-            </div>
-            <span>Planned Open Houses</span>
-          </DropdownMenuItem>
-        </Link>
-        <Link href="/dashboard/recently-viewed">
-          <DropdownMenuItem>
-            <Layers className="mr-2 h-4 w-4" />
-            <span>Recently Viewed</span>
+            <Calendar className="mr-2 h-4 w-4" />
+            <span>Tours & Appointments</span>
           </DropdownMenuItem>
         </Link>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <User className="mr-2 h-4 w-4" />
-          <span>Account Settings</span>
-        </DropdownMenuItem>
+        <Link href="/dashboard/settings">
+          <DropdownMenuItem>
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Settings</span>
+          </DropdownMenuItem>
+        </Link>
         <DropdownMenuItem onClick={handleSignOut}>
           <ArrowRightFromLine className="mr-2 h-4 w-4" />
           <span>Sign Out</span>

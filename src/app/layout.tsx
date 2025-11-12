@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import ResponsiveNav from "@/components/Home/Navbar/ResponsiveNav";
-import Footer from "@/components/Home/Footer/Footer";
+import { ConditionalFooter } from "@/components/Home/Footer/ConditionalFooter";
 import ScrollToTop from "@/components/Helper/ScrollToTop";
 import GoogleMapsProvider from '@/providers/GoogleMapsProvider';
 import QueryProvider from '@/components/providers/QueryProvider';
@@ -37,7 +37,7 @@ export default function RootLayout({
               {children}
             </GoogleMapsProvider>
             
-            <Footer />
+            <ConditionalFooter />
             <ScrollToTop />
             <Toaster />
           </QueryProvider>

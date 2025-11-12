@@ -17,7 +17,7 @@ import StickyPropertyBar from './StickyPropertyBar'
 import Breadcrumbs from './Breadcrumbs'
 import { ContactSection } from './ItemBody/ContactSection'
 
-const Item: React.FC = () => {
+const ItemRent: React.FC = () => {
   const params = useParams();
   const router = useRouter();
   const propertyId = params?.id as string || '';
@@ -40,12 +40,12 @@ const Item: React.FC = () => {
         const foundProperty = listings.find(p => p.mlsNumber === propertyId);
         
         if (foundProperty) {
-          // Verify this is a buy property (not rent)
+          // Verify this is a rental property
           const isRental = foundProperty.type === 'Lease' || foundProperty.type?.toLowerCase().includes('lease');
           
-          if (isRental) {
-            // Redirect to rent page
-            router.replace(`/rent/${propertyId}`);
+          if (!isRental) {
+            // Redirect to buy page
+            router.replace(`/property/${propertyId}`);
             return;
           }
           
@@ -87,10 +87,10 @@ const Item: React.FC = () => {
           <p className="text-red-500 text-lg mb-4">{error || 'Property not found'}</p>
           {error && error.includes('not found') && (
             <button
-              onClick={() => router.push('/listings')}
+              onClick={() => router.push('/rent')}
               className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
             >
-              Browse Properties
+              Browse Rentals
             </button>
           )}
         </div>
@@ -98,11 +98,10 @@ const Item: React.FC = () => {
     );
   }
 
-  // Define navigation sections for buy properties (includes history)
+  // Define navigation sections for rent (no history section)
   const navigationSections = [
     { id: 'description', label: 'Description' },
     { id: 'listing-details', label: 'Listing Details' },
-    { id: 'history', label: 'History' },
     { id: 'features', label: 'Neighborhood' },
     { id: 'lifestyle', label: 'Lifestyle' },
     { id: 'demographics', label: 'Demographics' },
@@ -114,9 +113,9 @@ const Item: React.FC = () => {
     <div className='bg-background'>
       {/* Sticky Property Bar */}
       <StickyPropertyBar property={property} bannerRef={bannerRef} />
-      <div className='container-1400 mt-5 mb-4'>
+      <div className='container-1400 mt-20 mb-4'>
         {/* Breadcrumbs */}
-        <Breadcrumbs property={property} isPreCon={false} />
+        <Breadcrumbs property={property} isPreCon={false} isRent={true} />
         <BannerGallery property={property} />
       </div>
       {/* Sticky Navigation Panel */}
@@ -126,12 +125,12 @@ const Item: React.FC = () => {
         <div className='flex flex-row gap-8'>
           <div className='w-[70%] flex flex-col gap-6'>
             <div ref={bannerRef} data-banner-section>
-              <Banner property={property} rawProperty={rawProperty} isPreCon={false} />
+              <Banner property={property} rawProperty={rawProperty} isPreCon={false} isRent={true} />
             </div>
-            <ItemBody property={property} isPreCon={false} />
+            <ItemBody property={property} isPreCon={false} isRent={true} />
           </div>
           <div className='w-[30%] flex flex-col gap-4 items-start gap-0 sticky top-[130px] self-start'>
-            <BasicInfo property={property} rawProperty={rawProperty} isPreCon={false} />
+            <BasicInfo property={property} rawProperty={rawProperty} isPreCon={false} isRent={true} />
             <PropertyAlerts 
               propertyId={property.mlsNumber} 
               cityName={property.address.city || 'this area'}
@@ -155,4 +154,5 @@ const Item: React.FC = () => {
   )
 }
 
-export default Item
+export default ItemRent
+

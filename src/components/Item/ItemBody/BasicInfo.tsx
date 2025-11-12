@@ -10,9 +10,10 @@ interface BasicInfoProps {
   property: PropertyListing;
   rawProperty?: SinglePropertyListingResponse | null;
   isPreCon?: boolean;
+  isRent?: boolean;
 }
 
-const BasicInfo: React.FC<BasicInfoProps> = () => {
+const BasicInfo: React.FC<BasicInfoProps> = ({ isRent = false }) => {
   const [isScheduleTourModalOpen, setIsScheduleTourModalOpen] = useState(false);
   const [isRequestInfoModalOpen, setIsRequestInfoModalOpen] = useState(false);
 

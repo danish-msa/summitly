@@ -1,9 +1,9 @@
-import Item from '@/components/Item/Item';
+import ItemPreCon from '@/components/Item/ItemPreCon';
 import React from 'react'
 
 const PreConstructionItemPage: React.FC = () => {
   return (
-    <Item />
+    <ItemPreCon />
   )
 }
 

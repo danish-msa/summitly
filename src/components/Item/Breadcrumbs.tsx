@@ -6,12 +6,25 @@ import { PropertyListing } from '@/lib/types';
 interface BreadcrumbsProps {
   property: PropertyListing;
   isPreCon?: boolean;
+  isRent?: boolean;
 }
 
-const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ property, isPreCon = false }) => {
+const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ property, isPreCon = false, isRent = false }) => {
+  const getBreadcrumbLabel = () => {
+    if (isPreCon) return 'Pre-Construction';
+    if (isRent) return 'Rent';
+    return 'Listings';
+  };
+
+  const getBreadcrumbHref = () => {
+    if (isPreCon) return '/pre-con';
+    if (isRent) return '/rent';
+    return '/listings';
+  };
+
   const breadcrumbItems = [
     { label: 'Home', href: '/' },
-    { label: isPreCon ? 'Pre-Construction' : 'Listings', href: isPreCon ? '/pre-con' : '/listings' },
+    { label: getBreadcrumbLabel(), href: getBreadcrumbHref() },
     ...(property.address.city ? [{ label: property.address.city, href: null }] : []),
     ...(property.address.neighborhood ? [{ label: property.address.neighborhood, href: null }] : []),
     { label: property.address.location || `${property.address.streetNumber || ''} ${property.address.streetName || ''}`.trim() || 'Property', href: null }
