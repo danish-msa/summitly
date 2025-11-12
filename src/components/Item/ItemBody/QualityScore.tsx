@@ -15,7 +15,7 @@ const ratingsData: RatingData[] = [
 export const RatingsOverview = () => {
   return (
     <div className="max-w-xl w-full">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {ratingsData.map((item) => (
           <RatingBar key={item.label} label={item.label} rating={item.rating} />
         ))}

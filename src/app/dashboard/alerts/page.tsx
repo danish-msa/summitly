@@ -85,7 +85,7 @@ export default function Alerts() {
                     <MapPin className="h-4 w-4" />
                     <span className="text-sm">{alert.location}</span>
                   </div>
-                  {alert.type === "price-drop" ? (
+                  {alert.type === "price-drop" && alert.oldPrice && alert.newPrice ? (
                     <div className="flex items-center gap-3">
                       <span className="text-muted-foreground line-through">{alert.oldPrice}</span>
                       <span className="text-2xl font-bold text-green-600">{alert.newPrice}</span>
