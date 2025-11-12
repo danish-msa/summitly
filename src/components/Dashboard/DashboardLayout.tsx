@@ -11,6 +11,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
   const router = useRouter()
 
+  // Reset body padding on dashboard pages
+  useEffect(() => {
+    document.body.style.paddingTop = '0'
+    return () => {
+      document.body.style.paddingTop = '0'
+    }
+  }, [])
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/signin')
@@ -28,14 +36,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   if (!session) {
     return null
   }
-
-  // Reset body padding on dashboard pages
-  useEffect(() => {
-    document.body.style.paddingTop = '0'
-    return () => {
-      document.body.style.paddingTop = '0'
-    }
-  }, [])
 
   return (
     <SidebarProvider>

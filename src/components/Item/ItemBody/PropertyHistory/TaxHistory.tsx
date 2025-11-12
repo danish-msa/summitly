@@ -1,5 +1,4 @@
 import { PropertyListing } from '@/lib/types';
-import { formatDate } from './utils';
 import { FileText, TrendingUp } from 'lucide-react';
 
 interface TaxHistoryProps {

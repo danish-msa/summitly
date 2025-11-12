@@ -5,26 +5,17 @@ import { Badge } from "@/components/ui/badge"
 import { TrendingDown, Star, MapPin } from "lucide-react"
 import { useAllPropertyAlerts } from '@/hooks/usePropertyAlerts'
 import { fetchPropertyListings } from '@/lib/api/properties'
-import { useState, useEffect } from 'react'
-import { PropertyListing } from '@/lib/types'
+import { useEffect } from 'react'
 import Link from 'next/link'
 
 export default function Alerts() {
   const { alerts } = useAllPropertyAlerts()
-  const [properties, setProperties] = useState<PropertyListing[]>([])
 
   useEffect(() => {
     const loadAlerts = async () => {
       try {
-        const allProperties = await fetchPropertyListings()
-        // Match properties to alerts
-        const matchedProperties = allProperties.filter(p => 
-          alerts.some(alert => 
-            alert.mlsNumber === p.mlsNumber ||
-            (alert.cityName && p.address.city?.toLowerCase().includes(alert.cityName.toLowerCase()))
-          )
-        )
-        setProperties(matchedProperties)
+        await fetchPropertyListings()
+        // Match properties to alerts - can be used in future implementation
       } catch (error) {
         console.error('Error loading alerts:', error)
       }

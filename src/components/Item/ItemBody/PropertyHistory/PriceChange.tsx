@@ -1,5 +1,5 @@
 import { GroupedHistoryRecord } from './types';
-import { formatDate, formatCurrency } from './utils';
+import { formatCurrency } from './utils';
 import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
 
 interface PriceChangeProps {

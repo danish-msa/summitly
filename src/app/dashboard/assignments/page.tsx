@@ -1,8 +1,5 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { MapPin, BedDouble, Bath, Square, Eye, Heart } from "lucide-react"
 import PropertyCard from '@/components/Helper/PropertyCard'
 import { fetchPropertyListings } from '@/lib/api/properties'
 import { useState, useEffect } from 'react'
