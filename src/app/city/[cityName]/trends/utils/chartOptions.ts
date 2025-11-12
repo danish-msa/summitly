@@ -1,0 +1,444 @@
+import { formatPrice } from './helpers';
+
+// Chart data types
+export interface AverageSoldPriceData {
+  months: string[];
+  prices: number[];
+}
+
+export interface SalesVolumeGraphData {
+  months: string[];
+  detached: number[];
+  townhouse: number[];
+  condo: number[];
+}
+
+export interface SalesAndInventoryData {
+  months: string[];
+  sales: number[];
+  inventory: number[];
+}
+
+export interface DaysOnMarketData {
+  months: string[];
+  lastYear: number[];
+  currentYear: number[];
+}
+
+// Get Pro-Rated Month Index
+export const getProRatedMonthIndex = (months: string[]): number => {
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+  
+  if (currentYear >= 2025 && currentMonth >= 9) {
+    return 9; // Oct 25 index
+  }
+  return months.length - 2;
+};
+
+// Chart option for Average Sold Price
+export const getAverageSoldPriceChartOption = (data: AverageSoldPriceData) => {
+  return {
+    tooltip: {
+      trigger: 'axis' as const,
+      formatter: (params: any) => {
+        const param = params[0];
+        return `${param.name}<br/>${param.seriesName}: ${formatPrice(param.value)}`;
+      },
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#e5e7eb',
+      textStyle: { color: '#1f2937' }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: '10%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category' as const,
+      data: data.months,
+      axisLabel: {
+        color: '#6b7280'
+      }
+    },
+    yAxis: {
+      type: 'value' as const,
+      axisLabel: {
+        formatter: (value: number) => formatPrice(value),
+        color: '#6b7280'
+      }
+    },
+    series: [
+      {
+        name: 'Average Sold Price',
+        type: 'line' as const,
+        data: data.prices,
+        smooth: true,
+        lineStyle: {
+          color: '#3b82f6',
+          width: 3
+        },
+        itemStyle: {
+          color: '#3b82f6'
+        },
+        areaStyle: {
+          color: {
+            type: 'linear' as const,
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(59, 130, 246, 0.3)' },
+              { offset: 1, color: 'rgba(59, 130, 246, 0.05)' }
+            ]
+          }
+        }
+      }
+    ]
+  };
+};
+
+// Chart option for Sales Volume by Property Type
+export const getSalesVolumeChartOption = (data: SalesVolumeGraphData, proRatedIndex: number) => {
+  const detachedPercentages = data.detached.map((detached, index) => {
+    const total = detached + data.townhouse[index] + data.condo[index];
+    return total > 0 ? Math.round((detached / total) * 100) : 0;
+  });
+  
+  const townhousePercentages = data.townhouse.map((townhouse, index) => {
+    const total = data.detached[index] + townhouse + data.condo[index];
+    return total > 0 ? Math.round((townhouse / total) * 100) : 0;
+  });
+  
+  const condoPercentages = data.condo.map((condo, index) => {
+    const total = data.detached[index] + data.townhouse[index] + condo;
+    return total > 0 ? Math.round((condo / total) * 100) : 0;
+  });
+  
+  return {
+    tooltip: {
+      trigger: 'axis' as const,
+      formatter: (params: any) => {
+        let result = `${params[0].name}<br/>`;
+        params.forEach((param: any) => {
+          result += `${param.marker}${param.seriesName}: ${param.value}%<br/>`;
+        });
+        return result;
+      },
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#e5e7eb',
+      textStyle: { color: '#1f2937' }
+    },
+    legend: {
+      data: ['Detached', 'Townhouse', 'Condo'],
+      top: '5%',
+      textStyle: {
+        color: '#1f2937'
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: '15%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category' as const,
+      boundaryGap: false,
+      data: data.months,
+      axisLabel: {
+        color: '#6b7280',
+        rotate: 0
+      }
+    },
+    yAxis: {
+      type: 'value' as const,
+      max: 100,
+      axisLabel: {
+        formatter: '{value}%',
+        color: '#6b7280'
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#e5e7eb',
+          type: 'dashed' as const
+        }
+      }
+    },
+    series: [
+      {
+        name: 'Detached',
+        type: 'line' as const,
+        stack: 'Total',
+        areaStyle: {
+          color: {
+            type: 'linear' as const,
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(239, 68, 68, 0.6)' },
+              { offset: 1, color: 'rgba(239, 68, 68, 0.1)' }
+            ]
+          }
+        },
+        lineStyle: {
+          width: 0
+        },
+        emphasis: {
+          focus: 'series' as const
+        },
+        data: detachedPercentages,
+        markLine: {
+          silent: true,
+          symbol: 'none',
+          lineStyle: {
+            color: '#ef4444',
+            type: 'dashed' as const,
+            width: 2
+          },
+          label: {
+            show: true,
+            position: 'insideEndTop' as const,
+            formatter: 'Pro-Rated',
+            color: '#ef4444',
+            fontSize: 12,
+            fontWeight: 'bold' as const,
+            rotate: 90
+          },
+          data: [
+            {
+              xAxis: proRatedIndex
+            }
+          ]
+        }
+      },
+      {
+        name: 'Townhouse',
+        type: 'line' as const,
+        stack: 'Total',
+        areaStyle: {
+          color: {
+            type: 'linear' as const,
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(20, 184, 166, 0.6)' },
+              { offset: 1, color: 'rgba(20, 184, 166, 0.1)' }
+            ]
+          }
+        },
+        lineStyle: {
+          width: 0
+        },
+        emphasis: {
+          focus: 'series' as const
+        },
+        data: townhousePercentages
+      },
+      {
+        name: 'Condo',
+        type: 'line' as const,
+        stack: 'Total',
+        areaStyle: {
+          color: {
+            type: 'linear' as const,
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(59, 130, 246, 0.6)' },
+              { offset: 1, color: 'rgba(59, 130, 246, 0.1)' }
+            ]
+          }
+        },
+        lineStyle: {
+          width: 0
+        },
+        emphasis: {
+          focus: 'series' as const
+        },
+        data: condoPercentages
+      }
+    ]
+  };
+};
+
+// Chart option for Sales and Inventory
+export const getSalesAndInventoryChartOption = (data: SalesAndInventoryData) => {
+  return {
+    tooltip: {
+      trigger: 'axis' as const,
+      formatter: (params: any) => {
+        let result = `${params[0].name}<br/>`;
+        params.forEach((param: any) => {
+          result += `${param.marker}${param.seriesName}: ${param.value}<br/>`;
+        });
+        return result;
+      },
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#e5e7eb',
+      textStyle: { color: '#1f2937' }
+    },
+    legend: {
+      data: ['Sales', 'Inventory'],
+      top: '5%',
+      textStyle: {
+        color: '#1f2937'
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: '15%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category' as const,
+      data: data.months,
+      axisLabel: {
+        color: '#6b7280'
+      }
+    },
+    yAxis: {
+      type: 'value' as const,
+      axisLabel: {
+        color: '#6b7280'
+      }
+    },
+    series: [
+      {
+        name: 'Sales',
+        type: 'line' as const,
+        data: data.sales,
+        smooth: true,
+        lineStyle: {
+          color: '#3b82f6',
+          width: 3
+        },
+        itemStyle: {
+          color: '#3b82f6'
+        },
+        areaStyle: {
+          color: {
+            type: 'linear' as const,
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(59, 130, 246, 0.3)' },
+              { offset: 1, color: 'rgba(59, 130, 246, 0.05)' }
+            ]
+          }
+        }
+      },
+      {
+        name: 'Inventory',
+        type: 'line' as const,
+        data: data.inventory,
+        smooth: true,
+        lineStyle: {
+          color: '#10b981',
+          width: 3
+        },
+        itemStyle: {
+          color: '#10b981'
+        },
+        areaStyle: {
+          color: {
+            type: 'linear' as const,
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(16, 185, 129, 0.3)' },
+              { offset: 1, color: 'rgba(16, 185, 129, 0.05)' }
+            ]
+          }
+        }
+      }
+    ]
+  };
+};
+
+// Chart option for Days on Market
+export const getDaysOnMarketChartOption = (data: DaysOnMarketData) => {
+  return {
+    tooltip: {
+      trigger: 'axis' as const,
+      formatter: (params: any) => {
+        let result = `${params[0].name}<br/>`;
+        params.forEach((param: any) => {
+          result += `${param.marker}${param.seriesName}: ${param.value} days<br/>`;
+        });
+        return result;
+      },
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#e5e7eb',
+      textStyle: { color: '#1f2937' }
+    },
+    legend: {
+      data: ['Last Year', 'Current Year'],
+      top: '5%',
+      textStyle: {
+        color: '#1f2937'
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: '15%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category' as const,
+      data: data.months,
+      axisLabel: {
+        color: '#6b7280',
+        rotate: 0
+      }
+    },
+    yAxis: {
+      type: 'value' as const,
+      name: 'Days',
+      axisLabel: {
+        formatter: '{value}',
+        color: '#6b7280'
+      }
+    },
+    series: [
+      {
+        name: 'Last Year',
+        type: 'bar' as const,
+        data: data.lastYear,
+        itemStyle: {
+          color: '#94a3b8'
+        },
+        barWidth: '40%'
+      },
+      {
+        name: 'Current Year',
+        type: 'bar' as const,
+        data: data.currentYear,
+        itemStyle: {
+          color: '#3b82f6'
+        },
+        barWidth: '40%'
+      }
+    ]
+  };
+};
+

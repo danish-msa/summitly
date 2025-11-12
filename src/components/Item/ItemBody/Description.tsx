@@ -47,12 +47,12 @@ const Description: React.FC<DescriptionProps> = ({ property, isPreCon = false })
           {description || 'No description available for this property.'}
         </p>
       </div>
-      <div className="flex flex-col bg-gray-100 rounded-lg p-8 md:w-[45%]">
+      <div className="flex flex-col bg-[linear-gradient(112deg,#7e3af2_1.66%,#eb7161)] rounded-lg p-8 md:w-[45%]">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="h-5 w-5 text-secondary" />
-          <h3 className="text-lg font-semibold text-gray-900">AI Summary of this property</h3>
+          <Sparkles className="h-5 w-5 text-white" />
+          <h3 className="text-xl font-semibold text-white">AI Summary of this property</h3>
         </div>
-        <ul className="text-gray-500 font-light leading-relaxed space-y-2 list-none">
+        <ul className="text-white font-light leading-relaxed space-y-2 list-none">
           {displayedPoints.map((point, index) => (
             <li key={index} className="flex items-start">
               <span className="mr-2">•</span>
@@ -64,10 +64,10 @@ const Description: React.FC<DescriptionProps> = ({ property, isPreCon = false })
           <div className="mt-2 self-start">
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="flex items-center gap-2 text-secondary hover:text-primary font-medium text-base transition-colors"
+              className="flex items-center gap-2 text-white hover:underline font-medium text-base transition-colors"
             >
               {isExpanded ? 'Read less' : 'Read more'}
-            <ChevronDown className={`h-5 w-5 text-secondary transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`h-5 w-5 text-white transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
 
             </button>
           </div>

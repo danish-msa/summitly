@@ -7,9 +7,9 @@ import PropertyCard from '@/components/Helper/PropertyCard';
 import { PropertyListing } from '@/lib/types';
 import { fetchTopCities } from '@/data/data';
 import { AreaSelector } from '@/components/City/AreaSelector';
-import { MarketStats } from '@/components/City/MarketStats';
 import { Separator } from '@/components/ui/separator';
-import { LayoutGrid, MapPin, Bell } from 'lucide-react';
+import { LayoutGrid, MapPin, Bell, TrendingUp, Home } from 'lucide-react';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useGlobalFilters } from '@/hooks/useGlobalFilters';
 import GlobalFilters from '@/components/common/filters/GlobalFilters';
@@ -229,10 +229,43 @@ const CityPage: React.FC = () => {
           <AreaSelector properties={properties} cityName={displayCityName} />
         </section>
 
-
-        {/* Market Stats */}
+        {/* Navigation Buttons */}
         <section>
-          <MarketStats cityName={displayCityName} properties={properties} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Link
+              href={`/city/${citySlug}/trends`}
+              className="group flex items-center gap-4 p-6 border bg-white rounded-lg hover:shadow-lg transition-all duration-200 hover:border-primary"
+            >
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                <TrendingUp className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-foreground mb-1">
+                  Market Trends
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Explore housing market statistics and price trends for {displayCityName}
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              href={`/city/${citySlug}/neighbourhoods`}
+              className="group flex items-center gap-4 p-6 border bg-white rounded-lg hover:shadow-lg transition-all duration-200 hover:border-primary"
+            >
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                <Home className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-foreground mb-1">
+                  Neighbourhoods
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Discover different neighbourhoods and areas in {displayCityName}
+                </p>
+              </div>
+            </Link>
+          </div>
         </section>
         <Separator />
 

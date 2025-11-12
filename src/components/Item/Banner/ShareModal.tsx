@@ -2,15 +2,16 @@ import React, { useState } from 'react';
 import { 
   Copy, 
   Mail, 
-  MessageCircle, 
-  Facebook, 
-  Twitter, 
-  Bookmark, 
-  MessageSquare, 
-  Linkedin,
   CheckIcon
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { 
+  FaFacebook, 
+  FaTwitter, 
+  FaLinkedin, 
+  FaPinterest, 
+  FaReddit,
+  FaWhatsapp
+} from "react-icons/fa";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { PropertyListing } from '@/lib/types';
@@ -31,43 +32,45 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, property }) =>
 
   const shareOptions = [
     {
-      name: 'Copy Link',
-      icon: Copy,
-      action: () => copyToClipboard()
-    },
-    {
       name: 'Email',
       icon: Mail,
+      color: 'bg-blue-100 hover:bg-blue-200 text-blue-700',
       action: () => shareViaEmail()
     },
     {
       name: 'WhatsApp',
-      icon: MessageCircle,
+      icon: FaWhatsapp,
+      color: 'bg-green-100 hover:bg-green-200 text-green-700',
       action: () => shareViaWhatsApp()
     },
     {
       name: 'Facebook',
-      icon: Facebook,
+      icon: FaFacebook,
+      color: 'bg-blue-600 hover:bg-blue-700 text-white',
       action: () => shareViaFacebook()
     },
     {
       name: 'Twitter',
-      icon: Twitter,
+      icon: FaTwitter,
+      color: 'bg-sky-500 hover:bg-sky-600 text-white',
       action: () => shareViaTwitter()
     },
     {
       name: 'Pinterest',
-      icon: Bookmark,
+      icon: FaPinterest,
+      color: 'bg-red-600 hover:bg-red-700 text-white',
       action: () => shareViaPinterest()
     },
     {
       name: 'Reddit',
-      icon: MessageSquare,
+      icon: FaReddit,
+      color: 'bg-orange-500 hover:bg-orange-600 text-white',
       action: () => shareViaReddit()
     },
     {
       name: 'LinkedIn',
-      icon: Linkedin,
+      icon: FaLinkedin,
+      color: 'bg-blue-700 hover:bg-blue-800 text-white',
       action: () => shareViaLinkedIn()
     }
   ];
@@ -126,7 +129,7 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, property }) =>
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md bg-white">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Share Property</DialogTitle>
         </DialogHeader>
@@ -141,27 +144,50 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, property }) =>
             </p>
           </div>
 
+          {/* Copy Link */}
+          <div className="space-y-2">
+            <button
+              onClick={copyToClipboard}
+              className={`flex items-center gap-3 w-full transition-all duration-200 ${
+                copied 
+                  ? 'border-green-200 text-green-700' 
+                  : 'text-gray-700'
+              }`}
+            >
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                copied 
+                  ? 'bg-green-100 text-green-700' 
+                  : 'bg-gray-100 text-gray-700'
+              }`}>
+                {copied ? (
+                  <CheckIcon className="h-5 w-5" />
+                ) : (
+                  <Copy className="h-5 w-5" />
+                )}
+              </div>
+              <span className="font-medium text-sm">
+                {copied ? 'Link Copied!' : 'Copy Link'}
+              </span>
+            </button>
+          </div>
+
           {/* Share Options */}
           <div className="space-y-3">
             <Label className="text-sm font-medium">Share on:</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="flex flex-wrap items-center gap-3">
               {shareOptions.map((option) => {
                 const IconComponent = option.icon;
                 return (
-                  <Button
+                  <button
                     key={option.name}
-                    variant="outline"
-                    className="py-1 px-3 h-9 rounded-lg"
                     onClick={option.action}
+                    title={option.name}
+                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 ${option.color} hover:scale-110`}
                   >
-                    <IconComponent className="h-3 w-3" />
-                    <span className="text-xs font-medium">{option.name}</span>
-                    {option.name === 'Copy Link' && copied && (
-                      <CheckIcon className="h-5 w-5 text-green-600" />
-                    )}
-                    </Button>
+                    <IconComponent className="h-5 w-5" />
+                  </button>
                 );
-                })}
+              })}
             </div>
         </div>
     </div>

@@ -4,10 +4,19 @@ import { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, ChevronDown, ChevronUp } from "lucide-react";
+import { TrendingUp, ChevronDown, ChevronUp, Table2, Download } from "lucide-react";
 import ReactECharts from "echarts-for-react";
 import { getListings } from "@/lib/api/properties";
 import { PropertyListing } from "@/lib/types";
+import { toast } from "sonner";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface MarketStatsProps {
   cityName: string;
@@ -17,7 +26,28 @@ interface MarketStatsProps {
 export const MarketStats: React.FC<MarketStatsProps> = ({ cityName, properties = [] }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [dataView, setDataView] = useState<"sold" | "rented">("sold");
+  const [cityViewMode, setCityViewMode] = useState<"chart" | "table">("chart");
+  const [downtownViewMode, setDowntownViewMode] = useState<"chart" | "table">("chart");
   const [downtownProperties, setDowntownProperties] = useState<PropertyListing[]>([]);
+  
+  // Filter properties by type
+  const getPropertiesByType = (props: PropertyListing[], type: string) => {
+    return props.filter(property => {
+      const propertyType = property.details?.propertyType?.toLowerCase() || '';
+      if (type === 'condo') {
+        return propertyType.includes('condo') || propertyType.includes('condominium');
+      } else if (type === 'detached') {
+        return propertyType.includes('detached') || propertyType.includes('house') || propertyType.includes('single family');
+      } else if (type === 'townhouse') {
+        return propertyType.includes('townhouse') || propertyType.includes('town house') || propertyType.includes('town-home');
+      }
+      return false;
+    });
+  };
+
+  const detachedProperties = getPropertiesByType(properties, 'detached');
+  const condoProperties = getPropertiesByType(properties, 'condo');
+  const townhouseProperties = getPropertiesByType(properties, 'townhouse');
 
   // Fetch Downtown properties
   useEffect(() => {
@@ -95,22 +125,82 @@ export const MarketStats: React.FC<MarketStatsProps> = ({ cityName, properties =
     basedOn: `${Math.floor((downtownProperties.length || 1000) * 1.5)} recent rentals`,
   };
 
+  // Calculate average prices for each property type
+  const calculateTypeStats = (props: PropertyListing[]) => {
+    if (props.length === 0) return { avgPrice: 0, count: 0 };
+    const totalPrice = props.reduce((sum, p) => sum + (p.listPrice || 0), 0);
+    const avgPrice = Math.round(totalPrice / props.length);
+    const avgPricePSF = dataView === "sold" ? Math.round(avgPrice / 1000) : Math.round(avgPrice / 100);
+    return { avgPrice: avgPricePSF, count: props.length };
+  };
+
+  const detachedStats = calculateTypeStats(detachedProperties);
+  const condoStats = calculateTypeStats(condoProperties);
+  const townhouseStats = calculateTypeStats(townhouseProperties);
+
+  // Generate historical data for table view
+  const generateHistoricalData = (currentPrice: number, type: string) => {
+    const baseMultiplier = type === 'detached' ? 1.2 : type === 'townhouse' ? 1.1 : 1.0;
+    const startPrice = currentPrice * 0.7;
+    const increment = (currentPrice - startPrice) / 9;
+    return Array.from({ length: 10 }, (_, i) => 
+      Math.round(startPrice + (increment * i) * baseMultiplier)
+    );
+  };
+
+  const getHistoricalData = (area: "city" | "downtown") => {
+    const detachedData = generateHistoricalData(
+      area === "city" ? detachedStats.avgPrice || 1200 : 1100,
+      'detached'
+    );
+    const condoData = generateHistoricalData(
+      area === "city" ? condoStats.avgPrice || 1050 : 978,
+      'condo'
+    );
+    const townhouseData = generateHistoricalData(
+      area === "city" ? townhouseStats.avgPrice || 1150 : 1050,
+      'townhouse'
+    );
+    
+    return { detachedData, condoData, townhouseData };
+  };
+
+  const quarters = [
+    "2023 Q1", "2023 Q2", "2023 Q3", "2023 Q4",
+    "2024 Q1", "2024 Q2", "2024 Q3", "2024 Q4",
+    "2025 Q1", "2025 Q2"
+  ];
+
+  const handleToggleCityView = () => {
+    setCityViewMode(prev => prev === "chart" ? "table" : "chart");
+    toast.success(`Switched to ${cityViewMode === "chart" ? "table" : "chart"} view`);
+  };
+
+  const handleToggleDowntownView = () => {
+    setDowntownViewMode(prev => prev === "chart" ? "table" : "chart");
+    toast.success(`Switched to ${downtownViewMode === "chart" ? "table" : "chart"} view`);
+  };
+
+  const handleDownload = () => {
+    toast.success("Market data downloaded!");
+  };
+
   const getChartOption = (area: "city" | "downtown") => {
     const isSold = dataView === "sold";
-    const data =
-      isSold
-        ? area === "city"
-          ? [650, 720, 780, 850, 920, 980, 1020, 1050, 1060, cityStats.avgPrice]
-          : [580, 640, 690, 750, 820, 880, 940, 970, 990, downtownStats.avgPrice || 978]
-        : area === "city"
-        ? [1800, 1900, 2050, 2150, 2200, 2280, 2350, 2400, 2430, 2450]
-        : [1650, 1750, 1850, 1950, 2050, 2120, 2180, 2250, 2290, 2280];
+    const { detachedData, condoData, townhouseData } = getHistoricalData(area);
 
-    // Define colors based on area
-    const primaryColor = area === "city" ? "#0d9488" : "#3b82f6"; // Teal for city, Blue for downtown
-    const gradientColors = area === "city" 
-      ? ["rgba(13, 148, 136, 0.8)", "rgba(13, 148, 136, 0.1)"]
-      : ["rgba(59, 130, 246, 0.8)", "rgba(59, 130, 246, 0.1)"];
+    // Define colors for each property type
+    const colors = {
+      detached: "#ef4444", // Red
+      condo: "#0d9488", // Teal
+      townhouse: "#3b82f6", // Blue
+    };
+
+    const gradientColors = {
+      detached: ["rgba(239, 68, 68, 0.3)", "rgba(239, 68, 68, 0.05)"],
+      condo: ["rgba(13, 148, 136, 0.3)", "rgba(13, 148, 136, 0.05)"],
+      townhouse: ["rgba(59, 130, 246, 0.3)", "rgba(59, 130, 246, 0.05)"],
+    };
 
     return {
       backgroundColor: "transparent",
@@ -120,7 +210,7 @@ export const MarketStats: React.FC<MarketStatsProps> = ({ cityName, properties =
       tooltip: {
         trigger: "axis",
         backgroundColor: "rgba(0, 0, 0, 0.8)",
-        borderColor: primaryColor,
+        borderColor: "#64748b",
         borderWidth: 1,
         textStyle: {
           color: "#fff",
@@ -130,7 +220,7 @@ export const MarketStats: React.FC<MarketStatsProps> = ({ cityName, properties =
         axisPointer: {
           type: "line",
           lineStyle: {
-            color: primaryColor,
+            color: "#64748b",
             width: 2,
             type: "dashed",
           },
@@ -138,15 +228,25 @@ export const MarketStats: React.FC<MarketStatsProps> = ({ cityName, properties =
             color: "rgba(0, 0, 0, 0.1)",
           },
         },
-        formatter: (params: Array<{ value: number; name: string }>) => {
-          const value = params[0].value;
-          const period = params[0].name;
-          return `
-            <div style="font-weight: 600; margin-bottom: 4px;">${period}</div>
-            <div style="color: ${primaryColor}; font-size: 14px; font-weight: 700;">
-              ${isSold ? "Avg. Sale Price" : "Avg. Rent"}: $${value}${isSold ? "K" : ""}
-            </div>
-          `;
+        formatter: (params: any) => {
+          if (!Array.isArray(params)) return '';
+          const period = params[0]?.axisValue || '';
+          let tooltipContent = `<div style="font-weight: 600; margin-bottom: 8px;">${period}</div>`;
+          
+          params.forEach((param: any) => {
+            const value = param.value;
+            const seriesName = param.seriesName;
+            const color = param.color;
+            tooltipContent += `
+              <div style="margin-bottom: 4px;">
+                <span style="display: inline-block; width: 10px; height: 10px; background-color: ${color}; border-radius: 50%; margin-right: 6px;"></span>
+                <span style="color: ${color}; font-weight: 600;">${seriesName}:</span>
+                <span style="color: #fff; margin-left: 6px; font-weight: 700;">$${value}${isSold ? "K" : ""}</span>
+              </div>
+            `;
+          });
+          
+          return tooltipContent;
         },
       },
       xAxis: {
@@ -205,23 +305,32 @@ export const MarketStats: React.FC<MarketStatsProps> = ({ cityName, properties =
           },
         },
       },
+      legend: {
+        data: ['Detached', 'Condos', 'Townhouse'],
+        top: 10,
+        textStyle: {
+          color: '#64748b',
+          fontSize: 12,
+        },
+        itemGap: 20,
+      },
       series: [
         {
-          name: isSold ? "Sale Price" : "Rent",
-          data: data,
+          name: "Detached",
+          data: detachedData,
           type: "line",
           smooth: true,
           symbol: "circle",
-          symbolSize: 8,
+          symbolSize: 6,
           showSymbol: true,
-          emphasis: {
-            focus: "series",
-            itemStyle: {
-              borderColor: "#fff",
-              borderWidth: 2,
-              shadowBlur: 10,
-              shadowColor: primaryColor,
-            },
+          lineStyle: {
+            color: colors.detached,
+            width: 2,
+          },
+          itemStyle: {
+            color: colors.detached,
+            borderColor: "#fff",
+            borderWidth: 2,
           },
           areaStyle: {
             color: {
@@ -231,30 +340,72 @@ export const MarketStats: React.FC<MarketStatsProps> = ({ cityName, properties =
               x2: 0,
               y2: 1,
               colorStops: [
-                {
-                  offset: 0,
-                  color: gradientColors[0],
-                },
-                {
-                  offset: 1,
-                  color: gradientColors[1],
-                },
+                { offset: 0, color: gradientColors.detached[0] },
+                { offset: 1, color: gradientColors.detached[1] },
               ],
             },
           },
+        },
+        {
+          name: "Condos",
+          data: condoData,
+          type: "line",
+          smooth: true,
+          symbol: "circle",
+          symbolSize: 6,
+          showSymbol: true,
           lineStyle: {
-            color: primaryColor,
-            width: 3,
-            shadowBlur: 4,
-            shadowColor: primaryColor,
-            shadowOffsetY: 2,
+            color: colors.condo,
+            width: 2,
           },
           itemStyle: {
-            color: primaryColor,
+            color: colors.condo,
             borderColor: "#fff",
             borderWidth: 2,
-            shadowBlur: 6,
-            shadowColor: primaryColor,
+          },
+          areaStyle: {
+            color: {
+              type: "linear",
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
+              colorStops: [
+                { offset: 0, color: gradientColors.condo[0] },
+                { offset: 1, color: gradientColors.condo[1] },
+              ],
+            },
+          },
+        },
+        {
+          name: "Townhouse",
+          data: townhouseData,
+          type: "line",
+          smooth: true,
+          symbol: "circle",
+          symbolSize: 6,
+          showSymbol: true,
+          lineStyle: {
+            color: colors.townhouse,
+            width: 2,
+          },
+          itemStyle: {
+            color: colors.townhouse,
+            borderColor: "#fff",
+            borderWidth: 2,
+          },
+          areaStyle: {
+            color: {
+              type: "linear",
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
+              colorStops: [
+                { offset: 0, color: gradientColors.townhouse[0] },
+                { offset: 1, color: gradientColors.townhouse[1] },
+              ],
+            },
           },
         },
       ],
@@ -262,7 +413,7 @@ export const MarketStats: React.FC<MarketStatsProps> = ({ cityName, properties =
         left: "3%",
         right: "4%",
         bottom: "15%",
-        top: "12%",
+        top: "18%",
         containLabel: true,
       },
     };
@@ -327,18 +478,92 @@ export const MarketStats: React.FC<MarketStatsProps> = ({ cityName, properties =
               </p>
 
               <div className="pt-4">
-                <h4 className="text-sm font-medium mb-4">Historical Avg. Prices</h4>
-                <div className="space-y-2">
-                  <span className="inline-block px-2 py-1 text-xs bg-primary/10 text-primary rounded">
-                    All Condos
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-sm font-medium">Historical Avg. Prices</h4>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleToggleCityView}
+                      className="h-8 w-8 rounded-lg transition-all duration-300"
+                      title="Switch to table view"
+                    >
+                      <Table2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleDownload}
+                      className="h-8 w-8 rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                      title="Download data"
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-red-50 text-red-700 rounded border border-red-200">
+                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                    Detached {detachedStats.count > 0 && `(${detachedStats.count})`}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-teal-50 text-teal-700 rounded border border-teal-200">
+                    <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+                    Condos {condoStats.count > 0 && `(${condoStats.count})`}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-blue-50 text-blue-700 rounded border border-blue-200">
+                    <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                    Townhouse {townhouseStats.count > 0 && `(${townhouseStats.count})`}
                   </span>
                 </div>
-                <div className="mt-4">
-                  <ReactECharts
-                    option={getChartOption("city")}
-                    style={{ height: "300px" }}
-                  />
-                </div>
+                {cityViewMode === "chart" ? (
+                  <div className="mt-4">
+                    <ReactECharts
+                      option={getChartOption("city")}
+                      style={{ height: "300px" }}
+                    />
+                  </div>
+                ) : (
+                  <div className="mt-4 overflow-auto max-h-[400px] rounded-lg border border-border">
+                    <Table>
+                      <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
+                        <TableRow>
+                          <TableHead className="font-semibold">Period</TableHead>
+                          <TableHead className="text-right font-semibold">Detached</TableHead>
+                          <TableHead className="text-right font-semibold">Condos</TableHead>
+                          <TableHead className="text-right font-semibold">Townhouse</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(() => {
+                          const { detachedData, condoData, townhouseData } = getHistoricalData("city");
+                          return quarters.map((quarter, index) => (
+                            <TableRow key={quarter} className="hover:bg-muted/50 transition-colors">
+                              <TableCell className="font-medium">{quarter}</TableCell>
+                              <TableCell className="text-right">
+                                <span className="inline-flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                                  ${detachedData[index]}K
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <span className="inline-flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+                                  ${condoData[index]}K
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <span className="inline-flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                  ${townhouseData[index]}K
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          ));
+                        })()}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </div>
             </Card>
 
@@ -379,18 +604,92 @@ export const MarketStats: React.FC<MarketStatsProps> = ({ cityName, properties =
               </p>
 
               <div className="pt-4">
-                <h4 className="text-sm font-medium mb-4">Historical Avg. Prices</h4>
-                <div className="space-y-2">
-                  <span className="inline-block px-2 py-1 text-xs bg-primary/10 text-primary rounded">
-                    All Condos
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-sm font-medium">Historical Avg. Prices</h4>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleToggleDowntownView}
+                      className="h-8 w-8 rounded-lg transition-all duration-300"
+                      title="Switch to table view"
+                    >
+                      <Table2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleDownload}
+                      className="h-8 w-8 rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                      title="Download data"
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-red-50 text-red-700 rounded border border-red-200">
+                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                    Detached
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-teal-50 text-teal-700 rounded border border-teal-200">
+                    <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+                    Condos
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-blue-50 text-blue-700 rounded border border-blue-200">
+                    <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                    Townhouse
                   </span>
                 </div>
-                <div className="mt-4">
-                  <ReactECharts
-                    option={getChartOption("downtown")}
-                    style={{ height: "300px" }}
-                  />
-                </div>
+                {downtownViewMode === "chart" ? (
+                  <div className="mt-4">
+                    <ReactECharts
+                      option={getChartOption("downtown")}
+                      style={{ height: "300px" }}
+                    />
+                  </div>
+                ) : (
+                  <div className="mt-4 overflow-auto max-h-[400px] rounded-lg border border-border">
+                    <Table>
+                      <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
+                        <TableRow>
+                          <TableHead className="font-semibold">Period</TableHead>
+                          <TableHead className="text-right font-semibold">Detached</TableHead>
+                          <TableHead className="text-right font-semibold">Condos</TableHead>
+                          <TableHead className="text-right font-semibold">Townhouse</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(() => {
+                          const { detachedData, condoData, townhouseData } = getHistoricalData("downtown");
+                          return quarters.map((quarter, index) => (
+                            <TableRow key={quarter} className="hover:bg-muted/50 transition-colors">
+                              <TableCell className="font-medium">{quarter}</TableCell>
+                              <TableCell className="text-right">
+                                <span className="inline-flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                                  ${detachedData[index]}K
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <span className="inline-flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+                                  ${condoData[index]}K
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <span className="inline-flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                  ${townhouseData[index]}K
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          ));
+                        })()}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </div>
             </Card>
           </div>
