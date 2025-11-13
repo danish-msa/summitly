@@ -1,5 +1,5 @@
 import { PropertyListing } from '@/lib/types';
-import { calculateAvgPrice, formatPrice } from './helpers';
+import { calculateAvgPrice } from './helpers';
 
 // Sales Volume Data Types
 export interface SalesVolumeRow {

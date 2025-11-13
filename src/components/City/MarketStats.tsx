@@ -5,6 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, ChevronDown, ChevronUp, Table2, Download } from "lucide-react";
+import * as echarts from "echarts";
 import ReactECharts from "echarts-for-react";
 import { getListings } from "@/lib/api/properties";
 import { PropertyListing } from "@/lib/types";
@@ -228,15 +229,18 @@ export const MarketStats: React.FC<MarketStatsProps> = ({ cityName, properties =
             color: "rgba(0, 0, 0, 0.1)",
           },
         },
-        formatter: (params: any) => {
-          if (!Array.isArray(params)) return '';
-          const period = params[0]?.axisValue || '';
+        formatter: (params: echarts.TooltipComponentFormatterCallbackParams) => {
+          const paramsArray = Array.isArray(params) ? params : [params];
+          if (paramsArray.length === 0) return '';
+          const firstParam = paramsArray[0] as { axisValue?: string };
+          const period = firstParam.axisValue || '';
           let tooltipContent = `<div style="font-weight: 600; margin-bottom: 8px;">${period}</div>`;
           
-          params.forEach((param: any) => {
-            const value = param.value;
-            const seriesName = param.seriesName;
-            const color = param.color;
+          paramsArray.forEach((param) => {
+            const p = param as { value?: number; seriesName?: string; color?: string };
+            const value = p.value || 0;
+            const seriesName = p.seriesName || '';
+            const color = p.color || '#000';
             tooltipContent += `
               <div style="margin-bottom: 4px;">
                 <span style="display: inline-block; width: 10px; height: 10px; background-color: ${color}; border-radius: 50%; margin-right: 6px;"></span>

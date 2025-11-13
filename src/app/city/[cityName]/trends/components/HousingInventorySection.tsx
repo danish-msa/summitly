@@ -14,16 +14,13 @@ import {
 import ReactECharts from "echarts-for-react";
 import { 
   getSalesAndInventoryChartOption,
-  getDaysOnMarketChartOption,
-  type SalesAndInventoryData,
-  type DaysOnMarketData
+  getDaysOnMarketChartOption
 } from '../utils/chartOptions';
 import { 
   generateInventoryOverviewData,
   generateInventoryTableData,
   generateSalesAndInventoryData,
-  generateDaysOnMarketData,
-  type InventoryData
+  generateDaysOnMarketData
 } from '../utils/dataGenerators';
 
 interface HousingInventorySectionProps {

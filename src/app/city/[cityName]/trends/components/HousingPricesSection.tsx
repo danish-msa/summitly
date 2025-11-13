@@ -17,16 +17,13 @@ import { formatPrice } from '../utils/helpers';
 import { 
   getAverageSoldPriceChartOption, 
   getSalesVolumeChartOption,
-  getProRatedMonthIndex,
-  type AverageSoldPriceData,
-  type SalesVolumeGraphData
+  getProRatedMonthIndex
 } from '../utils/chartOptions';
 import { 
   generateSalesVolumeMockData,
   generateAverageSoldPriceData,
   generateSalesVolumeData,
-  generatePriceOverviewData,
-  type SalesVolumeData
+  generatePriceOverviewData
 } from '../utils/dataGenerators';
 import { PropertyListing } from '@/lib/types';
 

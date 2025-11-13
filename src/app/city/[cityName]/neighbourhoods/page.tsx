@@ -19,7 +19,6 @@ const unslugifyCityName = (slug: string): string => {
 const CityNeighbourhoodsPage: React.FC = () => {
   const params = useParams();
   const citySlug = params?.cityName as string || '';
-  const [properties, setProperties] = useState<PropertyListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [cityInfo, setCityInfo] = useState<{ name: string } | null>(null);
   const [neighbourhoods, setNeighbourhoods] = useState<Array<{
@@ -53,8 +52,6 @@ const CityNeighbourhoodsPage: React.FC = () => {
         setCityInfo({
           name: cityName,
         });
-
-        setProperties(cityProperties);
 
         // Calculate neighbourhood statistics
         const neighbourhoodMap = new Map<string, { count: number; totalPrice: number }>();

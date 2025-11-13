@@ -1,3 +1,4 @@
+import * as echarts from 'echarts';
 import { formatPrice } from './helpers';
 
 // Chart data types
@@ -42,9 +43,10 @@ export const getAverageSoldPriceChartOption = (data: AverageSoldPriceData) => {
   return {
     tooltip: {
       trigger: 'axis' as const,
-      formatter: (params: any) => {
-        const param = params[0];
-        return `${param.name}<br/>${param.seriesName}: ${formatPrice(param.value)}`;
+      formatter: (params: echarts.TooltipComponentFormatterCallbackParams) => {
+        const paramsArray = Array.isArray(params) ? params : [params];
+        const param = paramsArray[0] as { name?: string; seriesName?: string; value?: number };
+        return `${param.name || ''}<br/>${param.seriesName || ''}: ${formatPrice(param.value || 0)}`;
       },
       backgroundColor: 'rgba(255, 255, 255, 0.95)',
       borderColor: '#e5e7eb',
@@ -122,10 +124,13 @@ export const getSalesVolumeChartOption = (data: SalesVolumeGraphData, proRatedIn
   return {
     tooltip: {
       trigger: 'axis' as const,
-      formatter: (params: any) => {
-        let result = `${params[0].name}<br/>`;
-        params.forEach((param: any) => {
-          result += `${param.marker}${param.seriesName}: ${param.value}%<br/>`;
+      formatter: (params: echarts.TooltipComponentFormatterCallbackParams) => {
+        const paramsArray = Array.isArray(params) ? params : [params];
+        const firstParam = paramsArray[0] as { name?: string };
+        let result = `${firstParam.name || ''}<br/>`;
+        paramsArray.forEach((param) => {
+          const p = param as { marker?: string; seriesName?: string; value?: number };
+          result += `${p.marker || ''}${p.seriesName || ''}: ${p.value || 0}%<br/>`;
         });
         return result;
       },
@@ -278,10 +283,13 @@ export const getSalesAndInventoryChartOption = (data: SalesAndInventoryData) => 
   return {
     tooltip: {
       trigger: 'axis' as const,
-      formatter: (params: any) => {
-        let result = `${params[0].name}<br/>`;
-        params.forEach((param: any) => {
-          result += `${param.marker}${param.seriesName}: ${param.value}<br/>`;
+      formatter: (params: echarts.TooltipComponentFormatterCallbackParams) => {
+        const paramsArray = Array.isArray(params) ? params : [params];
+        const firstParam = paramsArray[0] as { name?: string };
+        let result = `${firstParam.name || ''}<br/>`;
+        paramsArray.forEach((param) => {
+          const p = param as { marker?: string; seriesName?: string; value?: number };
+          result += `${p.marker || ''}${p.seriesName || ''}: ${p.value || 0}<br/>`;
         });
         return result;
       },
@@ -378,10 +386,13 @@ export const getDaysOnMarketChartOption = (data: DaysOnMarketData) => {
   return {
     tooltip: {
       trigger: 'axis' as const,
-      formatter: (params: any) => {
-        let result = `${params[0].name}<br/>`;
-        params.forEach((param: any) => {
-          result += `${param.marker}${param.seriesName}: ${param.value} days<br/>`;
+      formatter: (params: echarts.TooltipComponentFormatterCallbackParams) => {
+        const paramsArray = Array.isArray(params) ? params : [params];
+        const firstParam = paramsArray[0] as { name?: string };
+        let result = `${firstParam.name || ''}<br/>`;
+        paramsArray.forEach((param) => {
+          const p = param as { marker?: string; seriesName?: string; value?: number };
+          result += `${p.marker || ''}${p.seriesName || ''}: ${p.value || 0} days<br/>`;
         });
         return result;
       },
