@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { useMemo, useState, useEffect } from 'react'
 import { getListingDetails } from '@/lib/api/repliers/services/listings'
 import { getPropertyUrl } from '@/lib/utils/propertyUrl'
+import { PropertyListing } from '@/lib/types'
 
 const stats = [
   {
