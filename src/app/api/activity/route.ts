@@ -16,11 +16,13 @@ export async function GET() {
 
     const userId = session.user.id
     const activities: Array<{
+      id: string;
       type: string;
       action: string;
       timestamp: Date;
       mlsNumber?: string;
       location?: string;
+      tourType?: string;
     }> = []
 
     // Get recent saved properties (last 10)
