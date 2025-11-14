@@ -5,7 +5,7 @@ const Hero = () => {
   return (
     <div className='w-full flex-col lg:flex-row flex justify-center items-center min-h-[600px] sm:min-h-[700px] lg:h-[800px] z-50 relative mx-auto bg-[url("/images/HeroBackImage.jpg")] bg-cover bg-center bg-no-repeat'>
         {/* Overlay */}
-        <div className='absolute inset-0 bg-white bg-opacity-50'></div>
+        {/* <div className='absolute inset-0 bg-white bg-opacity-50'></div> */}
 
         <div className='w-full max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center text-black relative py-8 sm:py-12 lg:py-0'>
             <span className='inline-flex mb-4 items-center gap-2 bg-brand-smoky-gray/10 backdrop-blur-sm text-secondary px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm md:text-base font-medium'>
