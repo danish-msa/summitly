@@ -22,7 +22,29 @@ type Props = {
 const Nav = ({ openNav }: Props) => {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const isPropertyPage = pathname?.includes('/property/') || pathname?.includes('/pre-construction/');
+  
+  // Check if current page is a property page
+  // Property pages: /{citySlug}/{slug} where citySlug doesn't end with -real-estate and slug contains numbers
+  const isPropertyPage = (() => {
+    if (!pathname) return false;
+    
+    // Old property page patterns
+    if (pathname.includes('/property/') || pathname.includes('/pre-construction/') || pathname.includes('/rent/')) {
+      return true;
+    }
+    
+    // New property page pattern: /{citySlug}/{slug}
+    const pathParts = pathname.split('/').filter(Boolean);
+    if (pathParts.length === 2) {
+      const [citySlug, slug] = pathParts;
+      // Property pages: citySlug doesn't end with -real-estate AND slug contains numbers
+      if (citySlug && slug && !citySlug.endsWith('-real-estate') && /\d/.test(slug)) {
+        return true;
+      }
+    }
+    
+    return false;
+  })();
   
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);

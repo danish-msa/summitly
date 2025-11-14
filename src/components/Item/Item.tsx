@@ -258,6 +258,7 @@ const Item: React.FC = () => {
     ? [
         { id: 'description', label: 'Description' },
         { id: 'listing-details', label: 'Listing Details' },
+        { id: 'available-units', label: 'Available Units' },
         { id: 'features', label: 'Neighborhood' },
         { id: 'lifestyle', label: 'Lifestyle' },
         { id: 'demographics', label: 'Demographics' },
@@ -278,7 +279,7 @@ const Item: React.FC = () => {
     <div className='bg-background'>
       {/* Sticky Property Bar */}
       <StickyPropertyBar property={property} bannerRef={bannerRef} />
-      <div className='container-1400 mt-20 mb-4'>
+      <div className='container-1400 mt-5 mb-4'>
         {/* Breadcrumbs */}
         <Breadcrumbs property={property} isPreCon={false} isRent={isRental} />
         <BannerGallery property={property} />

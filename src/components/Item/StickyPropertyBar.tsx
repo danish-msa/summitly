@@ -129,7 +129,7 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
             exit={{ y: -150, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
             style={{ top: `${sectionNavHeight}px` }}
-            className="fixed left-0 right-0 z-[98] bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg"
+            className="fixed left-0 right-0 z-[9] bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg"
           >
             <div className="container-1400 mx-auto px-4">
               <div className="flex items-center justify-between py-2 gap-3 lg:gap-8">

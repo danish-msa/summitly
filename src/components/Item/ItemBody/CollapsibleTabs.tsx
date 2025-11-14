@@ -12,6 +12,7 @@ import { PropertyListing } from '@/lib/types'
 import PropertyHistory from './PropertyHistory'
 import Description from './Description'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AvailableUnits } from './AvailableUnits'
 
 interface CollapsibleTabsProps {
   property: PropertyListing;
@@ -27,7 +28,7 @@ interface TabSection {
 
 const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property, isPreCon = false, isRent = false }) => {
   const defaultExpanded = (isPreCon || isRent)
-    ? ['listing-details', 'description', 'features', 'lifestyle', 'location', 'demographics', 'market-analytics', 'calculators']
+    ? ['listing-details', 'description', 'available-units', 'features', 'lifestyle', 'location', 'demographics', 'market-analytics', 'calculators']
     : ['listing-details', 'description', 'features', 'lifestyle', 'location', 'demographics', 'market-analytics', 'calculators', 'history'];
   
   const [expandedTabs, setExpandedTabs] = useState<Set<string>>(
@@ -80,6 +81,13 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property, isPreCon = 
         <PropertyListingDetails data={generateMockListingData()} />
       )
     },
+    ...(isRent ? [{
+      id: 'available-units',
+      label: 'Available Units',
+      content: (
+        <AvailableUnits />
+      )
+    }] : []),
     ...((isPreCon || isRent) ? [] : [{
       id: 'history',
       label: 'Property History',
