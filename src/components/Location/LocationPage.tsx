@@ -153,7 +153,7 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
   
   // Use property alerts hook for saving alerts
   const { data: session } = useSession();
-  const { currentAlert } = usePropertyAlerts(
+  const { currentAlert, saveAlert } = usePropertyAlerts(
     undefined, // No specific property
     locationType === 'city' ? cityName : undefined,  // City name for city-level alerts
     locationType === 'neighbourhood' ? neighbourhoodName : (locationType === 'area' ? areaName : undefined)  // Neighborhood or area
@@ -632,7 +632,7 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
             const alertData: {
               newProperties: boolean;
               soldListings: boolean;
-              priceChanges: boolean;
+              expiredListings: boolean;
               cityName?: string;
               neighborhood?: string;
             } = {
