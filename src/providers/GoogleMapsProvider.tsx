@@ -34,7 +34,7 @@ const LoadingElement = () => {
       <div className="flex flex-col items-center">
         {/* Logo */}
         <img 
-          src="/images/logo/logo_vertical.png" 
+          src="/images/logo/favicon.png" 
           alt="Summitly Logo" 
           className="h-auto w-20 mb-4"
         />

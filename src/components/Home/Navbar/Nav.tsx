@@ -153,11 +153,11 @@ const Nav = ({ openNav }: Props) => {
                     className="relative"
                   >
                     <Image
-                      src="/images/logo/LogoBlue.png"
+                      src="/images/logo/summitly_logo.png"
                       alt="Summitly Logo"
                       width={200}
                       height={60}
-                      className="h-8 lg:h-10 w-auto transition-opacity duration-300"
+                      className="h-8 lg:h-8 w-auto transition-opacity duration-300"
                       priority
                       quality={100}
                     />

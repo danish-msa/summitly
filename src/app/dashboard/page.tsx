@@ -3,7 +3,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Home, TrendingUp, Heart, Calendar } from "lucide-react"
 import { useSavedProperties } from '@/hooks/useSavedProperties'
-import { useAllPropertyAlerts } from '@/hooks/usePropertyAlerts'
 import { useTours } from '@/hooks/useTours'
 import { useActivity } from '@/hooks/useActivity'
 import Link from 'next/link'

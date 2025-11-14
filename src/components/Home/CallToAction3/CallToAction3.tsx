@@ -20,9 +20,9 @@ export const CallToAction3 = () => {
                 </h3>
                 <p className="text-muted-foreground">
                   Our expert real estate team is here to help you every step of the way.{" "}
-                  <a href="/contact" className="text-primary hover:underline">
+                  <Link href="/contact" className="text-primary hover:underline">
                     Get personalized assistance
-                  </a>
+                  </Link>
                   {" "}from our experienced agents.
                 </p>
               </div>
