@@ -73,6 +73,7 @@ export default function Alerts() {
             time: timeAgo,
             alertId: alert.id,
             mlsNumber: alert.mlsNumber,
+            timestamp: alert.updatedAt || alert.createdAt || new Date(),
           })
         }
 
@@ -87,6 +88,7 @@ export default function Alerts() {
             time: timeAgo,
             alertId: alert.id,
             description: `Get notified when new ${alert.propertyType || 'properties'} are listed in ${location}`,
+            timestamp: alert.updatedAt || alert.createdAt || new Date(),
           })
         }
 
@@ -101,6 +103,7 @@ export default function Alerts() {
             time: timeAgo,
             alertId: alert.id,
             description: `Get notified when ${alert.propertyType || 'properties'} are sold in ${location}`,
+            timestamp: alert.updatedAt || alert.createdAt || new Date(),
           })
         }
 
@@ -115,6 +118,7 @@ export default function Alerts() {
             time: timeAgo,
             alertId: alert.id,
             description: `Get notified when ${alert.propertyType || 'properties'} listings expire in ${location}`,
+            timestamp: alert.updatedAt || alert.createdAt || new Date(),
           })
         }
 
