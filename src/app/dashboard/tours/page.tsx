@@ -13,6 +13,23 @@ import { getListingDetails } from "@/lib/api/repliers/services/listings"
 import { PropertyListing } from "@/lib/types"
 import { getPropertyUrl } from "@/lib/utils/propertyUrl"
 
+// Tour type from useTours hook
+interface Tour {
+  id: string
+  userId: string
+  mlsNumber: string
+  tourType: 'IN_PERSON' | 'VIDEO_CHAT'
+  scheduledDate: Date | string
+  name: string
+  phone: string
+  email: string
+  preApproval: boolean
+  status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED'
+  notes?: string | null
+  createdAt: Date | string
+  updatedAt: Date | string
+}
+
 const appointments = [
   {
     id: 1,
@@ -63,17 +80,7 @@ const formatTime = (date: Date | string): string => {
 export default function Tours() {
   const { tours, isLoading, deleteTour, isDeleting, updateTour, isUpdating } = useTours()
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [selectedTour, setSelectedTour] = useState<{
-    id: string;
-    mlsNumber: string;
-    tourType: string;
-    date: string;
-    time: string;
-    name: string;
-    phone: string;
-    email: string;
-    status: string;
-  } | null>(null)
+  const [selectedTour, setSelectedTour] = useState<Tour | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [property, setProperty] = useState<PropertyListing | null>(null)
   const [isLoadingProperty, setIsLoadingProperty] = useState(false)
@@ -118,17 +125,7 @@ export default function Tours() {
     }
   }
 
-  const handleViewRequest = async (tour: {
-    id: string;
-    mlsNumber: string;
-    tourType: string;
-    date: string;
-    time: string;
-    name: string;
-    phone: string;
-    email: string;
-    status: string;
-  }) => {
+  const handleViewRequest = async (tour: Tour) => {
     setSelectedTour(tour)
     setIsDialogOpen(true)
     setIsLoadingProperty(true)
