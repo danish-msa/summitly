@@ -26,10 +26,14 @@ export default function Alerts() {
     id: string;
     type: string;
     title: string;
-    description: string;
+    description?: string;
     timestamp: Date;
     mlsNumber?: string;
     location?: string;
+    property?: string;
+    propertyType?: string;
+    time?: string;
+    alertId?: string;
   }>>([])
 
   useEffect(() => {
@@ -40,10 +44,14 @@ export default function Alerts() {
           id: string;
           type: string;
           title: string;
-          description: string;
+          description?: string;
           timestamp: Date;
           mlsNumber?: string;
           location?: string;
+          property?: string;
+          propertyType?: string;
+          time?: string;
+          alertId?: string;
         }> = []
         const location = alert.neighborhood 
           ? `${alert.neighborhood}, ${alert.cityName || ''}`
