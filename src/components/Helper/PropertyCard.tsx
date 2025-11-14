@@ -9,6 +9,7 @@ import { useSavedProperties } from '@/hooks/useSavedProperties';
 import { useSession } from 'next-auth/react';
 import { toast } from '@/hooks/use-toast';
 import AuthModal from '@/components/Auth/AuthModal';
+import { getPropertyUrl } from '@/lib/utils/propertyUrl';
 
 // Mock data type based on your original interface
 interface PropertyListing {
@@ -167,7 +168,9 @@ const PropertyCard = ({ property, onHide }: PropertyCardProps) => {
     e.stopPropagation();
     
     // Create share URL
-    const shareUrl = `${window.location.origin}/property/${property.mlsNumber}`;
+    const shareUrl = `${window.location.origin}${(() => {
+      return getPropertyUrl(property);
+    })()}`;
     const shareText = `Check out this ${property.details.propertyType} for ${priceDisplay} in ${property.address.city}`;
     
     // Use Web Share API if available, otherwise fallback to clipboard
@@ -199,7 +202,7 @@ const PropertyCard = ({ property, onHide }: PropertyCardProps) => {
   return (
     <>
       <Link 
-        href={`/property/${property.mlsNumber}`} 
+        href={getPropertyUrl(property)}
         className="group cursor-pointer w-full block transition-transform duration-300"
         aria-label={`View details for ${property.details.propertyType} at ${property.address.city}`}
       >

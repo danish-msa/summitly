@@ -303,7 +303,9 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
             {/* Schedule Tour Modal */}
             <ScheduleTourModal 
                 open={isScheduleTourModalOpen} 
-                onOpenChange={setIsScheduleTourModalOpen} 
+                onOpenChange={setIsScheduleTourModalOpen}
+                mlsNumber={property.mlsNumber || property.mls?.toString()}
+                propertyAddress={fullAddress}
             />
         </div>
     );

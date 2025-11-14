@@ -4,7 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Home, TrendingUp, Heart, Calendar } from "lucide-react"
 import { useSavedProperties } from '@/hooks/useSavedProperties'
 import { useAllPropertyAlerts } from '@/hooks/usePropertyAlerts'
+import { useTours } from '@/hooks/useTours'
+import { useActivity } from '@/hooks/useActivity'
 import Link from 'next/link'
+import { useMemo, useState, useEffect } from 'react'
+import { getListingDetails } from '@/lib/api/repliers/services/listings'
+import { getPropertyUrl } from '@/lib/utils/propertyUrl'
 
 const stats = [
   {
@@ -12,41 +17,101 @@ const stats = [
     value: "12",
     icon: Home,
     change: "+2 this week",
-    color: "text-primary",
+    color: "text-blue-600",
+    bgGradient: "from-blue-500 to-blue-600",
+    iconBg: "bg-blue-100",
   },
   {
     title: "Saved Properties",
     value: "28",
     icon: Heart,
     change: "+5 new",
-    color: "text-accent",
+    color: "text-pink-600",
+    bgGradient: "from-pink-500 to-rose-500",
+    iconBg: "bg-pink-100",
   },
   {
     title: "Avg. Property Value",
     value: "$425K",
     icon: TrendingUp,
     change: "+3.2% this month",
-    color: "text-green-600",
+    color: "text-emerald-600",
+    bgGradient: "from-emerald-500 to-teal-500",
+    iconBg: "bg-emerald-100",
   },
   {
     title: "Upcoming Tours",
     value: "4",
     icon: Calendar,
     change: "Next: Tomorrow 2PM",
-    color: "text-blue-600",
+    color: "text-purple-600",
+    bgGradient: "from-purple-500 to-indigo-500",
+    iconBg: "bg-purple-100",
   },
 ]
 
-const recentActivity = [
-  { action: "New property saved", property: "123 Oak Street", time: "2 hours ago" },
-  { action: "Price drop alert", property: "456 Maple Ave", time: "5 hours ago" },
-  { action: "Tour scheduled", property: "789 Pine Road", time: "1 day ago" },
-  { action: "New listing match", property: "321 Elm Boulevard", time: "2 days ago" },
-]
+// Format time ago
+const formatTimeAgo = (date: Date | string): string => {
+  const now = new Date()
+  const past = typeof date === 'string' ? new Date(date) : date
+  const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000)
+  
+  if (diffInSeconds < 60) return 'just now'
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`
+  if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 604800)} weeks ago`
+  return `${Math.floor(diffInSeconds / 2592000)} months ago`
+}
 
 export default function DashboardHome() {
   const { savedProperties } = useSavedProperties()
   const { alerts } = useAllPropertyAlerts()
+  const { tours } = useTours()
+  const { activities, isLoading: isLoadingActivity } = useActivity()
+
+  // Get upcoming tours count
+  const upcomingTours = useMemo(() => {
+    const now = new Date()
+    return tours.filter(tour => {
+      const tourDate = new Date(tour.scheduledDate)
+      return tourDate >= now && tour.status !== 'CANCELLED' && tour.status !== 'COMPLETED'
+    })
+  }, [tours])
+
+  // Get next tour
+  const nextTour = useMemo(() => {
+    if (upcomingTours.length === 0) return null
+    const sorted = [...upcomingTours].sort((a, b) => {
+      return new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime()
+    })
+    return sorted[0]
+  }, [upcomingTours])
+
+  // Format next tour time
+  const nextTourTime = useMemo(() => {
+    if (!nextTour) return "No upcoming tours"
+    const tourDate = new Date(nextTour.scheduledDate)
+    const now = new Date()
+    const tomorrow = new Date(now)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    
+    const todayStr = now.toDateString()
+    const tomorrowStr = tomorrow.toDateString()
+    const dateStr = tourDate.toDateString()
+    
+    let dateText = ""
+    if (dateStr === todayStr) {
+      dateText = "Today"
+    } else if (dateStr === tomorrowStr) {
+      dateText = "Tomorrow"
+    } else {
+      dateText = tourDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    }
+    
+    const time = tourDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+    return `Next: ${dateText} ${time}`
+  }, [nextTour])
 
   // Update stats with real data
   const updatedStats = stats.map(stat => {
@@ -54,10 +119,94 @@ export default function DashboardHome() {
       return { ...stat, value: savedProperties.length.toString() }
     }
     if (stat.title === "Upcoming Tours") {
-      return { ...stat, value: alerts.length.toString() }
+      return { 
+        ...stat, 
+        value: upcomingTours.length.toString(),
+        change: nextTourTime
+      }
     }
     return stat
   })
+
+  // Fetch property details for activities that need URLs
+  const [propertyMap, setPropertyMap] = useState<Record<string, any>>({})
+  
+  useEffect(() => {
+    const fetchProperties = async () => {
+      const mlsNumbers = activities
+        .filter(a => a.mlsNumber && (a.type === 'property_saved' || a.type === 'alert_watch'))
+        .map(a => a.mlsNumber!)
+        .filter((v, i, a) => a.indexOf(v) === i) // unique values
+      
+      const properties: Record<string, any> = {}
+      await Promise.all(
+        mlsNumbers.map(async (mls) => {
+          try {
+            const prop = await getListingDetails(mls)
+            if (prop) properties[mls] = prop
+          } catch (error) {
+            console.error(`Failed to fetch property ${mls}:`, error)
+          }
+        })
+      )
+      setPropertyMap(properties)
+    }
+    
+    if (activities.length > 0) {
+      fetchProperties()
+    }
+  }, [activities])
+
+  // Transform activities for display
+  const recentActivity = useMemo(() => {
+    return activities.slice(0, 4).map(activity => {
+      const propertyText = activity.mlsNumber 
+        ? `MLS: ${activity.mlsNumber}` 
+        : activity.location || 'Property'
+      
+      // Determine link based on activity type
+      let link = ''
+      let linkText = propertyText
+      
+      if (activity.type === 'property_saved' && activity.mlsNumber) {
+        const property = propertyMap[activity.mlsNumber]
+        if (property) {
+          link = getPropertyUrl(property)
+          linkText = property.address?.streetNumber && property.address?.streetName
+            ? `${property.address.streetNumber} ${property.address.streetName}`
+            : propertyText
+        } else {
+          link = `/property/${activity.mlsNumber}` // Fallback
+        }
+      } else if (activity.type === 'tour_scheduled') {
+        link = '/dashboard/tours'
+        linkText = 'View tour'
+      } else if (activity.type === 'alert_watch' && activity.mlsNumber) {
+        const property = propertyMap[activity.mlsNumber]
+        if (property) {
+          link = getPropertyUrl(property)
+          linkText = property.address?.streetNumber && property.address?.streetName
+            ? `${property.address.streetNumber} ${property.address.streetName}`
+            : propertyText
+        } else {
+          link = `/property/${activity.mlsNumber}` // Fallback
+        }
+      } else if (activity.type === 'alert_new') {
+        link = '/dashboard/alerts'
+        linkText = 'View alerts'
+      }
+      
+      return {
+        action: activity.action,
+        property: propertyText,
+        time: formatTimeAgo(activity.timestamp),
+        mlsNumber: activity.mlsNumber,
+        type: activity.type,
+        link,
+        linkText,
+      }
+    })
+  }, [activities, propertyMap])
 
   return (
     <div className="space-y-6">
@@ -68,16 +217,18 @@ export default function DashboardHome() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {updatedStats.map((stat) => (
-          <Card key={stat.title} className="shadow-md hover:shadow-lg transition-shadow">
+          <Card key={stat.title} className={`bg-gradient-to-br ${stat.bgGradient} shadow-md hover:shadow-xl transition-all duration-300 border-0`}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm font-medium text-white/90">
                 {stat.title}
               </CardTitle>
-              <stat.icon className={`h-5 w-5 ${stat.color}`} />
+              <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+                <stat.icon className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-foreground">{stat.value}</div>
-              <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>
+              <div className="text-3xl font-bold text-white">{stat.value}</div>
+              <p className="text-xs text-white/80 mt-1">{stat.change}</p>
             </CardContent>
           </Card>
         ))}
@@ -89,20 +240,39 @@ export default function DashboardHome() {
             <CardTitle>Recent Activity</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentActivity.map((activity, index) => (
-                <div
-                  key={index}
-                  className="flex items-start justify-between border-b last:border-0 pb-3 last:pb-0"
-                >
-                  <div>
-                    <p className="font-medium text-foreground">{activity.action}</p>
-                    <p className="text-sm text-muted-foreground">{activity.property}</p>
+            {isLoadingActivity ? (
+              <div className="py-4 text-center">
+                <p className="text-sm text-muted-foreground">Loading activity...</p>
+              </div>
+            ) : recentActivity.length === 0 ? (
+              <div className="py-4 text-center">
+                <p className="text-sm text-muted-foreground">No recent activity</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentActivity.map((activity) => (
+                  <div
+                    key={activity.type + activity.mlsNumber + activity.time}
+                    className="flex items-start justify-between border-b last:border-0 pb-3 last:pb-0"
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground">{activity.action}</p>
+                      {activity.link ? (
+                        <Link 
+                          href={activity.link}
+                          className="text-sm text-muted-foreground hover:text-primary transition-colors inline-block"
+                        >
+                          {activity.linkText}
+                        </Link>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">{activity.property}</p>
+                      )}
+                    </div>
+                    <span className="text-xs text-muted-foreground ml-2 flex-shrink-0">{activity.time}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">{activity.time}</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -113,19 +283,19 @@ export default function DashboardHome() {
           <CardContent>
             <div className="grid gap-3">
               <Link href="/listings">
-                <button className="w-full p-4 text-left rounded-lg border border-border hover:bg-accent hover:text-accent-foreground transition-colors">
+                <button className="w-full p-4 text-left rounded-lg border border-border hover:bg-muted/40 transition-colors">
                   <p className="font-medium">Search New Properties</p>
                   <p className="text-sm text-muted-foreground">Find your dream home</p>
                 </button>
               </Link>
               <Link href="/dashboard/tours">
-                <button className="w-full p-4 text-left rounded-lg border border-border hover:bg-accent hover:text-accent-foreground transition-colors">
+                <button className="w-full p-4 text-left rounded-lg border border-border hover:bg-muted/40 transition-colors">
                   <p className="font-medium">Schedule a Tour</p>
                   <p className="text-sm text-muted-foreground">Book a property viewing</p>
                 </button>
               </Link>
               <Link href="/find-an-agent">
-                <button className="w-full p-4 text-left rounded-lg border border-border hover:bg-accent hover:text-accent-foreground transition-colors">
+                <button className="w-full p-4 text-left rounded-lg border border-border hover:bg-muted/40 transition-colors">
                   <p className="font-medium">Contact an Agent</p>
                   <p className="text-sm text-muted-foreground">Get expert assistance</p>
                 </button>

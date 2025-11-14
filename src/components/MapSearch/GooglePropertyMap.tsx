@@ -6,6 +6,7 @@ import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { useRouter } from 'next/navigation';
 import { PropertyListing } from '@/lib/types';
 import MapSearchBox from './MapSearchBox';
+import { getPropertyUrl } from '@/lib/utils/propertyUrl';
 
 interface GooglePropertyMapProps {
   properties: PropertyListing[];
@@ -226,7 +227,7 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
   };
 
   const handleViewProperty = (property: PropertyListing) => {
-    router.push(`/property/${property.mlsNumber}`);
+    router.push(getPropertyUrl(property));
   };
 
   // Handle search place selection

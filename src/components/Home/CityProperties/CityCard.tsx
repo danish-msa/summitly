@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { BsArrowRightCircle } from 'react-icons/bs';
+import { getCityUrl } from '@/lib/utils/cityUrl';
 
 interface City {
   id: number;
@@ -13,20 +14,11 @@ interface CityCardProps {
   city: City;
 }
 
-// Helper function to convert city name to URL-friendly slug
-const slugifyCityName = (cityName: string): string => {
-  return cityName
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-};
-
 const CityCard = ({ city }: CityCardProps) => {
-  const citySlug = slugifyCityName(city.cityName);
   const [imageError, setImageError] = useState(false);
   
   return (
-    <Link href={`/city/${citySlug}`}>
+    <Link href={getCityUrl(city.cityName)}>
       <div className='relative rounded-lg overflow-hidden m-2 group cursor-pointer'>
           {imageError ? (
             <div className='w-full h-[250px] bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center'>

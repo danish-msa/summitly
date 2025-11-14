@@ -8,37 +8,47 @@ import { PropertyListing } from '@/lib/types';
 import { fetchTopCities } from '@/data/data';
 import { AreaSelector } from '@/components/City/AreaSelector';
 import { Separator } from '@/components/ui/separator';
-import { LayoutGrid, MapPin, Bell, TrendingUp, Home } from 'lucide-react';
+import { LayoutGrid, MapPin, Bell, TrendingUp, Home, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import dynamic from 'next/dynamic';
 import { useGlobalFilters } from '@/hooks/useGlobalFilters';
 import GlobalFilters from '@/components/common/filters/GlobalFilters';
 import { LOCATIONS } from '@/lib/types/filters';
 import SellRentToggle from '../common/filters/SellRentToggle';
-import PropertyAlertsDialog from './PropertyAlertsDialog';
+import PropertyAlertsDialog from '../City/PropertyAlertsDialog';
 import { usePropertyAlerts } from '@/hooks/usePropertyAlerts';
 import { useSession } from 'next-auth/react';
 import { toast } from '@/hooks/use-toast';
+import { parseCityUrl, getCityUrl } from '@/lib/utils/cityUrl';
 
 // Dynamically import the Google Maps component with no SSR
 const GooglePropertyMap = dynamic(() => import('@/components/MapSearch/GooglePropertyMap'), { ssr: false });
 
-// Helper function to convert slug back to city name
-const unslugifyCityName = (slug: string): string => {
+// Helper function to convert slug back to name
+const unslugifyName = (slug: string): string => {
   return slug
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 };
 
+export type LocationType = 'city' | 'area' | 'neighbourhood';
 
-const CityPage: React.FC = () => {
+interface LocationPageProps {
+  locationType: LocationType;
+}
+
+const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
   const params = useParams();
-  const citySlug = params?.cityName as string || '';
+  const citySlug = (params?.citySlug || params?.cityName) as string || ''; // Support both for backward compatibility
+  const areaSlug = (params?.areaName || params?.slug) as string || ''; // Support both for backward compatibility
+  const neighbourhoodSlug = (params?.neighbourhoodName || params?.neighbourhood) as string || ''; // Support both for backward compatibility
+  
   const [properties, setProperties] = useState<PropertyListing[]>([]);
   const [allProperties, setAllProperties] = useState<PropertyListing[]>([]);
   const [loading, setLoading] = useState(true);
-  const [cityInfo, setCityInfo] = useState<{ name: string; numberOfProperties: number } | null>(null);
+  const [locationInfo, setLocationInfo] = useState<{ name: string; numberOfProperties: number } | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'mixed' | 'map'>('list');
   const [selectedProperty, setSelectedProperty] = useState<PropertyListing | null>(null);
   const [communities, setCommunities] = useState<string[]>([]);
@@ -48,6 +58,8 @@ const CityPage: React.FC = () => {
     soldListings: false,
     expiredListings: false,
   });
+  const [selectedArea, setSelectedArea] = useState<string | null>(null);
+  const [selectedNeighborhood, setSelectedNeighborhood] = useState<string | null>(null);
   
   // Use global filters hook
   const { filters, handleFilterChange, resetFilters } = useGlobalFilters();
@@ -70,17 +82,81 @@ const CityPage: React.FC = () => {
     }));
   };
 
-  // Convert slug to city name
+  // Determine location names based on type
+  // Parse city name from URL (remove -real-estate suffix if present)
   const cityName = useMemo(() => {
-    return unslugifyCityName(citySlug);
+    // Check if citySlug ends with -real-estate and parse it
+    if (citySlug.endsWith('-real-estate')) {
+      return parseCityUrl(citySlug);
+    }
+    return unslugifyName(citySlug);
   }, [citySlug]);
+  
+  // Get city slug for URLs (with -real-estate suffix)
+  const cityUrlSlug = useMemo(() => {
+    if (citySlug.endsWith('-real-estate')) {
+      return citySlug; // Already has suffix
+    }
+    // Generate city URL slug from city name
+    return cityName
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '') + '-real-estate';
+  }, [citySlug, cityName]);
+
+  const areaName = useMemo(() => {
+    return areaSlug ? unslugifyName(areaSlug) : '';
+  }, [areaSlug]);
+
+  const neighbourhoodName = useMemo(() => {
+    return neighbourhoodSlug ? unslugifyName(neighbourhoodSlug) : '';
+  }, [neighbourhoodSlug]);
+
+  // Build URL paths based on location type (using cityUrlSlug with -real-estate)
+  const basePath = useMemo(() => {
+    if (locationType === 'neighbourhood') {
+      return `/${cityUrlSlug}/${areaSlug}/${neighbourhoodSlug}`;
+    } else if (locationType === 'area') {
+      return `/${cityUrlSlug}/${areaSlug}`;
+    }
+    return `/${cityUrlSlug}`;
+  }, [locationType, cityUrlSlug, areaSlug, neighbourhoodSlug]);
+
+  const trendsPath = useMemo(() => {
+    return `${basePath}/trends`;
+  }, [basePath]);
+
+  const neighbourhoodsPath = useMemo(() => {
+    if (locationType === 'city') {
+      return `/${cityUrlSlug}/neighbourhoods`;
+    } else if (locationType === 'area') {
+      return `/${cityUrlSlug}/${areaSlug}/neighbourhoods`;
+    }
+    return null; // No neighbourhoods page for neighbourhood
+  }, [locationType, cityUrlSlug, areaSlug]);
+
+  const areasPath = useMemo(() => {
+    if (locationType === 'city') {
+      return `/${cityUrlSlug}/areas`;
+    }
+    return null; // Only city has areas
+  }, [locationType, cityUrlSlug]);
+
+  // Get display name based on location type
+  const displayName = useMemo(() => {
+    if (locationType === 'neighbourhood') return neighbourhoodName;
+    if (locationType === 'area') return areaName;
+    return cityName;
+  }, [locationType, cityName, areaName, neighbourhoodName]);
   
   // Use property alerts hook for saving alerts
   const { data: session } = useSession();
   const { currentAlert, isLoading: isLoadingAlerts, saveAlert, isSaving } = usePropertyAlerts(
     undefined, // No specific property
-    cityName,  // City name for location-based alerts
-    undefined  // No specific neighborhood
+    locationType === 'city' ? cityName : undefined,  // City name for city-level alerts
+    locationType === 'neighbourhood' ? neighbourhoodName : (locationType === 'area' ? areaName : undefined)  // Neighborhood or area
   );
   
   // Load existing alert options when alert is found
@@ -94,67 +170,100 @@ const CityPage: React.FC = () => {
     }
   }, [currentAlert]);
 
-  // City coordinates are calculated when needed
-
   useEffect(() => {
-    const loadCityData = async () => {
+    const loadLocationData = async () => {
       try {
         setLoading(true);
 
-        // Fetch city info from top cities
-        const topCities = await fetchTopCities();
-        const foundCity = topCities.find(city => 
-          city.cityName.toLowerCase() === cityName.toLowerCase()
-        );
+        // Fetch city info from top cities (only for city type)
+        let foundCity = null;
+        if (locationType === 'city') {
+          const topCities = await fetchTopCities();
+          foundCity = topCities.find(city => 
+            city.cityName.toLowerCase() === cityName.toLowerCase()
+          );
+        }
 
-        // Fetch properties for the city
+        // Fetch properties
         const listingsData = await getListings({
           status: 'A',
           resultsPerPage: 50,
           pageNum: 1,
         });
 
-        // Filter properties by city name
-        const cityProperties = listingsData.listings.filter(property =>
+        // Filter properties by location
+        let filtered = listingsData.listings;
+
+        // Always filter by city
+        filtered = filtered.filter(property =>
           property.address?.city?.toLowerCase() === cityName.toLowerCase()
         );
 
-        // Set city info - use found city from top cities if available, otherwise count from filtered properties
-        if (foundCity) {
-          setCityInfo({
+        // Filter by area if applicable
+        if (locationType === 'area' || locationType === 'neighbourhood') {
+          filtered = filtered.filter(property => {
+            const propArea = property.address?.area?.toLowerCase() || '';
+            const searchArea = areaName.toLowerCase();
+            // Use flexible matching: exact match or contains
+            return propArea === searchArea || 
+                   propArea.includes(searchArea) || 
+                   searchArea.includes(propArea);
+          });
+        }
+
+        // Filter by neighbourhood if applicable
+        if (locationType === 'neighbourhood') {
+          filtered = filtered.filter(property => {
+            const propNeighbourhood = property.address?.neighborhood?.toLowerCase() || '';
+            const searchNeighbourhood = neighbourhoodName.toLowerCase();
+            // Use flexible matching: exact match or contains
+            return propNeighbourhood === searchNeighbourhood || 
+                   propNeighbourhood.includes(searchNeighbourhood) || 
+                   searchNeighbourhood.includes(propNeighbourhood);
+          });
+        }
+
+        const locationProperties = filtered;
+
+        // Set location info
+        if (foundCity && locationType === 'city') {
+          setLocationInfo({
             name: foundCity.cityName,
             numberOfProperties: foundCity.numberOfProperties,
           });
         } else {
-          setCityInfo({
-            name: cityName,
-            numberOfProperties: cityProperties.length,
+          setLocationInfo({
+            name: displayName,
+            numberOfProperties: locationProperties.length,
           });
         }
 
-        setProperties(cityProperties);
-        setAllProperties(cityProperties);
+        setProperties(locationProperties);
+        setAllProperties(locationProperties);
         
-        // Extract unique communities from the properties
+        // Extract unique communities/neighbourhoods from the properties
         const uniqueCommunities = Array.from(
           new Set(
-            cityProperties
+            locationProperties
               .map(property => property.address?.neighborhood)
               .filter(Boolean) as string[]
           )
         ).sort();
         setCommunities(uniqueCommunities);
       } catch (error) {
-        console.error('Error loading city data:', error);
+        console.error('Error loading location data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    if (citySlug) {
-      loadCityData();
+    if (citySlug && (locationType === 'city' || areaSlug)) {
+      if (locationType === 'neighbourhood' && !neighbourhoodSlug) {
+        return;
+      }
+      loadLocationData();
     }
-  }, [citySlug, cityName]);
+  }, [citySlug, areaSlug, neighbourhoodSlug, locationType, cityName, areaName, neighbourhoodName, displayName]);
 
   // Filter properties based on filter state
   useEffect(() => {
@@ -201,35 +310,65 @@ const CityPage: React.FC = () => {
       );
     }
 
+    // Filter by selected area from AreaSelector
+    if (selectedArea) {
+      filtered = filtered.filter(property =>
+        property.address?.area?.toLowerCase() === selectedArea.toLowerCase()
+      );
+    }
+
+    // Filter by selected neighborhood from AreaSelector
+    if (selectedNeighborhood) {
+      filtered = filtered.filter(property =>
+        property.address?.neighborhood?.toLowerCase() === selectedNeighborhood.toLowerCase()
+      );
+    }
+
     setProperties(filtered);
-  }, [filters, allProperties]);
+  }, [filters, allProperties, selectedArea, selectedNeighborhood]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-secondary mb-4"></div>
-          <p className="text-gray-600">Loading city information...</p>
+          <p className="text-gray-600">Loading location information...</p>
         </div>
       </div>
     );
   }
 
-  const displayCityName = cityInfo?.name || cityName;
+  const displayLocationName = locationInfo?.name || displayName;
+  const locationTypeLabel = locationType === 'neighbourhood' ? 'Neighbourhood' : locationType === 'area' ? 'Area' : 'City';
 
   return (
     <div className="min-h-screen">
       {/* Header Section */}
       <header className="border-b bg-card pt-16">
         <div className="container-1400 mx-auto px-4 py-6">
+          {/* Back Button - Show for area and neighbourhood pages */}
+          {(locationType === 'area' || locationType === 'neighbourhood') && (
+            <div className="mb-4">
+              <Link href={`/${cityUrlSlug}`}>
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-2 p-0"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span>Back to {cityName} Page</span>
+                </Button>
+              </Link>
+            </div>
+          )}
+          
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-foreground mb-2">
-                {displayCityName} Properties For Sale
+                {displayLocationName} Properties For Sale
               </h1>
               <p className="text-muted-foreground">
-                Search for {displayCityName} real estate by price, bedroom, or property type. View
-                all the latest {displayCityName} MLS® listings.
+                Search for {displayLocationName} real estate by price, bedroom, or property type. View
+                all the latest {displayLocationName} MLS® listings.
               </p>
             </div>
             <button 
@@ -245,56 +384,90 @@ const CityPage: React.FC = () => {
 
       {/* Main Content */}
       <main className="container-1400 mx-auto px-4 py-8 space-y-4">
-        
-        {/* Area Selector */}
-        <section>
-          <AreaSelector properties={properties} cityName={displayCityName} />
-        </section>
 
         {/* Navigation Buttons */}
         <section>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className={`grid gap-4 ${neighbourhoodsPath && areasPath ? 'grid-cols-1 md:grid-cols-3' : neighbourhoodsPath || areasPath ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-1'}`}>
             <Link
-              href={`/${citySlug}/trends`}
-              className="group flex items-center gap-4 p-6 border bg-white rounded-lg hover:shadow-lg transition-all duration-200 hover:border-primary"
+              href={trendsPath}
+              className="group flex items-center gap-4 p-6 bg-green-500/20 rounded-lg hover:shadow-lg transition-all duration-200"
             >
               <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                <TrendingUp className="h-6 w-6 text-primary" />
+                <TrendingUp className="h-6 w-6 text-green-500" />
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-foreground mb-1">
                   Market Trends
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Explore housing market statistics and price trends for {displayCityName}
+                  Explore housing market statistics and price trends for {displayLocationName}
                 </p>
               </div>
             </Link>
 
-            <Link
-              href={`/${citySlug}/neighbourhoods`}
-              className="group flex items-center gap-4 p-6 border bg-white rounded-lg hover:shadow-lg transition-all duration-200 hover:border-primary"
-            >
-              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                <Home className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-foreground mb-1">
-                  Neighbourhoods
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Discover different neighbourhoods and areas in {displayCityName}
-                </p>
-              </div>
-            </Link>
+            {areasPath && (
+              <Link
+                href={areasPath}
+                className="group flex items-center gap-4 p-6 bg-blue-500/20 rounded-lg hover:shadow-lg transition-all duration-200"
+              >
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                  <MapPin className="h-6 w-6 text-blue-500" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-foreground mb-1">
+                    Areas
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Explore different areas in {displayLocationName}
+                  </p>
+                </div>
+              </Link>
+            )}
+
+            {neighbourhoodsPath && (
+              <Link
+                href={neighbourhoodsPath}
+                className="group flex items-center gap-4 p-6 bg-purple-500/20 rounded-lg hover:shadow-lg transition-all duration-200"
+              >
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                  <Home className="h-6 w-6 text-purple-500" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-foreground mb-1">
+                    Neighbourhoods
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Discover different neighbourhoods and areas in {displayLocationName}
+                  </p>
+                </div>
+              </Link>
+            )}
+
+            
           </div>
         </section>
+        
+         {/* Area Selector - Only show for city and area */}
+         {(locationType === 'city' || locationType === 'area') && (
+           <section>
+             <AreaSelector 
+               properties={allProperties} 
+               cityName={displayLocationName}
+               onAreaSelect={setSelectedArea}
+               onNeighborhoodSelect={setSelectedNeighborhood}
+               selectedArea={selectedArea}
+               selectedNeighborhood={selectedNeighborhood}
+             />
+           </section>
+         )}
+
+        
         <Separator />
 
         {/* Filters */}
         <section>
             <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
+                <div className="">
                 <GlobalFilters
                     filters={filters}
                     handleFilterChange={handleFilterChange}
@@ -307,14 +480,15 @@ const CityPage: React.FC = () => {
                     showPrice={true}
                     showBedrooms={false}
                     showBathrooms={false}
-                    showAdvanced={true}
+                    showAdvanced={false}
                     showSellRentToggle={false}
+                    showResetButton={false}
                     layout="horizontal"
                     className="w-full"
                 />
                 </div>
-          {/* Sell/Rent Toggle */}
-                <div className="flex-1 flex justify-end">
+                {/* Sell/Rent Toggle */}
+                <div className="flex justify-end">
                     <SellRentToggle 
                     listingType={(filters.listingType === 'sell' || filters.listingType === 'rent') ? filters.listingType : 'sell'}
                     onListingTypeChange={handleListingTypeChange}
@@ -414,7 +588,7 @@ const CityPage: React.FC = () => {
                 ) : (
                   <div className="bg-secondary/30 rounded-lg p-12 text-center">
                     <p className="text-lg text-muted-foreground">
-                      No properties found in {displayCityName}
+                      No properties found in {displayLocationName}
                     </p>
                   </div>
                 )}
@@ -442,7 +616,7 @@ const CityPage: React.FC = () => {
         onOpenChange={setAlertsOpen}
         alertOptions={alertOptions}
         onToggleOption={toggleAlertOption}
-        cityName={displayCityName}
+        cityName={displayLocationName}
         onSave={async (options) => {
           if (!session) {
             toast({
@@ -455,16 +629,29 @@ const CityPage: React.FC = () => {
           }
 
           try {
-            await saveAlert({
-              cityName: displayCityName,
+            // Determine what to save based on location type
+            const alertData: any = {
               newProperties: options.newProperties,
               soldListings: options.soldListings,
               expiredListings: options.expiredListings,
-            });
+            };
+
+            // Add location information based on location type
+            if (locationType === 'city') {
+              alertData.cityName = cityName;
+            } else if (locationType === 'area') {
+              alertData.cityName = cityName;
+              alertData.neighborhood = areaName; // Using neighborhood field for area
+            } else if (locationType === 'neighbourhood') {
+              alertData.cityName = cityName;
+              alertData.neighborhood = neighbourhoodName;
+            }
+
+            await saveAlert(alertData);
 
             toast({
               title: "Alerts Saved",
-              description: `Your property alerts for ${displayCityName} have been saved successfully.`,
+              description: `Your property alerts for ${displayLocationName} have been saved successfully.`,
               variant: "default",
             });
           } catch (error) {
@@ -481,5 +668,5 @@ const CityPage: React.FC = () => {
   );
 };
 
-export default CityPage;
+export default LocationPage;
 

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { PropertyListing } from "@/lib/types";
 import { getListings } from "@/lib/api/repliers/services/listings";
+import { getPropertyUrl } from "@/lib/utils/propertyUrl";
 
 interface MapProps {
   // Location data
@@ -278,7 +279,7 @@ const Map: React.FC<MapProps> = ({
 
   // Handle listing click
   const handleListingClick = (listing: PropertyListing) => {
-    router.push(`/property/${listing.mlsNumber}`);
+    router.push(getPropertyUrl(listing));
   };
 
   // Map center

@@ -13,9 +13,13 @@ interface BasicInfoProps {
   isRent?: boolean;
 }
 
-const BasicInfo: React.FC<BasicInfoProps> = () => {
+const BasicInfo: React.FC<BasicInfoProps> = ({ property }) => {
   const [isScheduleTourModalOpen, setIsScheduleTourModalOpen] = useState(false);
   const [isRequestInfoModalOpen, setIsRequestInfoModalOpen] = useState(false);
+  
+  const mlsNumber = property.mlsNumber || property.mls?.toString();
+  const propertyAddress = property.address?.location || 
+    `${property.address?.streetNumber || ''} ${property.address?.streetName || ''} ${property.address?.streetSuffix || ''}, ${property.address?.city || ''}, ${property.address?.state || ''} ${property.address?.zip || ''}`.trim();
 
   // Calculate the nearest available date and time
   const getNearestAvailableDateTime = useMemo(() => {
@@ -103,7 +107,9 @@ const BasicInfo: React.FC<BasicInfoProps> = () => {
       {/* Schedule Tour Modal */}
       <ScheduleTourModal 
         open={isScheduleTourModalOpen} 
-        onOpenChange={setIsScheduleTourModalOpen} 
+        onOpenChange={setIsScheduleTourModalOpen}
+        mlsNumber={mlsNumber}
+        propertyAddress={propertyAddress}
       />
 
       {/* Request Info Modal */}

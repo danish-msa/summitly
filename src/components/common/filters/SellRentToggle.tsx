@@ -21,13 +21,13 @@ const SellRentToggle: React.FC<SellRentToggleProps> = ({
       {/* Cool Switch Toggle with Tooltips */}
       <div className="relative">
         {/* Background Container */}
-        <div className="relative bg-gray-100 rounded-full p-1 shadow-inner">
+        <div className="relative bg-gray-100 rounded-lg p-1 shadow-inner">
           {/* Animated Switch Handle */}
           <motion.div
-            className="absolute top-1 z-10 bg-white rounded-full shadow-lg border border-gray-200"
+            className="absolute top-1 z-10 bg-white rounded-lg shadow-lg border border-gray-200"
             style={{
               width: '100px',
-              height: '40px',
+              height: '30px',
             }}
             animate={{
               x: listingType === 'sell' ? 0 : 95,
@@ -45,9 +45,9 @@ const SellRentToggle: React.FC<SellRentToggleProps> = ({
           <div className="relative flex">
             {/* Sell Option */}
             <motion.button
-              className={`relative z-20 flex items-center justify-center gap-2 px-3 w-30 h-10 rounded-full transition-all duration-300 ${
+              className={`relative z-20 flex items-center justify-center gap-2 px-3 w-30 h-8 rounded-full transition-all duration-300 ${
                 listingType === 'sell' 
-                  ? 'text-secondary' 
+                  ? 'text-primary' 
                   : 'text-gray-500 hover:text-gray-700'
               }`}
               onClick={() => onListingTypeChange('sell')}
@@ -62,9 +62,9 @@ const SellRentToggle: React.FC<SellRentToggleProps> = ({
 
             {/* Rent Option */}
             <motion.button
-              className={`relative z-20 flex items-center justify-center gap-2 px-3 w-30 h-10 rounded-full transition-all duration-300 ${
+              className={`relative z-20 flex items-center justify-center gap-2 px-3 w-30 h-8 rounded-full transition-all duration-300 ${
                 listingType === 'rent' 
-                  ? 'text-secondary' 
+                  ? 'text-primary' 
                   : 'text-gray-500 hover:text-gray-700'
               }`}
               onClick={() => onListingTypeChange('rent')}

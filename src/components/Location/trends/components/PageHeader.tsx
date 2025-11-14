@@ -20,9 +20,10 @@ import {
 interface PageHeaderProps {
   cityName: string;
   citySlug: string;
+  backLabel?: string;
 }
 
-export const PageHeader: React.FC<PageHeaderProps> = ({ cityName, citySlug }) => {
+export const PageHeader: React.FC<PageHeaderProps> = ({ cityName, citySlug, backLabel }) => {
   const [copied, setCopied] = useState(false);
 
   const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
@@ -68,18 +69,20 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ cityName, citySlug }) =>
     window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}&title=${title}&summary=${summary}`);
   };
 
+  const backUrl = citySlug.startsWith('/') ? citySlug : `/${citySlug}`;
+  const backText = backLabel || `Back to ${cityName} Page`;
+
   return (
     <header className="border-b bg-card pt-16">
       <div className="container-1400 mx-auto px-4 py-6">
-        {/* Back Button */}
         <div className="mb-4">
-          <Link href={`/city/${citySlug}`}>
+          <Link href={backUrl}>
             <Button
               variant="ghost"
               className="flex items-center gap-2 p-0"
             >
               <ArrowLeft className="h-4 w-4" />
-              <span>Back to {cityName} Page</span>
+              <span>{backText}</span>
             </Button>
           </Link>
         </div>
@@ -95,9 +98,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ cityName, citySlug }) =>
             </p>
           </div>
           
-          {/* Share Buttons */}
           <div className="flex items-center gap-3">
-            {/* Copy Link Button */}
             <Button
               variant="outline"
               onClick={copyToClipboard}
@@ -116,7 +117,6 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ cityName, citySlug }) =>
               )}
             </Button>
 
-            {/* Share Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 

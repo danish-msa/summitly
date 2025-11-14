@@ -57,6 +57,7 @@ model User {
   searches SearchHistory[]
   propertyWatchlists PropertyWatchlist[]
   agentProfile AgentProfile?
+  tours Tour[]
 }
 
 model VerificationToken {
@@ -260,4 +261,39 @@ model PropertyWatchlist {
   @@index([userId])
   @@index([mlsNumber])
   @@index([cityName, neighborhood])
+}
+
+// Property Tours - stores scheduled tours for properties
+model Tour {
+  id            String      @id @default(cuid())
+  userId        String
+  mlsNumber     String      // MLS number of the property
+  tourType      TourType    @default(IN_PERSON)
+  scheduledDate DateTime    // Combined date and time
+  name          String
+  phone         String
+  email         String
+  preApproval   Boolean     @default(false)
+  status        TourStatus  @default(PENDING)
+  notes         String?     @db.Text
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([mlsNumber])
+  @@index([scheduledDate])
+}
+
+enum TourType {
+  IN_PERSON
+  VIDEO_CHAT
+}
+
+enum TourStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
 }

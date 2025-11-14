@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Heart, MapPin, Bed, Bath, Square } from 'lucide-react'
 import { PropertyListing } from '@/lib/types'
 import { formatCurrency, formatRelativeTime } from '@/lib/utils/format'
+import { getPropertyUrl } from '@/lib/utils/propertyUrl'
 
 interface PropertyCardProps {
   property: PropertyListing
@@ -147,7 +148,7 @@ export function PropertyCard({
       
       <CardFooter className="p-4 pt-0">
         <Button asChild className="w-full">
-          <Link href={`/property/${property.mlsNumber}`}>
+          <Link href={getPropertyUrl(property)}>
             View Details
           </Link>
         </Button>

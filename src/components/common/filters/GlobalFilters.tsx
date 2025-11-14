@@ -22,6 +22,7 @@ interface GlobalFiltersProps extends FilterComponentProps {
   showBathrooms?: boolean;
   showAdvanced?: boolean;
   showSellRentToggle?: boolean;
+  showResetButton?: boolean; // Flag to show/hide reset button
   isPreCon?: boolean; // Flag to show pre-construction specific filters
   layout?: 'horizontal' | 'vertical';
   className?: string;
@@ -41,6 +42,7 @@ const GlobalFilters: React.FC<GlobalFiltersProps> = ({
   showBathrooms = true,
   showAdvanced = true,
   showSellRentToggle = false,
+  showResetButton = true,
   isPreCon = false,
   layout = 'horizontal',
   className = ''
@@ -154,15 +156,17 @@ const GlobalFilters: React.FC<GlobalFiltersProps> = ({
         {filterComponents}
         
         {/* Reset Filters Button */}
-        <button 
-          onClick={resetFilters}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:border-secondary hover:bg-gray-50 transition-all"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          <span className="text-sm">Reset</span>
-        </button>
+        {showResetButton && resetFilters && (
+          <button 
+            onClick={resetFilters}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:border-secondary hover:bg-gray-50 transition-all"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span className="text-sm">Reset</span>
+          </button>
+        )}
       </div>
     </div>
   );

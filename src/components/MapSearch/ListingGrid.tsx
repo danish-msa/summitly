@@ -1,6 +1,7 @@
 import React from 'react'
 import Link from 'next/link';
 import { FaMapMarkerAlt, FaBed, FaBath, FaRuler } from 'react-icons/fa';
+import { getPropertyUrl } from '@/lib/utils/propertyUrl';
 
 interface Property {
     id: string;
@@ -91,7 +92,10 @@ const ListingGrid: React.FC<ItemBodyProps> = ({ property }) => {
   };
 
   return (
-    <Link target='_blank' href={`/property/${property.id}`}>
+    <Link target='_blank' href={getPropertyUrl({
+      address: property.address,
+      mlsNumber: property.id // Map id to mlsNumber
+    })}>
       <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
         <div className="md:flex">
           <div className="md:w-1/3 h-48 md:h-auto relative">

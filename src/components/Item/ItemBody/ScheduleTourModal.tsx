@@ -23,6 +23,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { ChevronLeft, ChevronRight, AlertCircle, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTours } from '@/hooks/useTours';
+import { useSession } from 'next-auth/react';
+import { toast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   tourType: z.enum(['in-person', 'video-chat']),
@@ -39,6 +42,8 @@ type FormData = z.infer<typeof formSchema>;
 interface ScheduleTourModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  mlsNumber?: string;
+  propertyAddress?: string;
 }
 
 // Generate dates for the next 7 days
@@ -69,7 +74,11 @@ const timeSlots = [
 const ScheduleTourModal: React.FC<ScheduleTourModalProps> = ({
   open,
   onOpenChange,
+  mlsNumber,
+  propertyAddress,
 }) => {
+  const { data: session } = useSession();
+  const { createTour, isCreating } = useTours();
   const [dateOffset, setDateOffset] = useState(0);
   const dates = generateDates();
   const visibleDates = dates.slice(dateOffset, dateOffset + 4);
@@ -79,6 +88,7 @@ const ScheduleTourModal: React.FC<ScheduleTourModalProps> = ({
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -93,10 +103,78 @@ const ScheduleTourModal: React.FC<ScheduleTourModalProps> = ({
   const selectedTime = watch('time');
   const preApproval = watch('preApproval');
 
-  const onSubmit = (data: FormData) => {
-    console.log('Form submitted:', data);
-    // Handle form submission here
-    onOpenChange(false);
+  const onSubmit = async (data: FormData) => {
+    if (!session) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to schedule a tour.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!mlsNumber) {
+      toast({
+        title: "Error",
+        description: "Property information is missing. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Parse time from format like "9:00 AM" to 24-hour format
+      const parseTime = (timeStr: string): string => {
+        const [time, period] = timeStr.split(' ')
+        const [hours, minutes] = time.split(':')
+        let hour24 = parseInt(hours, 10)
+        if (period === 'PM' && hour24 !== 12) {
+          hour24 += 12
+        } else if (period === 'AM' && hour24 === 12) {
+          hour24 = 0
+        }
+        return `${hour24.toString().padStart(2, '0')}:${minutes}`
+      }
+      
+      // Combine date and time into a single datetime
+      const time24 = parseTime(data.time)
+      const dateTime = new Date(`${data.date}T${time24}:00`)
+      
+      await createTour({
+        mlsNumber,
+        tourType: data.tourType === 'in-person' ? 'IN_PERSON' : 'VIDEO_CHAT',
+        scheduledDate: dateTime.toISOString(),
+        name: data.name,
+        phone: data.phone,
+        email: data.email,
+        preApproval: data.preApproval,
+      });
+
+      toast({
+        title: "Tour Scheduled",
+        description: "Your tour has been scheduled successfully. You'll receive a confirmation email shortly.",
+        variant: "default",
+      });
+
+      // Reset form and close modal
+      reset({
+        tourType: 'in-person',
+        preApproval: false,
+        date: '',
+        time: '',
+        name: '',
+        phone: '',
+        email: '',
+      });
+      onOpenChange(false);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to schedule tour. Please try again.";
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
   };
 
   const handlePrevDates = () => {
@@ -287,9 +365,10 @@ const ScheduleTourModal: React.FC<ScheduleTourModalProps> = ({
           {/* Submit Button */}
           <Button 
             type="submit" 
-            className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground py-6 text-base font-semibold rounded-lg"
+            disabled={isCreating}
+            className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground py-6 text-base font-semibold rounded-lg disabled:opacity-50"
           >
-            Schedule Tour
+            {isCreating ? 'Scheduling...' : 'Schedule Tour'}
           </Button>
 
           {/* Pre-approval Checkbox */}
