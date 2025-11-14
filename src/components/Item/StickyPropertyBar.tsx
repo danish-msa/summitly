@@ -211,7 +211,7 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
       <ScheduleTourModal 
         open={isScheduleTourModalOpen} 
         onOpenChange={setIsScheduleTourModalOpen}
-        mlsNumber={property.mlsNumber || property.mls?.toString()}
+        mlsNumber={property.mlsNumber}
         propertyAddress={property.address?.location || 
           `${property.address?.streetNumber || ''} ${property.address?.streetName || ''} ${property.address?.streetSuffix || ''}, ${property.address?.city || ''}, ${property.address?.state || ''} ${property.address?.zip || ''}`.trim()}
       />

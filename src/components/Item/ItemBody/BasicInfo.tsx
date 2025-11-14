@@ -17,7 +17,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ property }) => {
   const [isScheduleTourModalOpen, setIsScheduleTourModalOpen] = useState(false);
   const [isRequestInfoModalOpen, setIsRequestInfoModalOpen] = useState(false);
   
-  const mlsNumber = property.mlsNumber || property.mls?.toString();
+  const mlsNumber = property.mlsNumber;
   const propertyAddress = property.address?.location || 
     `${property.address?.streetNumber || ''} ${property.address?.streetName || ''} ${property.address?.streetSuffix || ''}, ${property.address?.city || ''}, ${property.address?.state || ''} ${property.address?.zip || ''}`.trim();
 
