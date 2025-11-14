@@ -131,7 +131,7 @@ const CityNeighbourhoodsPage: React.FC = () => {
         const mockData = generateMockNeighbourhoodData();
         const allNeighbourhoods = neighbourhoodsList.length > 0 
           ? neighbourhoodsList 
-          : mockData.all.map((n, idx) => ({ ...n, area: 'downtown' }));
+          : mockData.all.map((n) => ({ ...n, area: 'downtown' }));
 
         setNeighbourhoodData({
           hottest: allNeighbourhoods.slice(0, 5),

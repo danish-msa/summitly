@@ -75,7 +75,6 @@ const ScheduleTourModal: React.FC<ScheduleTourModalProps> = ({
   open,
   onOpenChange,
   mlsNumber,
-  propertyAddress,
 }) => {
   const { data: session } = useSession();
   const { createTour, isCreating } = useTours();

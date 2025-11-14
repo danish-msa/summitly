@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import Link from "next/link";
 import { PropertyListing } from "@/lib/types";
 
 interface Neighborhood {
@@ -26,14 +25,6 @@ interface AreaSelectorProps {
   selectedArea?: string | null;
   selectedNeighborhood?: string | null;
 }
-
-// Helper function to slugify names for URLs
-const slugify = (name: string): string => {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-};
 
 // Mock areas data (similar to lovable.dev example)
 const mockAreasData: Area[] = [

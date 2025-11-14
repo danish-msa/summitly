@@ -16,7 +16,7 @@ import SimilarListings from './ItemBody/SimilarListings'
 import StickyPropertyBar from './StickyPropertyBar'
 import Breadcrumbs from './Breadcrumbs'
 import { ContactSection } from './ItemBody/ContactSection'
-import { parsePropertyUrl, slugify } from '@/lib/utils/propertyUrl'
+import { parsePropertyUrl } from '@/lib/utils/propertyUrl'
 
 const Item: React.FC = () => {
   const params = useParams();

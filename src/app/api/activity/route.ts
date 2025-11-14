@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions)
     
@@ -15,7 +15,13 @@ export async function GET(request: NextRequest) {
     }
 
     const userId = session.user.id
-    const activities: any[] = []
+    const activities: Array<{
+      type: string;
+      action: string;
+      timestamp: Date;
+      mlsNumber?: string;
+      location?: string;
+    }> = []
 
     // Get recent saved properties (last 10)
     const savedProperties = await prisma.savedProperty.findMany({

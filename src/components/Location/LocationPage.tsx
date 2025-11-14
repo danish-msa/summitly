@@ -20,7 +20,7 @@ import PropertyAlertsDialog from '../City/PropertyAlertsDialog';
 import { usePropertyAlerts } from '@/hooks/usePropertyAlerts';
 import { useSession } from 'next-auth/react';
 import { toast } from '@/hooks/use-toast';
-import { parseCityUrl, getCityUrl } from '@/lib/utils/cityUrl';
+import { parseCityUrl } from '@/lib/utils/cityUrl';
 
 // Dynamically import the Google Maps component with no SSR
 const GooglePropertyMap = dynamic(() => import('@/components/MapSearch/GooglePropertyMap'), { ssr: false });
@@ -153,7 +153,7 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
   
   // Use property alerts hook for saving alerts
   const { data: session } = useSession();
-  const { currentAlert, isLoading: isLoadingAlerts, saveAlert, isSaving } = usePropertyAlerts(
+  const { currentAlert } = usePropertyAlerts(
     undefined, // No specific property
     locationType === 'city' ? cityName : undefined,  // City name for city-level alerts
     locationType === 'neighbourhood' ? neighbourhoodName : (locationType === 'area' ? areaName : undefined)  // Neighborhood or area
@@ -339,7 +339,6 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
   }
 
   const displayLocationName = locationInfo?.name || displayName;
-  const locationTypeLabel = locationType === 'neighbourhood' ? 'Neighbourhood' : locationType === 'area' ? 'Area' : 'City';
 
   return (
     <div className="min-h-screen">
@@ -630,7 +629,13 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
 
           try {
             // Determine what to save based on location type
-            const alertData: any = {
+            const alertData: {
+              newProperties: boolean;
+              soldListings: boolean;
+              priceChanges: boolean;
+              cityName?: string;
+              neighborhood?: string;
+            } = {
               newProperties: options.newProperties,
               soldListings: options.soldListings,
               expiredListings: options.expiredListings,

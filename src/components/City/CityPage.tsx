@@ -77,7 +77,7 @@ const CityPage: React.FC = () => {
   
   // Use property alerts hook for saving alerts
   const { data: session } = useSession();
-  const { currentAlert, isLoading: isLoadingAlerts, saveAlert, isSaving } = usePropertyAlerts(
+  const { currentAlert } = usePropertyAlerts(
     undefined, // No specific property
     cityName,  // City name for location-based alerts
     undefined  // No specific neighborhood

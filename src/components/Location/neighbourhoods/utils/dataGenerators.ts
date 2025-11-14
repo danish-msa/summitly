@@ -1,5 +1,3 @@
-import { PropertyListing } from '@/lib/types';
-
 export interface NeighbourhoodData {
   rank: number;
   name: string;

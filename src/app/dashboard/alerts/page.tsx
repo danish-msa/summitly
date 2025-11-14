@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { TrendingDown, Star, MapPin, Bell, Home, Calendar, X } from "lucide-react"
+import { TrendingDown, Star, MapPin, Bell, Home, Calendar } from "lucide-react"
 import { useAllPropertyAlerts } from '@/hooks/usePropertyAlerts'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -22,13 +22,29 @@ const formatTimeAgo = (date: Date | string): string => {
 
 export default function Alerts() {
   const { alerts, isLoading } = useAllPropertyAlerts()
-  const [displayAlerts, setDisplayAlerts] = useState<any[]>([])
+  const [displayAlerts, setDisplayAlerts] = useState<Array<{
+    id: string;
+    type: string;
+    title: string;
+    description: string;
+    timestamp: Date;
+    mlsNumber?: string;
+    location?: string;
+  }>>([])
 
   useEffect(() => {
     if (alerts && alerts.length > 0) {
       // Transform saved alerts into display format
       const transformedAlerts = alerts.flatMap(alert => {
-        const alertCards: any[] = []
+        const alertCards: Array<{
+          id: string;
+          type: string;
+          title: string;
+          description: string;
+          timestamp: Date;
+          mlsNumber?: string;
+          location?: string;
+        }> = []
         const location = alert.neighborhood 
           ? `${alert.neighborhood}, ${alert.cityName || ''}`
           : alert.cityName || 'Unknown Location'

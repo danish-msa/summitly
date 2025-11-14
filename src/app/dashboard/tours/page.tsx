@@ -7,7 +7,7 @@ import { Calendar, Clock, MapPin, Video, User } from "lucide-react"
 import { useTours } from "@/hooks/useTours"
 import { toast } from "@/hooks/use-toast"
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { TourDetailsDialog } from "@/components/Dashboard/TourDetailsDialog"
 import { getListingDetails } from "@/lib/api/repliers/services/listings"
 import { PropertyListing } from "@/lib/types"
@@ -63,7 +63,17 @@ const formatTime = (date: Date | string): string => {
 export default function Tours() {
   const { tours, isLoading, deleteTour, isDeleting, updateTour, isUpdating } = useTours()
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [selectedTour, setSelectedTour] = useState<any>(null)
+  const [selectedTour, setSelectedTour] = useState<{
+    id: string;
+    mlsNumber: string;
+    tourType: string;
+    date: string;
+    time: string;
+    name: string;
+    phone: string;
+    email: string;
+    status: string;
+  } | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [property, setProperty] = useState<PropertyListing | null>(null)
   const [isLoadingProperty, setIsLoadingProperty] = useState(false)
@@ -108,7 +118,17 @@ export default function Tours() {
     }
   }
 
-  const handleViewRequest = async (tour: any) => {
+  const handleViewRequest = async (tour: {
+    id: string;
+    mlsNumber: string;
+    tourType: string;
+    date: string;
+    time: string;
+    name: string;
+    phone: string;
+    email: string;
+    status: string;
+  }) => {
     setSelectedTour(tour)
     setIsDialogOpen(true)
     setIsLoadingProperty(true)

@@ -66,7 +66,6 @@ const formatTimeAgo = (date: Date | string): string => {
 
 export default function DashboardHome() {
   const { savedProperties } = useSavedProperties()
-  const { alerts } = useAllPropertyAlerts()
   const { tours } = useTours()
   const { activities, isLoading: isLoadingActivity } = useActivity()
 
@@ -129,7 +128,7 @@ export default function DashboardHome() {
   })
 
   // Fetch property details for activities that need URLs
-  const [propertyMap, setPropertyMap] = useState<Record<string, any>>({})
+  const [propertyMap, setPropertyMap] = useState<Record<string, PropertyListing>>({})
   
   useEffect(() => {
     const fetchProperties = async () => {
@@ -138,7 +137,7 @@ export default function DashboardHome() {
         .map(a => a.mlsNumber!)
         .filter((v, i, a) => a.indexOf(v) === i) // unique values
       
-      const properties: Record<string, any> = {}
+      const properties: Record<string, PropertyListing> = {}
       await Promise.all(
         mlsNumbers.map(async (mls) => {
           try {

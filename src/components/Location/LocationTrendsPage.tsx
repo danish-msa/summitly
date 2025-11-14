@@ -6,7 +6,7 @@ import { getListings } from '@/lib/api/properties';
 import { PropertyListing } from '@/lib/types';
 import { MarketStats } from '@/components/City/MarketStats';
 import { Separator } from '@/components/ui/separator';
-import { unslugifyCityName, getDateRanges } from '@/components/Location/trends/utils/helpers';
+import { getDateRanges } from '@/components/Location/trends/utils/helpers';
 import { PageHeader } from '@/components/Location/trends/components/PageHeader';
 import { HousingPricesSection } from '@/components/Location/trends/components/HousingPricesSection';
 import { HousingInventorySection } from '@/components/Location/trends/components/HousingInventorySection';
