@@ -304,7 +304,7 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
             <ScheduleTourModal 
                 open={isScheduleTourModalOpen} 
                 onOpenChange={setIsScheduleTourModalOpen}
-                mlsNumber={property.mlsNumber || property.mls?.toString()}
+                mlsNumber={property.mlsNumber}
                 propertyAddress={fullAddress}
             />
         </div>
