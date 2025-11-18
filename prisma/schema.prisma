@@ -43,21 +43,21 @@ model User {
   email         String    @unique
   emailVerified DateTime?
   image         String?
-  phone         String?   // Phone number field
-  password      String?   // For credentials authentication
+  phone         String? // Phone number field
+  password      String? // For credentials authentication
   role          UserRole  @default(BUYER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts Account[]
-  sessions Session[]
-  properties Property[]
-  favorites Favorite[]
-  savedProperties SavedProperty[]
-  searches SearchHistory[]
+  accounts           Account[]
+  sessions           Session[]
+  properties         Property[]
+  favorites          Favorite[]
+  savedProperties    SavedProperty[]
+  searches           SearchHistory[]
   propertyWatchlists PropertyWatchlist[]
-  agentProfile AgentProfile?
-  tours Tour[]
+  agentProfile       AgentProfile?
+  tours              Tour[]
 }
 
 model VerificationToken {
@@ -69,50 +69,50 @@ model VerificationToken {
 }
 
 model Property {
-  id          String        @id @default(cuid())
-  mlsNumber   String        @unique
-  title       String
-  description String?       @db.Text
-  price       Float
+  id           String         @id @default(cuid())
+  mlsNumber    String         @unique
+  title        String
+  description  String?        @db.Text
+  price        Float
   propertyType PropertyType
-  status      PropertyStatus @default(ACTIVE)
-  
+  status       PropertyStatus @default(ACTIVE)
+
   // Address
   streetNumber String?
   streetName   String?
   city         String
   state        String
   zipCode      String?
-  country      String       @default("US")
-  
+  country      String  @default("US")
+
   // Property Details
-  bedrooms     Int
-  bathrooms    Float
-  squareFeet   Int?
-  lotSize      Float?
-  yearBuilt    Int?
-  
+  bedrooms   Int
+  bathrooms  Float
+  squareFeet Int?
+  lotSize    Float?
+  yearBuilt  Int?
+
   // Coordinates
-  latitude     Float?
-  longitude    Float?
-  
+  latitude  Float?
+  longitude Float?
+
   // Images
-  images       String[]     @default([])
-  
+  images String[] @default([])
+
   // Features
-  features     String[]     @default([])
-  
+  features String[] @default([])
+
   // Agent/User
-  userId       String
-  user         User         @relation(fields: [userId], references: [id])
-  
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
   // Timestamps
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  favorites    Favorite[]
-  views        PropertyView[]
+  favorites Favorite[]
+  views     PropertyView[]
 }
 
 model Favorite {
@@ -120,25 +120,25 @@ model Favorite {
   userId     String
   propertyId String
   createdAt  DateTime @default(now())
-  
+
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  
+
   @@unique([userId, propertyId])
 }
 
 // Saved properties from MLS/external listings (using MLS number as identifier)
 model SavedProperty {
-  id         String   @id @default(cuid())
-  userId     String
-  mlsNumber  String   // MLS number from PropertyListing
-  notes      String?  @db.Text // User's personal notes
-  tags       String[] @default([]) // User-defined tags
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  
+  id        String   @id @default(cuid())
+  userId    String
+  mlsNumber String // MLS number from PropertyListing
+  notes     String?  @db.Text // User's personal notes
+  tags      String[] @default([]) // User-defined tags
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@unique([userId, mlsNumber])
   @@index([userId])
   @@index([mlsNumber])
@@ -151,22 +151,22 @@ model PropertyView {
   ipAddress  String?
   userAgent  String?
   viewedAt   DateTime @default(now())
-  
+
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 }
 
 model SearchHistory {
-  id          String   @id @default(cuid())
-  userId      String
-  query       String?
-  location    String?
-  minPrice    Float?
-  maxPrice    Float?
-  bedrooms    Int?
-  bathrooms   Int?
+  id           String        @id @default(cuid())
+  userId       String
+  query        String?
+  location     String?
+  minPrice     Float?
+  maxPrice     Float?
+  bedrooms     Int?
+  bathrooms    Int?
   propertyType PropertyType?
-  searchedAt  DateTime @default(now())
-  
+  searchedAt   DateTime      @default(now())
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -183,21 +183,21 @@ model AgentProfile {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Contact {
-  id        String   @id @default(cuid())
-  name      String
-  email     String
-  phone     String?
-  message   String   @db.Text
+  id         String        @id @default(cuid())
+  name       String
+  email      String
+  phone      String?
+  message    String        @db.Text
   propertyId String?
-  type      ContactType @default(GENERAL)
-  status    ContactStatus @default(PENDING)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  type       ContactType   @default(GENERAL)
+  status     ContactStatus @default(PENDING)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
 }
 
 enum UserRole {
@@ -245,7 +245,7 @@ enum ContactStatus {
 model PropertyWatchlist {
   id              String   @id @default(cuid())
   userId          String
-  mlsNumber       String?  // If watching a specific property
+  mlsNumber       String? // If watching a specific property
   cityName        String?
   neighborhood    String?
   propertyType    String?
@@ -255,9 +255,9 @@ model PropertyWatchlist {
   expiredListings Boolean  @default(false) // Alert for expired listings in area
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@index([userId])
   @@index([mlsNumber])
   @@index([cityName, neighborhood])
@@ -265,22 +265,22 @@ model PropertyWatchlist {
 
 // Property Tours - stores scheduled tours for properties
 model Tour {
-  id            String      @id @default(cuid())
+  id            String     @id @default(cuid())
   userId        String
-  mlsNumber     String      // MLS number of the property
-  tourType      TourType    @default(IN_PERSON)
-  scheduledDate DateTime    // Combined date and time
+  mlsNumber     String // MLS number of the property
+  tourType      TourType   @default(IN_PERSON)
+  scheduledDate DateTime // Combined date and time
   name          String
   phone         String
   email         String
-  preApproval   Boolean     @default(false)
-  status        TourStatus  @default(PENDING)
-  notes         String?     @db.Text
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  
+  preApproval   Boolean    @default(false)
+  status        TourStatus @default(PENDING)
+  notes         String?    @db.Text
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@index([userId])
   @@index([mlsNumber])
   @@index([scheduledDate])
@@ -301,64 +301,64 @@ enum TourStatus {
 
 // Pre-Construction Projects - stores pre-construction project data
 model PreConstructionProject {
-  id              String   @id @default(cuid())
-  mlsNumber       String   @unique // Unique identifier (e.g., 'luxury-heights-condominiums')
-  projectName     String
-  developer       String
-  startingPrice   Float
-  status          String   // 'selling', 'coming-soon', 'sold-out'
-  
+  id            String @id @default(cuid())
+  mlsNumber     String @unique // Unique identifier (e.g., 'luxury-heights-condominiums')
+  projectName   String
+  developer     String
+  startingPrice Float
+  status        String // 'selling', 'coming-soon', 'sold-out'
+
   // Address
-  streetNumber    String?
-  streetName      String?
-  city            String
-  state           String
-  zip             String?
-  country         String   @default("Canada")
-  neighborhood    String?
+  streetNumber      String?
+  streetName        String?
+  city              String
+  state             String
+  zip               String?
+  country           String  @default("Canada")
+  neighborhood      String?
   majorIntersection String?
-  
+
   // Coordinates
-  latitude        Float?
-  longitude       Float?
-  
+  latitude  Float?
+  longitude Float?
+
   // Property Details
-  propertyType    String   // 'Condominium', 'Detached', 'Semi-Detached', 'Townhome'
-  bedroomRange    String   // e.g., '1-3'
-  bathroomRange   String   // e.g., '1-3'
-  sqftRange       String   // e.g., '650-1,450'
-  totalUnits      Int
-  availableUnits  Int
-  storeys         Int?
-  
+  propertyType   String // 'Condominium', 'Detached', 'Semi-Detached', 'Townhome'
+  bedroomRange   String // e.g., '1-3'
+  bathroomRange  String // e.g., '1-3'
+  sqftRange      String // e.g., '650-1,450'
+  totalUnits     Int
+  availableUnits Int
+  storeys        Int?
+
   // Completion
-  completionDate  String   // e.g., 'Q4 2025'
-  completionProgress Int   // 0-100
-  
+  completionDate     String // e.g., 'Q4 2025'
+  completionProgress Int // 0-100
+
   // Images
-  images          String[] @default([])
-  
+  images String[] @default([])
+
   // Features and Amenities
-  features        String[] @default([])
-  amenities       String[] @default([])
-  
+  features  String[] @default([])
+  amenities String[] @default([])
+
   // Additional Info
   depositStructure String? @db.Text
-  description     String?  @db.Text
-  documents       String?  @db.Text // JSON string for documents array
-  
+  description      String? @db.Text
+  documents        String? @db.Text // JSON string for documents array
+
   // Development Team (stored as JSON or separate fields)
-  developerInfo   String?  @db.Text // JSON string for developer details
-  architectInfo   String?  @db.Text // JSON string for architect details
-  builderInfo     String?  @db.Text // JSON string for builder details
-  
+  developerInfo String? @db.Text // JSON string for developer details
+  architectInfo String? @db.Text // JSON string for architect details
+  builderInfo   String? @db.Text // JSON string for builder details
+
   // Timestamps
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  units           PreConstructionUnit[]
-  
+  units PreConstructionUnit[]
+
   @@index([city])
   @@index([status])
   @@index([propertyType])
@@ -366,40 +366,40 @@ model PreConstructionProject {
 
 // Pre-Construction Units - stores individual units within a project
 model PreConstructionUnit {
-  id              String   @id @default(cuid())
-  projectId       String
-  project         PreConstructionProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  
-  unitName        String   // e.g., '101', '202'
-  beds            Int
-  baths           Int
-  sqft            Int
-  price           Float
-  maintenanceFee  Float?
-  status          String   // 'for-sale', 'sold-out', 'reserved'
-  
-  floorplanImage  String?
-  description     String?  @db.Text
-  features        String[] @default([])
-  amenities       String[] @default([])
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+  id        String                 @id @default(cuid())
+  projectId String
+  project   PreConstructionProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  unitName       String // e.g., '101', '202'
+  beds           Int
+  baths          Int
+  sqft           Int
+  price          Float
+  maintenanceFee Float?
+  status         String // 'for-sale', 'sold-out', 'reserved'
+
+  floorplanImage String?
+  description    String?  @db.Text
+  features       String[] @default([])
+  amenities      String[] @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([projectId])
   @@index([status])
 }
 
 // Property Ratings - stores ratings for ALL property types (regular listings, pre-cons, etc.)
 model PropertyRating {
-  id          String   @id @default(cuid())
-  propertyId  String   // Can be mlsNumber for regular properties or projectId for pre-cons
-  propertyType String  // 'regular', 'pre-construction' - to distinguish property types
-  userId      String?  // Optional user ID if user is logged in, null for anonymous ratings
-  sessionId   String?  // Session ID for anonymous users to prevent duplicate ratings
-  rating      Int      // Rating value from 1 to 5 stars
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  propertyId   String // Can be mlsNumber for regular properties or projectId for pre-cons
+  propertyType String // 'regular', 'pre-construction' - to distinguish property types
+  userId       String? // Optional user ID if user is logged in, null for anonymous ratings
+  sessionId    String? // Session ID for anonymous users to prevent duplicate ratings
+  rating       Int // Rating value from 1 to 5 stars
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([propertyId])
   @@index([propertyType])

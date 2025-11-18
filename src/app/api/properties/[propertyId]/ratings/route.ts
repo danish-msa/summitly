@@ -6,10 +6,10 @@ import { authOptions } from '@/lib/auth';
 // GET - Get rating statistics for a property (works for all property types)
 export async function GET(
   request: NextRequest,
-  { params }: { params: { propertyId: string } }
+  { params }: { params: Promise<{ propertyId: string }> }
 ) {
   try {
-    const { propertyId } = params;
+    const { propertyId } = await params;
     const { searchParams } = new URL(request.url);
     const propertyType = searchParams.get('propertyType') || 'regular';
 
@@ -86,10 +86,10 @@ export async function GET(
 // POST - Create or update a rating (works for all property types)
 export async function POST(
   request: NextRequest,
-  { params }: { params: { propertyId: string } }
+  { params }: { params: Promise<{ propertyId: string }> }
 ) {
   try {
-    const { propertyId } = params;
+    const { propertyId } = await params;
     const body = await request.json();
     const { rating, propertyType = 'regular' } = body;
 

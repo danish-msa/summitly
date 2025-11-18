@@ -6,10 +6,10 @@ import { authOptions } from '@/lib/auth';
 // GET - Get rating statistics for a property (works for all property types)
 export async function GET(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const { projectId } = params;
+    const { projectId } = await params;
     const { searchParams } = new URL(request.url);
     const propertyType = searchParams.get('propertyType') || 'pre-construction'; // Default to pre-construction for backward compatibility
 
@@ -85,10 +85,10 @@ export async function GET(
 // POST - Create or update a rating (works for all property types)
 export async function POST(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const { projectId } = params;
+    const { projectId } = await params;
     const body = await request.json();
     const { rating, propertyType = 'pre-construction' } = body; // Default to pre-construction for backward compatibility
 

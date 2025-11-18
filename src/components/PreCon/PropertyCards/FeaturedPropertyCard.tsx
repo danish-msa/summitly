@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Bed, Bath, Maximize2, MapPin, Heart, ChevronLeft, ChevronRight, Building2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bed, Bath, Maximize2, MapPin, Heart, ChevronLeft, ChevronRight, Building2, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -12,6 +12,32 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [imgError, setImgError] = useState(false);
+  
+  // Load rating data from database
+  const [ratingData, setRatingData] = useState<{
+    average: number;
+    total: number;
+  }>({
+    average: 0,
+    total: 0
+  });
+
+  useEffect(() => {
+    const loadRatings = async () => {
+      try {
+        const { getProjectRating } = await import('@/lib/api/project-ratings');
+        const data = await getProjectRating(property.id);
+        setRatingData({
+          average: data.average || 0,
+          total: data.total || 0
+        });
+      } catch (error) {
+        console.error('Error loading ratings:', error);
+      }
+    };
+
+    loadRatings();
+  }, [property.id]);
   
   const images = property.images;
   const totalImages = images.length;
@@ -111,15 +137,6 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
               </button>
             </div>
 
-            {/* Image Counter */}
-            {totalImages > 1 && (
-              <div className="absolute bottom-16 right-3">
-                <div className="bg-black/60 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium">
-                  {currentImageIndex + 1}/{totalImages}
-                </div>
-              </div>
-            )}
-
             {/* Carousel Controls */}
             {totalImages > 1 && (
               <>
@@ -165,12 +182,34 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
             </h3>
 
             {/* Developer */}
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-2">
               <Building2 className="text-muted-foreground" size={16} />
               <p className="text-sm text-muted-foreground">
                 {property.developer}
               </p>
             </div>
+
+            {/* Rating Display */}
+            {ratingData.total > 0 && (
+              <div className="flex items-center gap-1.5 mb-4">
+                <div className="flex items-center gap-0.5">
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    const isActive = star <= Math.round(ratingData.average);
+                    return (
+                      <Star
+                        key={star}
+                        className={cn(
+                          "h-3 w-3",
+                          isActive ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+                        )}
+                      />
+                    );
+                  })}
+                </div>
+                <span className="text-xs font-medium text-foreground">{ratingData.average.toFixed(1)}</span>
+                <span className="text-xs text-muted-foreground">({ratingData.total})</span>
+              </div>
+            )}
 
             {/* Property Details */}
             <div className="flex flex-wrap gap-4 mb-4">
