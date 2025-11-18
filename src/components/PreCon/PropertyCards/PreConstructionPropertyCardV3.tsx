@@ -1,11 +1,12 @@
 "use client";
 
-import { MapPin, Building2, Bed, Bath, Maximize2 } from "lucide-react";
+import { MapPin, Building2, Bed, Bath, Maximize2, Star } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import Link from 'next/link';
 import type { PreConstructionPropertyCardProps } from './types';
+import { useEffect, useState } from 'react';
 
 const PreConstructionPropertyCardV3 = ({ 
   property,
@@ -17,6 +18,32 @@ const PreConstructionPropertyCardV3 = ({
     currency: 'USD',
     maximumFractionDigits: 0
   }).format(property.startingPrice);
+
+  // Load rating data from database
+  const [ratingData, setRatingData] = useState<{
+    average: number;
+    total: number;
+  }>({
+    average: 0,
+    total: 0
+  });
+
+  useEffect(() => {
+    const loadRatings = async () => {
+      try {
+        const { getProjectRating } = await import('@/lib/api/project-ratings');
+        const data = await getProjectRating(property.id);
+        setRatingData({
+          average: data.average || 0,
+          total: data.total || 0
+        });
+      } catch (error) {
+        console.error('Error loading ratings:', error);
+      }
+    };
+
+    loadRatings();
+  }, [property.id]);
 
   const getStatusBadge = () => {
     switch (property.status) {
@@ -79,10 +106,37 @@ const PreConstructionPropertyCardV3 = ({
               <h4 className="font-semibold text-base leading-tight text-foreground mb-1 line-clamp-2">
                 {property.projectName}
               </h4>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1.5">
                 <Building2 className="h-3 w-3 flex-shrink-0" />
                 <span className="line-clamp-1">{property.developer}</span>
               </div>
+              {/* Rating Display */}
+              {ratingData.total > 0 && (
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => {
+                      const isActive = star <= Math.round(ratingData.average);
+                      return (
+                        <Star
+                          key={star}
+                          className={cn(
+                            "h-3 w-3",
+                            isActive
+                              ? "text-yellow-400 fill-yellow-400"
+                              : "text-gray-300"
+                          )}
+                        />
+                      );
+                    })}
+                  </div>
+                  <span className="text-xs font-medium text-foreground">
+                    {ratingData.average.toFixed(1)}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    ({ratingData.total})
+                  </span>
+                </div>
+              )}
             </div>
             <div className="text-right w-[30%]">
               <p className="text-xs text-muted-foreground">Starting from</p>

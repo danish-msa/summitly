@@ -23,8 +23,25 @@ import {
   Droplet,
   Gauge,
   DoorOpen,
-  MessageCircle
+  MessageCircle,
+  Sparkles,
+  Shield,
+  Dumbbell,
+  Waves as Pool,
+  Flame,
+  ArrowUpDown,
+  Square,
+  Mountain,
+  Eye,
+  Lock,
+  Wifi,
+  Tv,
+  UtensilsCrossed,
+  Coffee,
+  Gamepad2,
+  ShoppingBag
 } from "lucide-react";
+import { PropertyListing } from "@/lib/types";
 
 interface ListingDetailsProps {
   data: {
@@ -66,9 +83,13 @@ interface ListingDetailsProps {
       avgDaysOnMarket: number;
     };
   };
+  property?: PropertyListing;
 }
 
-export default function PropertyListingDetails({ data }: ListingDetailsProps) {
+export default function PropertyListingDetails({ data, property }: ListingDetailsProps) {
+  // Debug: Check if property has preCon data
+  // console.log('Property preCon data:', property?.preCon);
+  
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -76,6 +97,104 @@ export default function PropertyListingDetails({ data }: ListingDetailsProps) {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(price);
+  };
+
+  // Get appropriate icon for highlight key
+  const getHighlightIcon = (key: string) => {
+    const keyLower = key.toLowerCase();
+    
+    // Pool/Swimming
+    if (keyLower.includes('pool') || keyLower.includes('swim')) {
+      return Pool;
+    }
+    
+    // Security/Safety
+    if (keyLower.includes('security') || keyLower.includes('safe') || keyLower.includes('guard') || keyLower.includes('alarm')) {
+      return Shield;
+    }
+    
+    // Gym/Fitness
+    if (keyLower.includes('gym') || keyLower.includes('fitness') || keyLower.includes('exercise')) {
+      return Dumbbell;
+    }
+    
+    // Fireplace
+    if (keyLower.includes('fireplace') || keyLower.includes('fire')) {
+      return Flame;
+    }
+    
+    // Elevator
+    if (keyLower.includes('elevator') || keyLower.includes('lift')) {
+      return ArrowUpDown;
+    }
+    
+    // Balcony/Deck/Patio
+    if (keyLower.includes('balcony') || keyLower.includes('deck') || keyLower.includes('patio') || keyLower.includes('terrace')) {
+      return Square;
+    }
+    
+    // View
+    if (keyLower.includes('view') || keyLower.includes('scenic') || keyLower.includes('ocean') || keyLower.includes('mountain')) {
+      return Eye;
+    }
+    
+    // Lock/Security
+    if (keyLower.includes('lock') || keyLower.includes('secure')) {
+      return Lock;
+    }
+    
+    // WiFi/Internet
+    if (keyLower.includes('wifi') || keyLower.includes('internet') || keyLower.includes('network')) {
+      return Wifi;
+    }
+    
+    // TV/Entertainment
+    if (keyLower.includes('tv') || keyLower.includes('television') || keyLower.includes('entertainment')) {
+      return Tv;
+    }
+    
+    // Kitchen/Dining
+    if (keyLower.includes('kitchen') || keyLower.includes('dining') || keyLower.includes('cafe')) {
+      return UtensilsCrossed;
+    }
+    
+    // Coffee/Bar
+    if (keyLower.includes('coffee') || keyLower.includes('bar') || keyLower.includes('cafe')) {
+      return Coffee;
+    }
+    
+    // Game/Recreation
+    if (keyLower.includes('game') || keyLower.includes('recreation') || keyLower.includes('play')) {
+      return Gamepad2;
+    }
+    
+    // Shopping
+    if (keyLower.includes('shopping') || keyLower.includes('mall') || keyLower.includes('store')) {
+      return ShoppingBag;
+    }
+    
+    // Parking
+    if (keyLower.includes('parking') || keyLower.includes('garage')) {
+      return Car;
+    }
+    
+    // Garden/Yard
+    if (keyLower.includes('garden') || keyLower.includes('yard') || keyLower.includes('landscape')) {
+      return TreePine;
+    }
+    
+    // Water/Beach
+    if (keyLower.includes('water') || keyLower.includes('beach') || keyLower.includes('lake')) {
+      return Waves;
+    }
+    
+    // Mountain/Nature
+    if (keyLower.includes('mountain') || keyLower.includes('nature') || keyLower.includes('forest')) {
+      return Mountain;
+    }
+    
+    // Default - use Sparkles for general highlights
+    return Sparkles;
   };
 
   // Get appropriate icon for fact key
@@ -182,6 +301,37 @@ export default function PropertyListingDetails({ data }: ListingDetailsProps) {
                 </div>
               );
             })}
+            {/* Occupancy / Completion Year for Pre-Construction Properties */}
+            {property && property.preCon && property.preCon.completion && property.preCon.completion.date && (
+              <div className="flex items-center gap-3 hover:shadow-sm transition-shadow">
+                <div className="w-10 h-10 rounded-lg bg-brand-celestial/20 flex items-center justify-center flex-shrink-0">
+                  <Calendar className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div className="flex-1 min-w-0 space-y-1">
+                  <p className="text-sm text-muted-foreground">Occupancy / Completion Year</p>
+                  <p className="font-semibold text-foreground">
+                    {(() => {
+                      const completionDate = property.preCon.completion.date;
+                      // Extract year from completion.date (e.g., "Q4 2025" -> "2025", "2025" -> "2025")
+                      const yearMatch = completionDate.match(/\d{4}/);
+                      if (yearMatch) {
+                        return yearMatch[0];
+                      }
+                      // If no year found, try to parse as date string
+                      try {
+                        const parsedDate = new Date(completionDate);
+                        if (!isNaN(parsedDate.getTime())) {
+                          return parsedDate.getFullYear().toString();
+                        }
+                      } catch (e) {
+                        // If parsing fails, return the original string
+                      }
+                      return completionDate;
+                    })()}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -364,11 +514,15 @@ export default function PropertyListingDetails({ data }: ListingDetailsProps) {
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {Object.entries(data.propertyDetails.highlights).map(([key, value]) => (
-                  <Badge key={key} variant="secondary" className="px-3 py-1">
-                    {key}: {value}
-                  </Badge>
-                ))}
+                {Object.entries(data.propertyDetails.highlights).map(([key, value]) => {
+                  const Icon = getHighlightIcon(key);
+                  return (
+                    <Badge key={key} variant="secondary" className="px-3 py-2 flex items-center gap-1.5">
+                      <Icon className="h-3.5 w-3.5" />
+                      {key}: {value}
+                    </Badge>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>

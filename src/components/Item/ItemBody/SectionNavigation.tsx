@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { Heart, Share2, Video, Images, ArrowUp, MessageCircle, XCircle } from 'lucide-react'
+import { Heart, Share2, Video, Images, ArrowUp, MessageCircle, XCircle, Calculator } from 'lucide-react'
 import { PropertyListing } from '@/lib/types'
 import ShareModal from '../Banner/ShareModal'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -113,6 +113,10 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
         behavior: 'smooth'
       });
     }
+  };
+
+  const handleCalculatorClick = () => {
+    scrollToSection('calculators');
   };
 
   // Calculate navigation bar height dynamically
@@ -268,10 +272,10 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
       className="sticky top-0 bg-white border-b border-gray-200 shadow-sm mb-4 z-50"
     >
       <div className="container-1400 mx-auto">
-        <div className="flex items-center gap-2 overflow-x-auto py-2 scrollbar-hide">
+        <div className="flex items-center gap-0.5 overflow-x-auto py-2 scrollbar-hide">
           {/* Video, Gallery, and Scroll to Top Icons */}
           {property && (
-            <div className="flex items-center gap-2 flex-shrink-0 mr-2 border-r border-gray-200 pr-3">
+            <div className="flex items-center gap-0.5 flex-shrink-0 mr-2 border-r border-gray-200 pr-3">
               <button
                 onClick={handleVideoClick}
                 className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-primary transition-all duration-200"
@@ -315,16 +319,24 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
             </Button>
           ))}
           
-          {/* Contact, Save and Share Icons */}
+          {/* Contact, Calculator, Save and Share Icons */}
           {property && (
             <>
-              <div className="ml-auto flex items-center gap-3 flex-shrink-0">
+              <div className="ml-auto flex items-center gap-0.5 flex-shrink-0">
                 <button
                   onClick={handleContactClick}
                   className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-primary transition-all duration-200"
                   aria-label="Contact us"
                 >
                   <MessageCircle className="h-5 w-5" />
+                </button>
+                
+                <button
+                  onClick={handleCalculatorClick}
+                  className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-primary transition-all duration-200"
+                  aria-label="Go to calculators"
+                >
+                  <Calculator className="h-5 w-5" />
                 </button>
                 
                 <button

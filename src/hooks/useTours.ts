@@ -5,7 +5,7 @@ interface Tour {
   id: string
   userId: string
   mlsNumber: string
-  tourType: 'IN_PERSON' | 'VIDEO_CHAT'
+  tourType: 'IN_PERSON' | 'VIDEO_CHAT' | 'SELF_GUIDED'
   scheduledDate: Date | string
   name: string
   phone: string
@@ -19,7 +19,7 @@ interface Tour {
 
 interface CreateTourData {
   mlsNumber: string
-  tourType?: 'IN_PERSON' | 'VIDEO_CHAT'
+  tourType?: 'IN_PERSON' | 'VIDEO_CHAT' | 'SELF_GUIDED'
   scheduledDate: string // ISO date string
   name: string
   phone: string

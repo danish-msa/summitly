@@ -610,7 +610,11 @@ export interface PropertyListing {
     preCon?: {
         projectName: string;
         developer: string;
-        startingPrice: number;
+        startingPrice: number; // Keep for backward compatibility
+        priceRange?: {
+            min: number;
+            max: number;
+        };
         status: 'selling' | 'coming-soon' | 'sold-out';
         completion: {
             date: string;
@@ -622,10 +626,99 @@ export interface PropertyListing {
             sqftRange: string;
             totalUnits: number;
             availableUnits: number;
+            storeys?: number; // Number of floors/storeys
         };
         features: string[];
+        amenities?: string[]; // Project amenities list
         depositStructure?: string;
         description: string;
+        developmentTeam?: {
+            overview?: string;
+            developer?: {
+                name: string;
+                description?: string;
+                website?: string;
+                stats?: {
+                    totalProjects: number;
+                    activelySelling: number;
+                    launchingSoon: number;
+                    registrationPhase: number;
+                    soldOut: number;
+                    resale: number;
+                    cancelled: number;
+                };
+            };
+            architect?: {
+                name: string;
+                description?: string;
+                website?: string;
+                stats?: {
+                    totalProjects: number;
+                    activelySelling: number;
+                    launchingSoon: number;
+                    registrationPhase: number;
+                    soldOut: number;
+                    resale: number;
+                    cancelled: number;
+                };
+            };
+            interiorDesigner?: {
+                name: string;
+                description?: string;
+                website?: string;
+                stats?: {
+                    totalProjects: number;
+                    activelySelling: number;
+                    launchingSoon: number;
+                    registrationPhase: number;
+                    soldOut: number;
+                    resale: number;
+                    cancelled: number;
+                };
+            };
+            builder?: {
+                name: string;
+                description?: string;
+                website?: string;
+                stats?: {
+                    totalProjects: number;
+                    activelySelling: number;
+                    launchingSoon: number;
+                    registrationPhase: number;
+                    soldOut: number;
+                    resale: number;
+                    cancelled: number;
+                };
+            };
+            landscapeArchitect?: {
+                name: string;
+                description?: string;
+                website?: string;
+                stats?: {
+                    totalProjects: number;
+                    activelySelling: number;
+                    launchingSoon: number;
+                    registrationPhase: number;
+                    soldOut: number;
+                    resale: number;
+                    cancelled: number;
+                };
+            };
+            marketing?: {
+                name: string;
+                description?: string;
+                website?: string;
+                stats?: {
+                    totalProjects: number;
+                    activelySelling: number;
+                    launchingSoon: number;
+                    registrationPhase: number;
+                    soldOut: number;
+                    resale: number;
+                    cancelled: number;
+                };
+            };
+        };
     };
 }
 
@@ -791,3 +884,6 @@ export interface Board {
 export interface LocationsResponse {
   boards: Board[];
 }
+
+// Export unit types
+export type { UnitListing } from './units';

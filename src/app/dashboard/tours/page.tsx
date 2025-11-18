@@ -18,7 +18,7 @@ interface Tour {
   id: string
   userId: string
   mlsNumber: string
-  tourType: 'IN_PERSON' | 'VIDEO_CHAT'
+  tourType: 'IN_PERSON' | 'VIDEO_CHAT' | 'SELF_GUIDED'
   scheduledDate: Date | string
   name: string
   phone: string
@@ -239,6 +239,12 @@ export default function Tours() {
                               <Badge variant="outline" className="flex items-center gap-1">
                                 <User className="h-3 w-3" />
                                 In-Person
+                              </Badge>
+                            )}
+                            {tour.tourType === 'SELF_GUIDED' && (
+                              <Badge variant="outline" className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                Self-guided
                               </Badge>
                             )}
                           </div>

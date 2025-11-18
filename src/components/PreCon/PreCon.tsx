@@ -14,6 +14,7 @@ import { NewHomesRecommendations } from './NewHomesRecommendations/NewHomesRecom
 import PreConCityProperties from './PreConCityProperties/PreConCityProperties'
 import PlatinumAccessVIP from './PlatinumAccessVIP/PlatinumAccessVIP'
 import PreConBlogs from './Blogs/PreConBlogs'
+import NotifyMe from './NotifyMe/NotifyMe'
 
 const PreCon: React.FC = () => {
   return (
@@ -28,6 +29,7 @@ const PreCon: React.FC = () => {
       <NewHomesRecommendations />
       <PreConCityProperties />
       <PlatinumAccessVIP />
+      <NotifyMe />
       <PreConBlogs />
       <Testimonials />
       <PreConCTA />

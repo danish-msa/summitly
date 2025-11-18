@@ -110,6 +110,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ property }) => {
         onOpenChange={setIsScheduleTourModalOpen}
         mlsNumber={mlsNumber}
         propertyAddress={propertyAddress}
+        property={property}
       />
 
       {/* Request Info Modal */}

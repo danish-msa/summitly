@@ -1,83 +1,60 @@
 "use client";
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { FeaturedPropertyCard } from '../PropertyCards';
 import type { PreConstructionProperty } from '../PropertyCards/types';
 import SectionHeading from '@/components/Helper/SectionHeading';
+import { getAllPreConProjects } from '@/data/mockPreConData';
+import { PropertyListing } from '@/lib/types';
 
-// Featured properties data - top picks
-const featuredProperties: PreConstructionProperty[] = [
-  {
-    id: 'featured-1',
-    projectName: 'Luxury Heights Condominiums',
-    developer: 'Premium Developments Inc.',
-    startingPrice: 450000,
-    images: [
-      '/images/p1.jpg',
-      '/images/p2.jpg',
-      '/images/p3.jpg',
-    ],
+// Convert PropertyListing to PreConstructionProperty format
+const convertToPreConProperty = (property: PropertyListing): PreConstructionProperty | null => {
+  if (!property.preCon) return null;
+
+  const preCon = property.preCon;
+  const address = property.address;
+
+  return {
+    id: property.mlsNumber,
+    projectName: preCon.projectName,
+    developer: preCon.developer,
+    startingPrice: preCon.startingPrice,
+    images: property.images?.allImages || [property.images?.imageUrl || '/images/p1.jpg'],
     address: {
-      street: '123 Main Street',
-      city: 'Toronto',
-      province: 'Ontario',
-      latitude: 43.6532,
-      longitude: -79.3832,
+      street: `${address.streetNumber || ''} ${address.streetName || ''}`.trim() || address.location?.split(',')[0] || '',
+      city: address.city || '',
+      province: address.state || '',
+      latitude: property.map?.latitude ?? undefined,
+      longitude: property.map?.longitude ?? undefined,
     },
     details: {
-      propertyType: 'Condominium',
-      bedroomRange: '1-3',
-      bathroomRange: '1-2',
-      sqftRange: '650-1,200',
-      totalUnits: 150,
-      availableUnits: 45,
+      propertyType: property.details?.propertyType || 'Condominium',
+      bedroomRange: preCon.details.bedroomRange,
+      bathroomRange: preCon.details.bathroomRange,
+      sqftRange: preCon.details.sqftRange,
+      totalUnits: preCon.details.totalUnits,
+      availableUnits: preCon.details.availableUnits,
     },
     completion: {
-      date: 'Q4 2025',
-      progress: 35,
+      date: preCon.completion.date,
+      progress: preCon.completion.progress,
     },
-    occupancyYear: 2026,
-    features: ['Rooftop Terrace', 'Gym', 'Pool', 'Concierge'],
-    depositStructure: '5% on signing, 10% within 6 months',
-    status: 'selling',
-  },
-  {
-    id: 'featured-2',
-    projectName: 'Waterfront Residences',
-    developer: 'Ocean View Developments',
-    startingPrice: 680000,
-    images: [
-      '/images/p2.jpg',
-      '/images/p3.jpg',
-      '/images/p4.jpg',
-    ],
-    address: {
-      street: '456 Harbor Drive',
-      city: 'Vancouver',
-      province: 'British Columbia',
-      latitude: 49.2827,
-      longitude: -123.1207,
-    },
-    details: {
-      propertyType: 'Condominium',
-      bedroomRange: '2-4',
-      bathroomRange: '2-3',
-      sqftRange: '1,000-1,800',
-      totalUnits: 200,
-      availableUnits: 120,
-    },
-    completion: {
-      date: 'Q2 2026',
-      progress: 15,
-    },
-    occupancyYear: 2027,
-    features: ['Waterfront Views', 'Marina Access', 'Spa', 'Restaurant'],
-    depositStructure: '10% on signing, 5% every 6 months',
-    status: 'selling',
-  },
-];
+    features: preCon.features || [],
+    depositStructure: preCon.depositStructure,
+    status: preCon.status,
+  };
+};
 
 const FeaturedProjects: React.FC = () => {
+  // Get featured projects from centralized mock data (top 2 projects)
+  const featuredProperties = useMemo(() => {
+    const allPropertyListings = getAllPreConProjects();
+    return allPropertyListings
+      .map(convertToPreConProperty)
+      .filter((project): project is PreConstructionProperty => project !== null)
+      .slice(0, 2); // Get top 2 for featured section
+  }, []);
+
   return (
     <section className="py-16 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">

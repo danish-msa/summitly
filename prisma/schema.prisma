@@ -289,6 +289,7 @@ model Tour {
 enum TourType {
   IN_PERSON
   VIDEO_CHAT
+  SELF_GUIDED
 }
 
 enum TourStatus {
@@ -296,4 +297,114 @@ enum TourStatus {
   CONFIRMED
   COMPLETED
   CANCELLED
+}
+
+// Pre-Construction Projects - stores pre-construction project data
+model PreConstructionProject {
+  id              String   @id @default(cuid())
+  mlsNumber       String   @unique // Unique identifier (e.g., 'luxury-heights-condominiums')
+  projectName     String
+  developer       String
+  startingPrice   Float
+  status          String   // 'selling', 'coming-soon', 'sold-out'
+  
+  // Address
+  streetNumber    String?
+  streetName      String?
+  city            String
+  state           String
+  zip             String?
+  country         String   @default("Canada")
+  neighborhood    String?
+  majorIntersection String?
+  
+  // Coordinates
+  latitude        Float?
+  longitude       Float?
+  
+  // Property Details
+  propertyType    String   // 'Condominium', 'Detached', 'Semi-Detached', 'Townhome'
+  bedroomRange    String   // e.g., '1-3'
+  bathroomRange   String   // e.g., '1-3'
+  sqftRange       String   // e.g., '650-1,450'
+  totalUnits      Int
+  availableUnits  Int
+  storeys         Int?
+  
+  // Completion
+  completionDate  String   // e.g., 'Q4 2025'
+  completionProgress Int   // 0-100
+  
+  // Images
+  images          String[] @default([])
+  
+  // Features and Amenities
+  features        String[] @default([])
+  amenities       String[] @default([])
+  
+  // Additional Info
+  depositStructure String? @db.Text
+  description     String?  @db.Text
+  
+  // Development Team (stored as JSON or separate fields)
+  developerInfo   String?  @db.Text // JSON string for developer details
+  architectInfo   String?  @db.Text // JSON string for architect details
+  builderInfo     String?  @db.Text // JSON string for builder details
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  ratings         PropertyRating[]
+  units           PreConstructionUnit[]
+  
+  @@index([city])
+  @@index([status])
+  @@index([propertyType])
+}
+
+// Pre-Construction Units - stores individual units within a project
+model PreConstructionUnit {
+  id              String   @id @default(cuid())
+  projectId       String
+  project         PreConstructionProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  unitName        String   // e.g., '101', '202'
+  beds            Int
+  baths           Int
+  sqft            Int
+  price           Float
+  maintenanceFee  Float?
+  status          String   // 'for-sale', 'sold-out', 'reserved'
+  
+  floorplanImage  String?
+  description     String?  @db.Text
+  features        String[] @default([])
+  amenities       String[] @default([])
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([projectId])
+  @@index([status])
+}
+
+// Property Ratings - stores ratings for ALL property types (regular listings, pre-cons, etc.)
+model PropertyRating {
+  id          String   @id @default(cuid())
+  propertyId  String   // Can be mlsNumber for regular properties or projectId for pre-cons
+  propertyType String  // 'regular', 'pre-construction' - to distinguish property types
+  userId      String?  // Optional user ID if user is logged in, null for anonymous ratings
+  sessionId   String?  // Session ID for anonymous users to prevent duplicate ratings
+  rating      Int      // Rating value from 1 to 5 stars
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([propertyId])
+  @@index([propertyType])
+  @@index([userId])
+  @@index([propertyId, propertyType])
+  @@index([propertyId, rating])
+  @@index([propertyId, sessionId])
 }

@@ -126,7 +126,7 @@ const ProjectList: React.FC<ProjectListProps> = ({
       {/* View All Projects Button - Only show in list view */}
       {viewMode === 'list' && (
         <div className="flex justify-center mt-12">
-          <Link href="/pre-con">
+          <Link href="/pre-construction">
             <Button variant="outline" size="lg" className="px-8">
               View All Projects
             </Button>

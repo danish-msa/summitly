@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Bed, Bath, Maximize2, MapPin } from 'lucide-react';
+import { Calendar, Bed, Bath, Maximize2, MapPin, Building2, User, Layers, Home, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PropertyListing } from '@/lib/types';
 import ShareModal from './Banner/ShareModal';
@@ -78,6 +78,9 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
   
   // Check if this is a rental property
   const isRental = property.type === 'Lease' || property.type?.toLowerCase().includes('lease');
+  
+  // Check if this is a pre-construction property
+  const isPreCon = !!property.preCon;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-CA', {
@@ -133,67 +136,157 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
           >
             <div className="container-1400 mx-auto px-4">
               <div className="flex items-center justify-between py-2 gap-3 lg:gap-8">
-                {/* Price */}
-                <div className="flex-shrink-0">
-                  <div className="text-base lg:text-lg xl:text-2xl font-bold text-primary whitespace-nowrap">
-                    {isRental 
-                      ? `${formatPrice(property.listPrice)}/mo`
-                      : formatPrice(property.listPrice)}
-                  </div>
-                </div>
+                {isPreCon ? (
+                  <>
+                    {/* Pre-Construction Layout */}
+                    {/* Starting Price */}
+                    <div className="flex-shrink-0">
+                      <div className="text-base lg:text-lg xl:text-2xl font-bold text-primary whitespace-nowrap">
+                        {property.preCon?.priceRange 
+                          ? `${formatPrice(property.preCon.priceRange.min)} - ${formatPrice(property.preCon.priceRange.max)}`
+                          : property.preCon?.startingPrice
+                          ? formatPrice(property.preCon.startingPrice)
+                          : 'Contact for Pricing'}
+                      </div>
+                    </div>
 
-                {/* Property Stats (Beds, Baths, Sqft) */}
-                <div className="hidden md:flex justify-start items-center gap-4 lg:gap-6 flex-shrink-0">
-                  {/* Beds */}
-                  <div className="flex items-center gap-1.5">
-                    <Bed className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <span className="text-base text-foreground whitespace-nowrap">
-                      {getBedrooms()}
-                    </span>
-                  </div>
+                    {/* Pre-Con Stats */}
+                    <div className="hidden md:flex justify-start items-center gap-3 lg:gap-4 flex-shrink-0 flex-wrap">
+                      {/* Project Name */}
+                      {property.preCon?.projectName && (
+                        <div className="flex items-center gap-1.5">
+                          <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <span className="text-sm text-foreground whitespace-nowrap truncate max-w-[150px]">
+                            {property.preCon.projectName}
+                          </span>
+                        </div>
+                      )}
 
-                  {/* Baths */}
-                  <div className="flex items-center gap-1.5">
-                    <Bath className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <span className="text-base text-foreground whitespace-nowrap">
-                      {getBathrooms()}
-                    </span>
-                  </div>
+                      {/* Developer */}
+                      {property.preCon?.developer && (
+                        <div className="flex items-center gap-1.5">
+                          <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <span className="text-sm text-foreground whitespace-nowrap truncate max-w-[120px]">
+                            {property.preCon.developer}
+                          </span>
+                        </div>
+                      )}
 
-                  {/* Square Feet */}
-                  <div className="flex items-center gap-1.5">
-                    <Maximize2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <span className="text-base text-foreground whitespace-nowrap">
-                      {getSquareFeet()}
-                    </span>
-                  </div>
-                </div>
+                      {/* Project Type */}
+                      <div className="flex items-center gap-1.5">
+                        <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-sm text-foreground whitespace-nowrap">
+                          {property.details.propertyType || 'Condominium'}
+                        </span>
+                      </div>
 
-                {/* Address */}
-                <div className="flex flex-col justify-center gap-1 flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0 min-w-0">
-                    <MapPin className="h-5 w-5 flex-shrink-0" />
-                    <span className="truncate text-base">{shortAddress}</span>
-                  </div>
-                </div>
+                      {/* Units */}
+                      {property.preCon?.details?.totalUnits && (
+                        <div className="flex items-center gap-1.5">
+                          <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <span className="text-sm text-foreground whitespace-nowrap">
+                            {property.preCon.details.totalUnits} Units
+                          </span>
+                        </div>
+                      )}
 
-                {/* Right Side: Action Buttons */}
-                <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
-                  
-                  {/* Schedule Tour Button */}
-                  <Button
-                    variant="default"
-                    size="default"
-                    onClick={handleScheduleTour}
-                    className="gap-2 bg-brand-cb-blue hover:bg-brand-midnight"
-                  >
-                    <Calendar className="h-4 w-4" />
-                    <span className="hidden sm:inline">Schedule Tour</span>
-                    <span className="sm:hidden">Tour</span>
-                  </Button>
+                      {/* Suites */}
+                      {property.preCon?.details?.availableUnits !== undefined && (
+                        <div className="flex items-center gap-1.5">
+                          <Home className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <span className="text-sm text-foreground whitespace-nowrap">
+                            {property.preCon.details.availableUnits} Suites
+                          </span>
+                        </div>
+                      )}
 
-                  
-                </div>
+                      {/* Stories */}
+                      {property.preCon?.details?.storeys && (
+                        <div className="flex items-center gap-1.5">
+                          <Layers className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <span className="text-sm text-foreground whitespace-nowrap">
+                            {property.preCon.details.storeys} Stories
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Completion */}
+                      {property.preCon?.completion?.date && (
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <p className="text-sm text-foreground whitespace-nowrap">
+                            {(() => {
+                              const yearMatch = property.preCon.completion.date.match(/\d{4}/);
+                              return yearMatch ? `Completion: ${yearMatch[0]}` : `Completion: ${property.preCon.completion.date}`;
+                            })()}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Regular Property Layout */}
+                    {/* Price */}
+                    <div className="flex-shrink-0">
+                      <div className="text-base lg:text-lg xl:text-2xl font-bold text-primary whitespace-nowrap">
+                        {isRental 
+                          ? `${formatPrice(property.listPrice)}/mo`
+                          : formatPrice(property.listPrice)}
+                      </div>
+                    </div>
+
+                    {/* Property Stats (Beds, Baths, Sqft) */}
+                    <div className="hidden md:flex justify-start items-center gap-4 lg:gap-6 flex-shrink-0">
+                      {/* Beds */}
+                      <div className="flex items-center gap-1.5">
+                        <Bed className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-base text-foreground whitespace-nowrap">
+                          {getBedrooms()}
+                        </span>
+                      </div>
+
+                      {/* Baths */}
+                      <div className="flex items-center gap-1.5">
+                        <Bath className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-base text-foreground whitespace-nowrap">
+                          {getBathrooms()}
+                        </span>
+                      </div>
+
+                      {/* Square Feet */}
+                      <div className="flex items-center gap-1.5">
+                        <Maximize2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-base text-foreground whitespace-nowrap">
+                          {getSquareFeet()}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Address */}
+                    <div className="flex flex-col justify-center gap-1 flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0 min-w-0">
+                        <MapPin className="h-5 w-5 flex-shrink-0" />
+                        <span className="truncate text-base">{shortAddress}</span>
+                      </div>
+                    </div>
+
+                    {/* Right Side: Action Buttons */}
+                    <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
+                      {/* Schedule Tour Button */}
+                      <Button
+                        variant="default"
+                        size="default"
+                        onClick={handleScheduleTour}
+                        className="gap-2 bg-brand-cb-blue hover:bg-brand-midnight"
+                      >
+                        <Calendar className="h-4 w-4" />
+                        <span className="hidden sm:inline">Schedule Tour</span>
+                        <span className="sm:hidden">Tour</span>
+                      </Button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>
@@ -207,14 +300,17 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
         property={property}
       />
 
-      {/* Schedule Tour Modal */}
-      <ScheduleTourModal 
-        open={isScheduleTourModalOpen} 
-        onOpenChange={setIsScheduleTourModalOpen}
-        mlsNumber={property.mlsNumber}
-        propertyAddress={property.address?.location || 
-          `${property.address?.streetNumber || ''} ${property.address?.streetName || ''} ${property.address?.streetSuffix || ''}, ${property.address?.city || ''}, ${property.address?.state || ''} ${property.address?.zip || ''}`.trim()}
-      />
+      {/* Schedule Tour Modal - Only show for non-pre-con properties */}
+      {!isPreCon && (
+        <ScheduleTourModal 
+          open={isScheduleTourModalOpen} 
+          onOpenChange={setIsScheduleTourModalOpen}
+          mlsNumber={property.mlsNumber}
+          propertyAddress={property.address?.location || 
+            `${property.address?.streetNumber || ''} ${property.address?.streetName || ''} ${property.address?.streetSuffix || ''}, ${property.address?.city || ''}, ${property.address?.state || ''} ${property.address?.zip || ''}`.trim()}
+          property={property}
+        />
+      )}
     </>
   );
 };

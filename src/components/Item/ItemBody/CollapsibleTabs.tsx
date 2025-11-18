@@ -28,8 +28,8 @@ interface TabSection {
 
 const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property, isPreCon = false, isRent = false }) => {
   const defaultExpanded = (isPreCon || isRent)
-    ? ['listing-details', 'description', 'available-units', 'features', 'lifestyle', 'location', 'demographics', 'market-analytics', 'calculators']
-    : ['listing-details', 'description', 'features', 'lifestyle', 'location', 'demographics', 'market-analytics', 'calculators', 'history'];
+    ? ['listing-details', 'description', 'available-units', 'features', 'lifestyle', 'location', 'demographics', 'market-analytics']
+    : ['listing-details', 'description', 'features', 'lifestyle', 'location', 'demographics', 'market-analytics', 'history'];
   
   const [expandedTabs, setExpandedTabs] = useState<Set<string>>(
     new Set(defaultExpanded)
@@ -78,7 +78,7 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property, isPreCon = 
       id: 'listing-details',
       label: 'Listing Details',
       content: (
-        <PropertyListingDetails data={generateMockListingData()} />
+        <PropertyListingDetails data={generateMockListingData()} property={property} />
       )
     },
     ...(isRent ? [{

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, CreditCard, Bed, Bath, Maximize2, Megaphone, Building2, ArrowUp, ArrowDown } from "lucide-react";
+import { Calendar, CreditCard, Bed, Bath, Maximize2, Megaphone, Building2, ArrowUp, ArrowDown, User, Calendar as CalendarIcon, Layers, Home, Users, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PropertyListing } from '@/lib/types';
@@ -7,6 +7,7 @@ import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/sin
 import ShareModal from './ShareModal';
 import ScheduleTourModal from '../ItemBody/ScheduleTourModal';
 import RatingsOverview from '../ItemBody/QualityScore';
+import ProjectRatingDisplay from '../../PreConItem/PreConItemBody/ProjectRatingDisplay';
 
 interface BannerProps {
     property: PropertyListing;
@@ -89,6 +90,38 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
     const priceChangeDollars = estimatedPrice - property.listPrice;
     const isPriceRising = priceChangeDollars > 0;
 
+    // Get status color based on status value
+    const getStatusColor = (status: string) => {
+        const normalizedStatus = status?.toLowerCase() || '';
+        
+        // PreCon statuses
+        if (normalizedStatus === 'selling' || normalizedStatus === 'active' || normalizedStatus === 'available') {
+            return 'bg-green-600 text-white hover:bg-green-700';
+        }
+        if (normalizedStatus === 'coming-soon' || normalizedStatus === 'coming soon') {
+            return 'bg-blue-600 text-white hover:bg-blue-700';
+        }
+        if (normalizedStatus === 'sold-out' || normalizedStatus === 'sold out' || normalizedStatus === 'sold') {
+            return 'bg-red-600 text-white hover:bg-red-700';
+        }
+        if (normalizedStatus === 'pending') {
+            return 'bg-yellow-500 text-white hover:bg-yellow-600';
+        }
+        if (normalizedStatus === 'rented' || normalizedStatus === 'inactive') {
+            return 'bg-gray-500 text-white hover:bg-gray-600';
+        }
+        
+        // Default color
+        return 'bg-secondary text-white hover:bg-primary/20';
+    };
+
+    // Get status text
+    const statusText = isPreCon 
+        ? (preConData?.status || property.status || 'Selling Now')
+        : isRent
+        ? (property.status || 'Available Now')
+        : (property.status || 'Active');
+
     return (
         <div className="">
             
@@ -98,26 +131,32 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                     {/* Two Column Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* First Column */}
-                        <div className="flex flex-col gap-2 col-span-2 items-start">
+                        <div className="flex flex-col gap-2 col-span-2">
                             {/* Heading with MLS and Status */}
                             <div className="flex flex-wrap items-center gap-3">
                                 
                                 <h1 className="text-2xl font-bold text-foreground sm:text-3xl lg:text-3xl">
-                                    {shortAddress}
+                                    {isPreCon ? preConData?.projectName : shortAddress}
                                 </h1>
-                                <Badge className="bg-primary/10 text-primary hover:bg-primary/20 uppercase py-1 px-4">
-                                    <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-primary"></span>
-                                    {isPreCon 
-                                        ? (preConData?.status || property.status || 'Selling')
-                                        : isRent
-                                        ? (property.status || 'Available')
-                                        : (property.status || 'Active')}
+                                <Badge className={`${getStatusColor(statusText)} uppercase py-1 px-4`}>
+                                    <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-white"></span>
+                                    {statusText}
                                 </Badge>
+                                {isPreCon && (
+                                    <span className="text-base text-foreground font-medium">
+                                        by <a href="#" className="underline text-primary">{preConData?.developer}</a>
+                                    </span>
+                                )}  
                             </div>
+
+                            
+                            {/* Project Rating Display for Pre-Con */}
+                            <ProjectRatingDisplay propertyId={property.mlsNumber || preConData?.projectName || 'default'} />
+
                             <div className="flex flex-col gap-2 justify-start">
                                 {/* Address */}
                                 <div className="flex items-start text-primary">
-                                    {/* <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0" /> */}
+                                    <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0 mr-1" />
                                     <span className="text-sm font-medium sm:text-lg max-w-xl">{fullAddress}</span>
                                 </div>
                                 {/* MLS Number or Project ID - Same line as heading */}
@@ -132,55 +171,94 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                                     </span>
                                 )}
                                 
-                                {/* Property Stats with Icons - Above Price */}
-                                <div className="flex items-center gap-4 sm:gap-6 mt-2">
-                                    {/* property type */}
-                                    <div className="flex flex-row items-center gap-1">
-                                        <Building2 className="h-6 w-6 text-primary" />
-                                        <span className="text-sm text-foreground font-medium">Detached</span>
-                                    </div>
-                                    {/* Beds */}
-                                    <div className="flex flex-row items-center gap-1">
-                                        <Bed className="h-6 w-6 text-primary" />
-                                        <span className="text-sm text-foreground font-medium">{getBedrooms()}</span>
-                                    </div>
+                                {/* Property Stats with Icons */}
+                                {isPreCon ? (
+                                    <>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mt-4">
+                                            {/* Property Type */}
+                                            <div className="flex flex-row items-center gap-1">
+                                                <Building2 className="h-6 w-6 text-primary" />
+                                                <span className="text-sm text-foreground font-medium">{property.details.propertyType || 'Condominium'}</span>
+                                            </div>
+                                            {/* Occupancy */}
+                                            {preConData?.completion?.date && (
+                                                <div className="flex flex-row items-center gap-1">
+                                                    <CalendarIcon className="h-6 w-6 text-primary" />
+                                                    <span className="text-sm text-foreground font-medium">
+                                                        {(() => {
+                                                            const yearMatch = preConData.completion.date.match(/\d{4}/);
+                                                            return yearMatch ? `Completion: ${yearMatch[0]}` : `Completion: ${preConData.completion.date}`;
+                                                        })()}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {/* Area */}
+                                            {preConData?.details?.sqftRange && (
+                                                <div className="flex flex-row items-center gap-1">
+                                                    <Maximize2 className="h-6 w-6 text-primary" />
+                                                    <span className="text-sm text-foreground font-medium">{preConData.details.sqftRange}</span>
+                                                </div>
+                                            )}
+                                            {/* Storeys */}
+                                            {preConData?.details?.storeys && (
+                                                <div className="flex flex-row items-center gap-1">
+                                                    <Layers className="h-6 w-6 text-primary" />
+                                                    <span className="text-sm text-foreground font-medium">{preConData.details.storeys} Storeys</span>
+                                                </div>
+                                            )}
+                                            {/* Suites - Available suites */}
+                                            {preConData?.details?.availableUnits !== undefined && (
+                                                <div className="flex flex-row items-center gap-1">
+                                                    <Home className="h-6 w-6 text-primary" />
+                                                    <span className="text-sm text-foreground font-medium">{preConData.details.availableUnits} Suites</span>
+                                                </div>
+                                            )}
+                                            {/* Units - Total units */}
+                                            {preConData?.details?.totalUnits && (
+                                                <div className="flex flex-row items-center gap-1">
+                                                    <Users className="h-6 w-6 text-primary" />
+                                                    <span className="text-sm text-foreground font-medium">{preConData.details.totalUnits} Units</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        
+                                        </>
+                                    ) : (
+                                        <>
+                                        <div className="flex items-center gap-4 sm:gap-6 mt-2 flex-wrap">
+                                            {/* property type */}
+                                            <div className="flex flex-row items-center gap-1">
+                                                <Building2 className="h-6 w-6 text-primary" />
+                                                <span className="text-sm text-foreground font-medium">{property.details.propertyType || 'Detached'}</span>
+                                            </div>
+                                            {/* Beds */}
+                                            <div className="flex flex-row items-center gap-1">
+                                                <Bed className="h-6 w-6 text-primary" />
+                                                <span className="text-sm text-foreground font-medium">{getBedrooms()}</span>
+                                            </div>
 
-                                    {/* Baths */}
-                                    <div className="flex flex-row items-center gap-1">
-                                        <Bath className="h-6 w-6 text-primary" />
-                                        <span className="text-sm text-foreground font-medium">{getBathrooms()}</span>
-                                    </div>
+                                            {/* Baths */}
+                                            <div className="flex flex-row items-center gap-1">
+                                                <Bath className="h-6 w-6 text-primary" />
+                                                <span className="text-sm text-foreground font-medium">{getBathrooms()}</span>
+                                            </div>
 
-                                    {/* Square Feet */}
-                                    <div className="flex flex-row items-center gap-1">
-                                        <Maximize2 className="h-6 w-6 text-primary" />
-                                        <span className="text-sm text-foreground font-medium">{getSquareFeet()}</span>
-                                    </div>
-                                </div>
-                                <RatingsOverview />
-                                {/* Developer for pre-con, Property Type for regular */}
-                                {/* {isPreCon && preConData?.developer ? (
-                                    <div className="mb-2">
-                                        <span className="text-base font-medium text-primary">
-                                            Developer: {preConData.developer}
-                                        </span>
-                                    </div>
-                                ) : (
-                                    <div className="mb-2 inline-block">
-                                        <span className="text-base font-medium text-primary">
-                                            Property Type: {property.details.propertyType}
-                                        </span>
-                                    </div>
-                                )} */}
+                                            {/* Square Feet */}
+                                            <div className="flex flex-row items-center gap-1">
+                                                <Maximize2 className="h-6 w-6 text-primary" />
+                                                <span className="text-sm text-foreground font-medium">{getSquareFeet()}</span>
+                                            </div>
+                                        </div>
+                                        </>
+                                    )}
+                                
+
+                                {/* Ratings Overview for regular properties */}
+                                {isPreCon ? "" : <RatingsOverview />}
+                                
                             </div>
                             
-                            {/* Property Type and Address */}
-                            <div>
-                                
-
-                                
-                                
-                            </div>
                         </div>
 
                         {/* Second Column */}
@@ -190,11 +268,13 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                                 {/* Listed Price Block */}
                                 <div className="flex flex-col gap-1 items-end  rounded-lg bg-white p-4">
                                     <span className="text-xs text-gray-600 font-medium uppercase">
-                                        {isRent ? 'Monthly Rent' : isPreCon ? 'Starting Price' : 'Listed Price'}
+                                        {isRent ? 'Monthly Rent' : isPreCon ? 'Price Range' : 'Listed Price'}
                                     </span>
-                                    <div className="text-xl font-bold text-foreground sm:text-3xl">
-                                        {isPreCon && preConData?.startingPrice 
-                                            ? `Starting from ${formatPrice(preConData.startingPrice)}`
+                                    <div className="text-xl font-bold text-foreground text-right sm:text-2xl">
+                                        {isPreCon && preConData?.priceRange 
+                                            ? `${formatPrice(preConData.priceRange.min)} - ${formatPrice(preConData.priceRange.max)}`
+                                            : isPreCon && preConData?.startingPrice
+                                            ? `${formatPrice(preConData.startingPrice)}`
                                             : isRent
                                             ? `${formatPrice(property.listPrice)}/month`
                                             : formatPrice(property.listPrice)}
@@ -257,6 +337,7 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                     
                     
                     {/* home estimate and CTA Row */}
+                    {!isPreCon && !isRent && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                         {/* Announcement Message */}
                         <div className="flex flex-col gap-4 p-3 bg-white rounded-lg">
@@ -288,6 +369,7 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                             </Button>
                         </div>
                     </div>
+                    )}
                     {/* Property Stats Grid */}
                     {/* <PropertyStats property={property} rawProperty={rawProperty} isPreCon={isPreCon} /> */}
                 </div>
@@ -306,6 +388,7 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                 onOpenChange={setIsScheduleTourModalOpen}
                 mlsNumber={property.mlsNumber}
                 propertyAddress={fullAddress}
+                property={property}
             />
         </div>
     );

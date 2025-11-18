@@ -1,9 +1,23 @@
-import ItemPreCon from '@/components/Item/ItemPreCon';
+import PreConItem from '@/components/PreConItem/PreConItem';
+import { getPreConProject } from '@/data/mockPreConData';
+import { notFound } from 'next/navigation';
 import React from 'react'
 
-const PreConstructionItemPage: React.FC = () => {
+interface PreConstructionItemPageProps {
+  params: {
+    id: string;
+  };
+}
+
+const PreConstructionItemPage: React.FC<PreConstructionItemPageProps> = async ({ params }) => {
+  const property = getPreConProject(params.id);
+  
+  if (!property) {
+    notFound();
+  }
+
   return (
-    <ItemPreCon />
+    <PreConItem />
   )
 }
 

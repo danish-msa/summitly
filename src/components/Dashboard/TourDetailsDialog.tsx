@@ -50,7 +50,7 @@ interface Tour {
   id: string
   userId: string
   mlsNumber: string
-  tourType: 'IN_PERSON' | 'VIDEO_CHAT'
+  tourType: 'IN_PERSON' | 'VIDEO_CHAT' | 'SELF_GUIDED'
   scheduledDate: Date | string
   name: string
   phone: string
@@ -234,13 +234,15 @@ export function TourDetailsDialog({
                   <div className="flex items-center gap-2">
                     {tour.tourType === 'VIDEO_CHAT' ? (
                       <Video className="h-5 w-5 text-muted-foreground" />
+                    ) : tour.tourType === 'SELF_GUIDED' ? (
+                      <MapPin className="h-5 w-5 text-muted-foreground" />
                     ) : (
                       <User className="h-5 w-5 text-muted-foreground" />
                     )}
                     <div>
                       <p className="text-sm text-muted-foreground">Tour Type</p>
                       <Badge variant="outline" className="mt-1">
-                        {tour.tourType === 'VIDEO_CHAT' ? 'Video Chat' : 'In-Person'}
+                        {tour.tourType === 'VIDEO_CHAT' ? 'Video Chat' : tour.tourType === 'SELF_GUIDED' ? 'Self-guided' : 'In-Person'}
                       </Badge>
                     </div>
                   </div>

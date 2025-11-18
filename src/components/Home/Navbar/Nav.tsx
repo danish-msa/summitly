@@ -179,7 +179,7 @@ const Nav = ({ openNav }: Props) => {
                       alt="Summitly Logo"
                       width={200}
                       height={60}
-                      className="h-8 lg:h-8 w-auto transition-opacity duration-300"
+                      className="h-8 lg:h-14 w-auto transition-opacity duration-300"
                       priority
                       quality={100}
                     />
