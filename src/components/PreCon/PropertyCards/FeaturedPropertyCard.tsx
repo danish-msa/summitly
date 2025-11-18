@@ -1,17 +1,25 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Bed, Bath, Maximize2, MapPin, Heart, ChevronLeft, ChevronRight, Building2, Star } from 'lucide-react';
+import { Bed, Bath, Maximize2, MapPin, Heart, ChevronLeft, ChevronRight, Building2, Star, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import type { PreConstructionPropertyCardProps } from './types';
+import { useSavedProperties } from '@/hooks/useSavedProperties';
+import { useSession } from 'next-auth/react';
+import { toast } from '@/hooks/use-toast';
+import AuthModal from '@/components/Auth/AuthModal';
 
 const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCardProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  
+  const { data: session } = useSession();
+  const { checkIsSaved, saveProperty, unsaveProperty, isSaving, isUnsaving } = useSavedProperties();
+  const isSaved = checkIsSaved(property.id);
   
   // Load rating data from database
   const [ratingData, setRatingData] = useState<{
@@ -62,10 +70,42 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
     setCurrentImageIndex((prev) => (prev - 1 + totalImages) % totalImages);
   };
 
-  const toggleLike = (e: React.MouseEvent) => {
+  const handleSave = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsLiked(!isLiked);
+
+    // If not logged in, show auth modal
+    if (!session) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    try {
+      if (isSaved) {
+        await unsaveProperty(property.id);
+        toast({
+          title: "Project Removed",
+          description: "Project has been removed from your saved list.",
+          icon: <XCircle className="h-5 w-5 text-gray-600" />,
+        });
+      } else {
+        await saveProperty({ mlsNumber: property.id });
+        toast({
+          title: "Project Saved",
+          description: "Project has been added to your saved list.",
+          variant: "success",
+          icon: <Heart className="h-5 w-5 text-green-600 fill-green-600" />,
+        });
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to save project. Please try again."
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+        icon: <XCircle className="h-5 w-5 text-red-600" />,
+      });
+    }
   };
 
 
@@ -88,6 +128,7 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
   };
 
   return (
+    <>
     <Link href={`/pre-construction/${property.id}`}>
       <div 
         className={cn(
@@ -125,13 +166,17 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
             {/* Actions */}
             <div className="absolute top-12 right-3 flex flex-col gap-2">
               <button
-                onClick={toggleLike}
-                className="p-1.5 rounded-full bg-card/95 backdrop-blur-sm hover:bg-card transition-colors duration-200"
+                onClick={handleSave}
+                disabled={isSaving || isUnsaving}
+                className={cn(
+                  "p-1.5 rounded-full bg-card/95 backdrop-blur-sm hover:bg-card transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed",
+                  isSaved && "bg-red-50/95 hover:bg-red-50"
+                )}
               >
                 <Heart 
                   className={cn(
                     "w-4 h-4 transition-all duration-200",
-                    isLiked ? "fill-red-500 text-red-500" : "text-muted-foreground"
+                    isSaved ? "fill-red-500 text-red-500" : "text-muted-foreground"
                   )} 
                 />
               </button>
@@ -247,6 +292,13 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
         </div>
       </div>
     </Link>
+    
+    {/* Auth Modal */}
+    <AuthModal 
+      isOpen={isAuthModalOpen} 
+      onClose={() => setIsAuthModalOpen(false)} 
+    />
+    </>
   );
 };
 

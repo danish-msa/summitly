@@ -4,13 +4,14 @@ import { notFound } from 'next/navigation';
 import React from 'react'
 
 interface PreConstructionItemPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 const PreConstructionItemPage: React.FC<PreConstructionItemPageProps> = async ({ params }) => {
-  const property = getPreConProject(params.id);
+  const { id } = await params;
+  const property = getPreConProject(id);
   
   if (!property) {
     notFound();
