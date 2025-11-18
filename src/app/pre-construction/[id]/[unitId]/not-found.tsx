@@ -37,7 +37,7 @@ export default function UnitNotFound() {
             size="lg"
             className="bg-primary hover:bg-primary/90 text-white"
           >
-            <Link href="/pre-construction">
+            <Link href="/pre-construction/projects">
               <Building2 className="mr-2 h-5 w-5" />
               Browse All Projects
             </Link>

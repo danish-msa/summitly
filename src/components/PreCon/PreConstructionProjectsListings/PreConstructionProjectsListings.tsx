@@ -302,6 +302,7 @@ const PreConstructionProjectsListings: React.FC = () => {
   };
 
   // Handle map bounds change
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleMapBoundsChange = (_bounds: {north: number; south: number; east: number; west: number}) => {
     // Map bounds change handler - can be used for filtering properties by bounds in the future
   };

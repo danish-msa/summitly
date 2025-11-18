@@ -12,7 +12,7 @@ const PreConCallToAction = () => {
             <h2 className='text-left font-body text-lg md:text-2xl leading-loose md:w-[60%] text-white'>Interested in pre-construction? Explore our projects and secure your future home</h2>
           </div>
           <div className='flex items-center gap-4 w-[20%]'>
-            <Link href="/pre-construction">
+            <Link href="/pre-construction/projects">
               <button className='btn btn-primary bg-transparent rounded-full border-2 border-white text-white px-10 py-4 hover:bg-white hover:text-primary'>View Projects!</button>
             </Link>
           </div>

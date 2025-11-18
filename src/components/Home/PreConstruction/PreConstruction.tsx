@@ -77,7 +77,7 @@ const PreConstruction: React.FC = () => {
 
         <div className="text-center mt-10">
           <Link
-            href="/pre-construction"
+            href="/pre-construction/projects"
             className="inline-flex items-center px-6 py-3 bg-secondary hover:bg-secondary/90 text-white font-medium rounded-lg transition-colors"
           >
             View All Pre-Construction Projects

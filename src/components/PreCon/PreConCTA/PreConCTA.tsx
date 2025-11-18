@@ -66,7 +66,7 @@ const PreConCTA = () => {
             </div>
 
             {/* CTA Button */}
-            <Link href="/pre-construction">
+            <Link href="/pre-construction/projects">
               <Button 
                 size="lg"
                 className="bg-secondary hover:bg-secondary/90 text-white font-semibold px-8 py-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl text-base"
