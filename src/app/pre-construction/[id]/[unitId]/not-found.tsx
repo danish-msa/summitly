@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Home, Building2, ArrowLeft, HomeIcon } from 'lucide-react';
+import { Building2, ArrowLeft, HomeIcon } from 'lucide-react';
 
 export default function UnitNotFound() {
   return (

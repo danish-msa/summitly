@@ -1,6 +1,6 @@
 import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { CheckCircle2, DollarSign, TrendingUp, Star, Bed, Maximize2, Calculator, Home } from "lucide-react"
+import { CheckCircle2, DollarSign, TrendingUp, Star, Bed, Maximize2, Calculator } from "lucide-react"
 import { PropertyListing } from '@/lib/types'
 
 interface PriceItem {
@@ -86,12 +86,6 @@ const PricingIncentives: React.FC<PricingIncentivesProps> = ({ property }) => {
     { title: "$18,000 + HST (2 Bedroom and Larger)", value: "Large Units" },
     { title: "Free Kitchen Island", value: "Valued at $15,000 to $25,000" },
     { title: "Free Sliding Door to Den", value: "Valued at $5,000" },
-  ];
-
-  const standardFeatures = [
-    "Miele Integrated Appliance Package",
-    "Irpinia Custom Kitchen",
-    "Hardwood Flooring",
   ];
 
   // Extract completion date for incentives expiry (mock - add 3 months to completion)

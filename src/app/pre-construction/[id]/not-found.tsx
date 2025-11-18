@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Home, Building2, ArrowLeft } from 'lucide-react';
+import { Home, Building2 } from 'lucide-react';
 
 export default function PreConstructionNotFound() {
   return (

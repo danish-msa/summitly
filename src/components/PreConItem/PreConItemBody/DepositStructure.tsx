@@ -1,7 +1,7 @@
 import React from 'react'
 import { PropertyListing } from '@/lib/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { DollarSign, Calendar, FileText } from 'lucide-react'
+import { Calendar, FileText } from 'lucide-react'
 
 interface DepositStructureProps {
   property: PropertyListing;
@@ -20,7 +20,6 @@ const DepositStructure: React.FC<DepositStructureProps> = ({ property }) => {
 
   // Parse deposit structure (this is a simple parser, you may want to enhance it)
   const depositInfo = preCon.depositStructure;
-  const startingPrice = preCon.startingPrice;
 
   // Extract completion date for incentives expiry (similar to PricingIncentives)
   const getIncentivesExpiryDate = () => {

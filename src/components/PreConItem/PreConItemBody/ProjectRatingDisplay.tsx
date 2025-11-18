@@ -55,7 +55,7 @@ const ProjectRatingDisplay: React.FC<ProjectRatingDisplayProps> = ({ propertyId 
     
     setIsSaving(true);
     try {
-      const response = await saveProjectRating(propertyId, rating);
+      await saveProjectRating(propertyId, rating);
       
       // Update local state
       setUserRating(rating);

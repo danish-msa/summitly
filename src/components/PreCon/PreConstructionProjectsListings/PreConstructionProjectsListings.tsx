@@ -5,7 +5,7 @@ import PreConstructionPropertyCardV3 from '../PropertyCards/PreConstructionPrope
 import type { PreConstructionProperty } from '../PropertyCards/types';
 import { getAllPreConProjects } from '@/data/mockPreConData';
 import { PropertyListing } from '@/lib/types';
-import { FaSort, FaMapMarkerAlt, FaList } from 'react-icons/fa';
+import { FaSort } from 'react-icons/fa';
 import PreConListingFilters from './PreConListingFilters';
 import { LOCATIONS } from '@/lib/types/filters';
 import { useHiddenProperties } from '@/hooks/useHiddenProperties';
@@ -150,13 +150,13 @@ const PreConstructionProjectsListings: React.FC = () => {
   const [sortOption, setSortOption] = useState('newest');
   const [viewMode, setViewMode] = useState<'split' | 'list' | 'map'>('list');
   const [selectedProject, setSelectedProject] = useState<PreConstructionProperty | null>(null);
-  const [mapBounds, setMapBounds] = useState<{
+  const [_mapBounds, setMapBounds] = useState<{
     north: number;
     south: number;
     east: number;
     west: number;
   } | null>(null);
-  const { hideProperty, getVisibleProperties } = useHiddenProperties();
+  const { getVisibleProperties } = useHiddenProperties();
 
   // Extract unique communities from projects
   useMemo(() => {

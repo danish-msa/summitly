@@ -7,7 +7,6 @@ import { UnitListing } from '@/lib/types/units'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Bed, Bath, Maximize2, Eye } from 'lucide-react'
 import Link from 'next/link'
 import ForSaleSoldOutToggle from './ForSaleSoldOutToggle'
@@ -25,12 +24,11 @@ type TabType = "for-sale" | "sold-out";
 type SortOption = "price-low" | "price-high" | "beds-low" | "beds-high";
 
 const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
-  const router = useRouter();
   const preCon = property.preCon;
   const propertyId = property.mlsNumber || 'featured-1';
   
   const [activeTab, setActiveTab] = useState<TabType>("for-sale");
-  const [sortBy, setSortBy] = useState<SortOption>("price-low");
+  const [sortBy] = useState<SortOption>("price-low");
   const [minPrice, setMinPrice] = useState<number>(0);
   const [maxPrice, setMaxPrice] = useState<number>(2000000);
   const [bedrooms, setBedrooms] = useState<number>(0);
@@ -212,16 +210,6 @@ interface UnitCardProps {
 }
 
 const UnitCard: React.FC<UnitCardProps> = ({ unit, propertyId }) => {
-  const formatPrice = (price?: number) => {
-    if (!price) return 'Contact for pricing';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
-
   return (
     <Link href={`/pre-construction/${propertyId}/${unit.id}`} className="block">
       <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">

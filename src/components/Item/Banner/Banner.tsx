@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, CreditCard, Bed, Bath, Maximize2, Megaphone, Building2, ArrowUp, ArrowDown, User, Calendar as CalendarIcon, Layers, Home, Users, MapPin } from "lucide-react";
+import { Calendar, CreditCard, Bed, Bath, Maximize2, Megaphone, Building2, ArrowUp, ArrowDown, Calendar as CalendarIcon, Layers, Home, Users, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PropertyListing } from '@/lib/types';

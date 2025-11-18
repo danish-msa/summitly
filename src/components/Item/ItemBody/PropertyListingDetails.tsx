@@ -323,7 +323,7 @@ export default function PropertyListingDetails({ data, property }: ListingDetail
                         if (!isNaN(parsedDate.getTime())) {
                           return parsedDate.getFullYear().toString();
                         }
-                      } catch (e) {
+                      } catch {
                         // If parsing fails, return the original string
                       }
                       return completionDate;

@@ -12,7 +12,7 @@ const SquareFeetFilter: React.FC<IndividualFilterProps> = ({
   const [activeDropdown, setActiveDropdown] = useState<boolean>(false);
 
   // Handle square feet selection
-  const handleSquareFeetSelect = (value: string) => {
+  const _handleSquareFeetSelect = (value: string) => {
     const event = {
       target: {
         name: 'squareFeet',

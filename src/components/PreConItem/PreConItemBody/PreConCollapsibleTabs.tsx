@@ -5,7 +5,6 @@ import { NeighborhoodAmenities } from '../../Item/ItemBody/NeighborhoodAmenities
 import { LifestyleAmenities } from '../../Item/ItemBody/LifestyleAmenities'
 import { MortgageCalculator } from '../../Item/ItemBody/MortgageCalculator'
 import AffordabilityCalculator from '../../Item/ItemBody/AffordabilityCalculator'
-import { MarketAnalytics } from '../../Item/ItemBody/MarketAnalytics'
 import { PropertyListing } from '@/lib/types'
 import Description from '../../Item/ItemBody/Description'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'

@@ -50,11 +50,11 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({ property }) => {
     other: 'Other Documents'
   };
 
-  const getTypeIcon = (type: string) => {
+  const getTypeIcon = () => {
     return <FileText className="h-5 w-5" />;
   };
 
-  const handleDownload = (url: string, name: string) => {
+  const handleDownload = (url: string) => {
     // Open in new tab for download
     window.open(url, '_blank');
   };
@@ -65,10 +65,10 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({ property }) => {
         <div key={type} className="space-y-3">
           
           <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-              {getTypeIcon(type)}
-              {typeLabels[type] || 'Documents'}
-            </h3>
+          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+            {getTypeIcon()}
+            {typeLabels[type] || 'Documents'}
+          </h3>
             {docs.map((doc) => (
               <Card key={doc.id} className="p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between gap-4">
@@ -96,7 +96,7 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({ property }) => {
                     <Button
                       variant="default"
                       size="sm"
-                      onClick={() => handleDownload(doc.url, doc.name)}
+                      onClick={() => handleDownload(doc.url)}
                       className="flex items-center gap-2"
                     >
                       <Download className="h-4 w-4" />
