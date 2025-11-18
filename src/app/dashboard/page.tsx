@@ -179,7 +179,7 @@ export default function DashboardHome() {
       
       // Check if this is a pre-construction project
       const isPreConProject = activity.mlsNumber && preConProjectMap[activity.mlsNumber]
-      const preConProject = isPreConProject ? preConProjectMap[activity.mlsNumber] : null
+      const preConProject = (activity.mlsNumber && isPreConProject) ? preConProjectMap[activity.mlsNumber] : null
       
       // Determine link based on activity type
       let link = ''
