@@ -150,12 +150,6 @@ const PreConstructionProjectsListings: React.FC = () => {
   const [sortOption, setSortOption] = useState('newest');
   const [viewMode, setViewMode] = useState<'split' | 'list' | 'map'>('list');
   const [selectedProject, setSelectedProject] = useState<PreConstructionProperty | null>(null);
-  const [_mapBounds, setMapBounds] = useState<{
-    north: number;
-    south: number;
-    east: number;
-    west: number;
-  } | null>(null);
   const { getVisibleProperties } = useHiddenProperties();
 
   // Extract unique communities from projects
@@ -308,8 +302,8 @@ const PreConstructionProjectsListings: React.FC = () => {
   };
 
   // Handle map bounds change
-  const handleMapBoundsChange = (bounds: {north: number; south: number; east: number; west: number}) => {
-    setMapBounds(bounds);
+  const handleMapBoundsChange = (_bounds: {north: number; south: number; east: number; west: number}) => {
+    // Map bounds change handler - can be used for filtering properties by bounds in the future
   };
 
   // Convert visible projects to PropertyListing format for map

@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { PropertyListing } from '@/lib/types'
 import { UnitListing } from '@/lib/types/units'
 import { Card, CardContent } from '@/components/ui/card'

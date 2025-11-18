@@ -88,17 +88,6 @@ const PricingIncentives: React.FC<PricingIncentivesProps> = ({ property }) => {
     { title: "Free Sliding Door to Den", value: "Valued at $5,000" },
   ];
 
-  // Extract completion date for incentives expiry (mock - add 3 months to completion)
-  const getIncentivesExpiryDate = () => {
-    if (!preCon.completion?.date) return "Apr 1, 2025";
-    const yearMatch = preCon.completion.date.match(/\d{4}/);
-    if (yearMatch) {
-      const year = parseInt(yearMatch[0]);
-      return `Apr 1, ${year}`;
-    }
-    return "Apr 1, 2025";
-  };
-
   return (
     <div className="w-full">
       <div className="grid md:grid-cols-2 gap-8 mb-0 items-start">

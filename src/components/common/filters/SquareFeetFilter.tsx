@@ -11,18 +11,6 @@ const SquareFeetFilter: React.FC<IndividualFilterProps> = ({
 }) => {
   const [activeDropdown, setActiveDropdown] = useState<boolean>(false);
 
-  // Handle square feet selection
-  const _handleSquareFeetSelect = (value: string) => {
-    const event = {
-      target: {
-        name: 'squareFeet',
-        value: value
-      }
-    } as FilterChangeEvent;
-    handleFilterChange(event);
-    setActiveDropdown(false);
-  };
-
   // Get display text for square feet
   const getSquareFeetText = () => {
     if (!filters.minSquareFeet && !filters.maxSquareFeet) return 'All Sqft';
