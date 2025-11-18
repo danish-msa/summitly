@@ -67,6 +67,7 @@ const PreConItem: React.FC = () => {
     { id: 'deposit-structure', label: 'Deposit Structure' },
     { id: 'available-units', label: 'Available Units' },
     { id: 'amenities-neighborhood-lifestyle', label: 'Amenities & Lifestyle' },
+    { id: 'documents', label: 'Documents (PDFs)' },
     { id: 'demographics', label: 'Demographics' }
   ];
 

@@ -632,6 +632,14 @@ export interface PropertyListing {
         amenities?: string[]; // Project amenities list
         depositStructure?: string;
         description: string;
+        documents?: Array<{
+            id: string;
+            name: string;
+            url: string;
+            type: 'brochure' | 'floorplan' | 'specification' | 'contract' | 'other';
+            size?: string;
+            uploadedDate?: string;
+        }>;
         developmentTeam?: {
             overview?: string;
             developer?: {

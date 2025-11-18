@@ -14,6 +14,7 @@ import DepositStructure from './DepositStructure'
 import PricingIncentives from './PricingIncentives'
 import ProjectAmenities from './ProjectAmenities'
 import AvailableUnits from './AvailableUnits'
+import ProjectDocuments from './ProjectDocuments'
 
 interface PreConCollapsibleTabsProps {
   property: PropertyListing;
@@ -33,7 +34,8 @@ const PreConCollapsibleTabs: React.FC<PreConCollapsibleTabsProps> = ({ property 
     'pricing-incentives',
     'deposit-structure',
     'available-units',
-    'amenities-neighborhood-lifestyle', 
+    'amenities-neighborhood-lifestyle',
+    'documents',
     'demographics', 
     'market-analytics', 
     'calculators'
@@ -130,6 +132,13 @@ const PreConCollapsibleTabs: React.FC<PreConCollapsibleTabsProps> = ({ property 
             <LifestyleAmenities address={property.address.location || `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim()} />
           </TabsContent>
         </Tabs>
+      )
+    },
+    {
+      id: 'documents',
+      label: 'Documents (PDFs)',
+      content: (
+        <ProjectDocuments property={property} />
       )
     },
     {

@@ -456,6 +456,48 @@ export const mockPreConProjects: Record<string, PropertyListing> = {
       ],
       depositStructure: '5% on signing, 10% within 6 months, 5% at occupancy',
       description: 'Experience luxury living at its finest. Luxury Heights Condominiums offers a perfect blend of modern design and premium amenities. Located in the heart of the city, this pre-construction project features spacious units with stunning views, world-class amenities, and a prime location close to shopping, dining, and entertainment. Don\'t miss this opportunity to own a piece of luxury before completion.',
+      documents: [
+        {
+          id: 'luxury-heights-brochure',
+          name: 'Luxury Heights Condominiums - Project Brochure',
+          url: '/documents/luxury-heights-brochure.pdf',
+          type: 'brochure',
+          size: '2.5 MB',
+          uploadedDate: new Date('2024-01-15').toISOString()
+        },
+        {
+          id: 'luxury-heights-floorplan-1br',
+          name: '1 Bedroom Floor Plans',
+          url: '/documents/luxury-heights-1br-floorplans.pdf',
+          type: 'floorplan',
+          size: '1.8 MB',
+          uploadedDate: new Date('2024-01-20').toISOString()
+        },
+        {
+          id: 'luxury-heights-floorplan-2br',
+          name: '2 Bedroom Floor Plans',
+          url: '/documents/luxury-heights-2br-floorplans.pdf',
+          type: 'floorplan',
+          size: '2.1 MB',
+          uploadedDate: new Date('2024-01-20').toISOString()
+        },
+        {
+          id: 'luxury-heights-specifications',
+          name: 'Building Specifications & Features',
+          url: '/documents/luxury-heights-specifications.pdf',
+          type: 'specification',
+          size: '3.2 MB',
+          uploadedDate: new Date('2024-02-01').toISOString()
+        },
+        {
+          id: 'luxury-heights-purchase-agreement',
+          name: 'Standard Purchase Agreement Template',
+          url: '/documents/luxury-heights-purchase-agreement.pdf',
+          type: 'contract',
+          size: '850 KB',
+          uploadedDate: new Date('2024-02-10').toISOString()
+        }
+      ],
       developmentTeam: {
         overview: 'Our world-class development team brings together decades of experience in luxury residential development, combining innovative design, exceptional craftsmanship, and sustainable building practices to create this landmark project.',
         developer: {
