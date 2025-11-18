@@ -105,6 +105,13 @@ const PreConCollapsibleTabs: React.FC<PreConCollapsibleTabsProps> = ({ property 
       )
     },
     {
+      id: 'documents',
+      label: 'Documents (PDFs)',
+      content: (
+        <ProjectDocuments property={property} />
+      )
+    },
+    {
       id: 'available-units',
       label: 'Available Units',
       content: (
@@ -139,13 +146,6 @@ const PreConCollapsibleTabs: React.FC<PreConCollapsibleTabsProps> = ({ property 
             />
           </TabsContent>
         </Tabs>
-      )
-    },
-    {
-      id: 'documents',
-      label: 'Documents (PDFs)',
-      content: (
-        <ProjectDocuments property={property} />
       )
     },
     {

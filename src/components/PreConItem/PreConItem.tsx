@@ -65,9 +65,9 @@ const PreConItem: React.FC = () => {
     { id: 'project-details', label: 'Details' },
     { id: 'pricing-incentives', label: 'Pricing & Incentives' },
     { id: 'deposit-structure', label: 'Deposit Structure' },
+    { id: 'documents', label: 'Documents (PDFs)' },
     { id: 'available-units', label: 'Available Units' },
-    { id: 'amenities-neighborhood-lifestyle', label: 'Amenities & Lifestyle' },
-    { id: 'documents', label: 'Documents (PDFs)' }
+    { id: 'amenities-neighborhood-lifestyle', label: 'Amenities & Lifestyle' }
   ];
 
   return (
