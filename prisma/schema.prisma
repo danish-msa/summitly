@@ -345,6 +345,7 @@ model PreConstructionProject {
   // Additional Info
   depositStructure String? @db.Text
   description     String?  @db.Text
+  documents       String?  @db.Text // JSON string for documents array
   
   // Development Team (stored as JSON or separate fields)
   developerInfo   String?  @db.Text // JSON string for developer details
@@ -356,7 +357,6 @@ model PreConstructionProject {
   updatedAt       DateTime @updatedAt
   
   // Relations
-  ratings         PropertyRating[]
   units           PreConstructionUnit[]
   
   @@index([city])

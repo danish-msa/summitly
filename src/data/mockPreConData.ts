@@ -704,6 +704,32 @@ export const mockPreConProjects: Record<string, PropertyListing> = {
       ],
       depositStructure: '10% on signing, 5% every 6 months until occupancy',
       description: 'Luxury waterfront living awaits at Waterfront Residences. This exceptional pre-construction development offers stunning ocean views, direct marina access, and world-class amenities. Located in the heart of Vancouver\'s waterfront district, this project combines modern architecture with the natural beauty of the Pacific Northwest. Each unit is designed to maximize views and natural light, creating a truly exceptional living experience.',
+      documents: [
+        {
+          id: 'waterfront-brochure',
+          name: 'Waterfront Residences - Project Brochure',
+          url: '/documents/waterfront-residences-brochure.pdf',
+          type: 'brochure',
+          size: '3.1 MB',
+          uploadedDate: new Date('2024-02-15').toISOString()
+        },
+        {
+          id: 'waterfront-floorplans',
+          name: 'Complete Floor Plan Collection',
+          url: '/documents/waterfront-residences-floorplans.pdf',
+          type: 'floorplan',
+          size: '4.5 MB',
+          uploadedDate: new Date('2024-02-20').toISOString()
+        },
+        {
+          id: 'waterfront-specifications',
+          name: 'Building Specifications',
+          url: '/documents/waterfront-residences-specifications.pdf',
+          type: 'specification',
+          size: '2.8 MB',
+          uploadedDate: new Date('2024-03-01').toISOString()
+        }
+      ],
       developmentTeam: {
         overview: 'A collaboration of industry leaders bringing together expertise in waterfront development, sustainable design, and luxury living.',
         developer: {

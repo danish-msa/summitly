@@ -36,7 +36,6 @@ const PreConCollapsibleTabs: React.FC<PreConCollapsibleTabsProps> = ({ property 
     'available-units',
     'amenities-neighborhood-lifestyle',
     'documents',
-    'demographics', 
     'market-analytics', 
     'calculators'
   ];
@@ -117,10 +116,11 @@ const PreConCollapsibleTabs: React.FC<PreConCollapsibleTabsProps> = ({ property 
       label: 'Amenities & Lifestyle',
       content: (
         <Tabs defaultValue="project-amenities" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 h-12 p-1">
+          <TabsList className="grid w-full grid-cols-4 h-12 p-1">
             <TabsTrigger value="project-amenities" className="py-2 text-base">Project Amenities</TabsTrigger>
             <TabsTrigger value="neighborhood" className="py-2 text-base">Neighborhood</TabsTrigger>
             <TabsTrigger value="lifestyle" className="py-2 text-base">Lifestyle</TabsTrigger>
+            <TabsTrigger value="demographics" className="py-2 text-base">Demographics</TabsTrigger>
           </TabsList>
           <TabsContent value="project-amenities" className="mt-6">
             <ProjectAmenities property={property} />
@@ -131,6 +131,13 @@ const PreConCollapsibleTabs: React.FC<PreConCollapsibleTabsProps> = ({ property 
           <TabsContent value="lifestyle" className="mt-6">
             <LifestyleAmenities address={property.address.location || `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim()} />
           </TabsContent>
+          <TabsContent value="demographics" className="mt-6">
+            <Demographics 
+              latitude={property.map.latitude} 
+              longitude={property.map.longitude} 
+              address={property.address.location || `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim()} 
+            />
+          </TabsContent>
         </Tabs>
       )
     },
@@ -139,17 +146,6 @@ const PreConCollapsibleTabs: React.FC<PreConCollapsibleTabsProps> = ({ property 
       label: 'Documents (PDFs)',
       content: (
         <ProjectDocuments property={property} />
-      )
-    },
-    {
-      id: 'demographics',
-      label: 'Demographics',
-      content: (
-        <Demographics 
-          latitude={property.map.latitude} 
-          longitude={property.map.longitude} 
-          address={property.address.location || `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim()} 
-        />
       )
     },
     {

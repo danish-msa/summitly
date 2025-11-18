@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS "PreConstructionProject" (
     "amenities" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "depositStructure" TEXT,
     "description" TEXT,
+    "documents" TEXT,
     "developerInfo" TEXT,
     "architectInfo" TEXT,
     "builderInfo" TEXT,

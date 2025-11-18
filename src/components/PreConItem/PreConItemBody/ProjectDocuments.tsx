@@ -63,11 +63,12 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({ property }) => {
     <div className="space-y-6">
       {Object.entries(documentsByType).map(([type, docs]) => (
         <div key={type} className="space-y-3">
-          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-            {getTypeIcon(type)}
-            {typeLabels[type] || 'Documents'}
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              {getTypeIcon(type)}
+              {typeLabels[type] || 'Documents'}
+            </h3>
             {docs.map((doc) => (
               <Card key={doc.id} className="p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between gap-4">
@@ -75,8 +76,8 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({ property }) => {
                     <div className="flex-shrink-0 mt-1">
                       <FileText className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-foreground mb-1 line-clamp-2">
+                    <div className="flex gap-4 min-w-0 items-center">
+                      <h4 className="font-medium flex-1 text-foreground line-clamp-2">
                         {doc.name}
                       </h4>
                       {doc.size && (
@@ -93,7 +94,7 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({ property }) => {
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <Button
-                      variant="outline"
+                      variant="default"
                       size="sm"
                       onClick={() => handleDownload(doc.url, doc.name)}
                       className="flex items-center gap-2"
