@@ -28,18 +28,18 @@ const SquareFeetFilter: React.FC<IndividualFilterProps> = ({
 
   // Handle individual filter reset
   const handleIndividualReset = () => {
-    const minEvent = {
+    const minEvent: FilterChangeEvent = {
       target: {
         name: 'minSquareFeet',
-        value: undefined
+        value: 0
       }
-    } as FilterChangeEvent;
-    const maxEvent = {
+    };
+    const maxEvent: FilterChangeEvent = {
       target: {
         name: 'maxSquareFeet',
-        value: undefined
+        value: 0
       }
-    } as FilterChangeEvent;
+    };
     handleFilterChange(minEvent);
     handleFilterChange(maxEvent);
   };
@@ -103,18 +103,18 @@ const SquareFeetFilter: React.FC<IndividualFilterProps> = ({
                       : 'border-gray-300 hover:border-secondary'}
                   `}
                   onClick={() => {
-                    const minEvent = {
+                    const minEvent: FilterChangeEvent = {
                       target: {
                         name: 'minSquareFeet',
-                        value: option.min
+                        value: option.min ?? 0
                       }
-                    } as FilterChangeEvent;
-                    const maxEvent = {
+                    };
+                    const maxEvent: FilterChangeEvent = {
                       target: {
                         name: 'maxSquareFeet',
-                        value: option.max
+                        value: option.max ?? 0
                       }
-                    } as FilterChangeEvent;
+                    };
                     handleFilterChange(minEvent);
                     handleFilterChange(maxEvent);
                   }}

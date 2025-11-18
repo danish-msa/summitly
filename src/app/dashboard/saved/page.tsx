@@ -5,10 +5,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { useSavedProperties } from '@/hooks/useSavedProperties'
 import { fetchPropertyListings } from '@/lib/api/properties'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { PropertyListing } from '@/lib/types'
 import PropertyCard from '@/components/Helper/PropertyCard'
 import { Loader2 } from 'lucide-react'
+import { getAllPreConProjects } from '@/data/mockPreConData'
+import PreConstructionPropertyCardV3 from '@/components/PreCon/PropertyCards/PreConstructionPropertyCardV3'
+import type { PreConstructionProperty } from '@/components/PreCon/PropertyCards/types'
 
 const savedSearches = [
   { id: 1, name: "Downtown Condos", criteria: "2-3 bed, $500K-$800K, Downtown", results: 24 },
@@ -16,10 +19,61 @@ const savedSearches = [
   { id: 3, name: "Investment Properties", criteria: "Any, $300K-$600K, All areas", results: 45 },
 ]
 
+// Convert PropertyListing to PreConstructionProperty format
+const convertToPreConProperty = (property: PropertyListing): PreConstructionProperty | null => {
+  if (!property.preCon) return null;
+
+  const preCon = property.preCon;
+  const address = property.address;
+
+  return {
+    id: property.mlsNumber,
+    projectName: preCon.projectName,
+    developer: preCon.developer,
+    startingPrice: preCon.startingPrice,
+    images: property.images?.allImages || [property.images?.imageUrl || '/images/p1.jpg'],
+    address: {
+      street: `${address.streetNumber || ''} ${address.streetName || ''}`.trim() || address.location?.split(',')[0] || '',
+      city: address.city || '',
+      province: address.state || '',
+      latitude: property.map?.latitude ?? undefined,
+      longitude: property.map?.longitude ?? undefined,
+    },
+    details: {
+      propertyType: property.details?.propertyType || 'Condominium',
+      bedroomRange: preCon.details.bedroomRange,
+      bathroomRange: preCon.details.bathroomRange,
+      sqftRange: preCon.details.sqftRange,
+      totalUnits: preCon.details.totalUnits,
+      availableUnits: preCon.details.availableUnits,
+    },
+    completion: {
+      date: preCon.completion.date,
+      progress: preCon.completion.progress,
+    },
+    features: preCon.features || [],
+    depositStructure: preCon.depositStructure,
+    status: preCon.status,
+  };
+};
+
 export default function Saved() {
   const { savedProperties, isLoading: isLoadingSaved } = useSavedProperties()
   const [properties, setProperties] = useState<PropertyListing[]>([])
   const [isLoadingProperties, setIsLoadingProperties] = useState(true)
+
+  // Get saved pre-construction projects
+  const savedProjects = useMemo(() => {
+    if (isLoadingSaved || savedProperties.length === 0) return [];
+    
+    const allPreConProjects = getAllPreConProjects();
+    const savedMlsNumbers = savedProperties.map((sp) => sp.mlsNumber);
+    
+    return allPreConProjects
+      .filter((project) => savedMlsNumbers.includes(project.mlsNumber))
+      .map(convertToPreConProperty)
+      .filter((project): project is PreConstructionProperty => project !== null);
+  }, [savedProperties, isLoadingSaved]);
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -31,8 +85,11 @@ export default function Saved() {
       try {
         const allProperties = await fetchPropertyListings()
         const savedMlsNumbers = savedProperties.map((sp) => sp.mlsNumber)
+        // Filter out pre-construction projects (they're handled separately)
+        const allPreConProjects = getAllPreConProjects();
+        const preConMlsNumbers = allPreConProjects.map(p => p.mlsNumber);
         const savedPropertyListings = allProperties.filter((p) =>
-          savedMlsNumbers.includes(p.mlsNumber)
+          savedMlsNumbers.includes(p.mlsNumber) && !preConMlsNumbers.includes(p.mlsNumber)
         )
         setProperties(savedPropertyListings)
       } catch (error) {
@@ -64,6 +121,7 @@ export default function Saved() {
       <Tabs defaultValue="homes" className="w-full">
         <TabsList>
           <TabsTrigger value="homes">Saved Homes</TabsTrigger>
+          <TabsTrigger value="projects">Saved Projects</TabsTrigger>
           <TabsTrigger value="searches">Saved Searches</TabsTrigger>
         </TabsList>
         <TabsContent value="homes" className="mt-6">
@@ -83,6 +141,27 @@ export default function Saved() {
                   key={property.mlsNumber}
                   property={property}
                   onHide={() => {}}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+        <TabsContent value="projects" className="mt-6">
+          {savedProjects.length === 0 ? (
+            <div className="bg-card rounded-lg p-12 border border-border text-center">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                No saved projects yet
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                Start saving pre-construction projects you're interested in to see them here.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {savedProjects.map((project) => (
+                <PreConstructionPropertyCardV3
+                  key={project.id}
+                  property={project}
                 />
               ))}
             </div>
