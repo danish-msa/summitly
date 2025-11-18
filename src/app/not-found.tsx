@@ -1,3 +1,5 @@
+"use client";
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Home, Search, ArrowLeft, Building2 } from 'lucide-react';
@@ -29,15 +31,12 @@ export default function NotFound() {
           </Button>
           
           <Button
-            asChild
             variant="outline"
             size="lg"
             onClick={() => window.history.back()}
           >
-            <Link href="#" onClick={(e) => { e.preventDefault(); window.history.back(); }}>
-              <ArrowLeft className="mr-2 h-5 w-5" />
-              Go Back
-            </Link>
+            <ArrowLeft className="mr-2 h-5 w-5" />
+            Go Back
           </Button>
         </div>
 

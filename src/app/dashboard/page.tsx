@@ -10,6 +10,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { getListingDetails } from '@/lib/api/repliers/services/listings'
 import { getPropertyUrl } from '@/lib/utils/propertyUrl'
 import { PropertyListing } from '@/lib/types'
+import { getAllPreConProjects } from '@/data/mockPreConData'
 
 const stats = [
   {
@@ -130,12 +131,25 @@ export default function DashboardHome() {
   // Fetch property details for activities that need URLs
   const [propertyMap, setPropertyMap] = useState<Record<string, PropertyListing>>({})
   
+  // Get all pre-construction projects for checking
+  const allPreConProjects = useMemo(() => getAllPreConProjects(), [])
+  const preConProjectMap = useMemo(() => {
+    const map: Record<string, PropertyListing> = {}
+    allPreConProjects.forEach(project => {
+      if (project.mlsNumber) {
+        map[project.mlsNumber] = project
+      }
+    })
+    return map
+  }, [allPreConProjects])
+  
   useEffect(() => {
     const fetchProperties = async () => {
       const mlsNumbers = activities
         .filter(a => a.mlsNumber && (a.type === 'property_saved' || a.type === 'alert_watch'))
         .map(a => a.mlsNumber!)
         .filter((v, i, a) => a.indexOf(v) === i) // unique values
+        .filter(mls => !preConProjectMap[mls]) // Exclude pre-con projects (they're already in preConProjectMap)
       
       const properties: Record<string, PropertyListing> = {}
       await Promise.all(
@@ -154,7 +168,7 @@ export default function DashboardHome() {
     if (activities.length > 0) {
       fetchProperties()
     }
-  }, [activities])
+  }, [activities, preConProjectMap])
 
   // Transform activities for display
   const recentActivity = useMemo(() => {
@@ -163,32 +177,52 @@ export default function DashboardHome() {
         ? `MLS: ${activity.mlsNumber}` 
         : activity.location || 'Property'
       
+      // Check if this is a pre-construction project
+      const isPreConProject = activity.mlsNumber && preConProjectMap[activity.mlsNumber]
+      const preConProject = isPreConProject ? preConProjectMap[activity.mlsNumber] : null
+      
       // Determine link based on activity type
       let link = ''
       let linkText = propertyText
+      let actionText = activity.action
       
       if (activity.type === 'property_saved' && activity.mlsNumber) {
-        const property = propertyMap[activity.mlsNumber]
-        if (property) {
-          link = getPropertyUrl(property)
-          linkText = property.address?.streetNumber && property.address?.streetName
-            ? `${property.address.streetNumber} ${property.address.streetName}`
-            : propertyText
+        if (isPreConProject && preConProject) {
+          // Pre-construction project
+          link = `/pre-construction/${activity.mlsNumber}`
+          linkText = preConProject.preCon?.projectName || preConProject.address?.location || propertyText
+          actionText = 'Project saved'
         } else {
-          link = `/property/${activity.mlsNumber}` // Fallback
+          // Regular property
+          const property = propertyMap[activity.mlsNumber]
+          if (property) {
+            link = getPropertyUrl(property)
+            linkText = property.address?.streetNumber && property.address?.streetName
+              ? `${property.address.streetNumber} ${property.address.streetName}`
+              : propertyText
+          } else {
+            link = `/property/${activity.mlsNumber}` // Fallback
+          }
         }
       } else if (activity.type === 'tour_scheduled') {
         link = '/dashboard/tours'
         linkText = 'View tour'
       } else if (activity.type === 'alert_watch' && activity.mlsNumber) {
-        const property = propertyMap[activity.mlsNumber]
-        if (property) {
-          link = getPropertyUrl(property)
-          linkText = property.address?.streetNumber && property.address?.streetName
-            ? `${property.address.streetNumber} ${property.address.streetName}`
-            : propertyText
+        if (isPreConProject && preConProject) {
+          // Pre-construction project
+          link = `/pre-construction/${activity.mlsNumber}`
+          linkText = preConProject.preCon?.projectName || preConProject.address?.location || propertyText
         } else {
-          link = `/property/${activity.mlsNumber}` // Fallback
+          // Regular property
+          const property = propertyMap[activity.mlsNumber]
+          if (property) {
+            link = getPropertyUrl(property)
+            linkText = property.address?.streetNumber && property.address?.streetName
+              ? `${property.address.streetNumber} ${property.address.streetName}`
+              : propertyText
+          } else {
+            link = `/property/${activity.mlsNumber}` // Fallback
+          }
         }
       } else if (activity.type === 'alert_new') {
         link = '/dashboard/alerts'
@@ -196,7 +230,7 @@ export default function DashboardHome() {
       }
       
       return {
-        action: activity.action,
+        action: actionText,
         property: propertyText,
         time: formatTimeAgo(activity.timestamp),
         mlsNumber: activity.mlsNumber,
@@ -205,7 +239,7 @@ export default function DashboardHome() {
         linkText,
       }
     })
-  }, [activities, propertyMap])
+  }, [activities, propertyMap, preConProjectMap])
 
   return (
     <div className="space-y-6">

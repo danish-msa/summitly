@@ -1,3 +1,5 @@
+"use client";
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Building2, ArrowLeft, HomeIcon } from 'lucide-react';
@@ -21,15 +23,12 @@ export default function UnitNotFound() {
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
           <Button
-            asChild
-            size="lg"
             variant="outline"
+            size="lg"
             onClick={() => window.history.back()}
           >
-            <Link href="#" onClick={(e) => { e.preventDefault(); window.history.back(); }}>
-              <ArrowLeft className="mr-2 h-5 w-5" />
-              Back to Project
-            </Link>
+            <ArrowLeft className="mr-2 h-5 w-5" />
+            Back to Project
           </Button>
           
           <Button
