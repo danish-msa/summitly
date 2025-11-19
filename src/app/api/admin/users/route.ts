@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { isSuperAdmin } from '@/lib/roles'
-import { Prisma } from '@prisma/client'
+import { Prisma, UserRole } from '@prisma/client'
 
 // GET - List all users (with pagination and filters)
 export async function GET(request: NextRequest) {
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
       ]
     }
     if (role && (role === 'SUBSCRIBER' || role === 'ADMIN' || role === 'SUPER_ADMIN')) {
-      where.role = role as Prisma.UserRole
+      where.role = role as UserRole
     }
 
     // Get users and total count
