@@ -4,6 +4,29 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { isAdmin } from '@/lib/roles'
 
+// Helper function to fetch developer data by ID and return as JSON string
+async function fetchDeveloperData(developerId: string): Promise<string | null> {
+  if (!developerId) return null
+  try {
+    const developer = await (prisma as any).developer.findUnique({
+      where: { id: developerId },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        website: true,
+        image: true,
+        email: true,
+        phone: true,
+      },
+    })
+    return developer ? JSON.stringify(developer) : null
+  } catch (error) {
+    console.error('Error fetching developer:', error)
+    return null
+  }
+}
+
 // GET - List all pre-con projects (with pagination and filters)
 export async function GET(request: NextRequest) {
   try {
