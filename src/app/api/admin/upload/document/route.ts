@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { isAdmin } from '@/lib/roles'
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
-import { existsSync } from 'fs'
+import { supabase } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
@@ -81,24 +79,33 @@ export async function POST(request: NextRequest) {
     const timestamp = Date.now()
     const fileName = `${sanitizedProjectName}-${sanitizedDocType}-${timestamp}.${fileExtension}`
 
-    // Define upload directory
-    const uploadDir = join(process.cwd(), 'public', 'documents', 'pre-con')
-    
-    // Create directory if it doesn't exist
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true })
-    }
-
     // Convert file to buffer
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
-    // Write file to disk
-    const filePath = join(uploadDir, fileName)
-    await writeFile(filePath, buffer)
+    // Upload to Supabase Storage
+    const filePath = `pre-con/${fileName}`
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('documents')
+      .upload(filePath, buffer, {
+        contentType: file.type,
+        upsert: false,
+      })
 
-    // Return the public URL path
-    const publicPath = `/documents/pre-con/${fileName}`
+    if (uploadError) {
+      console.error('Supabase upload error:', uploadError)
+      return NextResponse.json(
+        { error: `Failed to upload document: ${uploadError.message}` },
+        { status: 500 }
+      )
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('documents')
+      .getPublicUrl(filePath)
+
+    const publicPath = urlData.publicUrl
 
     return NextResponse.json({
       success: true,
