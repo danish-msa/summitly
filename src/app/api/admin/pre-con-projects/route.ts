@@ -57,23 +57,23 @@ export async function GET(request: NextRequest) {
     }
 
     // Get projects and total count
-    const [projects, total] = await Promise.all([
-      prisma.preConstructionProject.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          units: {
-            select: {
-              id: true,
-              status: true,
-            },
+    // Using separate queries to avoid prepared statement conflicts
+    const projects = await prisma.preConstructionProject.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        units: {
+          select: {
+            id: true,
+            status: true,
           },
         },
-      }),
-      prisma.preConstructionProject.count({ where }),
-    ])
+      },
+    })
+
+    const total = await prisma.preConstructionProject.count({ where })
 
     return NextResponse.json({
       projects,

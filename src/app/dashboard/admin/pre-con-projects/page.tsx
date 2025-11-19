@@ -43,7 +43,7 @@ export default function PreConProjectsPage() {
   const [projects, setProjects] = useState<PreConProject[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
   const [cityFilter, setCityFilter] = useState("")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -80,7 +80,7 @@ export default function PreConProjectsPage() {
         page: page.toString(),
         limit: "10",
         ...(searchTerm && { search: searchTerm }),
-        ...(statusFilter && { status: statusFilter }),
+        ...(statusFilter && statusFilter !== "all" && { status: statusFilter }),
         ...(cityFilter && { city: cityFilter }),
       })
 
@@ -296,7 +296,7 @@ export default function PreConProjectsPage() {
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Status</SelectItem>
+            <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="selling">Selling</SelectItem>
             <SelectItem value="coming-soon">Coming Soon</SelectItem>
             <SelectItem value="sold-out">Sold Out</SelectItem>
