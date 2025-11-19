@@ -32,7 +32,13 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     // Build where clause
-    const where: any = {}
+    const where: {
+      OR?: Array<{
+        name?: { contains: string; mode: 'insensitive' }
+        email?: { contains: string; mode: 'insensitive' }
+      }>
+      role?: string
+    } = {}
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },

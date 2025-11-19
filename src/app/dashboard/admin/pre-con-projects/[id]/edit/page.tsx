@@ -59,6 +59,7 @@ export default function EditProjectPage() {
     if (params.id) {
       fetchProject()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id, session, router])
 
   const fetchProject = async () => {
@@ -129,9 +130,10 @@ export default function EditProjectPage() {
       }
 
       router.push("/dashboard/admin/pre-con-projects")
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error updating project:", error)
-      alert(error.message || "Failed to update project")
+      const message = error instanceof Error ? error.message : "Failed to update project"
+      alert(message)
     } finally {
       setSaving(false)
     }

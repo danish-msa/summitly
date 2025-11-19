@@ -5,9 +5,8 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Shield, Users, UserCheck, Crown } from "lucide-react"
+import { Shield, UserCheck, Crown } from "lucide-react"
 import { isSuperAdmin } from "@/lib/roles"
-import { StatCard } from "@/components/Dashboard/StatCard"
 
 export default function RolesPage() {
   const { data: session, status } = useSession()

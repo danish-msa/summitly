@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { DataTable, Column } from "@/components/Dashboard/DataTable"
-import { ActionButton } from "@/components/Dashboard/ActionButton"
 import { StatCard } from "@/components/Dashboard/StatCard"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -64,6 +63,7 @@ export default function UsersPage() {
       fetchUsers()
       fetchStats()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, session, router, page, searchTerm, roleFilter])
 
   const fetchUsers = async () => {
@@ -130,9 +130,10 @@ export default function UsersPage() {
       setSelectedRole("")
       fetchUsers()
       fetchStats()
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error updating user:", error)
-      alert(error.message || "Failed to update user")
+      const message = error instanceof Error ? error.message : "Failed to update user"
+      alert(message)
     }
   }
 
@@ -153,9 +154,10 @@ export default function UsersPage() {
       setSelectedUser(null)
       fetchUsers()
       fetchStats()
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error deleting user:", error)
-      alert(error.message || "Failed to delete user")
+      const message = error instanceof Error ? error.message : "Failed to delete user"
+      alert(message)
     }
   }
 

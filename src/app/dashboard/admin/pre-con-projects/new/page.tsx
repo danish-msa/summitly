@@ -72,9 +72,10 @@ export default function NewProjectPage() {
       }
 
       router.push("/dashboard/admin/pre-con-projects")
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error creating project:", error)
-      alert(error.message || "Failed to create project")
+      const message = error instanceof Error ? error.message : "Failed to create project"
+      alert(message)
     } finally {
       setLoading(false)
     }

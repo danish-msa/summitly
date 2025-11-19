@@ -17,7 +17,6 @@ import {
   Building2,
   Users,
   Shield,
-  FolderKanban,
 } from "lucide-react"
 import {
   Sidebar,

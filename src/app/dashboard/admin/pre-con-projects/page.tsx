@@ -34,7 +34,7 @@ interface PreConProject {
   totalUnits: number
   availableUnits: number
   createdAt: string
-  units?: any[]
+  units?: Array<{ id: string; status: string }>
 }
 
 export default function PreConProjectsPage() {
@@ -70,6 +70,7 @@ export default function PreConProjectsPage() {
       fetchProjects()
       fetchStats()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, session, router, page, searchTerm, statusFilter, cityFilter])
 
   const fetchProjects = async () => {

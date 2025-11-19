@@ -113,7 +113,41 @@ export async function PUT(
     }
 
     // Prepare update data
-    const updateData: any = {}
+    const updateData: {
+      projectName?: string
+      developer?: string
+      startingPrice?: number
+      status?: string
+      streetNumber?: string | null
+      streetName?: string | null
+      city?: string
+      state?: string
+      zip?: string | null
+      country?: string
+      neighborhood?: string | null
+      majorIntersection?: string | null
+      latitude?: number | null
+      longitude?: number | null
+      propertyType?: string
+      bedroomRange?: string
+      bathroomRange?: string
+      sqftRange?: string
+      totalUnits?: number
+      availableUnits?: number
+      storeys?: number | null
+      completionDate?: string
+      completionProgress?: number
+      images?: string[]
+      features?: string[]
+      amenities?: string[]
+      depositStructure?: string | null
+      description?: string | null
+      documents?: string | null
+      developerInfo?: string | null
+      architectInfo?: string | null
+      builderInfo?: string | null
+      mlsNumber?: string
+    } = {}
     if (body.projectName !== undefined) updateData.projectName = body.projectName
     if (body.developer !== undefined) updateData.developer = body.developer
     if (body.startingPrice !== undefined) updateData.startingPrice = parseFloat(body.startingPrice)

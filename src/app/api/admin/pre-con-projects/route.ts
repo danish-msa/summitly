@@ -33,7 +33,15 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     // Build where clause
-    const where: any = {}
+    const where: {
+      OR?: Array<{
+        projectName?: { contains: string; mode: 'insensitive' }
+        developer?: { contains: string; mode: 'insensitive' }
+        mlsNumber?: { contains: string; mode: 'insensitive' }
+      }>
+      status?: string
+      city?: { contains: string; mode: 'insensitive' }
+    } = {}
     if (search) {
       where.OR = [
         { projectName: { contains: search, mode: 'insensitive' } },
