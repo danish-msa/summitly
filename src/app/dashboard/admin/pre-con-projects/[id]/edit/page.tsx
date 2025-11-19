@@ -56,13 +56,15 @@ export default function EditProjectPage() {
       return
     }
 
-    if (params.id) {
+    if (params?.id) {
       fetchProject()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id, session, router])
+  }, [params?.id, session, router])
 
   const fetchProject = async () => {
+    if (!params?.id) return
+    
     try {
       setLoading(true)
       const response = await fetch(`/api/admin/pre-con-projects/${params.id}`)
@@ -113,6 +115,8 @@ export default function EditProjectPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!params?.id) return
+    
     setSaving(true)
 
     try {
