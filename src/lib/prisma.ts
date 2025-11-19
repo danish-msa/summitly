@@ -55,13 +55,6 @@ export const prisma =
         url: getDatabaseUrl(),
       },
     },
-    // Connection pool configuration
-    // Prisma handles connection pooling automatically, but we can tune it
-    __internal: {
-      engine: {
-        connectTimeout: 10000, // 10 seconds
-      },
-    },
   })
 
 // Prevent multiple instances in development
