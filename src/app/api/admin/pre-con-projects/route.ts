@@ -8,6 +8,7 @@ import { isAdmin } from '@/lib/roles'
 async function fetchDeveloperData(developerId: string): Promise<string | null> {
   if (!developerId) return null
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const developer = await (prisma as any).developer.findUnique({
       where: { id: developerId },
       select: {
