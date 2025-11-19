@@ -278,9 +278,9 @@ export default function DevelopersPage() {
 
   const columns: Column<Developer>[] = [
     {
+      key: "name",
       header: "Name",
-      accessor: "name",
-      cell: (row) => (
+      render: (row) => (
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8">
             <AvatarImage src={row.image || undefined} alt={row.name} />
@@ -291,27 +291,27 @@ export default function DevelopersPage() {
       ),
     },
     {
+      key: "type",
       header: "Type",
-      accessor: "type",
-      cell: (row) => {
+      render: (row) => {
         const typeLabel = developerTypes.find(t => t.value === row.type)?.label || row.type
         return <Badge variant="secondary">{typeLabel}</Badge>
       },
     },
     {
+      key: "email",
       header: "Email",
-      accessor: "email",
-      cell: (row) => row.email || "-",
+      render: (row) => row.email || "-",
     },
     {
+      key: "phone",
       header: "Phone",
-      accessor: "phone",
-      cell: (row) => row.phone || "-",
+      render: (row) => row.phone || "-",
     },
     {
+      key: "actions",
       header: "Actions",
-      accessor: "id",
-      cell: (row) => (
+      render: (row) => (
         <div className="flex gap-2">
           <ActionButton
             icon={Edit}
@@ -449,18 +449,52 @@ export default function DevelopersPage() {
       </Card>
 
       {/* Data Table */}
-      <Card>
-        <CardContent className="pt-6">
-          <DataTable
-            data={developers}
-            columns={columns}
-            loading={loading}
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-          />
-        </CardContent>
-      </Card>
+      {loading ? (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8 text-muted-foreground">Loading...</div>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <Card>
+            <CardContent className="pt-6">
+              <DataTable
+                data={developers}
+                columns={columns}
+                keyExtractor={(developer) => developer.id}
+                emptyMessage="No developers found"
+              />
+            </CardContent>
+          </Card>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">
+                Page {page} of {totalPages}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
       {/* Form Dialog */}
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
