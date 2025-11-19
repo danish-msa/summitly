@@ -86,8 +86,9 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error fetching pre-con projects:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch projects'
     return NextResponse.json(
-      { error: 'Failed to fetch projects' },
+      { error: errorMessage },
       { status: 500 }
     )
   }
@@ -147,6 +148,9 @@ export async function POST(request: NextRequest) {
       developerInfo,
       architectInfo,
       builderInfo,
+      interiorDesignerInfo,
+      landscapeArchitectInfo,
+      marketingInfo,
     } = body
 
     // Validate required fields
@@ -205,6 +209,9 @@ export async function POST(request: NextRequest) {
         developerInfo: developerInfo ? JSON.stringify(developerInfo) : null,
         architectInfo: architectInfo ? JSON.stringify(architectInfo) : null,
         builderInfo: builderInfo ? JSON.stringify(builderInfo) : null,
+        interiorDesignerInfo: interiorDesignerInfo ? JSON.stringify(interiorDesignerInfo) : null,
+        landscapeArchitectInfo: landscapeArchitectInfo ? JSON.stringify(landscapeArchitectInfo) : null,
+        marketingInfo: marketingInfo ? JSON.stringify(marketingInfo) : null,
       },
     })
 

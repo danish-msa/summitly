@@ -85,13 +85,18 @@ export default function PreConProjectsPage() {
       })
 
       const response = await fetch(`/api/admin/pre-con-projects?${params}`)
-      if (!response.ok) throw new Error("Failed to fetch projects")
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Failed to fetch projects" }))
+        throw new Error(errorData.error || "Failed to fetch projects")
+      }
 
       const data = await response.json()
       setProjects(data.projects || [])
       setTotalPages(data.pagination?.totalPages || 1)
     } catch (error) {
       console.error("Error fetching projects:", error)
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch projects"
+      alert(errorMessage)
     } finally {
       setLoading(false)
     }

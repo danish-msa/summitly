@@ -346,10 +346,13 @@ model PreConstructionProject {
   description      String? @db.Text
   documents        String? @db.Text // JSON string for documents array
 
-  // Development Team (stored as JSON or separate fields)
-  developerInfo String? @db.Text // JSON string for developer details
-  architectInfo String? @db.Text // JSON string for architect details
-  builderInfo   String? @db.Text // JSON string for builder details
+  // Development Team (stored as JSON)
+  developerInfo         String? @db.Text // JSON string for developer details
+  architectInfo         String? @db.Text // JSON string for architect details
+  builderInfo           String? @db.Text // JSON string for builder details
+  interiorDesignerInfo  String? @db.Text // JSON string for interior designer details
+  landscapeArchitectInfo String? @db.Text // JSON string for landscape architect details
+  marketingInfo         String? @db.Text // JSON string for marketing details
 
   // Timestamps
   createdAt DateTime @default(now())

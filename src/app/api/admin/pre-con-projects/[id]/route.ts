@@ -42,13 +42,25 @@ export async function GET(
       )
     }
 
-    // Parse JSON fields
+    // Parse JSON fields safely
+    const parseJsonField = (field: string | null) => {
+      if (!field) return null
+      try {
+        return JSON.parse(field)
+      } catch {
+        return null
+      }
+    }
+
     const parsedProject = {
       ...project,
-      documents: project.documents ? JSON.parse(project.documents) : null,
-      developerInfo: project.developerInfo ? JSON.parse(project.developerInfo) : null,
-      architectInfo: project.architectInfo ? JSON.parse(project.architectInfo) : null,
-      builderInfo: project.builderInfo ? JSON.parse(project.builderInfo) : null,
+      documents: parseJsonField(project.documents),
+      developerInfo: parseJsonField(project.developerInfo),
+      architectInfo: parseJsonField(project.architectInfo),
+      builderInfo: parseJsonField(project.builderInfo),
+      interiorDesignerInfo: parseJsonField(project.interiorDesignerInfo),
+      landscapeArchitectInfo: parseJsonField(project.landscapeArchitectInfo),
+      marketingInfo: parseJsonField(project.marketingInfo),
     }
 
     return NextResponse.json({ project: parsedProject })
@@ -146,6 +158,9 @@ export async function PUT(
       developerInfo?: string | null
       architectInfo?: string | null
       builderInfo?: string | null
+      interiorDesignerInfo?: string | null
+      landscapeArchitectInfo?: string | null
+      marketingInfo?: string | null
       mlsNumber?: string
     } = {}
     if (body.projectName !== undefined) updateData.projectName = body.projectName
@@ -180,6 +195,9 @@ export async function PUT(
     if (body.developerInfo !== undefined) updateData.developerInfo = body.developerInfo ? JSON.stringify(body.developerInfo) : null
     if (body.architectInfo !== undefined) updateData.architectInfo = body.architectInfo ? JSON.stringify(body.architectInfo) : null
     if (body.builderInfo !== undefined) updateData.builderInfo = body.builderInfo ? JSON.stringify(body.builderInfo) : null
+    if (body.interiorDesignerInfo !== undefined) updateData.interiorDesignerInfo = body.interiorDesignerInfo ? JSON.stringify(body.interiorDesignerInfo) : null
+    if (body.landscapeArchitectInfo !== undefined) updateData.landscapeArchitectInfo = body.landscapeArchitectInfo ? JSON.stringify(body.landscapeArchitectInfo) : null
+    if (body.marketingInfo !== undefined) updateData.marketingInfo = body.marketingInfo ? JSON.stringify(body.marketingInfo) : null
     if (body.mlsNumber !== undefined) updateData.mlsNumber = body.mlsNumber
 
     const project = await prisma.preConstructionProject.update({
@@ -190,13 +208,25 @@ export async function PUT(
       },
     })
 
-    // Parse JSON fields
+    // Parse JSON fields safely
+    const parseJsonField = (field: string | null) => {
+      if (!field) return null
+      try {
+        return JSON.parse(field)
+      } catch {
+        return null
+      }
+    }
+
     const parsedProject = {
       ...project,
-      documents: project.documents ? JSON.parse(project.documents) : null,
-      developerInfo: project.developerInfo ? JSON.parse(project.developerInfo) : null,
-      architectInfo: project.architectInfo ? JSON.parse(project.architectInfo) : null,
-      builderInfo: project.builderInfo ? JSON.parse(project.builderInfo) : null,
+      documents: parseJsonField(project.documents),
+      developerInfo: parseJsonField(project.developerInfo),
+      architectInfo: parseJsonField(project.architectInfo),
+      builderInfo: parseJsonField(project.builderInfo),
+      interiorDesignerInfo: parseJsonField(project.interiorDesignerInfo),
+      landscapeArchitectInfo: parseJsonField(project.landscapeArchitectInfo),
+      marketingInfo: parseJsonField(project.marketingInfo),
     }
 
     return NextResponse.json({ project: parsedProject })
