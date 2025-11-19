@@ -184,7 +184,6 @@ export async function PUT(
       images?: string[]
       videos?: string[]
       amenities?: string[]
-      amenities?: string[]
       depositStructure?: string | null
       description?: string | null
       documents?: string | null
