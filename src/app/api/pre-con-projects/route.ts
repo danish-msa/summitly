@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
         units: {
           select: {
             id: true,
-            name: true,
+            unitName: true,
             beds: true,
             baths: true,
             sqft: true,
