@@ -62,13 +62,38 @@ export async function GET(request: NextRequest) {
       const marketingInfo = parseJsonField(project.marketingInfo)
 
       // Build development team object
-      const developmentTeam: any = {}
-      if (developerInfo) developmentTeam.developer = developerInfo
-      if (architectInfo) developmentTeam.architect = architectInfo
-      if (builderInfo) developmentTeam.builder = builderInfo
-      if (interiorDesignerInfo) developmentTeam.interiorDesigner = interiorDesignerInfo
-      if (landscapeArchitectInfo) developmentTeam.landscapeArchitect = landscapeArchitectInfo
-      if (marketingInfo) developmentTeam.marketing = marketingInfo
+      interface DevelopmentTeamMember {
+        name: string
+        description: string
+        website: string
+        stats?: {
+          totalProjects: number
+          activelySelling: number
+          launchingSoon: number
+          registrationPhase: number
+          soldOut: number
+          resale: number
+          cancelled: number
+        }
+      }
+
+      interface DevelopmentTeam {
+        overview?: string
+        developer?: DevelopmentTeamMember
+        architect?: DevelopmentTeamMember
+        builder?: DevelopmentTeamMember
+        interiorDesigner?: DevelopmentTeamMember
+        landscapeArchitect?: DevelopmentTeamMember
+        marketing?: DevelopmentTeamMember
+      }
+
+      const developmentTeam: DevelopmentTeam = {}
+      if (developerInfo) developmentTeam.developer = developerInfo as DevelopmentTeamMember
+      if (architectInfo) developmentTeam.architect = architectInfo as DevelopmentTeamMember
+      if (builderInfo) developmentTeam.builder = builderInfo as DevelopmentTeamMember
+      if (interiorDesignerInfo) developmentTeam.interiorDesigner = interiorDesignerInfo as DevelopmentTeamMember
+      if (landscapeArchitectInfo) developmentTeam.landscapeArchitect = landscapeArchitectInfo as DevelopmentTeamMember
+      if (marketingInfo) developmentTeam.marketing = marketingInfo as DevelopmentTeamMember
 
       // Convert to PropertyListing format (matching mock data structure)
       return {
