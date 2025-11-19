@@ -17,6 +17,7 @@ import {
   Building2,
   Users,
   Shield,
+  Briefcase,
 } from "lucide-react"
 import {
   Sidebar,
@@ -51,6 +52,7 @@ const subscriberMenuItems = [
 const adminMenuItems = [
   ...subscriberMenuItems,
   { title: "Pre-Con Projects", url: "/dashboard/admin/pre-con-projects", icon: Building2 },
+  { title: "Developers", url: "/dashboard/admin/developers", icon: Briefcase },
 ]
 
 // Super Admin menu items (includes admin items + super admin items)

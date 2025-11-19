@@ -115,10 +115,10 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const {
-      mlsNumber,
       projectName,
       developer,
       startingPrice,
+      endingPrice,
       status,
       streetNumber,
       streetName,
@@ -131,6 +131,7 @@ export async function POST(request: NextRequest) {
       latitude,
       longitude,
       propertyType,
+      subPropertyType,
       bedroomRange,
       bathroomRange,
       sqftRange,
@@ -139,9 +140,11 @@ export async function POST(request: NextRequest) {
       storeys,
       completionDate,
       completionProgress,
+      promotions,
       images = [],
-      features = [],
+      videos = [],
       amenities = [],
+      customAmenities = [],
       depositStructure,
       description,
       documents,
@@ -154,23 +157,34 @@ export async function POST(request: NextRequest) {
     } = body
 
     // Validate required fields
-    if (!mlsNumber || !projectName || !developer || !startingPrice || !status || !city || !state) {
+    if (!projectName || !developer || !startingPrice || !endingPrice || !status || !city || !state) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       )
     }
 
-    // Check if mlsNumber already exists
-    const existing = await prisma.preConstructionProject.findUnique({
+    // Generate unique mlsNumber from project name (slugified)
+    const generateMlsNumber = (name: string): string => {
+      return name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '')
+    }
+
+    let mlsNumber = generateMlsNumber(projectName)
+    let counter = 1
+    let existing = await prisma.preConstructionProject.findUnique({
       where: { mlsNumber },
     })
 
-    if (existing) {
-      return NextResponse.json(
-        { error: 'Project with this MLS number already exists' },
-        { status: 400 }
-      )
+    // If mlsNumber exists, append a number
+    while (existing) {
+      mlsNumber = `${generateMlsNumber(projectName)}-${counter}`
+      existing = await prisma.preConstructionProject.findUnique({
+        where: { mlsNumber },
+      })
+      counter++
     }
 
     // Create project
@@ -180,6 +194,7 @@ export async function POST(request: NextRequest) {
         projectName,
         developer,
         startingPrice: parseFloat(startingPrice),
+        endingPrice: parseFloat(endingPrice),
         status,
         streetNumber,
         streetName,
@@ -192,6 +207,7 @@ export async function POST(request: NextRequest) {
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
         propertyType,
+        subPropertyType: subPropertyType || null,
         bedroomRange,
         bathroomRange,
         sqftRange,
@@ -199,19 +215,23 @@ export async function POST(request: NextRequest) {
         availableUnits: parseInt(availableUnits),
         storeys: storeys ? parseInt(storeys) : null,
         completionDate,
-        completionProgress: parseInt(completionProgress) || 0,
+        completionProgress,
+        promotions: promotions || null,
         images: Array.isArray(images) ? images : [],
-        features: Array.isArray(features) ? features : [],
-        amenities: Array.isArray(amenities) ? amenities : [],
+        videos: Array.isArray(videos) ? videos : [],
+        amenities: Array.isArray(amenities) 
+          ? [...amenities, ...(Array.isArray(customAmenities) ? customAmenities.map((a: string) => a) : [])]
+          : Array.isArray(customAmenities) ? customAmenities : [],
         depositStructure,
         description,
         documents: documents ? JSON.stringify(documents) : null,
-        developerInfo: developerInfo ? JSON.stringify(developerInfo) : null,
-        architectInfo: architectInfo ? JSON.stringify(architectInfo) : null,
-        builderInfo: builderInfo ? JSON.stringify(builderInfo) : null,
-        interiorDesignerInfo: interiorDesignerInfo ? JSON.stringify(interiorDesignerInfo) : null,
-        landscapeArchitectInfo: landscapeArchitectInfo ? JSON.stringify(landscapeArchitectInfo) : null,
-        marketingInfo: marketingInfo ? JSON.stringify(marketingInfo) : null,
+        // Store developer IDs, fetch developer data and store as JSON
+        developerInfo: developerInfo ? await fetchDeveloperData(developerInfo) : null,
+        architectInfo: architectInfo ? await fetchDeveloperData(architectInfo) : null,
+        builderInfo: builderInfo ? await fetchDeveloperData(builderInfo) : null,
+        interiorDesignerInfo: interiorDesignerInfo ? await fetchDeveloperData(interiorDesignerInfo) : null,
+        landscapeArchitectInfo: landscapeArchitectInfo ? await fetchDeveloperData(landscapeArchitectInfo) : null,
+        marketingInfo: marketingInfo ? await fetchDeveloperData(marketingInfo) : null,
       },
     })
 

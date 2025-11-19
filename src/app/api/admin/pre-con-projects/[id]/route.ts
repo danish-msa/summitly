@@ -4,6 +4,29 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { isAdmin } from '@/lib/roles'
 
+// Helper function to fetch developer data by ID and return as JSON string
+async function fetchDeveloperData(developerId: string): Promise<string | null> {
+  if (!developerId) return null
+  try {
+    const developer = await prisma.developer.findUnique({
+      where: { id: developerId },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        website: true,
+        image: true,
+        email: true,
+        phone: true,
+      },
+    })
+    return developer ? JSON.stringify(developer) : null
+  } catch (error) {
+    console.error('Error fetching developer:', error)
+    return null
+  }
+}
+
 // GET - Get a single project by ID
 export async function GET(
   request: NextRequest,
@@ -52,15 +75,21 @@ export async function GET(
       }
     }
 
+    // Extract developer ID from JSON (for form compatibility)
+    const extractDeveloperId = (field: string | null): string | null => {
+      const parsed = parseJsonField(field)
+      return parsed?.id || null
+    }
+
     const parsedProject = {
       ...project,
       documents: parseJsonField(project.documents),
-      developerInfo: parseJsonField(project.developerInfo),
-      architectInfo: parseJsonField(project.architectInfo),
-      builderInfo: parseJsonField(project.builderInfo),
-      interiorDesignerInfo: parseJsonField(project.interiorDesignerInfo),
-      landscapeArchitectInfo: parseJsonField(project.landscapeArchitectInfo),
-      marketingInfo: parseJsonField(project.marketingInfo),
+      developerInfo: extractDeveloperId(project.developerInfo),
+      architectInfo: extractDeveloperId(project.architectInfo),
+      builderInfo: extractDeveloperId(project.builderInfo),
+      interiorDesignerInfo: extractDeveloperId(project.interiorDesignerInfo),
+      landscapeArchitectInfo: extractDeveloperId(project.landscapeArchitectInfo),
+      marketingInfo: extractDeveloperId(project.marketingInfo),
     }
 
     return NextResponse.json({ project: parsedProject })
@@ -129,6 +158,7 @@ export async function PUT(
       projectName?: string
       developer?: string
       startingPrice?: number
+      endingPrice?: number
       status?: string
       streetNumber?: string | null
       streetName?: string | null
@@ -141,6 +171,7 @@ export async function PUT(
       latitude?: number | null
       longitude?: number | null
       propertyType?: string
+      subPropertyType?: string | null
       bedroomRange?: string
       bathroomRange?: string
       sqftRange?: string
@@ -148,9 +179,11 @@ export async function PUT(
       availableUnits?: number
       storeys?: number | null
       completionDate?: string
-      completionProgress?: number
+      completionProgress?: string
+      promotions?: string | null
       images?: string[]
-      features?: string[]
+      videos?: string[]
+      amenities?: string[]
       amenities?: string[]
       depositStructure?: string | null
       description?: string | null
@@ -166,6 +199,7 @@ export async function PUT(
     if (body.projectName !== undefined) updateData.projectName = body.projectName
     if (body.developer !== undefined) updateData.developer = body.developer
     if (body.startingPrice !== undefined) updateData.startingPrice = parseFloat(body.startingPrice)
+    if (body.endingPrice !== undefined) updateData.endingPrice = parseFloat(body.endingPrice)
     if (body.status !== undefined) updateData.status = body.status
     if (body.streetNumber !== undefined) updateData.streetNumber = body.streetNumber
     if (body.streetName !== undefined) updateData.streetName = body.streetName
@@ -178,6 +212,7 @@ export async function PUT(
     if (body.latitude !== undefined) updateData.latitude = body.latitude ? parseFloat(body.latitude) : null
     if (body.longitude !== undefined) updateData.longitude = body.longitude ? parseFloat(body.longitude) : null
     if (body.propertyType !== undefined) updateData.propertyType = body.propertyType
+    if (body.subPropertyType !== undefined) updateData.subPropertyType = body.subPropertyType
     if (body.bedroomRange !== undefined) updateData.bedroomRange = body.bedroomRange
     if (body.bathroomRange !== undefined) updateData.bathroomRange = body.bathroomRange
     if (body.sqftRange !== undefined) updateData.sqftRange = body.sqftRange
@@ -185,19 +220,24 @@ export async function PUT(
     if (body.availableUnits !== undefined) updateData.availableUnits = parseInt(body.availableUnits)
     if (body.storeys !== undefined) updateData.storeys = body.storeys ? parseInt(body.storeys) : null
     if (body.completionDate !== undefined) updateData.completionDate = body.completionDate
-    if (body.completionProgress !== undefined) updateData.completionProgress = parseInt(body.completionProgress) || 0
+    if (body.completionProgress !== undefined) updateData.completionProgress = body.completionProgress
+    if (body.promotions !== undefined) updateData.promotions = body.promotions
     if (body.images !== undefined) updateData.images = Array.isArray(body.images) ? body.images : []
-    if (body.features !== undefined) updateData.features = Array.isArray(body.features) ? body.features : []
-    if (body.amenities !== undefined) updateData.amenities = Array.isArray(body.amenities) ? body.amenities : []
+    if (body.videos !== undefined) updateData.videos = Array.isArray(body.videos) ? body.videos : []
+    if (body.amenities !== undefined || body.customAmenities !== undefined) {
+      const predefinedAmenities = Array.isArray(body.amenities) ? body.amenities : []
+      const customAmenities = Array.isArray(body.customAmenities) ? body.customAmenities : []
+      updateData.amenities = [...predefinedAmenities, ...customAmenities]
+    }
     if (body.depositStructure !== undefined) updateData.depositStructure = body.depositStructure
     if (body.description !== undefined) updateData.description = body.description
     if (body.documents !== undefined) updateData.documents = body.documents ? JSON.stringify(body.documents) : null
-    if (body.developerInfo !== undefined) updateData.developerInfo = body.developerInfo ? JSON.stringify(body.developerInfo) : null
-    if (body.architectInfo !== undefined) updateData.architectInfo = body.architectInfo ? JSON.stringify(body.architectInfo) : null
-    if (body.builderInfo !== undefined) updateData.builderInfo = body.builderInfo ? JSON.stringify(body.builderInfo) : null
-    if (body.interiorDesignerInfo !== undefined) updateData.interiorDesignerInfo = body.interiorDesignerInfo ? JSON.stringify(body.interiorDesignerInfo) : null
-    if (body.landscapeArchitectInfo !== undefined) updateData.landscapeArchitectInfo = body.landscapeArchitectInfo ? JSON.stringify(body.landscapeArchitectInfo) : null
-    if (body.marketingInfo !== undefined) updateData.marketingInfo = body.marketingInfo ? JSON.stringify(body.marketingInfo) : null
+    if (body.developerInfo !== undefined) updateData.developerInfo = body.developerInfo ? await fetchDeveloperData(body.developerInfo) : null
+    if (body.architectInfo !== undefined) updateData.architectInfo = body.architectInfo ? await fetchDeveloperData(body.architectInfo) : null
+    if (body.builderInfo !== undefined) updateData.builderInfo = body.builderInfo ? await fetchDeveloperData(body.builderInfo) : null
+    if (body.interiorDesignerInfo !== undefined) updateData.interiorDesignerInfo = body.interiorDesignerInfo ? await fetchDeveloperData(body.interiorDesignerInfo) : null
+    if (body.landscapeArchitectInfo !== undefined) updateData.landscapeArchitectInfo = body.landscapeArchitectInfo ? await fetchDeveloperData(body.landscapeArchitectInfo) : null
+    if (body.marketingInfo !== undefined) updateData.marketingInfo = body.marketingInfo ? await fetchDeveloperData(body.marketingInfo) : null
     if (body.mlsNumber !== undefined) updateData.mlsNumber = body.mlsNumber
 
     const project = await prisma.preConstructionProject.update({
@@ -218,15 +258,21 @@ export async function PUT(
       }
     }
 
+    // Extract developer ID from JSON (for form compatibility)
+    const extractDeveloperId = (field: string | null): string | null => {
+      const parsed = parseJsonField(field)
+      return parsed?.id || null
+    }
+
     const parsedProject = {
       ...project,
       documents: parseJsonField(project.documents),
-      developerInfo: parseJsonField(project.developerInfo),
-      architectInfo: parseJsonField(project.architectInfo),
-      builderInfo: parseJsonField(project.builderInfo),
-      interiorDesignerInfo: parseJsonField(project.interiorDesignerInfo),
-      landscapeArchitectInfo: parseJsonField(project.landscapeArchitectInfo),
-      marketingInfo: parseJsonField(project.marketingInfo),
+      developerInfo: extractDeveloperId(project.developerInfo),
+      architectInfo: extractDeveloperId(project.architectInfo),
+      builderInfo: extractDeveloperId(project.builderInfo),
+      interiorDesignerInfo: extractDeveloperId(project.interiorDesignerInfo),
+      landscapeArchitectInfo: extractDeveloperId(project.landscapeArchitectInfo),
+      marketingInfo: extractDeveloperId(project.marketingInfo),
     }
 
     return NextResponse.json({ project: parsedProject })

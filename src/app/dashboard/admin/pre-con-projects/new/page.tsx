@@ -15,11 +15,11 @@ export default function NewProjectPage() {
   
   const [formData, setFormData] = useState<FormData>({
     // Basic Information
-    mlsNumber: "",
     projectName: "",
     developer: "",
     startingPrice: "",
-    status: "selling",
+    endingPrice: "",
+    status: "",
     
     // Address
     streetNumber: "",
@@ -27,14 +27,14 @@ export default function NewProjectPage() {
     city: "",
     state: "",
     zip: "",
-    country: "Canada",
     neighborhood: "",
     majorIntersection: "",
     latitude: "",
     longitude: "",
     
     // Property Details
-    propertyType: "Condominium",
+    propertyType: "",
+    subPropertyType: "",
     bedroomRange: "",
     bathroomRange: "",
     sqftRange: "",
@@ -44,54 +44,32 @@ export default function NewProjectPage() {
     
     // Completion
     completionDate: "",
-    completionProgress: "0",
+    completionProgress: "",
+    promotions: "",
     
     // Media
     images: [] as string[],
     imageInput: "",
+    videos: [] as string[],
+    videoInput: "",
     
-    // Features & Amenities
-    features: [] as string[],
-    featureInput: "",
-    amenities: [] as string[],
-    amenityInput: "",
+    // Amenities
+    amenities: [] as Array<{ name: string; icon: string }>,
+    customAmenities: [] as string[],
+    customAmenityInput: "",
     
     // Description & Documents
     description: "",
     depositStructure: "",
     documents: [] as Document[],
     
-    // Development Team
-    developerInfo: {
-      name: "",
-      description: "",
-      website: "",
-    },
-    architectInfo: {
-      name: "",
-      description: "",
-      website: "",
-    },
-    interiorDesignerInfo: {
-      name: "",
-      description: "",
-      website: "",
-    },
-    builderInfo: {
-      name: "",
-      description: "",
-      website: "",
-    },
-    landscapeArchitectInfo: {
-      name: "",
-      description: "",
-      website: "",
-    },
-    marketingInfo: {
-      name: "",
-      description: "",
-      website: "",
-    },
+    // Development Team (stored as developer IDs)
+    developerInfo: "",
+    architectInfo: "",
+    interiorDesignerInfo: "",
+    builderInfo: "",
+    landscapeArchitectInfo: "",
+    marketingInfo: "",
     developmentTeamOverview: "",
   })
 
@@ -106,22 +84,23 @@ export default function NewProjectPage() {
 
     try {
       const payload = {
-        mlsNumber: formData.mlsNumber,
         projectName: formData.projectName,
         developer: formData.developer,
         startingPrice: formData.startingPrice,
+        endingPrice: formData.endingPrice,
         status: formData.status,
         streetNumber: formData.streetNumber,
         streetName: formData.streetName,
         city: formData.city,
         state: formData.state,
         zip: formData.zip,
-        country: formData.country,
+        country: "Canada",
         neighborhood: formData.neighborhood,
         majorIntersection: formData.majorIntersection,
         latitude: formData.latitude,
         longitude: formData.longitude,
         propertyType: formData.propertyType,
+        subPropertyType: formData.subPropertyType,
         bedroomRange: formData.bedroomRange,
         bathroomRange: formData.bathroomRange,
         sqftRange: formData.sqftRange,
@@ -130,18 +109,20 @@ export default function NewProjectPage() {
         storeys: formData.storeys,
         completionDate: formData.completionDate,
         completionProgress: formData.completionProgress,
+        promotions: formData.promotions,
         images: formData.images,
-        features: formData.features,
+        videos: formData.videos,
         amenities: formData.amenities,
+        customAmenities: formData.customAmenities,
         depositStructure: formData.depositStructure,
         description: formData.description,
         documents: formData.documents.length > 0 ? formData.documents : null,
-        developerInfo: formData.developerInfo.name ? formData.developerInfo : null,
-        architectInfo: formData.architectInfo.name ? formData.architectInfo : null,
-        builderInfo: formData.builderInfo.name ? formData.builderInfo : null,
-        interiorDesignerInfo: formData.interiorDesignerInfo.name ? formData.interiorDesignerInfo : null,
-        landscapeArchitectInfo: formData.landscapeArchitectInfo.name ? formData.landscapeArchitectInfo : null,
-        marketingInfo: formData.marketingInfo.name ? formData.marketingInfo : null,
+        developerInfo: formData.developerInfo || null,
+        architectInfo: formData.architectInfo || null,
+        builderInfo: formData.builderInfo || null,
+        interiorDesignerInfo: formData.interiorDesignerInfo || null,
+        landscapeArchitectInfo: formData.landscapeArchitectInfo || null,
+        marketingInfo: formData.marketingInfo || null,
       }
 
       const response = await fetch("/api/admin/pre-con-projects", {
@@ -191,17 +172,8 @@ export default function NewProjectPage() {
         onSubmit={handleSubmit}
         loading={loading}
         submitLabel="Create Project"
+        onCancel={() => router.back()}
       />
-      
-      <div className="flex justify-end gap-4 mt-6">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.back()}
-        >
-          Cancel
-        </Button>
-      </div>
     </div>
   )
 }

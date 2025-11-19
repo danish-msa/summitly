@@ -38,6 +38,41 @@ import {
 import { FaBuildingUser } from 'react-icons/fa6'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
+// Icon mapping for stored icon names
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Waves,
+  Dumbbell,
+  Square,
+  Shield,
+  Sparkles,
+  UtensilsCrossed,
+  Coffee,
+  Car,
+  Lock,
+  Wifi,
+  Tv,
+  Gamepad2,
+  ShoppingBag,
+  TreePine,
+  Mountain,
+  Eye,
+  ArrowUpDown,
+  Flame,
+  Users,
+  Palette,
+  Hammer,
+  Sprout,
+  Megaphone,
+  Building2,
+  Home,
+  Ruler,
+  Bed,
+  Bath,
+  Calendar,
+  DollarSign,
+  Construction,
+}
+
 interface ProjectDetailsProps {
   property: PropertyListing;
 }
@@ -272,7 +307,15 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
           <CardContent>
             <div className="flex flex-wrap gap-2">
               {preCon.features.map((feature, index) => {
-                const FeatureIcon = getFeatureIcon(feature);
+                // Handle both old format (string) and new format (object with name and icon)
+                const featureName = typeof feature === 'string' ? feature : feature.name;
+                const featureIconName = typeof feature === 'string' ? null : feature.icon;
+                
+                // Use stored icon if available, otherwise fall back to getFeatureIcon
+                const FeatureIcon = featureIconName 
+                  ? (iconMap[featureIconName as keyof typeof iconMap] || getFeatureIcon(featureName))
+                  : getFeatureIcon(featureName);
+                
                 // Array of light color classes for badges
                 const badgeColors = [
                   'bg-blue-50 text-blue-700 border-blue-200',
@@ -292,7 +335,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
                     className={`px-3 py-2 flex items-center gap-1.5 text-sm ${colorClass}`}
                   >
                     <FeatureIcon className="h-4 w-4" />
-                    {feature}
+                    {featureName}
                   </Badge>
                 );
               })}

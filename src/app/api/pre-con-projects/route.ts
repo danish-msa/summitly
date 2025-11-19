@@ -102,6 +102,10 @@ export async function GET(request: NextRequest) {
         class: 'residential',
         type: 'Sale',
         listPrice: project.startingPrice,
+        priceRange: {
+          min: project.startingPrice,
+          max: project.endingPrice || project.startingPrice,
+        },
         listDate: project.createdAt.toISOString(),
         lastStatus: project.status,
         soldPrice: '',
@@ -159,7 +163,6 @@ export async function GET(request: NextRequest) {
           dimensionsSource: '',
           dimensions: '',
           squareFeet: parseInt(project.sqftRange.split('-')[0]) || 0,
-          features: project.features.join(', '),
           taxLot: '',
         },
         boardId: 0,
@@ -171,9 +174,10 @@ export async function GET(request: NextRequest) {
           projectName: project.projectName,
           developer: project.developer,
           startingPrice: project.startingPrice,
+          endingPrice: project.endingPrice || null,
           priceRange: {
             min: project.startingPrice,
-            max: project.startingPrice * 2, // Estimate max price
+            max: project.endingPrice || project.startingPrice,
           },
           status: project.status,
           completion: {
@@ -188,8 +192,8 @@ export async function GET(request: NextRequest) {
             availableUnits: project.availableUnits,
             storeys: project.storeys || undefined,
           },
-          features: project.features,
           amenities: project.amenities,
+          videos: project.videos || [],
           depositStructure: project.depositStructure || undefined,
           description: project.description || undefined,
           documents: documents || undefined,

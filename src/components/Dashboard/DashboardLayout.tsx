@@ -64,7 +64,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="h-screen flex w-full bg-muted/30 overflow-hidden">
+      <div className="h-screen flex  bg-muted/30 overflow-hidden">
         <DashboardSidebar />
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <header className="h-16 border-b bg-white flex items-center px-6 flex-shrink-0 z-40">

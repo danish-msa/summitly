@@ -5,10 +5,10 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { DataTable, Column } from "@/components/Dashboard/DataTable"
 import { ActionButton } from "@/components/Dashboard/ActionButton"
-import { StatCard } from "@/components/Dashboard/StatCard"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Plus, Search, Edit, Trash2, Building2, TrendingUp, Package, MapPin } from "lucide-react"
+import { Plus, Search, Edit, Trash2, Building2, TrendingUp, Package, MapPin, CheckCircle2 } from "lucide-react"
 import { isAdmin } from "@/lib/roles"
 import { Badge } from "@/components/ui/badge"
 import { formatCurrency } from "@/lib/utils"
@@ -250,26 +250,66 @@ export default function PreConProjectsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <StatCard
-          title="Total Projects"
-          value={stats.total}
-          icon={Building2}
-        />
-        <StatCard
-          title="Selling"
-          value={stats.selling}
-          icon={TrendingUp}
-        />
-        <StatCard
-          title="Coming Soon"
-          value={stats.comingSoon}
-          icon={Package}
-        />
-        <StatCard
-          title="Sold Out"
-          value={stats.soldOut}
-        />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 shadow-md hover:shadow-xl transition-all duration-300 border-0">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-white/90">
+              Total Projects
+            </CardTitle>
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+              <Building2 className="h-5 w-5 text-white" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-white">{stats.total}</div>
+            <p className="text-xs text-white/80 mt-1">All pre-construction projects</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-green-500 to-emerald-600 shadow-md hover:shadow-xl transition-all duration-300 border-0">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-white/90">
+              Selling
+            </CardTitle>
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+              <TrendingUp className="h-5 w-5 text-white" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-white">{stats.selling}</div>
+            <p className="text-xs text-white/80 mt-1">Currently available</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-yellow-500 to-orange-500 shadow-md hover:shadow-xl transition-all duration-300 border-0">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-white/90">
+              Coming Soon
+            </CardTitle>
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+              <Package className="h-5 w-5 text-white" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-white">{stats.comingSoon}</div>
+            <p className="text-xs text-white/80 mt-1">Launching soon</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-gray-500 to-slate-600 shadow-md hover:shadow-xl transition-all duration-300 border-0">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-white/90">
+              Sold Out
+            </CardTitle>
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+              <CheckCircle2 className="h-5 w-5 text-white" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-white">{stats.soldOut}</div>
+            <p className="text-xs text-white/80 mt-1">Fully sold</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters */}
