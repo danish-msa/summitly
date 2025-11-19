@@ -308,8 +308,8 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
             <div className="flex flex-wrap gap-2">
               {preCon.features.map((feature, index) => {
                 // Handle both old format (string) and new format (object with name and icon)
-                const featureName = typeof feature === 'string' ? feature : feature.name;
-                const featureIconName = typeof feature === 'string' ? null : feature.icon;
+                const featureName = typeof feature === 'string' ? feature : (feature as { name: string; icon: string }).name;
+                const featureIconName = typeof feature === 'string' ? null : (feature as { name: string; icon: string }).icon;
                 
                 // Use stored icon if available, otherwise fall back to getFeatureIcon
                 const FeatureIcon = featureIconName 
