@@ -18,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Plus, Search, Edit, Trash2, Briefcase, Upload, Loader2, X } from "lucide-react"
+import { Plus, Search, Edit, Trash2, Briefcase, Upload, Loader2, X, Users, Building2, Palette } from "lucide-react"
 import { isAdmin } from "@/lib/roles"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -351,37 +351,64 @@ export default function DevelopersPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 shadow-md hover:shadow-xl transition-all duration-300 border-0">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-white/90">
+              Total
+            </CardTitle>
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+              <Users className="h-5 w-5 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-3xl font-bold text-white">{stats.total}</div>
+            <p className="text-xs text-white/80 mt-1">All team members</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Developers</CardTitle>
+
+        <Card className="bg-gradient-to-br from-green-500 to-emerald-600 shadow-md hover:shadow-xl transition-all duration-300 border-0">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-white/90">
+              Developers
+            </CardTitle>
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+              <Building2 className="h-5 w-5 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.developers}</div>
+            <div className="text-3xl font-bold text-white">{stats.developers}</div>
+            <p className="text-xs text-white/80 mt-1">Development companies</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Architects</CardTitle>
+
+        <Card className="bg-gradient-to-br from-purple-500 to-indigo-600 shadow-md hover:shadow-xl transition-all duration-300 border-0">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-white/90">
+              Architects
+            </CardTitle>
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+              <Palette className="h-5 w-5 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.architects}</div>
+            <div className="text-3xl font-bold text-white">{stats.architects}</div>
+            <p className="text-xs text-white/80 mt-1">Architecture firms</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Others</CardTitle>
+
+        <Card className="bg-gradient-to-br from-orange-500 to-amber-600 shadow-md hover:shadow-xl transition-all duration-300 border-0">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-white/90">
+              Others
+            </CardTitle>
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+              <Briefcase className="h-5 w-5 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.others}</div>
+            <div className="text-3xl font-bold text-white">{stats.others}</div>
+            <p className="text-xs text-white/80 mt-1">Other team members</p>
           </CardContent>
         </Card>
       </div>

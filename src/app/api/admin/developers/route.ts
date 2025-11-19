@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { isAdmin } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
-import { DeveloperType } from '@prisma/client'
+import { DeveloperType, Prisma } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     // Build where clause
-    const where: any = {}
+    const where: Prisma.DeveloperWhereInput = {}
     
     if (search) {
       where.OR = [

@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Plus, X, MapPin, Upload, Loader2, Waves, Dumbbell, Square, Shield, Sparkles, UtensilsCrossed, Coffee, Car, Lock, Wifi, Tv, Gamepad2, ShoppingBag, TreePine, Mountain, Eye, ArrowUpDown, Flame, Users, Palette, Hammer, Sprout, Megaphone, Building2, Home, Ruler, Bed, Bath, Calendar, DollarSign, Construction, Check, ChevronDown, Search } from "lucide-react"
+import { Plus, X, MapPin, Upload, Loader2, Waves, Dumbbell, Square, Shield, Sparkles, UtensilsCrossed, Coffee, Car, Lock, Wifi, Tv, Gamepad2, ShoppingBag, TreePine, Mountain, Eye, ArrowUpDown, Flame, Users, Palette, Hammer, Sprout, Megaphone, Building2, Home, Ruler, Bed, Bath, Calendar, DollarSign, Construction, ChevronDown, Search } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import GlobalLocationSearch from "@/components/common/GlobalLocationSearch"
 import { getGeocode, getLatLng } from "use-places-autocomplete"
@@ -107,13 +107,11 @@ export function PreConProjectForm({
   const [amenitySearchOpen, setAmenitySearchOpen] = useState(false)
   const [amenitySearchQuery, setAmenitySearchQuery] = useState("")
   const [developers, setDevelopers] = useState<Developer[]>([])
-  const [loadingDevelopers, setLoadingDevelopers] = useState(false)
 
   // Fetch developers for dropdowns
   useEffect(() => {
     const fetchDevelopers = async () => {
       try {
-        setLoadingDevelopers(true)
         const response = await fetch('/api/admin/developers?limit=1000')
         if (response.ok) {
           const data = await response.json()
@@ -121,8 +119,6 @@ export function PreConProjectForm({
         }
       } catch (error) {
         console.error('Error fetching developers:', error)
-      } finally {
-        setLoadingDevelopers(false)
       }
     }
     fetchDevelopers()
