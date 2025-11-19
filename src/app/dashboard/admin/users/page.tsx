@@ -77,13 +77,18 @@ export default function UsersPage() {
       })
 
       const response = await fetch(`/api/admin/users?${params}`)
-      if (!response.ok) throw new Error("Failed to fetch users")
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Failed to fetch users" }))
+        throw new Error(errorData.error || "Failed to fetch users")
+      }
 
       const data = await response.json()
       setUsers(data.users || [])
       setTotalPages(data.pagination?.totalPages || 1)
     } catch (error) {
       console.error("Error fetching users:", error)
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch users"
+      alert(errorMessage)
     } finally {
       setLoading(false)
     }

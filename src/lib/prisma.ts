@@ -4,22 +4,78 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
+/**
+ * Optimal Prisma Client Configuration for Supabase
+ * 
+ * Best Practices:
+ * - Development: Use DIRECT connection (port 5432) with ?sslmode=require
+ * - Production: Use CONNECTION POOLER (port 6543) with ?pgbouncer=true
+ * 
+ * Connection String Formats:
+ * - Direct: postgresql://postgres:PASSWORD@db.PROJECT_REF.supabase.co:5432/postgres?sslmode=require
+ * - Pooler: postgresql://postgres.PROJECT_REF:PASSWORD@aws-REGION.pooler.supabase.com:6543/postgres?pgbouncer=true
+ */
+function getDatabaseUrl(): string {
+  const databaseUrl = process.env.DATABASE_URL || ''
+  
+  if (!databaseUrl) {
+    throw new Error('DATABASE_URL environment variable is not set')
+  }
+
+  // Check if using connection pooler (port 6543 or pooler.supabase.com)
+  const isPooler = databaseUrl.includes('pooler.supabase.com') || databaseUrl.includes(':6543')
+  
+  // Check if using direct connection (port 5432)
+  const isDirect = databaseUrl.includes(':5432') || databaseUrl.includes('db.') && !databaseUrl.includes('pooler')
+  
+  // Auto-fix common issues
+  let url = databaseUrl
+  
+  if (isPooler && !url.includes('pgbouncer=true')) {
+    // Add pgbouncer=true for connection pooler to disable prepared statements
+    url = `${url}${url.includes('?') ? '&' : '?'}pgbouncer=true`
+  }
+  
+  if (isDirect && !url.includes('sslmode=')) {
+    // Add SSL requirement for direct connections
+    url = `${url}${url.includes('?') ? '&' : '?'}sslmode=require`
+  }
+  
+  return url
+}
+
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+    log: process.env.NODE_ENV === 'development' 
+      ? ['error', 'warn'] 
+      : ['error'],
     datasources: {
       db: {
-        url: process.env.DATABASE_URL,
+        url: getDatabaseUrl(),
+      },
+    },
+    // Connection pool configuration
+    // Prisma handles connection pooling automatically, but we can tune it
+    __internal: {
+      engine: {
+        connectTimeout: 10000, // 10 seconds
       },
     },
   })
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+// Prevent multiple instances in development
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma
+}
 
-// Disconnect on process termination
+// Graceful shutdown
 if (typeof window === 'undefined') {
-  process.on('beforeExit', async () => {
+  const cleanup = async () => {
     await prisma.$disconnect()
-  })
+  }
+  
+  process.on('beforeExit', cleanup)
+  process.on('SIGINT', cleanup)
+  process.on('SIGTERM', cleanup)
 }

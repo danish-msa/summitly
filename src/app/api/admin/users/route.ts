@@ -44,25 +44,24 @@ export async function GET(request: NextRequest) {
       where.role = role as UserRole
     }
 
-    // Get users and total count
-    const [users, total] = await Promise.all([
-      prisma.user.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          image: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      }),
-      prisma.user.count({ where }),
-    ])
+    // Get users and total count (sequential to avoid prepared statement errors)
+    const users = await prisma.user.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        image: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
+
+    const total = await prisma.user.count({ where })
 
     return NextResponse.json({
       users,
