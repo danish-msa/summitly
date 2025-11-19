@@ -701,6 +701,86 @@ export function PreConProjectForm({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Search Location field above the map */}
+              <div className="space-y-2">
+                <Label htmlFor="search-location">Search Location</Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground z-10 pointer-events-none" />
+                  <GlobalLocationSearch
+                    placeholder="Search for an address or location"
+                    countryRestriction="ca"
+                    onSelect={async (address, coordinates) => {
+                      try {
+                        // Get detailed address components
+                        const results = await getGeocode({ address })
+                        const place = results[0]
+                        
+                        // Extract address components
+                        const addressComponents = place.address_components || []
+                        
+                        // Helper function to get component by type
+                        const getComponent = (types: string[]) => {
+                          const component = addressComponents.find((comp: { types: string[] }) =>
+                            types.some(type => comp.types.includes(type))
+                          )
+                          return component ? component.long_name : ""
+                        }
+                        
+                        // Helper function to get short name component
+                        const getShortComponent = (types: string[]) => {
+                          const component = addressComponents.find((comp: { types: string[] }) =>
+                            types.some(type => comp.types.includes(type))
+                          )
+                          return component ? component.short_name : ""
+                        }
+                        
+                        // Parse street address
+                        const streetNumber = getComponent(["street_number"])
+                        const route = getComponent(["route"])
+                        
+                        // Parse city, state, zip
+                        const city = getComponent(["locality", "administrative_area_level_2"])
+                        const state = getShortComponent(["administrative_area_level_1"])
+                        const zip = getComponent(["postal_code"])
+                        
+                        // Parse neighborhood
+                        const neighborhood = getComponent(["neighborhood", "sublocality", "sublocality_level_1"])
+                        
+                        // Get coordinates
+                        const { lat, lng } = coordinates || await getLatLng(place)
+                        
+                        // Update form data with parsed address
+                        setFormData((prev) => ({
+                          ...prev,
+                          streetNumber,
+                          streetName: route,
+                          city,
+                          state,
+                          zip,
+                          neighborhood,
+                          latitude: lat.toString(),
+                          longitude: lng.toString(),
+                        }))
+                      } catch (error) {
+                        console.error("Error parsing address:", error)
+                        // If parsing fails, at least set coordinates if available
+                        if (coordinates) {
+                          setFormData((prev) => ({
+                            ...prev,
+                            latitude: coordinates.lat.toString(),
+                            longitude: coordinates.lng.toString(),
+                          }))
+                        }
+                      }
+                    }}
+                    className="w-full"
+                    inputClassName="rounded-lg pl-10"
+                    showLocationButton={false}
+                    showSearchButton={false}
+                  />
+                </div>
+              </div>
+              
               {/* Interactive Map */}
               <div className="space-y-2">
                 <div className="w-full h-[400px] rounded-lg overflow-hidden border border-border relative">
@@ -748,85 +828,6 @@ export function PreConProjectForm({
                       <div className="text-muted-foreground">Loading map...</div>
                     </div>
                   )}
-                  
-                  {/* Search Location field at the bottom of the map */}
-                  <div className="absolute bottom-4 left-4 right-4 max-w-5xl z-10">
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground z-10 pointer-events-none" />
-                      <GlobalLocationSearch
-                        placeholder="Search for an address or location"
-                        countryRestriction="ca"
-                        onSelect={async (address, coordinates) => {
-                          try {
-                            // Get detailed address components
-                            const results = await getGeocode({ address })
-                            const place = results[0]
-                            
-                            // Extract address components
-                            const addressComponents = place.address_components || []
-                            
-                            // Helper function to get component by type
-                            const getComponent = (types: string[]) => {
-                              const component = addressComponents.find((comp: { types: string[] }) =>
-                                types.some(type => comp.types.includes(type))
-                              )
-                              return component ? component.long_name : ""
-                            }
-                            
-                            // Helper function to get short name component
-                            const getShortComponent = (types: string[]) => {
-                              const component = addressComponents.find((comp: { types: string[] }) =>
-                                types.some(type => comp.types.includes(type))
-                              )
-                              return component ? component.short_name : ""
-                            }
-                            
-                            // Parse street address
-                            const streetNumber = getComponent(["street_number"])
-                            const route = getComponent(["route"])
-                            
-                            // Parse city, state, zip
-                            const city = getComponent(["locality", "administrative_area_level_2"])
-                            const state = getShortComponent(["administrative_area_level_1"])
-                            const zip = getComponent(["postal_code"])
-                            
-                            // Parse neighborhood
-                            const neighborhood = getComponent(["neighborhood", "sublocality", "sublocality_level_1"])
-                            
-                            // Get coordinates
-                            const { lat, lng } = coordinates || await getLatLng(place)
-                            
-                            // Update form data with parsed address
-                            setFormData((prev) => ({
-                              ...prev,
-                              streetNumber,
-                              streetName: route,
-                              city,
-                              state,
-                              zip,
-                              neighborhood,
-                              latitude: lat.toString(),
-                              longitude: lng.toString(),
-                            }))
-                          } catch (error) {
-                            console.error("Error parsing address:", error)
-                            // If parsing fails, at least set coordinates if available
-                            if (coordinates) {
-                              setFormData((prev) => ({
-                                ...prev,
-                                latitude: coordinates.lat.toString(),
-                                longitude: coordinates.lng.toString(),
-                              }))
-                            }
-                          }
-                        }}
-                        className="w-full"
-                        inputClassName="rounded-lg pl-10 bg-white shadow-lg"
-                        showLocationButton={false}
-                        showSearchButton={false}
-                      />
-                    </div>
-                  </div>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Click on the map or drag the marker to select a location. The address fields will be automatically filled.

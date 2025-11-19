@@ -220,10 +220,12 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
       icon: FaBuildingUser,
     },
     {
-      label: 'Price Range',
-      value: preCon.priceRange 
-        ? `${formatPrice(preCon.priceRange.min)} - ${formatPrice(preCon.priceRange.max)}`
-        : formatPrice(preCon.startingPrice),
+      label: 'Starting Price',
+      value: preCon.startingPrice
+        ? formatPrice(preCon.startingPrice)
+        : preCon.priceRange 
+        ? formatPrice(preCon.priceRange.min)
+        : 'Contact for Pricing',
       icon: DollarSign,
     },
     {

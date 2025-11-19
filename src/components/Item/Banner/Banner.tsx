@@ -150,9 +150,7 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                             </div>
 
                             
-                            {/* Project Rating Display for Pre-Con */}
-                            <ProjectRatingDisplay propertyId={property.mlsNumber || preConData?.projectName || 'default'} />
-
+                            
                             <div className="flex flex-col gap-2 justify-start">
                                 {/* Address */}
                                 <div className="flex items-start text-primary">
@@ -268,13 +266,11 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                                 {/* Listed Price Block */}
                                 <div className="flex flex-col gap-1 items-end  rounded-lg bg-white p-4">
                                     <span className="text-xs text-gray-600 font-medium uppercase">
-                                        {isRent ? 'Monthly Rent' : isPreCon ? 'Price Range' : 'Listed Price'}
+                                        {isRent ? 'Monthly Rent' : isPreCon ? 'Starting Price' : 'Listed Price'}
                                     </span>
-                                    <div className="text-xl font-bold text-foreground text-right sm:text-2xl">
+                                    <div className="text-xl font-bold text-foreground text-right sm:text-3xl">
                                         {isPreCon && preConData?.priceRange 
-                                            ? `${formatPrice(preConData.priceRange.min)} - ${formatPrice(preConData.priceRange.max)}`
-                                            : isPreCon && preConData?.startingPrice
-                                            ? `${formatPrice(preConData.startingPrice)}`
+                                            ? `${formatPrice(preConData.priceRange.min)}`
                                             : isRent
                                             ? `${formatPrice(property.listPrice)}/month`
                                             : formatPrice(property.listPrice)}
@@ -320,18 +316,22 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                                     </div>
                                     
                                 )}
-                                        {/* Get Pre-Qualified Button - Only for buy properties */}
-                                        {!isRent && (
-                                        <Button 
-                                            onClick={handleGetPreQualified}
-                                            variant="outline"
-                                            className="w-full sm:w-auto font-medium py-2.5 bg-green-600 text-white px-4 rounded-lg transition-colors"
-                                        >
-                                            <CreditCard className="h-4 w-4 mr-2" />
-                                            Get Pre-Qualified
-                                        </Button>
-                                        )}
+
+                                {/* Get Pre-Qualified Button - Only for buy properties */}
+                                {!isRent && (
+                                <Button 
+                                    onClick={handleGetPreQualified}
+                                    variant="outline"
+                                    className="w-full sm:w-auto font-medium py-2.5 bg-green-600 text-white px-4 rounded-lg transition-colors"
+                                >
+                                    <CreditCard className="h-4 w-4 mr-2" />
+                                    Get Pre-Qualified
+                                </Button>
+                                )}
+                                {/* Project Rating Display for Pre-Con */}
+                            <ProjectRatingDisplay propertyId={property.mlsNumber || preConData?.projectName || 'default'} />
                             
+                                
                         </div>
                     </div>
                     

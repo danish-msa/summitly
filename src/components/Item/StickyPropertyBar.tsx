@@ -45,28 +45,67 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
 
   useEffect(() => {
     const handleScroll = () => {
-      if (bannerRef.current) {
-        const bannerBottom = bannerRef.current.offsetTop + bannerRef.current.offsetHeight;
-        // SectionNavigation height (sticky at top)
-        const scrollPosition = window.scrollY + sectionNavHeight;
-        
-        if (scrollPosition >= bannerBottom) {
-          setIsVisible(true);
-        } else {
-          setIsVisible(false);
-        }
+      if (!bannerRef.current) return;
+
+      const bannerBottom = bannerRef.current.offsetTop + bannerRef.current.offsetHeight;
+      const scrollPosition = window.scrollY + sectionNavHeight;
+      
+      // Find the last content section to determine when to hide the sticky bar
+      const contactSection = document.getElementById('contact-section');
+      const footer = document.querySelector('footer');
+      
+      // Find the bottom of the main content area
+      // Look for the last container-1400 which should contain SimilarListings
+      let contentBottom = document.documentElement.scrollHeight;
+      
+      // Find all container-1400 elements and get the last one (which should be SimilarListings)
+      const containers = Array.from(document.querySelectorAll('.container-1400'));
+      if (containers.length > 0) {
+        const lastContainer = containers[containers.length - 1] as HTMLElement;
+        const lastContainerRect = lastContainer.getBoundingClientRect();
+        const lastContainerBottom = lastContainerRect.top + window.scrollY + lastContainerRect.height;
+        // Use the last container as the content end point
+        contentBottom = lastContainerBottom;
       }
+      
+      // If contact section exists and is after the last container, use it instead
+      if (contactSection) {
+        const contactRect = contactSection.getBoundingClientRect();
+        const contactBottom = contactRect.top + window.scrollY + contactRect.height;
+        // Use whichever is further down (the actual last content)
+        contentBottom = Math.max(contentBottom, contactBottom);
+      }
+      
+      // Account for footer if it exists - hide sticky bar before footer
+      if (footer) {
+        const footerRect = footer.getBoundingClientRect();
+        const footerTop = footerRect.top + window.scrollY;
+        // Hide sticky bar when we reach 100px before footer
+        contentBottom = Math.min(contentBottom, footerTop - 100);
+      }
+      
+      // Calculate if we should show the sticky bar
+      // Show only if: past banner AND viewport hasn't reached the end of content
+      const viewportBottom = window.scrollY + window.innerHeight;
+      const shouldShow = scrollPosition >= bannerBottom && viewportBottom < contentBottom;
+      
+      setIsVisible(shouldShow);
     };
 
     const handleResize = () => {
       handleScroll(); // Recalculate on resize
     };
 
+    // Initial check with delay to ensure DOM is ready
+    const timeoutId = setTimeout(() => {
+      handleScroll();
+    }, 100);
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleResize, { passive: true });
-    handleScroll(); // Check initial position
 
     return () => {
+      clearTimeout(timeoutId);
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
     };
@@ -142,10 +181,10 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
                     {/* Starting Price */}
                     <div className="flex-shrink-0">
                       <div className="text-base lg:text-lg xl:text-2xl font-bold text-primary whitespace-nowrap">
-                        {property.preCon?.priceRange 
-                          ? `${formatPrice(property.preCon.priceRange.min)} - ${formatPrice(property.preCon.priceRange.max)}`
-                          : property.preCon?.startingPrice
+                        {property.preCon?.startingPrice
                           ? formatPrice(property.preCon.startingPrice)
+                          : property.preCon?.priceRange 
+                          ? formatPrice(property.preCon.priceRange.min)
                           : 'Contact for Pricing'}
                       </div>
                     </div>

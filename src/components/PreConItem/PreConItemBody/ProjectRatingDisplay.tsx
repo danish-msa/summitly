@@ -104,10 +104,10 @@ const ProjectRatingDisplay: React.FC<ProjectRatingDisplayProps> = ({ propertyId 
   }
 
   return (
-    <div className="flex flex-col gap-2 my-2">
+    <div className="flex items-center gap-2 my-2">
       {/* Star Rating */}
       <div 
-        className="flex items-center gap-2"
+        className="flex items-center gap-1"
         onMouseLeave={handleMouseLeave}
       >
         {[1, 2, 3, 4, 5].map((star) => {
@@ -132,12 +132,12 @@ const ProjectRatingDisplay: React.FC<ProjectRatingDisplayProps> = ({ propertyId 
             >
               <Star
                 className={cn(
-                  "h-6 w-6 transition-colors",
+                  "h-5 w-5 transition-colors",
                   isActive || isHovered
                     ? "text-yellow-400 fill-yellow-400"
                     : isAverage && ratingData.average > 0 && !hasRated
                     ? "text-yellow-400 fill-yellow-400"
-                    : "text-gray-500 hover:text-yellow-300"
+                    : "text-gray-300 hover:text-yellow-300"
                 )}
               />
             </button>
@@ -145,34 +145,21 @@ const ProjectRatingDisplay: React.FC<ProjectRatingDisplayProps> = ({ propertyId 
         })}
       </div>
       
-      {/* Rating Info Display */}
+      {/* Rating Stats - Professional One-Line Format */}
       {ratingData.total > 0 && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 rounded-full">
-            <span className="text-xs font-semibold text-primary">
-              {ratingData.total} {ratingData.total === 1 ? 'Vote' : 'Votes'}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-muted rounded-full">
-            <span className="text-xs font-medium text-foreground">
-              Average:
-            </span>
-            <span className="text-xs font-bold text-primary">
-              {ratingData.average.toFixed(2)}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              out of 5
-            </span>
-          </div>
-          {hasRated && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 rounded-full border border-green-200">
-              <span className="text-xs font-medium text-green-700">
-                ✓ Rated
-              </span>
-            </div>
-          )}
+        <div className="flex items-center gap-2 text-sm">
+          <span className="font-semibold text-foreground">
+            {ratingData.average.toFixed(1)}
+          </span>
+          <span className="text-muted-foreground">/</span>
+          <span className="text-muted-foreground">5</span>
+          <span className="text-muted-foreground">
+            ({ratingData.total} {ratingData.total === 1 ? 'vote' : 'votes'})
+          </span>
         </div>
       )}
+      
+      
     </div>
   );
 };

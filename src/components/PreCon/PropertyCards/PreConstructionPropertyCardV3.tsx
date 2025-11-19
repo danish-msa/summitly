@@ -129,11 +129,13 @@ const PreConstructionPropertyCardV3 = ({
                       );
                     })}
                   </div>
-                  <span className="text-xs font-medium text-foreground">
+                  <span className="text-xs font-semibold text-foreground">
                     {ratingData.average.toFixed(1)}
                   </span>
+                  <span className="text-xs text-muted-foreground">/</span>
+                  <span className="text-xs text-muted-foreground">5</span>
                   <span className="text-xs text-muted-foreground">
-                    ({ratingData.total})
+                    ({ratingData.total} {ratingData.total === 1 ? 'vote' : 'votes'})
                   </span>
                 </div>
               )}

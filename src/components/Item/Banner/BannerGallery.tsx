@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layers, ChevronLeft, ChevronRight, MapPin, Map as MapIcon, Navigation } from "lucide-react";
+import { Layers, ChevronLeft, ChevronRight, MapPin, Map as MapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -32,6 +32,7 @@ const BannerGallery: React.FC<BannerGalleryProps> = ({ property }) => {
     const [lightboxIndex, setLightboxIndex] = useState(0);
     const [activeCategory, setActiveCategory] = useState<ImageCategory>('all');
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+    const [defaultTab, setDefaultTab] = useState<string>('all');
     
     // Get image source with fallback
     const getImageSrc = (index: number) => {
@@ -91,7 +92,8 @@ const BannerGallery: React.FC<BannerGalleryProps> = ({ property }) => {
         setIsLightboxOpen(true);
     };
 
-    const handleModalOpen = () => {
+    const handleModalOpen = (tab: string = 'all') => {
+        setDefaultTab(tab);
         setIsModalOpen(true);
     };
 
@@ -158,7 +160,7 @@ const BannerGallery: React.FC<BannerGalleryProps> = ({ property }) => {
                         <Button
                             variant="default"
                             className="gap-2 bg-white/85 text-black backdrop-blur-md hover:bg-white shadow-lg rounded-lg"
-                            onClick={handleModalOpen}
+                            onClick={() => handleModalOpen('all')}
                         >
                             <Layers className="h-4 w-4" />
                             View Gallery
@@ -166,24 +168,10 @@ const BannerGallery: React.FC<BannerGalleryProps> = ({ property }) => {
                         <Button
                             variant="default"
                             className="gap-2 bg-white/85 text-black backdrop-blur-md hover:bg-white shadow-lg rounded-lg"
-                            onClick={() => {
-                                // Handle Map View - you can add map modal or navigation here
-                                console.log('Map View clicked');
-                            }}
+                            onClick={() => handleModalOpen('map')}
                         >
                             <MapIcon className="h-4 w-4" />
                             Map View
-                        </Button>
-                        <Button
-                            variant="default"
-                            className="gap-2 bg-white/85 text-black backdrop-blur-md hover:bg-white shadow-lg rounded-lg"
-                            onClick={() => {
-                                // Handle Street View - you can add street view modal or navigation here
-                                console.log('Street View clicked');
-                            }}
-                        >
-                            <Navigation className="h-4 w-4" />
-                            Street View
                         </Button>
                     </div>
                 </div>
@@ -198,7 +186,7 @@ const BannerGallery: React.FC<BannerGalleryProps> = ({ property }) => {
                             <div 
                                 key={actualIndex}
                                 className="relative overflow-hidden bg-muted cursor-pointer group"
-                                onClick={() => isLastImage && categorizedImages.length > 5 ? handleModalOpen() : handleImageClick(actualIndex)}
+                                onClick={() => isLastImage && categorizedImages.length > 5 ? handleModalOpen('all') : handleImageClick(actualIndex)}
                             >
                                 <img
                                     src={image.src}
@@ -227,7 +215,7 @@ const BannerGallery: React.FC<BannerGalleryProps> = ({ property }) => {
                     variant="secondary"
                     size="sm"
                     className="md:hidden absolute bottom-4 right-4 z-10 gap-2 bg-white/95 backdrop-blur-md hover:bg-white shadow-lg"
-                    onClick={handleModalOpen}
+                    onClick={() => handleModalOpen('all')}
                 >
                     <Layers className="h-4 w-4" />
                     Show all {categorizedImages.length} photos
@@ -235,7 +223,14 @@ const BannerGallery: React.FC<BannerGalleryProps> = ({ property }) => {
             </div>
 
             {/* Full-Screen Gallery Modal */}
-            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <Dialog open={isModalOpen} onOpenChange={(open) => {
+                setIsModalOpen(open);
+                if (!open) {
+                    // Reset to 'all' tab when modal closes
+                    setDefaultTab('all');
+                    setActiveCategory('all');
+                }
+            }}>
                 <DialogContent className="w-full max-w-none h-full p-0 gap-0 z-[9999] bg-background flex flex-col">
                     <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
                         <div className="flex items-center justify-between">
@@ -246,7 +241,10 @@ const BannerGallery: React.FC<BannerGalleryProps> = ({ property }) => {
                     </DialogHeader>
 
                     <div className="flex-1 overflow-hidden flex flex-col min-h-0">
-                        <Tabs defaultValue="all" className="w-full h-full flex flex-col" onValueChange={(value) => setActiveCategory(value as ImageCategory)}>
+                        <Tabs value={defaultTab} defaultValue="all" className="w-full h-full flex flex-col" onValueChange={(value) => {
+                            setActiveCategory(value as ImageCategory);
+                            setDefaultTab(value);
+                        }}>
                             <div className="sticky top-0 bg-background z-10 px-6 pt-4 pb-2 border-b flex-shrink-0">
                                 <TabsList className="w-full justify-start">
                                     <TabsTrigger value="all" className="gap-2">

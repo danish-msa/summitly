@@ -12,6 +12,7 @@ import StickyPropertyBar from '../Item/StickyPropertyBar'
 import Breadcrumbs from './Breadcrumbs'
 import RightSidebar from './PreConItemBody/RightSidebar'
 import PreConFAQ from '../PreCon/FAQ/FAQ'
+import { PreConContactSection } from './PreConItemBody/PreConContactSection'
 import { getPreConProject } from '@/data/mockPreConData'
 
 const PreConItem: React.FC = () => {
@@ -96,6 +97,9 @@ const PreConItem: React.FC = () => {
       </div>
       <div className='container-1400 mt-20 mb-4'>
         <PreConFAQ />
+      </div>
+      <div className='container-1400 mt-20 mb-4'>
+        <PreConContactSection />
       </div>
     </div>
   )
