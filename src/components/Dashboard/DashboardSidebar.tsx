@@ -14,6 +14,10 @@ import {
   Settings,
   LogOut,
   ArrowLeft,
+  Building2,
+  Users,
+  Shield,
+  FolderKanban,
 } from "lucide-react"
 import {
   Sidebar,
@@ -30,8 +34,10 @@ import {
 import { cn } from "@/lib/utils"
 import { signOut, useSession } from "next-auth/react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { isAdmin, isSuperAdmin } from "@/lib/roles"
 
-const menuItems = [
+// Subscriber menu items
+const subscriberMenuItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Chat", url: "/dashboard/chat", icon: MessageSquare },
   { title: "Saved", url: "/dashboard/saved", icon: Heart },
@@ -40,6 +46,19 @@ const menuItems = [
   { title: "Assignments", url: "/dashboard/assignments", icon: Home },
   { title: "Tours & Appointments", url: "/dashboard/tours", icon: Calendar },
   { title: "Market Reports", url: "/dashboard/market-reports", icon: FileText },
+]
+
+// Admin menu items (includes subscriber items + admin items)
+const adminMenuItems = [
+  ...subscriberMenuItems,
+  { title: "Pre-Con Projects", url: "/dashboard/admin/pre-con-projects", icon: Building2 },
+]
+
+// Super Admin menu items (includes admin items + super admin items)
+const superAdminMenuItems = [
+  ...adminMenuItems,
+  { title: "User Management", url: "/dashboard/admin/users", icon: Users },
+  { title: "Role Management", url: "/dashboard/admin/roles", icon: Shield },
 ]
 
 const settingsItems = [
@@ -65,8 +84,21 @@ export function DashboardSidebar() {
     .toUpperCase()
     .slice(0, 2) || 'U'
 
+  // Get menu items based on user role
+  const getMenuItems = () => {
+    const role = session?.user?.role
+    if (isSuperAdmin(role)) {
+      return superAdminMenuItems
+    } else if (isAdmin(role)) {
+      return adminMenuItems
+    }
+    return subscriberMenuItems
+  }
+
+  const menuItems = getMenuItems()
+
   return (
-    <Sidebar className={!open ? "w-18" : "w-64"} collapsible="icon">
+    <Sidebar className={!open ? "w-18 bg-white" : "w-64 bg-white"} collapsible="icon">
       <SidebarHeader className="border-b border-border">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10 flex-shrink-0">
@@ -83,6 +115,11 @@ export function DashboardSidebar() {
               <p className="text-xs text-muted-foreground truncate">
                 {session?.user?.email || ''}
               </p>
+              {session?.user?.role && (
+                <p className="text-xs text-primary font-medium mt-0.5">
+                  {session.user.role.replace('_', ' ')}
+                </p>
+              )}
             </div>
           )}
         </div>

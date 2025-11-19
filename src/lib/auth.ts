@@ -105,7 +105,7 @@ export const authOptions: NextAuthOptions = {
     },
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role || 'BUYER'
+        token.role = user.role || 'SUBSCRIBER'
       }
       // Fetch role from database if not in token
       if (token.sub && !token.role) {
@@ -122,7 +122,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.sub!
-        session.user.role = token.role as string || 'BUYER'
+        session.user.role = token.role as string || 'SUBSCRIBER'
       }
       return session
     },

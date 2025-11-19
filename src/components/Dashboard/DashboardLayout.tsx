@@ -1,15 +1,17 @@
 "use client"
 
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { DashboardSidebar } from "./DashboardSidebar"
 import { Loader2 } from 'lucide-react'
+import { isAdmin, isSuperAdmin } from '@/lib/roles'
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const pathname = usePathname()
 
   // Reset body padding on dashboard pages
   useEffect(() => {
@@ -22,8 +24,31 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/signin')
+      return
     }
-  }, [status, router])
+
+    // Role-based access control
+    if (status === 'authenticated' && session?.user && pathname) {
+      const userRole = session.user.role
+
+      // Admin routes require admin or super admin
+      if (pathname.startsWith('/dashboard/admin')) {
+        if (!isAdmin(userRole)) {
+          router.push('/dashboard')
+          return
+        }
+      }
+
+      // Super admin only routes
+      if (pathname.startsWith('/dashboard/admin/users') || 
+          pathname.startsWith('/dashboard/admin/roles')) {
+        if (!isSuperAdmin(userRole)) {
+          router.push('/dashboard')
+          return
+        }
+      }
+    }
+  }, [status, session, router, pathname])
 
   if (status === 'loading') {
     return (
@@ -42,9 +67,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <div className="h-screen flex w-full bg-muted/30 overflow-hidden">
         <DashboardSidebar />
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <header className="h-16 border-b bg-background flex items-center px-6 flex-shrink-0 z-40">
+          <header className="h-16 border-b bg-white flex items-center px-6 flex-shrink-0 z-40">
             <SidebarTrigger className="mr-4" />
-            <h1 className="text-xl font-semibold text-foreground">Welcome, {session?.user?.name}</h1>
+            <h1 className="text-xl font-semibold text-foreground">
+              Welcome, {session?.user?.name}
+            </h1>
+            {session?.user?.role && (
+              <span className="ml-4 text-xs text-muted-foreground">
+                ({session.user.role.replace('_', ' ')})
+              </span>
+            )}
           </header>
           <main className="flex-1 p-6 overflow-y-auto">
             {children}
