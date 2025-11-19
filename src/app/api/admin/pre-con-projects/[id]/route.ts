@@ -81,15 +81,22 @@ export async function GET(
       return parsed?.id || null
     }
 
+    // Type assertion to access all fields (Prisma types may not include all fields with include)
+    const projectWithAllFields = project as typeof project & {
+      interiorDesignerInfo: string | null
+      landscapeArchitectInfo: string | null
+      marketingInfo: string | null
+    }
+
     const parsedProject = {
       ...project,
       documents: parseJsonField(project.documents),
-      developerInfo: extractDeveloperId(project.developerInfo),
-      architectInfo: extractDeveloperId(project.architectInfo),
-      builderInfo: extractDeveloperId(project.builderInfo),
-      interiorDesignerInfo: extractDeveloperId(project.interiorDesignerInfo),
-      landscapeArchitectInfo: extractDeveloperId(project.landscapeArchitectInfo),
-      marketingInfo: extractDeveloperId(project.marketingInfo),
+      developerInfo: extractDeveloperId(project.developerInfo ?? null),
+      architectInfo: extractDeveloperId(project.architectInfo ?? null),
+      builderInfo: extractDeveloperId(project.builderInfo ?? null),
+      interiorDesignerInfo: extractDeveloperId(projectWithAllFields.interiorDesignerInfo ?? null),
+      landscapeArchitectInfo: extractDeveloperId(projectWithAllFields.landscapeArchitectInfo ?? null),
+      marketingInfo: extractDeveloperId(projectWithAllFields.marketingInfo ?? null),
     }
 
     return NextResponse.json({ project: parsedProject })
@@ -263,15 +270,22 @@ export async function PUT(
       return parsed?.id || null
     }
 
+    // Type assertion to access all fields (Prisma types may not include all fields with include)
+    const projectWithAllFields = project as typeof project & {
+      interiorDesignerInfo: string | null
+      landscapeArchitectInfo: string | null
+      marketingInfo: string | null
+    }
+
     const parsedProject = {
       ...project,
       documents: parseJsonField(project.documents),
-      developerInfo: extractDeveloperId(project.developerInfo),
-      architectInfo: extractDeveloperId(project.architectInfo),
-      builderInfo: extractDeveloperId(project.builderInfo),
-      interiorDesignerInfo: extractDeveloperId(project.interiorDesignerInfo),
-      landscapeArchitectInfo: extractDeveloperId(project.landscapeArchitectInfo),
-      marketingInfo: extractDeveloperId(project.marketingInfo),
+      developerInfo: extractDeveloperId(project.developerInfo ?? null),
+      architectInfo: extractDeveloperId(project.architectInfo ?? null),
+      builderInfo: extractDeveloperId(project.builderInfo ?? null),
+      interiorDesignerInfo: extractDeveloperId(projectWithAllFields.interiorDesignerInfo ?? null),
+      landscapeArchitectInfo: extractDeveloperId(projectWithAllFields.landscapeArchitectInfo ?? null),
+      marketingInfo: extractDeveloperId(projectWithAllFields.marketingInfo ?? null),
     }
 
     return NextResponse.json({ project: parsedProject })
