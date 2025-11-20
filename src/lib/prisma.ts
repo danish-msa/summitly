@@ -1,4 +1,6 @@
 import { PrismaClient } from '@prisma/client'
+import { Pool } from 'pg'
+import { PrismaPg } from '@prisma/adapter-pg'
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
@@ -44,16 +46,15 @@ function getDatabaseUrl(): string {
   return url
 }
 
-// Set the modified DATABASE_URL before creating PrismaClient
-// This ensures Prisma 7 uses the correct connection string with pooler/SSL settings
+// Create PostgreSQL connection pool
 const databaseUrl = getDatabaseUrl()
-if (process.env.DATABASE_URL !== databaseUrl) {
-  process.env.DATABASE_URL = databaseUrl
-}
+const pool = new Pool({ connectionString: databaseUrl })
+const adapter = new PrismaPg(pool)
 
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
+    adapter,
     log: process.env.NODE_ENV === 'development' 
       ? ['error', 'warn'] 
       : ['error'],
