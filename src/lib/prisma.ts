@@ -44,17 +44,19 @@ function getDatabaseUrl(): string {
   return url
 }
 
+// Set the modified DATABASE_URL before creating PrismaClient
+// This ensures Prisma 7 uses the correct connection string with pooler/SSL settings
+const databaseUrl = getDatabaseUrl()
+if (process.env.DATABASE_URL !== databaseUrl) {
+  process.env.DATABASE_URL = databaseUrl
+}
+
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
     log: process.env.NODE_ENV === 'development' 
       ? ['error', 'warn'] 
       : ['error'],
-    datasources: {
-      db: {
-        url: getDatabaseUrl(),
-      },
-    } as Prisma.PrismaClientOptions['datasources'],
   })
 
 // Prevent multiple instances in development
