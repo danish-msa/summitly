@@ -165,15 +165,15 @@ pool.on('error', (err) => {
 
 // Log connection info in development
 if (process.env.NODE_ENV === 'development') {
-  pool.on('connect', (client) => {
+  pool.on('connect', () => {
     console.log('✅ PostgreSQL connection established')
   })
   
-  pool.on('acquire', (client) => {
+  pool.on('acquire', () => {
     console.log('📊 PostgreSQL connection acquired from pool')
   })
   
-  pool.on('remove', (client) => {
+  pool.on('remove', () => {
     console.log('🗑️ PostgreSQL connection removed from pool')
   })
   
