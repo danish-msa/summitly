@@ -1644,63 +1644,65 @@ export function PreConProjectForm({
                 />
               </div>
 
-              {[
-                { key: "developerInfo", label: "Developer", type: "DEVELOPER" },
-                { key: "architectInfo", label: "Architect", type: "ARCHITECT" },
-                { key: "interiorDesignerInfo", label: "Interior Designer", type: "INTERIOR_DESIGNER" },
-                { key: "builderInfo", label: "Builder", type: "BUILDER" },
-                { key: "landscapeArchitectInfo", label: "Landscape Architect", type: "LANDSCAPE_ARCHITECT" },
-                { key: "marketingInfo", label: "Marketing", type: "MARKETING" },
-              ].map(({ key, label, type }) => {
-                const selectedId = formData[key as keyof typeof formData] as string
-                const selectedDeveloper = developers.find(d => d.id === selectedId)
-                const availableDevelopers = getDevelopersByType(type)
-                
-                return (
-                  <div key={key} className="space-y-2">
-                    <Label>{label}</Label>
-                    <Select
-                      value={selectedId || ""}
-                      onValueChange={(value) =>
-                        setFormData({
-                          ...formData,
-                          [key]: value,
-                        })
-                      }
-                    >
-                      <SelectTrigger className="rounded-lg">
-                        <SelectValue placeholder={`Select ${label.toLowerCase()}`} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="">None</SelectItem>
-                        {availableDevelopers.map((dev) => (
-                          <SelectItem key={dev.id} value={dev.id}>
-                            {dev.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {selectedDeveloper && (
-                      <div className="p-3 border rounded-lg bg-muted/50">
-                        <p className="text-sm font-medium">{selectedDeveloper.name}</p>
-                        {selectedDeveloper.description && (
-                          <p className="text-sm text-muted-foreground mt-1">{selectedDeveloper.description}</p>
-                        )}
-                        {selectedDeveloper.website && (
-                          <a
-                            href={selectedDeveloper.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-primary hover:underline mt-1 block"
-                          >
-                            {selectedDeveloper.website}
-                          </a>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[
+                  { key: "developerInfo", label: "Developer", type: "DEVELOPER" },
+                  { key: "architectInfo", label: "Architect", type: "ARCHITECT" },
+                  { key: "interiorDesignerInfo", label: "Interior Designer", type: "INTERIOR_DESIGNER" },
+                  { key: "builderInfo", label: "Builder", type: "BUILDER" },
+                  { key: "landscapeArchitectInfo", label: "Landscape Architect", type: "LANDSCAPE_ARCHITECT" },
+                  { key: "marketingInfo", label: "Marketing", type: "MARKETING" },
+                ].map(({ key, label, type }) => {
+                  const selectedId = formData[key as keyof typeof formData] as string
+                  const selectedDeveloper = developers.find(d => d.id === selectedId)
+                  const availableDevelopers = getDevelopersByType(type)
+                  
+                  return (
+                    <div key={key} className="space-y-2">
+                      <Label>{label}</Label>
+                      <Select
+                        value={selectedId || "none"}
+                        onValueChange={(value) =>
+                          setFormData({
+                            ...formData,
+                            [key]: value === "none" ? "" : value,
+                          })
+                        }
+                      >
+                        <SelectTrigger className="rounded-lg">
+                          <SelectValue placeholder={`Select ${label.toLowerCase()}`} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {availableDevelopers.map((dev) => (
+                            <SelectItem key={dev.id} value={dev.id}>
+                              {dev.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {selectedDeveloper && (
+                        <div className="p-3 border rounded-lg bg-muted/50">
+                          <p className="text-sm font-medium">{selectedDeveloper.name}</p>
+                          {selectedDeveloper.description && (
+                            <p className="text-sm text-muted-foreground mt-1">{selectedDeveloper.description}</p>
+                          )}
+                          {selectedDeveloper.website && (
+                            <a
+                              href={selectedDeveloper.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-primary hover:underline mt-1 block"
+                            >
+                              {selectedDeveloper.website}
+                            </a>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
