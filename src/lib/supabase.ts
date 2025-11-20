@@ -30,9 +30,9 @@ function getSupabaseClient(): SupabaseClient {
 // Export a proxy that lazily initializes the client only when accessed
 // This prevents build-time errors since the client is not created until runtime
 export const supabase = new Proxy({} as SupabaseClient, {
-  get(_target, prop) {
+  get(_target, prop: keyof SupabaseClient) {
     const client = getSupabaseClient()
-    const value = (client as any)[prop]
+    const value = client[prop]
     
     // If it's a function, bind it to the client
     if (typeof value === 'function') {
