@@ -211,6 +211,49 @@ export async function POST(request: NextRequest) {
       counter++
     }
 
+    // Prepare data with proper type conversions
+    const imagesArray = Array.isArray(images) 
+      ? images.filter((img): img is string => typeof img === 'string' && img.length > 0)
+      : []
+    
+    const videosArray = Array.isArray(videos) 
+      ? videos.filter((vid): vid is string => typeof vid === 'string' && vid.length > 0)
+      : []
+    
+    const amenitiesArray = (() => {
+      const amenityStrings: string[] = []
+      
+      if (Array.isArray(amenities)) {
+        amenities.forEach((a: { name: string; icon: string } | string) => {
+          if (typeof a === 'string' && a.trim().length > 0) {
+            amenityStrings.push(a.trim())
+          } else if (typeof a === 'object' && a !== null && 'name' in a && typeof a.name === 'string' && a.name.trim().length > 0) {
+            amenityStrings.push(a.name.trim())
+          }
+        })
+      }
+      
+      if (Array.isArray(customAmenities)) {
+        customAmenities.forEach((a: string) => {
+          if (typeof a === 'string' && a.trim().length > 0) {
+            amenityStrings.push(a.trim())
+          }
+        })
+      }
+      
+      return amenityStrings
+    })()
+
+    // Log data for debugging (remove sensitive info)
+    console.log('Creating project with data:', {
+      mlsNumber,
+      projectName,
+      imagesCount: imagesArray.length,
+      videosCount: videosArray.length,
+      amenitiesCount: amenitiesArray.length,
+      hasDocuments: !!documents,
+    })
+
     // Create project
     const project = await prisma.preConstructionProject.create({
       data: {
@@ -220,14 +263,14 @@ export async function POST(request: NextRequest) {
         startingPrice: parseFloat(startingPrice),
         endingPrice: parseFloat(endingPrice),
         status,
-        streetNumber,
-        streetName,
+        streetNumber: streetNumber || null,
+        streetName: streetName || null,
         city,
         state,
-        zip,
+        zip: zip || null,
         country,
-        neighborhood,
-        majorIntersection,
+        neighborhood: neighborhood || null,
+        majorIntersection: majorIntersection || null,
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
         propertyType,
@@ -240,15 +283,26 @@ export async function POST(request: NextRequest) {
         storeys: storeys ? parseInt(storeys) : null,
         completionDate,
         completionProgress,
-        promotions: promotions || null,
-        images: Array.isArray(images) ? images : [],
-        videos: Array.isArray(videos) ? videos : [],
-        amenities: Array.isArray(amenities) 
-          ? [...amenities, ...(Array.isArray(customAmenities) ? customAmenities.map((a: string) => a) : [])]
-          : Array.isArray(customAmenities) ? customAmenities : [],
-        depositStructure,
-        description,
-        documents: documents ? JSON.stringify(documents) : null,
+        promotions: promotions && promotions.trim() ? promotions.trim() : null,
+        images: imagesArray,
+        videos: videosArray,
+        amenities: amenitiesArray,
+        depositStructure: depositStructure && depositStructure.trim() ? depositStructure.trim() : null,
+        description: description && description.trim() ? description.trim() : null,
+        documents: documents ? (() => {
+          try {
+            // If documents is already a string, parse and re-stringify to ensure it's valid JSON
+            if (typeof documents === 'string') {
+              const parsed = JSON.parse(documents)
+              return JSON.stringify(parsed)
+            }
+            // If it's an object/array, stringify it
+            return JSON.stringify(documents)
+          } catch (e) {
+            console.error('Error stringifying documents:', e)
+            return null
+          }
+        })() : null,
         // Store developer IDs, fetch developer data and store as JSON
         developerInfo: developerInfo ? await fetchDeveloperData(developerInfo) : null,
         architectInfo: architectInfo ? await fetchDeveloperData(architectInfo) : null,
@@ -265,8 +319,13 @@ export async function POST(request: NextRequest) {
     )
   } catch (error) {
     console.error('Error creating pre-con project:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to create project'
+    console.error('Error details:', {
+      message: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+    })
     return NextResponse.json(
-      { error: 'Failed to create project' },
+      { error: errorMessage },
       { status: 500 }
     )
   }
