@@ -1267,7 +1267,7 @@ export function PreConProjectForm({
                       onClick={() => addArrayItem("videos", "videoInput")}
                       className="rounded-lg"
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-4 w-4" /> 
                     </Button>
                   </div>
                   <p className="text-sm text-muted-foreground">
