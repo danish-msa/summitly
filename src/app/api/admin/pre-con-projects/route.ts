@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { isAdmin } from '@/lib/roles'
+import { Prisma } from '@prisma/client'
 
 // Helper function to fetch developer data by ID and return as JSON string
 async function fetchDeveloperData(developerId: string): Promise<string | null> {
@@ -337,7 +338,7 @@ export async function POST(request: NextRequest) {
         interiorDesignerInfo: interiorDesignerInfo ? await fetchDeveloperData(interiorDesignerInfo) : null,
         landscapeArchitectInfo: landscapeArchitectInfo ? await fetchDeveloperData(landscapeArchitectInfo) : null,
         marketingInfo: marketingInfo ? await fetchDeveloperData(marketingInfo) : null,
-      } as any, // Type assertion needed until IDE picks up regenerated Prisma types
+      } as unknown as Prisma.PreConstructionProjectCreateInput,
     })
 
     return NextResponse.json(
