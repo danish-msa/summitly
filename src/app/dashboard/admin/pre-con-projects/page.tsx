@@ -206,7 +206,9 @@ export default function PreConProjectsPage() {
         }
         
         return (
-          <Badge className={statusColors[project.status] || "hover:bg-none bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"}>
+          <Badge 
+            className={`${statusColors[project.status] || "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"} [&:hover]:!bg-[inherit]`}
+          >
             {formatStatus(project.status)}
           </Badge>
         )
