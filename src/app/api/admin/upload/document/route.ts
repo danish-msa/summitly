@@ -4,6 +4,9 @@ import { authOptions } from '@/lib/auth'
 import { isAdmin } from '@/lib/roles'
 import { supabase } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -78,6 +81,14 @@ export async function POST(request: NextRequest) {
     // Add timestamp to ensure uniqueness
     const timestamp = Date.now()
     const fileName = `${sanitizedProjectName}-${sanitizedDocType}-${timestamp}.${fileExtension}`
+
+    // Validate Supabase configuration
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return NextResponse.json(
+        { error: 'Supabase storage is not configured. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.' },
+        { status: 500 }
+      )
+    }
 
     // Convert file to buffer
     const bytes = await file.arrayBuffer()
