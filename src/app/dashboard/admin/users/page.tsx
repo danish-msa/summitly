@@ -30,10 +30,13 @@ interface User {
 }
 
 export default function UsersPage() {
+  console.log('🔍 [USERS PAGE] Component rendered')
+  
   const { data: session, status } = useSession()
   const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [roleFilter, setRoleFilter] = useState("")
   const [page, setPage] = useState(1)
@@ -50,23 +53,40 @@ export default function UsersPage() {
   const [selectedRole, setSelectedRole] = useState("")
 
   useEffect(() => {
+    console.log('🔍 [USERS PAGE] useEffect triggered:', {
+      status,
+      hasSession: !!session,
+      userRole: session?.user?.role,
+      page,
+      searchTerm,
+      roleFilter,
+    })
+
     if (status === "unauthenticated") {
+      console.log('⚠️ [USERS PAGE] Unauthenticated, redirecting to signin')
       router.push("/auth/signin")
       return
     }
 
     if (status === "authenticated" && session?.user) {
+      console.log('🔍 [USERS PAGE] Authenticated, checking role...')
       if (!isSuperAdmin(session.user.role)) {
+        console.warn('⚠️ [USERS PAGE] Not super admin, redirecting to dashboard')
         router.push("/dashboard")
         return
       }
+      console.log('✅ [USERS PAGE] Super admin confirmed, fetching data...')
       fetchUsers()
       fetchStats()
+    } else if (status === "loading") {
+      console.log('⏳ [USERS PAGE] Still loading session...')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, session, router, page, searchTerm, roleFilter])
 
   const fetchUsers = async () => {
+    const startTime = Date.now()
+    console.log('🔍 [USERS PAGE] fetchUsers called')
     try {
       setLoading(true)
       const params = new URLSearchParams({
@@ -76,31 +96,67 @@ export default function UsersPage() {
         ...(roleFilter && { role: roleFilter }),
       })
 
-      const response = await fetch(`/api/admin/users?${params}`)
+      const url = `/api/admin/users?${params}`
+      console.log('🔍 [USERS PAGE] Fetching from:', url)
+
+      const response = await fetch(url)
+      console.log('🔍 [USERS PAGE] Response status:', response.status, response.statusText)
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: "Failed to fetch users" }))
-        throw new Error(errorData.error || "Failed to fetch users")
+        console.error('❌ [USERS PAGE] Response error:', errorData)
+        throw new Error(errorData.error || errorData.details || "Failed to fetch users")
       }
 
       const data = await response.json()
+      console.log('✅ [USERS PAGE] Data received:', {
+        usersCount: data.users?.length || 0,
+        pagination: data.pagination,
+      })
+      
       setUsers(data.users || [])
       setTotalPages(data.pagination?.totalPages || 1)
+      setError(null) // Clear any previous errors
+      
+      const duration = Date.now() - startTime
+      console.log(`✅ [USERS PAGE] fetchUsers completed in ${duration}ms`)
     } catch (error) {
-      console.error("Error fetching users:", error)
+      const duration = Date.now() - startTime
       const errorMessage = error instanceof Error ? error.message : "Failed to fetch users"
-      alert(errorMessage)
+      console.error("❌ [USERS PAGE] Error fetching users:", {
+        error,
+        message: errorMessage,
+        duration: `${duration}ms`,
+      })
+      setError(errorMessage)
+      // Don't use alert, set error state instead
     } finally {
       setLoading(false)
+      console.log('🔍 [USERS PAGE] Loading set to false')
     }
   }
 
   const fetchStats = async () => {
+    console.log('🔍 [USERS PAGE] fetchStats called')
     try {
       const response = await fetch("/api/admin/users?limit=1000")
-      if (!response.ok) return
+      console.log('🔍 [USERS PAGE] Stats response status:', response.status)
+      
+      if (!response.ok) {
+        console.warn('⚠️ [USERS PAGE] Stats fetch failed:', response.status)
+        return
+      }
 
       const data = await response.json()
       const allUsers = data.users || []
+      console.log('✅ [USERS PAGE] Stats data received:', {
+        totalUsers: allUsers.length,
+        breakdown: {
+          subscribers: allUsers.filter((u: User) => u.role === "SUBSCRIBER").length,
+          admins: allUsers.filter((u: User) => u.role === "ADMIN").length,
+          superAdmins: allUsers.filter((u: User) => u.role === "SUPER_ADMIN").length,
+        },
+      })
       
       setStats({
         total: allUsers.length,
@@ -109,7 +165,7 @@ export default function UsersPage() {
         superAdmins: allUsers.filter((u: User) => u.role === "SUPER_ADMIN").length,
       })
     } catch (error) {
-      console.error("Error fetching stats:", error)
+      console.error("❌ [USERS PAGE] Error fetching stats:", error)
     }
   }
 
@@ -246,12 +302,25 @@ export default function UsersPage() {
   ]
 
   if (status === "loading" || loading) {
+    console.log('⏳ [USERS PAGE] Rendering loading state:', {
+      sessionStatus: status,
+      dataLoading: loading,
+    })
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground">
+          Loading... {status === "loading" ? "(Checking session...)" : "(Loading users...)"}
+        </div>
       </div>
     )
   }
+
+  console.log('🔍 [USERS PAGE] Rendering page content:', {
+    usersCount: users.length,
+    stats,
+    totalPages,
+    currentPage: page,
+  })
 
   return (
     <div className="space-y-6">
@@ -261,6 +330,25 @@ export default function UsersPage() {
           Manage users and their roles
         </p>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-md">
+          <p className="font-medium">Error loading users</p>
+          <p className="text-sm mt-1">{error}</p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-2"
+            onClick={() => {
+              setError(null)
+              fetchUsers()
+            }}
+          >
+            Retry
+          </Button>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
@@ -301,15 +389,16 @@ export default function UsersPage() {
             />
           </div>
         </div>
-        <Select value={roleFilter} onValueChange={(value) => {
-          setRoleFilter(value)
+        <Select value={roleFilter || "all"} onValueChange={(value) => {
+          // Convert "all" back to empty string for API filtering
+          setRoleFilter(value === "all" ? "" : value)
           setPage(1)
         }}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="All Roles" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Roles</SelectItem>
+            <SelectItem value="all">All Roles</SelectItem>
             <SelectItem value="SUBSCRIBER">Subscriber</SelectItem>
             <SelectItem value="ADMIN">Admin</SelectItem>
             <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>
