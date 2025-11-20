@@ -5,6 +5,10 @@ import { prisma } from '@/lib/prisma'
 import { isSuperAdmin } from '@/lib/roles'
 import { Prisma, UserRole } from '@prisma/client'
 
+// Force dynamic rendering to ensure fresh Prisma client with SSL config
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 // GET - List all users (with pagination and filters)
 export async function GET(request: NextRequest) {
   try {
