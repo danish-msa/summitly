@@ -88,8 +88,20 @@ export async function GET(
       marketingInfo: string | null
     }
 
+    // Convert completionProgress integer back to string for form compatibility
+    const progressToString = (progress: number | null | undefined): string => {
+      const progressMap: Record<number, string> = {
+        0: 'Pre-construction',
+        1: 'Construction',
+        2: 'Complete',
+      }
+      if (progress === null || progress === undefined) return ''
+      return progressMap[progress] || 'Pre-construction'
+    }
+
     const parsedProject = {
       ...project,
+      completionProgress: progressToString(project.completionProgress as unknown as number),
       documents: parseJsonField(project.documents),
       developerInfo: extractDeveloperId(project.developerInfo ?? null),
       architectInfo: extractDeveloperId(project.architectInfo ?? null),
@@ -226,7 +238,26 @@ export async function PUT(
     if (body.availableUnits !== undefined) updateData.availableUnits = parseInt(body.availableUnits)
     if (body.storeys !== undefined) updateData.storeys = body.storeys ? parseInt(body.storeys) : null
     if (body.completionDate !== undefined) updateData.completionDate = body.completionDate
-    if (body.completionProgress !== undefined) updateData.completionProgress = body.completionProgress
+    if (body.completionProgress !== undefined) {
+      // Convert completionProgress string to integer (database expects Int)
+      const progressMap: Record<string, number> = {
+        'Pre-construction': 0,
+        'Construction': 1,
+        'Complete': 2,
+      }
+      
+      if (typeof body.completionProgress === 'number') {
+        updateData.completionProgress = body.completionProgress
+      } else {
+        const progressString = String(body.completionProgress || '').trim()
+        if (progressString in progressMap) {
+          updateData.completionProgress = progressMap[progressString]
+        } else {
+          const parsed = parseInt(progressString, 10)
+          updateData.completionProgress = !isNaN(parsed) ? parsed : 0
+        }
+      }
+    }
     if (body.promotions !== undefined) updateData.promotions = body.promotions
     if (body.images !== undefined) updateData.images = Array.isArray(body.images) ? body.images : []
     if (body.videos !== undefined) updateData.videos = Array.isArray(body.videos) ? body.videos : []
@@ -277,8 +308,20 @@ export async function PUT(
       marketingInfo: string | null
     }
 
+    // Convert completionProgress integer back to string for form compatibility
+    const progressToString = (progress: number | null | undefined): string => {
+      const progressMap: Record<number, string> = {
+        0: 'Pre-construction',
+        1: 'Construction',
+        2: 'Complete',
+      }
+      if (progress === null || progress === undefined) return ''
+      return progressMap[progress] || 'Pre-construction'
+    }
+
     const parsedProject = {
       ...project,
+      completionProgress: progressToString(project.completionProgress as unknown as number),
       documents: parseJsonField(project.documents),
       developerInfo: extractDeveloperId(project.developerInfo ?? null),
       architectInfo: extractDeveloperId(project.architectInfo ?? null),

@@ -182,7 +182,15 @@ export async function GET(request: NextRequest) {
           status: project.status,
           completion: {
             date: project.completionDate,
-            progress: project.completionProgress,
+            progress: (() => {
+              // Convert integer completionProgress to string for frontend
+              const progressMap: Record<number, string> = {
+                0: 'Pre-construction',
+                1: 'Construction',
+                2: 'Complete',
+              }
+              return progressMap[project.completionProgress] || 'Pre-construction'
+            })(),
           },
           details: {
             bedroomRange: project.bedroomRange,

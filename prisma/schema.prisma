@@ -7,7 +7,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Account {
@@ -360,7 +359,7 @@ model PreConstructionProject {
 
   // Completion
   completionDate     String // e.g., 'Q4 2025'
-  completionProgress String // 'Pre-construction', 'Construction', 'Complete'
+  completionProgress Int // 0 = Pre-construction, 1 = Construction, 2 = Complete
   promotions         String? // '5% Down Payment', '10% Down Payment', '15% Down Payment'
 
   // Images

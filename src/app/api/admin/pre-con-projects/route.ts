@@ -254,6 +254,32 @@ export async function POST(request: NextRequest) {
       hasDocuments: !!documents,
     })
 
+    // Map completionProgress string to integer (database expects Int, not String)
+    // 0 = Pre-construction, 1 = Construction, 2 = Complete
+    const completionProgressInt = (() => {
+      const progressMap: Record<string, number> = {
+        'Pre-construction': 0,
+        'Construction': 1,
+        'Complete': 2,
+      }
+      
+      if (typeof completionProgress === 'number') {
+        return completionProgress
+      }
+      
+      const progressString = String(completionProgress || '').trim()
+      if (progressString in progressMap) {
+        return progressMap[progressString]
+      }
+      
+      const parsed = parseInt(progressString, 10)
+      if (!isNaN(parsed)) {
+        return parsed
+      }
+      
+      return 0 // Default to Pre-construction
+    })()
+
     // Create project
     const project = await prisma.preConstructionProject.create({
       data: {
@@ -282,7 +308,7 @@ export async function POST(request: NextRequest) {
         availableUnits: typeof availableUnits === 'number' ? availableUnits : parseInt(String(availableUnits), 10),
         storeys: storeys ? (typeof storeys === 'number' ? storeys : parseInt(String(storeys), 10)) : null,
         completionDate,
-        completionProgress,
+        completionProgress: completionProgressInt,
         promotions: promotions && promotions.trim() ? promotions.trim() : null,
         images: imagesArray.length > 0 ? imagesArray : [],
         videos: videosArray.length > 0 ? videosArray : [],
@@ -311,7 +337,7 @@ export async function POST(request: NextRequest) {
         interiorDesignerInfo: interiorDesignerInfo ? await fetchDeveloperData(interiorDesignerInfo) : null,
         landscapeArchitectInfo: landscapeArchitectInfo ? await fetchDeveloperData(landscapeArchitectInfo) : null,
         marketingInfo: marketingInfo ? await fetchDeveloperData(marketingInfo) : null,
-      },
+      } as any, // Type assertion needed until IDE picks up regenerated Prisma types
     })
 
     return NextResponse.json(
