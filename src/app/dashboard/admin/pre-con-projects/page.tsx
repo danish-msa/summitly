@@ -206,7 +206,7 @@ export default function PreConProjectsPage() {
         }
         
         return (
-          <Badge className={statusColors[project.status] || "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"}>
+          <Badge className={statusColors[project.status] || "hover:bg-none bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"}>
             {formatStatus(project.status)}
           </Badge>
         )
@@ -248,7 +248,9 @@ export default function PreConProjectsPage() {
     },
   ]
 
-  if (status === "loading" || loading) {
+  // Only show full-page loading for initial authentication check
+  // Once authenticated, show the page structure and load data in background
+  if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-muted-foreground">Loading...</div>
@@ -381,12 +383,18 @@ export default function PreConProjectsPage() {
       </div>
 
       {/* Table */}
-      <DataTable
-        data={projects}
-        columns={columns}
-        keyExtractor={(project) => project.id}
-        emptyMessage="No projects found"
-      />
+      {loading && projects.length === 0 ? (
+        <div className="flex items-center justify-center min-h-[200px]">
+          <div className="text-muted-foreground">Loading projects...</div>
+        </div>
+      ) : (
+        <DataTable
+          data={projects}
+          columns={columns}
+          keyExtractor={(project) => project.id}
+          emptyMessage="No projects found"
+        />
+      )}
 
       {/* Pagination */}
       {totalPages > 1 && (
