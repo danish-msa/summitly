@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, Prisma } from '@prisma/client'
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
@@ -54,7 +54,7 @@ export const prisma =
       db: {
         url: getDatabaseUrl(),
       },
-    },
+    } as Prisma.PrismaClientOptions['datasources'],
   })
 
 // Prevent multiple instances in development
