@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     // Upload to Supabase Storage
     const filePath = `pre-con/${fileName}`
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('documents')
       .upload(filePath, buffer, {
         contentType: file.type,
