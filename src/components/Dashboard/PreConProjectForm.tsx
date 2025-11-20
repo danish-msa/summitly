@@ -107,7 +107,6 @@ export function PreConProjectForm({
   const [mapLoaded, setMapLoaded] = useState(false)
   const mapRef = useRef<google.maps.Map | null>(null)
   const markerRef = useRef<google.maps.Marker | null>(null)
-  const [uploading, setUploading] = useState(false)
   const [uploadingDocument, setUploadingDocument] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const documentFileInputRef = useRef<HTMLInputElement>(null)
