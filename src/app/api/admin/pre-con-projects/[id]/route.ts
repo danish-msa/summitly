@@ -198,7 +198,7 @@ export async function PUT(
       availableUnits?: number
       storeys?: number | null
       completionDate?: string
-      completionProgress?: string
+      completionProgress?: number
       promotions?: string | null
       images?: string[]
       videos?: string[]
