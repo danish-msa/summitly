@@ -100,8 +100,25 @@ export async function GET(request: NextRequest) {
 
     const total = await prisma.preConstructionProject.count({ where })
 
+    // Parse developerInfo JSON to extract developer name
+    const parseDeveloperName = (developerInfo: string | null): string | null => {
+      if (!developerInfo) return null
+      try {
+        const parsed = JSON.parse(developerInfo)
+        return parsed?.name || null
+      } catch {
+        return null
+      }
+    }
+
+    // Map projects to include developer name
+    const projectsWithDeveloperName = projects.map((project: typeof projects[0]) => ({
+      ...project,
+      developerName: parseDeveloperName(project.developerInfo),
+    }))
+
     return NextResponse.json({
-      projects,
+      projects: projectsWithDeveloperName,
       pagination: {
         page,
         limit,

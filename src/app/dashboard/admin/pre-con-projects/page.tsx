@@ -26,6 +26,7 @@ interface PreConProject {
   mlsNumber: string
   projectName: string
   developer: string
+  developerName?: string | null
   startingPrice: number
   status: string
   city: string
@@ -112,8 +113,12 @@ export default function PreConProjectsPage() {
       
       setStats({
         total: allProjects.length,
-        selling: allProjects.filter((p: PreConProject) => p.status === "selling").length,
-        comingSoon: allProjects.filter((p: PreConProject) => p.status === "coming-soon").length,
+        selling: allProjects.filter((p: PreConProject) => 
+          p.status === "now-selling" || p.status === "selling"
+        ).length,
+        comingSoon: allProjects.filter((p: PreConProject) => 
+          p.status === "coming-soon" || p.status === "new-release-coming-soon"
+        ).length,
         soldOut: allProjects.filter((p: PreConProject) => p.status === "sold-out").length,
       })
     } catch (error) {
@@ -155,6 +160,11 @@ export default function PreConProjectsPage() {
     {
       key: "developer",
       header: "Developer",
+      render: (project) => (
+        <div className="text-sm">
+          {project.developerName || project.developer || "N/A"}
+        </div>
+      ),
     },
     {
       key: "location",
@@ -178,13 +188,26 @@ export default function PreConProjectsPage() {
       header: "Status",
       render: (project) => {
         const statusColors: Record<string, string> = {
-          selling: "bg-green-100 text-green-800",
-          "coming-soon": "bg-yellow-100 text-yellow-800",
-          "sold-out": "bg-gray-100 text-gray-800",
+          "platinum-access": "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+          "now-selling": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+          "assignments": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+          "new-release-coming-soon": "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+          "coming-soon": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+          "resale": "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200",
+          "sold-out": "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
         }
+        
+        // Format status text: replace hyphens with spaces and capitalize words
+        const formatStatus = (status: string) => {
+          return status
+            .split("-")
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ")
+        }
+        
         return (
-          <Badge className={statusColors[project.status] || "bg-gray-100"}>
-            {project.status.replace("-", " ")}
+          <Badge className={statusColors[project.status] || "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"}>
+            {formatStatus(project.status)}
           </Badge>
         )
       },
@@ -337,8 +360,12 @@ export default function PreConProjectsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="selling">Selling</SelectItem>
+            <SelectItem value="platinum-access">Platinum Access</SelectItem>
+            <SelectItem value="now-selling">Now Selling</SelectItem>
+            <SelectItem value="assignments">Assignments</SelectItem>
+            <SelectItem value="new-release-coming-soon">New Release Coming Soon</SelectItem>
             <SelectItem value="coming-soon">Coming Soon</SelectItem>
+            <SelectItem value="resale">Resale</SelectItem>
             <SelectItem value="sold-out">Sold Out</SelectItem>
           </SelectContent>
         </Select>
