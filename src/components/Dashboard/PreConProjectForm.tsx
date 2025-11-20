@@ -25,6 +25,12 @@ export interface Document {
   uploadedDate?: string
 }
 
+export interface PendingImage {
+  file: File
+  preview: string
+  id: string
+}
+
 export interface FormData {
   projectName: string
   developer: string
@@ -52,6 +58,7 @@ export interface FormData {
   completionProgress: string
   promotions: string
   images: string[]
+  pendingImages: PendingImage[]
   imageInput: string
   videos: string[]
   videoInput: string
@@ -107,6 +114,17 @@ export function PreConProjectForm({
   const [amenitySearchOpen, setAmenitySearchOpen] = useState(false)
   const [amenitySearchQuery, setAmenitySearchQuery] = useState("")
   const [developers, setDevelopers] = useState<Developer[]>([])
+
+  // Cleanup preview URLs when component unmounts or images are removed
+  useEffect(() => {
+    return () => {
+      if (formData.pendingImages) {
+        formData.pendingImages.forEach((img) => {
+          URL.revokeObjectURL(img.preview)
+        })
+      }
+    }
+  }, [formData.pendingImages])
 
   // Fetch developers for dropdowns
   useEffect(() => {
@@ -467,8 +485,8 @@ export function PreConProjectForm({
     return undefined
   }
 
-  // Handle image file upload
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle image file selection (store locally, don't upload yet)
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -486,39 +504,38 @@ export function PreConProjectForm({
       return
     }
 
-    setUploading(true)
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-
-      const response = await fetch('/api/admin/upload/image', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to upload image')
-      }
-
-      const data = await response.json()
-      
-      // Add uploaded image path to images array
-      setFormData((prev) => ({
-        ...prev,
-        images: [...prev.images, data.path],
-      }))
-
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-    } catch (error) {
-      console.error('Error uploading image:', error)
-      alert(error instanceof Error ? error.message : 'Failed to upload image')
-    } finally {
-      setUploading(false)
+    // Create preview URL
+    const preview = URL.createObjectURL(file)
+    const pendingImage: PendingImage = {
+      file,
+      preview,
+      id: `pending-${Date.now()}-${Math.random()}`,
     }
+
+    // Add to pending images (will be uploaded when project is created)
+    setFormData((prev) => ({
+      ...prev,
+      pendingImages: [...(prev.pendingImages || []), pendingImage],
+    }))
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  // Remove pending image
+  const removePendingImage = (id: string) => {
+    setFormData((prev) => {
+      const imageToRemove = prev.pendingImages?.find((img) => img.id === id)
+      if (imageToRemove) {
+        URL.revokeObjectURL(imageToRemove.preview)
+      }
+      return {
+        ...prev,
+        pendingImages: prev.pendingImages?.filter((img) => img.id !== id) || [],
+      }
+    })
   }
 
   // Handle document file upload
@@ -1144,26 +1161,15 @@ export function PreConProjectForm({
                       accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
                       onChange={handleImageUpload}
                       className="hidden"
-                      disabled={uploading}
                     />
                     <Button
                       type="button"
                       variant="outline"
                       onClick={() => fileInputRef.current?.click()}
-                      disabled={uploading}
                       className="rounded-lg"
                     >
-                      {uploading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="h-4 w-4 mr-2" />
-                          Choose File
-                        </>
-                      )}
+                      <Upload className="h-4 w-4 mr-2" />
+                      Choose File
                     </Button>
                     <p className="text-sm text-muted-foreground self-center">
                       Max 10MB (JPEG, PNG, WebP, GIF)
@@ -1198,10 +1204,41 @@ export function PreConProjectForm({
                   </div>
                 </div>
 
-                {/* Images Preview */}
+                {/* Pending Images Preview (not yet uploaded) */}
+                {formData.pendingImages && formData.pendingImages.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Selected Images ({formData.pendingImages.length}) - Will be uploaded when project is created</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {formData.pendingImages.map((pendingImg) => (
+                        <div
+                          key={pendingImg.id}
+                          className="relative group border rounded-lg overflow-hidden aspect-square border-primary/50"
+                        >
+                          <img
+                            src={pendingImg.preview}
+                            alt={`Pending image ${pendingImg.file.name}`}
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removePendingImage(pendingImg.id)}
+                            className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate">
+                            {pendingImg.file.name}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Already Uploaded Images Preview (from URLs) */}
                 {formData.images.length > 0 && (
                   <div className="space-y-2">
-                    <Label>Uploaded Images ({formData.images.length})</Label>
+                    <Label>Image URLs ({formData.images.length})</Label>
                     <div className="grid grid-cols-2 gap-2">
                       {formData.images.map((img, index) => (
                         <div

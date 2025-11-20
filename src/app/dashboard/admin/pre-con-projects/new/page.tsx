@@ -49,6 +49,7 @@ export default function NewProjectPage() {
     
     // Media
     images: [] as string[],
+    pendingImages: [] as Array<{ file: File; preview: string; id: string }>,
     imageInput: "",
     videos: [] as string[],
     videoInput: "",
@@ -83,6 +84,37 @@ export default function NewProjectPage() {
     setLoading(true)
 
     try {
+      // First, upload all pending images
+      const uploadedImageUrls: string[] = []
+      
+      if (formData.pendingImages && formData.pendingImages.length > 0) {
+        for (const pendingImage of formData.pendingImages) {
+          try {
+            const uploadFormData = new FormData()
+            uploadFormData.append('file', pendingImage.file)
+
+            const uploadResponse = await fetch('/api/admin/upload/image', {
+              method: 'POST',
+              body: uploadFormData,
+            })
+
+            if (!uploadResponse.ok) {
+              const error = await uploadResponse.json()
+              throw new Error(error.error || `Failed to upload image: ${pendingImage.file.name}`)
+            }
+
+            const uploadData = await uploadResponse.json()
+            uploadedImageUrls.push(uploadData.path)
+          } catch (error) {
+            console.error(`Error uploading image ${pendingImage.file.name}:`, error)
+            throw new Error(`Failed to upload image: ${pendingImage.file.name}. ${error instanceof Error ? error.message : 'Unknown error'}`)
+          }
+        }
+      }
+
+      // Combine uploaded images with existing image URLs
+      const allImages = [...formData.images, ...uploadedImageUrls]
+
       const payload = {
         projectName: formData.projectName,
         developer: formData.developer,
@@ -110,7 +142,7 @@ export default function NewProjectPage() {
         completionDate: formData.completionDate,
         completionProgress: formData.completionProgress,
         promotions: formData.promotions,
-        images: formData.images,
+        images: allImages,
         videos: formData.videos,
         amenities: formData.amenities,
         customAmenities: formData.customAmenities,
@@ -137,6 +169,11 @@ export default function NewProjectPage() {
         const error = await response.json()
         throw new Error(error.error || "Failed to create project")
       }
+
+      // Clean up preview URLs
+      formData.pendingImages?.forEach((img) => {
+        URL.revokeObjectURL(img.preview)
+      })
 
       router.push("/dashboard/admin/pre-con-projects")
     } catch (error) {
