@@ -7,6 +7,8 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { DashboardSidebar } from "./DashboardSidebar"
 import { Loader2 } from 'lucide-react'
 import { isAdmin, isSuperAdmin } from '@/lib/roles'
+import { BackgroundRefreshProvider } from '@/contexts/BackgroundRefreshContext'
+import { BackgroundRefreshIndicator } from './BackgroundRefreshIndicator'
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
@@ -63,27 +65,32 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <SidebarProvider>
-      <div className="h-screen flex  bg-muted/30 overflow-hidden">
-        <DashboardSidebar />
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <header className="h-16 border-b bg-white flex items-center px-6 flex-shrink-0 z-40">
-            <SidebarTrigger className="mr-4" />
-            <h1 className="text-xl font-semibold text-foreground">
-              Welcome, {session?.user?.name}
-            </h1>
-            {session?.user?.role && (
-              <span className="ml-4 text-xs text-muted-foreground">
-                ({session.user.role.replace('_', ' ')})
-              </span>
-            )}
-          </header>
-          <main className="flex-1 p-6 overflow-y-auto">
-            {children}
-          </main>
+    <BackgroundRefreshProvider>
+      <SidebarProvider>
+        <div className="h-screen flex  bg-muted/30 overflow-hidden">
+          <DashboardSidebar />
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <header className="h-16 border-b bg-white flex items-center justify-between px-6 flex-shrink-0 z-40">
+              <div className="flex items-center">
+                <SidebarTrigger className="mr-4" />
+                <h1 className="text-xl font-semibold text-foreground">
+                  Welcome, {session?.user?.name}
+                </h1>
+                {session?.user?.role && (
+                  <span className="ml-4 text-xs text-muted-foreground">
+                    ({session.user.role.replace('_', ' ')})
+                  </span>
+                )}
+              </div>
+              <BackgroundRefreshIndicator />
+            </header>
+            <main className="flex-1 p-6 overflow-y-auto">
+              {children}
+            </main>
+          </div>
         </div>
-      </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </BackgroundRefreshProvider>
   )
 }
 

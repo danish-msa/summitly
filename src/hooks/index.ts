@@ -2,3 +2,4 @@
 export * from './api/useProperties';
 export * from './ui/useLocalStorage';
 export * from './ui/useDebounce';
+export * from './useBackgroundFetch';

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { useBackgroundFetch } from "@/hooks/useBackgroundFetch"
 import { DataTable, Column } from "@/components/Dashboard/DataTable"
 import { ActionButton } from "@/components/Dashboard/ActionButton"
 import { Button } from "@/components/ui/button"
@@ -42,7 +43,7 @@ export default function PreConProjectsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [projects, setProjects] = useState<PreConProject[]>([])
-  const [loading, setLoading] = useState(true)
+  const { loading, error, setError, fetchData } = useBackgroundFetch()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [cityFilter, setCityFilter] = useState("")
@@ -75,8 +76,7 @@ export default function PreConProjectsPage() {
   }, [status, session, router, page, searchTerm, statusFilter, cityFilter])
 
   const fetchProjects = async () => {
-    try {
-      setLoading(true)
+    await fetchData(async () => {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: "10",
@@ -94,13 +94,8 @@ export default function PreConProjectsPage() {
       const data = await response.json()
       setProjects(data.projects || [])
       setTotalPages(data.pagination?.totalPages || 1)
-    } catch (error) {
-      console.error("Error fetching projects:", error)
-      const errorMessage = error instanceof Error ? error.message : "Failed to fetch projects"
-      alert(errorMessage)
-    } finally {
-      setLoading(false)
-    }
+      return data
+    })
   }
 
   const fetchStats = async () => {
@@ -142,7 +137,8 @@ export default function PreConProjectsPage() {
       fetchStats()
     } catch (error) {
       console.error("Error deleting project:", error)
-      alert("Failed to delete project")
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete project"
+      alert(errorMessage)
     }
   }
 
@@ -250,12 +246,13 @@ export default function PreConProjectsPage() {
     },
   ]
 
-  // Only show full-page loading for initial authentication check
-  // Once authenticated, show the page structure and load data in background
-  if (status === "loading") {
+  // Only show full-page loading for initial authentication check or initial data load
+  if (status === "loading" || loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground">
+          Loading... {status === "loading" ? "(Checking session...)" : "(Loading projects...)"}
+        </div>
       </div>
     )
   }
@@ -384,19 +381,32 @@ export default function PreConProjectsPage() {
         />
       </div>
 
-      {/* Table */}
-      {loading && projects.length === 0 ? (
-        <div className="flex items-center justify-center min-h-[200px]">
-          <div className="text-muted-foreground">Loading projects...</div>
+      {/* Error Display */}
+      {error && (
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-md">
+          <p className="font-medium">Error loading projects</p>
+          <p className="text-sm mt-1">{error}</p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-2"
+            onClick={() => {
+              setError(null)
+              fetchProjects()
+            }}
+          >
+            Retry
+          </Button>
         </div>
-      ) : (
-        <DataTable
-          data={projects}
-          columns={columns}
-          keyExtractor={(project) => project.id}
-          emptyMessage="No projects found"
-        />
       )}
+
+      {/* Table */}
+      <DataTable
+        data={projects}
+        columns={columns}
+        keyExtractor={(project) => project.id}
+        emptyMessage="No projects found"
+      />
 
       {/* Pagination */}
       {totalPages > 1 && (

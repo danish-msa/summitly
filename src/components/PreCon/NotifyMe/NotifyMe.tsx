@@ -28,8 +28,11 @@ const NotifyMe: React.FC = () => {
   };
 
   return (
-    <section className="py-16 relative overflow-hidden">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <section 
+      className="container-1400 rounded-2xl mx-auto relative overflow-hidden "
+      
+    >
+      <div className="px-4 sm:px-6 lg:px-8 relative z-10 bg-cover bg-center bg-no-repeat py-16 " style={{ backgroundImage: 'url(/images/pre-con/notify.png)' }}>
         <div className="max-w-2xl mx-auto text-center">
           {/* Title */}
           <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
@@ -37,13 +40,13 @@ const NotifyMe: React.FC = () => {
           </h2>
 
           {/* Description */}
-          <p className="text-lg text-muted-foreground mb-2">
+          <p className="text-lg text-white mb-2">
             Send me information about new projects that are launching or selling
           </p>
 
           {/* Community CTA */}
-          <p className="text-base text-muted-foreground mb-8">
-            Join Summitly community of <span className="font-bold text-foreground">500,000+</span> Buyers & Investors today!
+          <p className="text-base text-white mb-8">
+            Join Summitly community of <span className="font-bold text-white underline">500,000+</span> Buyers & Investors today!
           </p>
 
           {/* Email Form */}
@@ -81,12 +84,12 @@ const NotifyMe: React.FC = () => {
           {/* Privacy Assurances */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
-              <Mail className="w-4 h-4" />
-              <span>No spam, ever</span>
+              <Mail className="w-4 h-4 text-white" />
+              <span className="text-white">No spam, ever</span>
             </div>
             <div className="flex items-center gap-2">
-              <Check className="w-4 h-4" />
-              <span>Unsubscribe anytime</span>
+              <Check className="w-4 h-4 text-white" />
+              <span className="text-white">Unsubscribe anytime</span>
             </div>
           </div>
         </div>

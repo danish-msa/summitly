@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { useBackgroundFetch } from "@/hooks/useBackgroundFetch"
 import { DataTable, Column } from "@/components/Dashboard/DataTable"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,10 +36,7 @@ export default function UsersPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const hasLoadedOnce = useRef(false)
+  const { loading, refreshing, error, setError, fetchData } = useBackgroundFetch()
   const [searchTerm, setSearchTerm] = useState("")
   const [roleFilter, setRoleFilter] = useState("")
   const [page, setPage] = useState(1)
@@ -79,9 +77,7 @@ export default function UsersPage() {
         return
       }
       console.log('✅ [USERS PAGE] Super admin confirmed, fetching data...')
-      // Only treat as initial load if we've never loaded before
-      const isInitialLoad = !hasLoadedOnce.current
-      fetchUsers(isInitialLoad)
+      fetchUsers()
       fetchStats()
     } else if (status === "loading") {
       console.log('⏳ [USERS PAGE] Still loading session...')
@@ -89,20 +85,11 @@ export default function UsersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, session, router, page, searchTerm, roleFilter])
 
-  const fetchUsers = async (isInitialLoad = false) => {
+  const fetchUsers = async () => {
     const startTime = Date.now()
-    console.log('🔍 [USERS PAGE] fetchUsers called', { isInitialLoad })
+    console.log('🔍 [USERS PAGE] fetchUsers called')
     
-    // If we have existing data, use refreshing state instead of loading
-    const hasExistingData = users.length > 0
-    
-    try {
-      if (isInitialLoad || !hasExistingData) {
-        setLoading(true)
-      } else {
-        setRefreshing(true)
-      }
-      
+    await fetchData(async () => {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: "10",
@@ -130,26 +117,12 @@ export default function UsersPage() {
       
       setUsers(data.users || [])
       setTotalPages(data.pagination?.totalPages || 1)
-      setError(null) // Clear any previous errors
-      hasLoadedOnce.current = true
       
       const duration = Date.now() - startTime
       console.log(`✅ [USERS PAGE] fetchUsers completed in ${duration}ms`)
-    } catch (error) {
-      const duration = Date.now() - startTime
-      const errorMessage = error instanceof Error ? error.message : "Failed to fetch users"
-      console.error("❌ [USERS PAGE] Error fetching users:", {
-        error,
-        message: errorMessage,
-        duration: `${duration}ms`,
-      })
-      setError(errorMessage)
-      // Don't use alert, set error state instead
-    } finally {
-      setLoading(false)
-      setRefreshing(false)
-      console.log('🔍 [USERS PAGE] Loading set to false')
-    }
+      
+      return data
+    })
   }
 
   const fetchStats = async () => {
@@ -205,7 +178,7 @@ export default function UsersPage() {
       setEditDialogOpen(false)
       setSelectedUser(null)
       setSelectedRole("")
-      fetchUsers(false)
+      fetchUsers()
       fetchStats()
     } catch (error) {
       console.error("Error updating user:", error)
@@ -229,7 +202,7 @@ export default function UsersPage() {
 
       setDeleteDialogOpen(false)
       setSelectedUser(null)
-      fetchUsers(false)
+      fetchUsers()
       fetchStats()
     } catch (error) {
       console.error("Error deleting user:", error)
@@ -317,13 +290,12 @@ export default function UsersPage() {
     },
   ]
 
-  // Only show full loading screen on initial load (never loaded before) or when checking session
-  if (status === "loading" || (loading && !hasLoadedOnce.current)) {
+  // Only show full loading screen on initial load or when checking session
+  if (status === "loading" || loading) {
     console.log('⏳ [USERS PAGE] Rendering loading state:', {
       sessionStatus: status,
       dataLoading: loading,
       hasUsers: users.length > 0,
-      hasLoadedOnce: hasLoadedOnce.current,
     })
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -344,20 +316,10 @@ export default function UsersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">User Management</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage users and their roles
-            </p>
-          </div>
-          {refreshing && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              <span>Refreshing...</span>
-            </div>
-          )}
-        </div>
+        <h1 className="text-3xl font-bold">User Management</h1>
+        <p className="text-muted-foreground mt-1">
+          Manage users and their roles
+        </p>
       </div>
 
       {/* Error Display */}
