@@ -27,7 +27,7 @@ const PreConstructionProjects = () => {
   };
 
   // Handle map bounds change (currently unused, but required by map component)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   const handleMapBoundsChange = (_bounds: {north: number; south: number; east: number; west: number}) => {
     // Map bounds are tracked but not currently used for filtering
     // This can be implemented in the future if needed

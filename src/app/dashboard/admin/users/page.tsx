@@ -36,7 +36,7 @@ export default function UsersPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
-  const { loading, refreshing, error, setError, fetchData } = useBackgroundFetch()
+  const { loading, error, setError, fetchData } = useBackgroundFetch()
   const [searchTerm, setSearchTerm] = useState("")
   const [roleFilter, setRoleFilter] = useState("")
   const [page, setPage] = useState(1)
