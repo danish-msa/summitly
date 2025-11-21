@@ -63,7 +63,7 @@ interface UseBackgroundFetchReturn<T> {
  *   })
  * }, [])
  */
-export function useBackgroundFetch<T = any>(
+export function useBackgroundFetch<T = unknown>(
   options: UseBackgroundFetchOptions = {}
 ): UseBackgroundFetchReturn<T> {
   const { initialLoading = true } = options
