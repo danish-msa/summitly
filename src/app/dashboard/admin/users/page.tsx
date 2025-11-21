@@ -1,13 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { DataTable, Column } from "@/components/Dashboard/DataTable"
-import { StatCard } from "@/components/Dashboard/StatCard"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Search, Edit, Trash2, Users, Shield, UserCheck } from "lucide-react"
+import { Search, Edit, Trash2, Users, Shield, UserCheck, Crown } from "lucide-react"
 import { isSuperAdmin } from "@/lib/roles"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -36,7 +36,9 @@ export default function UsersPage() {
   const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const hasLoadedOnce = useRef(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [roleFilter, setRoleFilter] = useState("")
   const [page, setPage] = useState(1)
@@ -60,6 +62,7 @@ export default function UsersPage() {
       page,
       searchTerm,
       roleFilter,
+      hasUsers: users.length > 0,
     })
 
     if (status === "unauthenticated") {
@@ -76,7 +79,9 @@ export default function UsersPage() {
         return
       }
       console.log('✅ [USERS PAGE] Super admin confirmed, fetching data...')
-      fetchUsers()
+      // Only treat as initial load if we've never loaded before
+      const isInitialLoad = !hasLoadedOnce.current
+      fetchUsers(isInitialLoad)
       fetchStats()
     } else if (status === "loading") {
       console.log('⏳ [USERS PAGE] Still loading session...')
@@ -84,11 +89,20 @@ export default function UsersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, session, router, page, searchTerm, roleFilter])
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (isInitialLoad = false) => {
     const startTime = Date.now()
-    console.log('🔍 [USERS PAGE] fetchUsers called')
+    console.log('🔍 [USERS PAGE] fetchUsers called', { isInitialLoad })
+    
+    // If we have existing data, use refreshing state instead of loading
+    const hasExistingData = users.length > 0
+    
     try {
-      setLoading(true)
+      if (isInitialLoad || !hasExistingData) {
+        setLoading(true)
+      } else {
+        setRefreshing(true)
+      }
+      
       const params = new URLSearchParams({
         page: page.toString(),
         limit: "10",
@@ -117,6 +131,7 @@ export default function UsersPage() {
       setUsers(data.users || [])
       setTotalPages(data.pagination?.totalPages || 1)
       setError(null) // Clear any previous errors
+      hasLoadedOnce.current = true
       
       const duration = Date.now() - startTime
       console.log(`✅ [USERS PAGE] fetchUsers completed in ${duration}ms`)
@@ -132,6 +147,7 @@ export default function UsersPage() {
       // Don't use alert, set error state instead
     } finally {
       setLoading(false)
+      setRefreshing(false)
       console.log('🔍 [USERS PAGE] Loading set to false')
     }
   }
@@ -189,7 +205,7 @@ export default function UsersPage() {
       setEditDialogOpen(false)
       setSelectedUser(null)
       setSelectedRole("")
-      fetchUsers()
+      fetchUsers(false)
       fetchStats()
     } catch (error) {
       console.error("Error updating user:", error)
@@ -213,7 +229,7 @@ export default function UsersPage() {
 
       setDeleteDialogOpen(false)
       setSelectedUser(null)
-      fetchUsers()
+      fetchUsers(false)
       fetchStats()
     } catch (error) {
       console.error("Error deleting user:", error)
@@ -301,10 +317,13 @@ export default function UsersPage() {
     },
   ]
 
-  if (status === "loading" || loading) {
+  // Only show full loading screen on initial load (never loaded before) or when checking session
+  if (status === "loading" || (loading && !hasLoadedOnce.current)) {
     console.log('⏳ [USERS PAGE] Rendering loading state:', {
       sessionStatus: status,
       dataLoading: loading,
+      hasUsers: users.length > 0,
+      hasLoadedOnce: hasLoadedOnce.current,
     })
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -325,10 +344,20 @@ export default function UsersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">User Management</h1>
-        <p className="text-muted-foreground mt-1">
-          Manage users and their roles
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">User Management</h1>
+            <p className="text-muted-foreground mt-1">
+              Manage users and their roles
+            </p>
+          </div>
+          {refreshing && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              <span>Refreshing...</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Error Display */}
@@ -351,26 +380,66 @@ export default function UsersPage() {
       )}
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <StatCard
-          title="Total Users"
-          value={stats.total}
-          icon={Users}
-        />
-        <StatCard
-          title="Subscribers"
-          value={stats.subscribers}
-          icon={UserCheck}
-        />
-        <StatCard
-          title="Admins"
-          value={stats.admins}
-          icon={Shield}
-        />
-        <StatCard
-          title="Super Admins"
-          value={stats.superAdmins}
-        />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 shadow-md hover:shadow-xl transition-all duration-300 border-0">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-white/90">
+              Total Users
+            </CardTitle>
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+              <Users className="h-5 w-5 text-white" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-white">{stats.total}</div>
+            <p className="text-xs text-white/80 mt-1">All registered users</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-emerald-500 to-teal-500 shadow-md hover:shadow-xl transition-all duration-300 border-0">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-white/90">
+              Subscribers
+            </CardTitle>
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+              <UserCheck className="h-5 w-5 text-white" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-white">{stats.subscribers}</div>
+            <p className="text-xs text-white/80 mt-1">Regular users</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-purple-500 to-indigo-500 shadow-md hover:shadow-xl transition-all duration-300 border-0">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-white/90">
+              Admins
+            </CardTitle>
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+              <Shield className="h-5 w-5 text-white" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-white">{stats.admins}</div>
+            <p className="text-xs text-white/80 mt-1">Administrators</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-amber-500 to-orange-500 shadow-md hover:shadow-xl transition-all duration-300 border-0">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-white/90">
+              Super Admins
+            </CardTitle>
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+              <Crown className="h-5 w-5 text-white" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-white">{stats.superAdmins}</div>
+            <p className="text-xs text-white/80 mt-1">Super administrators</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters */}
