@@ -405,6 +405,7 @@ model PreConstructionProject {
   landscapeArchitectInfo String? @db.Text // JSON string for landscape architect details
   marketingInfo         String? @db.Text // JSON string for marketing details
   salesMarketingCompany String? // Sales & Marketing Company ID
+  developmentTeamOverview String? @db.Text // Overview of the development team
 
   // Timestamps
   createdAt DateTime @default(now())

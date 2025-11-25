@@ -213,6 +213,7 @@ export async function POST(request: NextRequest) {
       landscapeArchitectInfo,
       marketingInfo,
       salesMarketingCompany,
+      developmentTeamOverview,
     } = body
 
     // Validate required fields
@@ -389,6 +390,7 @@ export async function POST(request: NextRequest) {
         landscapeArchitectInfo: landscapeArchitectInfo ? await fetchDeveloperData(landscapeArchitectInfo) : null,
         marketingInfo: marketingInfo ? await fetchDeveloperData(marketingInfo) : null,
         salesMarketingCompany: salesMarketingCompany && salesMarketingCompany.trim() ? salesMarketingCompany.trim() : null,
+        developmentTeamOverview: developmentTeamOverview && developmentTeamOverview.trim() ? developmentTeamOverview.trim() : null,
       } as unknown as Prisma.PreConstructionProjectCreateInput,
     })
 

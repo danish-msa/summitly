@@ -67,6 +67,7 @@ interface PreConProject {
   landscapeArchitectInfo: string | null
   marketingInfo: string | null
   salesMarketingCompany: string | null
+  developmentTeamOverview: string | null
 }
 
 export default function EditProjectPage() {
@@ -234,7 +235,7 @@ export default function EditProjectPage() {
         landscapeArchitectInfo: project.landscapeArchitectInfo || "",
         marketingInfo: project.marketingInfo || "",
         salesMarketingCompany: project.salesMarketingCompany || "",
-        developmentTeamOverview: "",
+        developmentTeamOverview: project.developmentTeamOverview || "",
       })
     } catch (error) {
       console.error("Error fetching project:", error)
@@ -340,6 +341,7 @@ export default function EditProjectPage() {
         landscapeArchitectInfo: formData.landscapeArchitectInfo || null,
         marketingInfo: formData.marketingInfo || null,
         salesMarketingCompany: formData.salesMarketingCompany || null,
+        developmentTeamOverview: formData.developmentTeamOverview || null,
       }
 
       const response = await fetch(`/api/admin/pre-con-projects/${params.id}`, {

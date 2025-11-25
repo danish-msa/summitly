@@ -6,6 +6,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { cn } from '@/lib/utils';
 import type { PreConstructionPropertyCardProps, PreConstructionPropertyInput } from './types';
 
+// Type guard to check if property has preCon
+const hasPreCon = (property: PreConstructionPropertyInput): property is PreConstructionPropertyInput & { preCon: NonNullable<PreConstructionPropertyInput['preCon']> } => {
+  return 'preCon' in property && property.preCon !== null && property.preCon !== undefined;
+};
+
 // Helper function to get images from property
 const getImages = (property: PreConstructionPropertyInput): string[] => {
   if (Array.isArray(property.images)) {
@@ -14,7 +19,7 @@ const getImages = (property: PreConstructionPropertyInput): string[] => {
   if (property.images && typeof property.images === 'object' && 'allImages' in property.images) {
     return property.images.allImages || [];
   }
-  if (property.preCon?.images && Array.isArray(property.preCon.images)) {
+  if (hasPreCon(property) && property.preCon.images && Array.isArray(property.preCon.images)) {
     return property.preCon.images;
   }
   if (property.images && typeof property.images === 'object' && 'imageUrl' in property.images) {
@@ -25,10 +30,16 @@ const getImages = (property: PreConstructionPropertyInput): string[] => {
 
 // Helper function to get starting price
 const getStartingPrice = (property: PreConstructionPropertyInput): number => {
-  return property.preCon?.startingPrice || 
-         ('startingPrice' in property ? property.startingPrice : 0) || 
-         ('listPrice' in property ? property.listPrice : 0) || 
-         0;
+  if (hasPreCon(property) && property.preCon.startingPrice) {
+    return property.preCon.startingPrice;
+  }
+  if ('startingPrice' in property && property.startingPrice) {
+    return property.startingPrice;
+  }
+  if ('listPrice' in property && property.listPrice) {
+    return property.listPrice;
+  }
+  return 0;
 };
 
 // Helper function to get property ID
@@ -40,23 +51,35 @@ const getPropertyId = (property: PreConstructionPropertyInput): string => {
 
 // Helper function to get project name
 const getProjectName = (property: PreConstructionPropertyInput): string => {
-  return property.preCon?.projectName || 
-         ('projectName' in property ? property.projectName : undefined) || 
-         '';
+  if (hasPreCon(property) && property.preCon.projectName) {
+    return property.preCon.projectName;
+  }
+  if ('projectName' in property && property.projectName) {
+    return property.projectName;
+  }
+  return '';
 };
 
 // Helper function to get developer
 const getDeveloper = (property: PreConstructionPropertyInput): string => {
-  return property.preCon?.developer || 
-         ('developer' in property ? property.developer : undefined) || 
-         '';
+  if (hasPreCon(property) && property.preCon.developer) {
+    return property.preCon.developer;
+  }
+  if ('developer' in property && property.developer) {
+    return property.developer;
+  }
+  return '';
 };
 
 // Helper function to get status
 const getStatus = (property: PreConstructionPropertyInput): string => {
-  return property.preCon?.status || 
-         ('status' in property ? property.status : undefined) || 
-         'selling';
+  if (hasPreCon(property) && property.preCon.status) {
+    return property.preCon.status;
+  }
+  if ('status' in property && property.status) {
+    return property.status;
+  }
+  return 'selling';
 };
 
 const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstructionPropertyCardProps) => {
@@ -178,7 +201,7 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
             {/* Property Type Badge */}
             <div className="absolute top-3 left-3">
               <Badge className="bg-card/95 backdrop-blur-sm text-card-foreground border-0 shadow-lg text-xs">
-                {property.preCon?.details?.propertyType || 
+                {(hasPreCon(property) && property.preCon.details?.propertyType) || 
                  ('details' in property ? property.details?.propertyType : undefined) || 
                  'Pre-Construction'}
               </Badge>
@@ -308,7 +331,7 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
             <div className="flex items-center gap-1.5">
               <Bed className="text-muted-foreground" size={14} />
               <span className="text-xs text-foreground">
-                {property.preCon?.details?.bedroomRange || 
+                {(hasPreCon(property) && property.preCon.details?.bedroomRange) || 
                  ('details' in property ? property.details?.bedroomRange : undefined) || 
                  'N/A'}
               </span>
@@ -316,7 +339,7 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
             <div className="flex items-center gap-1.5">
               <Bath className="text-muted-foreground" size={14} />
               <span className="text-xs text-foreground">
-                {property.preCon?.details?.bathroomRange || 
+                {(hasPreCon(property) && property.preCon.details?.bathroomRange) || 
                  ('details' in property ? property.details?.bathroomRange : undefined) || 
                  'N/A'}
               </span>
@@ -324,7 +347,7 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
             <div className="flex items-center gap-1.5">
               <Maximize2 className="text-muted-foreground" size={14} />
               <span className="text-xs text-foreground">
-                {property.preCon?.details?.sqftRange || 
+                {(hasPreCon(property) && property.preCon.details?.sqftRange) || 
                  ('details' in property ? property.details?.sqftRange : undefined) || 
                  'N/A'} sqft
               </span>
@@ -338,7 +361,7 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
               <div>
                 <p className="text-xs text-muted-foreground">Completion</p>
                 <p className="text-xs font-semibold text-foreground">
-                  {property.preCon?.completion?.date || 
+                  {(hasPreCon(property) && property.preCon.completion?.date) || 
                    ('completion' in property ? property.completion?.date : undefined) || 
                    'TBD'}
                 </p>
@@ -349,10 +372,10 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
               <div>
                 <p className="text-xs text-muted-foreground">Available</p>
                 <p className="text-xs font-semibold text-foreground">
-                  {property.preCon?.details?.availableUnits || 
+                  {(hasPreCon(property) && property.preCon.details?.availableUnits) || 
                    ('details' in property ? property.details?.availableUnits : undefined) || 
                    0}/
-                  {property.preCon?.details?.totalUnits || 
+                  {(hasPreCon(property) && property.preCon.details?.totalUnits) || 
                    ('details' in property ? property.details?.totalUnits : undefined) || 
                    0}
                 </p>

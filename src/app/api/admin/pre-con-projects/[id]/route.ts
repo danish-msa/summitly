@@ -86,6 +86,7 @@ export async function GET(
       interiorDesignerInfo: string | null
       landscapeArchitectInfo: string | null
       marketingInfo: string | null
+      developmentTeamOverview: string | null
     }
 
     // Convert completionProgress integer back to string for form compatibility
@@ -109,6 +110,7 @@ export async function GET(
       interiorDesignerInfo: extractDeveloperId(projectWithAllFields.interiorDesignerInfo ?? null),
       landscapeArchitectInfo: extractDeveloperId(projectWithAllFields.landscapeArchitectInfo ?? null),
       marketingInfo: extractDeveloperId(projectWithAllFields.marketingInfo ?? null),
+      developmentTeamOverview: projectWithAllFields.developmentTeamOverview ?? null,
     }
 
     return NextResponse.json({ project: parsedProject })
@@ -229,6 +231,7 @@ export async function PUT(
       landscapeArchitectInfo?: string | null
       marketingInfo?: string | null
       salesMarketingCompany?: string | null
+      developmentTeamOverview?: string | null
       mlsNumber?: string
     } = {}
     if (body.projectName !== undefined) updateData.projectName = body.projectName
@@ -309,6 +312,7 @@ export async function PUT(
     if (body.landscapeArchitectInfo !== undefined) updateData.landscapeArchitectInfo = body.landscapeArchitectInfo ? await fetchDeveloperData(body.landscapeArchitectInfo) : null
     if (body.marketingInfo !== undefined) updateData.marketingInfo = body.marketingInfo ? await fetchDeveloperData(body.marketingInfo) : null
     if (body.salesMarketingCompany !== undefined) updateData.salesMarketingCompany = body.salesMarketingCompany || null
+    if (body.developmentTeamOverview !== undefined) updateData.developmentTeamOverview = body.developmentTeamOverview || null
     if (body.mlsNumber !== undefined) updateData.mlsNumber = body.mlsNumber
 
     const project = await prisma.preConstructionProject.update({
@@ -340,6 +344,7 @@ export async function PUT(
       interiorDesignerInfo: string | null
       landscapeArchitectInfo: string | null
       marketingInfo: string | null
+      developmentTeamOverview: string | null
     }
 
     // Convert completionProgress integer back to string for form compatibility
@@ -363,6 +368,7 @@ export async function PUT(
       interiorDesignerInfo: extractDeveloperId(projectWithAllFields.interiorDesignerInfo ?? null),
       landscapeArchitectInfo: extractDeveloperId(projectWithAllFields.landscapeArchitectInfo ?? null),
       marketingInfo: extractDeveloperId(projectWithAllFields.marketingInfo ?? null),
+      developmentTeamOverview: projectWithAllFields.developmentTeamOverview ?? null,
     }
 
     return NextResponse.json({ project: parsedProject })

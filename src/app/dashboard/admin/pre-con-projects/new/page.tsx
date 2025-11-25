@@ -192,6 +192,7 @@ export default function NewProjectPage() {
         landscapeArchitectInfo: formData.landscapeArchitectInfo || null,
         marketingInfo: formData.marketingInfo || null,
         salesMarketingCompany: formData.salesMarketingCompany || null,
+        developmentTeamOverview: formData.developmentTeamOverview || null,
       }
 
       const response = await fetch("/api/admin/pre-con-projects", {
