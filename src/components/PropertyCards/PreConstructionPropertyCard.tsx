@@ -6,8 +6,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { cn } from '@/lib/utils';
 import type { PreConstructionPropertyCardProps, PreConstructionPropertyInput } from './types';
 
+// Type for property with preCon
+type PropertyWithPreCon = Extract<PreConstructionPropertyInput, { preCon?: unknown }>;
+
 // Type guard to check if property has preCon
-const hasPreCon = (property: PreConstructionPropertyInput): property is PreConstructionPropertyInput & { preCon: NonNullable<PreConstructionPropertyInput['preCon']> } => {
+const hasPreCon = (property: PreConstructionPropertyInput): property is PropertyWithPreCon & { preCon: NonNullable<PropertyWithPreCon['preCon']> } => {
   return 'preCon' in property && property.preCon !== null && property.preCon !== undefined;
 };
 
