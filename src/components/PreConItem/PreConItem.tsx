@@ -27,17 +27,34 @@ const PreConItem: React.FC = () => {
   useEffect(() => {
     const fetchPropertyDetails = async () => {
       try {
-        // For pre-con projects, use mock data
-        // TODO: Replace with actual API call
-        const mockProperty = getPreConProject(propertyId);
-        if (mockProperty) {
-          setProperty(mockProperty);
+        // Fetch from API using mlsNumber
+        const response = await fetch(`/api/pre-con-projects/${propertyId}`);
+        if (!response.ok) {
+          // Fallback to mock data if API fails
+          const mockProperty = getPreConProject(propertyId);
+          if (mockProperty) {
+            setProperty(mockProperty);
+          } else {
+            setError('Property not found');
+          }
+          return;
+        }
+        
+        const data = await response.json();
+        if (data.project) {
+          setProperty(data.project);
         } else {
           setError('Property not found');
         }
       } catch (err) {
-        setError('Failed to load property details');
-        console.error(err);
+        console.error('Error fetching property:', err);
+        // Fallback to mock data on error
+        const mockProperty = getPreConProject(propertyId);
+        if (mockProperty) {
+          setProperty(mockProperty);
+        } else {
+          setError('Failed to load property details');
+        }
       } finally {
         setLoading(false);
       }
@@ -84,13 +101,13 @@ const PreConItem: React.FC = () => {
       <SectionNavigation sections={navigationSections} property={property} />
       <div className='container-1400'>
         <div className='flex flex-row gap-8'>
-          <div className='w-[70%] flex flex-col gap-6'>
+          <div className='w-[75%] flex flex-col gap-6'>
             <div ref={bannerRef} data-banner-section>
               <Banner property={property} rawProperty={null} isPreCon={true} />
             </div>
             <PreConItemBody property={property} />
           </div>
-          <div className='w-[30%] flex flex-col gap-4 items-start gap-0 sticky top-[130px] self-start'>
+          <div className='w-[25%] flex flex-col gap-4 items-start gap-0 sticky top-[130px] self-start'>
             <RightSidebar property={property} />
           </div>
         </div>

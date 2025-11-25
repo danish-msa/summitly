@@ -331,7 +331,17 @@ model PreConstructionProject {
   developer     String
   startingPrice Float
   endingPrice   Float
+  avgPricePerSqft Float? // Average price per square foot
   status        String // 'selling', 'coming-soon', 'sold-out'
+  
+  // Additional Pricing
+  parkingPrice      Float?
+  parkingPriceDetail String? @db.Text
+  lockerPrice       Float?
+  lockerPriceDetail String? @db.Text
+  assignmentFee     Float?
+  developmentLevies Float?
+  developmentCharges Float?
 
   // Address
   streetNumber      String?
@@ -350,12 +360,22 @@ model PreConstructionProject {
   // Property Details
   propertyType   String // 'Condos', 'Houses', 'Lofts', 'Master-Planned Communities', 'Multi Family', 'Offices'
   subPropertyType String? // 'Low-Rise', 'Mid-Rise', 'High-Rise' (for Condos) or 'Link', 'Townhouse', 'Semi-Detached', 'Detached' (for Houses)
-  bedroomRange   String // 'Studio', '1 Bdrm', '2 Bdrms', etc.
+  bedroomRange   String // e.g., '1-3' (range format)
   bathroomRange  String // e.g., '1-3'
   sqftRange      String // e.g., '650-1,450'
+  hasDen         Boolean @default(false) // Unit has den available
+  hasStudio      Boolean @default(false) // Studio units available
+  hasLoft        Boolean @default(false) // Loft units available
+  hasWorkLiveLoft Boolean @default(false) // Work/Live Loft units available
   totalUnits     Int
   availableUnits Int
   storeys        Int?
+  height         Float? // Height in meters
+  
+  // Maintenance & Fees
+  maintenanceFeesPerSqft Float?
+  maintenanceFeesDetail  String? @db.Text
+  floorPremiums          String? @db.Text
 
   // Completion
   completionDate     String // e.g., 'Q4 2025'
@@ -384,6 +404,7 @@ model PreConstructionProject {
   interiorDesignerInfo  String? @db.Text // JSON string for interior designer details
   landscapeArchitectInfo String? @db.Text // JSON string for landscape architect details
   marketingInfo         String? @db.Text // JSON string for marketing details
+  salesMarketingCompany String? // Sales & Marketing Company ID
 
   // Timestamps
   createdAt DateTime @default(now())

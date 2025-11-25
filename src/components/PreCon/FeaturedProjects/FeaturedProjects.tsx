@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { FeaturedPropertyCard } from '../PropertyCards';
 import type { PreConstructionProperty } from '../PropertyCards/types';
 import SectionHeading from '@/components/Helper/SectionHeading';
-import { getAllPreConProjects } from '@/data/mockPreConData';
 import { PropertyListing } from '@/lib/types';
 
 // Convert PropertyListing to PreConstructionProperty format
@@ -28,7 +27,7 @@ const convertToPreConProperty = (property: PropertyListing): PreConstructionProp
       longitude: property.map?.longitude ?? undefined,
     },
     details: {
-      propertyType: property.details?.propertyType || 'Condominium',
+      propertyType: property.details?.propertyType || preCon.details?.propertyType || 'Condominium',
       bedroomRange: preCon.details.bedroomRange,
       bathroomRange: preCon.details.bathroomRange,
       sqftRange: preCon.details.sqftRange,
@@ -37,7 +36,7 @@ const convertToPreConProperty = (property: PropertyListing): PreConstructionProp
     },
     completion: {
       date: preCon.completion.date,
-      progress: preCon.completion.progress,
+      progress: typeof preCon.completion.progress === 'string' ? 0 : (preCon.completion.progress || 0),
     },
     features: preCon.features || [],
     depositStructure: preCon.depositStructure,
@@ -46,14 +45,56 @@ const convertToPreConProperty = (property: PropertyListing): PreConstructionProp
 };
 
 const FeaturedProjects: React.FC = () => {
-  // Get featured projects from centralized mock data (top 2 projects)
+  const [projects, setProjects] = useState<PropertyListing[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch('/api/pre-con-projects?limit=2');
+        if (response.ok) {
+          const data = await response.json();
+          setProjects(data.projects || []);
+        }
+      } catch (error) {
+        console.error('Error fetching featured projects:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  // Convert and get top 2 featured projects
   const featuredProperties = useMemo(() => {
-    const allPropertyListings = getAllPreConProjects();
-    return allPropertyListings
+    return projects
       .map(convertToPreConProperty)
       .filter((project): project is PreConstructionProperty => project !== null)
-      .slice(0, 2); // Get top 2 for featured section
-  }, []);
+      .slice(0, 2);
+  }, [projects]);
+
+  if (loading) {
+    return (
+      <section className="py-16 bg-background">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <SectionHeading
+            heading="Our Top Picks"
+            subheading="Featured Projects"
+            description="Discover our handpicked selection of premium pre-construction properties"
+            position="center"
+          />
+          <div className="flex items-center justify-center py-12">
+            <div className="text-muted-foreground">Loading featured projects...</div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (featuredProperties.length === 0) {
+    return null;
+  }
 
   return (
     <section className="py-16 bg-background">

@@ -18,7 +18,8 @@ const PreConstructionProjects = () => {
     mapProperties,
     filters,
     handleFilterChange,
-    allProjects
+    allProjects,
+    loading
   } = usePreConProjects();
 
   // Handle project click for map
@@ -80,7 +81,11 @@ const PreConstructionProjects = () => {
           />
         </div>
 
-        {visibleProjects.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="text-muted-foreground">Loading projects...</div>
+          </div>
+        ) : visibleProjects.length > 0 ? (
           <div className={`flex ${viewMode === 'map' ? 'flex-col' : viewMode === 'list' ? 'flex-col' : 'flex-col md:flex-row'} gap-6`}>
             {/* Project Listings */}
             {(viewMode === 'list' || viewMode === 'split') && (

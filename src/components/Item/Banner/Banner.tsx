@@ -176,7 +176,31 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                                             {/* Property Type */}
                                             <div className="flex flex-row items-center gap-1">
                                                 <Building2 className="h-6 w-6 text-primary" />
-                                                <span className="text-sm text-foreground font-medium">{property.details.propertyType || 'Condominium'}</span>
+                                                <span className="text-sm text-foreground font-medium">
+                                                    {(() => {
+                                                        // Get propertyType from details or preCon details (if available)
+                                                        const propertyType = property.details?.propertyType || 
+                                                                             property.preCon?.details?.propertyType || 
+                                                                             'Condominium';
+                                                        // Get subPropertyType from preCon details
+                                                        const subPropertyType = property.preCon?.details?.subPropertyType;
+                                                        
+                                                        // Check if propertyType is Condo/Condominium or House/Houses
+                                                        const isCondo = propertyType.toLowerCase().includes('condo');
+                                                        const isHouse = propertyType.toLowerCase().includes('house');
+                                                        
+                                                        // If subPropertyType exists and matches the property type, append the property type
+                                                        if (subPropertyType && isCondo) {
+                                                            return `${subPropertyType} Condo`;
+                                                        }
+                                                        if (subPropertyType && isHouse) {
+                                                            return `${subPropertyType} House`;
+                                                        }
+                                                        
+                                                        // Otherwise, return the propertyType
+                                                        return propertyType;
+                                                    })()}
+                                                </span>
                                             </div>
                                             {/* Occupancy */}
                                             {preConData?.completion?.date && (

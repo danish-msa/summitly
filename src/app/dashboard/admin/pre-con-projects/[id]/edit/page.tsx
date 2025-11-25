@@ -7,19 +7,28 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import { isAdmin } from "@/lib/roles"
 import { PreConProjectForm, type FormData } from "@/components/Dashboard/PreConProjectForm"
+import { useBackgroundFetch } from "@/hooks/useBackgroundFetch"
 
 export default function EditProjectPage() {
   const router = useRouter()
   const params = useParams()
   const { data: session } = useSession()
-  const [loading, setLoading] = useState(true)
+  const { loading, fetchData } = useBackgroundFetch()
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState<FormData>({
     projectName: "",
     developer: "",
     startingPrice: "",
     endingPrice: "",
+    avgPricePerSqft: "",
     status: "",
+    parkingPrice: "",
+    parkingPriceDetail: "",
+    lockerPrice: "",
+    lockerPriceDetail: "",
+    assignmentFee: "",
+    developmentLevies: "",
+    developmentCharges: "",
     streetNumber: "",
     streetName: "",
     city: "",
@@ -33,10 +42,19 @@ export default function EditProjectPage() {
     subPropertyType: "",
     bedroomRange: "",
     bathroomRange: "",
-    sqftRange: "",
+    sqftMin: "",
+    sqftMax: "",
+    hasDen: false,
+    hasStudio: false,
+    hasLoft: false,
+    hasWorkLiveLoft: false,
     totalUnits: "",
     availableUnits: "",
     storeys: "",
+    height: "",
+    maintenanceFeesPerSqft: "",
+    maintenanceFeesDetail: "",
+    floorPremiums: "",
     completionDate: "",
     completionProgress: "",
     promotions: "",
@@ -57,6 +75,7 @@ export default function EditProjectPage() {
     builderInfo: "",
     landscapeArchitectInfo: "",
     marketingInfo: "",
+    salesMarketingCompany: "",
     developmentTeamOverview: "",
   })
 
@@ -76,19 +95,30 @@ export default function EditProjectPage() {
     if (!params?.id) return
     
     try {
-      setLoading(true)
-      const response = await fetch(`/api/admin/pre-con-projects/${params.id}`)
-      if (!response.ok) throw new Error("Failed to fetch project")
+      const project = await fetchData(async () => {
+        const response = await fetch(`/api/admin/pre-con-projects/${params.id}`)
+        if (!response.ok) throw new Error("Failed to fetch project")
 
-      const data = await response.json()
-      const project = data.project
+        const data = await response.json()
+        return data.project
+      })
+
+      if (!project) return
 
       setFormData({
         projectName: project.projectName || "",
         developer: project.developer || "",
         startingPrice: project.startingPrice?.toString() || "",
         endingPrice: project.endingPrice?.toString() || "",
+        avgPricePerSqft: project.avgPricePerSqft?.toString() || "",
         status: project.status || "",
+        parkingPrice: project.parkingPrice?.toString() || "",
+        parkingPriceDetail: project.parkingPriceDetail || "",
+        lockerPrice: project.lockerPrice?.toString() || "",
+        lockerPriceDetail: project.lockerPriceDetail || "",
+        assignmentFee: project.assignmentFee?.toString() || "",
+        developmentLevies: project.developmentLevies?.toString() || "",
+        developmentCharges: project.developmentCharges?.toString() || "",
         streetNumber: project.streetNumber || "",
         streetName: project.streetName || "",
         city: project.city || "",
@@ -102,10 +132,19 @@ export default function EditProjectPage() {
         subPropertyType: project.subPropertyType || "",
         bedroomRange: project.bedroomRange || "",
         bathroomRange: project.bathroomRange || "",
-        sqftRange: project.sqftRange || "",
+        sqftMin: project.sqftRange ? (project.sqftRange.split('-')[0]?.trim() || '') : '',
+        sqftMax: project.sqftRange ? (project.sqftRange.split('-')[1]?.trim() || '') : '',
+        hasDen: project.hasDen ?? false,
+        hasStudio: project.hasStudio ?? false,
+        hasLoft: project.hasLoft ?? false,
+        hasWorkLiveLoft: project.hasWorkLiveLoft ?? false,
         totalUnits: project.totalUnits?.toString() || "",
         availableUnits: project.availableUnits?.toString() || "",
         storeys: project.storeys?.toString() || "",
+        height: project.height?.toString() || "",
+        maintenanceFeesPerSqft: project.maintenanceFeesPerSqft?.toString() || "",
+        maintenanceFeesDetail: project.maintenanceFeesDetail || "",
+        floorPremiums: project.floorPremiums || "",
         completionDate: project.completionDate || "",
         completionProgress: project.completionProgress || "",
         promotions: project.promotions || "",
@@ -134,14 +173,13 @@ export default function EditProjectPage() {
         builderInfo: project.builderInfo || "",
         landscapeArchitectInfo: project.landscapeArchitectInfo || "",
         marketingInfo: project.marketingInfo || "",
+        salesMarketingCompany: project.salesMarketingCompany || "",
         developmentTeamOverview: "",
       })
     } catch (error) {
       console.error("Error fetching project:", error)
       alert("Failed to load project")
       router.push("/dashboard/admin/pre-con-projects")
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -188,7 +226,15 @@ export default function EditProjectPage() {
         developer: formData.developer,
         startingPrice: formData.startingPrice,
         endingPrice: formData.endingPrice,
+        avgPricePerSqft: formData.avgPricePerSqft || null,
         status: formData.status,
+        parkingPrice: formData.parkingPrice || null,
+        parkingPriceDetail: formData.parkingPriceDetail || null,
+        lockerPrice: formData.lockerPrice || null,
+        lockerPriceDetail: formData.lockerPriceDetail || null,
+        assignmentFee: formData.assignmentFee || null,
+        developmentLevies: formData.developmentLevies || null,
+        developmentCharges: formData.developmentCharges || null,
         streetNumber: formData.streetNumber,
         streetName: formData.streetName,
         city: formData.city,
@@ -203,10 +249,20 @@ export default function EditProjectPage() {
         subPropertyType: formData.subPropertyType,
         bedroomRange: formData.bedroomRange,
         bathroomRange: formData.bathroomRange,
-        sqftRange: formData.sqftRange,
+        sqftRange: formData.sqftMin && formData.sqftMax 
+          ? `${formData.sqftMin}-${formData.sqftMax}` 
+          : formData.sqftMin || formData.sqftMax || '',
+        hasDen: formData.hasDen,
+        hasStudio: formData.hasStudio,
+        hasLoft: formData.hasLoft,
+        hasWorkLiveLoft: formData.hasWorkLiveLoft,
         totalUnits: formData.totalUnits,
         availableUnits: formData.availableUnits,
         storeys: formData.storeys,
+        height: formData.height || null,
+        maintenanceFeesPerSqft: formData.maintenanceFeesPerSqft || null,
+        maintenanceFeesDetail: formData.maintenanceFeesDetail || null,
+        floorPremiums: formData.floorPremiums || null,
         completionDate: formData.completionDate,
         completionProgress: formData.completionProgress,
         promotions: formData.promotions,
@@ -223,6 +279,7 @@ export default function EditProjectPage() {
         interiorDesignerInfo: formData.interiorDesignerInfo || null,
         landscapeArchitectInfo: formData.landscapeArchitectInfo || null,
         marketingInfo: formData.marketingInfo || null,
+        salesMarketingCompany: formData.salesMarketingCompany || null,
       }
 
       const response = await fetch(`/api/admin/pre-con-projects/${params.id}`, {

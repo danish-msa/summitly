@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Plus, X, MapPin, Upload, Loader2, Waves, Dumbbell, Square, Shield, Sparkles, UtensilsCrossed, Coffee, Car, Lock, Wifi, Tv, Gamepad2, ShoppingBag, TreePine, Mountain, Eye, ArrowUpDown, Flame, Users, Palette, Hammer, Sprout, Megaphone, Building2, Home, Ruler, Bed, Bath, Calendar, DollarSign, Construction, ChevronDown, Search } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -36,7 +36,15 @@ export interface FormData {
   developer: string
   startingPrice: string
   endingPrice: string
+  avgPricePerSqft: string
   status: string
+  parkingPrice: string
+  parkingPriceDetail: string
+  lockerPrice: string
+  lockerPriceDetail: string
+  assignmentFee: string
+  developmentLevies: string
+  developmentCharges: string
   streetNumber: string
   streetName: string
   city: string
@@ -50,10 +58,19 @@ export interface FormData {
   subPropertyType: string
   bedroomRange: string
   bathroomRange: string
-  sqftRange: string
+  sqftMin: string
+  sqftMax: string
+  hasDen: boolean
+  hasStudio: boolean
+  hasLoft: boolean
+  hasWorkLiveLoft: boolean
   totalUnits: string
   availableUnits: string
   storeys: string
+  height: string
+  maintenanceFeesPerSqft: string
+  maintenanceFeesDetail: string
+  floorPremiums: string
   completionDate: string
   completionProgress: string
   promotions: string
@@ -74,6 +91,7 @@ export interface FormData {
   builderInfo: string // Developer ID
   landscapeArchitectInfo: string // Developer ID
   marketingInfo: string // Developer ID
+  salesMarketingCompany: string // Sales & Marketing Company ID
   developmentTeamOverview: string
 }
 
@@ -103,7 +121,8 @@ export function PreConProjectForm({
   submitLabel = "Create Project",
   onCancel,
 }: PreConProjectFormProps) {
-  const [activeTab, setActiveTab] = useState("basic")
+  const [openSections, setOpenSections] = useState<string[]>(["basic", "address", "details", "media", "team"])
+  const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
   const [mapLoaded, setMapLoaded] = useState(false)
   const mapRef = useRef<google.maps.Map | null>(null)
   const markerRef = useRef<google.maps.Marker | null>(null)
@@ -610,19 +629,63 @@ export function PreConProjectForm({
     }
   }
 
-  return (
-    <form onSubmit={onSubmit}>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid max-w-5xl w-full grid-cols-5">
-          <TabsTrigger value="basic">Basic Info</TabsTrigger>
-          <TabsTrigger value="address">Address</TabsTrigger>
-          <TabsTrigger value="details">Property Details</TabsTrigger>
-          <TabsTrigger value="media">Media & Content</TabsTrigger>
-          <TabsTrigger value="team">Development Team</TabsTrigger>
-        </TabsList>
+  // Scroll to section and open it
+  const navigateToSection = (section: string) => {
+    if (!openSections.includes(section)) {
+      setOpenSections((prev) => [...prev, section])
+    }
+    setTimeout(() => {
+      const element = sectionRefs.current[section]
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" })
+      }
+    }, 100)
+  }
 
-        {/* Basic Information Tab */}
-        <TabsContent value="basic" className="space-y-6 container">
+  const sections = [
+    { id: "basic", label: "Basic Info" },
+    { id: "address", label: "Address" },
+    { id: "details", label: "Property Details" },
+    { id: "media", label: "Media & Content" },
+    { id: "team", label: "Development Team" },
+  ]
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-6">
+      {/* Sticky Navigation Header */}
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="container py-4">
+          <div className="flex flex-wrap gap-2 justify-center">
+            {sections.map((section) => (
+              <Button
+                key={section.id}
+                type="button"
+                variant={openSections.includes(section.id) ? "default" : "outline"}
+                onClick={() => navigateToSection(section.id)}
+                className="rounded-lg"
+              >
+                {section.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Collapsible Sections */}
+      <Accordion
+        type="multiple"
+        value={openSections}
+        onValueChange={setOpenSections}
+        className="space-y-4"
+      >
+        {/* Basic Information Section */}
+        <div ref={(el) => { sectionRefs.current["basic"] = el }}>
+          <AccordionItem value="basic">
+            <AccordionTrigger className="container text-lg font-semibold px-6">
+              Basic Information
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-6 container">
           <Card>
             <CardHeader>
               <CardTitle>Basic Information</CardTitle>
@@ -683,6 +746,30 @@ export function PreConProjectForm({
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="avgPricePerSqft">Avg. Price (/ft)</Label>
+                  <Input
+                    id="avgPricePerSqft"
+                    type="number"
+                    step="0.01"
+                    className="rounded-lg"
+                    value={formData.avgPricePerSqft}
+                    onChange={(e) => setFormData({ ...formData, avgPricePerSqft: e.target.value })}
+                    placeholder="e.g., 850.50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="avgPricePerSqft">Avg. Price (/ft)</Label>
+                  <Input
+                    id="avgPricePerSqft"
+                    type="number"
+                    step="0.01"
+                    className="rounded-lg"
+                    value={formData.avgPricePerSqft}
+                    onChange={(e) => setFormData({ ...formData, avgPricePerSqft: e.target.value })}
+                    placeholder="e.g., 850.50"
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="status">Selling Status *</Label>
                   <Select
                     value={formData.status}
@@ -703,12 +790,107 @@ export function PreConProjectForm({
                   </Select>
                 </div>
               </div>
+              
+              {/* Additional Pricing Section */}
+              <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t">
+                <div className="space-y-2">
+                  <Label htmlFor="parkingPrice">Parking Price</Label>
+                  <Input
+                    id="parkingPrice"
+                    type="number"
+                    step="0.01"
+                    className="rounded-lg"
+                    value={formData.parkingPrice}
+                    onChange={(e) => setFormData({ ...formData, parkingPrice: e.target.value })}
+                    placeholder="e.g., 50000"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lockerPrice">Locker Price</Label>
+                  <Input
+                    id="lockerPrice"
+                    type="number"
+                    step="0.01"
+                    className="rounded-lg"
+                    value={formData.lockerPrice}
+                    onChange={(e) => setFormData({ ...formData, lockerPrice: e.target.value })}
+                    placeholder="e.g., 5000"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="parkingPriceDetail">Parking Price Detail</Label>
+                  <Textarea
+                    id="parkingPriceDetail"
+                    className="rounded-lg"
+                    value={formData.parkingPriceDetail}
+                    onChange={(e) => setFormData({ ...formData, parkingPriceDetail: e.target.value })}
+                    placeholder="Additional details about parking pricing"
+                    rows={2}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lockerPriceDetail">Locker Price Detail</Label>
+                  <Textarea
+                    id="lockerPriceDetail"
+                    className="rounded-lg"
+                    value={formData.lockerPriceDetail}
+                    onChange={(e) => setFormData({ ...formData, lockerPriceDetail: e.target.value })}
+                    placeholder="Additional details about locker pricing"
+                    rows={2}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="assignmentFee">Assignment Fee</Label>
+                  <Input
+                    id="assignmentFee"
+                    type="number"
+                    step="0.01"
+                    className="rounded-lg"
+                    value={formData.assignmentFee}
+                    onChange={(e) => setFormData({ ...formData, assignmentFee: e.target.value })}
+                    placeholder="e.g., 5000"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="developmentLevies">Development Levies</Label>
+                  <Input
+                    id="developmentLevies"
+                    type="number"
+                    step="0.01"
+                    className="rounded-lg"
+                    value={formData.developmentLevies}
+                    onChange={(e) => setFormData({ ...formData, developmentLevies: e.target.value })}
+                    placeholder="e.g., 15000"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="developmentCharges">Development Charges</Label>
+                  <Input
+                    id="developmentCharges"
+                    type="number"
+                    step="0.01"
+                    className="rounded-lg"
+                    value={formData.developmentCharges}
+                    onChange={(e) => setFormData({ ...formData, developmentCharges: e.target.value })}
+                    placeholder="e.g., 20000"
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
-        </TabsContent>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </div>
 
-        {/* Address Tab */}
-        <TabsContent value="address" className="space-y-6 container">
+        {/* Address Section */}
+        <div ref={(el) => { sectionRefs.current["address"] = el }}>
+          <AccordionItem value="address">
+            <AccordionTrigger className="container text-lg font-semibold px-6">
+              Address & Location
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-6 container">
           <Card>
             <CardHeader>
               <CardTitle>Address & Location</CardTitle>
@@ -925,10 +1107,19 @@ export function PreConProjectForm({
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </div>
 
-        {/* Property Details Tab */}
-        <TabsContent value="details" className="space-y-6 container">
+        {/* Property Details Section */}
+        <div ref={(el) => { sectionRefs.current["details"] = el }}>
+          <AccordionItem value="details">
+            <AccordionTrigger className="container text-lg font-semibold px-6">
+              Property Details
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-6 container">
           <Card>
             <CardHeader>
               <CardTitle>Property Details</CardTitle>
@@ -996,31 +1187,15 @@ export function PreConProjectForm({
                   </div>
                 )}
                 <div className="space-y-2">
-                  <Label htmlFor="bedroomRange">Beds *</Label>
-                  <Select
+                  <Label htmlFor="bedroomRange">Beds Range *</Label>
+                  <Input
+                    id="bedroomRange"
+                    className="rounded-lg"
+                    placeholder="e.g., 1-3"
                     value={formData.bedroomRange}
-                    onValueChange={(value) => setFormData({ ...formData, bedroomRange: value })}
-                  >
-                    <SelectTrigger className="rounded-lg">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Studio">Studio</SelectItem>
-                      <SelectItem value="1 Bdrm">1 Bdrm</SelectItem>
-                      <SelectItem value="1 Bdrm + Den">1 Bdrm + Den</SelectItem>
-                      <SelectItem value="2 Bdrms">2 Bdrms</SelectItem>
-                      <SelectItem value="2 Bdrms + Den">2 Bdrms + Den</SelectItem>
-                      <SelectItem value="3 Bdrms">3 Bdrms</SelectItem>
-                      <SelectItem value="3 Bdrms + Den">3 Bdrms + Den</SelectItem>
-                      <SelectItem value="4 Bdrms">4 Bdrms</SelectItem>
-                      <SelectItem value="4 Bdrms + Den">4 Bdrms + Den</SelectItem>
-                      <SelectItem value="5 Bdrms">5 Bdrms</SelectItem>
-                      <SelectItem value="5 Bdrms + Den">5 Bdrms + Den</SelectItem>
-                      <SelectItem value="6 Bdrms">6 Bdrms</SelectItem>
-                      <SelectItem value="Loft">Loft</SelectItem>
-                      <SelectItem value="Work / Live Loft">Work / Live Loft</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    onChange={(e) => setFormData({ ...formData, bedroomRange: e.target.value })}
+                    required
+                  />
                 </div>
               </div>
 
@@ -1038,15 +1213,28 @@ export function PreConProjectForm({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="sqftRange">Square Foot Range *</Label>
-                  <Input
-                    id="sqftRange"
-                    className="rounded-lg"
-                    placeholder="e.g., 650-1,450"
-                    value={formData.sqftRange}
-                    onChange={(e) => setFormData({ ...formData, sqftRange: e.target.value })}
-                    required
-                  />
+                  <Label>Square Foot Range *</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="sqftMin"
+                      type="number"
+                      className="rounded-lg"
+                      placeholder="Min"
+                      value={formData.sqftMin}
+                      onChange={(e) => setFormData({ ...formData, sqftMin: e.target.value })}
+                      required
+                    />
+                    <span className="text-muted-foreground">-</span>
+                    <Input
+                      id="sqftMax"
+                      type="number"
+                      className="rounded-lg"
+                      placeholder="Max"
+                      value={formData.sqftMax}
+                      onChange={(e) => setFormData({ ...formData, sqftMax: e.target.value })}
+                      required
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="totalUnits">Total Units *</Label>
@@ -1058,6 +1246,61 @@ export function PreConProjectForm({
                     onChange={(e) => setFormData({ ...formData, totalUnits: e.target.value })}
                     required
                   />
+                </div>
+              </div>
+
+              {/* Row 2.5: Unit Type Checkboxes */}
+              <div className="space-y-2">
+                <Label>Unit Types Available</Label>
+                <div className="flex flex-wrap gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="hasDen"
+                      checked={formData.hasDen}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, hasDen: checked === true })
+                      }
+                    />
+                    <Label htmlFor="hasDen" className="font-normal cursor-pointer">
+                      Den
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="hasStudio"
+                      checked={formData.hasStudio}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, hasStudio: checked === true })
+                      }
+                    />
+                    <Label htmlFor="hasStudio" className="font-normal cursor-pointer">
+                      Studio
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="hasLoft"
+                      checked={formData.hasLoft}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, hasLoft: checked === true })
+                      }
+                    />
+                    <Label htmlFor="hasLoft" className="font-normal cursor-pointer">
+                      Loft
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="hasWorkLiveLoft"
+                      checked={formData.hasWorkLiveLoft}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, hasWorkLiveLoft: checked === true })
+                      }
+                    />
+                    <Label htmlFor="hasWorkLiveLoft" className="font-normal cursor-pointer">
+                      Work/Live Loft
+                    </Label>
+                  </div>
                 </div>
               </div>
 
@@ -1085,6 +1328,18 @@ export function PreConProjectForm({
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="height">Height (M)</Label>
+                  <Input
+                    id="height"
+                    type="number"
+                    step="0.01"
+                    className="rounded-lg"
+                    value={formData.height}
+                    onChange={(e) => setFormData({ ...formData, height: e.target.value })}
+                    placeholder="e.g., 150.5"
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="completionDate">Completion Date *</Label>
                   <Input
                     id="completionDate"
@@ -1093,6 +1348,44 @@ export function PreConProjectForm({
                     value={formData.completionDate}
                     onChange={(e) => setFormData({ ...formData, completionDate: e.target.value })}
                     required
+                  />
+                </div>
+              </div>
+
+              {/* Maintenance & Fees Section */}
+              <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t">
+                <div className="space-y-2">
+                  <Label htmlFor="maintenanceFeesPerSqft">Maintenance Fees (/ft)</Label>
+                  <Input
+                    id="maintenanceFeesPerSqft"
+                    type="number"
+                    step="0.01"
+                    className="rounded-lg"
+                    value={formData.maintenanceFeesPerSqft}
+                    onChange={(e) => setFormData({ ...formData, maintenanceFeesPerSqft: e.target.value })}
+                    placeholder="e.g., 0.65"
+                  />
+                </div>
+                <div className="space-y-2 col-span-2">
+                  <Label htmlFor="maintenanceFeesDetail">Maintenance Fees Detail</Label>
+                  <Textarea
+                    id="maintenanceFeesDetail"
+                    className="rounded-lg"
+                    value={formData.maintenanceFeesDetail}
+                    onChange={(e) => setFormData({ ...formData, maintenanceFeesDetail: e.target.value })}
+                    placeholder="Additional details about maintenance fees"
+                    rows={3}
+                  />
+                </div>
+                <div className="space-y-2 col-span-2">
+                  <Label htmlFor="floorPremiums">Floor Premiums</Label>
+                  <Textarea
+                    id="floorPremiums"
+                    className="rounded-lg"
+                    value={formData.floorPremiums}
+                    onChange={(e) => setFormData({ ...formData, floorPremiums: e.target.value })}
+                    placeholder="Details about floor premiums (e.g., $5,000 per floor above 10th)"
+                    rows={3}
                   />
                 </div>
               </div>
@@ -1134,10 +1427,19 @@ export function PreConProjectForm({
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </div>
 
-        {/* Media & Content Tab */}
-        <TabsContent value="media" className="space-y-6 container">
+        {/* Media & Content Section */}
+        <div ref={(el) => { sectionRefs.current["media"] = el }}>
+          <AccordionItem value="media">
+            <AccordionTrigger className="container text-lg font-semibold px-6">
+              Media & Content
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-6 container">
           {/* Images and Videos in the same row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Images Card */}
@@ -1619,10 +1921,19 @@ export function PreConProjectForm({
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </div>
 
-        {/* Development Team Tab */}
-        <TabsContent value="team" className="space-y-6 container">
+        {/* Development Team Section */}
+        <div ref={(el) => { sectionRefs.current["team"] = el }}>
+          <AccordionItem value="team">
+            <AccordionTrigger className="container text-lg font-semibold px-6">
+              Development Team
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-6 container">
           <Card>
             <CardHeader>
               <CardTitle>Development Team</CardTitle>
@@ -1701,11 +2012,63 @@ export function PreConProjectForm({
                     </div>
                   )
                 })}
+                
+                {/* Sales & Marketing Company */}
+                <div className="space-y-2">
+                  <Label htmlFor="salesMarketingCompany">Sales & Marketing Company</Label>
+                  <Select
+                    value={formData.salesMarketingCompany || "none"}
+                    onValueChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        salesMarketingCompany: value === "none" ? "" : value,
+                      })
+                    }
+                  >
+                    <SelectTrigger className="rounded-lg">
+                      <SelectValue placeholder="Select sales & marketing company" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {getDevelopersByType("MARKETING").map((dev) => (
+                        <SelectItem key={dev.id} value={dev.id}>
+                          {dev.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formData.salesMarketingCompany && (
+                    (() => {
+                      const selectedCompany = developers.find(d => d.id === formData.salesMarketingCompany)
+                      return selectedCompany ? (
+                        <div className="p-3 border rounded-lg bg-muted/50">
+                          <p className="text-sm font-medium">{selectedCompany.name}</p>
+                          {selectedCompany.description && (
+                            <p className="text-sm text-muted-foreground mt-1">{selectedCompany.description}</p>
+                          )}
+                          {selectedCompany.website && (
+                            <a
+                              href={selectedCompany.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-primary hover:underline mt-1 block"
+                            >
+                              {selectedCompany.website}
+                            </a>
+                          )}
+                        </div>
+                      ) : null
+                    })()
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </div>
+      </Accordion>
 
       <div className="flex justify-between gap-4 mt-6">
         {onCancel && (

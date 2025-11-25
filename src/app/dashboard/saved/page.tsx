@@ -8,7 +8,7 @@ import { fetchPropertyListings } from '@/lib/api/properties'
 import { useState, useEffect, useMemo } from 'react'
 import { PropertyListing } from '@/lib/types'
 import PropertyCard from '@/components/Helper/PropertyCard'
-import { Loader2 } from 'lucide-react'
+import { useBackgroundFetch } from '@/hooks/useBackgroundFetch'
 import { getAllPreConProjects } from '@/data/mockPreConData'
 import PreConstructionPropertyCardV3 from '@/components/PreCon/PropertyCards/PreConstructionPropertyCardV3'
 import type { PreConstructionProperty } from '@/components/PreCon/PropertyCards/types'
@@ -60,7 +60,7 @@ const convertToPreConProperty = (property: PropertyListing): PreConstructionProp
 export default function Saved() {
   const { savedProperties, isLoading: isLoadingSaved } = useSavedProperties()
   const [properties, setProperties] = useState<PropertyListing[]>([])
-  const [isLoadingProperties, setIsLoadingProperties] = useState(true)
+  const { loading: isLoadingProperties, fetchData } = useBackgroundFetch()
 
   // Get saved pre-construction projects
   const savedProjects = useMemo(() => {
@@ -78,31 +78,29 @@ export default function Saved() {
   useEffect(() => {
     const fetchProperties = async () => {
       if (savedProperties.length === 0) {
-        setIsLoadingProperties(false)
         return
       }
 
-      try {
-        const allProperties = await fetchPropertyListings()
-        const savedMlsNumbers = savedProperties.map((sp) => sp.mlsNumber)
-        // Filter out pre-construction projects (they're handled separately)
-        const allPreConProjects = getAllPreConProjects();
-        const preConMlsNumbers = allPreConProjects.map(p => p.mlsNumber);
-        const savedPropertyListings = allProperties.filter((p) =>
-          savedMlsNumbers.includes(p.mlsNumber) && !preConMlsNumbers.includes(p.mlsNumber)
-        )
-        setProperties(savedPropertyListings)
-      } catch (error) {
-        console.error('Error fetching saved properties:', error)
-      } finally {
-        setIsLoadingProperties(false)
+      if (!isLoadingSaved) {
+        await fetchData(async () => {
+          const allProperties = await fetchPropertyListings()
+          const savedMlsNumbers = savedProperties.map((sp) => sp.mlsNumber)
+          // Filter out pre-construction projects (they're handled separately)
+          const allPreConProjects = getAllPreConProjects();
+          const preConMlsNumbers = allPreConProjects.map(p => p.mlsNumber);
+          const savedPropertyListings = allProperties.filter((p) =>
+            savedMlsNumbers.includes(p.mlsNumber) && !preConMlsNumbers.includes(p.mlsNumber)
+          )
+          setProperties(savedPropertyListings)
+          return savedPropertyListings
+        }).catch((error) => {
+          console.error('Error fetching saved properties:', error)
+        })
       }
     }
 
-    if (!isLoadingSaved) {
-      fetchProperties()
-    }
-  }, [savedProperties, isLoadingSaved])
+    fetchProperties()
+  }, [savedProperties, isLoadingSaved, fetchData])
 
   if (isLoadingSaved || isLoadingProperties) {
     return (

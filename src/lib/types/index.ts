@@ -627,9 +627,13 @@ export interface PropertyListing {
             totalUnits: number;
             availableUnits: number;
             storeys?: number; // Number of floors/storeys
+            height?: number; // Height in meters
+            propertyType?: string; // Property type (e.g., 'Condominium', 'Houses')
+            subPropertyType?: string; // Sub property type (e.g., 'High-Rise', 'Detached')
         };
         features: string[];
         amenities?: string[]; // Project amenities list
+        videos?: string[]; // Property videos
         depositStructure?: string;
         description: string;
         documents?: Array<{
@@ -643,9 +647,13 @@ export interface PropertyListing {
         developmentTeam?: {
             overview?: string;
             developer?: {
+                id?: string;
                 name: string;
                 description?: string;
                 website?: string;
+                image?: string;
+                email?: string;
+                phone?: string;
                 stats?: {
                     totalProjects: number;
                     activelySelling: number;
@@ -657,9 +665,13 @@ export interface PropertyListing {
                 };
             };
             architect?: {
+                id?: string;
                 name: string;
                 description?: string;
                 website?: string;
+                image?: string;
+                email?: string;
+                phone?: string;
                 stats?: {
                     totalProjects: number;
                     activelySelling: number;
@@ -671,9 +683,13 @@ export interface PropertyListing {
                 };
             };
             interiorDesigner?: {
+                id?: string;
                 name: string;
                 description?: string;
                 website?: string;
+                image?: string;
+                email?: string;
+                phone?: string;
                 stats?: {
                     totalProjects: number;
                     activelySelling: number;
@@ -685,9 +701,13 @@ export interface PropertyListing {
                 };
             };
             builder?: {
+                id?: string;
                 name: string;
                 description?: string;
                 website?: string;
+                image?: string;
+                email?: string;
+                phone?: string;
                 stats?: {
                     totalProjects: number;
                     activelySelling: number;
@@ -699,9 +719,13 @@ export interface PropertyListing {
                 };
             };
             landscapeArchitect?: {
+                id?: string;
                 name: string;
                 description?: string;
                 website?: string;
+                image?: string;
+                email?: string;
+                phone?: string;
                 stats?: {
                     totalProjects: number;
                     activelySelling: number;
@@ -713,9 +737,13 @@ export interface PropertyListing {
                 };
             };
             marketing?: {
+                id?: string;
                 name: string;
                 description?: string;
                 website?: string;
+                image?: string;
+                email?: string;
+                phone?: string;
                 stats?: {
                     totalProjects: number;
                     activelySelling: number;

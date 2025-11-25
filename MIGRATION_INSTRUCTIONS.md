@@ -1,97 +1,108 @@
-# Database Migration Instructions
+# Migration Instructions: Add Pre-Construction Additional Fields
 
-## ✅ Step 1: Run SQL Migration in Supabase
+## Problem
+Prisma 7.0.0 requires a `prisma.config.ts` file, but the Prisma CLI is unable to parse it, preventing `prisma migrate dev` from running.
 
-Since Prisma can't connect directly from your local machine, we'll run the migration manually in Supabase SQL Editor.
+## Solution: Manual SQL Migration
 
-### Instructions:
+Since Prisma CLI is having issues with the config file, we'll apply the migration directly using SQL.
 
-1. **Go to Supabase Dashboard**
-   - Visit: https://supabase.com/dashboard/project/omsefyactufffyqaxowx
-   - Click **SQL Editor** in the left sidebar
+### Step 1: Run SQL Migration in Supabase
 
-2. **Create New Query**
-   - Click **New query** button
+1. **Open Supabase Dashboard**
+   - Go to https://supabase.com/dashboard
+   - Select your project
 
-3. **Copy and Paste SQL**
-   - Open `prisma/migration.sql` file in this project
-   - Copy **ALL** the SQL content
-   - Paste it into the Supabase SQL Editor
+2. **Navigate to SQL Editor**
+   - Click on "SQL Editor" in the left sidebar
 
-4. **Run the Migration**
-   - Click **Run** button (or press `Ctrl+Enter`)
-   - Wait for it to complete (should take a few seconds)
+3. **Run the Migration**
+   - Copy the entire contents of `prisma/migrations/add_precon_additional_fields.sql`
+   - Paste it into the SQL Editor
+   - Click "Run" (or press Ctrl+Enter)
 
-5. **Verify Tables Created**
-   - Go to **Table Editor** in Supabase dashboard
-   - You should see all these tables:
-     - Account
-     - Session
-     - User
-     - VerificationToken
-     - Property
-     - Favorite
-     - SavedProperty
-     - PropertyView
-     - SearchHistory
-     - AgentProfile
-     - Contact
+4. **Verify Migration**
+   - After running, verify the columns were added:
+   ```sql
+   SELECT column_name, data_type 
+   FROM information_schema.columns 
+   WHERE table_name = 'PreConstructionProject'
+   AND column_name IN (
+     'avgPricePerSqft',
+     'parkingPrice',
+     'parkingPriceDetail',
+     'lockerPrice',
+     'lockerPriceDetail',
+     'assignmentFee',
+     'developmentLevies',
+     'developmentCharges',
+     'height',
+     'maintenanceFeesPerSqft',
+     'maintenanceFeesDetail',
+     'floorPremiums',
+     'salesMarketingCompany'
+   )
+   ORDER BY column_name;
+   ```
 
----
+### Step 2: Mark Migration as Applied (Optional)
 
-## ✅ Step 2: Generate Prisma Client
+If you want Prisma to recognize this migration, you can manually create a migration record:
 
-After running the migration in Supabase, generate the Prisma client locally:
+```sql
+INSERT INTO "_prisma_migrations" (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count)
+VALUES (
+  gen_random_uuid(),
+  '',
+  NOW(),
+  'add_precon_additional_fields',
+  NULL,
+  NULL,
+  NOW(),
+  1
+);
+```
+
+### Step 3: Regenerate Prisma Client
+
+After the migration is complete, regenerate the Prisma client:
 
 ```bash
-npx prisma generate
+npm run prisma:generate
 ```
 
-This will create the Prisma client based on your schema, even without a direct connection.
+## Fields Added
 
----
+The following fields are added to the `PreConstructionProject` table:
 
-## ✅ Step 3: Update Connection String (For Future Use)
+- `avgPricePerSqft` (DOUBLE PRECISION) - Average price per square foot
+- `parkingPrice` (DOUBLE PRECISION) - Parking price
+- `parkingPriceDetail` (TEXT) - Parking price details
+- `lockerPrice` (DOUBLE PRECISION) - Locker price
+- `lockerPriceDetail` (TEXT) - Locker price details
+- `assignmentFee` (DOUBLE PRECISION) - Assignment fee
+- `developmentLevies` (DOUBLE PRECISION) - Development levies
+- `developmentCharges` (DOUBLE PRECISION) - Development charges
+- `height` (DOUBLE PRECISION) - Height in meters
+- `maintenanceFeesPerSqft` (DOUBLE PRECISION) - Maintenance fees per square foot
+- `maintenanceFeesDetail` (TEXT) - Maintenance fees details
+- `floorPremiums` (TEXT) - Floor premiums information
+- `salesMarketingCompany` (TEXT) - Sales & Marketing Company ID
 
-Once the tables are created, we can try connecting Prisma again. Update your `.env.local` with:
+All fields are nullable to maintain compatibility with existing records.
 
-**Option A: Transaction Pooler (Recommended)**
-```env
-DATABASE_URL="postgresql://postgres.omsefyactufffyqaxowx:OHmK2KTxlfGyA2KH@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
-```
+## Troubleshooting
 
-**Option B: Direct Connection**
-```env
-DATABASE_URL="postgresql://postgres:OHmK2KTxlfGyA2KH@db.omsefyactufffyqaxowx.supabase.co:5432/postgres?sslmode=require"
-```
+If you encounter any issues:
 
----
+1. **Check if columns already exist**: The migration script uses `DO $$` blocks to check if columns exist before adding them, so it's safe to run multiple times.
 
-## 🎯 What This Does
+2. **Verify Prisma Schema**: Ensure `prisma/schema.prisma` has all the fields defined (it should already have them).
 
-This migration creates:
-- ✅ All database tables for your application
-- ✅ User authentication tables (Account, Session, User)
-- ✅ Property management tables
-- ✅ Saved properties functionality
-- ✅ Agent profiles
-- ✅ Contact forms
-- ✅ All indexes and foreign keys
+3. **Regenerate Client**: Always run `npm run prisma:generate` after database changes.
 
----
+## Future Migrations
 
-## 📝 Notes
-
-- The migration is **idempotent** - if tables already exist, it will fail gracefully
-- If you get errors about existing types/tables, you can ignore them or drop existing tables first
-- After running this, your Prisma schema will match your database structure
-
----
-
-## 🚀 Next Steps
-
-After running the migration:
-1. Generate Prisma client: `npx prisma generate`
-2. Test your application - authentication and property saving should work
-3. If Prisma still can't connect, your app will work fine - Prisma client is already generated
-
+For future migrations, you may need to:
+- Fix the `prisma.config.ts` parsing issue, OR
+- Continue using manual SQL migrations for Prisma 7.0.0

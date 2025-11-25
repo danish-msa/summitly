@@ -1,6 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { PreConstructionProperty } from '../../PropertyCards/types';
-import { getAllPreConProjects } from '@/data/mockPreConData';
 import { PropertyListing } from '@/lib/types';
 import { convertToPropertyListing } from '../utils/convertToPropertyListing';
 import { usePreConFilters } from './usePreConFilters';
@@ -29,7 +28,7 @@ const convertToPreConProperty = (property: PropertyListing): PreConstructionProp
       longitude: property.map?.longitude ?? undefined,
     },
     details: {
-      propertyType: property.details?.propertyType || 'Condominium',
+      propertyType: property.details?.propertyType || preCon.details?.propertyType || 'Condominium',
       bedroomRange: preCon.details.bedroomRange,
       bathroomRange: preCon.details.bathroomRange,
       sqftRange: preCon.details.sqftRange,
@@ -38,7 +37,7 @@ const convertToPreConProperty = (property: PropertyListing): PreConstructionProp
     },
     completion: {
       date: preCon.completion.date,
-      progress: preCon.completion.progress,
+      progress: typeof preCon.completion.progress === 'string' ? 0 : (preCon.completion.progress || 0),
     },
     features: preCon.features || [],
     depositStructure: preCon.depositStructure,
@@ -50,15 +49,30 @@ const convertToPreConProperty = (property: PropertyListing): PreConstructionProp
  * Custom hook for managing pre-construction projects
  */
 export const usePreConProjects = () => {
-  // Get all projects from centralized mock data and convert them
-  const allProjectsData = useMemo(() => {
-    const allPropertyListings = getAllPreConProjects();
-    return allPropertyListings
-      .map(convertToPreConProperty)
-      .filter((project): project is PreConstructionProperty => project !== null);
-  }, []);
+  const [allProjects, setAllProjects] = useState<PreConstructionProperty[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [allProjects] = useState<PreConstructionProperty[]>(allProjectsData);
+  // Fetch projects from API
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch('/api/pre-con-projects');
+        if (response.ok) {
+          const data = await response.json();
+          const projects = (data.projects || [])
+            .map(convertToPreConProperty)
+            .filter((project): project is PreConstructionProperty => project !== null);
+          setAllProjects(projects);
+        }
+      } catch (error) {
+        console.error('Error fetching pre-con projects:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
   const [hiddenProjects, setHiddenProjects] = useState<Set<string>>(new Set());
   
   // Use global filters hook
@@ -99,7 +113,8 @@ export const usePreConProjects = () => {
     filters,
     handleFilterChange,
     resetFilters,
-    handleHide
+    handleHide,
+    loading
   };
 };
 

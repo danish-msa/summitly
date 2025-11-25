@@ -52,6 +52,31 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Helper function to fetch developer name by ID
+    const getDeveloperName = async (developerId: string): Promise<string> => {
+      if (!developerId) return 'Unknown Developer'
+      try {
+        const developer = await prisma.developer.findUnique({
+          where: { id: developerId },
+          select: { name: true },
+        })
+        return developer?.name || developerId
+      } catch {
+        return developerId
+      }
+    }
+
+    // Fetch all developer names in parallel
+    const developerIds = [...new Set(projects.map(p => p.developer).filter(Boolean))]
+    const developerNamesMap = new Map<string, string>()
+    
+    await Promise.all(
+      developerIds.map(async (id) => {
+        const name = await getDeveloperName(id)
+        developerNamesMap.set(id, name)
+      })
+    )
+
     const formattedProjects = projects.map((project) => {
       const documents = parseJsonField(project.documents)
       const developerInfo = parseJsonField(project.developerInfo)
@@ -61,11 +86,18 @@ export async function GET(request: NextRequest) {
       const landscapeArchitectInfo = parseJsonField(project.landscapeArchitectInfo)
       const marketingInfo = parseJsonField(project.marketingInfo)
 
+      // Get developer name from map
+      const developerName = developerNamesMap.get(project.developer) || project.developer
+
       // Build development team object
       interface DevelopmentTeamMember {
+        id?: string
         name: string
-        description: string
-        website: string
+        description?: string
+        website?: string
+        image?: string
+        email?: string
+        phone?: string
         stats?: {
           totalProjects: number
           activelySelling: number
@@ -172,9 +204,10 @@ export async function GET(request: NextRequest) {
         },
         preCon: {
           projectName: project.projectName,
-          developer: project.developer,
+          developer: developerName,
           startingPrice: project.startingPrice,
           endingPrice: project.endingPrice || null,
+          avgPricePerSqft: project.avgPricePerSqft || null,
           priceRange: {
             min: project.startingPrice,
             max: project.endingPrice || project.startingPrice,
@@ -199,8 +232,24 @@ export async function GET(request: NextRequest) {
             totalUnits: project.totalUnits,
             availableUnits: project.availableUnits,
             storeys: project.storeys || undefined,
+            height: project.height || undefined,
+            propertyType: project.propertyType,
+            subPropertyType: project.subPropertyType || undefined,
           },
+          // Pricing fields
+          parkingPrice: project.parkingPrice || null,
+          parkingPriceDetail: project.parkingPriceDetail || null,
+          lockerPrice: project.lockerPrice || null,
+          lockerPriceDetail: project.lockerPriceDetail || null,
+          assignmentFee: project.assignmentFee || null,
+          developmentLevies: project.developmentLevies || null,
+          developmentCharges: project.developmentCharges || null,
+          maintenanceFeesPerSqft: project.maintenanceFeesPerSqft || null,
+          maintenanceFeesDetail: project.maintenanceFeesDetail || null,
+          floorPremiums: project.floorPremiums || null,
+          promotions: project.promotions || null,
           amenities: project.amenities,
+          features: project.features || [],
           videos: project.videos || [],
           depositStructure: project.depositStructure || undefined,
           description: project.description || undefined,

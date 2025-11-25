@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import PreConstructionPropertyCardV3 from '../PropertyCards/PreConstructionPropertyCardV3';
 import type { PreConstructionProperty } from '../PropertyCards/types';
-import { getAllPreConProjects } from '@/data/mockPreConData';
 import { PropertyListing } from '@/lib/types';
 import { FaSort } from 'react-icons/fa';
 import PreConListingFilters from './PreConListingFilters';
@@ -44,7 +43,7 @@ const convertToPreConProperty = (property: PropertyListing): PreConstructionProp
     },
     completion: {
       date: preCon.completion.date,
-      progress: preCon.completion.progress,
+      progress: typeof preCon.completion.progress === 'string' ? 0 : (preCon.completion.progress || 0),
     },
     features: preCon.features || [],
     depositStructure: preCon.depositStructure,
@@ -125,13 +124,33 @@ const convertToPropertyListing = (project: PreConstructionProperty): PropertyLis
 };
 
 const PreConstructionProjectsListings: React.FC = () => {
-  // Get all projects from centralized mock data
+  const [projects, setProjects] = useState<PropertyListing[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch('/api/pre-con-projects');
+        if (response.ok) {
+          const data = await response.json();
+          setProjects(data.projects || []);
+        }
+      } catch (error) {
+        console.error('Error fetching pre-con projects:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  // Convert projects to PreConstructionProperty format
   const allProjectsData = useMemo(() => {
-    const allPropertyListings = getAllPreConProjects();
-    return allPropertyListings
+    return projects
       .map(convertToPreConProperty)
       .filter((project): project is PreConstructionProperty => project !== null);
-  }, []);
+  }, [projects]);
 
   const [communities, setCommunities] = useState<string[]>([]);
   const [filters, setFilters] = useState({
@@ -324,6 +343,16 @@ const PreConstructionProjectsListings: React.FC = () => {
     }
     return visibleProjects;
   }, [visibleProjects, viewMode]);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto pt-10 pb-24 px-4">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-muted-foreground">Loading projects...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto pt-10 pb-24 px-4">

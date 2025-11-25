@@ -8,6 +8,7 @@ import { useSession } from 'next-auth/react'
 import { useSavedProperties } from '@/hooks/useSavedProperties'
 import { toast } from '@/hooks/use-toast'
 import AuthModal from '@/components/Auth/AuthModal'
+import VideoModal from '@/components/PreConItem/PreConItemBody/VideoModal'
 
 interface Section {
   id: string;
@@ -376,23 +377,11 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
 
       {/* Video Modal */}
       {property && (
-        <Dialog open={isVideoModalOpen} onOpenChange={setIsVideoModalOpen}>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <DialogTitle>Property Video</DialogTitle>
-            </DialogHeader>
-            <div className="aspect-video bg-black rounded-lg flex items-center justify-center">
-              {/* Video player placeholder - replace with actual video URL */}
-              <div className="text-white text-center">
-                <Video className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg">Video player will be embedded here</p>
-                <p className="text-sm text-gray-400 mt-2">
-                  Add video URL from property data
-                </p>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <VideoModal
+          open={isVideoModalOpen}
+          onOpenChange={setIsVideoModalOpen}
+          videos={property.preCon?.videos || []}
+        />
       )}
 
       {/* Auth Modal */}

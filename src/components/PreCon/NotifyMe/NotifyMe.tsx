@@ -65,7 +65,7 @@ const NotifyMe: React.FC = () => {
               <Button
                 type="submit"
                 disabled={isSubmitting || isSubmitted}
-                className="h-12 px-8 bg-[#CBF4FA] hover:bg-foreground/90 text-[#006CAD] font-medium rounded-l-none whitespace-nowrap"
+                className="h-12 px-8 bg-[#CBF4FA] hover:bg-foreground/90 hover:text-[#CBF4FA] text-[#006CAD] font-medium rounded-l-none whitespace-nowrap"
               >
                 {isSubmitting ? (
                   'Submitting...'

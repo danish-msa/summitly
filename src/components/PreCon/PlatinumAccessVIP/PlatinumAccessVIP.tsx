@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import Carousel from 'react-multi-carousel';
 import 'react-multi-carousel/lib/styles.css';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { PreConstructionPropertyCardV3 } from '../PropertyCards';
 import type { PreConstructionProperty } from '../PropertyCards/types';
 import SectionHeading from '@/components/Helper/SectionHeading';
-import { getAllPreConProjects } from '@/data/mockPreConData';
 import { PropertyListing } from '@/lib/types';
 
 // Convert PropertyListing to PreConstructionProperty format
@@ -31,7 +30,7 @@ const convertToPreConProperty = (property: PropertyListing): PreConstructionProp
       longitude: property.map?.longitude ?? undefined,
     },
     details: {
-      propertyType: property.details?.propertyType || 'Condominium',
+      propertyType: property.details?.propertyType || preCon.details?.propertyType || 'Condominium',
       bedroomRange: preCon.details.bedroomRange,
       bathroomRange: preCon.details.bathroomRange,
       sqftRange: preCon.details.sqftRange,
@@ -40,7 +39,7 @@ const convertToPreConProperty = (property: PropertyListing): PreConstructionProp
     },
     completion: {
       date: preCon.completion.date,
-      progress: preCon.completion.progress,
+      progress: typeof preCon.completion.progress === 'string' ? 0 : (preCon.completion.progress || 0),
     },
     features: preCon.features || [],
     depositStructure: preCon.depositStructure,
@@ -70,18 +69,38 @@ const CustomRightArrow = ({ onClick }: { onClick?: () => void }) => (
 );
 
 const PlatinumAccessVIP: React.FC = () => {
-  // Get VIP projects from centralized mock data (filter for condos or use all projects)
+  const [projects, setProjects] = useState<PropertyListing[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch('/api/pre-con-projects');
+        if (response.ok) {
+          const data = await response.json();
+          setProjects(data.projects || []);
+        }
+      } catch (error) {
+        console.error('Error fetching VIP projects:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  // Get VIP projects (filter for condos)
   const platinumVIPProjects = useMemo(() => {
-    const allPropertyListings = getAllPreConProjects();
-    return allPropertyListings
+    return projects
       .map(convertToPreConProperty)
       .filter((project): project is PreConstructionProperty => project !== null)
       .filter(project => 
-        // Filter for condominiums or include all if you want all property types
+        // Filter for condominiums
         project.details.propertyType.toLowerCase().includes('condo') || 
         project.details.propertyType.toLowerCase().includes('condominium')
       );
-  }, []);
+  }, [projects]);
 
   const responsive = {
     superLargeDesktop: {
@@ -105,6 +124,28 @@ const PlatinumAccessVIP: React.FC = () => {
       slidesToSlide: 1
     }
   };
+
+  if (loading) {
+    return (
+      <section className="py-16 bg-background">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <SectionHeading
+            heading="Platinum Access VIP Condos"
+            subheading="Platinum Access VIP"
+            description="Exclusive VIP access to the most prestigious pre-construction condominium projects with premium amenities and luxury living"
+            position="center"
+          />
+          <div className="flex items-center justify-center py-12">
+            <div className="text-muted-foreground">Loading VIP projects...</div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (platinumVIPProjects.length === 0) {
+    return null;
+  }
 
   return (
     <section className="py-16 bg-background">

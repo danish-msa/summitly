@@ -42,7 +42,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({ property }) => {
 
       {/* CTA Block */}
       <Card className="bg-gradient-to-r from-brand-celestial to-brand-cb-blue text-primary-foreground">
-        <CardContent className="p-6">
+        <CardContent className="px-4 py-6">
           <div className="space-y-4">
             <div className="text-center">
               <h3 className="text-xl font-bold mb-2">

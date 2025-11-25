@@ -33,10 +33,10 @@ import {
   Palette,
   Hammer,
   Sprout,
-  Megaphone
+  Megaphone,
 } from 'lucide-react'
 import { FaBuildingUser } from 'react-icons/fa6'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import DevelopmentTeamSection from './DevelopmentTeamSection'
 
 // Icon mapping for stored icon names
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -77,18 +77,6 @@ interface ProjectDetailsProps {
   property: PropertyListing;
 }
 
-// Helper function to get color class for stat blocks
-const getStatBlockColor = (statType: string): string => {
-  const colorMap: { [key: string]: string } = {
-    'activelySelling': 'bg-green-50 text-green-700 border-green-200',
-    'launchingSoon': 'bg-blue-50 text-blue-700 border-blue-200',
-    'registrationPhase': 'bg-purple-50 text-purple-700 border-purple-200',
-    'soldOut': 'bg-gray-50 text-gray-700 border-gray-200',
-    'resale': 'bg-orange-50 text-orange-700 border-orange-200',
-    'cancelled': 'bg-red-50 text-red-700 border-red-200',
-  };
-  return colorMap[statType] || 'bg-muted text-foreground border-border';
-};
 
 const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
   const preCon = property.preCon;
@@ -244,11 +232,6 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
       icon: Calendar,
     },
     {
-      label: 'Progress',
-      value: `${preCon.completion.progress}%`,
-      icon: Construction,
-    },
-    {
       label: 'Bedroom Range',
       value: preCon.details.bedroomRange,
       icon: Bed,
@@ -274,6 +257,36 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
       icon: Building2,
     },
   ];
+
+  // Add additional details if available
+  if (preCon.details.storeys) {
+    details.push({
+      label: 'Storeys',
+      value: preCon.details.storeys.toString(),
+      icon: Building2,
+    });
+  }
+  if ((preCon.details as any).height) {
+    details.push({
+      label: 'Height',
+      value: `${(preCon.details as any).height}m`,
+      icon: Building2,
+    });
+  }
+  if ((preCon.details as any).propertyType) {
+    details.push({
+      label: 'Property Type',
+      value: (preCon.details as any).propertyType,
+      icon: Home,
+    });
+  }
+  if ((preCon.details as any).subPropertyType) {
+    details.push({
+      label: 'Sub Property Type',
+      value: (preCon.details as any).subPropertyType,
+      icon: Home,
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -347,556 +360,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
       )}
 
       {preCon.developmentTeam && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Development Team
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* Team Overview */}
-            {preCon.developmentTeam.overview && (
-              <div className="mb-6 p-4 bg-muted rounded-lg">
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {preCon.developmentTeam.overview}
-                </p>
-              </div>
-            )}
-
-            {/* Team Tabs */}
-            <Tabs 
-              defaultValue={
-                preCon.developmentTeam.developer ? "developer" :
-                preCon.developmentTeam.architect ? "architect" :
-                preCon.developmentTeam.interiorDesigner ? "interior-designer" :
-                preCon.developmentTeam.builder ? "builder" :
-                preCon.developmentTeam.landscapeArchitect ? "landscape-architect" :
-                preCon.developmentTeam.marketing ? "marketing" : "developer"
-              } 
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 h-auto p-1 gap-1">
-                {preCon.developmentTeam.developer && (
-                  <TabsTrigger value="developer" className="text-xs md:text-sm py-2">
-                    Developer
-                  </TabsTrigger>
-                )}
-                {preCon.developmentTeam.architect && (
-                  <TabsTrigger value="architect" className="text-xs md:text-sm py-2">
-                    Architect
-                  </TabsTrigger>
-                )}
-                {preCon.developmentTeam.interiorDesigner && (
-                  <TabsTrigger value="interior-designer" className="text-xs md:text-sm py-2">
-                    Interior Designer
-                  </TabsTrigger>
-                )}
-                {preCon.developmentTeam.builder && (
-                  <TabsTrigger value="builder" className="text-xs md:text-sm py-2">
-                    Builder
-                  </TabsTrigger>
-                )}
-                {preCon.developmentTeam.landscapeArchitect && (
-                  <TabsTrigger value="landscape-architect" className="text-xs md:text-sm py-2">
-                    Landscape
-                  </TabsTrigger>
-                )}
-                {preCon.developmentTeam.marketing && (
-                  <TabsTrigger value="marketing" className="text-xs md:text-sm py-2">
-                    Marketing
-                  </TabsTrigger>
-                )}
-              </TabsList>
-
-              {preCon.developmentTeam.developer && (
-                <TabsContent value="developer" className="mt-6">
-                  <div className="space-y-6">
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Building2 className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-foreground mb-2">
-                          {preCon.developmentTeam.developer.name}
-                        </h3>
-                        {preCon.developmentTeam.developer.description && (
-                          <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-                            {preCon.developmentTeam.developer.description}
-                          </p>
-                        )}
-                        {preCon.developmentTeam.developer.website && (
-                          <a 
-                            href={preCon.developmentTeam.developer.website} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-sm text-primary hover:underline"
-                          >
-                            Visit Website →
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Stats Section */}
-                    {preCon.developmentTeam.developer.stats && (
-                      <div className="p-4 bg-card border border-border rounded-lg">
-                        <div className="mb-4">
-                          <p className="text-sm text-muted-foreground">
-                            {preCon.developmentTeam.developer.stats.totalProjects} Total Projects
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('activelySelling')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.developer.stats.activelySelling}
-                            </p>
-                            <p className="text-xs mt-1">Actively Selling</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('launchingSoon')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.developer.stats.launchingSoon}
-                            </p>
-                            <p className="text-xs mt-1">Launching Soon</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('registrationPhase')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.developer.stats.registrationPhase}
-                            </p>
-                            <p className="text-xs mt-1">Registration Phase</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('soldOut')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.developer.stats.soldOut}
-                            </p>
-                            <p className="text-xs mt-1">Sold Out</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('resale')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.developer.stats.resale}
-                            </p>
-                            <p className="text-xs mt-1">Resale</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('cancelled')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.developer.stats.cancelled}
-                            </p>
-                            <p className="text-xs mt-1">Cancelled</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
-              )}
-
-              {preCon.developmentTeam.architect && (
-                <TabsContent value="architect" className="mt-6">
-                  <div className="space-y-6">
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Building2 className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-foreground mb-2">
-                          {preCon.developmentTeam.architect.name}
-                        </h3>
-                        {preCon.developmentTeam.architect.description && (
-                          <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-                            {preCon.developmentTeam.architect.description}
-                          </p>
-                        )}
-                        {preCon.developmentTeam.architect.website && (
-                          <a 
-                            href={preCon.developmentTeam.architect.website} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-sm text-primary hover:underline"
-                          >
-                            Visit Website →
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Stats Section */}
-                    {preCon.developmentTeam.architect.stats && (
-                      <div className="p-4 bg-card border border-border rounded-lg">
-                        <div className="mb-4">
-                          <p className="text-sm text-muted-foreground">
-                            {preCon.developmentTeam.architect.stats.totalProjects} Total Projects
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('activelySelling')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.architect.stats.activelySelling}
-                            </p>
-                            <p className="text-xs mt-1">Actively Selling</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('launchingSoon')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.architect.stats.launchingSoon}
-                            </p>
-                            <p className="text-xs mt-1">Launching Soon</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('registrationPhase')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.architect.stats.registrationPhase}
-                            </p>
-                            <p className="text-xs mt-1">Registration Phase</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('soldOut')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.architect.stats.soldOut}
-                            </p>
-                            <p className="text-xs mt-1">Sold Out</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('resale')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.architect.stats.resale}
-                            </p>
-                            <p className="text-xs mt-1">Resale</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('cancelled')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.architect.stats.cancelled}
-                            </p>
-                            <p className="text-xs mt-1">Cancelled</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
-              )}
-
-              {preCon.developmentTeam.interiorDesigner && (
-                <TabsContent value="interior-designer" className="mt-6">
-                  <div className="space-y-6">
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Palette className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-foreground mb-2">
-                          {preCon.developmentTeam.interiorDesigner.name}
-                        </h3>
-                        {preCon.developmentTeam.interiorDesigner.description && (
-                          <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-                            {preCon.developmentTeam.interiorDesigner.description}
-                          </p>
-                        )}
-                        {preCon.developmentTeam.interiorDesigner.website && (
-                          <a 
-                            href={preCon.developmentTeam.interiorDesigner.website} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-sm text-primary hover:underline"
-                          >
-                            Visit Website →
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Stats Section */}
-                    {preCon.developmentTeam.interiorDesigner.stats && (
-                      <div className="p-4 bg-card border border-border rounded-lg">
-                        <div className="mb-4">
-                          <p className="text-sm text-muted-foreground">
-                            {preCon.developmentTeam.interiorDesigner.stats.totalProjects} Total Projects
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('activelySelling')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.interiorDesigner.stats.activelySelling}
-                            </p>
-                            <p className="text-xs mt-1">Actively Selling</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('launchingSoon')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.interiorDesigner.stats.launchingSoon}
-                            </p>
-                            <p className="text-xs mt-1">Launching Soon</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('registrationPhase')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.interiorDesigner.stats.registrationPhase}
-                            </p>
-                            <p className="text-xs mt-1">Registration Phase</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('soldOut')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.interiorDesigner.stats.soldOut}
-                            </p>
-                            <p className="text-xs mt-1">Sold Out</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('resale')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.interiorDesigner.stats.resale}
-                            </p>
-                            <p className="text-xs mt-1">Resale</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('cancelled')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.interiorDesigner.stats.cancelled}
-                            </p>
-                            <p className="text-xs mt-1">Cancelled</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
-              )}
-
-              {preCon.developmentTeam.builder && (
-                <TabsContent value="builder" className="mt-6">
-                  <div className="space-y-6">
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Hammer className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-foreground mb-2">
-                          {preCon.developmentTeam.builder.name}
-                        </h3>
-                        {preCon.developmentTeam.builder.description && (
-                          <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-                            {preCon.developmentTeam.builder.description}
-                          </p>
-                        )}
-                        {preCon.developmentTeam.builder.website && (
-                          <a 
-                            href={preCon.developmentTeam.builder.website} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-sm text-primary hover:underline"
-                          >
-                            Visit Website →
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Stats Section */}
-                    {preCon.developmentTeam.builder.stats && (
-                      <div className="p-4 bg-card border border-border rounded-lg">
-                        <div className="mb-4">
-                          <p className="text-sm text-muted-foreground">
-                            {preCon.developmentTeam.builder.stats.totalProjects} Total Projects
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('activelySelling')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.builder.stats.activelySelling}
-                            </p>
-                            <p className="text-xs mt-1">Actively Selling</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('launchingSoon')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.builder.stats.launchingSoon}
-                            </p>
-                            <p className="text-xs mt-1">Launching Soon</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('registrationPhase')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.builder.stats.registrationPhase}
-                            </p>
-                            <p className="text-xs mt-1">Registration Phase</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('soldOut')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.builder.stats.soldOut}
-                            </p>
-                            <p className="text-xs mt-1">Sold Out</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('resale')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.builder.stats.resale}
-                            </p>
-                            <p className="text-xs mt-1">Resale</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('cancelled')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.builder.stats.cancelled}
-                            </p>
-                            <p className="text-xs mt-1">Cancelled</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
-              )}
-
-              {preCon.developmentTeam.landscapeArchitect && (
-                <TabsContent value="landscape-architect" className="mt-6">
-                  <div className="space-y-6">
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Sprout className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-foreground mb-2">
-                          {preCon.developmentTeam.landscapeArchitect.name}
-                        </h3>
-                        {preCon.developmentTeam.landscapeArchitect.description && (
-                          <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-                            {preCon.developmentTeam.landscapeArchitect.description}
-                          </p>
-                        )}
-                        {preCon.developmentTeam.landscapeArchitect.website && (
-                          <a 
-                            href={preCon.developmentTeam.landscapeArchitect.website} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-sm text-primary hover:underline"
-                          >
-                            Visit Website →
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Stats Section */}
-                    {preCon.developmentTeam.landscapeArchitect.stats && (
-                      <div className="p-4 bg-card border border-border rounded-lg">
-                        <div className="mb-4">
-                          <p className="text-sm text-muted-foreground">
-                            {preCon.developmentTeam.landscapeArchitect.stats.totalProjects} Total Projects
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('activelySelling')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.landscapeArchitect.stats.activelySelling}
-                            </p>
-                            <p className="text-xs mt-1">Actively Selling</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('launchingSoon')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.landscapeArchitect.stats.launchingSoon}
-                            </p>
-                            <p className="text-xs mt-1">Launching Soon</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('registrationPhase')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.landscapeArchitect.stats.registrationPhase}
-                            </p>
-                            <p className="text-xs mt-1">Registration Phase</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('soldOut')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.landscapeArchitect.stats.soldOut}
-                            </p>
-                            <p className="text-xs mt-1">Sold Out</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('resale')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.landscapeArchitect.stats.resale}
-                            </p>
-                            <p className="text-xs mt-1">Resale</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('cancelled')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.landscapeArchitect.stats.cancelled}
-                            </p>
-                            <p className="text-xs mt-1">Cancelled</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
-              )}
-
-              {preCon.developmentTeam.marketing && (
-                <TabsContent value="marketing" className="mt-6">
-                  <div className="space-y-6">
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Megaphone className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-foreground mb-2">
-                          {preCon.developmentTeam.marketing.name}
-                        </h3>
-                        {preCon.developmentTeam.marketing.description && (
-                          <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-                            {preCon.developmentTeam.marketing.description}
-                          </p>
-                        )}
-                        {preCon.developmentTeam.marketing.website && (
-                          <a 
-                            href={preCon.developmentTeam.marketing.website} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-sm text-primary hover:underline"
-                          >
-                            Visit Website →
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Stats Section */}
-                    {preCon.developmentTeam.marketing.stats && (
-                      <div className="p-4 bg-card border border-border rounded-lg">
-                        <div className="mb-4">
-                          <p className="text-sm text-muted-foreground">
-                            {preCon.developmentTeam.marketing.stats.totalProjects} Total Projects
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('activelySelling')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.marketing.stats.activelySelling}
-                            </p>
-                            <p className="text-xs mt-1">Actively Selling</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('launchingSoon')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.marketing.stats.launchingSoon}
-                            </p>
-                            <p className="text-xs mt-1">Launching Soon</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('registrationPhase')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.marketing.stats.registrationPhase}
-                            </p>
-                            <p className="text-xs mt-1">Registration Phase</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('soldOut')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.marketing.stats.soldOut}
-                            </p>
-                            <p className="text-xs mt-1">Sold Out</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('resale')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.marketing.stats.resale}
-                            </p>
-                            <p className="text-xs mt-1">Resale</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg border ${getStatBlockColor('cancelled')}`}>
-                            <p className="text-2xl font-bold">
-                              {preCon.developmentTeam.marketing.stats.cancelled}
-                            </p>
-                            <p className="text-xs mt-1">Cancelled</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
-              )}
-            </Tabs>
-          </CardContent>
-        </Card>
+        <DevelopmentTeamSection developmentTeam={preCon.developmentTeam} />
       )}
       {/* CTA Section */}
       <div className="text-center mt-16">

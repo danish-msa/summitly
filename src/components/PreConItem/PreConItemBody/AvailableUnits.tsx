@@ -34,10 +34,26 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
   const [minSquareFeet, setMinSquareFeet] = useState<number | undefined>(undefined);
   const [maxSquareFeet, setMaxSquareFeet] = useState<number | undefined>(undefined);
 
-  const mockUnits = getPreConUnits(propertyId);
+  // Use real units from property data if available, otherwise fall back to mock
+  const realUnits = (property.preCon as any)?.units || []
+  const mockUnits = getPreConUnits(propertyId)
+  const units = realUnits.length > 0 ? realUnits.map((unit: any) => ({
+    id: unit.id,
+    name: unit.name || unit.unitName,
+    beds: unit.beds,
+    baths: unit.baths,
+    sqft: unit.sqft,
+    price: unit.price,
+    maintenanceFee: unit.maintenanceFee || 0,
+    status: unit.status === 'for-sale' ? 'for-sale' : unit.status === 'sold-out' ? 'sold-out' : 'reserved',
+    floorplanImage: unit.floorplanImage || '/images/floorplan-placeholder.jpg',
+    description: unit.description,
+    features: unit.features || [],
+    amenities: unit.amenities || [],
+  })) : mockUnits
 
   const filteredAndSortedUnits = useMemo(() => {
-    let filtered = mockUnits.filter(unit => unit.status === activeTab);
+    let filtered = units.filter((unit: any) => unit.status === activeTab);
 
     // Apply bedroom filter
     if (bedrooms > 0) {
@@ -84,7 +100,7 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
     });
 
     return sorted;
-  }, [activeTab, sortBy, bedrooms, minPrice, maxPrice, minSquareFeet, maxSquareFeet, mockUnits]);
+  }, [activeTab, sortBy, bedrooms, minPrice, maxPrice, minSquareFeet, maxSquareFeet, units]);
 
   // Handle price filter change
   const handlePriceFilterChange = (e: FilterChangeEvent) => {
@@ -126,8 +142,8 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
     listingType: 'all',
   };
 
-  const forSaleCount = mockUnits.filter(u => u.status === "for-sale").length;
-  const soldOutCount = mockUnits.filter(u => u.status === "sold-out").length;
+  const forSaleCount = units.filter((u: any) => u.status === "for-sale").length;
+  const soldOutCount = units.filter((u: any) => u.status === "sold-out").length;
 
   if (!preCon) {
     return (
@@ -254,8 +270,23 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, propertyId }) => {
                 </div>
                 <div className="text-sm mt-2">
                   <span className="text-muted-foreground">Maint Fees: </span>
-                  <span className="font-medium">${unit.maintenanceFee}/mo</span>
+                  <span className="font-medium">${unit.maintenanceFee || 0}/mo</span>
                 </div>
+                {unit.description && (
+                  <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{unit.description}</p>
+                )}
+                {unit.features && unit.features.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {unit.features.slice(0, 3).map((feature: string, idx: number) => (
+                      <span key={idx} className="text-xs bg-muted px-2 py-0.5 rounded">
+                        {feature}
+                      </span>
+                    ))}
+                    {unit.features.length > 3 && (
+                      <span className="text-xs text-muted-foreground">+{unit.features.length - 3} more</span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {unit.status === "sold-out" && (

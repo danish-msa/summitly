@@ -3,7 +3,6 @@ import { Bed, Bath, Maximize2, MapPin, Heart, ChevronLeft, ChevronRight, MoreVer
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import type { PreConstructionPropertyCardProps } from './types';
 
@@ -12,14 +11,24 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
   const [isLiked, setIsLiked] = useState(false);
   const [imgError, setImgError] = useState(false);
   
-  const images = property.images;
+  // Get images from property - handle both PropertyListing format and PreConstructionProperty format
+  const images = (property as any).images?.allImages || 
+                 (property as any).images || 
+                 ((property as any).preCon?.images && Array.isArray((property as any).preCon.images) ? (property as any).preCon.images : []) ||
+                 [(property as any).images?.imageUrl || '/images/p1.jpg'];
   const totalImages = images.length;
+
+  // Get starting price - handle both formats
+  const startingPrice = (property as any).preCon?.startingPrice || 
+                        (property as any).startingPrice || 
+                        (property as any).listPrice || 
+                        0;
 
   const formattedPrice = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0
-  }).format(property.startingPrice);
+  }).format(startingPrice);
 
   const imageSrc = imgError ? '/placeholder.svg' : images[currentImageIndex];
 
@@ -44,12 +53,14 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const shareUrl = `${window.location.origin}/pre-construction/${property.id}`;
-    const shareText = `Check out ${property.projectName} - Pre-construction starting from ${formattedPrice}`;
+    const propertyId = (property as any).mlsNumber || (property as any).id;
+    const projectName = (property as any).preCon?.projectName || (property as any).projectName;
+    const shareUrl = `${window.location.origin}/pre-construction/${propertyId}`;
+    const shareText = `Check out ${projectName} - Pre-construction starting from ${formattedPrice}`;
     
     if (navigator.share) {
       navigator.share({
-        title: property.projectName,
+        title: projectName,
         text: shareText,
         url: shareUrl,
       }).catch(console.error);
@@ -71,18 +82,28 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
   const handleRegisterInterest = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Register interest for:', property.projectName);
+    const projectName = (property as any).preCon?.projectName || (property as any).projectName;
+    console.log('Register interest for:', projectName);
     // Add your registration logic here
   };
 
+  // Get status from property - handle both formats
+  const status = (property as any).preCon?.status || (property as any).status || 'selling';
+  
   const getStatusBadge = () => {
-    switch (property.status) {
+    switch (status) {
       case 'selling':
+      case 'now-selling':
+      case 'assignments':
+      case 'platinum-access':
         return <Badge className="bg-[#22C06A] text-white border-0">Now Selling</Badge>;
       case 'coming-soon':
+      case 'new-release-coming-soon':
         return <Badge className="bg-blue-500 text-white border-0">Coming Soon</Badge>;
       case 'sold-out':
         return <Badge variant="secondary">Sold Out</Badge>;
+      default:
+        return <Badge className="bg-[#22C06A] text-white border-0">Now Selling</Badge>;
     }
   };
 
@@ -93,7 +114,10 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
         className
       )}
       style={{ boxShadow: 'var(--shadow-card)' }}
-      onClick={() => window.location.href = `/pre-construction/${property.id}`}
+      onClick={() => {
+        const propertyId = (property as any).mlsNumber || (property as any).id;
+        window.location.href = `/pre-construction/${propertyId}`;
+      }}
     >
       <div className="flex flex-col h-full">
         {/* Image Section - Top */}
@@ -101,7 +125,7 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
           <div className="relative h-48">
             <img 
               src={imageSrc}
-              alt={`${property.projectName} - ${property.developer}`}
+              alt={`${(property as any).preCon?.projectName || (property as any).projectName} - ${(property as any).preCon?.developer || (property as any).developer}`}
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
               onError={() => setImgError(true)}
             />
@@ -111,7 +135,7 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
             {/* Property Type Badge */}
             <div className="absolute top-3 left-3">
               <Badge className="bg-card/95 backdrop-blur-sm text-card-foreground border-0 shadow-lg text-xs">
-                {property.details.propertyType}
+                {(property as any).preCon?.details?.propertyType || (property as any).details?.propertyType || (property as any).details?.propertyType || 'Pre-Construction'}
               </Badge>
             </div>
 
@@ -194,19 +218,29 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
             <div className="flex-1">
               {/* Project Name */}
               <h3 className="text-lg font-bold text-foreground mb-1 line-clamp-1">
-                {property.projectName}
+                {(property as any).preCon?.projectName || (property as any).projectName}
               </h3>
 
               {/* Developer */}
               <p className="text-xs text-muted-foreground mb-2">
-                by {property.developer}
+                by {(property as any).preCon?.developer || (property as any).developer}
               </p>
 
               {/* Location */}
               <div className="flex items-start mb-3">
                 <MapPin className="mr-1 text-muted-foreground flex-shrink-0 mt-0.5" size={14} />
                 <p className="text-xs text-foreground line-clamp-1">
-                  {property.address.street}, {property.address.city}
+                  {(() => {
+                    const address = (property as any).address;
+                    if (address) {
+                      const street = address.street || 
+                                   `${address.streetNumber || ''} ${address.streetName || ''}`.trim() ||
+                                   address.location?.split(',')[0] || '';
+                      const city = address.city || '';
+                      return street ? `${street}, ${city}` : city;
+                    }
+                    return 'Location not available';
+                  })()}
                 </p>
               </div>
             </div>
@@ -226,15 +260,21 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
           <div className="flex flex-wrap gap-3 mb-3">
             <div className="flex items-center gap-1.5">
               <Bed className="text-muted-foreground" size={14} />
-              <span className="text-xs text-foreground">{property.details.bedroomRange}</span>
+              <span className="text-xs text-foreground">
+                {(property as any).preCon?.details?.bedroomRange || (property as any).details?.bedroomRange || 'N/A'}
+              </span>
             </div>
             <div className="flex items-center gap-1.5">
               <Bath className="text-muted-foreground" size={14} />
-              <span className="text-xs text-foreground">{property.details.bathroomRange}</span>
+              <span className="text-xs text-foreground">
+                {(property as any).preCon?.details?.bathroomRange || (property as any).details?.bathroomRange || 'N/A'}
+              </span>
             </div>
             <div className="flex items-center gap-1.5">
               <Maximize2 className="text-muted-foreground" size={14} />
-              <span className="text-xs text-foreground">{property.details.sqftRange} sqft</span>
+              <span className="text-xs text-foreground">
+                {(property as any).preCon?.details?.sqftRange || (property as any).details?.sqftRange || 'N/A'} sqft
+              </span>
             </div>
           </div>
 
@@ -244,25 +284,21 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
               <Calendar className="text-primary flex-shrink-0 mt-0.5" size={14} />
               <div>
                 <p className="text-xs text-muted-foreground">Completion</p>
-                <p className="text-xs font-semibold text-foreground">{property.completion.date}</p>
+                <p className="text-xs font-semibold text-foreground">
+                  {(property as any).preCon?.completion?.date || (property as any).completion?.date || 'TBD'}
+                </p>
               </div>
             </div>
             <div className="flex items-start gap-1.5 p-2 bg-muted/50 rounded-lg">
               <TrendingUp className="text-accent flex-shrink-0 mt-0.5" size={14} />
               <div>
                 <p className="text-xs text-muted-foreground">Available</p>
-                <p className="text-xs font-semibold text-foreground">{property.details.availableUnits}/{property.details.totalUnits}</p>
+                <p className="text-xs font-semibold text-foreground">
+                  {(property as any).preCon?.details?.availableUnits || (property as any).details?.availableUnits || 0}/
+                  {(property as any).preCon?.details?.totalUnits || (property as any).details?.totalUnits || 0}
+                </p>
               </div>
             </div>
-          </div>
-
-          {/* Construction Progress */}
-          <div className="mb-3">
-            <div className="flex items-center justify-between mb-1.5">
-              <p className="text-xs text-muted-foreground">Progress</p>
-              <p className="text-xs font-semibold text-foreground">{property.completion.progress}%</p>
-            </div>
-            <Progress value={property.completion.progress} className="h-1.5" />
           </div>
 
           {/* CTA Button */}
@@ -279,3 +315,4 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
 };
 
 export default PreConstructionPropertyCard;
+

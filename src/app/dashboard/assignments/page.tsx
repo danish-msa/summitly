@@ -4,31 +4,30 @@ import PropertyCard from '@/components/Helper/PropertyCard'
 import { fetchPropertyListings } from '@/lib/api/properties'
 import { useState, useEffect } from 'react'
 import { PropertyListing } from '@/lib/types'
-import { Loader2 } from 'lucide-react'
+import { useBackgroundFetch } from '@/hooks/useBackgroundFetch'
 
 export default function MyListings() {
   const [listings, setListings] = useState<PropertyListing[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { loading, fetchData } = useBackgroundFetch()
 
   useEffect(() => {
     const loadListings = async () => {
-      try {
+      await fetchData(async () => {
         const allProperties = await fetchPropertyListings()
         // Filter for user's listings - in a real app, this would filter by user ID
         setListings(allProperties.slice(0, 2)) // Mock: show first 2
-      } catch (error) {
+        return allProperties
+      }).catch((error) => {
         console.error('Error loading listings:', error)
-      } finally {
-        setIsLoading(false)
-      }
+      })
     }
     loadListings()
-  }, [])
+  }, [fetchData])
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="text-muted-foreground">Loading...</div>
       </div>
     )
   }

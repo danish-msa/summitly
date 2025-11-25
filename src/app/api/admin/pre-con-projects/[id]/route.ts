@@ -178,7 +178,15 @@ export async function PUT(
       developer?: string
       startingPrice?: number
       endingPrice?: number
+      avgPricePerSqft?: number | null
       status?: string
+      parkingPrice?: number | null
+      parkingPriceDetail?: string | null
+      lockerPrice?: number | null
+      lockerPriceDetail?: string | null
+      assignmentFee?: number | null
+      developmentLevies?: number | null
+      developmentCharges?: number | null
       streetNumber?: string | null
       streetName?: string | null
       city?: string
@@ -194,9 +202,17 @@ export async function PUT(
       bedroomRange?: string
       bathroomRange?: string
       sqftRange?: string
+      hasDen?: boolean
+      hasStudio?: boolean
+      hasLoft?: boolean
+      hasWorkLiveLoft?: boolean
       totalUnits?: number
       availableUnits?: number
       storeys?: number | null
+      height?: number | null
+      maintenanceFeesPerSqft?: number | null
+      maintenanceFeesDetail?: string | null
+      floorPremiums?: string | null
       completionDate?: string
       completionProgress?: number
       promotions?: string | null
@@ -212,13 +228,22 @@ export async function PUT(
       interiorDesignerInfo?: string | null
       landscapeArchitectInfo?: string | null
       marketingInfo?: string | null
+      salesMarketingCompany?: string | null
       mlsNumber?: string
     } = {}
     if (body.projectName !== undefined) updateData.projectName = body.projectName
     if (body.developer !== undefined) updateData.developer = body.developer
     if (body.startingPrice !== undefined) updateData.startingPrice = parseFloat(body.startingPrice)
     if (body.endingPrice !== undefined) updateData.endingPrice = parseFloat(body.endingPrice)
+    if (body.avgPricePerSqft !== undefined) updateData.avgPricePerSqft = body.avgPricePerSqft ? parseFloat(body.avgPricePerSqft) : null
     if (body.status !== undefined) updateData.status = body.status
+    if (body.parkingPrice !== undefined) updateData.parkingPrice = body.parkingPrice ? parseFloat(body.parkingPrice) : null
+    if (body.parkingPriceDetail !== undefined) updateData.parkingPriceDetail = body.parkingPriceDetail || null
+    if (body.lockerPrice !== undefined) updateData.lockerPrice = body.lockerPrice ? parseFloat(body.lockerPrice) : null
+    if (body.lockerPriceDetail !== undefined) updateData.lockerPriceDetail = body.lockerPriceDetail || null
+    if (body.assignmentFee !== undefined) updateData.assignmentFee = body.assignmentFee ? parseFloat(body.assignmentFee) : null
+    if (body.developmentLevies !== undefined) updateData.developmentLevies = body.developmentLevies ? parseFloat(body.developmentLevies) : null
+    if (body.developmentCharges !== undefined) updateData.developmentCharges = body.developmentCharges ? parseFloat(body.developmentCharges) : null
     if (body.streetNumber !== undefined) updateData.streetNumber = body.streetNumber
     if (body.streetName !== undefined) updateData.streetName = body.streetName
     if (body.city !== undefined) updateData.city = body.city
@@ -234,9 +259,17 @@ export async function PUT(
     if (body.bedroomRange !== undefined) updateData.bedroomRange = body.bedroomRange
     if (body.bathroomRange !== undefined) updateData.bathroomRange = body.bathroomRange
     if (body.sqftRange !== undefined) updateData.sqftRange = body.sqftRange
+    if (body.hasDen !== undefined) updateData.hasDen = body.hasDen === true || body.hasDen === 'true'
+    if (body.hasStudio !== undefined) updateData.hasStudio = body.hasStudio === true || body.hasStudio === 'true'
+    if (body.hasLoft !== undefined) updateData.hasLoft = body.hasLoft === true || body.hasLoft === 'true'
+    if (body.hasWorkLiveLoft !== undefined) updateData.hasWorkLiveLoft = body.hasWorkLiveLoft === true || body.hasWorkLiveLoft === 'true'
     if (body.totalUnits !== undefined) updateData.totalUnits = parseInt(body.totalUnits)
     if (body.availableUnits !== undefined) updateData.availableUnits = parseInt(body.availableUnits)
     if (body.storeys !== undefined) updateData.storeys = body.storeys ? parseInt(body.storeys) : null
+    if (body.height !== undefined) updateData.height = body.height ? parseFloat(body.height) : null
+    if (body.maintenanceFeesPerSqft !== undefined) updateData.maintenanceFeesPerSqft = body.maintenanceFeesPerSqft ? parseFloat(body.maintenanceFeesPerSqft) : null
+    if (body.maintenanceFeesDetail !== undefined) updateData.maintenanceFeesDetail = body.maintenanceFeesDetail || null
+    if (body.floorPremiums !== undefined) updateData.floorPremiums = body.floorPremiums || null
     if (body.completionDate !== undefined) updateData.completionDate = body.completionDate
     if (body.completionProgress !== undefined) {
       // Convert completionProgress string to integer (database expects Int)
@@ -275,6 +308,7 @@ export async function PUT(
     if (body.interiorDesignerInfo !== undefined) updateData.interiorDesignerInfo = body.interiorDesignerInfo ? await fetchDeveloperData(body.interiorDesignerInfo) : null
     if (body.landscapeArchitectInfo !== undefined) updateData.landscapeArchitectInfo = body.landscapeArchitectInfo ? await fetchDeveloperData(body.landscapeArchitectInfo) : null
     if (body.marketingInfo !== undefined) updateData.marketingInfo = body.marketingInfo ? await fetchDeveloperData(body.marketingInfo) : null
+    if (body.salesMarketingCompany !== undefined) updateData.salesMarketingCompany = body.salesMarketingCompany || null
     if (body.mlsNumber !== undefined) updateData.mlsNumber = body.mlsNumber
 
     const project = await prisma.preConstructionProject.update({

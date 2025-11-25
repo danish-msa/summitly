@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { useBackgroundFetch } from "@/hooks/useBackgroundFetch"
 import { DataTable, Column } from "@/components/Dashboard/DataTable"
 import { ActionButton } from "@/components/Dashboard/ActionButton"
 import { Button } from "@/components/ui/button"
@@ -36,6 +37,7 @@ interface Developer {
   updatedAt: string
 }
 
+
 const developerTypes = [
   { value: "DEVELOPER", label: "Developer" },
   { value: "ARCHITECT", label: "Architect" },
@@ -49,7 +51,7 @@ export default function DevelopersPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [developers, setDevelopers] = useState<Developer[]>([])
-  const [loading, setLoading] = useState(true)
+  const { loading, fetchData } = useBackgroundFetch()
   const [searchTerm, setSearchTerm] = useState("")
   const [typeFilter, setTypeFilter] = useState("all")
   const [page, setPage] = useState(1)
@@ -94,8 +96,7 @@ export default function DevelopersPage() {
   }, [status, session, router, page, searchTerm, typeFilter])
 
   const fetchDevelopers = async () => {
-    try {
-      setLoading(true)
+    await fetchData(async () => {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: "10",
@@ -112,13 +113,13 @@ export default function DevelopersPage() {
       const data = await response.json()
       setDevelopers(data.developers || [])
       setTotalPages(data.pagination?.totalPages || 1)
-    } catch (error) {
+      
+      return data
+    }).catch((error) => {
       console.error("Error fetching developers:", error)
       const errorMessage = error instanceof Error ? error.message : "Failed to fetch developers"
       alert(errorMessage)
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
   const fetchStats = async () => {
@@ -626,6 +627,7 @@ export default function DevelopersPage() {
                 </div>
               </div>
             </div>
+
             <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="outline" onClick={handleCloseForm}>
                 Cancel

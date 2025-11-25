@@ -176,8 +176,8 @@ const ProjectAmenities: React.FC<ProjectAmenitiesProps> = ({ property }) => {
     return Building2;
   };
 
-  // Mock amenities data - in a real app, this would come from property.preCon.amenities
-  const allAmenities = preCon.amenities || [
+  // Use real amenities data from database
+  const allAmenities = preCon.amenities && preCon.amenities.length > 0 ? preCon.amenities : [
     "Pet Spa",
     "Spa",
     "Kids Play Room",

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { CheckCircle2, DollarSign, TrendingUp, Star, Bed, Maximize2, Calculator } from "lucide-react"
+import { CheckCircle2, DollarSign, TrendingUp, Star, Bed, Maximize2, Calculator, Car, Package, FileText, Wrench, Home } from "lucide-react"
 import { PropertyListing } from '@/lib/types'
 
 interface PriceItem {
@@ -54,7 +54,8 @@ const PricingIncentives: React.FC<PricingIncentivesProps> = ({ property }) => {
     return null;
   };
 
-  const pricePerSqft = calculatePricePerSqft();
+  // Use avgPricePerSqft from database if available, otherwise calculate
+  const pricePerSqft = (preCon as any).avgPricePerSqft || calculatePricePerSqft();
 
   // Extract bedroom info for pricing
   const getBedroomPricing = () => {
@@ -74,23 +75,71 @@ const PricingIncentives: React.FC<PricingIncentivesProps> = ({ property }) => {
     { label: "2 Bed Starting From", value: getBedroomPricing() || "N/A", icon: Bed },
     { label: "Price Per Sqft", value: pricePerSqft ? `$${pricePerSqft.toLocaleString()}` : "N/A", icon: Calculator },
     { label: "Avg Price Per Sqft", value: pricePerSqft ? `$${pricePerSqft.toLocaleString()} / sqft` : "N/A", icon: TrendingUp },
-    { label: "Pre-Con Avg Price Per Sq Ft", value: pricePerSqft ? `$${Math.round(pricePerSqft * 0.75).toLocaleString()} / sqft` : "N/A", icon: Maximize2 },
   ];
 
-  // Mock incentives - in a real app, this would come from the property data
-  const incentives: Incentive[] = [
-    { title: "Free Assignment", highlight: true },
-    { title: "Free Right to Lease During Occupancy", highlight: true },
-    { title: "Capped Development Charges" },
-    { title: "$15,000 + HST (1 Bedroom + Den and Smaller)", value: "Small Units" },
-    { title: "$18,000 + HST (2 Bedroom and Larger)", value: "Large Units" },
-    { title: "Free Kitchen Island", value: "Valued at $15,000 to $25,000" },
-    { title: "Free Sliding Door to Den", value: "Valued at $5,000" },
-  ];
+  // Additional pricing fields
+  const additionalPricing: PriceItem[] = []
+  if ((preCon as any).parkingPrice) {
+    additionalPricing.push({
+      label: "Parking Price",
+      value: formatPrice((preCon as any).parkingPrice),
+      icon: Car
+    })
+  }
+  if ((preCon as any).lockerPrice) {
+    additionalPricing.push({
+      label: "Locker Price",
+      value: formatPrice((preCon as any).lockerPrice),
+      icon: Package
+    })
+  }
+  if ((preCon as any).assignmentFee) {
+    additionalPricing.push({
+      label: "Assignment Fee",
+      value: formatPrice((preCon as any).assignmentFee),
+      icon: FileText
+    })
+  }
+  if ((preCon as any).developmentCharges) {
+    additionalPricing.push({
+      label: "Development Charges",
+      value: formatPrice((preCon as any).developmentCharges),
+      icon: Wrench
+    })
+  }
+  if ((preCon as any).developmentLevies) {
+    additionalPricing.push({
+      label: "Development Levies",
+      value: formatPrice((preCon as any).developmentLevies),
+      icon: Wrench
+    })
+  }
+  if ((preCon as any).maintenanceFeesPerSqft) {
+    additionalPricing.push({
+      label: "Maintenance Fees Per Sqft",
+      value: `$${((preCon as any).maintenanceFeesPerSqft).toLocaleString()} / sqft`,
+      icon: Home
+    })
+  }
+
+  // Parse promotions from string (comma-separated or newline-separated)
+  const parsePromotions = (promotionsString: string | null | undefined): Incentive[] => {
+    if (!promotionsString) return []
+    
+    // Split by comma or newline
+    const items = promotionsString.split(/[,\n]/).map(item => item.trim()).filter(Boolean)
+    
+    return items.map(item => ({
+      title: item,
+      highlight: item.toLowerCase().includes('free') || item.toLowerCase().includes('included')
+    }))
+  }
+
+  const incentives: Incentive[] = parsePromotions((preCon as any).promotions)
 
   return (
-    <div className="w-full">
-      <div className="grid md:grid-cols-2 gap-8 mb-0 items-start">
+    <div className="w-full space-y-6">
+      <div className="grid md:grid-cols-2 gap-8 items-start">
         {/* Pricing Card */}
         <Card className="shadow-lg border-border bg-green-50 hover:shadow-xl transition-shadow">
           <CardHeader className="border-b border-border bg-green-100">
@@ -117,6 +166,47 @@ const PricingIncentives: React.FC<PricingIncentivesProps> = ({ property }) => {
                 );
               })}
             </div>
+            {additionalPricing.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-border">
+                <h4 className="text-sm font-semibold text-foreground mb-3">Additional Costs</h4>
+                <div className="space-y-2">
+                  {additionalPricing.map((item, index) => {
+                    const IconComponent = item.icon || DollarSign;
+                    return (
+                      <div
+                        key={index}
+                        className="flex justify-between items-center py-2 border-b border-border last:border-0"
+                      >
+                        <div className="flex items-center gap-2">
+                          <IconComponent className="h-4 w-4 text-primary flex-shrink-0" />
+                          <span className="text-muted-foreground font-medium text-sm">{item.label}</span>
+                        </div>
+                        <span className="text-foreground font-bold text-base">{item.value}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* Show details if available */}
+                {((preCon as any).parkingPriceDetail || (preCon as any).lockerPriceDetail || (preCon as any).maintenanceFeesDetail) && (
+                  <div className="mt-4 pt-4 border-t border-border">
+                    <div className="space-y-2 text-xs text-muted-foreground">
+                      {(preCon as any).parkingPriceDetail && (
+                        <p><strong>Parking:</strong> {(preCon as any).parkingPriceDetail}</p>
+                      )}
+                      {(preCon as any).lockerPriceDetail && (
+                        <p><strong>Locker:</strong> {(preCon as any).lockerPriceDetail}</p>
+                      )}
+                      {(preCon as any).maintenanceFeesDetail && (
+                        <p><strong>Maintenance:</strong> {(preCon as any).maintenanceFeesDetail}</p>
+                      )}
+                      {(preCon as any).floorPremiums && (
+                        <p><strong>Floor Premiums:</strong> {(preCon as any).floorPremiums}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="mt-6 p-2 bg-green-300 rounded-lg border border-primary/20">
               <div className="flex items-center gap-2 text-primary justify-center font-semibold">
                 <TrendingUp className="h-5 w-5" />
@@ -145,26 +235,33 @@ const PricingIncentives: React.FC<PricingIncentivesProps> = ({ property }) => {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4">
-            <div className="flex flex-col gap-6 mb-3">
-              {incentives.map((incentive, index) => (
-                <div
-                  key={index}
-                  className="flex items-start gap-2"
-                >
-                  <CheckCircle2
-                    className="h-5 w-5 flex-shrink-0 mt-0.5"
-                  />
-                  <div>
-                    <div className="font-medium text-sm">
-                      {incentive.title}
+            {incentives.length > 0 ? (
+              <div className="flex flex-col gap-6 mb-3">
+                {incentives.map((incentive, index) => (
+                  <div
+                    key={index}
+                    className={`flex items-start gap-2 ${incentive.highlight ? 'p-3 bg-purple-100 rounded-lg' : ''}`}
+                  >
+                    <CheckCircle2
+                      className={`h-5 w-5 flex-shrink-0 mt-0.5 ${incentive.highlight ? 'text-primary' : 'text-muted-foreground'}`}
+                    />
+                    <div>
+                      <div className={`font-medium text-sm ${incentive.highlight ? 'text-primary font-semibold' : ''}`}>
+                        {incentive.title}
+                      </div>
+                      {incentive.value && (
+                        <div className="text-muted-foreground text-xs mt-0.5">{incentive.value}</div>
+                      )}
                     </div>
-                    {incentive.value && (
-                      <div className="text-muted-foreground text-xs mt-0.5">{incentive.value}</div>
-                    )}
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Star className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>No incentives available at this time</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
