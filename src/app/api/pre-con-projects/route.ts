@@ -7,12 +7,18 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status') || ''
     const city = searchParams.get('city') || ''
+    const propertyType = searchParams.get('propertyType') || ''
+    const subPropertyType = searchParams.get('subPropertyType') || ''
+    const completionYear = searchParams.get('completionYear') || ''
     const limit = searchParams.get('limit')
 
     // Build where clause
     const where: {
       status?: string
       city?: { contains: string; mode: 'insensitive' }
+      propertyType?: string
+      subPropertyType?: string
+      completionDate?: { contains: string }
     } = {}
     
     if (status) {
@@ -20,6 +26,16 @@ export async function GET(request: NextRequest) {
     }
     if (city) {
       where.city = { contains: city, mode: 'insensitive' }
+    }
+    if (propertyType) {
+      where.propertyType = propertyType
+    }
+    if (subPropertyType) {
+      where.subPropertyType = subPropertyType
+    }
+    if (completionYear) {
+      // Filter by completion date containing the year (e.g., "Q4 2025" contains "2025")
+      where.completionDate = { contains: completionYear }
     }
 
     // Retry logic for connection issues

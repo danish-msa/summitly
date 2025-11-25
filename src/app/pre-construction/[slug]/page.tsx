@@ -3,27 +3,84 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import PreConItem from '@/components/PreConItem/PreConItem';
-import PreConstructionCityPage from '@/components/PreCon/PreConstructionCityPage';
+import PreConstructionBasePage from '@/components/PreCon/PreConstructionBasePage';
 import { preConCities } from '@/components/PreCon/Search/preConSearchData';
 
 const PreConstructionPage: React.FC = () => {
   const params = useParams();
   const slug = params?.slug as string || '';
-  const [pageType, setPageType] = useState<'project' | 'city' | 'loading'>('loading');
+  const [pageType, setPageType] = useState<'project' | 'city' | 'status' | 'propertyType' | 'subPropertyType' | 'completionYear' | 'loading'>('loading');
 
   // Known city slugs (from preConCities)
   const knownCitySlugs = preConCities.map(city => city.id);
 
+  // Known status slugs
+  const knownStatusSlugs = ['selling', 'coming-soon', 'sold-out'];
+
+  // Known property type slugs
+  const knownPropertyTypeSlugs = ['condos', 'houses', 'lofts', 'master-planned-communities', 'multi-family', 'offices'];
+
+  // Known sub-property type slugs (format: subType-mainType)
+  const knownSubPropertyTypeSlugs = [
+    'high-rise-condos',
+    'mid-rise-condos',
+    'low-rise-condos',
+    'link-houses',
+    'townhouse-houses',
+    'semi-detached-houses',
+    'detached-houses',
+  ];
+
+  // Helper to check if slug is a sub-property type
+  const isSubPropertyType = (slug: string): boolean => {
+    return knownSubPropertyTypeSlugs.includes(slug.toLowerCase());
+  };
+
+  // Helper to check if slug is a year (4-digit number)
+  const isYear = (slug: string): boolean => {
+    const yearRegex = /^\d{4}$/;
+    if (!yearRegex.test(slug)) return false;
+    const year = parseInt(slug, 10);
+    // Check if it's a reasonable year (e.g., 2020-2100)
+    return year >= 2020 && year <= 2100;
+  };
+
   useEffect(() => {
     const determinePageType = async () => {
       try {
-        // First, check if it's a known city
-        if (knownCitySlugs.includes(slug.toLowerCase())) {
+        const slugLower = slug.toLowerCase();
+
+        // First, check if it's a year (e.g., "2025")
+        if (isYear(slug)) {
+          setPageType('completionYear');
+          return;
+        }
+
+        // Check if it's a sub-property type (e.g., "high-rise-condos")
+        if (isSubPropertyType(slugLower)) {
+          setPageType('subPropertyType');
+          return;
+        }
+
+        // Check if it's a known status
+        if (knownStatusSlugs.includes(slugLower)) {
+          setPageType('status');
+          return;
+        }
+
+        // Check if it's a known property type
+        if (knownPropertyTypeSlugs.includes(slugLower)) {
+          setPageType('propertyType');
+          return;
+        }
+
+        // Check if it's a known city
+        if (knownCitySlugs.includes(slugLower)) {
           setPageType('city');
           return;
         }
 
-        // If not a known city, try to fetch as a project (by mlsNumber)
+        // If not a known filter, try to fetch as a project (by mlsNumber)
         const projectResponse = await fetch(`/api/pre-con-projects/${slug}`);
         
         if (projectResponse.ok) {
@@ -78,8 +135,8 @@ const PreConstructionPage: React.FC = () => {
   }
 
   // Render appropriate page based on type
-  if (pageType === 'city') {
-    return <PreConstructionCityPage citySlug={slug} />;
+  if (pageType === 'city' || pageType === 'status' || pageType === 'propertyType' || pageType === 'subPropertyType' || pageType === 'completionYear') {
+    return <PreConstructionBasePage slug={slug} pageType={pageType} />;
   }
 
   // Otherwise, it's a project

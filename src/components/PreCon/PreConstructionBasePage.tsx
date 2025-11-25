@@ -12,6 +12,7 @@ import { PreConstructionPropertyCardV3 } from '@/components/PreCon/PropertyCards
 import type { PreConstructionProperty } from '@/components/PreCon/PropertyCards/types';
 import { PropertyListing } from '@/lib/types';
 import { toast } from '@/hooks/use-toast';
+import BlogSection from '@/components/common/BlogSection';
 
 // Dynamically import the Google Maps component with no SSR
 const GooglePropertyMap = dynamic(() => import('@/components/MapSearch/GooglePropertyMap'), { ssr: false });
@@ -142,15 +143,108 @@ const convertToPropertyListing = (project: PreConstructionProperty): PropertyLis
   };
 };
 
-interface PreConstructionCityPageProps {
-  citySlug: string;
+type PageType = 'city' | 'status' | 'propertyType' | 'subPropertyType' | 'completionYear';
+
+interface PreConstructionBasePageProps {
+  slug: string;
+  pageType: PageType;
 }
 
-const PreConstructionCityPage: React.FC<PreConstructionCityPageProps> = ({ citySlug }) => {
+// Helper to format status for display
+const formatStatus = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    'selling': 'Selling',
+    'coming-soon': 'Coming Soon',
+    'sold-out': 'Sold Out',
+  };
+  return statusMap[status.toLowerCase()] || status;
+};
+
+// Helper to format property type for display
+const formatPropertyType = (type: string): string => {
+  const typeMap: Record<string, string> = {
+    'condos': 'Condos',
+    'houses': 'Houses',
+    'lofts': 'Lofts',
+    'master-planned-communities': 'Master-Planned Communities',
+    'multi-family': 'Multi Family',
+    'offices': 'Offices',
+  };
+  return typeMap[type.toLowerCase()] || type;
+};
+
+// Helper to convert property type slug to database value
+const slugToPropertyType = (slug: string): string => {
+  const typeMap: Record<string, string> = {
+    'condos': 'Condos',
+    'houses': 'Houses',
+    'lofts': 'Lofts',
+    'master-planned-communities': 'Master-Planned Communities',
+    'multi-family': 'Multi Family',
+    'offices': 'Offices',
+  };
+  return typeMap[slug.toLowerCase()] || slug;
+};
+
+// Helper to parse sub-property type slug (e.g., "high-rise-condos" -> { subPropertyType: "High-Rise", propertyType: "Condos" })
+const parseSubPropertyTypeSlug = (slug: string): { subPropertyType: string; propertyType: string } | null => {
+  const slugLower = slug.toLowerCase();
+  
+  // Condos sub-types
+  if (slugLower.endsWith('-condos')) {
+    const subType = slugLower.replace('-condos', '');
+    const subTypeMap: Record<string, string> = {
+      'high-rise': 'High-Rise',
+      'mid-rise': 'Mid-Rise',
+      'low-rise': 'Low-Rise',
+    };
+    if (subTypeMap[subType]) {
+      return { subPropertyType: subTypeMap[subType], propertyType: 'Condos' };
+    }
+  }
+  
+  // Houses sub-types
+  if (slugLower.endsWith('-houses')) {
+    const subType = slugLower.replace('-houses', '');
+    const subTypeMap: Record<string, string> = {
+      'link': 'Link',
+      'townhouse': 'Townhouse',
+      'semi-detached': 'Semi-Detached',
+      'detached': 'Detached',
+    };
+    if (subTypeMap[subType]) {
+      return { subPropertyType: subTypeMap[subType], propertyType: 'Houses' };
+    }
+  }
+  
+  return null;
+};
+
+// Helper to format sub-property type for display
+const formatSubPropertyType = (subType: string, mainType: string): string => {
+  return `${subType} ${mainType}`;
+};
+
+// Helper to convert status slug to database value
+const slugToStatus = (slug: string): string => {
+  const statusMap: Record<string, string> = {
+    'selling': 'selling',
+    'coming-soon': 'coming-soon',
+    'sold-out': 'sold-out',
+  };
+  return statusMap[slug.toLowerCase()] || slug;
+};
+
+const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({ slug, pageType }) => {
   const [projects, setProjects] = useState<PropertyListing[]>([]);
   const [allProjects, setAllProjects] = useState<PropertyListing[]>([]);
   const [loading, setLoading] = useState(true);
-  const [cityInfo, setCityInfo] = useState<{ name: string; numberOfProjects: number } | null>(null);
+  const [pageInfo, setPageInfo] = useState<{ 
+    title: string; 
+    numberOfProjects: number; 
+    province?: string;
+    description?: string;
+  } | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'mixed' | 'map'>('list');
   const [selectedProject, setSelectedProject] = useState<PreConstructionProperty | null>(null);
   const [communities, setCommunities] = useState<string[]>([]);
@@ -158,55 +252,109 @@ const PreConstructionCityPage: React.FC<PreConstructionCityPageProps> = ({ cityS
   // Use global filters hook
   const { filters, handleFilterChange, resetFilters } = useGlobalFilters();
 
-  // Convert slug to city name
-  const cityName = useMemo(() => {
-    return unslugifyCityName(citySlug);
-  }, [citySlug]);
+  // Build API query based on page type
+  const buildApiQuery = useMemo(() => {
+    if (pageType === 'city') {
+      const cityName = unslugifyCityName(slug);
+      return `/api/pre-con-projects?city=${encodeURIComponent(cityName)}`;
+    } else if (pageType === 'status') {
+      const status = slugToStatus(slug);
+      return `/api/pre-con-projects?status=${encodeURIComponent(status)}`;
+    } else if (pageType === 'propertyType') {
+      const propertyType = slugToPropertyType(slug);
+      return `/api/pre-con-projects?propertyType=${encodeURIComponent(propertyType)}`;
+    } else if (pageType === 'subPropertyType') {
+      const parsed = parseSubPropertyTypeSlug(slug);
+      if (parsed) {
+        return `/api/pre-con-projects?propertyType=${encodeURIComponent(parsed.propertyType)}&subPropertyType=${encodeURIComponent(parsed.subPropertyType)}`;
+      }
+    } else if (pageType === 'completionYear') {
+      // Slug is the year (e.g., "2025")
+      return `/api/pre-con-projects?completionYear=${encodeURIComponent(slug)}`;
+    }
+    return '';
+  }, [slug, pageType]);
 
-  // Fetch pre-construction projects for the city
+  // Fetch pre-construction projects
   useEffect(() => {
-    const loadCityData = async () => {
+    const loadData = async () => {
       try {
         setLoading(true);
 
-        // Fetch projects for the city
-        const response = await fetch(`/api/pre-con-projects?city=${encodeURIComponent(cityName)}`);
+        if (!buildApiQuery) return;
+
+        const response = await fetch(buildApiQuery);
         if (!response.ok) {
           throw new Error('Failed to fetch projects');
         }
 
         const data = await response.json();
-        const cityProjects = data.projects || [];
+        const fetchedProjects = data.projects || [];
 
-        // Set city info
-        setCityInfo({
-          name: cityName,
-          numberOfProjects: cityProjects.length,
+        // Extract province from first project (if available)
+        const province = fetchedProjects.length > 0 
+          ? (fetchedProjects[0] as PropertyListing).address?.state || 'ON'
+          : 'ON';
+
+        // Build page info based on page type
+        let title = '';
+        let description = '';
+
+        if (pageType === 'city') {
+          const cityName = unslugifyCityName(slug);
+          title = cityName;
+          description = `Discover the latest pre-construction opportunities in ${cityName}. Explore upcoming developments, pricing, and availability.`;
+        } else if (pageType === 'status') {
+          const statusDisplay = formatStatus(slug);
+          title = `${statusDisplay} Pre-Construction Projects`;
+          description = `Browse all ${statusDisplay.toLowerCase()} pre-construction projects. Find your perfect new home with Summitly.`;
+        } else if (pageType === 'propertyType') {
+          const typeDisplay = formatPropertyType(slug);
+          title = `${typeDisplay} Pre-Construction Projects`;
+          description = `Explore ${typeDisplay.toLowerCase()} pre-construction projects. Discover new developments and find your ideal property.`;
+        } else if (pageType === 'subPropertyType') {
+          const parsed = parseSubPropertyTypeSlug(slug);
+          if (parsed) {
+            const typeDisplay = formatSubPropertyType(parsed.subPropertyType, parsed.propertyType);
+            title = `${typeDisplay} Pre-Construction Projects`;
+            description = `Explore ${typeDisplay.toLowerCase()} pre-construction projects. Discover new developments and find your ideal property.`;
+          }
+        } else if (pageType === 'completionYear') {
+          // Slug is the year (e.g., "2025")
+          title = `${slug} Completion Pre-Construction Projects`;
+          description = `Discover pre-construction projects completing in ${slug}. Explore upcoming developments, pricing, and availability for projects expected to be ready in ${slug}.`;
+        }
+
+        setPageInfo({
+          title,
+          numberOfProjects: fetchedProjects.length,
+          province,
+          description,
         });
 
-        setProjects(cityProjects);
-        setAllProjects(cityProjects);
+        setProjects(fetchedProjects);
+        setAllProjects(fetchedProjects);
         
         // Extract unique communities from the projects
         const uniqueCommunities = Array.from(
           new Set(
-            cityProjects
+            fetchedProjects
               .map((project: PropertyListing) => project.address?.neighborhood || project.address?.city)
               .filter(Boolean) as string[]
           )
         ).sort();
         setCommunities(uniqueCommunities);
       } catch (error) {
-        console.error('Error loading city data:', error);
+        console.error('Error loading data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    if (citySlug) {
-      loadCityData();
+    if (slug && buildApiQuery) {
+      loadData();
     }
-  }, [citySlug, cityName]);
+  }, [slug, buildApiQuery, pageType]);
 
   // Filter projects based on filter state
   useEffect(() => {
@@ -275,36 +423,83 @@ const PreConstructionCityPage: React.FC<PreConstructionCityPageProps> = ({ cityS
     );
   }
 
-  const displayCityName = cityInfo?.name || cityName;
+  const displayTitle = pageInfo?.title || '';
+  const projectCount = pageInfo?.numberOfProjects || 0;
+  const province = pageInfo?.province || 'ON';
+  const displayCount = projectCount > 0 ? `${projectCount}+` : '120+';
+
+  // Get current date for "Last Updated"
+  const lastUpdatedDate = new Date().toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+
+  // Build description based on page type
+  const buildDescription = () => {
+    if (pageType === 'city') {
+      return `${displayCount} Pre construction Homes in ${displayTitle}, ${province} | Explore Floor Plans, Pricing & Availability. Summitly has over ${displayCount.toLowerCase()} pre construction homes from trusted builders in ${displayTitle}, ${province}. If you are looking to buy resale homes, Summitly is your trusted platform to find 1000+ homes for sale in ${displayTitle}. Whether you are looking to downsize to buy townhomes for sale in ${displayTitle} or looking to buy condos in ${displayTitle} for your family or browsing ${displayTitle} detached homes for sale, our platform is updated daily with latest resale listings every hour. For new development homes, easily filter by number of bedrooms (1 to 4+), project type, and construction status from budget-friendly condo to a pre construction homes, contact us to connect you to the most exciting real estate opportunities in ${displayTitle}.`;
+    } else if (pageType === 'subPropertyType' || pageType === 'completionYear') {
+      return pageInfo?.description || `Explore ${displayTitle.toLowerCase()} pre-construction projects. Discover new developments and find your ideal property.`;
+    } else {
+      return pageInfo?.description || '';
+    }
+  };
+
+  // Build heading based on page type
+  const buildHeading = () => {
+    if (pageType === 'city') {
+      return (
+        <>
+          {displayCount} Pre Construction Homes in <span className='text-secondary'>{displayTitle}</span>
+        </>
+      );
+    } else {
+      return (
+        <>
+          <span className='text-secondary'>{displayCount}</span> {displayTitle}
+        </>
+      );
+    }
+  };
 
   return (
     <div className="min-h-screen">
       {/* Header Section */}
-      <header className="border-b bg-card pt-16">
-        <div className="container-1400 mx-auto px-4 py-6">
-          <div className="flex items-start justify-between gap-4">
+      <header className="border-b bg-card pt-10">
+        <div className="container-1400 mx-auto py-6">
+          <div className="flex flex-col justify-between gap-2">
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-foreground mb-2">
-                {displayCityName} Pre-Construction Projects
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+                {buildHeading()}
               </h1>
-              <p className="text-muted-foreground">
-                Discover the latest pre-construction opportunities in {displayCityName}. 
-                Explore upcoming developments, pricing, and availability.
-              </p>
+              <div className="space-y-3">
+                <p className="text-muted-foreground text-base leading-relaxed">
+                  {buildDescription()}
+                </p>
+                <p className="text-sm text-muted-foreground/80">
+                  Last Updated: {lastUpdatedDate}
+                </p>
+              </div>
             </div>
-            <button 
-              onClick={() => {
-                toast({
-                  title: "Alerts Coming Soon",
-                  description: "Property alerts for pre-construction projects will be available soon.",
-                  variant: "default",
-                });
-              }}
-              className="flex items-center gap-2 px-4 py-2 bg-secondary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors shadow-sm"
-            >
-              <Bell className="w-5 h-5" />
-              <span className="font-medium">Get Alerts</span>
-            </button>
+            <div className="flex flex-col items-center justify-end lg:items-end gap-3">
+              <p className="text-sm text-muted-foreground text-center lg:text-right">
+                Be the first to hear about new properties
+              </p>
+              <button 
+                onClick={() => {
+                  toast({
+                    title: "Alerts Coming Soon",
+                    description: "Property alerts for pre-construction projects will be available soon.",
+                    variant: "default",
+                  });
+                }}
+                className="flex items-center gap-2 px-6 py-3 bg-secondary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors shadow-sm font-medium whitespace-nowrap"
+              >
+                <Bell className="w-5 h-5" />
+                <span>Alert Me of New Properties</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -315,39 +510,43 @@ const PreConstructionCityPage: React.FC<PreConstructionCityPageProps> = ({ cityS
         {/* Navigation Buttons */}
         <section>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Link
-              href={`/${citySlug}/trends`}
-              className="group flex items-center gap-4 p-6 border bg-white rounded-lg hover:shadow-lg transition-all duration-200 hover:border-primary"
-            >
-              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                <TrendingUp className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-foreground mb-1">
-                  Market Trends
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Explore housing market statistics and price trends for {displayCityName}
-                </p>
-              </div>
-            </Link>
+            {pageType === 'city' && (
+              <>
+                <Link
+                  href={`/${slug}/trends`}
+                  className="group flex items-center gap-4 p-6 border bg-white rounded-lg hover:shadow-lg transition-all duration-200 hover:border-primary"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                    <TrendingUp className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-foreground mb-1">
+                      Market Trends
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Explore housing market statistics and price trends for {displayTitle}
+                    </p>
+                  </div>
+                </Link>
 
-            <Link
-              href={`/${citySlug}/neighbourhoods`}
-              className="group flex items-center gap-4 p-6 border bg-white rounded-lg hover:shadow-lg transition-all duration-200 hover:border-primary"
-            >
-              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                <Home className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-foreground mb-1">
-                  Neighbourhoods
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Discover different neighbourhoods and areas in {displayCityName}
-                </p>
-              </div>
-            </Link>
+                <Link
+                  href={`/${slug}/neighbourhoods`}
+                  className="group flex items-center gap-4 p-6 border bg-white rounded-lg hover:shadow-lg transition-all duration-200 hover:border-primary"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                    <Home className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-foreground mb-1">
+                      Neighbourhoods
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Discover different neighbourhoods and areas in {displayTitle}
+                    </p>
+                  </div>
+                </Link>
+              </>
+            )}
           </div>
         </section>
         <Separator />
@@ -463,7 +662,7 @@ const PreConstructionCityPage: React.FC<PreConstructionCityPageProps> = ({ cityS
                 ) : (
                   <div className="bg-secondary/30 rounded-lg p-12 text-center">
                     <p className="text-lg text-muted-foreground">
-                      No pre-construction projects found in {displayCityName}
+                      No pre-construction projects found{pageType === 'city' ? ` in ${displayTitle}` : ''}
                     </p>
                   </div>
                 )}
@@ -490,10 +689,50 @@ const PreConstructionCityPage: React.FC<PreConstructionCityPageProps> = ({ cityS
             )}
           </div>
         </section>
+
+        {/* Blog Section */}
+        <section>
+          <BlogSection
+            category="Pre-construction"
+            heading={(() => {
+              if (pageType === 'city') {
+                return `Latest News and Insight in ${displayTitle}`;
+              } else if (pageType === 'status') {
+                return `Latest News and Insights for ${displayTitle}`;
+              } else if (pageType === 'propertyType' || pageType === 'subPropertyType' || pageType === 'completionYear') {
+                return `Latest News and Insights for ${displayTitle}`;
+              }
+              return 'Latest Pre-Construction News and Insights';
+            })()}
+            subheading="Stay Informed"
+            description={(() => {
+              if (pageType === 'city') {
+                return `Discover the latest news, market insights, and expert advice about pre-construction properties in ${displayTitle}, ${province}. Stay ahead with Summitly's comprehensive coverage of the real estate market.`;
+              } else if (pageType === 'status') {
+                return `Stay updated with the latest news, market trends, and expert insights about ${displayTitle.toLowerCase()}. Get valuable information to help you make informed decisions with Summitly.`;
+              } else if (pageType === 'propertyType' || pageType === 'subPropertyType' || pageType === 'completionYear') {
+                return `Explore the latest news, market insights, and expert advice about ${displayTitle.toLowerCase()}. Stay informed with Summitly's comprehensive coverage of pre-construction real estate.`;
+              }
+              return 'Discover the latest news, market insights, and expert advice about pre-construction properties. Stay ahead with Summitly\'s comprehensive coverage of the real estate market.';
+            })()}
+            limit={3}
+            viewAllLink={(() => {
+              if (pageType === 'city') {
+                return `/blogs?category=Pre-construction&search=${encodeURIComponent(displayTitle)}`;
+              } else if (pageType === 'status') {
+                const statusSlug = slug.toLowerCase();
+                return `/blogs?category=Pre-construction&search=${encodeURIComponent(statusSlug)}`;
+              } else if (pageType === 'propertyType' || pageType === 'subPropertyType' || pageType === 'completionYear') {
+                return `/blogs?category=Pre-construction&search=${encodeURIComponent(displayTitle)}`;
+              }
+              return '/blogs?category=Pre-construction';
+            })()}
+          />
+        </section>
       </main>
     </div>
   );
 };
 
-export default PreConstructionCityPage;
+export default PreConstructionBasePage;
 

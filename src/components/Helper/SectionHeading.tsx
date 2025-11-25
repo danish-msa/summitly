@@ -19,7 +19,7 @@ const SectionHeading = ({heading, subheading, description, position = 'center'}:
             {subheading}
           </span>
         </div>
-        <h2 className={`text-2xl md:text-5xl ${textAlignment} capitalize font-bold mb-2 text-primary`}>{heading}</h2>
+        <h2 className={`text-2xl md:text-4xl ${textAlignment} capitalize font-bold mb-2 text-primary`}>{heading}</h2>
         <p className={`text-lg text-text ${textAlignment} mt-4`}>{description}</p>
     </div>
   )
