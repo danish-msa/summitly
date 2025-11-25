@@ -95,6 +95,9 @@ function createSupabasePool(): Pool {
   // Check if using pooler for optimized settings
   const isPooler = cleanConnectionString.includes('pooler.supabase.com') || cleanConnectionString.includes(':6543')
   
+  // Detect if running on localhost (development)
+  const isLocalhost = process.env.NODE_ENV === 'development' && !process.env.VERCEL
+  
   // Build Pool configuration with explicit SSL settings
   // The ssl object MUST be provided to override any default SSL behavior
   // Conservative values for serverless / Prisma v7 environments
@@ -108,9 +111,10 @@ function createSupabasePool(): Pool {
     },
     // Connection pool settings - conservative values for serverless/Prisma v7
     // If using pooler, allow slightly higher max; otherwise keep very low
-    max: isPooler ? 5 : 2, // Pooler: 5 (conservative), Direct: 2 (very low to prevent exhaustion)
-    connectionTimeoutMillis: 30000, // 30s helps with SSL handshake delays
-    idleTimeoutMillis: isPooler ? 30000 : 60000, // Pooler: 30s, Direct: 60s (longer idle for direct)
+    // For localhost, increase limits to handle connection issues better
+    max: isPooler ? (isLocalhost ? 10 : 5) : (isLocalhost ? 5 : 2), // More connections for localhost
+    connectionTimeoutMillis: isLocalhost ? 60000 : 30000, // Longer timeout for localhost (60s)
+    idleTimeoutMillis: isPooler ? (isLocalhost ? 60000 : 30000) : (isLocalhost ? 120000 : 60000), // Longer idle for localhost
   }
   
   // Create pool with explicit SSL configuration

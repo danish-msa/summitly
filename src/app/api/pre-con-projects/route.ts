@@ -22,25 +22,64 @@ export async function GET(request: NextRequest) {
       where.city = { contains: city, mode: 'insensitive' }
     }
 
-    // Get projects
-    const projects = await prisma.preConstructionProject.findMany({
-      where,
-      take: limit ? parseInt(limit) : undefined,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        units: {
-          select: {
-            id: true,
-            unitName: true,
-            beds: true,
-            baths: true,
-            sqft: true,
-            price: true,
-            status: true,
+    // Retry logic for connection issues
+    let retries = 3
+    let projects
+    let lastError: Error | null = null
+    
+    while (retries > 0) {
+      try {
+        // Get projects
+        projects = await prisma.preConstructionProject.findMany({
+          where,
+          take: limit ? parseInt(limit) : undefined,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            units: {
+              select: {
+                id: true,
+                unitName: true,
+                beds: true,
+                baths: true,
+                sqft: true,
+                price: true,
+                status: true,
+              },
+            },
           },
-        },
-      },
-    })
+        })
+        break // Success, exit retry loop
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error))
+        retries--
+        
+        // Check if it's a connection error
+        const isConnectionError = 
+          lastError.message.includes('Connection terminated') ||
+          lastError.message.includes('ECONNRESET') ||
+          lastError.message.includes('ETIMEDOUT') ||
+          lastError.message.includes('Connection closed')
+        
+        if (isConnectionError && retries > 0) {
+          console.warn(`⚠️ Connection error, retrying... (${retries} attempts left)`)
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * (4 - retries)))
+          // Try to reconnect
+          try {
+            await prisma.$disconnect()
+            await prisma.$connect()
+          } catch (reconnectError) {
+            console.warn('Reconnection attempt failed, will retry query')
+          }
+        } else {
+          throw lastError // Not a connection error or out of retries
+        }
+      }
+    }
+    
+    if (!projects) {
+      throw lastError || new Error('Failed to fetch projects after retries')
+    }
 
     // Parse JSON fields and convert to PropertyListing format
     const parseJsonField = (field: string | null) => {

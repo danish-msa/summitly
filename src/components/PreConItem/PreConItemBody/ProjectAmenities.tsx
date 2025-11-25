@@ -225,82 +225,8 @@ const ProjectAmenities: React.FC<ProjectAmenitiesProps> = ({ property }) => {
     "Dining Room"
   ];
 
-  // Remove duplicates
-  const uniqueAmenities = Array.from(new Set(allAmenities));
-
-  // Categorize amenities
-  const categorizeAmenities = (amenities: string[]) => {
-    const categories: { [key: string]: string[] } = {
-      'Wellness & Fitness': [],
-      'Recreation & Entertainment': [],
-      'Family & Children': [],
-      'Dining & Social': [],
-      'Business & Work': [],
-      'Services & Convenience': [],
-      'Outdoor Spaces': [],
-      'Other': []
-    };
-
-    amenities.forEach(amenity => {
-      const lower = amenity.toLowerCase();
-      
-      // Wellness & Fitness
-      if (lower.includes('spa') || lower.includes('steam') || lower.includes('sauna') || 
-          lower.includes('gym') || lower.includes('fitness') || lower.includes('yoga') || 
-          lower.includes('training') || lower.includes('spin') || lower.includes('meditation') ||
-          lower.includes('treatment')) {
-        categories['Wellness & Fitness'].push(amenity);
-      }
-      // Recreation & Entertainment
-      else if (lower.includes('pool') || lower.includes('game') || lower.includes('billiard') || 
-               lower.includes('screening') || lower.includes('media') || lower.includes('party') ||
-               lower.includes('table tennis') || lower.includes('ping pong')) {
-        categories['Recreation & Entertainment'].push(amenity);
-      }
-      // Family & Children
-      else if (lower.includes('kid') || lower.includes('children') || lower.includes('play') || 
-               lower.includes('parent')) {
-        categories['Family & Children'].push(amenity);
-      }
-      // Dining & Social
-      else if (lower.includes('dining') || lower.includes('coffee') || lower.includes('bar') || 
-               lower.includes('lounge') || lower.includes('lobby') || lower.includes('bbq') ||
-               lower.includes('catering') || lower.includes('kitchen')) {
-        categories['Dining & Social'].push(amenity);
-      }
-      // Business & Work
-      else if (lower.includes('conference') || lower.includes('co-working') || lower.includes('coworking') ||
-               lower.includes('meeting')) {
-        categories['Business & Work'].push(amenity);
-      }
-      // Services & Convenience
-      else if (lower.includes('concierge') || lower.includes('parking') || lower.includes('porte') ||
-               lower.includes('storage') || lower.includes('parcel') || lower.includes('laundry')) {
-        categories['Services & Convenience'].push(amenity);
-      }
-      // Outdoor Spaces
-      else if (lower.includes('rooftop') || lower.includes('patio') || lower.includes('outdoor') ||
-               lower.includes('deck') || lower.includes('garden')) {
-        categories['Outdoor Spaces'].push(amenity);
-      }
-      // Other
-      else {
-        categories['Other'].push(amenity);
-      }
-    });
-
-    // Remove empty categories and sort items within each category
-    const filteredCategories: { [key: string]: string[] } = {};
-    Object.keys(categories).forEach(key => {
-      if (categories[key].length > 0) {
-        filteredCategories[key] = categories[key].sort();
-      }
-    });
-
-    return filteredCategories;
-  };
-
-  const categorizedAmenities = categorizeAmenities(uniqueAmenities);
+  // Remove duplicates and sort
+  const uniqueAmenities = Array.from(new Set(allAmenities)).sort();
 
   return (
     <div className="w-full">
@@ -310,31 +236,22 @@ const ProjectAmenities: React.FC<ProjectAmenitiesProps> = ({ property }) => {
         </p>
       </div>
 
-      <div className="space-y-6">
-        {Object.entries(categorizedAmenities).map(([category, amenities]) => (
-          <div key={category}>
-            <h3 className="text-lg font-semibold text-foreground mb-3 pb-2 border-b border-border">
-              {category}
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {amenities.map((amenity, index) => {
-                const Icon = getAmenityIcon(amenity);
-                
-                return (
-                  <div
-                    key={index}
-                    className="flex items-center gap-2 py-2 group"
-                  >
-                    <Icon className="h-5 w-5 text-primary flex-shrink-0" />
-                    <span className="text-sm text-foreground leading-tight">
-                      {amenity}
-                    </span>
-                  </div>
-                );
-              })}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        {uniqueAmenities.map((amenity, index) => {
+          const Icon = getAmenityIcon(amenity);
+          
+          return (
+            <div
+              key={index}
+              className="flex items-center gap-2 py-2 group"
+            >
+              <Icon className="h-5 w-5 text-primary flex-shrink-0" />
+              <span className="text-sm text-foreground leading-tight">
+                {amenity}
+              </span>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -266,7 +266,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, propertyId }) => {
 
           {/* Details */}
           <div className="flex-1 space-y-2">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start justify-between gap-2 w-full flex-1">
               <div>
                 <h3 className="text-xl font-semibold text-foreground">Unit {unit.name}</h3>
                 <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
@@ -290,25 +290,26 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, propertyId }) => {
                     </div>
                   )}
                 </div>
-                <div className="text-sm mt-2">
-                  <span className="text-muted-foreground">Maint Fees: </span>
-                  <span className="font-medium">${unit.maintenanceFee || 0}/mo</span>
-                </div>
-                {unit.description && (
-                  <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{unit.description}</p>
-                )}
-                {unit.features && unit.features.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {unit.features.slice(0, 3).map((feature: string, idx: number) => (
-                      <span key={idx} className="text-xs bg-muted px-2 py-0.5 rounded">
-                        {feature}
-                      </span>
-                    ))}
-                    {unit.features.length > 3 && (
-                      <span className="text-xs text-muted-foreground">+{unit.features.length - 3} more</span>
-                    )}
+                <div className="flex flex-row justify-between gap-2 w-full flex-1">
+                  <div className="text-sm mt-2">
+                    <span className="text-muted-foreground">Maint Fees: </span>
+                    <span className="font-medium">${unit.maintenanceFee || 0}/mo</span>
                   </div>
-                )}
+                  
+                  {/* {unit.features && unit.features.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {unit.features.slice(0, 3).map((feature: string, idx: number) => (
+                        <span key={idx} className="text-xs bg-muted px-1 py-0.5 rounded">
+                          {feature}
+                        </span>
+                      ))}
+                      {unit.features.length > 3 && (
+                        <span className="text-xs text-muted-foreground">+{unit.features.length - 3} more</span>
+                      )}
+                    </div>
+                  )} */}
+                </div>
+                
               </div>
 
               {unit.status === "sold-out" && (

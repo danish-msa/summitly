@@ -22,11 +22,12 @@ const slugifyCityName = (cityName: string): string => {
 };
 
 const PreConCityCard = ({ city }: PreConCityCardProps) => {
-  const citySlug = slugifyCityName(city.name);
+  // Use the city.id which is already in slug format (e.g., 'toronto', 'richmond-hill')
+  const citySlug = city.id;
   const [imageError, setImageError] = useState(false);
   
   return (
-    <Link href={`/pre-construction?location=${citySlug}`}>
+    <Link href={`/pre-construction/${citySlug}`}>
       <div className='relative rounded-lg overflow-hidden m-2 group cursor-pointer'>
           {imageError ? (
             <div className='w-full h-[250px] bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center'>

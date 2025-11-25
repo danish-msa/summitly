@@ -123,10 +123,10 @@ const PreConCollapsibleTabs: React.FC<PreConCollapsibleTabsProps> = ({ property 
       content: (
         <Tabs defaultValue="project-amenities" className="w-full">
           <TabsList className="grid w-full grid-cols-4 h-12 p-1">
-            <TabsTrigger value="project-amenities" className="py-2 text-base">Project Amenities</TabsTrigger>
-            <TabsTrigger value="neighborhood" className="py-2 text-base">Neighborhood</TabsTrigger>
-            <TabsTrigger value="lifestyle" className="py-2 text-base">Lifestyle</TabsTrigger>
-            <TabsTrigger value="demographics" className="py-2 text-base">Demographics</TabsTrigger>
+            <TabsTrigger value="project-amenities" className="py-2 text-sm">Project Amenities</TabsTrigger>
+            <TabsTrigger value="neighborhood" className="py-2 text-sm">Neighborhood</TabsTrigger>
+            <TabsTrigger value="lifestyle" className="py-2 text-sm">Lifestyle</TabsTrigger>
+            <TabsTrigger value="demographics" className="py-2 text-sm">Demographics</TabsTrigger>
           </TabsList>
           <TabsContent value="project-amenities" className="mt-6">
             <ProjectAmenities property={property} />
@@ -153,8 +153,8 @@ const PreConCollapsibleTabs: React.FC<PreConCollapsibleTabsProps> = ({ property 
       content: (
         <Tabs defaultValue="mortgage" className="w-full mt-6">
           <TabsList className="grid w-full grid-cols-2 h-12 p-1">
-            <TabsTrigger value="mortgage" className="py-2 text-base">Mortgage Calculator</TabsTrigger>
-            <TabsTrigger value="affordability" className="py-2 text-base">Affordability Calculator</TabsTrigger>
+            <TabsTrigger value="mortgage" className="py-2 text-sm">Mortgage Calculator</TabsTrigger>
+            <TabsTrigger value="affordability" className="py-2 text-sm">Affordability Calculator</TabsTrigger>
           </TabsList>
           <TabsContent value="mortgage" className="mt-6">
             <MortgageCalculator />

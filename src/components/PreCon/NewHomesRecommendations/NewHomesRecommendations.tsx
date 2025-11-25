@@ -47,7 +47,7 @@ const getCityImage = (city: string): string => {
 const generateRecommendations = (type: "Homes" | "Condos"): Recommendation[] => {
   return cities.map((city) => ({
     title: `New ${type} ${city}`,
-    link: `/pre-construction?type=${type.toLowerCase()}&location=${city.toLowerCase().replace(/\s+/g, "-")}`,
+    link: `/pre-construction/${city.toLowerCase().replace(/\s+/g, "-")}`,
     image: getCityImage(city),
   }));
 };

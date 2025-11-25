@@ -60,26 +60,26 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({ property }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2">
       {Object.entries(documentsByType).map(([type, docs]) => (
-        <div key={type} className="space-y-3">
+        <div key={type} className="space-y-2">
           
           <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+          {/* <h4 className="text-base font-semibold text-foreground flex items-center gap-2">
             {getTypeIcon()}
             {typeLabels[type] || 'Documents'}
-          </h3>
+          </h4> */}
             {docs.map((doc) => (
-              <Card key={doc.id} className="p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between gap-4">
+              <Card key={doc.id} className="p-2 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between gap-4">
                   <div className="flex items-start gap-3 flex-1 min-w-0">
                     <div className="flex-shrink-0 mt-1">
-                      <FileText className="h-6 w-6 text-primary" />
+                      <FileText className="h-4 w-4 text-primary" />
                     </div>
-                    <div className="flex gap-4 min-w-0 items-center">
-                      <h4 className="font-medium flex-1 text-foreground line-clamp-2">
+                    <div className="flex gap-4 min-w-0 items-center flex-1">
+                      <span className="font-medium flex-1 text-foreground line-clamp-2">
                         {doc.name}
-                      </h4>
+                      </span>
                       {doc.size && (
                         <p className="text-xs text-muted-foreground">
                           {doc.size}
@@ -97,7 +97,7 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({ property }) => {
                       variant="default"
                       size="sm"
                       onClick={() => handleDownload(doc.url)}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 "
                     >
                       <Download className="h-4 w-4" />
                       <span className="hidden sm:inline">Download</span>

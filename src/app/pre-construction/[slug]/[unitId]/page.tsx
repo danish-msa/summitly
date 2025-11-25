@@ -5,20 +5,21 @@ import UnitDetailPageClient from './UnitDetailPageClient'
 
 interface UnitDetailPageProps {
   params: Promise<{
-    id: string;
+    slug: string;
     unitId: string;
   }>;
 }
 
 const UnitDetailPage: React.FC<UnitDetailPageProps> = async ({ params }) => {
-  const { id, unitId } = await params;
-  const unit = getPreConUnit(id, unitId);
+  const { slug, unitId } = await params;
+  const unit = getPreConUnit(slug, unitId);
 
   if (!unit) {
     notFound();
   }
 
-  return <UnitDetailPageClient unit={unit} propertyId={id} />;
+  return <UnitDetailPageClient unit={unit} propertyId={slug} />;
 }
 
 export default UnitDetailPage
+
