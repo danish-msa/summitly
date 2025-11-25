@@ -132,6 +132,37 @@ export function PreConProjectForm({
   const [amenitySearchOpen, setAmenitySearchOpen] = useState(false)
   const [amenitySearchQuery, setAmenitySearchQuery] = useState("")
   const [developers, setDevelopers] = useState<Developer[]>([])
+  const [sidebarWidth, setSidebarWidth] = useState(0)
+
+  // Get sidebar width for fixed positioning
+  useEffect(() => {
+    const updateSidebarWidth = () => {
+      // Try to find sidebar by checking for common sidebar selectors
+      const sidebar = document.querySelector('[data-sidebar], .sidebar, [class*="sidebar"]') as HTMLElement
+      if (sidebar) {
+        setSidebarWidth(sidebar.offsetWidth)
+      } else {
+        // Fallback: check parent container for sidebar
+        const mainContainer = document.querySelector('main')?.parentElement
+        if (mainContainer) {
+          const sidebarElement = mainContainer.querySelector('[class*="w-"]') as HTMLElement
+          if (sidebarElement && sidebarElement !== mainContainer.querySelector('main')?.parentElement) {
+            setSidebarWidth(sidebarElement.offsetWidth)
+          }
+        }
+      }
+    }
+
+    updateSidebarWidth()
+    // Update on window resize and sidebar toggle
+    window.addEventListener('resize', updateSidebarWidth)
+    const interval = setInterval(updateSidebarWidth, 200) // Check periodically for sidebar changes
+    
+    return () => {
+      window.removeEventListener('resize', updateSidebarWidth)
+      clearInterval(interval)
+    }
+  }, [])
 
   // Cleanup preview URLs when component unmounts or images are removed
   useEffect(() => {
@@ -651,10 +682,14 @@ export function PreConProjectForm({
   ]
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
-      {/* Sticky Navigation Header */}
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="container py-4">
+    <form onSubmit={onSubmit} className="space-y-6 relative pb-24">
+      {/* Fixed Navigation Header - Below Dashboard Header (h-16 = 64px) */}
+      <div className="fixed z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b shadow-sm" style={{ 
+        top: '64px', // Header height
+        left: `${sidebarWidth}px`,
+        right: '0px'
+      }}>
+        <div className="px-6 py-4">
           <div className="flex flex-wrap gap-2 justify-center">
             {sections.map((section) => (
               <Button
@@ -670,6 +705,9 @@ export function PreConProjectForm({
           </div>
         </div>
       </div>
+
+      {/* Spacer to account for fixed navigation (header 64px + nav bar ~80px) */}
+      <div className="h-20" />
 
       {/* Collapsible Sections */}
       <Accordion
@@ -2070,24 +2108,44 @@ export function PreConProjectForm({
         </div>
       </Accordion>
 
-      <div className="flex justify-between gap-4 mt-6">
-        {onCancel && (
-          <Button
-            type="button"
-            variant="destructive"
-            onClick={onCancel}
-            disabled={loading}
-          >
-            Cancel
-          </Button>
-        )}
-        <div className="flex-1" />
-        <Button
-          type="submit"
-          disabled={loading}
-        >
-          {loading ? "Saving..." : submitLabel}
-        </Button>
+      {/* Spacer to account for fixed action buttons */}
+      <div className="h-24" />
+
+      {/* Fixed Action Buttons at Bottom */}
+      <div className="fixed bottom-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t shadow-lg" style={{ 
+        left: `${sidebarWidth}px`,
+        right: '0px'
+      }}>
+        <div className="px-6 py-4">
+          <div className="flex justify-between gap-4 max-w-7xl mx-auto">
+            {onCancel && (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={onCancel}
+                disabled={loading}
+                className="min-w-[120px]"
+              >
+                Cancel
+              </Button>
+            )}
+            <div className="flex-1" />
+            <Button
+              type="submit"
+              disabled={loading}
+              className="min-w-[120px]"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                submitLabel
+              )}
+            </Button>
+          </div>
+        </div>
       </div>
     </form>
   )
