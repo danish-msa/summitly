@@ -238,15 +238,33 @@ export async function PUT(
     if (body.developer !== undefined) updateData.developer = body.developer
     if (body.startingPrice !== undefined) updateData.startingPrice = parseFloat(body.startingPrice)
     if (body.endingPrice !== undefined) updateData.endingPrice = parseFloat(body.endingPrice)
-    if (body.avgPricePerSqft !== undefined) updateData.avgPricePerSqft = body.avgPricePerSqft ? parseFloat(body.avgPricePerSqft) : null
+    if (body.avgPricePerSqft !== undefined) {
+      const parsed = body.avgPricePerSqft === '' || body.avgPricePerSqft === null ? null : parseFloat(String(body.avgPricePerSqft))
+      updateData.avgPricePerSqft = isNaN(parsed as number) ? null : parsed
+    }
     if (body.status !== undefined) updateData.status = body.status
-    if (body.parkingPrice !== undefined) updateData.parkingPrice = body.parkingPrice ? parseFloat(body.parkingPrice) : null
-    if (body.parkingPriceDetail !== undefined) updateData.parkingPriceDetail = body.parkingPriceDetail || null
-    if (body.lockerPrice !== undefined) updateData.lockerPrice = body.lockerPrice ? parseFloat(body.lockerPrice) : null
-    if (body.lockerPriceDetail !== undefined) updateData.lockerPriceDetail = body.lockerPriceDetail || null
-    if (body.assignmentFee !== undefined) updateData.assignmentFee = body.assignmentFee ? parseFloat(body.assignmentFee) : null
-    if (body.developmentLevies !== undefined) updateData.developmentLevies = body.developmentLevies ? parseFloat(body.developmentLevies) : null
-    if (body.developmentCharges !== undefined) updateData.developmentCharges = body.developmentCharges ? parseFloat(body.developmentCharges) : null
+    if (body.parkingPrice !== undefined) {
+      const parsed = body.parkingPrice === '' || body.parkingPrice === null ? null : parseFloat(String(body.parkingPrice))
+      updateData.parkingPrice = isNaN(parsed as number) ? null : parsed
+    }
+    if (body.parkingPriceDetail !== undefined) updateData.parkingPriceDetail = body.parkingPriceDetail === '' ? null : (body.parkingPriceDetail || null)
+    if (body.lockerPrice !== undefined) {
+      const parsed = body.lockerPrice === '' || body.lockerPrice === null ? null : parseFloat(String(body.lockerPrice))
+      updateData.lockerPrice = isNaN(parsed as number) ? null : parsed
+    }
+    if (body.lockerPriceDetail !== undefined) updateData.lockerPriceDetail = body.lockerPriceDetail === '' ? null : (body.lockerPriceDetail || null)
+    if (body.assignmentFee !== undefined) {
+      const parsed = body.assignmentFee === '' || body.assignmentFee === null ? null : parseFloat(String(body.assignmentFee))
+      updateData.assignmentFee = isNaN(parsed as number) ? null : parsed
+    }
+    if (body.developmentLevies !== undefined) {
+      const parsed = body.developmentLevies === '' || body.developmentLevies === null ? null : parseFloat(String(body.developmentLevies))
+      updateData.developmentLevies = isNaN(parsed as number) ? null : parsed
+    }
+    if (body.developmentCharges !== undefined) {
+      const parsed = body.developmentCharges === '' || body.developmentCharges === null ? null : parseFloat(String(body.developmentCharges))
+      updateData.developmentCharges = isNaN(parsed as number) ? null : parsed
+    }
     if (body.streetNumber !== undefined) updateData.streetNumber = body.streetNumber
     if (body.streetName !== undefined) updateData.streetName = body.streetName
     if (body.city !== undefined) updateData.city = body.city
@@ -270,9 +288,12 @@ export async function PUT(
     if (body.availableUnits !== undefined) updateData.availableUnits = parseInt(body.availableUnits)
     if (body.storeys !== undefined) updateData.storeys = body.storeys ? parseInt(body.storeys) : null
     if (body.height !== undefined) updateData.height = body.height ? parseFloat(body.height) : null
-    if (body.maintenanceFeesPerSqft !== undefined) updateData.maintenanceFeesPerSqft = body.maintenanceFeesPerSqft ? parseFloat(body.maintenanceFeesPerSqft) : null
-    if (body.maintenanceFeesDetail !== undefined) updateData.maintenanceFeesDetail = body.maintenanceFeesDetail || null
-    if (body.floorPremiums !== undefined) updateData.floorPremiums = body.floorPremiums || null
+    if (body.maintenanceFeesPerSqft !== undefined) {
+      const parsed = body.maintenanceFeesPerSqft === '' || body.maintenanceFeesPerSqft === null ? null : parseFloat(String(body.maintenanceFeesPerSqft))
+      updateData.maintenanceFeesPerSqft = isNaN(parsed as number) ? null : parsed
+    }
+    if (body.maintenanceFeesDetail !== undefined) updateData.maintenanceFeesDetail = body.maintenanceFeesDetail === '' ? null : (body.maintenanceFeesDetail || null)
+    if (body.floorPremiums !== undefined) updateData.floorPremiums = body.floorPremiums === '' ? null : (body.floorPremiums || null)
     if (body.completionDate !== undefined) updateData.completionDate = body.completionDate
     if (body.completionProgress !== undefined) {
       // Convert completionProgress string to integer (database expects Int)
