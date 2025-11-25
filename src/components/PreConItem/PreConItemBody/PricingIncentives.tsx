@@ -31,6 +31,7 @@ interface ExtendedPreCon {
   parkingPriceDetail?: string | null;
   lockerPriceDetail?: string | null;
   maintenanceFeesDetail?: string | null;
+  floorPremiums?: string | null;
   promotions?: string | null;
 }
 
@@ -203,20 +204,20 @@ const PricingIncentives: React.FC<PricingIncentivesProps> = ({ property }) => {
                   })}
                 </div>
                 {/* Show details if available */}
-                {((preCon as any).parkingPriceDetail || (preCon as any).lockerPriceDetail || (preCon as any).maintenanceFeesDetail) && (
+                {(extendedPreCon.parkingPriceDetail || extendedPreCon.lockerPriceDetail || extendedPreCon.maintenanceFeesDetail || extendedPreCon.floorPremiums) && (
                   <div className="mt-4 pt-4 border-t border-border">
                     <div className="space-y-2 text-xs text-muted-foreground">
-                      {(preCon as any).parkingPriceDetail && (
-                        <p><strong>Parking:</strong> {(preCon as any).parkingPriceDetail}</p>
+                      {extendedPreCon.parkingPriceDetail && (
+                        <p><strong>Parking:</strong> {extendedPreCon.parkingPriceDetail}</p>
                       )}
-                      {(preCon as any).lockerPriceDetail && (
-                        <p><strong>Locker:</strong> {(preCon as any).lockerPriceDetail}</p>
+                      {extendedPreCon.lockerPriceDetail && (
+                        <p><strong>Locker:</strong> {extendedPreCon.lockerPriceDetail}</p>
                       )}
-                      {(preCon as any).maintenanceFeesDetail && (
-                        <p><strong>Maintenance:</strong> {(preCon as any).maintenanceFeesDetail}</p>
+                      {extendedPreCon.maintenanceFeesDetail && (
+                        <p><strong>Maintenance:</strong> {extendedPreCon.maintenanceFeesDetail}</p>
                       )}
-                      {(preCon as any).floorPremiums && (
-                        <p><strong>Floor Premiums:</strong> {(preCon as any).floorPremiums}</p>
+                      {extendedPreCon.floorPremiums && (
+                        <p><strong>Floor Premiums:</strong> {extendedPreCon.floorPremiums}</p>
                       )}
                     </div>
                   </div>
