@@ -2,6 +2,7 @@ import React from 'react'
 import { PropertyListing } from '@/lib/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import Link from 'next/link'
 import { 
   Calendar, 
   Building2, 
@@ -101,6 +102,53 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
   const extractYear = (dateString: string) => {
     const yearMatch = dateString.match(/\d{4}/);
     return yearMatch ? yearMatch[0] : dateString;
+  };
+
+  // Helper function to generate slug for property type
+  const getPropertyTypeSlug = (propertyType: string): string => {
+    const typeMap: Record<string, string> = {
+      'Condos': 'condos',
+      'Houses': 'houses',
+      'Lofts': 'lofts',
+      'Master-Planned Communities': 'master-planned-communities',
+      'Multi Family': 'multi-family',
+      'Offices': 'offices',
+      'Condominium': 'condos',
+      'Condo': 'condos',
+    };
+    return typeMap[propertyType] || propertyType.toLowerCase().replace(/\s+/g, '-');
+  };
+
+  // Helper function to generate slug for sub-property type
+  const getSubPropertyTypeSlug = (subPropertyType: string, propertyType: string): string => {
+    const subTypeSlug = subPropertyType.toLowerCase().replace(/\s+/g, '-');
+    const propertyTypeSlug = getPropertyTypeSlug(propertyType);
+    
+    // For Condos: high-rise-condos, mid-rise-condos, low-rise-condos
+    if (propertyTypeSlug === 'condos') {
+      return `${subTypeSlug}-condos`;
+    }
+    // For Houses: link-houses, townhouse-houses, semi-detached-houses, detached-houses
+    if (propertyTypeSlug === 'houses') {
+      return `${subTypeSlug}-houses`;
+    }
+    
+    return `${subTypeSlug}-${propertyTypeSlug}`;
+  };
+
+  // Helper function to generate slug for status
+  const getStatusSlug = (status: string): string => {
+    const statusLower = status.toLowerCase();
+    if (statusLower === 'selling' || statusLower === 'active' || statusLower === 'available') {
+      return 'selling';
+    }
+    if (statusLower === 'coming-soon' || statusLower === 'coming soon') {
+      return 'coming-soon';
+    }
+    if (statusLower === 'sold-out' || statusLower === 'sold out' || statusLower === 'sold') {
+      return 'sold-out';
+    }
+    return statusLower.replace(/\s+/g, '-');
   };
 
   // Get appropriate icon for feature name
@@ -298,6 +346,23 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {details.map((detail, index) => {
               const Icon = detail.icon;
+              
+              // Determine if this detail should be a link and what URL to use
+              let linkUrl: string | null = null;
+              if (detail.label === 'Status') {
+                linkUrl = `/pre-construction/${getStatusSlug(detail.value)}`;
+              } else if (detail.label === 'Completion Year') {
+                const year = extractYear(detail.value);
+                if (year && /^\d{4}$/.test(year)) {
+                  linkUrl = `/pre-construction/${year}`;
+                }
+              } else if (detail.label === 'Property Type') {
+                linkUrl = `/pre-construction/${getPropertyTypeSlug(detail.value)}`;
+              } else if (detail.label === 'Sub Property Type') {
+                const propertyType = preCon.details.propertyType || 'Condominium';
+                linkUrl = `/pre-construction/${getSubPropertyTypeSlug(detail.value, propertyType)}`;
+              }
+              
               return (
                 <div key={index} className="flex items-center gap-2">
                   <div className="w-10 h-10 rounded-lg bg-brand-celestial/20 flex items-center justify-center flex-shrink-0">
@@ -305,7 +370,16 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground">{detail.label}</p>
-                    <p className="text-sm font-semibold text-foreground capitalize">{detail.value}</p>
+                    {linkUrl ? (
+                      <Link 
+                        href={linkUrl}
+                        className="text-sm font-semibold text-foreground capitalize underline hover:text-primary transition-colors"
+                      >
+                        {detail.value}
+                      </Link>
+                    ) : (
+                      <p className="text-sm font-semibold text-foreground capitalize">{detail.value}</p>
+                    )}
                   </div>
                 </div>
               );
