@@ -73,7 +73,7 @@ export default function EditProjectPage() {
   const router = useRouter()
   const params = useParams()
   const { data: session } = useSession()
-  const { loading, fetchData } = useBackgroundFetch()
+  const { loading, fetchData } = useBackgroundFetch<PreConProject>()
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState<FormData>({
     projectName: "",
@@ -155,7 +155,7 @@ export default function EditProjectPage() {
     if (!params?.id) return
     
     try {
-      const project = await fetchData<PreConProject>(async () => {
+      const project = await fetchData(async () => {
         const response = await fetch(`/api/admin/pre-con-projects/${params.id}`)
         if (!response.ok) throw new Error("Failed to fetch project")
 
