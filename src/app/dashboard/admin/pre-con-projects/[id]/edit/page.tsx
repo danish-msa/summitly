@@ -9,6 +9,66 @@ import { isAdmin } from "@/lib/roles"
 import { PreConProjectForm, type FormData } from "@/components/Dashboard/PreConProjectForm"
 import { useBackgroundFetch } from "@/hooks/useBackgroundFetch"
 
+// Type for the project returned from the API
+interface PreConProject {
+  id: string
+  mlsNumber: string
+  projectName: string
+  developer: string
+  startingPrice: number
+  endingPrice: number | null
+  avgPricePerSqft: number | null
+  status: string
+  parkingPrice: number | null
+  parkingPriceDetail: string | null
+  lockerPrice: number | null
+  lockerPriceDetail: string | null
+  assignmentFee: number | null
+  developmentLevies: number | null
+  developmentCharges: number | null
+  streetNumber: string | null
+  streetName: string | null
+  city: string
+  state: string
+  zip: string | null
+  neighborhood: string | null
+  majorIntersection: string | null
+  latitude: number | null
+  longitude: number | null
+  propertyType: string
+  subPropertyType: string | null
+  bedroomRange: string
+  bathroomRange: string
+  sqftRange: string
+  hasDen: boolean
+  hasStudio: boolean
+  hasLoft: boolean
+  hasWorkLiveLoft: boolean
+  totalUnits: number
+  availableUnits: number
+  storeys: number | null
+  height: number | null
+  maintenanceFeesPerSqft: number | null
+  maintenanceFeesDetail: string | null
+  floorPremiums: string | null
+  completionDate: string
+  completionProgress: string
+  promotions: string | null
+  images: string[]
+  videos: string[]
+  amenities: Array<string | { name: string; icon: string }>
+  depositStructure: string | null
+  description: string | null
+  documents: Array<{ id: string; name: string; url: string; type: string }> | null
+  developerInfo: string | null
+  architectInfo: string | null
+  interiorDesignerInfo: string | null
+  builderInfo: string | null
+  landscapeArchitectInfo: string | null
+  marketingInfo: string | null
+  salesMarketingCompany: string | null
+}
+
 export default function EditProjectPage() {
   const router = useRouter()
   const params = useParams()
@@ -95,12 +155,12 @@ export default function EditProjectPage() {
     if (!params?.id) return
     
     try {
-      const project = await fetchData(async () => {
+      const project = await fetchData<PreConProject>(async () => {
         const response = await fetch(`/api/admin/pre-con-projects/${params.id}`)
         if (!response.ok) throw new Error("Failed to fetch project")
 
         const data = await response.json()
-        return data.project
+        return data.project as PreConProject
       })
 
       if (!project) return
