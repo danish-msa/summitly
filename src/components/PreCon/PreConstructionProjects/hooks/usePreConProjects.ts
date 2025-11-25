@@ -61,7 +61,7 @@ export const usePreConProjects = () => {
           const data = await response.json();
           const projects = (data.projects || [])
             .map(convertToPreConProperty)
-            .filter((project): project is PreConstructionProperty => project !== null);
+            .filter((project: PreConstructionProperty | null): project is PreConstructionProperty => project !== null);
           setAllProjects(projects);
         }
       } catch (error) {
