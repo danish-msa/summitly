@@ -8,6 +8,7 @@ import ShareModal from './ShareModal';
 import ScheduleTourModal from '../ItemBody/ScheduleTourModal';
 import RatingsOverview from '../ItemBody/QualityScore';
 import ProjectRatingDisplay from '../../PreConItem/PreConItemBody/ProjectRatingDisplay';
+import Link from 'next/link';
 
 interface BannerProps {
     property: PropertyListing;
@@ -15,6 +16,49 @@ interface BannerProps {
     isPreCon?: boolean;
     isRent?: boolean;
 }
+
+// Helper function to generate slug for property type
+const getPropertyTypeSlug = (propertyType: string): string => {
+    const typeMap: Record<string, string> = {
+        'Condos': 'condos',
+        'Houses': 'houses',
+        'Lofts': 'lofts',
+        'Master-Planned Communities': 'master-planned-communities',
+        'Multi Family': 'multi-family',
+        'Offices': 'offices',
+        'Condominium': 'condos',
+        'Condo': 'condos',
+    };
+    return typeMap[propertyType] || propertyType.toLowerCase().replace(/\s+/g, '-');
+};
+
+// Helper function to generate slug for sub-property type
+const getSubPropertyTypeSlug = (subPropertyType: string, propertyType: string): string => {
+    const subTypeSlug = subPropertyType.toLowerCase().replace(/\s+/g, '-');
+    const propertyTypeSlug = getPropertyTypeSlug(propertyType);
+    
+    // For Condos: high-rise-condos, mid-rise-condos, low-rise-condos
+    if (propertyTypeSlug === 'condos') {
+        return `${subTypeSlug}-condos`;
+    }
+    // For Houses: link-houses, townhouse-houses, semi-detached-houses, detached-houses
+    if (propertyTypeSlug === 'houses') {
+        return `${subTypeSlug}-houses`;
+    }
+    
+    return `${subTypeSlug}-${propertyTypeSlug}`;
+};
+
+// Helper function to extract year from completion date
+const extractYear = (dateString: string): string | null => {
+    const yearMatch = dateString.match(/\d{4}/);
+    return yearMatch ? yearMatch[0] : null;
+};
+
+// Helper function to slugify city name
+const slugifyCity = (city: string): string => {
+    return city.toLowerCase().replace(/\s+/g, '-');
+};
 
 const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = false }) => {
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -173,47 +217,81 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                                 {isPreCon ? (
                                     <>
                                         <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mt-4">
-                                            {/* Property Type */}
-                                            <div className="flex flex-row items-center gap-1">
-                                                <Building2 className="h-6 w-6 text-primary" />
-                                                <span className="text-sm text-foreground font-medium">
-                                                    {(() => {
-                                                        // Get propertyType from details or preCon details (if available)
-                                                        const propertyType = property.details?.propertyType || 
-                                                                             property.preCon?.details?.propertyType || 
-                                                                             'Condominium';
-                                                        // Get subPropertyType from preCon details
-                                                        const subPropertyType = property.preCon?.details?.subPropertyType;
-                                                        
-                                                        // Check if propertyType is Condo/Condominium or House/Houses
-                                                        const isCondo = propertyType.toLowerCase().includes('condo');
-                                                        const isHouse = propertyType.toLowerCase().includes('house');
-                                                        
-                                                        // If subPropertyType exists and matches the property type, append the property type
-                                                        if (subPropertyType && isCondo) {
-                                                            return `${subPropertyType} Condo`;
-                                                        }
-                                                        if (subPropertyType && isHouse) {
-                                                            return `${subPropertyType} House`;
-                                                        }
-                                                        
-                                                        // Otherwise, return the propertyType
-                                                        return propertyType;
-                                                    })()}
-                                                </span>
-                                            </div>
-                                            {/* Occupancy */}
-                                            {preConData?.completion?.date && (
-                                                <div className="flex flex-row items-center gap-1">
-                                                    <CalendarIcon className="h-6 w-6 text-primary" />
-                                                    <span className="text-sm text-foreground font-medium">
-                                                        {(() => {
-                                                            const yearMatch = preConData.completion.date.match(/\d{4}/);
-                                                            return yearMatch ? `Completion: ${yearMatch[0]}` : `Completion: ${preConData.completion.date}`;
-                                                        })()}
-                                                    </span>
-                                                </div>
-                                            )}
+                                            {/* Sub-Property Type (e.g., High-Rise Condo) */}
+                                            {(() => {
+                                                // Get propertyType from details or preCon details (if available)
+                                                const propertyType = property.details?.propertyType || 
+                                                                     property.preCon?.details?.propertyType || 
+                                                                     'Condominium';
+                                                // Get subPropertyType from preCon details
+                                                const subPropertyType = property.preCon?.details?.subPropertyType;
+                                                
+                                                // Check if propertyType is Condo/Condominium or House/Houses
+                                                const isCondo = propertyType.toLowerCase().includes('condo');
+                                                const isHouse = propertyType.toLowerCase().includes('house');
+                                                
+                                                // Only show if subPropertyType exists
+                                                if (subPropertyType && (isCondo || isHouse)) {
+                                                    const displayText = isCondo ? `${subPropertyType} Condo` : `${subPropertyType} House`;
+                                                    const linkUrl = `/pre-construction/${getSubPropertyTypeSlug(subPropertyType, propertyType)}`;
+                                                    
+                                                    return (
+                                                        <div className="flex flex-row items-center gap-1">
+                                                            <Building2 className="h-6 w-6 text-primary" />
+                                                            <Link 
+                                                                href={linkUrl}
+                                                                className="text-sm text-foreground font-medium hover:text-primary transition-colors underline"
+                                                            >
+                                                                {displayText}
+                                                            </Link>
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
+                                            {/* Completion Date */}
+                                            {preConData?.completion?.date && (() => {
+                                                const year = extractYear(preConData.completion.date);
+                                                const displayText = year ? `Completion: ${year}` : `Completion: ${preConData.completion.date}`;
+                                                const linkUrl = year ? `/pre-construction/${year}` : null;
+                                                
+                                                return (
+                                                    <div className="flex flex-row items-center gap-1">
+                                                        <CalendarIcon className="h-6 w-6 text-primary" />
+                                                        {linkUrl ? (
+                                                            <Link 
+                                                                href={linkUrl}
+                                                                className="text-sm text-foreground font-medium hover:text-primary transition-colors underline"
+                                                            >
+                                                                {displayText}
+                                                            </Link>
+                                                        ) : (
+                                                            <span className="text-sm text-foreground font-medium">
+                                                                {displayText}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
+                                            {/* Property Type (e.g., Condos) */}
+                                            {(() => {
+                                                const propertyType = property.details?.propertyType || 
+                                                                     property.preCon?.details?.propertyType || 
+                                                                     'Condominium';
+                                                const propertyTypeSlug = getPropertyTypeSlug(propertyType);
+                                                
+                                                return (
+                                                    <div className="flex flex-row items-center gap-1">
+                                                        <Building2 className="h-6 w-6 text-primary" />
+                                                        <Link 
+                                                            href={`/pre-construction/${propertyTypeSlug}`}
+                                                            className="text-sm text-foreground font-medium hover:text-primary transition-colors underline"
+                                                        >
+                                                            Property Type: {propertyType}
+                                                        </Link>
+                                                    </div>
+                                                );
+                                            })()}
                                             {/* Area */}
                                             {preConData?.details?.sqftRange && (
                                                 <div className="flex flex-row items-center gap-1">

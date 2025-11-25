@@ -17,7 +17,7 @@ import { getPreConProject } from '@/data/mockPreConData'
 
 const PreConItem: React.FC = () => {
   const params = useParams();
-  const propertyId = params?.id as string || '';
+  const propertyId = params?.slug as string || '';
   const bannerRef = useRef<HTMLDivElement>(null);
   
   const [property, setProperty] = useState<PropertyListing | null>(null);
@@ -27,7 +27,7 @@ const PreConItem: React.FC = () => {
   useEffect(() => {
     const fetchPropertyDetails = async () => {
       try {
-        // Fetch from API using mlsNumber
+        // Fetch from API using mlsNumber (slug)
         const response = await fetch(`/api/pre-con-projects/${propertyId}`);
         if (!response.ok) {
           // Fallback to mock data if API fails
