@@ -1,6 +1,6 @@
 import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { CheckCircle2, DollarSign, TrendingUp, Star, Bed, Maximize2, Calculator, Car, Package, FileText, Wrench, Home } from "lucide-react"
+import { CheckCircle2, DollarSign, TrendingUp, Star, Bed, Calculator, Car, Package, FileText, Wrench, Home } from "lucide-react"
 import { PropertyListing } from '@/lib/types'
 
 interface PriceItem {
@@ -17,6 +17,21 @@ interface Incentive {
 
 interface PricingIncentivesProps {
   property: PropertyListing;
+}
+
+// Extended preCon type with additional database fields
+interface ExtendedPreCon {
+  avgPricePerSqft?: number | null;
+  parkingPrice?: number | null;
+  lockerPrice?: number | null;
+  assignmentFee?: number | null;
+  developmentCharges?: number | null;
+  developmentLevies?: number | null;
+  maintenanceFeesPerSqft?: number | null;
+  parkingPriceDetail?: string | null;
+  lockerPriceDetail?: string | null;
+  maintenanceFeesDetail?: string | null;
+  promotions?: string | null;
 }
 
 const PricingIncentives: React.FC<PricingIncentivesProps> = ({ property }) => {
@@ -55,7 +70,8 @@ const PricingIncentives: React.FC<PricingIncentivesProps> = ({ property }) => {
   };
 
   // Use avgPricePerSqft from database if available, otherwise calculate
-  const pricePerSqft = (preCon as any).avgPricePerSqft || calculatePricePerSqft();
+  const extendedPreCon = preCon as ExtendedPreCon;
+  const pricePerSqft = extendedPreCon.avgPricePerSqft || calculatePricePerSqft();
 
   // Extract bedroom info for pricing
   const getBedroomPricing = () => {
@@ -79,45 +95,45 @@ const PricingIncentives: React.FC<PricingIncentivesProps> = ({ property }) => {
 
   // Additional pricing fields
   const additionalPricing: PriceItem[] = []
-  if ((preCon as any).parkingPrice) {
+  if (extendedPreCon.parkingPrice) {
     additionalPricing.push({
       label: "Parking Price",
-      value: formatPrice((preCon as any).parkingPrice),
+      value: formatPrice(extendedPreCon.parkingPrice),
       icon: Car
     })
   }
-  if ((preCon as any).lockerPrice) {
+  if (extendedPreCon.lockerPrice) {
     additionalPricing.push({
       label: "Locker Price",
-      value: formatPrice((preCon as any).lockerPrice),
+      value: formatPrice(extendedPreCon.lockerPrice),
       icon: Package
     })
   }
-  if ((preCon as any).assignmentFee) {
+  if (extendedPreCon.assignmentFee) {
     additionalPricing.push({
       label: "Assignment Fee",
-      value: formatPrice((preCon as any).assignmentFee),
+      value: formatPrice(extendedPreCon.assignmentFee),
       icon: FileText
     })
   }
-  if ((preCon as any).developmentCharges) {
+  if (extendedPreCon.developmentCharges) {
     additionalPricing.push({
       label: "Development Charges",
-      value: formatPrice((preCon as any).developmentCharges),
+      value: formatPrice(extendedPreCon.developmentCharges),
       icon: Wrench
     })
   }
-  if ((preCon as any).developmentLevies) {
+  if (extendedPreCon.developmentLevies) {
     additionalPricing.push({
       label: "Development Levies",
-      value: formatPrice((preCon as any).developmentLevies),
+      value: formatPrice(extendedPreCon.developmentLevies),
       icon: Wrench
     })
   }
-  if ((preCon as any).maintenanceFeesPerSqft) {
+  if (extendedPreCon.maintenanceFeesPerSqft) {
     additionalPricing.push({
       label: "Maintenance Fees Per Sqft",
-      value: `$${((preCon as any).maintenanceFeesPerSqft).toLocaleString()} / sqft`,
+      value: `$${(extendedPreCon.maintenanceFeesPerSqft).toLocaleString()} / sqft`,
       icon: Home
     })
   }
@@ -135,7 +151,7 @@ const PricingIncentives: React.FC<PricingIncentivesProps> = ({ property }) => {
     }))
   }
 
-  const incentives: Incentive[] = parsePromotions((preCon as any).promotions)
+  const incentives: Incentive[] = parsePromotions(extendedPreCon.promotions)
 
   return (
     <div className="w-full space-y-6">

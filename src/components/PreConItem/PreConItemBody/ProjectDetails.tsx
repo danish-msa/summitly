@@ -266,24 +266,24 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
       icon: Building2,
     });
   }
-  if ((preCon.details as any).height) {
+  if (preCon.details.height) {
     details.push({
       label: 'Height',
-      value: `${(preCon.details as any).height}m`,
+      value: `${preCon.details.height}m`,
       icon: Building2,
     });
   }
-  if ((preCon.details as any).propertyType) {
+  if (preCon.details.propertyType) {
     details.push({
       label: 'Property Type',
-      value: (preCon.details as any).propertyType,
+      value: preCon.details.propertyType,
       icon: Home,
     });
   }
-  if ((preCon.details as any).subPropertyType) {
+  if (preCon.details.subPropertyType) {
     details.push({
       label: 'Sub Property Type',
-      value: (preCon.details as any).subPropertyType,
+      value: preCon.details.subPropertyType,
       icon: Home,
     });
   }

@@ -12,6 +12,7 @@ import { useBackgroundFetch } from '@/hooks/useBackgroundFetch'
 import { getAllPreConProjects } from '@/data/mockPreConData'
 import PreConstructionPropertyCardV3 from '@/components/PreCon/PropertyCards/PreConstructionPropertyCardV3'
 import type { PreConstructionProperty } from '@/components/PreCon/PropertyCards/types'
+import { Loader2 } from 'lucide-react'
 
 const savedSearches = [
   { id: 1, name: "Downtown Condos", criteria: "2-3 bed, $500K-$800K, Downtown", results: 24 },

@@ -29,8 +29,59 @@ export interface PreConstructionProperty {
   status: 'selling' | 'coming-soon' | 'sold-out';
 }
 
+// Union type to handle both PreConstructionProperty and PropertyListing formats
+export type PreConstructionPropertyInput = PreConstructionProperty | {
+  id?: string;
+  mlsNumber?: string;
+  preCon?: {
+    projectName?: string;
+    developer?: string;
+    startingPrice?: number;
+    status?: string;
+    images?: string[];
+    details?: {
+      propertyType?: string;
+      bedroomRange?: string;
+      bathroomRange?: string;
+      sqftRange?: string;
+      totalUnits?: number;
+      availableUnits?: number;
+    };
+    completion?: {
+      date?: string;
+      progress?: number;
+    };
+  };
+  projectName?: string;
+  developer?: string;
+  startingPrice?: number;
+  status?: string;
+  images?: string[] | { allImages?: string[]; imageUrl?: string };
+  address?: {
+    street?: string;
+    streetNumber?: string;
+    streetName?: string;
+    city?: string;
+    province?: string;
+    location?: string;
+  };
+  details?: {
+    propertyType?: string;
+    bedroomRange?: string;
+    bathroomRange?: string;
+    sqftRange?: string;
+    totalUnits?: number;
+    availableUnits?: number;
+  };
+  completion?: {
+    date?: string;
+    progress?: number;
+  };
+  listPrice?: number;
+};
+
 export interface PreConstructionPropertyCardProps {
-  property: PreConstructionProperty;
+  property: PreConstructionPropertyInput;
   onHide?: () => void;
   className?: string;
 }

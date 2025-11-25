@@ -22,6 +22,27 @@ interface AvailableUnitsProps {
 type TabType = "for-sale" | "sold-out";
 type SortOption = "price-low" | "price-high" | "beds-low" | "beds-high";
 
+// Type for database unit structure
+interface DatabaseUnit {
+  id: string;
+  name?: string;
+  unitName?: string;
+  beds: number;
+  baths: number;
+  sqft: number;
+  price: number;
+  maintenanceFee?: number | null;
+  status: string;
+  floorplanImage?: string | null;
+  description?: string | null;
+  features?: string[];
+  amenities?: string[];
+}
+
+interface PreConWithUnits {
+  units?: DatabaseUnit[];
+}
+
 const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
   const preCon = property.preCon;
   const propertyId = property.mlsNumber || 'featured-1';
@@ -35,25 +56,26 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
   const [maxSquareFeet, setMaxSquareFeet] = useState<number | undefined>(undefined);
 
   // Use real units from property data if available, otherwise fall back to mock
-  const realUnits = (property.preCon as any)?.units || []
-  const mockUnits = getPreConUnits(propertyId)
-  const units = realUnits.length > 0 ? realUnits.map((unit: any) => ({
+  const preConWithUnits = (property.preCon as PreConWithUnits | undefined);
+  const realUnits = preConWithUnits?.units || [];
+  const mockUnits = getPreConUnits(propertyId);
+  const units: UnitListing[] = realUnits.length > 0 ? realUnits.map((unit: DatabaseUnit) => ({
     id: unit.id,
-    name: unit.name || unit.unitName,
+    name: unit.name || unit.unitName || '',
     beds: unit.beds,
     baths: unit.baths,
     sqft: unit.sqft,
     price: unit.price,
     maintenanceFee: unit.maintenanceFee || 0,
-    status: unit.status === 'for-sale' ? 'for-sale' : unit.status === 'sold-out' ? 'sold-out' : 'reserved',
+    status: unit.status === 'for-sale' ? 'for-sale' : unit.status === 'sold-out' ? 'sold-out' : 'for-sale',
     floorplanImage: unit.floorplanImage || '/images/floorplan-placeholder.jpg',
-    description: unit.description,
+    description: unit.description || undefined,
     features: unit.features || [],
     amenities: unit.amenities || [],
-  })) : mockUnits
+  })) : mockUnits;
 
   const filteredAndSortedUnits = useMemo(() => {
-    let filtered = units.filter((unit: any) => unit.status === activeTab);
+    let filtered = units.filter((unit: UnitListing) => unit.status === activeTab);
 
     // Apply bedroom filter
     if (bedrooms > 0) {
@@ -142,8 +164,8 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
     listingType: 'all',
   };
 
-  const forSaleCount = units.filter((u: any) => u.status === "for-sale").length;
-  const soldOutCount = units.filter((u: any) => u.status === "sold-out").length;
+  const forSaleCount = units.filter((u: UnitListing) => u.status === "for-sale").length;
+  const soldOutCount = units.filter((u: UnitListing) => u.status === "sold-out").length;
 
   if (!preCon) {
     return (
