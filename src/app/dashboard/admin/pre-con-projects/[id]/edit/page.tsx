@@ -68,6 +68,20 @@ interface PreConProject {
   marketingInfo: string | null
   salesMarketingCompany: string | null
   developmentTeamOverview: string | null
+  units?: Array<{
+    id: string
+    unitName: string
+    beds: number
+    baths: number
+    sqft: number
+    price: number
+    maintenanceFee: number | null
+    status: string
+    floorplanImage: string | null
+    description: string | null
+    features: string[]
+    amenities: string[]
+  }>
 }
 
 export default function EditProjectPage() {
@@ -142,6 +156,7 @@ export default function EditProjectPage() {
     marketingInfo: "",
     salesMarketingCompany: "",
     developmentTeamOverview: "",
+    units: [],
   })
 
   // Handle auth check separately to avoid unnecessary re-runs
@@ -257,6 +272,20 @@ export default function EditProjectPage() {
         marketingInfo: project.marketingInfo || "",
         salesMarketingCompany: project.salesMarketingCompany || "",
         developmentTeamOverview: project.developmentTeamOverview || "",
+        units: project.units?.map((unit) => ({
+          id: unit.id,
+          unitName: unit.unitName || "",
+          beds: unit.beds?.toString() || "",
+          baths: unit.baths?.toString() || "",
+          sqft: unit.sqft?.toString() || "",
+          price: unit.price?.toString() || "",
+          maintenanceFee: unit.maintenanceFee?.toString() || "",
+          status: unit.status || "for-sale",
+          floorplanImage: unit.floorplanImage || "",
+          description: unit.description || "",
+          features: unit.features || [],
+          amenities: unit.amenities || [],
+        })) || [],
       })
     } catch (error) {
       console.error("Error fetching project:", error)
@@ -363,6 +392,20 @@ export default function EditProjectPage() {
         marketingInfo: formData.marketingInfo || null,
         salesMarketingCompany: formData.salesMarketingCompany || null,
         developmentTeamOverview: formData.developmentTeamOverview || null,
+        units: formData.units?.map((unit) => ({
+          id: unit.id.startsWith('unit-') ? undefined : unit.id, // Don't send ID for new units
+          unitName: unit.unitName,
+          beds: parseInt(unit.beds) || 0,
+          baths: parseInt(unit.baths) || 0,
+          sqft: parseInt(unit.sqft) || 0,
+          price: parseFloat(unit.price) || 0,
+          maintenanceFee: unit.maintenanceFee ? parseFloat(unit.maintenanceFee) : null,
+          status: unit.status,
+          floorplanImage: unit.floorplanImage || null,
+          description: unit.description || null,
+          features: unit.features || [],
+          amenities: unit.amenities || [],
+        })) || [],
       }
 
       const response = await fetch(`/api/admin/pre-con-projects/${params.id}`, {

@@ -214,6 +214,7 @@ export async function POST(request: NextRequest) {
       marketingInfo,
       salesMarketingCompany,
       developmentTeamOverview,
+      units = [],
     } = body
 
     // Validate required fields
@@ -391,6 +392,33 @@ export async function POST(request: NextRequest) {
         marketingInfo: marketingInfo ? await fetchDeveloperData(marketingInfo) : null,
         salesMarketingCompany: salesMarketingCompany && salesMarketingCompany.trim() ? salesMarketingCompany.trim() : null,
         developmentTeamOverview: developmentTeamOverview && developmentTeamOverview.trim() ? developmentTeamOverview.trim() : null,
+        units: Array.isArray(units) && units.length > 0 ? {
+          create: units.map((unit: {
+            unitName: string
+            beds: number | string
+            baths: number | string
+            sqft: number | string
+            price: number | string
+            maintenanceFee?: number | string | null
+            status: string
+            floorplanImage?: string | null
+            description?: string | null
+            features?: string[]
+            amenities?: string[]
+          }) => ({
+            unitName: unit.unitName,
+            beds: typeof unit.beds === 'number' ? unit.beds : parseInt(String(unit.beds), 10),
+            baths: typeof unit.baths === 'number' ? unit.baths : parseInt(String(unit.baths), 10),
+            sqft: typeof unit.sqft === 'number' ? unit.sqft : parseInt(String(unit.sqft), 10),
+            price: typeof unit.price === 'number' ? unit.price : parseFloat(String(unit.price)),
+            maintenanceFee: unit.maintenanceFee ? (typeof unit.maintenanceFee === 'number' ? unit.maintenanceFee : parseFloat(String(unit.maintenanceFee))) : null,
+            status: unit.status || 'for-sale',
+            floorplanImage: unit.floorplanImage || null,
+            description: unit.description || null,
+            features: Array.isArray(unit.features) ? unit.features : [],
+            amenities: Array.isArray(unit.amenities) ? unit.amenities : [],
+          })),
+        } : undefined,
       } as unknown as Prisma.PreConstructionProjectCreateInput,
     })
 

@@ -90,6 +90,7 @@ export default function NewProjectPage() {
     marketingInfo: "",
     salesMarketingCompany: "",
     developmentTeamOverview: "",
+    units: [],
   })
 
   if (session?.user && !isAdmin(session.user.role)) {
@@ -193,6 +194,19 @@ export default function NewProjectPage() {
         marketingInfo: formData.marketingInfo || null,
         salesMarketingCompany: formData.salesMarketingCompany || null,
         developmentTeamOverview: formData.developmentTeamOverview || null,
+        units: formData.units?.map((unit) => ({
+          unitName: unit.unitName,
+          beds: parseInt(unit.beds) || 0,
+          baths: parseInt(unit.baths) || 0,
+          sqft: parseInt(unit.sqft) || 0,
+          price: parseFloat(unit.price) || 0,
+          maintenanceFee: unit.maintenanceFee ? parseFloat(unit.maintenanceFee) : null,
+          status: unit.status,
+          floorplanImage: unit.floorplanImage || null,
+          description: unit.description || null,
+          features: unit.features || [],
+          amenities: unit.amenities || [],
+        })) || [],
       }
 
       const response = await fetch("/api/admin/pre-con-projects", {

@@ -336,6 +336,47 @@ export async function PUT(
     if (body.developmentTeamOverview !== undefined) updateData.developmentTeamOverview = body.developmentTeamOverview || null
     if (body.mlsNumber !== undefined) updateData.mlsNumber = body.mlsNumber
 
+    // Handle units update (delete all existing and create new ones)
+    if (body.units !== undefined && Array.isArray(body.units)) {
+      // Delete all existing units
+      await prisma.preConstructionUnit.deleteMany({
+        where: { projectId: id },
+      })
+
+      // Create new units if any
+      if (body.units.length > 0) {
+        await prisma.preConstructionUnit.createMany({
+          data: body.units.map((unit: {
+            id?: string
+            unitName: string
+            beds: number | string
+            baths: number | string
+            sqft: number | string
+            price: number | string
+            maintenanceFee?: number | string | null
+            status: string
+            floorplanImage?: string | null
+            description?: string | null
+            features?: string[]
+            amenities?: string[]
+          }) => ({
+            projectId: id,
+            unitName: unit.unitName,
+            beds: typeof unit.beds === 'number' ? unit.beds : parseInt(String(unit.beds), 10),
+            baths: typeof unit.baths === 'number' ? unit.baths : parseInt(String(unit.baths), 10),
+            sqft: typeof unit.sqft === 'number' ? unit.sqft : parseInt(String(unit.sqft), 10),
+            price: typeof unit.price === 'number' ? unit.price : parseFloat(String(unit.price)),
+            maintenanceFee: unit.maintenanceFee ? (typeof unit.maintenanceFee === 'number' ? unit.maintenanceFee : parseFloat(String(unit.maintenanceFee))) : null,
+            status: unit.status || 'for-sale',
+            floorplanImage: unit.floorplanImage || null,
+            description: unit.description || null,
+            features: Array.isArray(unit.features) ? unit.features : [],
+            amenities: Array.isArray(unit.amenities) ? unit.amenities : [],
+          })),
+        })
+      }
+    }
+
     const project = await prisma.preConstructionProject.update({
       where: { id },
       data: updateData,

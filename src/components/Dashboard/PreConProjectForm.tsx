@@ -31,6 +31,21 @@ export interface PendingImage {
   id: string
 }
 
+export interface Unit {
+  id: string
+  unitName: string
+  beds: string
+  baths: string
+  sqft: string
+  price: string
+  maintenanceFee: string
+  status: string
+  floorplanImage: string
+  description: string
+  features: string[]
+  amenities: string[]
+}
+
 export interface FormData {
   projectName: string
   developer: string
@@ -93,6 +108,7 @@ export interface FormData {
   marketingInfo: string // Developer ID
   salesMarketingCompany: string // Sales & Marketing Company ID
   developmentTeamOverview: string
+  units: Unit[]
 }
 
 interface Developer {
@@ -121,7 +137,7 @@ export function PreConProjectForm({
   submitLabel = "Create Project",
   onCancel,
 }: PreConProjectFormProps) {
-  const [openSections, setOpenSections] = useState<string[]>(["basic", "address", "details", "media", "team"])
+  const [openSections, setOpenSections] = useState<string[]>(["basic", "address", "details", "media", "team", "units"])
   const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
   const [mapLoaded, setMapLoaded] = useState(false)
   const mapRef = useRef<google.maps.Map | null>(null)
@@ -679,6 +695,7 @@ export function PreConProjectForm({
     { id: "details", label: "Property Details" },
     { id: "media", label: "Media & Content" },
     { id: "team", label: "Development Team" },
+    { id: "units", label: "Units Details" },
   ]
 
   return (
@@ -2100,6 +2117,359 @@ export function PreConProjectForm({
               </div>
             </CardContent>
           </Card>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </div>
+
+        {/* Units Details Section */}
+        <div ref={(el) => { sectionRefs.current["units"] = el }}>
+          <AccordionItem value="units">
+            <AccordionTrigger className="container text-lg font-semibold px-6">
+              Units Details
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-6 container">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Unit Details</CardTitle>
+                    <CardDescription>
+                      Add individual unit information. Total Units: {formData.totalUnits || "0"}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Add Unit Button */}
+                    <div className="flex justify-end">
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          const newUnit: Unit = {
+                            id: `unit-${Date.now()}-${Math.random()}`,
+                            unitName: "",
+                            beds: "",
+                            baths: "",
+                            sqft: "",
+                            price: "",
+                            maintenanceFee: "",
+                            status: "for-sale",
+                            floorplanImage: "",
+                            description: "",
+                            features: [],
+                            amenities: [],
+                          }
+                          setFormData((prev) => ({
+                            ...prev,
+                            units: [...(prev.units || []), newUnit],
+                          }))
+                        }}
+                        className="rounded-lg"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Unit
+                      </Button>
+                    </div>
+
+                    {/* Units List */}
+                    {formData.units && formData.units.length > 0 ? (
+                      <div className="space-y-4">
+                        {formData.units.map((unit, index) => (
+                          <Card key={unit.id} className="border-2">
+                            <CardHeader className="pb-3">
+                              <div className="flex items-center justify-between">
+                                <CardTitle className="text-base">
+                                  Unit {index + 1} {unit.unitName && `- ${unit.unitName}`}
+                                </CardTitle>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => {
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      units: prev.units?.filter((u) => u.id !== unit.id) || [],
+                                    }))
+                                  }}
+                                  className="h-8 w-8 text-destructive hover:text-destructive"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                              {/* Row 1: Unit Name, Beds, Baths, Sqft */}
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor={`unit-name-${unit.id}`}>Unit Name *</Label>
+                                  <Input
+                                    id={`unit-name-${unit.id}`}
+                                    className="rounded-lg"
+                                    placeholder="e.g., 101, 202"
+                                    value={unit.unitName}
+                                    onChange={(e) => {
+                                      setFormData((prev) => ({
+                                        ...prev,
+                                        units: prev.units?.map((u) =>
+                                          u.id === unit.id ? { ...u, unitName: e.target.value } : u
+                                        ) || [],
+                                      }))
+                                    }}
+                                    required
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor={`unit-beds-${unit.id}`}>Beds *</Label>
+                                  <Input
+                                    id={`unit-beds-${unit.id}`}
+                                    type="number"
+                                    className="rounded-lg"
+                                    placeholder="e.g., 2"
+                                    value={unit.beds}
+                                    onChange={(e) => {
+                                      setFormData((prev) => ({
+                                        ...prev,
+                                        units: prev.units?.map((u) =>
+                                          u.id === unit.id ? { ...u, beds: e.target.value } : u
+                                        ) || [],
+                                      }))
+                                    }}
+                                    required
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor={`unit-baths-${unit.id}`}>Baths *</Label>
+                                  <Input
+                                    id={`unit-baths-${unit.id}`}
+                                    type="number"
+                                    className="rounded-lg"
+                                    placeholder="e.g., 2"
+                                    value={unit.baths}
+                                    onChange={(e) => {
+                                      setFormData((prev) => ({
+                                        ...prev,
+                                        units: prev.units?.map((u) =>
+                                          u.id === unit.id ? { ...u, baths: e.target.value } : u
+                                        ) || [],
+                                      }))
+                                    }}
+                                    required
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor={`unit-sqft-${unit.id}`}>Sqft *</Label>
+                                  <Input
+                                    id={`unit-sqft-${unit.id}`}
+                                    type="number"
+                                    className="rounded-lg"
+                                    placeholder="e.g., 1200"
+                                    value={unit.sqft}
+                                    onChange={(e) => {
+                                      setFormData((prev) => ({
+                                        ...prev,
+                                        units: prev.units?.map((u) =>
+                                          u.id === unit.id ? { ...u, sqft: e.target.value } : u
+                                        ) || [],
+                                      }))
+                                    }}
+                                    required
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Row 2: Price, Maintenance Fee, Status */}
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor={`unit-price-${unit.id}`}>Price *</Label>
+                                  <Input
+                                    id={`unit-price-${unit.id}`}
+                                    type="number"
+                                    step="0.01"
+                                    className="rounded-lg"
+                                    placeholder="e.g., 500000"
+                                    value={unit.price}
+                                    onChange={(e) => {
+                                      setFormData((prev) => ({
+                                        ...prev,
+                                        units: prev.units?.map((u) =>
+                                          u.id === unit.id ? { ...u, price: e.target.value } : u
+                                        ) || [],
+                                      }))
+                                    }}
+                                    required
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor={`unit-maintenance-${unit.id}`}>Maintenance Fee</Label>
+                                  <Input
+                                    id={`unit-maintenance-${unit.id}`}
+                                    type="number"
+                                    step="0.01"
+                                    className="rounded-lg"
+                                    placeholder="e.g., 500"
+                                    value={unit.maintenanceFee}
+                                    onChange={(e) => {
+                                      setFormData((prev) => ({
+                                        ...prev,
+                                        units: prev.units?.map((u) =>
+                                          u.id === unit.id ? { ...u, maintenanceFee: e.target.value } : u
+                                        ) || [],
+                                      }))
+                                    }}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor={`unit-status-${unit.id}`}>Status *</Label>
+                                  <Select
+                                    value={unit.status}
+                                    onValueChange={(value) => {
+                                      setFormData((prev) => ({
+                                        ...prev,
+                                        units: prev.units?.map((u) =>
+                                          u.id === unit.id ? { ...u, status: value } : u
+                                        ) || [],
+                                      }))
+                                    }}
+                                  >
+                                    <SelectTrigger className="rounded-lg">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="for-sale">For Sale</SelectItem>
+                                      <SelectItem value="sold-out">Sold Out</SelectItem>
+                                      <SelectItem value="reserved">Reserved</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+
+                              {/* Row 3: Floorplan Image */}
+                              <div className="space-y-2">
+                                <Label htmlFor={`unit-floorplan-${unit.id}`}>Floorplan Image URL</Label>
+                                <Input
+                                  id={`unit-floorplan-${unit.id}`}
+                                  className="rounded-lg"
+                                  placeholder="https://example.com/floorplan.jpg"
+                                  value={unit.floorplanImage}
+                                  onChange={(e) => {
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      units: prev.units?.map((u) =>
+                                        u.id === unit.id ? { ...u, floorplanImage: e.target.value } : u
+                                      ) || [],
+                                    }))
+                                  }}
+                                />
+                                {unit.floorplanImage && (
+                                  <div className="mt-2 border rounded-lg overflow-hidden max-w-xs">
+                                    <img
+                                      src={unit.floorplanImage}
+                                      alt={`Floorplan for ${unit.unitName}`}
+                                      className="w-full h-auto"
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement
+                                        target.style.display = "none"
+                                      }}
+                                    />
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Row 4: Description */}
+                              <div className="space-y-2">
+                                <Label htmlFor={`unit-description-${unit.id}`}>Description</Label>
+                                <Textarea
+                                  id={`unit-description-${unit.id}`}
+                                  className="rounded-lg"
+                                  placeholder="Unit description..."
+                                  rows={3}
+                                  value={unit.description}
+                                  onChange={(e) => {
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      units: prev.units?.map((u) =>
+                                        u.id === unit.id ? { ...u, description: e.target.value } : u
+                                      ) || [],
+                                    }))
+                                  }}
+                                />
+                              </div>
+
+                              {/* Row 5: Features and Amenities */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor={`unit-features-${unit.id}`}>Features (comma-separated)</Label>
+                                  <Input
+                                    id={`unit-features-${unit.id}`}
+                                    className="rounded-lg"
+                                    placeholder="e.g., Balcony, Parking, Storage"
+                                    value={unit.features.join(", ")}
+                                    onChange={(e) => {
+                                      const features = e.target.value
+                                        .split(",")
+                                        .map((f) => f.trim())
+                                        .filter((f) => f.length > 0)
+                                      setFormData((prev) => ({
+                                        ...prev,
+                                        units: prev.units?.map((u) =>
+                                          u.id === unit.id ? { ...u, features } : u
+                                        ) || [],
+                                      }))
+                                    }}
+                                  />
+                                  {unit.features.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                      {unit.features.map((feature, idx) => (
+                                        <Badge key={idx} variant="secondary">
+                                          {feature}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor={`unit-amenities-${unit.id}`}>Unit Amenities (comma-separated)</Label>
+                                  <Input
+                                    id={`unit-amenities-${unit.id}`}
+                                    className="rounded-lg"
+                                    placeholder="e.g., High Ceilings, Walk-in Closet"
+                                    value={unit.amenities.join(", ")}
+                                    onChange={(e) => {
+                                      const amenities = e.target.value
+                                        .split(",")
+                                        .map((a) => a.trim())
+                                        .filter((a) => a.length > 0)
+                                      setFormData((prev) => ({
+                                        ...prev,
+                                        units: prev.units?.map((u) =>
+                                          u.id === unit.id ? { ...u, amenities } : u
+                                        ) || [],
+                                      }))
+                                    }}
+                                  />
+                                  {unit.amenities.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                      {unit.amenities.map((amenity, idx) => (
+                                        <Badge key={idx} variant="secondary">
+                                          {amenity}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <p>No units added yet. Click "Add Unit" to get started.</p>
+                        <p className="text-sm mt-2">
+                          Based on "Total Units" field: {formData.totalUnits || "0"} units
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
             </AccordionContent>
           </AccordionItem>
