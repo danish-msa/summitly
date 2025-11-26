@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
@@ -76,6 +76,10 @@ export default function EditProjectPage() {
   const { data: session } = useSession()
   const { loading, fetchData } = useBackgroundFetch<PreConProject>()
   const [saving, setSaving] = useState(false)
+  // Track if form has been initially loaded to prevent background updates from overwriting edits
+  const formInitializedRef = useRef(false)
+  // Track which project ID we've loaded to prevent unnecessary refetches
+  const loadedProjectIdRef = useRef<string | null>(null)
   const [formData, setFormData] = useState<FormData>({
     projectName: "",
     developer: "",
@@ -140,17 +144,26 @@ export default function EditProjectPage() {
     developmentTeamOverview: "",
   })
 
+  // Handle auth check separately to avoid unnecessary re-runs
   useEffect(() => {
     if (session?.user && !isAdmin(session.user.role)) {
       router.push("/dashboard")
-      return
     }
+  }, [session?.user, router])
 
-    if (params?.id) {
+  // Handle project fetching - only depend on project ID
+  useEffect(() => {
+    if (!params?.id) return
+
+    // Only reset and fetch if this is a different project than what we've loaded
+    // This prevents refetching when switching windows/tabs or when other dependencies change
+    if (loadedProjectIdRef.current !== params.id) {
+      formInitializedRef.current = false
+      loadedProjectIdRef.current = params.id as string
       fetchProject()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params?.id, session, router])
+  }, [params?.id])
 
   const fetchProject = async () => {
     if (!params?.id) return
@@ -166,6 +179,14 @@ export default function EditProjectPage() {
 
       if (!project) return
 
+      // Only update form data on initial load, not on background refreshes
+      // This prevents background updates from overwriting user edits
+      if (formInitializedRef.current) {
+        // Form already initialized, skip updating to preserve user edits
+        return
+      }
+
+      formInitializedRef.current = true
       setFormData({
         projectName: project.projectName || "",
         developer: project.developer || "",
@@ -381,7 +402,7 @@ export default function EditProjectPage() {
   }
 
   return (
-    <div className="space-y-6 pb-32">
+    <div className="space-y-6 pt-20">
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"

@@ -706,8 +706,6 @@ export function PreConProjectForm({
         </div>
       </div>
 
-      {/* Spacer to account for fixed navigation (header 64px + nav bar ~80px) */}
-      <div className="h-20" />
 
       {/* Collapsible Sections */}
       <Accordion
