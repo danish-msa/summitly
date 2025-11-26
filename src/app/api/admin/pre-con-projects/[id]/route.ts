@@ -210,6 +210,7 @@ export async function PUT(
       hasWorkLiveLoft?: boolean
       totalUnits?: number
       availableUnits?: number
+      suites?: number | null
       storeys?: number | null
       height?: number | null
       maintenanceFeesPerSqft?: number | null
@@ -218,6 +219,9 @@ export async function PUT(
       completionDate?: string
       completionProgress?: number
       promotions?: string | null
+      ownershipType?: string | null
+      garage?: string | null
+      basement?: string | null
       images?: string[]
       videos?: string[]
       amenities?: string[]
@@ -286,6 +290,7 @@ export async function PUT(
     if (body.hasWorkLiveLoft !== undefined) updateData.hasWorkLiveLoft = body.hasWorkLiveLoft === true || body.hasWorkLiveLoft === 'true'
     if (body.totalUnits !== undefined) updateData.totalUnits = parseInt(body.totalUnits)
     if (body.availableUnits !== undefined) updateData.availableUnits = parseInt(body.availableUnits)
+    if (body.suites !== undefined) updateData.suites = body.suites ? parseInt(body.suites) : null
     if (body.storeys !== undefined) updateData.storeys = body.storeys ? parseInt(body.storeys) : null
     if (body.height !== undefined) updateData.height = body.height ? parseFloat(body.height) : null
     if (body.maintenanceFeesPerSqft !== undefined) {
@@ -316,6 +321,9 @@ export async function PUT(
       }
     }
     if (body.promotions !== undefined) updateData.promotions = body.promotions
+    if (body.ownershipType !== undefined) updateData.ownershipType = body.ownershipType || null
+    if (body.garage !== undefined) updateData.garage = body.garage || null
+    if (body.basement !== undefined) updateData.basement = body.basement || null
     if (body.images !== undefined) updateData.images = Array.isArray(body.images) ? body.images : []
     if (body.videos !== undefined) updateData.videos = Array.isArray(body.videos) ? body.videos : []
     if (body.amenities !== undefined || body.customAmenities !== undefined) {

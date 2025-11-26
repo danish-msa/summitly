@@ -46,6 +46,7 @@ interface PreConProject {
   hasWorkLiveLoft: boolean
   totalUnits: number
   availableUnits: number
+  suites: number | null
   storeys: number | null
   height: number | null
   maintenanceFeesPerSqft: number | null
@@ -54,6 +55,9 @@ interface PreConProject {
   completionDate: string
   completionProgress: string
   promotions: string | null
+  ownershipType: string | null
+  garage: string | null
+  basement: string | null
   images: string[]
   videos: string[]
   amenities: Array<string | { name: string; icon: string }>
@@ -129,6 +133,7 @@ export default function EditProjectPage() {
     hasWorkLiveLoft: false,
     totalUnits: "",
     availableUnits: "",
+    suites: "",
     storeys: "",
     height: "",
     maintenanceFeesPerSqft: "",
@@ -137,6 +142,9 @@ export default function EditProjectPage() {
     completionDate: "",
     completionProgress: "",
     promotions: "",
+    ownershipType: "",
+    garage: "",
+    basement: "",
     images: [] as string[],
     pendingImages: [] as Array<{ file: File; preview: string; id: string }>,
     imageInput: "",
@@ -237,6 +245,7 @@ export default function EditProjectPage() {
         hasWorkLiveLoft: project.hasWorkLiveLoft ?? false,
         totalUnits: project.totalUnits?.toString() || "",
         availableUnits: project.availableUnits?.toString() || "",
+        suites: project.suites?.toString() || "",
         storeys: project.storeys?.toString() || "",
         height: project.height?.toString() || "",
         maintenanceFeesPerSqft: project.maintenanceFeesPerSqft?.toString() || "",
@@ -245,6 +254,9 @@ export default function EditProjectPage() {
         completionDate: project.completionDate || "",
         completionProgress: project.completionProgress || "",
         promotions: project.promotions || "",
+        ownershipType: project.ownershipType || "",
+        garage: project.garage || "",
+        basement: project.basement || "",
         images: project.images || [],
         pendingImages: [] as Array<{ file: File; preview: string; id: string }>,
         imageInput: "",
@@ -369,6 +381,7 @@ export default function EditProjectPage() {
         hasWorkLiveLoft: formData.hasWorkLiveLoft,
         totalUnits: formData.totalUnits,
         availableUnits: formData.availableUnits,
+        suites: formData.suites || null,
         storeys: formData.storeys,
         height: formData.height || null,
         maintenanceFeesPerSqft: formData.maintenanceFeesPerSqft === '' ? null : formData.maintenanceFeesPerSqft,
@@ -377,6 +390,9 @@ export default function EditProjectPage() {
         completionDate: formData.completionDate,
         completionProgress: formData.completionProgress,
         promotions: formData.promotions,
+        ownershipType: formData.ownershipType || null,
+        garage: formData.garage || null,
+        basement: formData.basement || null,
         images: allImages,
         videos: formData.videos,
         amenities: formData.amenities,

@@ -81,6 +81,7 @@ export interface FormData {
   hasWorkLiveLoft: boolean
   totalUnits: string
   availableUnits: string
+  suites: string
   storeys: string
   height: string
   maintenanceFeesPerSqft: string
@@ -89,6 +90,9 @@ export interface FormData {
   completionDate: string
   completionProgress: string
   promotions: string
+  ownershipType: string
+  garage: string
+  basement: string
   images: string[]
   pendingImages: PendingImage[]
   imageInput: string
@@ -137,7 +141,7 @@ export function PreConProjectForm({
   submitLabel = "Create Project",
   onCancel,
 }: PreConProjectFormProps) {
-  const [openSections, setOpenSections] = useState<string[]>(["basic", "address", "details", "media", "team", "units"])
+  const [openSections, setOpenSections] = useState<string[]>(["basic", "address", "details", "pricing", "media", "team", "units"])
   const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
   const [mapLoaded, setMapLoaded] = useState(false)
   const mapRef = useRef<google.maps.Map | null>(null)
@@ -693,6 +697,7 @@ export function PreConProjectForm({
     { id: "basic", label: "Basic Info" },
     { id: "address", label: "Address" },
     { id: "details", label: "Property Details" },
+    { id: "pricing", label: "Pricing Details" },
     { id: "media", label: "Media & Content" },
     { id: "team", label: "Development Team" },
     { id: "units", label: "Units Details" },
@@ -777,52 +782,6 @@ export function PreConProjectForm({
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="startingPrice">Starting Price *</Label>
-                  <Input
-                    id="startingPrice"
-                    type="number"
-                    className="rounded-lg"
-                    value={formData.startingPrice}
-                    onChange={(e) => setFormData({ ...formData, startingPrice: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="endingPrice">Ending Price *</Label>
-                  <Input
-                    id="endingPrice"
-                    type="number"
-                    className="rounded-lg"
-                    value={formData.endingPrice}
-                    onChange={(e) => setFormData({ ...formData, endingPrice: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="avgPricePerSqft">Avg. Price (/ft)</Label>
-                  <Input
-                    id="avgPricePerSqft"
-                    type="number"
-                    step="0.01"
-                    className="rounded-lg"
-                    value={formData.avgPricePerSqft}
-                    onChange={(e) => setFormData({ ...formData, avgPricePerSqft: e.target.value })}
-                    placeholder="e.g., 850.50"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="avgPricePerSqft">Avg. Price (/ft)</Label>
-                  <Input
-                    id="avgPricePerSqft"
-                    type="number"
-                    step="0.01"
-                    className="rounded-lg"
-                    value={formData.avgPricePerSqft}
-                    onChange={(e) => setFormData({ ...formData, avgPricePerSqft: e.target.value })}
-                    placeholder="e.g., 850.50"
-                  />
-                </div>
-                <div className="space-y-2">
                   <Label htmlFor="status">Selling Status *</Label>
                   <Select
                     value={formData.status}
@@ -841,92 +800,6 @@ export function PreConProjectForm({
                       <SelectItem value="sold-out">Sold Out</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-              </div>
-              
-              {/* Additional Pricing Section */}
-              <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t">
-                <div className="space-y-2">
-                  <Label htmlFor="parkingPrice">Parking Price</Label>
-                  <Input
-                    id="parkingPrice"
-                    type="number"
-                    step="0.01"
-                    className="rounded-lg"
-                    value={formData.parkingPrice}
-                    onChange={(e) => setFormData({ ...formData, parkingPrice: e.target.value })}
-                    placeholder="e.g., 50000"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lockerPrice">Locker Price</Label>
-                  <Input
-                    id="lockerPrice"
-                    type="number"
-                    step="0.01"
-                    className="rounded-lg"
-                    value={formData.lockerPrice}
-                    onChange={(e) => setFormData({ ...formData, lockerPrice: e.target.value })}
-                    placeholder="e.g., 5000"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="parkingPriceDetail">Parking Price Detail</Label>
-                  <Textarea
-                    id="parkingPriceDetail"
-                    className="rounded-lg"
-                    value={formData.parkingPriceDetail}
-                    onChange={(e) => setFormData({ ...formData, parkingPriceDetail: e.target.value })}
-                    placeholder="Additional details about parking pricing"
-                    rows={2}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lockerPriceDetail">Locker Price Detail</Label>
-                  <Textarea
-                    id="lockerPriceDetail"
-                    className="rounded-lg"
-                    value={formData.lockerPriceDetail}
-                    onChange={(e) => setFormData({ ...formData, lockerPriceDetail: e.target.value })}
-                    placeholder="Additional details about locker pricing"
-                    rows={2}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="assignmentFee">Assignment Fee</Label>
-                  <Input
-                    id="assignmentFee"
-                    type="number"
-                    step="0.01"
-                    className="rounded-lg"
-                    value={formData.assignmentFee}
-                    onChange={(e) => setFormData({ ...formData, assignmentFee: e.target.value })}
-                    placeholder="e.g., 5000"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="developmentLevies">Development Levies</Label>
-                  <Input
-                    id="developmentLevies"
-                    type="number"
-                    step="0.01"
-                    className="rounded-lg"
-                    value={formData.developmentLevies}
-                    onChange={(e) => setFormData({ ...formData, developmentLevies: e.target.value })}
-                    placeholder="e.g., 15000"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="developmentCharges">Development Charges</Label>
-                  <Input
-                    id="developmentCharges"
-                    type="number"
-                    step="0.01"
-                    className="rounded-lg"
-                    value={formData.developmentCharges}
-                    onChange={(e) => setFormData({ ...formData, developmentCharges: e.target.value })}
-                    placeholder="e.g., 20000"
-                  />
                 </div>
               </div>
             </CardContent>
@@ -1357,8 +1230,8 @@ export function PreConProjectForm({
                 </div>
               </div>
 
-              {/* Row 3: Available Units, Storeys, Completion Date */}
-              <div className="grid grid-cols-3 gap-4">
+              {/* Row 3: Available Units, Suites, Storeys, Completion Date */}
+              <div className="grid grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="availableUnits">Available Units *</Label>
                   <Input
@@ -1368,6 +1241,17 @@ export function PreConProjectForm({
                     value={formData.availableUnits}
                     onChange={(e) => setFormData({ ...formData, availableUnits: e.target.value })}
                     required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="suites">Suites</Label>
+                  <Input
+                    id="suites"
+                    type="number"
+                    className="rounded-lg"
+                    value={formData.suites}
+                    onChange={(e) => setFormData({ ...formData, suites: e.target.value })}
+                    placeholder="e.g., 150"
                   />
                 </div>
                 <div className="space-y-2">
@@ -1405,44 +1289,6 @@ export function PreConProjectForm({
                 </div>
               </div>
 
-              {/* Maintenance & Fees Section */}
-              <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t">
-                <div className="space-y-2">
-                  <Label htmlFor="maintenanceFeesPerSqft">Maintenance Fees (/ft)</Label>
-                  <Input
-                    id="maintenanceFeesPerSqft"
-                    type="number"
-                    step="0.01"
-                    className="rounded-lg"
-                    value={formData.maintenanceFeesPerSqft}
-                    onChange={(e) => setFormData({ ...formData, maintenanceFeesPerSqft: e.target.value })}
-                    placeholder="e.g., 0.65"
-                  />
-                </div>
-                <div className="space-y-2 col-span-2">
-                  <Label htmlFor="maintenanceFeesDetail">Maintenance Fees Detail</Label>
-                  <Textarea
-                    id="maintenanceFeesDetail"
-                    className="rounded-lg"
-                    value={formData.maintenanceFeesDetail}
-                    onChange={(e) => setFormData({ ...formData, maintenanceFeesDetail: e.target.value })}
-                    placeholder="Additional details about maintenance fees"
-                    rows={3}
-                  />
-                </div>
-                <div className="space-y-2 col-span-2">
-                  <Label htmlFor="floorPremiums">Floor Premiums</Label>
-                  <Textarea
-                    id="floorPremiums"
-                    className="rounded-lg"
-                    value={formData.floorPremiums}
-                    onChange={(e) => setFormData({ ...formData, floorPremiums: e.target.value })}
-                    placeholder="Details about floor premiums (e.g., $5,000 per floor above 10th)"
-                    rows={3}
-                  />
-                </div>
-              </div>
-
               {/* Row 4: Construction Status, Promotions */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
@@ -1461,25 +1307,253 @@ export function PreConProjectForm({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 col-span-2">
                   <Label htmlFor="promotions">Promotions</Label>
-                  <Select
+                  <Input
+                    id="promotions"
+                    className="rounded-lg"
                     value={formData.promotions}
-                    onValueChange={(value) => setFormData({ ...formData, promotions: value })}
+                    onChange={(e) => setFormData({ ...formData, promotions: e.target.value })}
+                    placeholder="e.g., 5% Down Payment, 10% Down Payment, etc."
+                  />
+                </div>
+              </div>
+
+              {/* Row 5: Ownership Type, Garage, Basement */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="ownershipType">Ownership Type</Label>
+                  <Input
+                    id="ownershipType"
+                    className="rounded-lg"
+                    value={formData.ownershipType}
+                    onChange={(e) => setFormData({ ...formData, ownershipType: e.target.value })}
+                    placeholder="e.g., Freehold, Condo, etc."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="garage">Garage</Label>
+                  <Select
+                    value={formData.garage}
+                    onValueChange={(value) => setFormData({ ...formData, garage: value })}
                   >
                     <SelectTrigger className="rounded-lg">
-                      <SelectValue placeholder="Select promotion" />
+                      <SelectValue placeholder="Select garage type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="5% Down Payment">5% Down Payment</SelectItem>
-                      <SelectItem value="10% Down Payment">10% Down Payment</SelectItem>
-                      <SelectItem value="15% Down Payment">15% Down Payment</SelectItem>
+                      <SelectItem value="single">Single</SelectItem>
+                      <SelectItem value="double">Double</SelectItem>
+                      <SelectItem value="triple">Triple</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="basement">Basement</Label>
+                  <Select
+                    value={formData.basement}
+                    onValueChange={(value) => setFormData({ ...formData, basement: value })}
+                  >
+                    <SelectTrigger className="rounded-lg">
+                      <SelectValue placeholder="Select basement type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="finished">Finished</SelectItem>
+                      <SelectItem value="unfinished">Unfinished</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
             </CardContent>
           </Card>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </div>
+
+        {/* Pricing Details Section */}
+        <div ref={(el) => { sectionRefs.current["pricing"] = el }}>
+          <AccordionItem value="pricing">
+            <AccordionTrigger className="container text-lg font-semibold px-6">
+              Pricing Details
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-6 container">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Pricing Details</CardTitle>
+                    <CardDescription>
+                      All pricing and fee information for the project
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Main Pricing */}
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="startingPrice">Starting Price *</Label>
+                        <Input
+                          id="startingPrice"
+                          type="number"
+                          className="rounded-lg"
+                          value={formData.startingPrice}
+                          onChange={(e) => setFormData({ ...formData, startingPrice: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="endingPrice">Ending Price *</Label>
+                        <Input
+                          id="endingPrice"
+                          type="number"
+                          className="rounded-lg"
+                          value={formData.endingPrice}
+                          onChange={(e) => setFormData({ ...formData, endingPrice: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="avgPricePerSqft">Avg. Price (/ft)</Label>
+                        <Input
+                          id="avgPricePerSqft"
+                          type="number"
+                          step="0.01"
+                          className="rounded-lg"
+                          value={formData.avgPricePerSqft}
+                          onChange={(e) => setFormData({ ...formData, avgPricePerSqft: e.target.value })}
+                          placeholder="e.g., 850.50"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Parking & Locker Pricing */}
+                    <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t">
+                      <div className="space-y-2">
+                        <Label htmlFor="parkingPrice">Parking Price</Label>
+                        <Input
+                          id="parkingPrice"
+                          type="number"
+                          step="0.01"
+                          className="rounded-lg"
+                          value={formData.parkingPrice}
+                          onChange={(e) => setFormData({ ...formData, parkingPrice: e.target.value })}
+                          placeholder="e.g., 50000"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lockerPrice">Locker Price</Label>
+                        <Input
+                          id="lockerPrice"
+                          type="number"
+                          step="0.01"
+                          className="rounded-lg"
+                          value={formData.lockerPrice}
+                          onChange={(e) => setFormData({ ...formData, lockerPrice: e.target.value })}
+                          placeholder="e.g., 5000"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="parkingPriceDetail">Parking Price Detail</Label>
+                        <Textarea
+                          id="parkingPriceDetail"
+                          className="rounded-lg"
+                          value={formData.parkingPriceDetail}
+                          onChange={(e) => setFormData({ ...formData, parkingPriceDetail: e.target.value })}
+                          placeholder="Additional details about parking pricing"
+                          rows={2}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lockerPriceDetail">Locker Price Detail</Label>
+                        <Textarea
+                          id="lockerPriceDetail"
+                          className="rounded-lg"
+                          value={formData.lockerPriceDetail}
+                          onChange={(e) => setFormData({ ...formData, lockerPriceDetail: e.target.value })}
+                          placeholder="Additional details about locker pricing"
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Additional Fees */}
+                    <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t">
+                      <div className="space-y-2">
+                        <Label htmlFor="assignmentFee">Assignment Fee</Label>
+                        <Input
+                          id="assignmentFee"
+                          type="number"
+                          step="0.01"
+                          className="rounded-lg"
+                          value={formData.assignmentFee}
+                          onChange={(e) => setFormData({ ...formData, assignmentFee: e.target.value })}
+                          placeholder="e.g., 5000"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="developmentLevies">Development Levies</Label>
+                        <Input
+                          id="developmentLevies"
+                          type="number"
+                          step="0.01"
+                          className="rounded-lg"
+                          value={formData.developmentLevies}
+                          onChange={(e) => setFormData({ ...formData, developmentLevies: e.target.value })}
+                          placeholder="e.g., 15000"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="developmentCharges">Development Charges</Label>
+                        <Input
+                          id="developmentCharges"
+                          type="number"
+                          step="0.01"
+                          className="rounded-lg"
+                          value={formData.developmentCharges}
+                          onChange={(e) => setFormData({ ...formData, developmentCharges: e.target.value })}
+                          placeholder="e.g., 20000"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Maintenance Fees */}
+                    <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t">
+                      <div className="space-y-2">
+                        <Label htmlFor="maintenanceFeesPerSqft">Maintenance Fees (/ft)</Label>
+                        <Input
+                          id="maintenanceFeesPerSqft"
+                          type="number"
+                          step="0.01"
+                          className="rounded-lg"
+                          value={formData.maintenanceFeesPerSqft}
+                          onChange={(e) => setFormData({ ...formData, maintenanceFeesPerSqft: e.target.value })}
+                          placeholder="e.g., 0.65"
+                        />
+                      </div>
+                      <div className="space-y-2 col-span-2">
+                        <Label htmlFor="maintenanceFeesDetail">Maintenance Fees Detail</Label>
+                        <Textarea
+                          id="maintenanceFeesDetail"
+                          className="rounded-lg"
+                          value={formData.maintenanceFeesDetail}
+                          onChange={(e) => setFormData({ ...formData, maintenanceFeesDetail: e.target.value })}
+                          placeholder="Additional details about maintenance fees"
+                          rows={3}
+                        />
+                      </div>
+                      <div className="space-y-2 col-span-2">
+                        <Label htmlFor="floorPremiums">Floor Premiums</Label>
+                        <Textarea
+                          id="floorPremiums"
+                          className="rounded-lg"
+                          value={formData.floorPremiums}
+                          onChange={(e) => setFormData({ ...formData, floorPremiums: e.target.value })}
+                          placeholder="Details about floor premiums (e.g., $5,000 per floor above 10th)"
+                          rows={3}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </AccordionContent>
           </AccordionItem>

@@ -369,6 +369,7 @@ model PreConstructionProject {
   hasWorkLiveLoft Boolean @default(false) // Work/Live Loft units available
   totalUnits     Int
   availableUnits Int
+  suites         Int?
   storeys        Int?
   height         Float? // Height in meters
   
@@ -381,6 +382,11 @@ model PreConstructionProject {
   completionDate     String // e.g., 'Q4 2025'
   completionProgress Int // 0 = Pre-construction, 1 = Construction, 2 = Complete
   promotions         String? // '5% Down Payment', '10% Down Payment', '15% Down Payment'
+  
+  // Additional Details
+  ownershipType String? // Ownership type
+  garage        String? // 'single', 'double', 'triple', 'other'
+  basement      String? // 'finished', 'unfinished'
 
   // Images
   images String[] @default([])
