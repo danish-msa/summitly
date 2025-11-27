@@ -2,6 +2,8 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useState, useRef, useEffect } from "react"
+import { createPortal } from "react-dom"
 import {
   LayoutDashboard,
   MessageSquare,
@@ -18,6 +20,12 @@ import {
   Users,
   Shield,
   Briefcase,
+  ChevronRight,
+  Plus,
+  List,
+  Tag,
+  Calendar as CalendarIcon,
+  MapPin,
 } from "lucide-react"
 import {
   Sidebar,
@@ -36,8 +44,21 @@ import { signOut, useSession } from "next-auth/react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { isAdmin, isSuperAdmin } from "@/lib/roles"
 
+// Menu item types
+type MenuItem = {
+  title: string
+  url: string
+  icon: React.ComponentType<{ className?: string }>
+  hasSubmenu?: boolean
+  submenu?: Array<{
+    title: string
+    url: string
+    icon: React.ComponentType<{ className?: string }>
+  }>
+}
+
 // Subscriber menu items
-const subscriberMenuItems = [
+const subscriberMenuItems: MenuItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Chat", url: "/dashboard/chat", icon: MessageSquare },
   { title: "Saved", url: "/dashboard/saved", icon: Heart },
@@ -49,14 +70,27 @@ const subscriberMenuItems = [
 ]
 
 // Admin menu items (includes subscriber items + admin items)
-const adminMenuItems = [
+const adminMenuItems: MenuItem[] = [
   ...subscriberMenuItems,
-  { title: "Pre-Con Projects", url: "/dashboard/admin/pre-con-projects", icon: Building2 },
+  { 
+    title: "Pre-Constructions", 
+    url: "/dashboard/admin/pre-con-projects", 
+    icon: Building2,
+    hasSubmenu: true,
+    submenu: [
+      { title: "All Projects", url: "/dashboard/admin/pre-con-projects", icon: List },
+      { title: "Add New Project", url: "/dashboard/admin/pre-con-projects/new", icon: Plus },
+      { title: "by Property Type", url: "/dashboard/admin/pre-con-projects/by-property-type", icon: Tag },
+      { title: "by Selling Status", url: "/dashboard/admin/pre-con-projects/by-selling-status", icon: Tag },
+      { title: "by Completion Year", url: "/dashboard/admin/pre-con-projects/by-completion-year", icon: CalendarIcon },
+      { title: "by City", url: "/dashboard/admin/pre-con-projects/by-city", icon: MapPin },
+    ]
+  },
   { title: "Developers", url: "/dashboard/admin/developers", icon: Briefcase },
 ]
 
 // Super Admin menu items (includes admin items + super admin items)
-const superAdminMenuItems = [
+const superAdminMenuItems: MenuItem[] = [
   ...adminMenuItems,
   { title: "User Management", url: "/dashboard/admin/users", icon: Users },
   { title: "Role Management", url: "/dashboard/admin/roles", icon: Shield },
@@ -71,8 +105,58 @@ export function DashboardSidebar() {
   const { open } = useSidebar()
   const pathname = usePathname()
   const { data: session } = useSession()
+  const [openSubmenu, setOpenSubmenu] = useState<string | null>(null)
+  const [submenuPosition, setSubmenuPosition] = useState<{ top: number; left: number } | null>(null)
+  const menuItemRefs = useRef<{ [key: string]: HTMLElement | null }>({})
 
-  const isActive = (path: string) => pathname === path
+  const isActive = (path: string) => pathname === path || pathname?.startsWith(path + "/")
+
+  // Update submenu position when opened
+  useEffect(() => {
+    if (openSubmenu && menuItemRefs.current[openSubmenu]) {
+      const rect = menuItemRefs.current[openSubmenu]?.getBoundingClientRect()
+      if (rect) {
+        setSubmenuPosition({
+          top: rect.top,
+          left: open ? rect.right + 8 : rect.right + 8,
+        })
+      }
+    } else {
+      setSubmenuPosition(null)
+    }
+  }, [openSubmenu, open])
+
+  // Close submenu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      const menuItem = menuItemRefs.current[openSubmenu || '']
+      const submenu = document.querySelector(`[data-submenu-for="${openSubmenu}"]`)
+      
+      if (
+        openSubmenu &&
+        menuItem &&
+        !menuItem.contains(target) &&
+        submenu &&
+        !submenu.contains(target)
+      ) {
+        setOpenSubmenu(null)
+      }
+    }
+
+    if (openSubmenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+      }
+    }
+  }, [openSubmenu])
+
+  const toggleSubmenu = (itemTitle: string, hasSubmenu: boolean) => {
+    if (hasSubmenu) {
+      setOpenSubmenu(openSubmenu === itemTitle ? null : itemTitle)
+    }
+  }
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: '/' })
@@ -148,22 +232,53 @@ export function DashboardSidebar() {
             <SidebarGroupLabel className={!open ? "sr-only" : ""}>Main Menu</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {menuItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <Link
-                        href={item.url}
-                        className={cn(
-                          "hover:bg-sidebar-accent",
-                          isActive(item.url) && "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                        )}
-                      >
-                        <item.icon className="h-6 w-6" />
-                        {open && <span>{item.title}</span>}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {menuItems.map((item) => {
+                  const hasSubmenu = 'hasSubmenu' in item && item.hasSubmenu && open
+                  const isSubmenuOpen = openSubmenu === item.title
+                  
+                  return (
+                    <SidebarMenuItem 
+                      key={item.title}
+                      ref={(el) => {
+                        menuItemRefs.current[item.title] = el
+                      }}
+                      className="relative"
+                    >
+                      <SidebarMenuButton asChild>
+                        <div className="w-full flex items-center">
+                          <Link
+                            href={item.url}
+                            className={cn(
+                              "flex-1 flex items-center gap-2 hover:bg-sidebar-accent rounded-md",
+                              isActive(item.url) && "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                            )}
+                            onClick={(e) => {
+                              if (hasSubmenu) {
+                                e.preventDefault()
+                                toggleSubmenu(item.title, hasSubmenu)
+                              }
+                            }}
+                          >
+                            <item.icon className="h-6 w-6" />
+                            {open && <span>{item.title}</span>}
+                          </Link>
+                          {hasSubmenu && open && (
+                            <button
+                              onClick={() => toggleSubmenu(item.title, hasSubmenu)}
+                              className="p-2 hover:bg-sidebar-accent rounded-md transition-transform"
+                              aria-label="Toggle submenu"
+                            >
+                              <ChevronRight className={cn(
+                                "h-4 w-4 transition-transform",
+                                isSubmenuOpen && "transform rotate-90"
+                              )} />
+                            </button>
+                          )}
+                        </div>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -204,6 +319,39 @@ export function DashboardSidebar() {
           </SidebarGroup>
         </div>
       </SidebarContent>
+      
+      {/* Submenu Portal - Rendered outside sidebar to avoid overflow clipping */}
+      {typeof window !== 'undefined' && openSubmenu && open && submenuPosition && (() => {
+        const menuItem = menuItems.find(item => item.title === openSubmenu && item.hasSubmenu && item.submenu)
+        if (!menuItem || !menuItem.submenu) return null
+        
+        return createPortal(
+          <div 
+            data-submenu-for={openSubmenu}
+            className="fixed w-56 bg-white border border-border rounded-lg shadow-lg z-[100] py-1"
+            style={{
+              left: `${submenuPosition.left}px`,
+              top: `${submenuPosition.top}px`,
+            }}
+          >
+            {menuItem.submenu.map((subItem) => (
+              <Link
+                key={subItem.title}
+                href={subItem.url}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-2 hover:bg-sidebar-accent text-sm transition-colors",
+                  isActive(subItem.url) && "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                )}
+                onClick={() => setOpenSubmenu(null)}
+              >
+                <subItem.icon className="h-4 w-4" />
+                <span>{subItem.title}</span>
+              </Link>
+            ))}
+          </div>,
+          document.body
+        )
+      })()}
     </Sidebar>
   )
 }

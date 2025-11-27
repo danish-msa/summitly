@@ -10,8 +10,10 @@ import BedroomFilter from './BedroomFilter';
 import BathroomFilter from './BathroomFilter';
 import EnhancedAdvancedFilters from './EnhancedAdvancedFilters';
 import SellRentToggle from './SellRentToggle';
-import BuilderFilter from './BuilderFilter';
+import DeveloperFilter from './DeveloperFilter';
 import PreConStatusFilter from './PreConStatusFilter';
+import CompletionDateFilter from './CompletionDateFilter';
+import ConstructionStatusFilter from './ConstructionStatusFilter';
 
 interface GlobalFiltersProps extends FilterComponentProps {
   showLocation?: boolean;
@@ -103,10 +105,16 @@ const GlobalFilters: React.FC<GlobalFiltersProps> = ({
   // Add Pre-Construction specific filters
   if (isPreCon) {
     filterComponents.push(
-      <BuilderFilter key="builder" {...commonProps} />
+      <DeveloperFilter key="developer" {...commonProps} />
     );
     filterComponents.push(
       <PreConStatusFilter key="preConStatus" {...commonProps} />
+    );
+    filterComponents.push(
+      <CompletionDateFilter key="completionDate" {...commonProps} />
+    );
+    filterComponents.push(
+      <ConstructionStatusFilter key="constructionStatus" {...commonProps} />
     );
   }
 
@@ -130,6 +138,7 @@ const GlobalFilters: React.FC<GlobalFiltersProps> = ({
         onOpenChange={setAdvancedOpen}
         filters={filters}
         onFilterChange={handleFilterChange}
+        isPreCon={isPreCon}
         onApplyFilters={() => {
           // Advanced filters are applied immediately when changed
           // This function can be used for any additional logic
@@ -137,11 +146,14 @@ const GlobalFilters: React.FC<GlobalFiltersProps> = ({
         onResetAdvanced={() => {
           // Reset only advanced filters
           const advancedFilterKeys = ['minSquareFeet', 'maxSquareFeet', 'yearBuilt', 'features', 'listingDate'];
+          if (isPreCon) {
+            advancedFilterKeys.push('unitTypes', 'ownershipType', 'garage', 'basement');
+          }
           advancedFilterKeys.forEach(key => {
             handleFilterChange({
               target: {
                 name: key,
-                value: key === 'features' ? [] : (key.includes('SquareFeet') ? 0 : '')
+                value: key === 'features' || key === 'unitTypes' ? [] : (key.includes('SquareFeet') ? 0 : 'all')
               }
             });
           });

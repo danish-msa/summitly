@@ -469,3 +469,24 @@ model PropertyRating {
   @@index([propertyId, rating])
   @@index([propertyId, sessionId])
 }
+
+// Pre-Construction Page Content - stores custom content for filtered pages
+model PreConstructionPageContent {
+  id          String   @id @default(cuid())
+  pageType    String   // 'propertyType', 'status', 'completionYear', 'city'
+  pageValue   String   // e.g., 'Condos', 'now-selling', '2025', 'Toronto'
+  title       String?  @db.Text
+  description String?  @db.Text
+  heroImage   String?
+  metaTitle   String?  @db.Text
+  metaDescription String? @db.Text
+  customContent String? @db.Text // JSON or rich text content
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([pageType, pageValue])
+  @@index([pageType])
+  @@index([pageValue])
+  @@index([isPublished])
+}

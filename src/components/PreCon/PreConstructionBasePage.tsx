@@ -235,6 +235,19 @@ const slugToStatus = (slug: string): string => {
   return statusMap[slug.toLowerCase()] || slug;
 };
 
+interface PageContent {
+  id: string
+  pageType: string
+  pageValue: string
+  title: string | null
+  description: string | null
+  heroImage: string | null
+  metaTitle: string | null
+  metaDescription: string | null
+  customContent: string | null
+  isPublished: boolean
+}
+
 const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({ slug, pageType }) => {
   const [projects, setProjects] = useState<PropertyListing[]>([]);
   const [allProjects, setAllProjects] = useState<PropertyListing[]>([]);
@@ -245,12 +258,55 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({ slug,
     province?: string;
     description?: string;
   } | null>(null);
+  const [pageContent, setPageContent] = useState<PageContent | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'mixed' | 'map'>('list');
   const [selectedProject, setSelectedProject] = useState<PreConstructionProperty | null>(null);
   const [communities, setCommunities] = useState<string[]>([]);
   
   // Use global filters hook
   const { filters, handleFilterChange, resetFilters } = useGlobalFilters();
+
+  // Helper to get pageValue from slug based on pageType
+  const getPageValue = useMemo(() => {
+    if (pageType === 'city') {
+      // For city, use the slug as-is (e.g., "toronto")
+      return slug.toLowerCase();
+    } else if (pageType === 'status') {
+      // Map status slug to database value
+      return slugToStatus(slug);
+    } else if (pageType === 'propertyType') {
+      // Map property type slug to database value
+      return slugToPropertyType(slug);
+    } else if (pageType === 'completionYear') {
+      // For completion year, slug is the year
+      return slug;
+    }
+    return null;
+  }, [slug, pageType]);
+
+  // Fetch page content
+  useEffect(() => {
+    const fetchPageContent = async () => {
+      if (!getPageValue) return;
+
+      try {
+        const response = await fetch(
+          `/api/pre-con-projects/page-content?pageType=${pageType}&pageValue=${encodeURIComponent(getPageValue)}`
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.pageContent) {
+            setPageContent(data.pageContent);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching page content:', error);
+      }
+    };
+
+    fetchPageContent();
+  }, [pageType, getPageValue]);
 
   // Build API query based on page type
   const buildApiQuery = useMemo(() => {
@@ -364,10 +420,23 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({ slug,
 
     // Filter by property type
     if (filters.propertyType !== 'all') {
-      filtered = filtered.filter(project => 
-        project.details?.propertyType?.toLowerCase() === filters.propertyType.toLowerCase() ||
-        project.preCon?.details?.propertyType?.toLowerCase() === filters.propertyType.toLowerCase()
-      );
+      filtered = filtered.filter(project => {
+        const projectPropertyType = (project.details?.propertyType || project.preCon?.details?.propertyType || '').toLowerCase();
+        const filterPropertyType = filters.propertyType.toLowerCase();
+        
+        // Check if property type matches
+        const propertyTypeMatch = projectPropertyType === filterPropertyType ||
+          projectPropertyType === filterPropertyType + 's' || // Handle plural (house vs houses)
+          projectPropertyType + 's' === filterPropertyType;
+        
+        // If subPropertyType is also selected, check that too
+        if (filters.subPropertyType && filters.subPropertyType !== 'all') {
+          const projectSubType = project.preCon?.details?.subPropertyType || '';
+          return propertyTypeMatch && projectSubType === filters.subPropertyType;
+        }
+        
+        return propertyTypeMatch;
+      });
     }
 
     // Filter by price
@@ -412,6 +481,31 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({ slug,
     return mapProperties.find(p => p.mlsNumber === selectedProject.id) || null;
   }, [selectedProject, mapProperties]);
 
+  // Update document title and meta tags for SEO - must be called before early returns
+  useEffect(() => {
+    const title = pageContent?.title || pageInfo?.title || '';
+    const metaTitle = pageContent?.metaTitle;
+    
+    if (metaTitle) {
+      document.title = metaTitle;
+    } else if (title) {
+      document.title = `${title} | Summitly`;
+    }
+
+    // Update meta description
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (pageContent?.metaDescription) {
+      if (metaDescription) {
+        metaDescription.setAttribute('content', pageContent.metaDescription);
+      } else {
+        const meta = document.createElement('meta');
+        meta.name = 'description';
+        meta.content = pageContent.metaDescription;
+        document.head.appendChild(meta);
+      }
+    }
+  }, [pageContent, pageInfo]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -423,7 +517,8 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({ slug,
     );
   }
 
-  const displayTitle = pageInfo?.title || '';
+  // Use custom content if available and published, otherwise use default
+  const displayTitle = pageContent?.title || pageInfo?.title || '';
   const projectCount = pageInfo?.numberOfProjects || 0;
   const province = pageInfo?.province || 'ON';
   const displayCount = projectCount > 0 ? `${projectCount}+` : '120+';
@@ -435,8 +530,14 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({ slug,
     day: 'numeric' 
   });
 
-  // Build description based on page type
+  // Build description based on page type - use custom content if available
   const buildDescription = () => {
+    // If custom description exists, use it
+    if (pageContent?.description) {
+      return pageContent.description;
+    }
+    
+    // Otherwise use default descriptions
     if (pageType === 'city') {
       return `${displayCount} Pre construction Homes in ${displayTitle}, ${province} | Explore Floor Plans, Pricing & Availability. Summitly has over ${displayCount.toLowerCase()} pre construction homes from trusted builders in ${displayTitle}, ${province}. If you are looking to buy resale homes, Summitly is your trusted platform to find 1000+ homes for sale in ${displayTitle}. Whether you are looking to downsize to buy townhomes for sale in ${displayTitle} or looking to buy condos in ${displayTitle} for your family or browsing ${displayTitle} detached homes for sale, our platform is updated daily with latest resale listings every hour. For new development homes, easily filter by number of bedrooms (1 to 4+), project type, and construction status from budget-friendly condo to a pre construction homes, contact us to connect you to the most exciting real estate opportunities in ${displayTitle}.`;
     } else if (pageType === 'subPropertyType' || pageType === 'completionYear') {
@@ -465,6 +566,18 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({ slug,
 
   return (
     <div className="min-h-screen">
+      {/* Hero Image Section */}
+      {pageContent?.heroImage && (
+        <div className="w-full h-64 md:h-96 relative overflow-hidden">
+          <img 
+            src={pageContent.heroImage} 
+            alt={displayTitle}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        </div>
+      )}
+      
       {/* Header Section */}
       <header className="border-b bg-card pt-10">
         <div className="container-1400 mx-auto py-6">
@@ -477,6 +590,12 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({ slug,
                 <p className="text-muted-foreground text-base leading-relaxed">
                   {buildDescription()}
                 </p>
+                {pageContent?.customContent && (
+                  <div 
+                    className="text-muted-foreground text-base leading-relaxed prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: pageContent.customContent }}
+                  />
+                )}
                 <p className="text-sm text-muted-foreground/80">
                   Last Updated: {lastUpdatedDate}
                 </p>
