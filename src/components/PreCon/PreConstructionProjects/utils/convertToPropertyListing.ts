@@ -14,7 +14,7 @@ export const convertToPropertyListing = (project: PreConstructionProperty): Prop
     status: project.status,
     class: 'residential',
     type: 'Sale',
-    listPrice: project.startingPrice,
+    listPrice: project.startingPrice ?? 0,
     listDate: new Date().toISOString(),
     lastStatus: project.status,
     soldPrice: '',
