@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import { Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -37,8 +38,9 @@ const PreConSuggestions: React.FC<PreConSuggestionsProps> = ({
           <h3 className="text-sm font-bold text-primary mb-3">Pre construction Cities</h3>
           <div className="grid grid-cols-3 gap-1">
             {cities.map((city) => (
-              <div
+              <Link
                 key={city.id}
+                href={`/pre-construction/${city.id}`}
                 onClick={() => onCitySelect(city)}
                 className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
               >
@@ -58,7 +60,7 @@ const PreConSuggestions: React.FC<PreConSuggestionsProps> = ({
                     {city.numberOfProjects ? `${city.numberOfProjects} Projects` : 'Pre construction'}
                   </p>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

@@ -194,13 +194,13 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
             >
               <div className="lg:flex justify-between gap-8">
                 {/* Left Side - Filter Sections */}
-                <div className="lg:flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="lg:flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
                   {/* Property Types */}
                   <div>
-                    <h6 className="font-medium text-sm text-gray-500 mb-4">
+                    <h6 className="font-medium text-base text-gray-500">
                       Projects by Property Type
                     </h6>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-0">
                       {staticPropertyTypes.map((type) => {
                         const Icon = getPropertyTypeIcon(type);
                         return (
@@ -213,10 +213,10 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                               <Icon className="w-5 h-5 text-primary" />
                             </div>
                             <div className="ml-3 flex-1 min-w-0 select-text">
-                              <h5 className="text-gray-900 text-sm font-semibold group-hover:text-primary transition-colors line-clamp-1">
+                              <h5 className="text-gray-900 text-sm font-semibold group-hover:text-primary transition-colors line-clamp-2">
                                 {formatPropertyType(type)}
                               </h5>
-                              <p className="text-xs font-medium text-gray-400 select-text line-clamp-1">
+                              <p className="text-xs font-medium text-gray-400 select-text line-clamp-2">
                                 {getPropertyTypeDescription(type)}
                               </p>
                             </div>
@@ -250,10 +250,10 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
 
                   {/* Occupancy Years */}
                   <div>
-                    <h6 className="font-medium text-sm text-gray-500 mb-4">
+                    <h6 className="font-medium text-base text-gray-500">
                       Projects by Occupancy Year
                     </h6>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-4 gap-0">
                       {staticOccupancyYears.map((year) => (
                         <Link
                           key={year}
@@ -273,10 +273,10 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
 
                   {/* Selling Status */}
                   <div className="flex-1">
-                    <h6 className="font-medium text-sm text-gray-500 mb-4">
+                    <h6 className="font-medium text-base text-gray-500">
                       Projects by Selling Status
                     </h6>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-3 gap-0">
                       {staticSellingStatuses.map((status) => {
                         const Icon = getStatusIcon(status);
                         return (
@@ -326,7 +326,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
 
                   {/* Developers */}
                   <div className="">
-                    <h6 className="font-medium text-sm text-gray-500 mb-4">
+                    <h6 className="font-medium text-base text-gray-500">
                       Projects by Developer
                     </h6>
                     <ul className="space-y-1 max-h-96 overflow-y-auto">
