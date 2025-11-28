@@ -265,7 +265,9 @@ export async function PUT(
       const parsed = body.avgPricePerSqft === '' || body.avgPricePerSqft === null ? null : parseFloat(String(body.avgPricePerSqft))
       updateData.avgPricePerSqft = isNaN(parsed as number) ? null : parsed
     }
-    if (body.status !== undefined) updateData.status = body.status || null
+    if (body.status !== undefined) {
+      updateData.status = body.status && body.status.trim() !== '' ? body.status : undefined
+    }
     if (body.parkingPrice !== undefined) {
       const parsed = body.parkingPrice === '' || body.parkingPrice === null ? null : parseFloat(String(body.parkingPrice))
       updateData.parkingPrice = isNaN(parsed as number) ? null : parsed
