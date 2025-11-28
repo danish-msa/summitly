@@ -169,7 +169,9 @@ export async function GET(request: NextRequest) {
       const marketingInfo = parseJsonField(project.marketingInfo)
 
       // Get developer name from map
-      const developerName = developerNamesMap.get(project.developer) || project.developer
+      const developerName = project.developer 
+        ? (developerNamesMap.get(project.developer) || project.developer)
+        : null
 
       // Build development team object
       interface DevelopmentTeamMember {
@@ -212,22 +214,22 @@ export async function GET(request: NextRequest) {
       // Convert to PropertyListing format (matching mock data structure)
       return {
         mlsNumber: project.mlsNumber,
-        status: project.status,
+        status: project.status || null,
         class: 'residential',
         type: 'Sale',
-        listPrice: project.startingPrice,
+        listPrice: project.startingPrice || null,
         priceRange: {
-          min: project.startingPrice,
-          max: project.endingPrice || project.startingPrice,
+          min: project.startingPrice || null,
+          max: project.endingPrice || project.startingPrice || null,
         },
         listDate: project.createdAt.toISOString(),
-        lastStatus: project.status,
+        lastStatus: project.status || null,
         soldPrice: '',
         soldDate: '',
         address: {
           area: null,
-          city: project.city,
-          country: project.country,
+          city: project.city || null,
+          country: project.country || null,
           district: null,
           majorIntersection: project.majorIntersection || null,
           neighborhood: project.neighborhood || null,
@@ -237,7 +239,7 @@ export async function GET(request: NextRequest) {
           streetSuffix: null,
           unitNumber: null,
           zip: project.zip || null,
-          state: project.state,
+          state: project.state || null,
           communityCode: null,
           streetDirectionPrefix: null,
           addressKey: null,
@@ -257,12 +259,12 @@ export async function GET(request: NextRequest) {
           point: null,
         },
         details: {
-          numBathrooms: parseInt(project.bathroomRange.split('-')[0]) || 1,
-          numBathroomsPlus: parseInt(project.bathroomRange.split('-')[1]) || 1,
-          numBedrooms: parseInt(project.bedroomRange.split('-')[0]) || 1,
-          numBedroomsPlus: parseInt(project.bedroomRange.split('-')[1]) || 1,
-          propertyType: project.propertyType,
-          sqft: parseInt(project.sqftRange.split('-')[0]) || 0,
+          numBathrooms: project.bathroomRange ? parseInt(project.bathroomRange.split('-')[0]) || 1 : 1,
+          numBathroomsPlus: project.bathroomRange ? parseInt(project.bathroomRange.split('-')[1]) || 1 : 1,
+          numBedrooms: project.bedroomRange ? parseInt(project.bedroomRange.split('-')[0]) || 1 : 1,
+          numBedroomsPlus: project.bedroomRange ? parseInt(project.bedroomRange.split('-')[1]) || 1 : 1,
+          propertyType: project.propertyType || null,
+          sqft: project.sqftRange ? parseInt(project.sqftRange.split('-')[0]) || 0 : 0,
         },
         updatedOn: project.updatedAt.toISOString(),
         lot: {
@@ -276,7 +278,7 @@ export async function GET(request: NextRequest) {
           source: '',
           dimensionsSource: '',
           dimensions: '',
-          squareFeet: parseInt(project.sqftRange.split('-')[0]) || 0,
+          squareFeet: project.sqftRange ? parseInt(project.sqftRange.split('-')[0]) || 0 : 0,
           taxLot: '',
         },
         boardId: 0,
@@ -287,18 +289,21 @@ export async function GET(request: NextRequest) {
         preCon: {
           projectName: project.projectName,
           developer: developerName,
-          startingPrice: project.startingPrice,
+          startingPrice: project.startingPrice || null,
           endingPrice: project.endingPrice || null,
           avgPricePerSqft: project.avgPricePerSqft || null,
           priceRange: {
-            min: project.startingPrice,
-            max: project.endingPrice || project.startingPrice,
+            min: project.startingPrice || null,
+            max: project.endingPrice || project.startingPrice || null,
           },
-          status: project.status,
+          status: project.status || null,
           completion: {
-            date: project.occupancyDate,
+            date: project.occupancyDate || null,
             progress: (() => {
               // Convert integer completionProgress to string for frontend
+              if (project.completionProgress === null || project.completionProgress === undefined) {
+                return 'Pre-construction'
+              }
               const progressMap: Record<number, string> = {
                 0: 'Pre-construction',
                 1: 'Construction',
@@ -308,14 +313,14 @@ export async function GET(request: NextRequest) {
             })(),
           },
           details: {
-            bedroomRange: project.bedroomRange,
-            bathroomRange: project.bathroomRange,
-            sqftRange: project.sqftRange,
-            totalUnits: project.totalUnits,
-            availableUnits: project.availableUnits,
+            bedroomRange: project.bedroomRange || null,
+            bathroomRange: project.bathroomRange || null,
+            sqftRange: project.sqftRange || null,
+            totalUnits: project.totalUnits || null,
+            availableUnits: project.availableUnits || null,
             storeys: project.storeys || undefined,
             height: project.height || undefined,
-            propertyType: project.propertyType,
+            propertyType: project.propertyType || null,
             subPropertyType: project.subPropertyType || undefined,
           },
           // Pricing fields
