@@ -17,13 +17,13 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
   const images = property.images;
   const totalImages = images.length;
 
-  const hasPrice = property.startingPrice && property.startingPrice > 0;
-  const formattedPrice = hasPrice 
+  const hasPrice = property.startingPrice != null && property.startingPrice > 0;
+  const formattedPrice = hasPrice
     ? new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD',
         maximumFractionDigits: 0
-      }).format(property.startingPrice)
+      }).format(property.startingPrice!)
     : 'Coming Soon';
 
   const imageSrc = imgError ? '/placeholder.svg' : images[currentImageIndex];
