@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import type { PropertyListing } from '@/lib/types';
 import type { PreConstructionProperty } from '@/components/PreCon/PropertyCards/types';
 import type { PageType, PageContent, PageInfo } from './types';
+import type { FilterState } from '@/lib/types/filters';
 import { 
   unslugifyCityName, 
   slugToStatus, 
@@ -17,7 +18,7 @@ import {
 interface UsePreConProjectsDataProps {
   slug: string;
   pageType: PageType;
-  filters: any;
+  filters: FilterState;
 }
 
 export const usePreConProjectsData = ({ slug, pageType, filters }: UsePreConProjectsDataProps) => {

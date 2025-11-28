@@ -15,8 +15,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Type assertion needed until Prisma client is regenerated
-    const pageContent = await (prisma as any).preConstructionPageContent?.findUnique({
+    const pageContent = await prisma.preConstructionPageContent.findUnique({
       where: {
         pageType_pageValue: {
           pageType,
