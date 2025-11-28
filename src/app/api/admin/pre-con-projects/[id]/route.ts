@@ -148,29 +148,16 @@ export async function PUT(
     const { id } = await params
     const body = await request.json()
 
-    // Validate required fields only if project is being published
-    // Drafts can have missing fields
-    const isPublished = body.isPublished === true
-    if (isPublished) {
-      const missingFields: string[] = []
-      if (!body.projectName) missingFields.push('projectName')
-      if (!body.developer) missingFields.push('developer')
-      if (!body.startingPrice) missingFields.push('startingPrice')
-      if (!body.endingPrice) missingFields.push('endingPrice')
-      if (!body.status) missingFields.push('status')
-      if (!body.city) missingFields.push('city')
-      if (!body.state) missingFields.push('state')
-
-      if (missingFields.length > 0) {
-        return NextResponse.json(
-          { 
-            error: 'Missing required fields',
-            missingFields: missingFields,
-            message: `Missing required fields: ${missingFields.join(', ')}. Please fill all required fields before publishing.`
-          },
-          { status: 400 }
-        )
-      }
+    // Only projectName is required (for both drafts and published projects)
+    if (body.projectName !== undefined && (!body.projectName || body.projectName.trim() === '')) {
+      return NextResponse.json(
+        { 
+          error: 'Missing required field',
+          missingFields: ['projectName'],
+          message: 'Project Name is required. Please provide a project name.'
+        },
+        { status: 400 }
+      )
     }
 
     // Check if project exists
@@ -216,33 +203,33 @@ export async function PUT(
       developmentCharges?: number | null
       streetNumber?: string | null
       streetName?: string | null
-      city?: string
-      state?: string
+      city?: string | null
+      state?: string | null
       zip?: string | null
-      country?: string
+      country?: string | null
       neighborhood?: string | null
       majorIntersection?: string | null
       latitude?: number | null
       longitude?: number | null
-      propertyType?: string
+      propertyType?: string | null
       subPropertyType?: string | null
-      bedroomRange?: string
-      bathroomRange?: string
-      sqftRange?: string
+      bedroomRange?: string | null
+      bathroomRange?: string | null
+      sqftRange?: string | null
       hasDen?: boolean
       hasStudio?: boolean
       hasLoft?: boolean
       hasWorkLiveLoft?: boolean
-      totalUnits?: number
-      availableUnits?: number
+      totalUnits?: number | null
+      availableUnits?: number | null
       suites?: number | null
       storeys?: number | null
       height?: string | null
       maintenanceFeesPerSqft?: number | null
       maintenanceFeesDetail?: string | null
       floorPremiums?: string | null
-      occupancyDate?: string
-      completionProgress?: number
+      occupancyDate?: string | null
+      completionProgress?: number | null
       promotions?: string | null
       ownershipType?: string | null
       garage?: string | null
@@ -265,14 +252,14 @@ export async function PUT(
       mlsNumber?: string
     } = {}
     if (body.projectName !== undefined) updateData.projectName = body.projectName
-    if (body.developer !== undefined) updateData.developer = body.developer
-    if (body.startingPrice !== undefined) updateData.startingPrice = parseFloat(body.startingPrice)
-    if (body.endingPrice !== undefined) updateData.endingPrice = parseFloat(body.endingPrice)
+    if (body.developer !== undefined) updateData.developer = body.developer || null
+    if (body.startingPrice !== undefined) updateData.startingPrice = body.startingPrice ? parseFloat(body.startingPrice) : null
+    if (body.endingPrice !== undefined) updateData.endingPrice = body.endingPrice ? parseFloat(body.endingPrice) : null
     if (body.avgPricePerSqft !== undefined) {
       const parsed = body.avgPricePerSqft === '' || body.avgPricePerSqft === null ? null : parseFloat(String(body.avgPricePerSqft))
       updateData.avgPricePerSqft = isNaN(parsed as number) ? null : parsed
     }
-    if (body.status !== undefined) updateData.status = body.status
+    if (body.status !== undefined) updateData.status = body.status || null
     if (body.parkingPrice !== undefined) {
       const parsed = body.parkingPrice === '' || body.parkingPrice === null ? null : parseFloat(String(body.parkingPrice))
       updateData.parkingPrice = isNaN(parsed as number) ? null : parsed
@@ -297,25 +284,25 @@ export async function PUT(
     }
     if (body.streetNumber !== undefined) updateData.streetNumber = body.streetNumber
     if (body.streetName !== undefined) updateData.streetName = body.streetName
-    if (body.city !== undefined) updateData.city = body.city
-    if (body.state !== undefined) updateData.state = body.state
+    if (body.city !== undefined) updateData.city = body.city || null
+    if (body.state !== undefined) updateData.state = body.state || null
     if (body.zip !== undefined) updateData.zip = body.zip
     if (body.country !== undefined) updateData.country = body.country
     if (body.neighborhood !== undefined) updateData.neighborhood = body.neighborhood
     if (body.majorIntersection !== undefined) updateData.majorIntersection = body.majorIntersection
     if (body.latitude !== undefined) updateData.latitude = body.latitude ? parseFloat(body.latitude) : null
     if (body.longitude !== undefined) updateData.longitude = body.longitude ? parseFloat(body.longitude) : null
-    if (body.propertyType !== undefined) updateData.propertyType = body.propertyType
-    if (body.subPropertyType !== undefined) updateData.subPropertyType = body.subPropertyType
-    if (body.bedroomRange !== undefined) updateData.bedroomRange = body.bedroomRange
-    if (body.bathroomRange !== undefined) updateData.bathroomRange = body.bathroomRange
-    if (body.sqftRange !== undefined) updateData.sqftRange = body.sqftRange
+    if (body.propertyType !== undefined) updateData.propertyType = body.propertyType || null
+    if (body.subPropertyType !== undefined) updateData.subPropertyType = body.subPropertyType || null
+    if (body.bedroomRange !== undefined) updateData.bedroomRange = body.bedroomRange || null
+    if (body.bathroomRange !== undefined) updateData.bathroomRange = body.bathroomRange || null
+    if (body.sqftRange !== undefined) updateData.sqftRange = body.sqftRange || null
     if (body.hasDen !== undefined) updateData.hasDen = body.hasDen === true || body.hasDen === 'true'
     if (body.hasStudio !== undefined) updateData.hasStudio = body.hasStudio === true || body.hasStudio === 'true'
     if (body.hasLoft !== undefined) updateData.hasLoft = body.hasLoft === true || body.hasLoft === 'true'
     if (body.hasWorkLiveLoft !== undefined) updateData.hasWorkLiveLoft = body.hasWorkLiveLoft === true || body.hasWorkLiveLoft === 'true'
-    if (body.totalUnits !== undefined) updateData.totalUnits = parseInt(body.totalUnits)
-    if (body.availableUnits !== undefined) updateData.availableUnits = parseInt(body.availableUnits)
+    if (body.totalUnits !== undefined) updateData.totalUnits = body.totalUnits ? parseInt(body.totalUnits) : null
+    if (body.availableUnits !== undefined) updateData.availableUnits = body.availableUnits ? parseInt(body.availableUnits) : null
     if (body.suites !== undefined) updateData.suites = body.suites ? parseInt(body.suites) : null
     if (body.storeys !== undefined) updateData.storeys = body.storeys ? parseInt(body.storeys) : null
     if (body.height !== undefined) updateData.height = body.height === '' ? null : (body.height || null)
@@ -325,24 +312,28 @@ export async function PUT(
     }
     if (body.maintenanceFeesDetail !== undefined) updateData.maintenanceFeesDetail = body.maintenanceFeesDetail === '' ? null : (body.maintenanceFeesDetail || null)
     if (body.floorPremiums !== undefined) updateData.floorPremiums = body.floorPremiums === '' ? null : (body.floorPremiums || null)
-    if (body.occupancyDate !== undefined) updateData.occupancyDate = body.occupancyDate
+    if (body.occupancyDate !== undefined) updateData.occupancyDate = body.occupancyDate || null
     if (body.completionProgress !== undefined) {
       // Convert completionProgress string to integer (database expects Int)
-      const progressMap: Record<string, number> = {
-        'Pre-construction': 0,
-        'Construction': 1,
-        'Complete': 2,
-      }
-      
-      if (typeof body.completionProgress === 'number') {
-        updateData.completionProgress = body.completionProgress
+      if (!body.completionProgress) {
+        updateData.completionProgress = null
       } else {
-        const progressString = String(body.completionProgress || '').trim()
-        if (progressString in progressMap) {
-          updateData.completionProgress = progressMap[progressString]
+        const progressMap: Record<string, number> = {
+          'Pre-construction': 0,
+          'Construction': 1,
+          'Complete': 2,
+        }
+        
+        if (typeof body.completionProgress === 'number') {
+          updateData.completionProgress = body.completionProgress
         } else {
-          const parsed = parseInt(progressString, 10)
-          updateData.completionProgress = !isNaN(parsed) ? parsed : 0
+          const progressString = String(body.completionProgress || '').trim()
+          if (progressString in progressMap) {
+            updateData.completionProgress = progressMap[progressString]
+          } else {
+            const parsed = parseInt(progressString, 10)
+            updateData.completionProgress = !isNaN(parsed) ? parsed : null
+          }
         }
       }
     }

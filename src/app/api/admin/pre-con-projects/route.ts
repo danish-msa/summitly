@@ -221,29 +221,16 @@ export async function POST(request: NextRequest) {
       units = [],
     } = body
 
-    // Validate required fields only if project is being published
-    // Drafts can have missing fields
-    const isPublished = body.isPublished === true
-    if (isPublished) {
-      const missingFields: string[] = []
-      if (!projectName) missingFields.push('projectName')
-      if (!developer) missingFields.push('developer')
-      if (!startingPrice) missingFields.push('startingPrice')
-      if (!endingPrice) missingFields.push('endingPrice')
-      if (!status) missingFields.push('status')
-      if (!city) missingFields.push('city')
-      if (!state) missingFields.push('state')
-
-      if (missingFields.length > 0) {
-        return NextResponse.json(
-          { 
-            error: 'Missing required fields',
-            missingFields: missingFields,
-            message: `Missing required fields: ${missingFields.join(', ')}. Please fill all required fields before publishing.`
-          },
-          { status: 400 }
-        )
-      }
+    // Only projectName is required (for both drafts and published projects)
+    if (!projectName || projectName.trim() === '') {
+      return NextResponse.json(
+        { 
+          error: 'Missing required field',
+          missingFields: ['projectName'],
+          message: 'Project Name is required. Please provide a project name.'
+        },
+        { status: 400 }
+      )
     }
 
     // Generate unique mlsNumber from project name (slugified)
@@ -343,11 +330,11 @@ export async function POST(request: NextRequest) {
       data: {
         mlsNumber,
         projectName,
-        developer,
-        startingPrice: typeof startingPrice === 'number' ? startingPrice : parseFloat(String(startingPrice)),
-        endingPrice: typeof endingPrice === 'number' ? endingPrice : parseFloat(String(endingPrice)),
+        developer: developer || null,
+        startingPrice: startingPrice ? (typeof startingPrice === 'number' ? startingPrice : parseFloat(String(startingPrice))) : null,
+        endingPrice: endingPrice ? (typeof endingPrice === 'number' ? endingPrice : parseFloat(String(endingPrice))) : null,
         avgPricePerSqft: avgPricePerSqft ? (typeof avgPricePerSqft === 'number' ? avgPricePerSqft : parseFloat(String(avgPricePerSqft))) : null,
-        status,
+        status: status || null,
         parkingPrice: parkingPrice ? (typeof parkingPrice === 'number' ? parkingPrice : parseFloat(String(parkingPrice))) : null,
         parkingPriceDetail: parkingPriceDetail && parkingPriceDetail.trim() ? parkingPriceDetail.trim() : null,
         lockerPrice: lockerPrice ? (typeof lockerPrice === 'number' ? lockerPrice : parseFloat(String(lockerPrice))) : null,
@@ -357,33 +344,33 @@ export async function POST(request: NextRequest) {
         developmentCharges: developmentCharges ? (typeof developmentCharges === 'number' ? developmentCharges : parseFloat(String(developmentCharges))) : null,
         streetNumber: streetNumber || null,
         streetName: streetName || null,
-        city,
-        state,
+        city: city || null,
+        state: state || null,
         zip: zip || null,
-        country,
+        country: country || "Canada",
         neighborhood: neighborhood || null,
         majorIntersection: majorIntersection || null,
         latitude: latitude ? (typeof latitude === 'number' ? latitude : parseFloat(String(latitude))) : null,
         longitude: longitude ? (typeof longitude === 'number' ? longitude : parseFloat(String(longitude))) : null,
-        propertyType,
+        propertyType: propertyType || null,
         subPropertyType: subPropertyType || null,
-        bedroomRange,
-        bathroomRange,
-        sqftRange,
+        bedroomRange: bedroomRange || null,
+        bathroomRange: bathroomRange || null,
+        sqftRange: sqftRange || null,
         hasDen: hasDen === true || hasDen === 'true',
         hasStudio: hasStudio === true || hasStudio === 'true',
         hasLoft: hasLoft === true || hasLoft === 'true',
         hasWorkLiveLoft: hasWorkLiveLoft === true || hasWorkLiveLoft === 'true',
-        totalUnits: typeof totalUnits === 'number' ? totalUnits : parseInt(String(totalUnits), 10),
-        availableUnits: typeof availableUnits === 'number' ? availableUnits : parseInt(String(availableUnits), 10),
+        totalUnits: totalUnits ? (typeof totalUnits === 'number' ? totalUnits : parseInt(String(totalUnits), 10)) : null,
+        availableUnits: availableUnits ? (typeof availableUnits === 'number' ? availableUnits : parseInt(String(availableUnits), 10)) : null,
         suites: suites ? (typeof suites === 'number' ? suites : parseInt(String(suites), 10)) : null,
         storeys: storeys ? (typeof storeys === 'number' ? storeys : parseInt(String(storeys), 10)) : null,
         height: height && String(height).trim() ? String(height).trim() : null,
         maintenanceFeesPerSqft: maintenanceFeesPerSqft ? (typeof maintenanceFeesPerSqft === 'number' ? maintenanceFeesPerSqft : parseFloat(String(maintenanceFeesPerSqft))) : null,
         maintenanceFeesDetail: maintenanceFeesDetail && maintenanceFeesDetail.trim() ? maintenanceFeesDetail.trim() : null,
         floorPremiums: floorPremiums && floorPremiums.trim() ? floorPremiums.trim() : null,
-        occupancyDate,
-        completionProgress: completionProgressInt,
+        occupancyDate: occupancyDate || null,
+        completionProgress: completionProgressInt !== undefined ? completionProgressInt : null,
         promotions: promotions && promotions.trim() ? promotions.trim() : null,
         ownershipType: ownershipType && ownershipType.trim() ? ownershipType.trim() : null,
         garage: garage && garage.trim() ? garage.trim() : null,
