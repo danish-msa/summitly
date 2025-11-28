@@ -57,7 +57,7 @@ export async function GET(
     const marketingInfo = parseJsonField(project.marketingInfo)
 
     // Get developer name
-    const developerName = await getDeveloperName(project.developer)
+    const developerName = project.developer ? await getDeveloperName(project.developer) : null
 
     // Build development team object
     interface DevelopmentTeamMember {
