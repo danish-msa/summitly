@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { isAdmin } from '@/lib/roles'
+import type { Prisma } from '@prisma/client'
 
 // Helper function to fetch developer data by ID and return as JSON string
 async function fetchDeveloperData(developerId: string): Promise<string | null> {
@@ -412,7 +413,7 @@ export async function PUT(
 
     const project = await prisma.preConstructionProject.update({
       where: { id },
-      data: updateData as any,
+      data: updateData as Prisma.PreConstructionProjectUncheckedUpdateInput,
       include: {
         units: true,
       },
