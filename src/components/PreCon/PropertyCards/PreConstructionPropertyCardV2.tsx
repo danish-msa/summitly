@@ -18,12 +18,15 @@ const PreConstructionPropertyCardV2 = ({ property, onHide, className }: PreConst
   const images = property.images;
   const totalImages = images.length;
 
-  const formattedPrice = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-    notation: 'compact'
-  }).format(property.startingPrice);
+  const hasPrice = property.startingPrice && property.startingPrice > 0;
+  const formattedPrice = hasPrice 
+    ? new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0,
+        notation: 'compact'
+      }).format(property.startingPrice)
+    : 'Coming Soon';
 
   const imageSrc = imgError ? '/placeholder.svg' : images[currentImageIndex];
 
@@ -97,7 +100,7 @@ const PreConstructionPropertyCardV2 = ({ property, onHide, className }: PreConst
             <div className="relative h-64">
               <img 
                 src={imageSrc}
-                alt={`${property.projectName} - ${property.developer}`}
+                alt={`${property.projectName}${property.developer ? ` - ${property.developer}` : ''}`}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 onError={() => setImgError(true)}
               />
@@ -194,46 +197,56 @@ const PreConstructionPropertyCardV2 = ({ property, onHide, className }: PreConst
               {/* Left Side - Developer Info & Property Details */}
               <div className="flex flex-col gap-3 flex-1">
                 {/* Developer Info */}
-                <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-gray-500" />
-                  <p className="text-sm text-gray-600 font-medium">
-                    {property.developer}
-                  </p>
-                </div>
+                {property.developer && (
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-gray-500" />
+                    <p className="text-sm text-gray-600 font-medium">
+                      {property.developer}
+                    </p>
+                  </div>
+                )}
 
                 {/* Property Details */}
                 <div className="flex flex-wrap gap-4">
-                  <div className="flex items-center gap-2">
-                    <Bed className="text-gray-400" size={16} />
-                    <span className="text-sm text-gray-700 font-medium">{property.details.bedroomRange}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Bath className="text-gray-400" size={16} />
-                    <span className="text-sm text-gray-700 font-medium">{property.details.bathroomRange}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Maximize2 className="text-gray-400" size={16} />
-                    <span className="text-sm text-gray-700 font-medium">{property.details.sqftRange}</span>
-                  </div>
+                  {property.details.bedroomRange && (
+                    <div className="flex items-center gap-2">
+                      <Bed className="text-gray-400" size={16} />
+                      <span className="text-sm text-gray-700 font-medium">{property.details.bedroomRange}</span>
+                    </div>
+                  )}
+                  {property.details.bathroomRange && (
+                    <div className="flex items-center gap-2">
+                      <Bath className="text-gray-400" size={16} />
+                      <span className="text-sm text-gray-700 font-medium">{property.details.bathroomRange}</span>
+                    </div>
+                  )}
+                  {property.details.sqftRange && (
+                    <div className="flex items-center gap-2">
+                      <Maximize2 className="text-gray-400" size={16} />
+                      <span className="text-sm text-gray-700 font-medium">{property.details.sqftRange}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Right Side - Price */}
               <div className="text-right">
                 <p className="text-xs text-gray-500 mb-1">Starting from</p>
-                <p className="text-2xl font-bold text-gray-900">{formattedPrice}</p>
+                <p className={`${hasPrice ? 'text-2xl' : 'text-sm'} font-bold text-gray-900 ${hasPrice ? 'whitespace-nowrap' : 'break-words'}`}>{formattedPrice}</p>
               </div>
             </div>
 
             {/* Key Info */}
             <div className="grid grid-cols-2 gap-3 mb-4">
-              <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                <Calendar className="text-primary flex-shrink-0" size={16} />
-                <div>
-                  <p className="text-xs text-gray-500">Completion</p>
-                  <p className="text-sm font-semibold text-gray-900">{property.completion.date}</p>
+              {property.completion.date && (
+                <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                  <Calendar className="text-primary flex-shrink-0" size={16} />
+                  <div>
+                    <p className="text-xs text-gray-500">Completion</p>
+                    <p className="text-sm font-semibold text-gray-900">{property.completion.date}</p>
+                  </div>
                 </div>
-              </div>
+              )}
               <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                 <Users className="text-accent flex-shrink-0" size={16} />
                 <div>

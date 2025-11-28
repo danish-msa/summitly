@@ -139,8 +139,8 @@ const PreConCollapsibleTabs: React.FC<PreConCollapsibleTabsProps> = ({ property 
           </TabsContent>
           <TabsContent value="demographics" className="mt-6">
             <Demographics 
-              latitude={property.map.latitude} 
-              longitude={property.map.longitude} 
+              latitude={property.map?.latitude || null} 
+              longitude={property.map?.longitude || null} 
               address={property.address.location || `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim()} 
             />
           </TabsContent>
@@ -160,7 +160,10 @@ const PreConCollapsibleTabs: React.FC<PreConCollapsibleTabsProps> = ({ property 
             <MortgageCalculator />
           </TabsContent>
           <TabsContent value="affordability" className="mt-6">
-            <AffordabilityCalculator propertyPrice={property.listPrice || 0} />
+            <AffordabilityCalculator propertyPrice={
+              property.listPrice || 
+              (property.preCon?.startingPrice && property.preCon.startingPrice > 0 ? property.preCon.startingPrice : 0)
+            } />
           </TabsContent>
         </Tabs>
       )

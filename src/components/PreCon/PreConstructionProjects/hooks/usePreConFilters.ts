@@ -52,12 +52,13 @@ export const usePreConFilters = (
       }
       
       // Price filter
-      if (project.startingPrice < filters.minPrice || project.startingPrice > filters.maxPrice) {
+      if (project.startingPrice && (project.startingPrice < filters.minPrice || project.startingPrice > filters.maxPrice)) {
         return false;
       }
       
       // Bedroom range filter (extract min from range like "1-3")
       if (filters.bedrooms && filters.bedrooms > 0) {
+        if (!project.details.bedroomRange) return false;
         const bedroomRange = project.details.bedroomRange.split('-');
         const minBedrooms = parseInt(bedroomRange[0]);
         if (minBedrooms < filters.bedrooms) {

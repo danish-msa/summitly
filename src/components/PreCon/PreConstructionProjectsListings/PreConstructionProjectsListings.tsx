@@ -91,9 +91,9 @@ const convertToPropertyListing = (project: PreConstructionProperty): PropertyLis
     },
     details: {
       propertyType: project.details.propertyType,
-      numBedrooms: parseInt(project.details.bedroomRange.split('-')[0]) || 0,
+      numBedrooms: project.details.bedroomRange ? parseInt(project.details.bedroomRange.split('-')[0]) || 0 : 0,
       numBedroomsPlus: 0,
-      numBathrooms: parseInt(project.details.bathroomRange.split('-')[0]) || 0,
+      numBathrooms: project.details.bathroomRange ? parseInt(project.details.bathroomRange.split('-')[0]) || 0 : 0,
       numBathroomsPlus: 0,
       sqft: project.details.sqftRange,
       landSize: ''
@@ -203,7 +203,7 @@ const PreConstructionProjectsListings: React.FC = () => {
     // Apply price filter
     if (filters.minPrice > 0 || filters.maxPrice < 2000000) {
       filtered = filtered.filter(project => {
-        const price = project.startingPrice;
+        const price = project.startingPrice || 0;
         return price >= filters.minPrice && price <= filters.maxPrice;
       });
     }
@@ -211,6 +211,7 @@ const PreConstructionProjectsListings: React.FC = () => {
     // Apply bedroom filter
     if (filters.bedrooms > 0) {
       filtered = filtered.filter(project => {
+        if (!project.details.bedroomRange) return false;
         const [minBeds] = project.details.bedroomRange.split('-').map(Number);
         return minBeds >= filters.bedrooms;
       });
@@ -219,6 +220,7 @@ const PreConstructionProjectsListings: React.FC = () => {
     // Apply bathroom filter
     if (filters.bathrooms > 0) {
       filtered = filtered.filter(project => {
+        if (!project.details.bathroomRange) return false;
         const [minBaths] = project.details.bathroomRange.split('-').map(Number);
         return minBaths >= filters.bathrooms;
       });
@@ -243,10 +245,18 @@ const PreConstructionProjectsListings: React.FC = () => {
     // Apply sorting
     switch(sortOption) {
       case 'price-asc':
-        filtered.sort((a, b) => a.startingPrice - b.startingPrice);
+        filtered.sort((a, b) => {
+          const priceA = a.startingPrice || 0;
+          const priceB = b.startingPrice || 0;
+          return priceA - priceB;
+        });
         break;
       case 'price-desc':
-        filtered.sort((a, b) => b.startingPrice - a.startingPrice);
+        filtered.sort((a, b) => {
+          const priceA = a.startingPrice || 0;
+          const priceB = b.startingPrice || 0;
+          return priceB - priceA;
+        });
         break;
       case 'name-asc':
         filtered.sort((a, b) => a.projectName.localeCompare(b.projectName));

@@ -92,10 +92,10 @@ export const convertToPropertyListing = (project: PreConstructionProperty): Prop
     },
     details: {
       propertyType: project.details.propertyType || '',
-      numBathrooms: parseInt(project.details.bathroomRange.split('-')[0]) || 1,
-      numBathroomsPlus: parseInt(project.details.bathroomRange.split('-')[1]) || 1,
-      numBedrooms: parseInt(project.details.bedroomRange.split('-')[0]) || 1,
-      numBedroomsPlus: parseInt(project.details.bedroomRange.split('-')[1]) || 1,
+      numBathrooms: project.details.bathroomRange ? parseInt(project.details.bathroomRange.split('-')[0]) || 1 : 1,
+      numBathroomsPlus: project.details.bathroomRange ? parseInt(project.details.bathroomRange.split('-')[1] || project.details.bathroomRange.split('-')[0]) || 1 : 1,
+      numBedrooms: project.details.bedroomRange ? parseInt(project.details.bedroomRange.split('-')[0]) || 1 : 1,
+      numBedroomsPlus: project.details.bedroomRange ? parseInt(project.details.bedroomRange.split('-')[1] || project.details.bedroomRange.split('-')[0]) || 1 : 1,
       sqft: project.details.sqftRange || '',
     },
     lot: {

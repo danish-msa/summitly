@@ -13,11 +13,14 @@ const PreConstructionPropertyCardV3 = ({
   className 
 }: PreConstructionPropertyCardProps) => {
   const image = property.images[0] || '/placeholder.svg';
-  const formattedPrice = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0
-  }).format(property.startingPrice);
+  const hasPrice = property.startingPrice && property.startingPrice > 0;
+  const formattedPrice = hasPrice 
+    ? new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0
+      }).format(property.startingPrice || 0)
+    : 'Coming Soon';
 
   // Load rating data from database
   const [ratingData, setRatingData] = useState<{
@@ -62,6 +65,7 @@ const PreConstructionPropertyCardV3 = ({
       return property.occupancyYear;
     }
     // Extract year from completion.date (e.g., "Q4 2025" -> 2025)
+    if (!property.completion.date) return null;
     const yearMatch = property.completion.date.match(/\d{4}/);
     return yearMatch ? parseInt(yearMatch[0]) : null;
   };
@@ -102,14 +106,16 @@ const PreConstructionPropertyCardV3 = ({
         </div>
         <div className="flex flex-col">
           <div className="flex items-start justify-between gap-4 p-4 pb-0 mb-3">
-            <div className="flex-1 w-[70%]">
+            <div className="flex-1 w-[65%]">
               <h4 className="font-semibold text-base leading-tight text-foreground mb-1 line-clamp-2">
                 {property.projectName}
               </h4>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1.5">
-                <Building2 className="h-3 w-3 flex-shrink-0" />
-                <span className="line-clamp-1">{property.developer}</span>
-              </div>
+              {property.developer && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1.5">
+                  <Building2 className="h-3 w-3 flex-shrink-0" />
+                  <span className="line-clamp-1">{property.developer}</span>
+                </div>
+              )}
               {/* Rating Display */}
               {ratingData.total > 0 && (
                 <div className="flex items-center gap-1.5 mt-1.5">
@@ -140,24 +146,30 @@ const PreConstructionPropertyCardV3 = ({
                 </div>
               )}
             </div>
-            <div className="text-right w-[30%]">
+            <div className="text-right w-[35%]">
               <p className="text-xs text-muted-foreground">Starting from</p>
-              <p className="text-lg font-bold text-foreground whitespace-nowrap">{formattedPrice}</p>
+              <p className={`${hasPrice ? 'text-lg' : 'text-sm'} font-bold text-foreground ${hasPrice ? 'whitespace-nowrap' : 'break-words'}`}>{formattedPrice}</p>
             </div>
           </div>
           <div className="flex items-center gap-4 text-xs text-muted-foreground bg-muted/50 px-4 py-2">
-            <div className="flex items-center gap-1">
-              <Bed className="h-3 w-3" />
-              <span>{property.details.bedroomRange}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Bath className="h-3 w-3" />
-              <span>{property.details.bathroomRange}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Maximize2 className="h-3 w-3" />
-              <span>{property.details.sqftRange}</span>
-            </div>
+            {property.details.bedroomRange && (
+              <div className="flex items-center gap-1">
+                <Bed className="h-3 w-3" />
+                <span>{property.details.bedroomRange}</span>
+              </div>
+            )}
+            {property.details.bathroomRange && (
+              <div className="flex items-center gap-1">
+                <Bath className="h-3 w-3" />
+                <span>{property.details.bathroomRange}</span>
+              </div>
+            )}
+            {property.details.sqftRange && (
+              <div className="flex items-center gap-1">
+                <Maximize2 className="h-3 w-3" />
+                <span>{property.details.sqftRange}</span>
+              </div>
+            )}
           </div>
         </div>
       </Card>

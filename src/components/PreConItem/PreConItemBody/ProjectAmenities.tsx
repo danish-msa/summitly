@@ -176,57 +176,32 @@ const ProjectAmenities: React.FC<ProjectAmenitiesProps> = ({ property }) => {
     return Building2;
   };
 
-  // Use real amenities data from database
-  const allAmenities = preCon.amenities && preCon.amenities.length > 0 ? preCon.amenities : [
-    "Pet Spa",
-    "Spa",
-    "Kids Play Room",
-    "Private Dining Room",
-    "Coffee Bar",
-    "Lobby",
-    "Lounge",
-    "Steam Room",
-    "Yoga Studio",
-    "Party Room",
-    "Conference Rooms",
-    "Spin Room",
-    "Pool",
-    "Fitness Centre",
-    "Games Room",
-    "Visitor Parking",
-    "Screening Room",
-    "Porte Cochere",
-    "Co Working Space",
-    "Billiard Table",
-    "Sauna",
-    "Training Studio",
-    "Media Room",
-    "Indoor Childrens Play Spaces",
-    "Outdoor Childrens Play Spaces",
-    "Parents Lounge",
-    "Meditation Garden",
-    "Private Treatment Room",
-    "Laundry Room",
-    "Storage Room",
-    "Dining Area",
-    "BBQ Permitted",
-    "Catering Kitchen",
-    "Concierge",
-    "Gym",
-    "Indoor Child Play Area",
-    "Outdoor Patio",
-    "Parcel Storage",
-    "Rooftop Deck",
-    "Library",
-    "Billiards / Table Tennis Room",
-    "Coin Laundry",
-    "On-Site Laundry",
-    "Storage",
-    "Dining Room"
-  ];
+  // Only use real amenities data from database - don't show fallback list
+  const allAmenities = preCon.amenities && preCon.amenities.length > 0 ? preCon.amenities : [];
 
   // Remove duplicates and sort
   const uniqueAmenities = Array.from(new Set(allAmenities)).sort();
+
+  // Handle both string and object format amenities
+  const processedAmenities = uniqueAmenities.map(amenity => {
+    if (typeof amenity === 'string') {
+      return amenity;
+    }
+    // Handle object format { name: string, icon: string }
+    return (amenity as { name: string; icon: string }).name;
+  }).filter(Boolean);
+
+  if (processedAmenities.length === 0) {
+    return (
+      <div className="w-full">
+        <div className="text-center py-12">
+          <p className="text-muted-foreground text-lg">
+            No amenities available for this project.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
@@ -237,7 +212,7 @@ const ProjectAmenities: React.FC<ProjectAmenitiesProps> = ({ property }) => {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-        {uniqueAmenities.map((amenity, index) => {
+        {processedAmenities.map((amenity, index) => {
           const Icon = getAmenityIcon(amenity);
           
           return (

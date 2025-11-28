@@ -5,8 +5,9 @@ import { PropertyListing } from '@/lib/types'
 
 interface PriceItem {
   label: string;
-  value: string;
+  value: string | null;
   icon?: React.ComponentType<{ className?: string }>;
+  show?: boolean;
 }
 
 interface Incentive {
@@ -60,6 +61,7 @@ const PricingIncentives: React.FC<PricingIncentivesProps> = ({ property }) => {
     if (!preCon.priceRange || !preCon.details?.sqftRange) return null;
     
     const sqftRange = preCon.details.sqftRange;
+    if (!sqftRange) return null;
     const maxSqftMatch = sqftRange.match(/(\d{1,3}(?:,\d{3})*)/g);
     if (maxSqftMatch && maxSqftMatch.length > 0) {
       const maxSqft = parseInt(maxSqftMatch[maxSqftMatch.length - 1].replace(/,/g, ''));
@@ -78,21 +80,42 @@ const PricingIncentives: React.FC<PricingIncentivesProps> = ({ property }) => {
   const getBedroomPricing = () => {
     if (!preCon.details?.bedroomRange) return null;
     const range = preCon.details.bedroomRange;
+    if (!range) return null;
     if (range.includes('1')) {
-      return preCon.priceRange ? formatPrice(preCon.priceRange.min) : 'N/A';
+      return preCon.priceRange ? formatPrice(preCon.priceRange.min) : null;
     }
     if (range.includes('2')) {
-      return preCon.priceRange ? formatPrice(Math.round((preCon.priceRange.min + preCon.priceRange.max) / 2)) : 'N/A';
+      return preCon.priceRange ? formatPrice(Math.round((preCon.priceRange.min + preCon.priceRange.max) / 2)) : null;
     }
-    return 'N/A';
+    return null;
   };
 
   const priceData: PriceItem[] = [
-    { label: "1 Bed Starting From", value: preCon.priceRange ? formatPrice(preCon.priceRange.min) : "N/A", icon: Bed },
-    { label: "2 Bed Starting From", value: getBedroomPricing() || "N/A", icon: Bed },
-    { label: "Price Per Sqft", value: pricePerSqft ? `$${pricePerSqft.toLocaleString()}` : "N/A", icon: Calculator },
-    { label: "Avg Price Per Sqft", value: pricePerSqft ? `$${pricePerSqft.toLocaleString()} / sqft` : "N/A", icon: TrendingUp },
-  ];
+    { 
+      label: "1 Bed Starting From", 
+      value: preCon.priceRange ? formatPrice(preCon.priceRange.min) : (preCon.startingPrice && preCon.startingPrice > 0 ? formatPrice(preCon.startingPrice) : null), 
+      icon: Bed,
+      show: !!(preCon.priceRange || (preCon.startingPrice && preCon.startingPrice > 0))
+    },
+    { 
+      label: "2 Bed Starting From", 
+      value: getBedroomPricing() || (preCon.priceRange ? formatPrice(preCon.priceRange.max) : null), 
+      icon: Bed,
+      show: !!(getBedroomPricing() || preCon.priceRange)
+    },
+    { 
+      label: "Price Per Sqft", 
+      value: pricePerSqft ? `$${pricePerSqft.toLocaleString()}` : null, 
+      icon: Calculator,
+      show: !!pricePerSqft
+    },
+    { 
+      label: "Avg Price Per Sqft", 
+      value: pricePerSqft ? `$${pricePerSqft.toLocaleString()} / sqft` : null, 
+      icon: TrendingUp,
+      show: !!pricePerSqft
+    },
+  ].filter(item => item.show && item.value);
 
   // Additional pricing fields
   const additionalPricing: PriceItem[] = []

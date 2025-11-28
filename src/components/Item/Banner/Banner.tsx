@@ -110,14 +110,20 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
         if (isPreCon && preConData?.details?.bedroomRange) {
             return preConData.details.bedroomRange;
         }
-        return `${property.details.numBedrooms || 0} Bed${property.details.numBedrooms !== 1 ? 's' : ''}`;
+        if (property.details.numBedrooms && property.details.numBedrooms > 0) {
+            return `${property.details.numBedrooms} Bed${property.details.numBedrooms !== 1 ? 's' : ''}`;
+        }
+        return null;
     };
 
     const getBathrooms = () => {
         if (isPreCon && preConData?.details?.bathroomRange) {
             return preConData.details.bathroomRange;
         }
-        return `${property.details.numBathrooms || 0} Bath${property.details.numBathrooms !== 1 ? 's' : ''}`;
+        if (property.details.numBathrooms && property.details.numBathrooms > 0) {
+            return `${property.details.numBathrooms} Bath${property.details.numBathrooms !== 1 ? 's' : ''}`;
+        }
+        return null;
     };
 
     const getSquareFeet = () => {
@@ -125,7 +131,7 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
             return preConData.details.sqftRange;
         }
         const sqft = property.details.sqft;
-        if (!sqft) return 'N/A';
+        if (!sqft || sqft === 0) return null;
         return `${sqft.toLocaleString()} SqFt`;
     };
 
@@ -186,9 +192,9 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                                     <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-white"></span>
                                     {statusText}
                                 </Badge>
-                                {isPreCon && (
+                                {isPreCon && preConData?.developer && (
                                     <span className="text-base text-foreground font-medium">
-                                        by <a href="#" className="underline text-primary">{preConData?.developer}</a>
+                                        by <a href="#" className="underline text-primary">{preConData.developer}</a>
                                     </span>
                                 )}  
                             </div>
@@ -300,21 +306,21 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                                                 </div>
                                             )}
                                             {/* Storeys */}
-                                            {preConData?.details?.storeys && (
+                                            {preConData?.details?.storeys && preConData.details.storeys > 0 && (
                                                 <div className="flex flex-row items-center gap-1">
                                                     <Layers className="h-6 w-6 text-primary" />
                                                     <span className="text-sm text-foreground font-medium">{preConData.details.storeys} Storeys</span>
                                                 </div>
                                             )}
                                             {/* Suites - Available suites */}
-                                            {preConData?.details?.availableUnits !== undefined && (
+                                            {preConData?.details?.availableUnits !== undefined && preConData.details.availableUnits !== null && preConData.details.availableUnits > 0 && (
                                                 <div className="flex flex-row items-center gap-1">
                                                     <Home className="h-6 w-6 text-primary" />
                                                     <span className="text-sm text-foreground font-medium">{preConData.details.availableUnits} Suites</span>
                                                 </div>
                                             )}
                                             {/* Units - Total units */}
-                                            {preConData?.details?.totalUnits && (
+                                            {preConData?.details?.totalUnits && preConData.details.totalUnits > 0 && (
                                                 <div className="flex flex-row items-center gap-1">
                                                     <Users className="h-6 w-6 text-primary" />
                                                     <span className="text-sm text-foreground font-medium">{preConData.details.totalUnits} Units</span>
@@ -333,22 +339,28 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                                                 <span className="text-sm text-foreground font-medium">{property.details.propertyType || 'Detached'}</span>
                                             </div>
                                             {/* Beds */}
-                                            <div className="flex flex-row items-center gap-1">
-                                                <Bed className="h-6 w-6 text-primary" />
-                                                <span className="text-sm text-foreground font-medium">{getBedrooms()}</span>
-                                            </div>
+                                            {getBedrooms() && (
+                                                <div className="flex flex-row items-center gap-1">
+                                                    <Bed className="h-6 w-6 text-primary" />
+                                                    <span className="text-sm text-foreground font-medium">{getBedrooms()}</span>
+                                                </div>
+                                            )}
 
                                             {/* Baths */}
-                                            <div className="flex flex-row items-center gap-1">
-                                                <Bath className="h-6 w-6 text-primary" />
-                                                <span className="text-sm text-foreground font-medium">{getBathrooms()}</span>
-                                            </div>
+                                            {getBathrooms() && (
+                                                <div className="flex flex-row items-center gap-1">
+                                                    <Bath className="h-6 w-6 text-primary" />
+                                                    <span className="text-sm text-foreground font-medium">{getBathrooms()}</span>
+                                                </div>
+                                            )}
 
                                             {/* Square Feet */}
-                                            <div className="flex flex-row items-center gap-1">
-                                                <Maximize2 className="h-6 w-6 text-primary" />
-                                                <span className="text-sm text-foreground font-medium">{getSquareFeet()}</span>
-                                            </div>
+                                            {getSquareFeet() && (
+                                                <div className="flex flex-row items-center gap-1">
+                                                    <Maximize2 className="h-6 w-6 text-primary" />
+                                                    <span className="text-sm text-foreground font-medium">{getSquareFeet()}</span>
+                                                </div>
+                                            )}
                                         </div>
                                         </>
                                     )}
@@ -371,8 +383,12 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                                         {isRent ? 'Monthly Rent' : isPreCon ? 'Starting Price' : 'Listed Price'}
                                     </span>
                                     <div className="text-xl font-bold text-foreground text-right sm:text-3xl">
-                                        {isPreCon && preConData?.priceRange 
-                                            ? `${formatPrice(preConData.priceRange.min)}`
+                                        {isPreCon 
+                                            ? (preConData?.priceRange && preConData.priceRange.min > 0
+                                                ? `${formatPrice(preConData.priceRange.min)}`
+                                                : (preConData?.startingPrice && preConData.startingPrice > 0
+                                                    ? formatPrice(preConData.startingPrice)
+                                                    : 'Coming Soon'))
                                             : isRent
                                             ? `${formatPrice(property.listPrice)}/month`
                                             : formatPrice(property.listPrice)}

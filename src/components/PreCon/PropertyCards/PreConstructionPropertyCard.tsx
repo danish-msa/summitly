@@ -17,11 +17,14 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
   const images = property.images;
   const totalImages = images.length;
 
-  const formattedPrice = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0
-  }).format(property.startingPrice);
+  const hasPrice = property.startingPrice && property.startingPrice > 0;
+  const formattedPrice = hasPrice 
+    ? new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0
+      }).format(property.startingPrice)
+    : 'Coming Soon';
 
   const imageSrc = imgError ? '/placeholder.svg' : images[currentImageIndex];
 
@@ -200,9 +203,11 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
               </h3>
 
               {/* Developer */}
-              <p className="text-xs text-muted-foreground mb-2">
-                by {property.developer}
-              </p>
+              {property.developer && (
+                <p className="text-xs text-muted-foreground mb-2">
+                  by {property.developer}
+                </p>
+              )}
 
               {/* Location */}
               <div className="flex items-start mb-3">
@@ -214,9 +219,9 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
             </div>
             <div className="flex-shrink-0">
               {/* Price */}
-              <div className="">
+              <div className="text-right">
                 <p className="text-xs text-muted-foreground">Starting from</p>
-                <p className="text-xl font-bold text-foreground">{formattedPrice}</p>
+                <p className={`${hasPrice ? 'text-xl' : 'text-sm'} font-bold text-foreground ${hasPrice ? 'whitespace-nowrap' : 'break-words'}`}>{formattedPrice}</p>
               </div>
             </div>
           </div>
@@ -226,29 +231,37 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
 
           {/* Property Details */}
           <div className="flex flex-wrap gap-3 mb-3">
-            <div className="flex items-center gap-1.5">
-              <Bed className="text-muted-foreground" size={14} />
-              <span className="text-xs text-foreground">{property.details.bedroomRange}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Bath className="text-muted-foreground" size={14} />
-              <span className="text-xs text-foreground">{property.details.bathroomRange}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Maximize2 className="text-muted-foreground" size={14} />
-              <span className="text-xs text-foreground">{property.details.sqftRange} sqft</span>
-            </div>
+            {property.details.bedroomRange && (
+              <div className="flex items-center gap-1.5">
+                <Bed className="text-muted-foreground" size={14} />
+                <span className="text-xs text-foreground">{property.details.bedroomRange}</span>
+              </div>
+            )}
+            {property.details.bathroomRange && (
+              <div className="flex items-center gap-1.5">
+                <Bath className="text-muted-foreground" size={14} />
+                <span className="text-xs text-foreground">{property.details.bathroomRange}</span>
+              </div>
+            )}
+            {property.details.sqftRange && (
+              <div className="flex items-center gap-1.5">
+                <Maximize2 className="text-muted-foreground" size={14} />
+                <span className="text-xs text-foreground">{property.details.sqftRange} sqft</span>
+              </div>
+            )}
           </div>
 
           {/* Key Info Grid */}
           <div className="grid grid-cols-2 gap-2 mb-3">
-            <div className="flex items-start gap-1.5 p-2 bg-muted/50 rounded-lg">
-              <Calendar className="text-primary flex-shrink-0 mt-0.5" size={14} />
-              <div>
-                <p className="text-xs text-muted-foreground">Completion</p>
-                <p className="text-xs font-semibold text-foreground">{property.completion.date}</p>
+            {property.completion.date && (
+              <div className="flex items-start gap-1.5 p-2 bg-muted/50 rounded-lg">
+                <Calendar className="text-primary flex-shrink-0 mt-0.5" size={14} />
+                <div>
+                  <p className="text-xs text-muted-foreground">Completion</p>
+                  <p className="text-xs font-semibold text-foreground">{property.completion.date}</p>
+                </div>
               </div>
-            </div>
+            )}
             <div className="flex items-start gap-1.5 p-2 bg-muted/50 rounded-lg">
               <TrendingUp className="text-accent flex-shrink-0 mt-0.5" size={14} />
               <div>

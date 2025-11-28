@@ -99,7 +99,8 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
     }).format(price);
   };
 
-  const extractYear = (dateString: string) => {
+  const extractYear = (dateString: string | null | undefined) => {
+    if (!dateString) return null;
     const yearMatch = dateString.match(/\d{4}/);
     return yearMatch ? yearMatch[0] : dateString;
   };
@@ -249,86 +250,97 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
       label: 'Project Name',
       value: preCon.projectName,
       icon: Building2,
+      show: !!preCon.projectName,
     },
     {
       label: 'Developer',
       value: preCon.developer,
       icon: FaBuildingUser,
+      show: !!preCon.developer,
     },
     {
       label: 'Starting Price',
-      value: preCon.startingPrice
+      value: preCon.startingPrice && preCon.startingPrice > 0
         ? formatPrice(preCon.startingPrice)
         : preCon.priceRange 
         ? formatPrice(preCon.priceRange.min)
-        : 'Contact for Pricing',
+        : null,
       icon: DollarSign,
+      show: (preCon.startingPrice && preCon.startingPrice > 0) || !!preCon.priceRange,
     },
     {
       label: 'Status',
       value: preCon.status,
       icon: Home,
+      show: !!preCon.status,
     },
     {
       label: 'Occupancy Date',
-      value: preCon.completion.date,
+      value: preCon.completion?.date,
       icon: Calendar,
+      show: !!preCon.completion?.date,
     },
     {
       label: 'Completion Year',
-      value: extractYear(preCon.completion.date),
+      value: extractYear(preCon.completion?.date),
       icon: Calendar,
+      show: !!preCon.completion?.date && extractYear(preCon.completion.date) !== 'N/A',
     },
     {
       label: 'Bedroom Range',
-      value: preCon.details.bedroomRange,
+      value: preCon.details?.bedroomRange,
       icon: Bed,
+      show: !!preCon.details?.bedroomRange,
     },
     {
       label: 'Bathroom Range',
-      value: preCon.details.bathroomRange,
+      value: preCon.details?.bathroomRange,
       icon: Bath,
+      show: !!preCon.details?.bathroomRange,
     },
     {
       label: 'Square Footage Range',
-      value: preCon.details.sqftRange,
+      value: preCon.details?.sqftRange,
       icon: Ruler,
+      show: !!preCon.details?.sqftRange,
     },
     {
       label: 'Total Units',
-      value: preCon.details.totalUnits.toString(),
+      value: preCon.details?.totalUnits?.toString(),
       icon: Building2,
+      show: preCon.details?.totalUnits !== undefined && preCon.details.totalUnits !== null && preCon.details.totalUnits > 0,
     },
     {
       label: 'Available Units',
-      value: preCon.details.availableUnits.toString(),
+      value: preCon.details?.availableUnits?.toString(),
       icon: Building2,
+      show: preCon.details?.availableUnits !== undefined && preCon.details.availableUnits !== null && preCon.details.availableUnits > 0,
     },
-  ];
+  ].filter(detail => detail.show);
 
   // Add additional details if available
-  if (preCon.details.storeys) {
+  if (preCon.details?.storeys) {
     details.push({
       label: 'Storeys',
       value: preCon.details.storeys.toString(),
       icon: Building2,
     });
   }
-  if (preCon.details.height) {
+  if (preCon.details?.height) {
     details.push({
       label: 'Height',
-      value: `${preCon.details.height}m`,
+      value: typeof preCon.details.height === 'string' ? preCon.details.height : `${preCon.details.height}m`,
       icon: Building2,
     });
   }
-  if (preCon.details.propertyType) {
+  if (preCon.details?.propertyType) {
     details.push({
       label: 'Property Type',
       value: preCon.details.propertyType,
       icon: Home,
     });
   }
-  if (preCon.details.subPropertyType) {
+  if (preCon.details?.subPropertyType) {
     details.push({
       label: 'Sub Property Type',
       value: preCon.details.subPropertyType,
@@ -349,18 +361,20 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
               
               // Determine if this detail should be a link and what URL to use
               let linkUrl: string | null = null;
-              if (detail.label === 'Status') {
-                linkUrl = `/pre-construction/${getStatusSlug(detail.value)}`;
-              } else if (detail.label === 'Completion Year') {
-                const year = extractYear(detail.value);
-                if (year && /^\d{4}$/.test(year)) {
-                  linkUrl = `/pre-construction/${year}`;
+              if (detail.value) {
+                if (detail.label === 'Status') {
+                  linkUrl = `/pre-construction/${getStatusSlug(detail.value)}`;
+                } else if (detail.label === 'Completion Year') {
+                  const year = extractYear(detail.value);
+                  if (year && /^\d{4}$/.test(year)) {
+                    linkUrl = `/pre-construction/${year}`;
+                  }
+                } else if (detail.label === 'Property Type') {
+                  linkUrl = `/pre-construction/${getPropertyTypeSlug(detail.value)}`;
+                } else if (detail.label === 'Sub Property Type') {
+                  const propertyType = preCon.details?.propertyType || 'Condominium';
+                  linkUrl = `/pre-construction/${getSubPropertyTypeSlug(detail.value, propertyType)}`;
                 }
-              } else if (detail.label === 'Property Type') {
-                linkUrl = `/pre-construction/${getPropertyTypeSlug(detail.value)}`;
-              } else if (detail.label === 'Sub Property Type') {
-                const propertyType = preCon.details.propertyType || 'Condominium';
-                linkUrl = `/pre-construction/${getSubPropertyTypeSlug(detail.value, propertyType)}`;
               }
               
               return (
@@ -370,7 +384,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground">{detail.label}</p>
-                    {linkUrl ? (
+                    {linkUrl && detail.value ? (
                       <Link 
                         href={linkUrl}
                         className="text-sm font-semibold text-foreground capitalize underline hover:text-primary transition-colors"
@@ -378,7 +392,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
                         {detail.value}
                       </Link>
                     ) : (
-                      <p className="text-sm font-semibold text-foreground capitalize">{detail.value}</p>
+                      <p className="text-sm font-semibold text-foreground capitalize">{detail.value || ''}</p>
                     )}
                   </div>
                 </div>

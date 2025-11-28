@@ -50,11 +50,14 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
   const images = property.images;
   const totalImages = images.length;
 
-  const formattedPrice = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0
-  }).format(property.startingPrice);
+  const hasPrice = property.startingPrice !== null && property.startingPrice !== undefined && property.startingPrice > 0;
+  const formattedPrice = hasPrice && property.startingPrice !== null
+    ? new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0
+      }).format(property.startingPrice)
+    : 'Coming Soon';
 
   const imageSrc = imgError ? '/placeholder.svg' : images[currentImageIndex];
 
@@ -142,7 +145,7 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
           <div className="relative h-full">
             <img 
               src={imageSrc}
-              alt={`${property.projectName} - ${property.developer}`}
+              alt={`${property.projectName}${property.developer ? ` - ${property.developer}` : ''}`}
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
               onError={() => setImgError(true)}
             />
@@ -227,12 +230,14 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
             </h3>
 
             {/* Developer */}
-            <div className="flex items-center gap-2 mb-2">
-              <Building2 className="text-muted-foreground" size={16} />
-              <p className="text-sm text-muted-foreground">
-                {property.developer}
-              </p>
-            </div>
+            {property.developer && (
+              <div className="flex items-center gap-2 mb-2">
+                <Building2 className="text-muted-foreground" size={16} />
+                <p className="text-sm text-muted-foreground">
+                  {property.developer}
+                </p>
+              </div>
+            )}
 
             {/* Rating Display */}
             {ratingData.total > 0 && (
@@ -262,27 +267,33 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
 
             {/* Property Details */}
             <div className="flex flex-wrap gap-4 mb-4">
-              <div className="flex items-center gap-1.5">
-                <Bed className="text-muted-foreground" size={16} />
-                <span className="text-sm text-foreground font-medium">{property.details.bedroomRange}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Bath className="text-muted-foreground" size={16} />
-                <span className="text-sm text-foreground font-medium">{property.details.bathroomRange}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Maximize2 className="text-muted-foreground" size={16} />
-                <span className="text-sm text-foreground font-medium">{property.details.sqftRange} sqft</span>
-              </div>
+              {property.details.bedroomRange && (
+                <div className="flex items-center gap-1.5">
+                  <Bed className="text-muted-foreground" size={16} />
+                  <span className="text-sm text-foreground font-medium">{property.details.bedroomRange}</span>
+                </div>
+              )}
+              {property.details.bathroomRange && (
+                <div className="flex items-center gap-1.5">
+                  <Bath className="text-muted-foreground" size={16} />
+                  <span className="text-sm text-foreground font-medium">{property.details.bathroomRange}</span>
+                </div>
+              )}
+              {property.details.sqftRange && (
+                <div className="flex items-center gap-1.5">
+                  <Maximize2 className="text-muted-foreground" size={16} />
+                  <span className="text-sm text-foreground font-medium">{property.details.sqftRange} sqft</span>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Bottom Section */}
-          <div className="flex items-end justify-between">
+          <div className="flex items-end justify-between gap-4">
             {/* Price */}
-            <div>
+            <div className="flex-shrink-0 min-w-0">
               <p className="text-xs text-muted-foreground mb-1">Starting from</p>
-              <p className="text-2xl font-bold text-foreground">{formattedPrice}</p>
+              <p className={`${hasPrice ? 'text-2xl' : 'text-lg'} font-bold text-foreground ${hasPrice ? 'whitespace-nowrap' : 'break-words'}`}>{formattedPrice}</p>
             </div>
 
             {/* CTA Button */}

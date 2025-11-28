@@ -44,12 +44,12 @@ export const convertToPropertyListing = (project: PreConstructionProperty): Prop
       point: null
     },
     details: {
-      numBathrooms: parseInt(project.details.bathroomRange.split('-')[0]) || 1,
-      numBathroomsPlus: parseInt(project.details.bathroomRange.split('-')[0]) || 1,
-      numBedrooms: parseInt(project.details.bedroomRange.split('-')[0]) || 1,
-      numBedroomsPlus: parseInt(project.details.bedroomRange.split('-')[0]) || 1,
+      numBathrooms: project.details.bathroomRange ? parseInt(project.details.bathroomRange.split('-')[0]) || 1 : 1,
+      numBathroomsPlus: project.details.bathroomRange ? parseInt(project.details.bathroomRange.split('-')[1] || project.details.bathroomRange.split('-')[0]) || 1 : 1,
+      numBedrooms: project.details.bedroomRange ? parseInt(project.details.bedroomRange.split('-')[0]) || 1 : 1,
+      numBedroomsPlus: project.details.bedroomRange ? parseInt(project.details.bedroomRange.split('-')[1] || project.details.bedroomRange.split('-')[0]) || 1 : 1,
       propertyType: project.details.propertyType,
-      sqft: parseInt(project.details.sqftRange.split('-')[0].replace(/,/g, '')) || 0
+      sqft: project.details.sqftRange ? parseInt(project.details.sqftRange.split('-')[0].replace(/,/g, '')) || 0 : 0
     },
     updatedOn: new Date().toISOString(),
     lot: {
@@ -63,7 +63,7 @@ export const convertToPropertyListing = (project: PreConstructionProperty): Prop
       source: '',
       dimensionsSource: '',
       dimensions: '',
-      squareFeet: parseInt(project.details.sqftRange.split('-')[0].replace(/,/g, '')) || 0,
+      squareFeet: project.details.sqftRange ? parseInt(project.details.sqftRange.split('-')[0].replace(/,/g, '')) || 0 : 0,
       features: '',
       taxLot: ''
     },

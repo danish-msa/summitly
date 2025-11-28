@@ -23,13 +23,13 @@ const DepositStructure: React.FC<DepositStructureProps> = ({ property }) => {
 
   // Extract completion date for incentives expiry (similar to PricingIncentives)
   const getIncentivesExpiryDate = () => {
-    if (!preCon.completion?.date) return "Apr 1, 2025";
+    if (!preCon.completion?.date) return null;
     const yearMatch = preCon.completion.date.match(/\d{4}/);
     if (yearMatch) {
       const year = parseInt(yearMatch[0]);
       return `Apr 1, ${year}`;
     }
-    return "Apr 1, 2025";
+    return null;
   };
 
   return (
@@ -49,15 +49,17 @@ const DepositStructure: React.FC<DepositStructureProps> = ({ property }) => {
                 <p className="font-semibold text-foreground">{depositInfo}</p>
               </div>
             </div>
-            <div className="flex items-start gap-4 p-4 rounded-lg bg-blue-50">
-              <div className="w-10 h-10 rounded-lg bg-brand-celestial/20 flex items-center justify-center flex-shrink-0">
-                <Calendar className="h-5 w-5 text-muted-foreground" />
+            {getIncentivesExpiryDate() && (
+              <div className="flex items-start gap-4 p-4 rounded-lg bg-blue-50">
+                <div className="w-10 h-10 rounded-lg bg-brand-celestial/20 flex items-center justify-center flex-shrink-0">
+                  <Calendar className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-muted-foreground mb-2">Incentives Valid Until</p>
+                  <p className="font-semibold text-foreground">{getIncentivesExpiryDate()}</p>
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="text-sm text-muted-foreground mb-2">Incentives Valid Until</p>
-                <p className="font-semibold text-foreground">{getIncentivesExpiryDate()}</p>
-              </div>
-            </div>
+            )}
           </div>
         </CardContent>
       </Card>
