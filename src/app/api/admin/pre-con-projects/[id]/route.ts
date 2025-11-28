@@ -212,7 +212,7 @@ export async function PUT(
       availableUnits?: number
       suites?: number | null
       storeys?: number | null
-      height?: number | null
+      height?: string | null
       maintenanceFeesPerSqft?: number | null
       maintenanceFeesDetail?: string | null
       floorPremiums?: string | null
@@ -292,7 +292,7 @@ export async function PUT(
     if (body.availableUnits !== undefined) updateData.availableUnits = parseInt(body.availableUnits)
     if (body.suites !== undefined) updateData.suites = body.suites ? parseInt(body.suites) : null
     if (body.storeys !== undefined) updateData.storeys = body.storeys ? parseInt(body.storeys) : null
-    if (body.height !== undefined) updateData.height = body.height ? parseFloat(body.height) : null
+    if (body.height !== undefined) updateData.height = body.height === '' ? null : (body.height || null)
     if (body.maintenanceFeesPerSqft !== undefined) {
       const parsed = body.maintenanceFeesPerSqft === '' || body.maintenanceFeesPerSqft === null ? null : parseFloat(String(body.maintenanceFeesPerSqft))
       updateData.maintenanceFeesPerSqft = isNaN(parsed as number) ? null : parsed

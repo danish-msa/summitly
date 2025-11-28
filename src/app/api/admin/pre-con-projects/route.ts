@@ -374,7 +374,7 @@ export async function POST(request: NextRequest) {
         availableUnits: typeof availableUnits === 'number' ? availableUnits : parseInt(String(availableUnits), 10),
         suites: suites ? (typeof suites === 'number' ? suites : parseInt(String(suites), 10)) : null,
         storeys: storeys ? (typeof storeys === 'number' ? storeys : parseInt(String(storeys), 10)) : null,
-        height: height ? (typeof height === 'number' ? height : parseFloat(String(height))) : null,
+        height: height && String(height).trim() ? String(height).trim() : null,
         maintenanceFeesPerSqft: maintenanceFeesPerSqft ? (typeof maintenanceFeesPerSqft === 'number' ? maintenanceFeesPerSqft : parseFloat(String(maintenanceFeesPerSqft))) : null,
         maintenanceFeesDetail: maintenanceFeesDetail && maintenanceFeesDetail.trim() ? maintenanceFeesDetail.trim() : null,
         floorPremiums: floorPremiums && floorPremiums.trim() ? floorPremiums.trim() : null,
