@@ -253,10 +253,8 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get("id")
     const pageType = searchParams.get("pageType")
     const pageValue = searchParams.get("pageValue")
-    const locationType = searchParams.get("locationType")
-    const parentId = searchParams.get("parentId")
 
-    // Prefer ID-based deletion (more reliable for location pages)
+    // Prefer ID-based deletion (more reliable)
     if (id) {
       await prisma.preConstructionPageContent.delete({
         where: { id },
@@ -272,28 +270,24 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // Build where clause based on pageType
-    if (pageType === 'by-location') {
-      await prisma.preConstructionPageContent.delete({
-        where: {
-          pageType_pageValue_locationType_parentId: {
-            pageType,
-            pageValue,
-            locationType: locationType || null,
-            parentId: parentId || null,
-          },
-        },
-      })
-    } else {
-      await prisma.preConstructionPageContent.delete({
-        where: {
-          pageType_pageValue: {
-            pageType,
-            pageValue,
-          },
-        },
-      })
+    // Use findFirst + delete for non-ID deletion
+    const content = await prisma.preConstructionPageContent.findFirst({
+      where: {
+        pageType,
+        pageValue,
+      },
+    })
+
+    if (!content) {
+      return NextResponse.json(
+        { error: "Page content not found" },
+        { status: 404 }
+      )
     }
+
+    await prisma.preConstructionPageContent.delete({
+      where: { id: content.id },
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {
