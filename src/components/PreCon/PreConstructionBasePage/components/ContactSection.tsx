@@ -9,7 +9,7 @@ interface ContactSectionProps {
 
 export const PreConContactSection: React.FC<ContactSectionProps> = ({ pageType, displayTitle }) => {
   const getTitle = () => {
-    if (pageType === 'city') {
+    if (pageType === 'by-location') {
       return `Connect with Us About Pre-Construction in ${displayTitle}`;
     } else if (pageType === 'status') {
       return `Connect with Us About ${displayTitle}`;
@@ -22,7 +22,7 @@ export const PreConContactSection: React.FC<ContactSectionProps> = ({ pageType, 
   };
 
   const getDescription = () => {
-    if (pageType === 'city') {
+    if (pageType === 'by-location') {
       return `Reach out to our team for any inquiries about pre-construction projects in ${displayTitle}. Whether you're looking for your dream home, need guidance on the buying process, or have questions about specific developments, we're here to help. Let's make your real estate journey seamless and enjoyable.`;
     } else if (pageType === 'status') {
       return `Reach out to our team for any inquiries about ${displayTitle.toLowerCase()} pre-construction projects. Whether you're looking for your dream home, need guidance on the buying process, or have questions about specific developments, we're here to help. Let's make your real estate journey seamless and enjoyable.`;

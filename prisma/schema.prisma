@@ -473,8 +473,10 @@ model PropertyRating {
 // Pre-Construction Page Content - stores custom content for filtered pages
 model PreConstructionPageContent {
   id          String   @id @default(cuid())
-  pageType    String   // 'propertyType', 'status', 'completionYear', 'city'
+  pageType    String   // 'propertyType', 'status', 'completionYear', 'by-location'
   pageValue   String   // e.g., 'Condos', 'now-selling', '2025', 'Toronto'
+  locationType String? // 'by-city', 'by-area', 'by-neighbourhood', 'by-intersection', 'by-communities' (only for pageType='by-location')
+  parentId    String?  // ID of parent location (for hierarchy: city -> area -> neighbourhood -> intersection)
   title       String?  @db.Text
   description String?  @db.Text
   heroImage   String?
@@ -486,8 +488,14 @@ model PreConstructionPageContent {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // Self-referential relation for parent-child hierarchy
+  parent   PreConstructionPageContent? @relation("LocationHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children PreConstructionPageContent[] @relation("LocationHierarchy")
+
   @@unique([pageType, pageValue])
   @@index([pageType])
   @@index([pageValue])
   @@index([isPublished])
+  @@index([locationType])
+  @@index([parentId])
 }

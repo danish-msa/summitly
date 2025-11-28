@@ -92,7 +92,7 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({ slug,
     }
     
     // Otherwise use default descriptions
-    if (pageType === 'city') {
+    if (pageType === 'by-location') {
       return `${displayCount} Pre construction Homes in ${displayTitle}, ${province} | Explore Floor Plans, Pricing & Availability. Summitly has over ${displayCount.toLowerCase()} pre construction homes from trusted builders in ${displayTitle}, ${province}. If you are looking to buy resale homes, Summitly is your trusted platform to find 1000+ homes for sale in ${displayTitle}. Whether you are looking to downsize to buy townhomes for sale in ${displayTitle} or looking to buy condos in ${displayTitle} for your family or browsing ${displayTitle} detached homes for sale, our platform is updated daily with latest resale listings every hour. For new development homes, easily filter by number of bedrooms (1 to 4+), project type, and construction status from budget-friendly condo to a pre construction homes, contact us to connect you to the most exciting real estate opportunities in ${displayTitle}.`;
     } else if (pageType === 'subPropertyType' || pageType === 'completionYear') {
       return pageInfo?.description || `Explore ${displayTitle.toLowerCase()} pre-construction projects. Discover new developments and find your ideal property.`;

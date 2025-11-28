@@ -127,7 +127,7 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ pageType, displayTitle, 
   }, [parsedCustomFaqs]);
 
   const getDescription = () => {
-    if (pageType === 'city') {
+    if (pageType === 'by-location') {
       return `Find answers to common questions about pre-construction projects in ${displayTitle}. Get expert guidance on buying new homes with Summitly.`;
     } else if (pageType === 'status') {
       return `Find answers to common questions about ${displayTitle.toLowerCase()} pre-construction projects. Get expert guidance on buying new homes with Summitly.`;

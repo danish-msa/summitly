@@ -47,7 +47,7 @@ export const ProjectListings: React.FC<ProjectListingsProps> = ({
       ) : (
         <div className="bg-secondary/30 rounded-lg p-12 text-center">
           <p className="text-lg text-muted-foreground">
-            No pre-construction projects found{pageType === 'city' ? ` in ${displayTitle}` : ''}
+            No pre-construction projects found{pageType === 'by-location' ? ` in ${displayTitle}` : ''}
           </p>
         </div>
       )}

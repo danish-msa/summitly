@@ -19,7 +19,7 @@ export const HeaderSection: React.FC<HeaderSectionProps> = ({
   displayCount,
 }) => {
   const buildHeading = () => {
-    if (pageType === 'city') {
+    if (pageType === 'by-location') {
       return (
         <>
           {displayCount} Pre Construction Homes in <span className='text-secondary'>{title}</span>

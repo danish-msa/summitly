@@ -9,7 +9,7 @@ import { preConCities } from '@/components/PreCon/Search/preConSearchData';
 const PreConstructionPage: React.FC = () => {
   const params = useParams();
   const slug = params?.slug as string || '';
-  const [pageType, setPageType] = useState<'project' | 'city' | 'status' | 'propertyType' | 'subPropertyType' | 'completionYear' | 'loading'>('loading');
+  const [pageType, setPageType] = useState<'project' | 'by-location' | 'status' | 'propertyType' | 'subPropertyType' | 'completionYear' | 'loading'>('loading');
 
   // Known city slugs (from preConCities)
   const knownCitySlugs = preConCities.map(city => city.id);
@@ -76,7 +76,7 @@ const PreConstructionPage: React.FC = () => {
 
         // Check if it's a known city
         if (knownCitySlugs.includes(slugLower)) {
-          setPageType('city');
+          setPageType('by-location');
           return;
         }
 
@@ -98,12 +98,12 @@ const PreConstructionPage: React.FC = () => {
           
           if (cityResponse.ok) {
             const data = await cityResponse.json();
-            // If we get projects back, treat it as a city
+            // If we get projects back, treat it as a location
             if (data.projects && data.projects.length > 0) {
-              setPageType('city');
+              setPageType('by-location');
             } else {
-              // No projects found, but still treat as city (empty city page)
-              setPageType('city');
+              // No projects found, but still treat as location (empty location page)
+              setPageType('by-location');
             }
           } else {
             // Not a city either, default to project (will show 404 if not found)
@@ -135,7 +135,7 @@ const PreConstructionPage: React.FC = () => {
   }
 
   // Render appropriate page based on type
-  if (pageType === 'city' || pageType === 'status' || pageType === 'propertyType' || pageType === 'subPropertyType' || pageType === 'completionYear') {
+  if (pageType === 'by-location' || pageType === 'status' || pageType === 'propertyType' || pageType === 'subPropertyType' || pageType === 'completionYear') {
     return <PreConstructionBasePage slug={slug} pageType={pageType} />;
   }
 

@@ -18,8 +18,21 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
+    const id = searchParams.get("id")
     const pageType = searchParams.get("pageType")
     const pageValue = searchParams.get("pageValue")
+
+    // If fetching by ID
+    if (id) {
+      const pageContent = await prisma.preConstructionPageContent.findUnique({
+        where: { id },
+        include: {
+          parent: true,
+          children: true,
+        },
+      })
+      return NextResponse.json({ pageContent })
+    }
 
     const where: {
       pageType?: string
@@ -36,6 +49,10 @@ export async function GET(request: NextRequest) {
 
     const pageContents = await prisma.preConstructionPageContent.findMany({
       where,
+      include: {
+        parent: true,
+        children: true,
+      },
       orderBy: [
         { pageType: "asc" },
         { pageValue: "asc" },
@@ -73,8 +90,11 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json()
     const {
+      id,
       pageType,
       pageValue,
+      locationType,
+      parentId,
       title,
       description,
       heroImage,
@@ -93,12 +113,36 @@ export async function PUT(request: NextRequest) {
     }
 
     // Validate pageType
-    const validPageTypes = ["propertyType", "status", "completionYear", "city"]
+    const validPageTypes = ["propertyType", "status", "completionYear", "city", "by-location"]
     if (!validPageTypes.includes(pageType)) {
       return NextResponse.json(
         { error: `Invalid pageType. Must be one of: ${validPageTypes.join(", ")}` },
         { status: 400 }
       )
+    }
+
+    // Validate locationType for by-location pages
+    if (pageType === "by-location") {
+      const validLocationTypes = ["by-city", "by-area", "by-neighbourhood", "by-intersection", "by-communities"]
+      if (!locationType || !validLocationTypes.includes(locationType)) {
+        return NextResponse.json(
+          { error: `locationType is required and must be one of: ${validLocationTypes.join(", ")}` },
+          { status: 400 }
+        )
+      }
+
+      // Validate parentId if provided
+      if (parentId) {
+        const parent = await prisma.preConstructionPageContent.findUnique({
+          where: { id: parentId },
+        })
+        if (!parent) {
+          return NextResponse.json(
+            { error: "Invalid parentId: parent location not found" },
+            { status: 400 }
+          )
+        }
+      }
     }
 
     // Validate completionYear format if applicable
@@ -125,6 +169,28 @@ export async function PUT(request: NextRequest) {
       }
     }
 
+    // If updating by ID, use update instead of upsert
+    if (id) {
+      const pageContent = await prisma.preConstructionPageContent.update({
+        where: { id },
+        data: {
+          pageType,
+          pageValue,
+          locationType: locationType || null,
+          parentId: parentId || null,
+          title: title || null,
+          description: description || null,
+          heroImage: heroImage || null,
+          metaTitle: metaTitle || null,
+          metaDescription: metaDescription || null,
+          customContent: customContent || null,
+          faqs: faqsJson,
+          isPublished: isPublished ?? false,
+        },
+      })
+      return NextResponse.json({ pageContent })
+    }
+
     const pageContent = await prisma.preConstructionPageContent.upsert({
       where: {
         pageType_pageValue: {
@@ -133,6 +199,8 @@ export async function PUT(request: NextRequest) {
         },
       },
       update: {
+        locationType: locationType || null,
+        parentId: parentId || null,
         title: title || null,
         description: description || null,
         heroImage: heroImage || null,
@@ -145,6 +213,8 @@ export async function PUT(request: NextRequest) {
       create: {
         pageType,
         pageValue,
+        locationType: locationType || null,
+        parentId: parentId || null,
         title: title || null,
         description: description || null,
         heroImage: heroImage || null,

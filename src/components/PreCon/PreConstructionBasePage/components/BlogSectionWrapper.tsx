@@ -16,7 +16,7 @@ export const BlogSectionWrapper: React.FC<BlogSectionWrapperProps> = ({
   slug,
 }) => {
   const getHeading = () => {
-    if (pageType === 'city') {
+    if (pageType === 'by-location') {
       return `Latest News and Insight in ${displayTitle}`;
     } else if (pageType === 'status') {
       return `Latest News and Insights for ${displayTitle}`;
@@ -27,7 +27,7 @@ export const BlogSectionWrapper: React.FC<BlogSectionWrapperProps> = ({
   };
 
   const getDescription = () => {
-    if (pageType === 'city') {
+    if (pageType === 'by-location') {
       return `Discover the latest news, market insights, and expert advice about pre-construction properties in ${displayTitle}, ${province}. Stay ahead with Summitly's comprehensive coverage of the real estate market.`;
     } else if (pageType === 'status') {
       return `Stay updated with the latest news, market trends, and expert insights about ${displayTitle.toLowerCase()}. Get valuable information to help you make informed decisions with Summitly.`;
@@ -38,7 +38,7 @@ export const BlogSectionWrapper: React.FC<BlogSectionWrapperProps> = ({
   };
 
   const getViewAllLink = () => {
-    if (pageType === 'city') {
+    if (pageType === 'by-location') {
       return `/blogs?category=Pre-construction&search=${encodeURIComponent(displayTitle)}`;
     } else if (pageType === 'status') {
       const statusSlug = slug.toLowerCase();

@@ -83,7 +83,7 @@ const adminMenuItems: MenuItem[] = [
       { title: "by Property Type", url: "/dashboard/admin/pre-con-projects/by-property-type", icon: Tag },
       { title: "by Selling Status", url: "/dashboard/admin/pre-con-projects/by-selling-status", icon: Tag },
       { title: "by Completion Year", url: "/dashboard/admin/pre-con-projects/by-completion-year", icon: CalendarIcon },
-      { title: "by City", url: "/dashboard/admin/pre-con-projects/by-city", icon: MapPin },
+      { title: "by Location", url: "/dashboard/admin/pre-con-projects/by-location", icon: MapPin },
     ]
   },
   { title: "Developers", url: "/dashboard/admin/developers", icon: Briefcase },

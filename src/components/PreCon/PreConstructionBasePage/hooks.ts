@@ -31,7 +31,7 @@ export const usePreConProjectsData = ({ slug, pageType, filters }: UsePreConProj
 
   // Helper to get pageValue from slug based on pageType
   const getPageValue = useMemo(() => {
-    if (pageType === 'city') {
+    if (pageType === 'by-location') {
       return slug.toLowerCase();
     } else if (pageType === 'status') {
       return slugToStatus(slug);
@@ -45,7 +45,7 @@ export const usePreConProjectsData = ({ slug, pageType, filters }: UsePreConProj
 
   // Build API query based on page type
   const buildApiQuery = useMemo(() => {
-    if (pageType === 'city') {
+    if (pageType === 'by-location') {
       const cityName = unslugifyCityName(slug);
       return `/api/pre-con-projects?city=${encodeURIComponent(cityName)}`;
     } else if (pageType === 'status') {
@@ -71,8 +71,10 @@ export const usePreConProjectsData = ({ slug, pageType, filters }: UsePreConProj
       if (!getPageValue) return;
 
       try {
+        // Use 'by-location' as pageType for location pages when fetching page content
+        const apiPageType = pageType === 'by-location' ? 'by-location' : pageType;
         const response = await fetch(
-          `/api/pre-con-projects/page-content?pageType=${pageType}&pageValue=${encodeURIComponent(getPageValue)}`
+          `/api/pre-con-projects/page-content?pageType=${apiPageType}&pageValue=${encodeURIComponent(getPageValue)}`
         );
         
         if (response.ok) {
@@ -114,7 +116,7 @@ export const usePreConProjectsData = ({ slug, pageType, filters }: UsePreConProj
         let title = '';
         let description = '';
 
-        if (pageType === 'city') {
+        if (pageType === 'by-location') {
           const cityName = unslugifyCityName(slug);
           title = cityName;
           description = `Discover the latest pre-construction opportunities in ${cityName}. Explore upcoming developments, pricing, and availability.`;

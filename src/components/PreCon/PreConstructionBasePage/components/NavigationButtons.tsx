@@ -14,7 +14,7 @@ export const NavigationButtons: React.FC<NavigationButtonsProps> = ({
   slug, 
   displayTitle 
 }) => {
-  if (pageType !== 'city') return null;
+  if (pageType !== 'by-location') return null;
 
   return (
     <section>

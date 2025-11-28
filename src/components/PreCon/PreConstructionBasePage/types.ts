@@ -1,4 +1,4 @@
-export type PageType = 'city' | 'status' | 'propertyType' | 'subPropertyType' | 'completionYear';
+export type PageType = 'by-location' | 'status' | 'propertyType' | 'subPropertyType' | 'completionYear';
 
 export interface PreConstructionBasePageProps {
   slug: string;
