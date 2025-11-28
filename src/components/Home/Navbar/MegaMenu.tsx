@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 import { Home, Building2, Warehouse, MapPin, Calculator, BookOpen, FileText, TrendingUp, Search, KeyRound, DollarSign, Shield } from 'lucide-react';
+import { getBlogPosts } from '@/data/data';
 
 interface MegaMenuItem {
   title: string;
@@ -32,6 +33,8 @@ interface MegaMenuProps {
     image: string;
     link: string;
   };
+  blogCategory?: string;
+  blogSearch?: string;
   className?: string;
   children: React.ReactNode;
 }
@@ -42,6 +45,8 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({
   onMouseLeave,
   columns,
   featuredContent,
+  blogCategory,
+  blogSearch,
   className = "",
   children
 }) => {
@@ -50,6 +55,19 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Get blogs based on category or search term
+  const blogs = blogCategory || blogSearch
+    ? getBlogPosts({
+        ...(blogCategory && { category: blogCategory }),
+        ...(blogSearch && { search: blogSearch })
+      }).slice(0, 3)
+    : getBlogPosts({}).slice(0, 3);
+
+  // Fallback to general blogs if no category match
+  const displayBlogs = blogs.length === 0 
+    ? getBlogPosts({}).slice(0, 3)
+    : blogs;
 
   const menuContent = (
     <AnimatePresence>
@@ -119,48 +137,47 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({
                 ))}
               </div>
 
-              {/* Featured Content Sidebar */}
-              {featuredContent && (
-                <div className="bg-gray-50 p-8 lg:w-1/3 rounded-lg">
+              {/* Latest News Sidebar */}
+              {displayBlogs.length > 0 && (
+                <div className="bg-gray-50 p-8 lg:w-1/3 mt-6 lg:mt-0 rounded-lg">
                   <h6 className="font-medium text-sm text-gray-500 mb-5">
-                        Latest News
-                      </h6>
-                  <div className="mb-6 relative w-full h-36 rounded-lg overflow-hidden">
-                    <Image
-                      src={featuredContent.image}
-                      alt={featuredContent.title}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="block">
-                    <h5 className="text-gray-900 text-base mb-1.5 font-semibold">
-                      {featuredContent.title}
-                    </h5>
-                    <p className="text-sm font-medium text-gray-400">
-                      {featuredContent.description}
-                    </p>
-                    <Link
-                      href={featuredContent.link}
-                      className="flex items-center mt-4 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
-                    >
-                      Learn more
-                      <svg
-                        className="ml-2"
-                        width="14"
-                        height="14"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
+                    Latest News
+                  </h6>
+                  <div className="space-y-4">
+                    {displayBlogs.map((blog) => (
+                      <Link
+                        key={blog.id}
+                        href={`/blogs?id=${blog.id}`}
+                        className="block group"
                       >
-                        <path
-                          d="M2 8L12.6667 8M9.33333 12L12.8619 8.4714C13.0842 8.24918 13.1953 8.13807 13.1953 8C13.1953 7.86193 13.0842 7.75082 12.8619 7.5286L9.33333 4"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
+                        <div className="flex gap-3 p-3 hover:bg-white rounded-lg transition-colors">
+                          {blog.image && (
+                            <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden">
+                              <Image
+                                src={blog.image}
+                                alt={blog.title}
+                                width={80}
+                                height={80}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                              />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <h5 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-2 group-hover:text-primary transition-colors">
+                              {blog.title}
+                            </h5>
+                            <p className="text-xs text-gray-500 line-clamp-2">
+                              {blog.excerpt}
+                            </p>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                    <Link
+                      href="/blogs"
+                      className="flex items-center mt-4 text-xs font-semibold text-primary hover:underline"
+                    >
+                      View all blogs →
                     </Link>
                   </div>
                 </div>

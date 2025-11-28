@@ -80,7 +80,15 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
     : preConBlogs;
 
   const formatStatus = (status: string) => {
-    return status
+    const statusMap: Record<string, string> = {
+      'platinum-access': 'Platinum Access',
+      'now-selling': 'Now Selling',
+      'coming-soon': 'Coming Soon',
+      'assignments': 'Assignments',
+      'resale': 'Resale',
+      'sold-out': 'Sold Out'
+    };
+    return statusMap[status] || status
       .split('-')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
@@ -88,6 +96,19 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
 
   const formatPropertyType = (type: string) => {
     return type.replace(/-/g, ' ');
+  };
+
+  const getPropertyTypeSlug = (type: string) => {
+    // Map property types to their URL slugs
+    const slugMap: Record<string, string> = {
+      'Condos': 'condos',
+      'Houses': 'houses',
+      'Lofts': 'lofts',
+      'Master-Planned Communities': 'master-planned-communities',
+      'Multi Family': 'multi-family',
+      'Offices': 'offices'
+    };
+    return slugMap[type] || type.toLowerCase().replace(/\s+/g, '-');
   };
 
   const getPropertyTypeIcon = (type: string) => {
@@ -111,18 +132,47 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
   };
 
   const getStatusIcon = (status: string) => {
-    if (status === 'selling') return CheckCircle;
+    if (status === 'platinum-access') return CheckCircle;
+    if (status === 'now-selling') return CheckCircle;
     if (status === 'coming-soon') return Clock;
+    if (status === 'assignments') return Tag;
+    if (status === 'resale') return Tag;
     if (status === 'sold-out') return XCircle;
     return Tag;
   };
 
   const getStatusDescription = (status: string) => {
-    if (status === 'selling') return 'Projects currently available for purchase';
+    if (status === 'platinum-access') return 'Exclusive early access projects';
+    if (status === 'now-selling') return 'Projects currently available for purchase';
     if (status === 'coming-soon') return 'Upcoming projects launching soon';
+    if (status === 'assignments') return 'Assignment opportunities available';
+    if (status === 'resale') return 'Resale properties available';
     if (status === 'sold-out') return 'Fully sold projects';
     return 'Browse projects by status';
   };
+
+  // Static lists for property types, selling statuses, and occupancy years
+  const staticPropertyTypes = [
+    'Condos',
+    'Houses',
+    'Lofts',
+    'Master-Planned Communities',
+    'Multi Family',
+    'Offices'
+  ];
+
+  const staticSellingStatuses = [
+    'platinum-access',
+    'now-selling',
+    'coming-soon',
+    'assignments',
+    'resale',
+    'sold-out'
+  ];
+
+  // Generate occupancy years from current year to 6 years ahead
+  const currentYear = new Date().getFullYear();
+  const staticOccupancyYears = Array.from({ length: 7 }, (_, i) => currentYear + i);
 
   const menuContent = (
     <AnimatePresence>
@@ -150,33 +200,52 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                     <h6 className="font-medium text-sm text-gray-500 mb-4">
                       Projects by Property Type
                     </h6>
-                    <ul className="space-y-1">
-                      {filterData.propertyTypes.length > 0 ? (
-                        filterData.propertyTypes.map((type) => {
-                          const Icon = getPropertyTypeIcon(type);
-                          return (
-                            <li key={type}>
-                              <Link
-                                href={`/pre-construction/by-property-type/${encodeURIComponent(type.toLowerCase().replace(/\s+/g, '-'))}`}
-                                className="px-3 py-5 transition-all duration-500 hover:bg-gray-50 hover:rounded-xl flex group cursor-pointer select-text"
-                              >
-                                <div className="rounded-lg w-12 h-12 flex items-center justify-center bg-gray-50 group-hover:bg-primary/10 transition-colors flex-shrink-0">
-                                  <Icon className="w-6 h-6 text-primary" />
-                                </div>
-                                <div className="ml-4 w-4/5 select-text">
-                                  <h5 className="text-gray-900 text-base mb-1.5 font-semibold group-hover:text-primary transition-colors">
-                                    {formatPropertyType(type)}
-                                  </h5>
-                                  <p className="text-xs font-medium text-gray-400 select-text">
-                                    {getPropertyTypeDescription(type)}
-                                  </p>
-                                </div>
-                              </Link>
-                            </li>
-                          );
-                        })
-                      ) : null}
-                    </ul>
+                    <div className="grid grid-cols-2 gap-2">
+                      {staticPropertyTypes.map((type) => {
+                        const Icon = getPropertyTypeIcon(type);
+                        return (
+                          <Link
+                            key={type}
+                            href={`/pre-construction/${getPropertyTypeSlug(type)}`}
+                            className="px-3 py-4 transition-all duration-500 hover:bg-gray-50 hover:rounded-xl flex group cursor-pointer select-text"
+                          >
+                            <div className="rounded-lg w-10 h-10 flex items-center justify-center bg-gray-50 group-hover:bg-primary/10 transition-colors flex-shrink-0">
+                              <Icon className="w-5 h-5 text-primary" />
+                            </div>
+                            <div className="ml-3 flex-1 min-w-0 select-text">
+                              <h5 className="text-gray-900 text-sm font-semibold group-hover:text-primary transition-colors line-clamp-1">
+                                {formatPropertyType(type)}
+                              </h5>
+                              <p className="text-xs font-medium text-gray-400 select-text line-clamp-1">
+                                {getPropertyTypeDescription(type)}
+                              </p>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                    <Link
+                      href="/pre-construction/projects"
+                      className="flex items-center mt-4 text-xs font-semibold text-primary hover:underline"
+                    >
+                      Show all property types
+                      <svg
+                        className="ml-2"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M2 8L12.6667 8M9.33333 12L12.8619 8.4714C13.0842 8.24918 13.1953 8.13807 13.1953 8C13.1953 7.86193 13.0842 7.75082 12.8619 7.5286L9.33333 4"
+                          stroke="currentColor"
+                          strokeWidth="1.6"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </Link>
                   </div>
 
                   {/* Occupancy Years */}
@@ -184,68 +253,79 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                     <h6 className="font-medium text-sm text-gray-500 mb-4">
                       Projects by Occupancy Year
                     </h6>
-                    <ul className="space-y-1">
-                      {filterData.occupancyYears.length > 0 ? (
-                        filterData.occupancyYears.map((year) => (
-                          <li key={year}>
-                            <Link
-                              href={`/pre-construction/by-completion-year/${year}`}
-                              className="px-3 py-5 transition-all duration-500 hover:bg-gray-50 hover:rounded-xl flex group cursor-pointer select-text"
-                            >
-                              <div className="rounded-lg w-12 h-12 flex items-center justify-center bg-gray-50 group-hover:bg-primary/10 transition-colors flex-shrink-0">
-                                <Calendar className="w-6 h-6 text-primary" />
-                              </div>
-                              <div className="ml-4 w-4/5 select-text">
-                                <h5 className="text-gray-900 text-base mb-1.5 font-semibold group-hover:text-primary transition-colors">
-                                  {year}
-                                </h5>
-                                <p className="text-xs font-medium text-gray-400 select-text">
-                                  Projects with occupancy in {year}
-                                </p>
-                              </div>
-                            </Link>
-                          </li>
-                        ))
-                      ) : null}
-                    </ul>
+                    <div className="grid grid-cols-4 gap-2">
+                      {staticOccupancyYears.map((year) => (
+                        <Link
+                          key={year}
+                          href={`/pre-construction/${year}`}
+                          className="px-3 py-4 transition-all duration-500 hover:bg-gray-50 hover:rounded-xl flex flex-col items-center justify-center group cursor-pointer select-text"
+                        >
+                          <div className="rounded-lg w-10 h-10 flex items-center justify-center bg-gray-50 group-hover:bg-primary/10 transition-colors mb-2">
+                            <Calendar className="w-5 h-5 text-primary" />
+                          </div>
+                          <h5 className="text-gray-900 text-sm font-semibold group-hover:text-primary transition-colors text-center">
+                            Move in {year}
+                          </h5>
+                        </Link>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Selling Status */}
-                  <div>
+                  <div className="flex-1">
                     <h6 className="font-medium text-sm text-gray-500 mb-4">
                       Projects by Selling Status
                     </h6>
-                    <ul className="space-y-1">
-                      {filterData.sellingStatuses.length > 0 ? (
-                        filterData.sellingStatuses.map((status) => {
-                          const Icon = getStatusIcon(status);
-                          return (
-                            <li key={status}>
-                              <Link
-                                href={`/pre-construction/by-selling-status/${encodeURIComponent(status)}`}
-                                className="px-3 py-5 transition-all duration-500 hover:bg-gray-50 hover:rounded-xl flex group cursor-pointer select-text"
-                              >
-                                <div className="rounded-lg w-12 h-12 flex items-center justify-center bg-gray-50 group-hover:bg-primary/10 transition-colors flex-shrink-0">
-                                  <Icon className="w-6 h-6 text-primary" />
-                                </div>
-                                <div className="ml-4 w-4/5 select-text">
-                                  <h5 className="text-gray-900 text-base mb-1.5 font-semibold group-hover:text-primary transition-colors">
-                                    {formatStatus(status)}
-                                  </h5>
-                                  <p className="text-xs font-medium text-gray-400 select-text">
-                                    {getStatusDescription(status)}
-                                  </p>
-                                </div>
-                              </Link>
-                            </li>
-                          );
-                        })
-                      ) : null}
-                    </ul>
+                    <div className="grid grid-cols-3 gap-2">
+                      {staticSellingStatuses.map((status) => {
+                        const Icon = getStatusIcon(status);
+                        return (
+                          <Link
+                            key={status}
+                            href={`/pre-construction/${status}`}
+                            className="px-3 py-4 transition-all duration-500 hover:bg-gray-50 hover:rounded-xl flex group cursor-pointer select-text"
+                          >
+                            <div className="rounded-lg w-10 h-10 flex items-center justify-center bg-gray-50 group-hover:bg-primary/10 transition-colors flex-shrink-0">
+                              <Icon className="w-5 h-5 text-primary" />
+                            </div>
+                            <div className="ml-3 flex-1 min-w-0 select-text">
+                              <h5 className="text-gray-900 text-sm font-semibold group-hover:text-primary transition-colors line-clamp-1">
+                                {formatStatus(status)}
+                              </h5>
+                              <p className="text-xs font-medium text-gray-400 select-text line-clamp-1">
+                                {getStatusDescription(status)}
+                              </p>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                    <Link
+                      href="/pre-construction/projects"
+                      className="flex items-center mt-4 text-xs font-semibold text-primary hover:underline"
+                    >
+                      Show all selling statuses
+                      <svg
+                        className="ml-2"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M2 8L12.6667 8M9.33333 12L12.8619 8.4714C13.0842 8.24918 13.1953 8.13807 13.1953 8C13.1953 7.86193 13.0842 7.75082 12.8619 7.5286L9.33333 4"
+                          stroke="currentColor"
+                          strokeWidth="1.6"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </Link>
                   </div>
 
                   {/* Developers */}
-                  <div>
+                  <div className="">
                     <h6 className="font-medium text-sm text-gray-500 mb-4">
                       Projects by Developer
                     </h6>
@@ -275,7 +355,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                     </ul>
                     {filterData.developers.length > 10 && (
                       <Link
-                        href="/pre-construction"
+                        href="/pre-construction/projects"
                         className="flex items-center mt-4 text-xs font-semibold text-primary hover:underline"
                       >
                         View all developers
@@ -313,7 +393,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                           href={`/blogs?id=${blog.id}`}
                           className="block group"
                         >
-                          <div className="flex gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                          <div className="flex gap-3 p-3 hover:bg-white rounded-lg transition-colors">
                             {blog.image && (
                               <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden">
                                 <Image
