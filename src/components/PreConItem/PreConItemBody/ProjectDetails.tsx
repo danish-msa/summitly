@@ -270,7 +270,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
       icon: Home,
     },
     {
-      label: 'Completion Date',
+      label: 'Occupancy Date',
       value: preCon.completion.date,
       icon: Calendar,
     },

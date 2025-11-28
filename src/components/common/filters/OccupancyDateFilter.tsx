@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import { FaChevronDown, FaCalendar } from 'react-icons/fa';
 import { IndividualFilterProps, FilterChangeEvent } from '@/lib/types/filters';
 
-// Generate completion date options (current year to 10 years ahead)
-const generateCompletionDates = () => {
+// Generate occupancy date options (current year to 10 years ahead)
+const generateOccupancyDates = () => {
   const currentYear = new Date().getFullYear();
   const dates = [{ value: 'all', label: 'All Dates' }];
   
@@ -22,19 +22,19 @@ const generateCompletionDates = () => {
   return dates;
 };
 
-const COMPLETION_DATES = generateCompletionDates();
+const OCCUPANCY_DATES = generateOccupancyDates();
 
-const CompletionDateFilter: React.FC<IndividualFilterProps> = ({ 
+const OccupancyDateFilter: React.FC<IndividualFilterProps> = ({ 
   filters, 
   handleFilterChange
 }) => {
   const [activeDropdown, setActiveDropdown] = useState<boolean>(false);
 
-  // Handle completion date selection
-  const handleCompletionDateSelect = (value: string) => {
+  // Handle occupancy date selection
+  const handleOccupancyDateSelect = (value: string) => {
     const event = {
       target: {
-        name: 'completionDate',
+        name: 'occupancyDate',
         value: value
       }
     } as FilterChangeEvent;
@@ -42,10 +42,10 @@ const CompletionDateFilter: React.FC<IndividualFilterProps> = ({
     setActiveDropdown(false);
   };
 
-  // Get display text for completion date
-  const getCompletionDateText = () => {
-    const dateValue = filters.completionDate || 'all';
-    const selectedDate = COMPLETION_DATES.find(d => d.value === dateValue);
+  // Get display text for occupancy date
+  const getOccupancyDateText = () => {
+    const dateValue = filters.occupancyDate || 'all';
+    const selectedDate = OCCUPANCY_DATES.find(d => d.value === dateValue);
     return selectedDate ? selectedDate.label : 'All Dates';
   };
 
@@ -53,7 +53,7 @@ const CompletionDateFilter: React.FC<IndividualFilterProps> = ({
   const handleIndividualReset = () => {
     const event = {
       target: {
-        name: 'completionDate',
+        name: 'occupancyDate',
         value: 'all'
       }
     } as FilterChangeEvent;
@@ -67,15 +67,15 @@ const CompletionDateFilter: React.FC<IndividualFilterProps> = ({
         onClick={() => setActiveDropdown(!activeDropdown)}
       >
         <FaCalendar className="text-secondary" />
-        <span className="font-base text-sm md:text-sm">{getCompletionDateText()}</span>
-        {filters.completionDate && filters.completionDate !== 'all' && filters.completionDate !== undefined && (
+        <span className="font-base text-sm md:text-sm">{getOccupancyDateText()}</span>
+        {filters.occupancyDate && filters.occupancyDate !== 'all' && filters.occupancyDate !== undefined && (
           <button
             onClick={(e) => {
               e.stopPropagation();
               handleIndividualReset();
             }}
             className="ml-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full p-0.5 transition-all"
-            title="Clear completion date filter"
+            title="Clear occupancy date filter"
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -87,10 +87,10 @@ const CompletionDateFilter: React.FC<IndividualFilterProps> = ({
       
       {activeDropdown && (
         <div className="absolute z-10 mt-2 w-full sm:w-64 bg-white rounded-lg shadow-lg p-4 max-h-80 overflow-y-auto">
-          <p className="font-semibold mb-3">Completion Date</p>
+          <p className="font-semibold mb-3">Occupancy Date</p>
           <div className="space-y-2">
-            {COMPLETION_DATES.map((date) => {
-              const isSelected = (filters.completionDate || 'all') === date.value;
+            {OCCUPANCY_DATES.map((date) => {
+              const isSelected = (filters.occupancyDate || 'all') === date.value;
               
               return (
                 <div 
@@ -102,7 +102,7 @@ const CompletionDateFilter: React.FC<IndividualFilterProps> = ({
                       ? 'border-2 border-secondary bg-secondary/5 text-secondary font-semibold' 
                       : 'border-gray-300 hover:border-secondary text-gray-700'}
                   `}
-                  onClick={() => handleCompletionDateSelect(date.value)}
+                  onClick={() => handleOccupancyDateSelect(date.value)}
                 >
                   {date.label}
                 </div>
@@ -115,5 +115,5 @@ const CompletionDateFilter: React.FC<IndividualFilterProps> = ({
   );
 };
 
-export default CompletionDateFilter;
+export default OccupancyDateFilter;
 

@@ -37,7 +37,7 @@ export interface FilterState {
   developer?: string;
   preConStatus?: string;
   subPropertyType?: string; // For house/condo sub-types
-  completionDate?: string; // e.g., 'Q4 2025'
+  occupancyDate?: string; // e.g., 'Q4 2025'
   constructionStatus?: string; // '0' = Pre-construction, '1' = Construction, '2' = Complete
   
   // Advanced pre-construction filters
@@ -48,6 +48,8 @@ export interface FilterState {
   availableUnits?: number; // Minimum available units
   suites?: number; // Number of suites
   storeys?: number; // Number of storeys
+  locker?: string; // 'all', 'has', 'no'
+  balcony?: string; // 'all', 'has', 'no'
 }
 
 export interface FilterChangeEvent {
@@ -86,12 +88,14 @@ export const DEFAULT_FILTER_STATE: FilterState = {
   developer: 'all',
   preConStatus: 'all',
   subPropertyType: 'all',
-  completionDate: 'all',
+  occupancyDate: 'all',
   constructionStatus: 'all',
   unitTypes: [],
   ownershipType: 'all',
   garage: 'all',
-  basement: 'all'
+  basement: 'all',
+  locker: 'all',
+  balcony: 'all'
 };
 
 // Location data

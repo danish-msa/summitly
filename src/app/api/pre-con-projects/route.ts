@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
     const propertyType = searchParams.get('propertyType') || ''
     const subPropertyType = searchParams.get('subPropertyType') || ''
     const completionYear = searchParams.get('completionYear') || ''
+    const developer = searchParams.get('developer') || ''
     const limit = searchParams.get('limit')
 
     // Build where clause
@@ -18,7 +19,8 @@ export async function GET(request: NextRequest) {
       city?: { contains: string; mode: 'insensitive' }
       propertyType?: string
       subPropertyType?: string
-      completionDate?: { contains: string }
+      occupancyDate?: { contains: string }
+      developer?: string | { contains: string; mode: 'insensitive' }
     } = {}
     
     if (status) {
@@ -34,8 +36,28 @@ export async function GET(request: NextRequest) {
       where.subPropertyType = subPropertyType
     }
     if (completionYear) {
-      // Filter by completion date containing the year (e.g., "Q4 2025" contains "2025")
-      where.completionDate = { contains: completionYear }
+      // Filter by occupancy date containing the year (e.g., "Q4 2025" contains "2025")
+      where.occupancyDate = { contains: completionYear }
+    }
+    if (developer) {
+      // Try to find developer by name first, then fall back to ID
+      try {
+        const developerRecord = await prisma.developer.findFirst({
+          where: { 
+            name: { contains: developer, mode: 'insensitive' }
+          },
+          select: { id: true }
+        })
+        if (developerRecord) {
+          where.developer = developerRecord.id
+        } else {
+          // If not found by name, try as ID or name match
+          where.developer = { contains: developer, mode: 'insensitive' }
+        }
+      } catch {
+        // Fallback to simple contains match
+        where.developer = { contains: developer, mode: 'insensitive' }
+      }
     }
 
     // Retry logic for connection issues
@@ -269,7 +291,7 @@ export async function GET(request: NextRequest) {
           },
           status: project.status,
           completion: {
-            date: project.completionDate,
+            date: project.occupancyDate,
             progress: (() => {
               // Convert integer completionProgress to string for frontend
               const progressMap: Record<number, string> = {

@@ -4,7 +4,6 @@ import React from 'react';
 import { FilterComponentProps } from '@/lib/types/filters';
 import GlobalFilters from '@/components/common/filters/GlobalFilters';
 import { useLocationDetection } from '@/hooks/useLocationDetection';
-import PreConStatusFilter from '@/components/common/filters/PreConStatusFilter';
 import { FaMapMarkerAlt, FaList } from 'react-icons/fa';
 
 interface PreConListingFiltersProps extends FilterComponentProps {
@@ -53,18 +52,12 @@ const PreConListingFilters: React.FC<PreConListingFiltersProps> = ({
           showLocation={true}
           showPropertyType={true}
           showCommunity={true}
-          showPrice={true}
-          showBedrooms={true}
-          showBathrooms={true}
+          showPrice={false}
+          showBedrooms={false}
+          showBathrooms={false}
+          showPreConStatus={true}
           layout="horizontal"
           className="w-full md:w-auto"
-        />
-        {/* Status Filter for Pre-Construction */}
-        <PreConStatusFilter
-          filters={filters}
-          handleFilterChange={handleFilterChange}
-          communities={communities}
-          locations={locations}
         />
         {/* View Mode Toggles */}
         {onViewModeChange && (

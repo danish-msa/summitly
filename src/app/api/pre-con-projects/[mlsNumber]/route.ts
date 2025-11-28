@@ -200,7 +200,7 @@ export async function GET(
         },
         status: project.status,
         completion: {
-          date: project.completionDate,
+          date: project.occupancyDate,
           progress: (() => {
             const progressMap: Record<number, string> = {
               0: 'Pre-construction',

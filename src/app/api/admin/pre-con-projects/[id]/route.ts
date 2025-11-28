@@ -216,7 +216,7 @@ export async function PUT(
       maintenanceFeesPerSqft?: number | null
       maintenanceFeesDetail?: string | null
       floorPremiums?: string | null
-      completionDate?: string
+      occupancyDate?: string
       completionProgress?: number
       promotions?: string | null
       ownershipType?: string | null
@@ -299,7 +299,7 @@ export async function PUT(
     }
     if (body.maintenanceFeesDetail !== undefined) updateData.maintenanceFeesDetail = body.maintenanceFeesDetail === '' ? null : (body.maintenanceFeesDetail || null)
     if (body.floorPremiums !== undefined) updateData.floorPremiums = body.floorPremiums === '' ? null : (body.floorPremiums || null)
-    if (body.completionDate !== undefined) updateData.completionDate = body.completionDate
+    if (body.occupancyDate !== undefined) updateData.occupancyDate = body.occupancyDate
     if (body.completionProgress !== undefined) {
       // Convert completionProgress string to integer (database expects Int)
       const progressMap: Record<string, number> = {

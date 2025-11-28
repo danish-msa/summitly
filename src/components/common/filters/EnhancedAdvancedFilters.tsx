@@ -1,4 +1,3 @@
-// Enhanced AdvancedFilters with better animations and features
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -7,9 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { FilterState, PROPERTY_TYPES } from '@/lib/types/filters';
+import { FilterState } from '@/lib/types/filters';
+import { PillSelector } from '@/components/ui/pill-selector';
+import { RangeSlider } from '@/components/ui/range-slider';
+import { PropertyTypeSelector } from './PropertyTypeSelector';
+import { cn } from '@/lib/utils';
+import { 
+  DoorOpen, 
+  Home, 
+  Warehouse, 
+  Briefcase 
+} from 'lucide-react';
 
 interface EnhancedAdvancedFiltersProps {
   open: boolean;
@@ -18,35 +26,8 @@ interface EnhancedAdvancedFiltersProps {
   onFilterChange: (e: { target: { name: string; value: string | number | string[] } }) => void;
   onApplyFilters: () => void;
   onResetAdvanced: () => void;
-  isPreCon?: boolean; // Flag to show pre-construction specific filters
+  isPreCon?: boolean;
 }
-
-// Pre-Construction Property Types (matching schema exactly)
-const PRECON_PROPERTY_TYPES = [
-  { value: 'Condos', label: 'Condos' },
-  { value: 'Houses', label: 'Houses' },
-  { value: 'Lofts', label: 'Lofts' },
-  { value: 'Master-Planned Communities', label: 'Master-Planned Communities' },
-  { value: 'Multi Family', label: 'Multi Family' },
-  { value: 'Offices', label: 'Offices' },
-];
-
-// House type options (for Houses property type) - matching schema
-const HOUSE_TYPES = [
-  { value: 'all', label: 'All House Types' },
-  { value: 'Link', label: 'Link' },
-  { value: 'Townhouse', label: 'Townhouse' },
-  { value: 'Semi-Detached', label: 'Semi-Detached' },
-  { value: 'Detached', label: 'Detached' },
-];
-
-// Condo type options (for Condos property type) - matching schema
-const CONDO_TYPES = [
-  { value: 'all', label: 'All Condo Types' },
-  { value: 'Low-Rise', label: 'Low-Rise' },
-  { value: 'Mid-Rise', label: 'Mid-Rise' },
-  { value: 'High-Rise', label: 'High-Rise' },
-];
 
 // Construction status options
 const CONSTRUCTION_STATUSES = [
@@ -64,8 +45,8 @@ const SELLING_STATUSES = [
   { value: 'sold-out', label: 'Sold Out' },
 ];
 
-// Generate completion date options
-const generateCompletionDates = () => {
+// Generate occupancy date options
+const generateOccupancyDates = () => {
   const currentYear = new Date().getFullYear();
   const dates = [{ value: 'all', label: 'All Dates' }];
   for (let year = currentYear; year <= currentYear + 10; year++) {
@@ -79,14 +60,14 @@ const generateCompletionDates = () => {
   return dates;
 };
 
-const COMPLETION_DATES = generateCompletionDates();
+const OCCUPANCY_DATES = generateOccupancyDates();
 
-// Unit type options
+// Unit type options with icons
 const unitTypeOptions = [
-  { value: 'Den', label: 'Den' },
-  { value: 'Studio', label: 'Studio' },
-  { value: 'Loft', label: 'Loft' },
-  { value: 'Work/Live Loft', label: 'Work/Live Loft' },
+  { value: 'Den', label: 'Den', icon: DoorOpen },
+  { value: 'Studio', label: 'Studio', icon: Home },
+  { value: 'Loft', label: 'Loft', icon: Warehouse },
+  { value: 'Work/Live Loft', label: 'Work/Live Loft', icon: Briefcase },
 ];
 
 // Basement options
@@ -94,6 +75,38 @@ const basementOptions = [
   { value: 'all', label: 'All' },
   { value: 'finished', label: 'Finished' },
   { value: 'unfinished', label: 'Unfinished' },
+];
+
+// Locker options
+const lockerOptions = [
+  { value: 'all', label: 'Any' },
+  { value: 'has', label: 'Has locker' },
+  { value: 'no', label: 'No Locker' },
+];
+
+// Balcony options
+const balconyOptions = [
+  { value: 'all', label: 'Any' },
+  { value: 'has', label: 'Has Balcony' },
+  { value: 'no', label: 'No Balcony' },
+];
+
+const BEDROOM_OPTIONS = [
+  { value: 0, label: 'All' },
+  { value: 1, label: '1+' },
+  { value: 2, label: '2+' },
+  { value: 3, label: '3+' },
+  { value: 4, label: '4+' },
+  { value: 5, label: '5+' },
+];
+
+const BATHROOM_OPTIONS = [
+  { value: 0, label: 'All' },
+  { value: 1, label: '1+' },
+  { value: 2, label: '2+' },
+  { value: 3, label: '3+' },
+  { value: 4, label: '4+' },
+  { value: 5, label: '5+' },
 ];
 
 export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = ({
@@ -108,36 +121,29 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [navbarHeight, setNavbarHeight] = useState(64);
-  const [showPropertySubmenu, setShowPropertySubmenu] = useState(false);
   const [developers, setDevelopers] = useState<Array<{ value: string; label: string }>>([
     { value: 'all', label: 'All Developers' }
   ]);
   const filtersRef = useRef(filters);
   
-  // Keep filtersRef in sync with filters prop
   useEffect(() => {
     filtersRef.current = filters;
   }, [filters]);
 
-  // Get navbar height
   useEffect(() => {
     const updateNavbarHeight = () => {
       const navbar = document.querySelector('[class*="z-[99]"]') as HTMLElement;
       if (navbar) {
-        const height = navbar.offsetHeight;
-        setNavbarHeight(height);
+        setNavbarHeight(navbar.offsetHeight);
       } else {
-        const isMobile = window.innerWidth < 1024;
-        setNavbarHeight(isMobile ? 56 : 64);
+        setNavbarHeight(window.innerWidth < 1024 ? 56 : 64);
       }
     };
-
     updateNavbarHeight();
     window.addEventListener('resize', updateNavbarHeight);
     return () => window.removeEventListener('resize', updateNavbarHeight);
   }, []);
 
-  // Fetch developers
   useEffect(() => {
     const fetchDevelopers = async () => {
       try {
@@ -152,20 +158,14 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
             }))
           ];
           setDevelopers(developerList);
-        } else {
-          console.error('Failed to fetch developers:', response.status);
         }
       } catch (error) {
         console.error('Error fetching developers:', error);
-        // Set a default option if fetch fails
-        setDevelopers([{ value: 'all', label: 'All Developers' }]);
       }
     };
-
     fetchDevelopers();
   }, []);
 
-  // Close panel when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -178,90 +178,56 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
         onOpenChange(false);
       }
     };
-
     if (open) {
       document.addEventListener('mousedown', handleClickOutside);
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
-
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.body.style.overflow = '';
     };
   }, [open, onOpenChange]);
 
-  // Handle property type selection
-  const handlePropertyTypeSelect = (value: string, checked: boolean) => {
-    const newValue = checked ? value : 'all';
-    onFilterChange({ 
-      target: { 
-        name: 'propertyType', 
-        value: newValue
-      } 
-    });
-    
-    // For non-pre-con: Check if it's Houses or Condos (matching schema values)
-    // For pre-con: Check if it's house or condo (lowercase)
-    const hasSubmenu = !isPreCon 
-      ? (newValue === 'Houses' || newValue === 'Condos')
-      : (newValue === 'house' || newValue === 'condo');
-    
-    if (hasSubmenu) {
-      setShowPropertySubmenu(true);
-    } else {
-      setShowPropertySubmenu(false);
-      // Reset subPropertyType when changing away from house/condo
-      if (filters.subPropertyType && filters.subPropertyType !== 'all') {
-        onFilterChange({
-          target: {
-            name: 'subPropertyType',
-            value: 'all'
-          }
-        });
-      }
-    }
+  const formatPrice = (value: number) => {
+    if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
+    return `$${value}`;
   };
 
-  // Handle sub-property type selection
-  const handleSubPropertyTypeSelect = (value: string, checked: boolean) => {
-    const newValue = checked ? value : 'all';
-    onFilterChange({
-      target: {
-        name: 'subPropertyType',
-        value: newValue
-      }
-    });
+  const formatSqft = (value: number) => {
+    return value >= 8000 ? `${value}+` : value.toString();
   };
 
-  // Count active filters
   const activeFiltersCount = [
     filters.propertyType !== 'all',
     filters.subPropertyType && filters.subPropertyType !== 'all',
     filters.constructionStatus && filters.constructionStatus !== 'all',
     filters.preConStatus && filters.preConStatus !== 'all',
-    filters.completionDate && filters.completionDate !== 'all',
+    filters.occupancyDate && filters.occupancyDate !== 'all',
     filters.developer && filters.developer !== 'all',
     filters.bedrooms !== 0,
     filters.bathrooms !== 0,
     (filters.minSquareFeet || 0) > 0,
-    (filters.maxSquareFeet || 0) > 0,
+    (filters.maxSquareFeet || 0) > 0 && (filters.maxSquareFeet || 0) < 8000,
     filters.minPrice > 0,
     filters.maxPrice < 2000000,
     filters.basement && filters.basement !== 'all',
+    filters.locker && filters.locker !== 'all',
+    filters.balcony && filters.balcony !== 'all',
     (filters.unitTypes?.length || 0) > 0,
   ].filter(Boolean).length;
 
   return (
     <>
-      {/* Enhanced Advanced Filters Button */}
+      {/* Advanced Filters Button */}
       <div className="relative w-full sm:w-auto">
         <Button
           ref={buttonRef}
           variant="outline"
           onClick={() => onOpenChange(!open)}
-          className="relative flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:border-secondary hover:bg-gray-50 transition-all group"
+          className="relative flex items-center gap-2 px-4 py-2 rounded-lg border-gray-300 hover:border-secondary transition-all group"
         >
           <Filter className="h-4 w-4 group-hover:rotate-12 transition-transform" />
           <span className="text-sm">Advanced</span>
@@ -279,32 +245,32 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
         </Button>
       </div>
 
-      {/* Inline Expandable Advanced Filters Panel - Full Width with Modern Design */}
+      {/* Overlay */}
       {open && (
-        <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm" onClick={() => onOpenChange(false)} />
+        <div className="fixed inset-0 z-40 bg-foreground/10 backdrop-blur-sm" onClick={() => onOpenChange(false)} />
       )}
+
+      {/* Filter Panel */}
       <div
         ref={panelRef}
         className={`
           fixed left-1/2 -translate-x-1/2 w-[95%] z-50
-          bg-white rounded-2xl shadow-2xl border border-gray-200
+          bg-card rounded-2xl shadow-2xl border border-border
           overflow-hidden
-          transition-all duration-300 ease-in-out
+          transition-all duration-300 ease-out
           ${open 
-            ? 'max-h-[85vh] opacity-100 visible translate-y-0' 
+            ? 'max-h-[95vh] opacity-100 visible translate-y-0' 
             : 'max-h-0 opacity-0 invisible -translate-y-4 pointer-events-none'
           }
         `}
-        style={{
-          top: `${navbarHeight + 12}px`
-        }}
+        style={{ top: `${navbarHeight + 12}px` }}
       >
-        <div className="p-6 md:p-8">
+        <div className="p-6 md:p-8 overflow-y-auto max-h-[calc(85vh-2rem)]">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6 pb-4 border-b">
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
             <div className="flex items-center gap-3">
               <div>
-                <h3 className="text-xl font-bold text-primary">Advanced Filters</h3>
+                <h3 className="text-xl font-bold text-foreground">Advanced Filters</h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   Refine your search with detailed criteria
                 </p>
@@ -315,421 +281,287 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
                 </Badge>
               )}
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onOpenChange(false)}
-              className="h-8 w-8"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                onClick={onResetAdvanced}
+                className="h-9"
+              >
+                Reset Filters
+              </Button>
+              <Button
+                onClick={() => {
+                  onApplyFilters();
+                  onOpenChange(false);
+                }}
+                className="h-9"
+              >
+                Apply Filters
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onOpenChange(false)}
+                className="h-8 w-8"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
-          {/* 3-Column Layout */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Column 1 */}
-            <div className="space-y-4">
+          {/* Main Content */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column */}
+            <div className="space-y-6">
               {/* Property Type */}
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">Property Type</Label>
+              <PropertyTypeSelector
+                value={filters.propertyType || 'all'}
+                subValue={filters.subPropertyType || 'all'}
+                onChange={(value) => {
+                  onFilterChange({ target: { name: 'propertyType', value } });
+                  // Reset subPropertyType when propertyType changes to 'all' or a type without subtypes
+                  if (value === 'all' || !['Condos', 'Houses'].includes(value)) {
+                    onFilterChange({ target: { name: 'subPropertyType', value: 'all' } });
+                  }
+                }}
+                onSubChange={(value) => onFilterChange({ target: { name: 'subPropertyType', value } })}
+              />
+
+              {/* Status Dropdowns */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  {/* Use pre-con property types for non-pre-con, regular PROPERTY_TYPES for pre-con */}
-                  {(!isPreCon ? PRECON_PROPERTY_TYPES : PROPERTY_TYPES.filter(pt => pt.value !== 'all')).map((type) => {
-                    const isChecked = filters.propertyType === type.value;
-                    return (
-                      <div key={type.value} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`prop-${type.value}`}
-                          checked={isChecked}
-                          onCheckedChange={(checked) => handlePropertyTypeSelect(type.value, checked === true)}
-                        />
-                        <label
-                          htmlFor={`prop-${type.value}`}
-                          className="text-sm font-medium leading-none cursor-pointer"
-                        >
-                          {type.label}
-                        </label>
-                      </div>
-                    );
-                  })}
-                  
-                  {/* Submenu for House/Condo - matching schema values */}
-                  {((!isPreCon && (filters.propertyType === 'Houses' || filters.propertyType === 'Condos')) ||
-                    (isPreCon && (filters.propertyType === 'house' || filters.propertyType === 'condo'))) && (
-                    <div className="ml-6 mt-2 space-y-2 border-l-2 border-gray-200 pl-4">
-                      {((!isPreCon && filters.propertyType === 'Houses') || (isPreCon && filters.propertyType === 'house') 
-                        ? HOUSE_TYPES 
-                        : CONDO_TYPES).map((subType) => {
-                        const isChecked = (filters.subPropertyType || 'all') === subType.value;
-                        return (
-                          <div key={subType.value} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`subprop-${subType.value}`}
-                              checked={isChecked}
-                              onCheckedChange={(checked) => handleSubPropertyTypeSelect(subType.value, checked === true)}
-                            />
-                            <label
-                              htmlFor={`subprop-${subType.value}`}
-                              className="text-sm font-medium leading-none cursor-pointer"
-                            >
-                              {subType.label}
-                            </label>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                  <Label className="text-sm font-semibold">Construction Status</Label>
+                  <select
+                    className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    value={filters.constructionStatus || 'all'}
+                    onChange={(e) => onFilterChange({ target: { name: 'constructionStatus', value: e.target.value } })}
+                  >
+                    {CONSTRUCTION_STATUSES.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">Selling Status</Label>
+                  <select
+                    className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    value={filters.preConStatus || 'all'}
+                    onChange={(e) => onFilterChange({ target: { name: 'preConStatus', value: e.target.value } })}
+                  >
+                    {SELLING_STATUSES.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
-              {/* Construction Status */}
-              <div className="space-y-2">
-                <Label htmlFor="constructionStatus" className="text-sm font-semibold">
-                  Construction Status
-                </Label>
-                <select
-                  id="constructionStatus"
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  value={filters.constructionStatus || 'all'}
-                  onChange={(e) => onFilterChange({ target: { name: 'constructionStatus', value: e.target.value } })}
-                >
-                  {CONSTRUCTION_STATUSES.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Selling Status */}
-              <div className="space-y-2">
-                <Label htmlFor="sellingStatus" className="text-sm font-semibold">
-                  Selling Status
-                </Label>
-                <select
-                  id="sellingStatus"
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  value={filters.preConStatus || 'all'}
-                  onChange={(e) => onFilterChange({ target: { name: 'preConStatus', value: e.target.value } })}
-                >
-                  {SELLING_STATUSES.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Completion Date */}
-              <div className="space-y-2">
-                <Label htmlFor="completionDate" className="text-sm font-semibold">
-                  Completion Date
-                </Label>
-                <select
-                  id="completionDate"
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  value={filters.completionDate || 'all'}
-                  onChange={(e) => onFilterChange({ target: { name: 'completionDate', value: e.target.value } })}
-                >
-                  {COMPLETION_DATES.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Developer */}
-              <div className="space-y-2">
-                <Label htmlFor="developer" className="text-sm font-semibold">
-                  Developer
-                </Label>
-                <select
-                  id="developer"
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  value={filters.developer || 'all'}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    onFilterChange({ target: { name: 'developer', value } });
-                  }}
-                >
-                  {developers.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+              {/* Occupancy Date & Developer */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">Occupancy Date</Label>
+                  <select
+                    className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    value={filters.occupancyDate || 'all'}
+                    onChange={(e) => onFilterChange({ target: { name: 'occupancyDate', value: e.target.value } })}
+                  >
+                    {OCCUPANCY_DATES.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">Developer</Label>
+                  <select
+                    className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    value={filters.developer || 'all'}
+                    onChange={(e) => onFilterChange({ target: { name: 'developer', value: e.target.value } })}
+                  >
+                    {developers.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
 
-            {/* Column 2 */}
-            <div className="space-y-4">
-              {/* Beds */}
-              <div className="space-y-2">
-                <Label htmlFor="bedrooms" className="text-sm font-semibold">Beds</Label>
-                <select
-                  id="bedrooms"
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  value={filters.bedrooms || 0}
-                  onChange={(e) => onFilterChange({ target: { name: 'bedrooms', value: parseInt(e.target.value) || 0 } })}
-                >
-                  <option value={0}>Any</option>
-                  <option value={1}>1</option>
-                  <option value={2}>2</option>
-                  <option value={3}>3</option>
-                  <option value={4}>4</option>
-                  <option value={5}>5+</option>
-                </select>
-              </div>
+            {/* Middle Column */}
+            <div className="space-y-6">
+              {/* Bedrooms */}
+              <PillSelector
+                label="Bedrooms"
+                options={BEDROOM_OPTIONS}
+                value={filters.bedrooms}
+                onChange={(value) => onFilterChange({ target: { name: 'bedrooms', value: value as number } })}
+              />
 
-              {/* Baths */}
-              <div className="space-y-2">
-                <Label htmlFor="bathrooms" className="text-sm font-semibold">Baths</Label>
-                <select
-                  id="bathrooms"
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  value={filters.bathrooms || 0}
-                  onChange={(e) => onFilterChange({ target: { name: 'bathrooms', value: parseInt(e.target.value) || 0 } })}
-                >
-                  <option value={0}>Any</option>
-                  <option value={1}>1</option>
-                  <option value={2}>2</option>
-                  <option value={3}>3</option>
-                  <option value={4}>4+</option>
-                </select>
-              </div>
+              {/* Bathrooms */}
+              <PillSelector
+                label="Bathrooms"
+                options={BATHROOM_OPTIONS}
+                value={filters.bathrooms}
+                onChange={(value) => onFilterChange({ target: { name: 'bathrooms', value: value as number } })}
+              />
 
-              {/* Square Foot Range */}
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">Square Foot Range</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Input
-                      type="number"
-                      placeholder="Min"
-                      value={filters.minSquareFeet || ""}
-                      onChange={(e) =>
-                        onFilterChange({ 
-                          target: { 
-                            name: 'minSquareFeet', 
-                            value: parseInt(e.target.value) || 0 
-                          } 
-                        })
-                      }
-                      className="text-sm"
-                    />
-                  </div>
-                  <div>
-                    <Input
-                      type="number"
-                      placeholder="Max"
-                      value={filters.maxSquareFeet || ""}
-                      onChange={(e) =>
-                        onFilterChange({ 
-                          target: { 
-                            name: 'maxSquareFeet', 
-                            value: parseInt(e.target.value) || 0 
-                          } 
-                        })
-                      }
-                      className="text-sm"
-                    />
-                  </div>
-                </div>
-              </div>
+              {/* Price Range */}
+              <RangeSlider
+                label="Price"
+                min={0}
+                max={2000000}
+                step={25000}
+                minValue={filters.minPrice}
+                maxValue={filters.maxPrice}
+                onMinChange={(value) => onFilterChange({ target: { name: 'minPrice', value } })}
+                onMaxChange={(value) => onFilterChange({ target: { name: 'maxPrice', value } })}
+                formatValue={formatPrice}
+              />
 
-              {/* Price */}
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">Price</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Input
-                      type="number"
-                      placeholder="Min"
-                      value={filters.minPrice || ""}
-                      onChange={(e) =>
-                        onFilterChange({ 
-                          target: { 
-                            name: 'minPrice', 
-                            value: parseInt(e.target.value) || 0 
-                          } 
-                        })
-                      }
-                      className="text-sm"
-                    />
-                  </div>
-                  <div>
-                    <Input
-                      type="number"
-                      placeholder="Max"
-                      value={filters.maxPrice || ""}
-                      onChange={(e) =>
-                        onFilterChange({ 
-                          target: { 
-                            name: 'maxPrice', 
-                            value: parseInt(e.target.value) || 2000000 
-                          } 
-                        })
-                      }
-                      className="text-sm"
-                    />
-                  </div>
+              {/* Square Footage */}
+              <RangeSlider
+                label="Square Footage (sqft)"
+                min={0}
+                max={8000}
+                step={100}
+                minValue={filters.minSquareFeet || 0}
+                maxValue={filters.maxSquareFeet || 8000}
+                onMinChange={(value) => onFilterChange({ target: { name: 'minSquareFeet', value } })}
+                onMaxChange={(value) => onFilterChange({ target: { name: 'maxSquareFeet', value } })}
+                formatValue={formatSqft}
+              />
+            </div>
+
+            {/* Right Column */}
+            <div className="space-y-6">
+              {/* Unit Types */}
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold text-foreground">Unit Types Available</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {unitTypeOptions.map((unitType) => {
+                    const Icon = unitType.icon;
+                    const unitTypesArray = Array.isArray(filters.unitTypes) ? filters.unitTypes : [];
+                    const isChecked = unitTypesArray.includes(unitType.value);
+                    
+                    return (
+                      <button
+                        key={unitType.value}
+                        type="button"
+                        onClick={() => {
+                          const current = Array.isArray(filtersRef.current.unitTypes) ? [...filtersRef.current.unitTypes] : [];
+                          const shouldAdd = !isChecked;
+                          
+                          if (shouldAdd && current.includes(unitType.value)) return;
+                          if (!shouldAdd && !current.includes(unitType.value)) return;
+                          
+                          const updated = shouldAdd
+                            ? [...current, unitType.value]
+                            : current.filter((item) => item !== unitType.value);
+                          
+                          onFilterChange({ target: { name: 'unitTypes', value: updated } });
+                        }}
+                        className={cn(
+                          "property-card relative",
+                          isChecked ? "property-card-active" : "property-card-inactive"
+                        )}
+                      >
+                        <Icon className={cn(
+                          "h-6 w-6 mb-1.5 transition-colors",
+                          isChecked ? "text-primary" : "text-muted-foreground"
+                        )} />
+                        <span className={cn(
+                          "text-xs font-medium text-center leading-tight",
+                          isChecked ? "text-primary" : "text-foreground"
+                        )}>
+                          {unitType.label}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* Basement */}
               <div className="space-y-2">
-                <Label htmlFor="basement" className="text-sm font-semibold">
-                  Basement
-                </Label>
+                <Label className="text-sm font-semibold">Basement</Label>
                 <select
-                  id="basement"
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   value={filters.basement || 'all'}
                   onChange={(e) => onFilterChange({ target: { name: 'basement', value: e.target.value } })}
                 >
                   {basementOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
+                    <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
                 </select>
               </div>
-            </div>
 
-            {/* Column 3 */}
-            <div className="space-y-4">
-                {/* Unit Types Available */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Unit Types Available</Label>
+              {/* Condo Includes Section */}
+              <div className="space-y-3 pt-2">
+                <Label className="text-sm font-semibold text-foreground">Condo Includes:</Label>
+                
+                {/* Locker and Balcony in same row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Locker */}
                   <div className="space-y-2">
-                    {unitTypeOptions.map((unitType) => {
-                      const unitTypesArray = Array.isArray(filters.unitTypes) ? filters.unitTypes : [];
-                      const isChecked = unitTypesArray.includes(unitType.value);
-                      return (
-                        <div key={unitType.value} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`unitType-${unitType.value}`}
-                            checked={isChecked}
-                            onCheckedChange={(checked) => {
-                              // Use ref to get the latest state to avoid stale closures
-                              const latestFilters = filtersRef.current;
-                              const current = Array.isArray(latestFilters.unitTypes) ? [...latestFilters.unitTypes] : [];
-                              const shouldAdd = checked === true;
-                              
-                              // Prevent duplicate operations
-                              if (shouldAdd && current.includes(unitType.value)) {
-                                return; // Already in array, no need to update
-                              }
-                              if (!shouldAdd && !current.includes(unitType.value)) {
-                                return; // Not in array, no need to update
-                              }
-                              
-                              const updated = shouldAdd
-                                ? [...current, unitType.value]
-                                : current.filter((item) => item !== unitType.value);
-                              
-                              onFilterChange({ target: { name: 'unitTypes', value: updated } });
-                            }}
-                          />
-                          <label
-                            htmlFor={`unitType-${unitType.value}`}
-                            className="text-sm font-medium leading-none cursor-pointer"
-                          >
-                            {unitType.label}
-                          </label>
-                        </div>
-                      );
-                    })}
+                    <Label className="text-sm font-medium text-muted-foreground">Locker</Label>
+                    <select
+                      className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      value={filters.locker || 'all'}
+                      onChange={(e) => onFilterChange({ target: { name: 'locker', value: e.target.value } })}
+                    >
+                      {lockerOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Balcony */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-muted-foreground">Balcony</Label>
+                    <select
+                      className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      value={filters.balcony || 'all'}
+                      onChange={(e) => onFilterChange({ target: { name: 'balcony', value: e.target.value } })}
+                    >
+                      {balconyOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
+              </div>
 
-                {/* Available Units */}
+              {/* Additional Inputs */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="availableUnits" className="text-sm font-semibold">
-                    Available Units
-                  </Label>
+                  <Label className="text-sm font-semibold">Available Units</Label>
                   <Input
-                    id="availableUnits"
                     type="number"
-                    placeholder="Min available units"
+                    placeholder="Min units"
                     value={filters.availableUnits || ""}
-                    onChange={(e) =>
-                      onFilterChange({ 
-                        target: { 
-                          name: 'availableUnits', 
-                          value: parseInt(e.target.value) || 0 
-                        } 
-                      })
-                    }
-                    className="text-sm"
+                    onChange={(e) => onFilterChange({ target: { name: 'availableUnits', value: parseInt(e.target.value) || 0 } })}
+                    className="h-10 rounded-lg"
                   />
                 </div>
-
-                {/* Suites */}
                 <div className="space-y-2">
-                  <Label htmlFor="suites" className="text-sm font-semibold">
-                    Suites
-                  </Label>
+                  <Label className="text-sm font-semibold">Suites</Label>
                   <Input
-                    id="suites"
                     type="number"
-                    placeholder="Number of suites"
+                    placeholder="# of suites"
                     value={filters.suites || ""}
-                    onChange={(e) =>
-                      onFilterChange({ 
-                        target: { 
-                          name: 'suites', 
-                          value: parseInt(e.target.value) || 0 
-                        } 
-                      })
-                    }
-                    className="text-sm"
+                    onChange={(e) => onFilterChange({ target: { name: 'suites', value: parseInt(e.target.value) || 0 } })}
+                    className="h-10 rounded-lg"
                   />
                 </div>
-
-                {/* Storeys */}
                 <div className="space-y-2">
-                  <Label htmlFor="storeys" className="text-sm font-semibold">
-                    Storeys
-                  </Label>
+                  <Label className="text-sm font-semibold">Storeys</Label>
                   <Input
-                    id="storeys"
                     type="number"
-                    placeholder="Number of storeys"
+                    placeholder="# of storeys"
                     value={filters.storeys || ""}
-                    onChange={(e) =>
-                      onFilterChange({ 
-                        target: { 
-                          name: 'storeys', 
-                          value: parseInt(e.target.value) || 0 
-                        } 
-                      })
-                    }
-                    className="text-sm"
+                    onChange={(e) => onFilterChange({ target: { name: 'storeys', value: parseInt(e.target.value) || 0 } })}
+                    className="h-10 rounded-lg"
                   />
                 </div>
               </div>
-          </div>
-
-          {/* Footer Actions */}
-          <div className="flex gap-3 pt-6 mt-6 border-t">
-            <Button
-              variant="outline"
-              onClick={onResetAdvanced}
-              className="flex-1"
-            >
-              Reset Advanced
-            </Button>
-            <Button
-              onClick={() => {
-                onApplyFilters();
-                onOpenChange(false);
-              }}
-              className="flex-1 bg-primary hover:bg-primary/90"
-            >
-              Apply Filters
-            </Button>
+            </div>
           </div>
         </div>
       </div>

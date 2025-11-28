@@ -11,6 +11,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ArrowLeft, Loader2 } from "lucide-react"
 import { isAdmin } from "@/lib/roles"
 import { useBackgroundFetch } from "@/hooks/useBackgroundFetch"
+import { FAQField } from "@/components/Dashboard/FAQField"
+import { RichTextEditor } from "@/components/Dashboard/RichTextEditor"
+import type { FaqItem } from "@/components/common/FAQ"
 
 interface PageContent {
   id: string
@@ -22,6 +25,7 @@ interface PageContent {
   metaTitle: string | null
   metaDescription: string | null
   customContent: string | null
+  faqs: string | null
   isPublished: boolean
 }
 
@@ -41,6 +45,7 @@ export default function EditPropertyTypePage() {
     metaTitle: "",
     metaDescription: "",
     customContent: "",
+    faqs: [] as FaqItem[],
     isPublished: false,
   })
 
@@ -85,6 +90,14 @@ export default function EditPropertyTypePage() {
       formInitializedRef.current = true
       
       if (content) {
+        let parsedFaqs: FaqItem[] = [];
+        if (content.faqs) {
+          try {
+            parsedFaqs = JSON.parse(content.faqs);
+          } catch (e) {
+            console.error("Error parsing FAQs:", e);
+          }
+        }
         setFormData({
           title: content.title || "",
           description: content.description || "",
@@ -92,6 +105,7 @@ export default function EditPropertyTypePage() {
           metaTitle: content.metaTitle || "",
           metaDescription: content.metaDescription || "",
           customContent: content.customContent || "",
+          faqs: parsedFaqs,
           isPublished: content.isPublished || false,
         })
       }
@@ -117,6 +131,7 @@ export default function EditPropertyTypePage() {
         metaTitle: formData.metaTitle || null,
         metaDescription: formData.metaDescription || null,
         customContent: formData.customContent || null,
+        faqs: formData.faqs.length > 0 ? JSON.stringify(formData.faqs) : null,
         isPublished: formData.isPublished,
       }
 
@@ -193,13 +208,10 @@ export default function EditPropertyTypePage() {
 
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                className="rounded-lg"
+              <RichTextEditor
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(value) => setFormData({ ...formData, description: value })}
                 placeholder="Page description..."
-                rows={4}
               />
             </div>
 
@@ -264,6 +276,13 @@ export default function EditPropertyTypePage() {
             </div>
           </CardContent>
         </Card>
+
+        <FAQField
+          value={formData.faqs}
+          onChange={(faqs) => setFormData({ ...formData, faqs })}
+          label="Page-Specific FAQs"
+          description="Add custom FAQs for this property type page. These will be displayed along with the default pre-construction FAQs."
+        />
 
         <div className="flex justify-end gap-4">
           <Button

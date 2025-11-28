@@ -52,7 +52,7 @@ interface PreConProject {
   maintenanceFeesPerSqft: number | null
   maintenanceFeesDetail: string | null
   floorPremiums: string | null
-  completionDate: string
+  occupancyDate: string
   completionProgress: string
   promotions: string | null
   ownershipType: string | null
@@ -139,7 +139,7 @@ export default function EditProjectPage() {
     maintenanceFeesPerSqft: "",
     maintenanceFeesDetail: "",
     floorPremiums: "",
-    completionDate: "",
+    occupancyDate: "",
     completionProgress: "",
     promotions: "",
     ownershipType: "",
@@ -251,7 +251,7 @@ export default function EditProjectPage() {
         maintenanceFeesPerSqft: project.maintenanceFeesPerSqft?.toString() || "",
         maintenanceFeesDetail: project.maintenanceFeesDetail || "",
         floorPremiums: project.floorPremiums || "",
-        completionDate: project.completionDate || "",
+        occupancyDate: project.occupancyDate || "",
         completionProgress: project.completionProgress || "",
         promotions: project.promotions || "",
         ownershipType: project.ownershipType || "",
@@ -387,7 +387,7 @@ export default function EditProjectPage() {
         maintenanceFeesPerSqft: formData.maintenanceFeesPerSqft === '' ? null : formData.maintenanceFeesPerSqft,
         maintenanceFeesDetail: formData.maintenanceFeesDetail === '' ? null : formData.maintenanceFeesDetail,
         floorPremiums: formData.floorPremiums === '' ? null : formData.floorPremiums,
-        completionDate: formData.completionDate,
+        occupancyDate: formData.occupancyDate,
         completionProgress: formData.completionProgress,
         promotions: formData.promotions,
         ownershipType: formData.ownershipType || null,

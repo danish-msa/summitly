@@ -12,7 +12,7 @@ import EnhancedAdvancedFilters from './EnhancedAdvancedFilters';
 import SellRentToggle from './SellRentToggle';
 import DeveloperFilter from './DeveloperFilter';
 import PreConStatusFilter from './PreConStatusFilter';
-import CompletionDateFilter from './CompletionDateFilter';
+import OccupancyDateFilter from './OccupancyDateFilter';
 import ConstructionStatusFilter from './ConstructionStatusFilter';
 
 interface GlobalFiltersProps extends FilterComponentProps {
@@ -26,6 +26,7 @@ interface GlobalFiltersProps extends FilterComponentProps {
   showSellRentToggle?: boolean;
   showResetButton?: boolean; // Flag to show/hide reset button
   isPreCon?: boolean; // Flag to show pre-construction specific filters
+  showPreConStatus?: boolean; // Flag to show/hide pre-construction status filter
   layout?: 'horizontal' | 'vertical';
   className?: string;
 }
@@ -46,6 +47,7 @@ const GlobalFilters: React.FC<GlobalFiltersProps> = ({
   showSellRentToggle = false,
   showResetButton = true,
   isPreCon = false,
+  showPreConStatus = false,
   layout = 'horizontal',
   className = ''
 }) => {
@@ -108,13 +110,17 @@ const GlobalFilters: React.FC<GlobalFiltersProps> = ({
       <DeveloperFilter key="developer" {...commonProps} />
     );
     filterComponents.push(
-      <PreConStatusFilter key="preConStatus" {...commonProps} />
-    );
-    filterComponents.push(
-      <CompletionDateFilter key="completionDate" {...commonProps} />
+      <OccupancyDateFilter key="occupancyDate" {...commonProps} />
     );
     filterComponents.push(
       <ConstructionStatusFilter key="constructionStatus" {...commonProps} />
+    );
+  }
+
+  // Add Pre-Construction Status Filter (can be shown independently)
+  if (showPreConStatus) {
+    filterComponents.push(
+      <PreConStatusFilter key="preConStatus" {...commonProps} />
     );
   }
 
@@ -145,15 +151,35 @@ const GlobalFilters: React.FC<GlobalFiltersProps> = ({
         }}
         onResetAdvanced={() => {
           // Reset only advanced filters
-          const advancedFilterKeys = ['minSquareFeet', 'maxSquareFeet', 'yearBuilt', 'features', 'listingDate'];
-          if (isPreCon) {
-            advancedFilterKeys.push('unitTypes', 'ownershipType', 'garage', 'basement');
-          }
+          const advancedFilterKeys = [
+            'propertyType',
+            'subPropertyType',
+            'minSquareFeet', 
+            'maxSquareFeet', 
+            'yearBuilt', 
+            'features', 
+            'listingDate',
+            'constructionStatus',
+            'preConStatus',
+            'occupancyDate',
+            'developer',
+            'basement',
+            'locker',
+            'balcony',
+            'unitTypes',
+            'availableUnits',
+            'suites',
+            'storeys'
+          ];
           advancedFilterKeys.forEach(key => {
             handleFilterChange({
               target: {
                 name: key,
-                value: key === 'features' || key === 'unitTypes' ? [] : (key.includes('SquareFeet') ? 0 : 'all')
+                value: key === 'features' || key === 'unitTypes' 
+                  ? [] 
+                  : (key.includes('SquareFeet') || key === 'availableUnits' || key === 'suites' || key === 'storeys')
+                    ? 0 
+                    : 'all'
               }
             });
           });

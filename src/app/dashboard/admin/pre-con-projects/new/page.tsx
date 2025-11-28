@@ -61,7 +61,7 @@ export default function NewProjectPage() {
     floorPremiums: "",
     
     // Completion
-    completionDate: "",
+    occupancyDate: "",
     completionProgress: "",
     promotions: "",
     ownershipType: "",
@@ -181,7 +181,7 @@ export default function NewProjectPage() {
         maintenanceFeesPerSqft: formData.maintenanceFeesPerSqft || null,
         maintenanceFeesDetail: formData.maintenanceFeesDetail || null,
         floorPremiums: formData.floorPremiums || null,
-        completionDate: formData.completionDate,
+        occupancyDate: formData.occupancyDate,
         completionProgress: formData.completionProgress,
         promotions: formData.promotions,
         ownershipType: formData.ownershipType || null,

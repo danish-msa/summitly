@@ -81,6 +81,7 @@ export async function PUT(request: NextRequest) {
       metaTitle,
       metaDescription,
       customContent,
+      faqs,
       isPublished,
     } = body
 
@@ -108,6 +109,22 @@ export async function PUT(request: NextRequest) {
       )
     }
 
+    // Parse FAQs if provided (should be JSON string or array)
+    let faqsJson = null;
+    if (faqs !== undefined && faqs !== null) {
+      if (typeof faqs === 'string') {
+        try {
+          faqsJson = faqs.trim() === '' ? null : faqs;
+        } catch {
+          faqsJson = null;
+        }
+      } else if (Array.isArray(faqs)) {
+        faqsJson = JSON.stringify(faqs);
+      } else {
+        faqsJson = null;
+      }
+    }
+
     const pageContent = await prisma.preConstructionPageContent.upsert({
       where: {
         pageType_pageValue: {
@@ -122,6 +139,7 @@ export async function PUT(request: NextRequest) {
         metaTitle: metaTitle || null,
         metaDescription: metaDescription || null,
         customContent: customContent || null,
+        faqs: faqsJson,
         isPublished: isPublished ?? false,
       },
       create: {
@@ -133,6 +151,7 @@ export async function PUT(request: NextRequest) {
         metaTitle: metaTitle || null,
         metaDescription: metaDescription || null,
         customContent: customContent || null,
+        faqs: faqsJson,
         isPublished: isPublished ?? false,
       },
     })

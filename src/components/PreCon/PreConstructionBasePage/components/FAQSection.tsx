@@ -1,5 +1,5 @@
-"use client";
-
+import React, { useMemo } from 'react';
+import FAQComponent, { type FaqItem } from '@/components/common/FAQ';
 import { 
   Building2, 
   DollarSign, 
@@ -12,7 +12,13 @@ import {
   Clock,
   CheckCircle2
 } from "lucide-react";
-import FAQComponent, { type FaqItem } from "@/components/common/FAQ";
+import type { PageType } from '../types';
+
+interface FAQSectionProps {
+  pageType: PageType;
+  displayTitle: string;
+  customFaqs?: string | null;
+}
 
 const initialFaqs: FaqItem[] = [
   {
@@ -92,16 +98,55 @@ const additionalFaqs: FaqItem[] = [
   },
 ];
 
-export function PreConFAQ() {
+export const FAQSection: React.FC<FAQSectionProps> = ({ pageType, displayTitle, customFaqs }) => {
+  // Parse custom FAQs from JSON string
+  const parsedCustomFaqs: FaqItem[] = useMemo(() => {
+    if (!customFaqs) return [];
+    try {
+      const parsed = JSON.parse(customFaqs);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      console.error("Error parsing custom FAQs:", e);
+      return [];
+    }
+  }, [customFaqs]);
+
+  // Merge custom FAQs with default FAQs
+  // Custom FAQs will appear first, then default FAQs
+  const mergedInitialFaqs = useMemo(() => {
+    if (parsedCustomFaqs.length === 0) return initialFaqs;
+    // Add custom FAQs first, then default FAQs
+    // Ensure custom FAQs have unique IDs
+    const customWithIds = parsedCustomFaqs.map((faq, index) => ({
+      ...faq,
+      id: `custom-${faq.id || index}`,
+      // Add default icon if not provided
+      icon: faq.icon || <Building2 className="w-5 h-5" />,
+    }));
+    return [...customWithIds, ...initialFaqs];
+  }, [parsedCustomFaqs]);
+
+  const getDescription = () => {
+    if (pageType === 'city') {
+      return `Find answers to common questions about pre-construction projects in ${displayTitle}. Get expert guidance on buying new homes with Summitly.`;
+    } else if (pageType === 'status') {
+      return `Find answers to common questions about ${displayTitle.toLowerCase()} pre-construction projects. Get expert guidance on buying new homes with Summitly.`;
+    } else if (pageType === 'propertyType' || pageType === 'subPropertyType') {
+      return `Find answers to common questions about ${displayTitle.toLowerCase()}. Get expert guidance on buying new homes with Summitly.`;
+    } else if (pageType === 'completionYear') {
+      return `Find answers to common questions about pre-construction projects completing in ${displayTitle}. Get expert guidance on buying new homes with Summitly.`;
+    }
+    return "Find answers to common questions about pre-construction projects and buying new homes with Summitly.";
+  };
+
   return (
     <FAQComponent
-      initialFaqs={initialFaqs}
+      initialFaqs={mergedInitialFaqs}
       additionalFaqs={additionalFaqs}
       heading="Frequently asked questions"
       subheading="FAQ"
-      description="Find answers to common questions about pre-construction projects and buying new homes with Summitly."
+      description={getDescription()}
     />
   );
-}
+};
 
-export default PreConFAQ;

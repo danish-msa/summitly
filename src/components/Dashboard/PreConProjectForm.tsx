@@ -87,7 +87,7 @@ export interface FormData {
   maintenanceFeesPerSqft: string
   maintenanceFeesDetail: string
   floorPremiums: string
-  completionDate: string
+  occupancyDate: string
   completionProgress: string
   promotions: string
   ownershipType: string
@@ -1230,7 +1230,7 @@ export function PreConProjectForm({
                 </div>
               </div>
 
-              {/* Row 3: Available Units, Suites, Storeys, Completion Date */}
+              {/* Row 3: Available Units, Suites, Storeys, Occupancy Date */}
               <div className="grid grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="availableUnits">Available Units *</Label>
@@ -1277,13 +1277,13 @@ export function PreConProjectForm({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="completionDate">Completion Date *</Label>
+                  <Label htmlFor="occupancyDate">Occupancy Date *</Label>
                   <Input
-                    id="completionDate"
+                    id="occupancyDate"
                     className="rounded-lg"
                     placeholder="e.g., Q4 2025"
-                    value={formData.completionDate}
-                    onChange={(e) => setFormData({ ...formData, completionDate: e.target.value })}
+                    value={formData.occupancyDate}
+                    onChange={(e) => setFormData({ ...formData, occupancyDate: e.target.value })}
                     required
                   />
                 </div>
