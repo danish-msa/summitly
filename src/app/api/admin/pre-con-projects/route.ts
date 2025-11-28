@@ -223,7 +223,7 @@ export async function POST(request: NextRequest) {
     } = body
 
     // Convert empty strings to null for optional fields
-    const normalizeField = (value: any): any => {
+    const normalizeField = (value: string | null | undefined): string | null => {
       if (value === '' || value === undefined) return null
       return value
     }
