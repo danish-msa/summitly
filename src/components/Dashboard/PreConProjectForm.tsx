@@ -856,6 +856,7 @@ export function PreConProjectForm({
                       <SelectItem value="assignments">Assignments</SelectItem>
                       <SelectItem value="new-release-coming-soon">New Release</SelectItem>
                       <SelectItem value="coming-soon">Coming Soon</SelectItem>
+                      <SelectItem value="register-now">Register Now</SelectItem>
                       <SelectItem value="resale">Resale</SelectItem>
                       <SelectItem value="sold-out">Sold Out</SelectItem>
                     </SelectContent>

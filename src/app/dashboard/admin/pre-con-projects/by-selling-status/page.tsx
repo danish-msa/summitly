@@ -30,6 +30,7 @@ const SELLING_STATUSES = [
   "assignments",
   "new-release-coming-soon",
   "coming-soon",
+  "register-now",
   "resale",
   "sold-out",
 ]

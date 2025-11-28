@@ -62,10 +62,10 @@ export async function GET(
         p.status && ['now-selling', 'assignments', 'platinum-access'].includes(p.status)
       ).length,
       launchingSoon: allProjects.filter(p => 
-        p.status && ['new-release-coming-soon', 'coming-soon'].includes(p.status)
+        p.status && ['new-release-coming-soon', 'coming-soon', 'register-now'].includes(p.status)
       ).length,
       registrationPhase: allProjects.filter(p => 
-        p.status === 'platinum-access'
+        p.status && ['platinum-access', 'register-now'].includes(p.status)
       ).length,
       soldOut: allProjects.filter(p => 
         p.status === 'sold-out'

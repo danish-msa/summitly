@@ -85,6 +85,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
       'now-selling': 'Now Selling',
       'coming-soon': 'Coming Soon',
       'assignments': 'Assignments',
+      'register-now': 'Register Now',
       'resale': 'Resale',
       'sold-out': 'Sold Out'
     };
@@ -136,6 +137,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
     if (status === 'now-selling') return CheckCircle;
     if (status === 'coming-soon') return Clock;
     if (status === 'assignments') return Tag;
+    if (status === 'register-now') return Clock;
     if (status === 'resale') return Tag;
     if (status === 'sold-out') return XCircle;
     return Tag;
@@ -146,6 +148,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
     if (status === 'now-selling') return 'Projects currently available for purchase';
     if (status === 'coming-soon') return 'Upcoming projects launching soon';
     if (status === 'assignments') return 'Assignment opportunities available';
+    if (status === 'register-now') return 'Projects accepting registrations';
     if (status === 'resale') return 'Resale properties available';
     if (status === 'sold-out') return 'Fully sold projects';
     return 'Browse projects by status';
@@ -166,6 +169,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
     'now-selling',
     'coming-soon',
     'assignments',
+    'register-now',
     'resale',
     'sold-out'
   ];

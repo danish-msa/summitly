@@ -199,6 +199,7 @@ export default function PreConProjectsPage() {
           "assignments": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
           "new-release-coming-soon": "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
           "coming-soon": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+          "register-now": "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
           "resale": "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200",
           "sold-out": "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
         }

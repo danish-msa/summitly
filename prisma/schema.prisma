@@ -332,7 +332,7 @@ model PreConstructionProject {
   startingPrice Float?
   endingPrice   Float?
   avgPricePerSqft Float? // Average price per square foot
-  status        String? // 'selling', 'coming-soon', 'sold-out'
+  status        String? // 'platinum-access', 'now-selling', 'assignments', 'new-release-coming-soon', 'coming-soon', 'register-now', 'resale', 'sold-out'
   
   // Additional Pricing
   parkingPrice      Float?
