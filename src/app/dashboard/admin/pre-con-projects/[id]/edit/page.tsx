@@ -449,7 +449,7 @@ export default function EditProjectPage() {
       router.push("/dashboard/admin/pre-con-projects")
     } catch (error) {
       console.error("Error updating project:", error)
-      let message = error instanceof Error ? error.message : "Failed to update project"
+      const message = error instanceof Error ? error.message : "Failed to update project"
       
       // If the error contains missing fields info, format it nicely
       if (message.includes("Missing fields:")) {

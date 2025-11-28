@@ -242,7 +242,7 @@ export default function NewProjectPage() {
       router.push("/dashboard/admin/pre-con-projects")
     } catch (error) {
       console.error("Error creating project:", error)
-      let message = error instanceof Error ? error.message : "Failed to create project"
+      const message = error instanceof Error ? error.message : "Failed to create project"
       
       // If the error contains missing fields info, format it nicely
       if (message.includes("Missing fields:")) {
