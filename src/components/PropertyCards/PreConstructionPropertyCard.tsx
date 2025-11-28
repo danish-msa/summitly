@@ -33,10 +33,10 @@ const getImages = (property: PreConstructionPropertyInput): string[] => {
 
 // Helper function to get starting price
 const getStartingPrice = (property: PreConstructionPropertyInput): number => {
-  if (hasPreCon(property) && property.preCon.startingPrice) {
+  if (hasPreCon(property) && property.preCon.startingPrice != null && property.preCon.startingPrice > 0) {
     return property.preCon.startingPrice;
   }
-  if ('startingPrice' in property && property.startingPrice) {
+  if ('startingPrice' in property && property.startingPrice != null && property.startingPrice > 0) {
     return property.startingPrice;
   }
   if ('listPrice' in property && property.listPrice) {
