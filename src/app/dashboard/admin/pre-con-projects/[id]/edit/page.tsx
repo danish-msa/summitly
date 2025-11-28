@@ -286,6 +286,7 @@ export default function EditProjectPage() {
         marketingInfo: project.marketingInfo || "",
         salesMarketingCompany: project.salesMarketingCompany || "",
         developmentTeamOverview: project.developmentTeamOverview || "",
+        isPublished: project.isPublished ?? false,
         units: project.units?.map((unit) => ({
           id: unit.id,
           unitName: unit.unitName || "",
