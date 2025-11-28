@@ -59,10 +59,10 @@ export async function GET(
     const stats = {
       totalProjects: allProjects.length,
       activelySelling: allProjects.filter(p => 
-        ['now-selling', 'assignments', 'platinum-access'].includes(p.status)
+        p.status && ['now-selling', 'assignments', 'platinum-access'].includes(p.status)
       ).length,
       launchingSoon: allProjects.filter(p => 
-        ['new-release-coming-soon', 'coming-soon'].includes(p.status)
+        p.status && ['new-release-coming-soon', 'coming-soon'].includes(p.status)
       ).length,
       registrationPhase: allProjects.filter(p => 
         p.status === 'platinum-access'
