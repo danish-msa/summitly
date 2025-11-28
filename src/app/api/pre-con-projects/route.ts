@@ -21,7 +21,10 @@ export async function GET(request: NextRequest) {
       subPropertyType?: string
       occupancyDate?: { contains: string }
       developer?: string | { contains: string; mode: 'insensitive' }
-    } = {}
+      isPublished?: boolean
+    } = {
+      isPublished: true, // Only show published projects on public website
+    }
     
     if (status) {
       where.status = status

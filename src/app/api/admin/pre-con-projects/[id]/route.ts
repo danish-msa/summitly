@@ -148,6 +148,31 @@ export async function PUT(
     const { id } = await params
     const body = await request.json()
 
+    // Validate required fields only if project is being published
+    // Drafts can have missing fields
+    const isPublished = body.isPublished === true
+    if (isPublished) {
+      const missingFields: string[] = []
+      if (!body.projectName) missingFields.push('projectName')
+      if (!body.developer) missingFields.push('developer')
+      if (!body.startingPrice) missingFields.push('startingPrice')
+      if (!body.endingPrice) missingFields.push('endingPrice')
+      if (!body.status) missingFields.push('status')
+      if (!body.city) missingFields.push('city')
+      if (!body.state) missingFields.push('state')
+
+      if (missingFields.length > 0) {
+        return NextResponse.json(
+          { 
+            error: 'Missing required fields',
+            missingFields: missingFields,
+            message: `Missing required fields: ${missingFields.join(', ')}. Please fill all required fields before publishing.`
+          },
+          { status: 400 }
+        )
+      }
+    }
+
     // Check if project exists
     const existing = await prisma.preConstructionProject.findUnique({
       where: { id },
@@ -236,6 +261,7 @@ export async function PUT(
       marketingInfo?: string | null
       salesMarketingCompany?: string | null
       developmentTeamOverview?: string | null
+      isPublished?: boolean
       mlsNumber?: string
     } = {}
     if (body.projectName !== undefined) updateData.projectName = body.projectName

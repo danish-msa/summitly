@@ -112,6 +112,7 @@ export interface FormData {
   marketingInfo: string // Developer ID
   salesMarketingCompany: string // Sales & Marketing Company ID
   developmentTeamOverview: string
+  isPublished: boolean
   units: Unit[]
 }
 
@@ -2711,7 +2712,7 @@ export function PreConProjectForm({
         right: '0px'
       }}>
         <div className="px-6 py-4">
-          <div className="flex justify-between gap-4 max-w-7xl mx-auto">
+          <div className="flex justify-between gap-4 max-w-7xl mx-auto items-center">
             {onCancel && (
               <Button
                 type="button"
@@ -2723,6 +2724,28 @@ export function PreConProjectForm({
                 Cancel
               </Button>
             )}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="isPublished"
+                  checked={formData.isPublished}
+                  onCheckedChange={(checked) => 
+                    setFormData({ ...formData, isPublished: checked === true })
+                  }
+                />
+                <Label 
+                  htmlFor="isPublished" 
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  Publish project (unchecked = draft)
+                </Label>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {formData.isPublished 
+                  ? "Project will be visible on the website" 
+                  : "Project will be saved as draft (not visible on website)"}
+              </div>
+            </div>
             <div className="flex-1" />
             <Button
               type="submit"
@@ -2735,7 +2758,7 @@ export function PreConProjectForm({
                   Saving...
                 </>
               ) : (
-                submitLabel
+                formData.isPublished ? submitLabel : "Save as Draft"
               )}
             </Button>
           </div>

@@ -72,6 +72,7 @@ interface PreConProject {
   marketingInfo: string | null
   salesMarketingCompany: string | null
   developmentTeamOverview: string | null
+  isPublished: boolean
   units?: Array<{
     id: string
     unitName: string
@@ -164,6 +165,7 @@ export default function EditProjectPage() {
     marketingInfo: "",
     salesMarketingCompany: "",
     developmentTeamOverview: "",
+    isPublished: false,
     units: [],
   })
 
@@ -408,6 +410,7 @@ export default function EditProjectPage() {
         marketingInfo: formData.marketingInfo || null,
         salesMarketingCompany: formData.salesMarketingCompany || null,
         developmentTeamOverview: formData.developmentTeamOverview || null,
+        isPublished: formData.isPublished || false,
         units: formData.units?.map((unit) => ({
           id: unit.id.startsWith('unit-') ? undefined : unit.id, // Don't send ID for new units
           unitName: unit.unitName,

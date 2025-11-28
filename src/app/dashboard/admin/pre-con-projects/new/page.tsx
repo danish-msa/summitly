@@ -94,6 +94,7 @@ export default function NewProjectPage() {
     marketingInfo: "",
     salesMarketingCompany: "",
     developmentTeamOverview: "",
+    isPublished: false,
     units: [],
   })
 
@@ -202,6 +203,7 @@ export default function NewProjectPage() {
         marketingInfo: formData.marketingInfo || null,
         salesMarketingCompany: formData.salesMarketingCompany || null,
         developmentTeamOverview: formData.developmentTeamOverview || null,
+        isPublished: formData.isPublished || false,
         units: formData.units?.map((unit) => ({
           unitName: unit.unitName,
           beds: parseInt(unit.beds) || 0,

@@ -221,25 +221,29 @@ export async function POST(request: NextRequest) {
       units = [],
     } = body
 
-    // Validate required fields
-    const missingFields: string[] = []
-    if (!projectName) missingFields.push('projectName')
-    if (!developer) missingFields.push('developer')
-    if (!startingPrice) missingFields.push('startingPrice')
-    if (!endingPrice) missingFields.push('endingPrice')
-    if (!status) missingFields.push('status')
-    if (!city) missingFields.push('city')
-    if (!state) missingFields.push('state')
+    // Validate required fields only if project is being published
+    // Drafts can have missing fields
+    const isPublished = body.isPublished === true
+    if (isPublished) {
+      const missingFields: string[] = []
+      if (!projectName) missingFields.push('projectName')
+      if (!developer) missingFields.push('developer')
+      if (!startingPrice) missingFields.push('startingPrice')
+      if (!endingPrice) missingFields.push('endingPrice')
+      if (!status) missingFields.push('status')
+      if (!city) missingFields.push('city')
+      if (!state) missingFields.push('state')
 
-    if (missingFields.length > 0) {
-      return NextResponse.json(
-        { 
-          error: 'Missing required fields',
-          missingFields: missingFields,
-          message: `Missing required fields: ${missingFields.join(', ')}`
-        },
-        { status: 400 }
-      )
+      if (missingFields.length > 0) {
+        return NextResponse.json(
+          { 
+            error: 'Missing required fields',
+            missingFields: missingFields,
+            message: `Missing required fields: ${missingFields.join(', ')}. Please fill all required fields before publishing.`
+          },
+          { status: 400 }
+        )
+      }
     }
 
     // Generate unique mlsNumber from project name (slugified)
@@ -413,6 +417,7 @@ export async function POST(request: NextRequest) {
         marketingInfo: marketingInfo ? await fetchDeveloperData(marketingInfo) : null,
         salesMarketingCompany: salesMarketingCompany && salesMarketingCompany.trim() ? salesMarketingCompany.trim() : null,
         developmentTeamOverview: developmentTeamOverview && developmentTeamOverview.trim() ? developmentTeamOverview.trim() : null,
+        isPublished: isPublished || false,
         units: Array.isArray(units) && units.length > 0 ? {
           create: units.map((unit: {
             unitName: string

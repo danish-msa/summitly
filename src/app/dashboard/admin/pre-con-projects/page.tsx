@@ -35,6 +35,7 @@ interface PreConProject {
   propertyType: string
   totalUnits: number
   availableUnits: number
+  isPublished: boolean
   createdAt: string
   units?: Array<{ id: string; status: string }>
 }
@@ -178,6 +179,15 @@ export default function PreConProjectsPage() {
       key: "startingPrice",
       header: "Starting Price",
       render: (project) => formatCurrency(project.startingPrice),
+    },
+    {
+      key: "isPublished",
+      header: "Publication",
+      render: (project) => (
+        <Badge variant={project.isPublished ? "default" : "secondary"}>
+          {project.isPublished ? "Published" : "Draft"}
+        </Badge>
+      ),
     },
     {
       key: "status",

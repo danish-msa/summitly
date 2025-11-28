@@ -413,6 +413,9 @@ model PreConstructionProject {
   salesMarketingCompany String? // Sales & Marketing Company ID
   developmentTeamOverview String? @db.Text // Overview of the development team
 
+  // Publication Status
+  isPublished Boolean @default(false) // Draft projects are not visible on public website
+
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -423,6 +426,7 @@ model PreConstructionProject {
   @@index([city])
   @@index([status])
   @@index([propertyType])
+  @@index([isPublished])
 }
 
 // Pre-Construction Units - stores individual units within a project
