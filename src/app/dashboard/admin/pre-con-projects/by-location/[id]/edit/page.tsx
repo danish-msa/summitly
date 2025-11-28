@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Loader2, ChevronRight, ChevronDown } from "lucide-react"
+import { ArrowLeft, Loader2 } from "lucide-react"
 import { isAdmin } from "@/lib/roles"
 import { useBackgroundFetch } from "@/hooks/useBackgroundFetch"
 import { FAQField } from "@/components/Dashboard/FAQField"
@@ -259,7 +259,23 @@ export default function EditLocationPage() {
     setSaving(true)
 
     try {
-      const payload: any = {
+      interface PageContentPayload {
+        id?: string;
+        pageType: string;
+        pageValue: string;
+        locationType: LocationType | '';
+        parentId: string | null;
+        title: string | null;
+        description: string | null;
+        heroImage: string | null;
+        metaTitle: string | null;
+        metaDescription: string | null;
+        customContent: string | null;
+        faqs: string | null;
+        isPublished: boolean;
+      }
+
+      const payload: PageContentPayload = {
         pageType: "by-location",
         pageValue: formData.pageValue,
         locationType: formData.locationType,
@@ -275,7 +291,7 @@ export default function EditLocationPage() {
       }
 
       if (!isNewPage && params?.id) {
-        payload.id = params.id
+        payload.id = params.id as string
       }
 
       const response = await fetch("/api/admin/pre-con-projects/page-content", {
