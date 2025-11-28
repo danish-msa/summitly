@@ -324,6 +324,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
       label: 'Storeys',
       value: preCon.details.storeys.toString(),
       icon: Building2,
+      show: true,
     });
   }
   if (preCon.details?.height) {
@@ -331,6 +332,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
       label: 'Height',
       value: typeof preCon.details.height === 'string' ? preCon.details.height : `${preCon.details.height}m`,
       icon: Building2,
+      show: true,
     });
   }
   if (preCon.details?.propertyType) {
@@ -338,6 +340,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
       label: 'Property Type',
       value: preCon.details.propertyType,
       icon: Home,
+      show: true,
     });
   }
   if (preCon.details?.subPropertyType) {
@@ -345,6 +348,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
       label: 'Sub Property Type',
       value: preCon.details.subPropertyType,
       icon: Home,
+      show: true,
     });
   }
 
