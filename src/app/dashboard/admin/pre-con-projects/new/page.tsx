@@ -227,7 +227,11 @@ export default function NewProjectPage() {
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.error || "Failed to create project")
+        const errorMessage = error.message || error.error || "Failed to create project"
+        if (error.missingFields && Array.isArray(error.missingFields)) {
+          throw new Error(`${errorMessage}\n\nMissing fields: ${error.missingFields.join(', ')}`)
+        }
+        throw new Error(errorMessage)
       }
 
       // Clean up preview URLs
@@ -238,8 +242,15 @@ export default function NewProjectPage() {
       router.push("/dashboard/admin/pre-con-projects")
     } catch (error) {
       console.error("Error creating project:", error)
-      const message = error instanceof Error ? error.message : "Failed to create project"
-      alert(message)
+      let message = error instanceof Error ? error.message : "Failed to create project"
+      
+      // If the error contains missing fields info, format it nicely
+      if (message.includes("Missing fields:")) {
+        const lines = message.split("\n\n")
+        alert(`${lines[0]}\n\n${lines[1]}`)
+      } else {
+        alert(message)
+      }
     } finally {
       setLoading(false)
     }

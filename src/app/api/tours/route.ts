@@ -62,9 +62,20 @@ export async function POST(request: NextRequest) {
     } = body
 
     // Validate required fields
-    if (!mlsNumber || !scheduledDate || !name || !phone || !email) {
+    const missingFields: string[] = []
+    if (!mlsNumber) missingFields.push('mlsNumber')
+    if (!scheduledDate) missingFields.push('scheduledDate')
+    if (!name) missingFields.push('name')
+    if (!phone) missingFields.push('phone')
+    if (!email) missingFields.push('email')
+
+    if (missingFields.length > 0) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { 
+          error: 'Missing required fields',
+          missingFields: missingFields,
+          message: `Missing required fields: ${missingFields.join(', ')}`
+        },
         { status: 400 }
       )
     }
