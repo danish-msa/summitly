@@ -36,7 +36,7 @@ interface UseBackgroundFetchReturn<T> {
    * @param isInitialLoad Whether this is the initial load (defaults to auto-detect)
    */
   fetchData: (
-    fetchFn: () => Promise<T>,
+    fetchFn: () => Promise<T | null>,
     isInitialLoad?: boolean
   ) => Promise<T | null>
   /**
@@ -104,7 +104,7 @@ export function useBackgroundFetch<T = unknown>(
 
   const fetchData = useCallback(
     async (
-      fetchFn: () => Promise<T>,
+      fetchFn: () => Promise<T | null>,
       isInitialLoad?: boolean
     ): Promise<T | null> => {
       // Determine if this is initial load
