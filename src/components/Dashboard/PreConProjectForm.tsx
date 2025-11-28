@@ -151,6 +151,9 @@ export function PreConProjectForm({
   const documentFileInputRef = useRef<HTMLInputElement>(null)
   const [amenitySearchOpen, setAmenitySearchOpen] = useState(false)
   const [amenitySearchQuery, setAmenitySearchQuery] = useState("")
+  const [unitAmenitySearchOpen, setUnitAmenitySearchOpen] = useState<Record<string, boolean>>({})
+  const [unitAmenitySearchQuery, setUnitAmenitySearchQuery] = useState<Record<string, string>>({})
+  const [unitCustomAmenityInput, setUnitCustomAmenityInput] = useState<Record<string, string>>({})
   const [developers, setDevelopers] = useState<Developer[]>([])
   const [sidebarWidth, setSidebarWidth] = useState(0)
 
@@ -478,6 +481,63 @@ export function PreConProjectForm({
       ...prev,
       customAmenities: prev.customAmenities.filter((_, i) => i !== index),
     }))
+  }
+
+  // Unit amenities helpers
+  const toggleUnitPredefinedAmenity = (unitId: string, amenity: { name: string; icon: string }) => {
+    setFormData((prev) => {
+      const unit = prev.units.find(u => u.id === unitId)
+      if (!unit) return prev
+
+      const isSelected = unit.amenities.includes(amenity.name)
+      const updatedAmenities = isSelected
+        ? unit.amenities.filter(a => a !== amenity.name)
+        : [...unit.amenities, amenity.name]
+
+      return {
+        ...prev,
+        units: prev.units.map(u =>
+          u.id === unitId ? { ...u, amenities: updatedAmenities } : u
+        ),
+      }
+    })
+  }
+
+  const addUnitCustomAmenity = (unitId: string) => {
+    const input = unitCustomAmenityInput[unitId]
+    if (!input?.trim()) return
+
+    setFormData((prev) => {
+      const unit = prev.units.find(u => u.id === unitId)
+      if (!unit) return prev
+
+      return {
+        ...prev,
+        units: prev.units.map(u =>
+          u.id === unitId
+            ? { ...u, amenities: [...u.amenities, input.trim()] }
+            : u
+        ),
+      }
+    })
+
+    setUnitCustomAmenityInput(prev => ({ ...prev, [unitId]: "" }))
+  }
+
+  const removeUnitAmenity = (unitId: string, index: number) => {
+    setFormData((prev) => {
+      const unit = prev.units.find(u => u.id === unitId)
+      if (!unit) return prev
+
+      return {
+        ...prev,
+        units: prev.units.map(u =>
+          u.id === unitId
+            ? { ...u, amenities: u.amenities.filter((_, i) => i !== index) }
+            : u
+        ),
+      }
+    })
   }
 
   const addArrayItem = (field: "images" | "videos", inputField: "imageInput" | "videoInput") => {
@@ -1259,12 +1319,11 @@ export function PreConProjectForm({
                   <Label htmlFor="height">Height (M)</Label>
                   <Input
                     id="height"
-                    type="number"
-                    step="0.01"
+                    type="text"
                     className="rounded-lg"
                     value={formData.height}
                     onChange={(e) => setFormData({ ...formData, height: e.target.value })}
-                    placeholder="e.g., 150.5"
+                    placeholder="e.g., 9'0&quot; to 10'0&quot;"
                   />
                 </div>
                 <div className="space-y-2">
@@ -2450,68 +2509,178 @@ export function PreConProjectForm({
                                 />
                               </div>
 
-                              {/* Row 5: Features and Amenities */}
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                  <Label htmlFor={`unit-features-${unit.id}`}>Features (comma-separated)</Label>
-                                  <Input
-                                    id={`unit-features-${unit.id}`}
-                                    className="rounded-lg"
-                                    placeholder="e.g., Balcony, Parking, Storage"
-                                    value={unit.features.join(", ")}
-                                    onChange={(e) => {
-                                      const features = e.target.value
-                                        .split(",")
-                                        .map((f) => f.trim())
-                                        .filter((f) => f.length > 0)
-                                      setFormData((prev) => ({
-                                        ...prev,
-                                        units: prev.units?.map((u) =>
-                                          u.id === unit.id ? { ...u, features } : u
-                                        ) || [],
-                                      }))
-                                    }}
-                                  />
-                                  {unit.features.length > 0 && (
-                                    <div className="flex flex-wrap gap-2 mt-2">
-                                      {unit.features.map((feature, idx) => (
-                                        <Badge key={idx} variant="secondary">
-                                          {feature}
-                                        </Badge>
-                                      ))}
-                                    </div>
-                                  )}
+                              {/* Row 5: Features */}
+                              <div className="space-y-2">
+                                <Label htmlFor={`unit-features-${unit.id}`}>Features (comma-separated)</Label>
+                                <Input
+                                  id={`unit-features-${unit.id}`}
+                                  className="rounded-lg"
+                                  placeholder="e.g., Balcony, Parking, Storage"
+                                  value={unit.features.join(", ")}
+                                  onChange={(e) => {
+                                    const features = e.target.value
+                                      .split(",")
+                                      .map((f) => f.trim())
+                                      .filter((f) => f.length > 0)
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      units: prev.units?.map((u) =>
+                                        u.id === unit.id ? { ...u, features } : u
+                                      ) || [],
+                                    }))
+                                  }}
+                                />
+                                {unit.features.length > 0 && (
+                                  <div className="flex flex-wrap gap-2 mt-2">
+                                    {unit.features.map((feature, idx) => (
+                                      <Badge key={idx} variant="secondary">
+                                        {feature}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Row 6: Unit Amenities */}
+                              <div className="space-y-4 border-t pt-4">
+                                <div>
+                                  <Label>Unit Amenities</Label>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    Select predefined amenities or add custom ones
+                                  </p>
                                 </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor={`unit-amenities-${unit.id}`}>Unit Amenities (comma-separated)</Label>
-                                  <Input
-                                    id={`unit-amenities-${unit.id}`}
-                                    className="rounded-lg"
-                                    placeholder="e.g., High Ceilings, Walk-in Closet"
-                                    value={unit.amenities.join(", ")}
-                                    onChange={(e) => {
-                                      const amenities = e.target.value
-                                        .split(",")
-                                        .map((a) => a.trim())
-                                        .filter((a) => a.length > 0)
-                                      setFormData((prev) => ({
-                                        ...prev,
-                                        units: prev.units?.map((u) =>
-                                          u.id === unit.id ? { ...u, amenities } : u
-                                        ) || [],
-                                      }))
-                                    }}
-                                  />
-                                  {unit.amenities.length > 0 && (
-                                    <div className="flex flex-wrap gap-2 mt-2">
-                                      {unit.amenities.map((amenity, idx) => (
-                                        <Badge key={idx} variant="secondary">
-                                          {amenity}
-                                        </Badge>
-                                      ))}
-                                    </div>
-                                  )}
+
+                                {/* Searchable Amenities Dropdown */}
+                                <div className="space-y-3">
+                                  <Label>Select Amenities</Label>
+                                  <Popover 
+                                    open={unitAmenitySearchOpen[unit.id] || false} 
+                                    onOpenChange={(open) => setUnitAmenitySearchOpen(prev => ({ ...prev, [unit.id]: open }))}
+                                  >
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        role="combobox"
+                                        aria-expanded={unitAmenitySearchOpen[unit.id] || false}
+                                        className="w-full justify-between rounded-lg"
+                                      >
+                                        <div className="flex items-center gap-2">
+                                          <Search className="h-4 w-4 text-muted-foreground" />
+                                          <span className="text-muted-foreground">
+                                            {unit.amenities.length > 0 
+                                              ? `${unit.amenities.length} selected` 
+                                              : "Search and select amenities..."}
+                                          </span>
+                                        </div>
+                                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                                      <div className="p-2">
+                                        <div className="flex items-center border-b px-3">
+                                          <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                                          <Input
+                                            placeholder="Search amenities..."
+                                            value={unitAmenitySearchQuery[unit.id] || ""}
+                                            onChange={(e) => setUnitAmenitySearchQuery(prev => ({ ...prev, [unit.id]: e.target.value }))}
+                                            className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                                          />
+                                        </div>
+                                        <div className="max-h-[300px] overflow-y-auto p-1">
+                                          {predefinedAmenities
+                                            .filter((amenity) =>
+                                              amenity.name.toLowerCase().includes((unitAmenitySearchQuery[unit.id] || "").toLowerCase())
+                                            )
+                                            .map((amenity) => {
+                                              const isSelected = unit.amenities.includes(amenity.name)
+                                              const IconComponent = featureIcons[amenity.icon as FeatureIconName] || Sparkles
+                                              return (
+                                                <div
+                                                  key={amenity.name}
+                                                  className="flex items-center space-x-2 p-2 rounded-md hover:bg-secondary/50 cursor-pointer"
+                                                  onClick={() => {
+                                                    toggleUnitPredefinedAmenity(unit.id, amenity)
+                                                  }}
+                                                >
+                                                  <Checkbox
+                                                    checked={isSelected}
+                                                    onCheckedChange={() => {
+                                                      toggleUnitPredefinedAmenity(unit.id, amenity)
+                                                    }}
+                                                  />
+                                                  <IconComponent className="h-4 w-4 text-muted-foreground" />
+                                                  <span className="text-sm flex-1">{amenity.name}</span>
+                                                </div>
+                                              )
+                                            })}
+                                          {predefinedAmenities.filter((amenity) =>
+                                            amenity.name.toLowerCase().includes((unitAmenitySearchQuery[unit.id] || "").toLowerCase())
+                                          ).length === 0 && (
+                                            <div className="p-4 text-center text-sm text-muted-foreground">
+                                              No amenities found
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </PopoverContent>
+                                  </Popover>
                                 </div>
+
+                                {/* Custom Amenities */}
+                                <div className="space-y-3">
+                                  <Label htmlFor={`unit-custom-amenity-${unit.id}`}>Add Custom Amenity</Label>
+                                  <div className="flex gap-2">
+                                    <Input
+                                      id={`unit-custom-amenity-${unit.id}`}
+                                      className="rounded-lg"
+                                      placeholder="Enter custom amenity name"
+                                      value={unitCustomAmenityInput[unit.id] || ""}
+                                      onChange={(e) => setUnitCustomAmenityInput(prev => ({ ...prev, [unit.id]: e.target.value }))}
+                                      onKeyPress={(e) => {
+                                        if (e.key === "Enter") {
+                                          e.preventDefault()
+                                          addUnitCustomAmenity(unit.id)
+                                        }
+                                      }}
+                                    />
+                                    <Button
+                                      type="button"
+                                      onClick={() => addUnitCustomAmenity(unit.id)}
+                                      className="rounded-lg"
+                                    >
+                                      <Plus className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+
+                                {/* Selected Amenities List */}
+                                {unit.amenities.length > 0 && (
+                                  <div className="space-y-2">
+                                    <Label>Selected Amenities ({unit.amenities.length})</Label>
+                                    <div className="flex flex-wrap gap-2">
+                                      {unit.amenities.map((amenityName, index) => {
+                                        const amenity = predefinedAmenities.find(a => a.name === amenityName)
+                                        const IconComponent = amenity 
+                                          ? (featureIcons[amenity.icon as FeatureIconName] || Sparkles)
+                                          : Sparkles
+                                        return (
+                                          <Badge key={index} variant="secondary" className="flex items-center gap-2 px-3 py-1.5">
+                                            <IconComponent className="h-4 w-4" />
+                                            {amenityName}
+                                            <button
+                                              type="button"
+                                              onClick={() => removeUnitAmenity(unit.id, index)}
+                                              className="ml-1 hover:text-destructive"
+                                            >
+                                              <X className="h-3 w-3" />
+                                            </button>
+                                          </Badge>
+                                        )
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </CardContent>
                           </Card>
