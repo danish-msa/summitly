@@ -65,11 +65,20 @@ export const usePreConFilters = (
         }
       }
       
-      // Builder filter
-      if (filters.builder && filters.builder !== 'all') {
-        const expectedDeveloper = BUILDER_MAP[filters.builder];
-        if (expectedDeveloper && project.developer !== expectedDeveloper) {
-          return false;
+      // Developer/Builder filter
+      if (filters.developer && filters.developer !== 'all') {
+        // Check if it's a builder slug that needs mapping
+        const expectedDeveloper = BUILDER_MAP[filters.developer];
+        if (expectedDeveloper) {
+          // It's a slug, use the mapped developer name
+          if (project.developer !== expectedDeveloper) {
+            return false;
+          }
+        } else {
+          // It's a developer name directly
+          if (project.developer !== filters.developer) {
+            return false;
+          }
         }
       }
       
