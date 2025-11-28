@@ -252,9 +252,15 @@ export async function PUT(
       mlsNumber?: string
     } = {}
     if (body.projectName !== undefined) updateData.projectName = body.projectName
-    if (body.developer !== undefined) updateData.developer = body.developer || null
-    if (body.startingPrice !== undefined) updateData.startingPrice = body.startingPrice ? parseFloat(body.startingPrice) : null
-    if (body.endingPrice !== undefined) updateData.endingPrice = body.endingPrice ? parseFloat(body.endingPrice) : null
+    if (body.developer !== undefined) {
+      updateData.developer = body.developer && body.developer.trim() !== '' ? body.developer : undefined
+    }
+    if (body.startingPrice !== undefined) {
+      updateData.startingPrice = body.startingPrice && body.startingPrice !== '' ? parseFloat(body.startingPrice) : undefined
+    }
+    if (body.endingPrice !== undefined) {
+      updateData.endingPrice = body.endingPrice && body.endingPrice !== '' ? parseFloat(body.endingPrice) : undefined
+    }
     if (body.avgPricePerSqft !== undefined) {
       const parsed = body.avgPricePerSqft === '' || body.avgPricePerSqft === null ? null : parseFloat(String(body.avgPricePerSqft))
       updateData.avgPricePerSqft = isNaN(parsed as number) ? null : parsed
@@ -404,7 +410,7 @@ export async function PUT(
 
     const project = await prisma.preConstructionProject.update({
       where: { id },
-      data: updateData,
+      data: updateData as any,
       include: {
         units: true,
       },
