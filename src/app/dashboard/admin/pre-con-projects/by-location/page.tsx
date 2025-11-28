@@ -8,7 +8,15 @@ import { DataTable, Column } from "@/components/Dashboard/DataTable"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Edit, Search, Plus } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Edit, Search, Plus, Trash2 } from "lucide-react"
 import { isAdmin } from "@/lib/roles"
 
 interface PageContent {
@@ -43,6 +51,8 @@ export default function ByLocationPage() {
   const { loading, error, setError, fetchData } = useBackgroundFetch()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedLocationType, setSelectedLocationType] = useState<LocationType | 'all'>('all')
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [contentToDelete, setContentToDelete] = useState<PageContent | null>(null)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -121,6 +131,29 @@ export default function ByLocationPage() {
     return matchesSearch && matchesType
   })
 
+  const handleDelete = async () => {
+    if (!contentToDelete) return
+
+    try {
+      const response = await fetch(`/api/admin/pre-con-projects/page-content?id=${contentToDelete.id}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Failed to delete location page" }))
+        throw new Error(errorData.error || "Failed to delete location page")
+      }
+
+      setDeleteDialogOpen(false)
+      setContentToDelete(null)
+      fetchPageContents()
+    } catch (error) {
+      console.error("Error deleting location page:", error)
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete location page"
+      alert(errorMessage)
+    }
+  }
+
   const columns: Column<PageContent>[] = [
     {
       key: "locationType",
@@ -175,6 +208,17 @@ export default function ByLocationPage() {
             onClick={() => router.push(`/dashboard/admin/pre-con-projects/by-location/${content.id}/edit`)}
           >
             <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setContentToDelete(content)
+              setDeleteDialogOpen(true)
+            }}
+            className="text-destructive hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       ),
@@ -259,6 +303,31 @@ export default function ByLocationPage() {
         keyExtractor={(content) => content.id}
         emptyMessage="No locations found"
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Location Page</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &quot;{contentToDelete?.pageValue}&quot;? This action cannot be undone.
+              {contentToDelete?.children && contentToDelete.children.length > 0 && (
+                <div className="mt-2 text-sm text-amber-600">
+                  Warning: This location has {contentToDelete.children.length} child location(s) that will also be affected.
+                </div>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

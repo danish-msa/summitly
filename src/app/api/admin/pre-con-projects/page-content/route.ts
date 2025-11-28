@@ -250,24 +250,50 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
+    const id = searchParams.get("id")
     const pageType = searchParams.get("pageType")
     const pageValue = searchParams.get("pageValue")
+    const locationType = searchParams.get("locationType")
+    const parentId = searchParams.get("parentId")
 
+    // Prefer ID-based deletion (more reliable for location pages)
+    if (id) {
+      await prisma.preConstructionPageContent.delete({
+        where: { id },
+      })
+      return NextResponse.json({ success: true })
+    }
+
+    // Fallback to old method for backward compatibility
     if (!pageType || !pageValue) {
       return NextResponse.json(
-        { error: "pageType and pageValue are required" },
+        { error: "id or (pageType and pageValue) are required" },
         { status: 400 }
       )
     }
 
-    await prisma.preConstructionPageContent.delete({
-      where: {
-        pageType_pageValue: {
-          pageType,
-          pageValue,
+    // Build where clause based on pageType
+    if (pageType === 'by-location') {
+      await prisma.preConstructionPageContent.delete({
+        where: {
+          pageType_pageValue_locationType_parentId: {
+            pageType,
+            pageValue,
+            locationType: locationType || null,
+            parentId: parentId || null,
+          },
         },
-      },
-    })
+      })
+    } else {
+      await prisma.preConstructionPageContent.delete({
+        where: {
+          pageType_pageValue: {
+            pageType,
+            pageValue,
+          },
+        },
+      })
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

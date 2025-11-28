@@ -754,17 +754,16 @@ export function PreConProjectForm({
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="projectName">Project Name *</Label>
+                  <Label htmlFor="projectName">Project Name</Label>
                   <Input
                     id="projectName"
                     className="rounded-lg"
                     value={formData.projectName}
                     onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
-                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="developer">Developer *</Label>
+                  <Label htmlFor="developer">Developer</Label>
                   <Select
                     value={formData.developer}
                     onValueChange={(value) => setFormData({ ...formData, developer: value })}
@@ -782,7 +781,7 @@ export function PreConProjectForm({
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="status">Selling Status *</Label>
+                  <Label htmlFor="status">Selling Status</Label>
                   <Select
                     value={formData.status}
                     onValueChange={(value) => setFormData({ ...formData, status: value })}
@@ -1002,23 +1001,21 @@ export function PreConProjectForm({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="city">City *</Label>
+                  <Label htmlFor="city">City</Label>
                   <Input
                     id="city"
                     className="rounded-lg"
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="state">State/Province *</Label>
+                  <Label htmlFor="state">State/Province</Label>
                   <Input
                     id="state"
                     className="rounded-lg"
                     value={formData.state}
                     onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -1057,7 +1054,7 @@ export function PreConProjectForm({
               {/* Row 1: Property Type, Sub-Property Type (conditional), Beds */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="propertyType">Property Type *</Label>
+                  <Label htmlFor="propertyType">Property Type</Label>
                   <Select
                     value={formData.propertyType}
                     onValueChange={(value) => setFormData({ ...formData, propertyType: value, subPropertyType: "" })}
@@ -1077,7 +1074,7 @@ export function PreConProjectForm({
                 </div>
                 {formData.propertyType === "Condos" && (
                   <div className="space-y-2">
-                    <Label htmlFor="subPropertyType">Condo Type *</Label>
+                    <Label htmlFor="subPropertyType">Condo Type</Label>
                     <Select
                       value={formData.subPropertyType}
                       onValueChange={(value) => setFormData({ ...formData, subPropertyType: value })}
@@ -1095,7 +1092,7 @@ export function PreConProjectForm({
                 )}
                 {formData.propertyType === "Houses" && (
                   <div className="space-y-2">
-                    <Label htmlFor="subPropertyType">House Type *</Label>
+                    <Label htmlFor="subPropertyType">House Type</Label>
                     <Select
                       value={formData.subPropertyType}
                       onValueChange={(value) => setFormData({ ...formData, subPropertyType: value })}
@@ -1113,14 +1110,13 @@ export function PreConProjectForm({
                   </div>
                 )}
                 <div className="space-y-2">
-                  <Label htmlFor="bedroomRange">Beds Range *</Label>
+                  <Label htmlFor="bedroomRange">Beds Range</Label>
                   <Input
                     id="bedroomRange"
                     className="rounded-lg"
                     placeholder="e.g., 1-3"
                     value={formData.bedroomRange}
                     onChange={(e) => setFormData({ ...formData, bedroomRange: e.target.value })}
-                    required
                   />
                 </div>
               </div>
@@ -1128,18 +1124,17 @@ export function PreConProjectForm({
               {/* Row 2: Bathroom Range, Square Foot Range, Total Units */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="bathroomRange">Bathroom Range *</Label>
+                  <Label htmlFor="bathroomRange">Bathroom Range</Label>
                   <Input
                     id="bathroomRange"
                     className="rounded-lg"
                     placeholder="e.g., 1-3"
                     value={formData.bathroomRange}
                     onChange={(e) => setFormData({ ...formData, bathroomRange: e.target.value })}
-                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Square Foot Range *</Label>
+                  <Label>Square Foot Range</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       id="sqftMin"
@@ -1148,7 +1143,6 @@ export function PreConProjectForm({
                       placeholder="Min"
                       value={formData.sqftMin}
                       onChange={(e) => setFormData({ ...formData, sqftMin: e.target.value })}
-                      required
                     />
                     <span className="text-muted-foreground">-</span>
                     <Input
@@ -1158,19 +1152,17 @@ export function PreConProjectForm({
                       placeholder="Max"
                       value={formData.sqftMax}
                       onChange={(e) => setFormData({ ...formData, sqftMax: e.target.value })}
-                      required
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="totalUnits">Total Units *</Label>
+                  <Label htmlFor="totalUnits">Total Units</Label>
                   <Input
                     id="totalUnits"
                     type="number"
                     className="rounded-lg"
                     value={formData.totalUnits}
                     onChange={(e) => setFormData({ ...formData, totalUnits: e.target.value })}
-                    required
                   />
                 </div>
               </div>
@@ -1233,14 +1225,13 @@ export function PreConProjectForm({
               {/* Row 3: Available Units, Suites, Storeys, Occupancy Date */}
               <div className="grid grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="availableUnits">Available Units *</Label>
+                  <Label htmlFor="availableUnits">Available Units</Label>
                   <Input
                     id="availableUnits"
                     type="number"
                     className="rounded-lg"
                     value={formData.availableUnits}
                     onChange={(e) => setFormData({ ...formData, availableUnits: e.target.value })}
-                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -1277,14 +1268,13 @@ export function PreConProjectForm({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="occupancyDate">Occupancy Date *</Label>
+                  <Label htmlFor="occupancyDate">Occupancy Date</Label>
                   <Input
                     id="occupancyDate"
                     className="rounded-lg"
                     placeholder="e.g., Q4 2025"
                     value={formData.occupancyDate}
                     onChange={(e) => setFormData({ ...formData, occupancyDate: e.target.value })}
-                    required
                   />
                 </div>
               </div>
@@ -1292,7 +1282,7 @@ export function PreConProjectForm({
               {/* Row 4: Construction Status, Promotions */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="completionProgress">Construction Status *</Label>
+                  <Label htmlFor="completionProgress">Construction Status</Label>
                   <Select
                     value={formData.completionProgress}
                     onValueChange={(value) => setFormData({ ...formData, completionProgress: value })}
@@ -1390,25 +1380,23 @@ export function PreConProjectForm({
                     {/* Main Pricing */}
                     <div className="grid grid-cols-3 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="startingPrice">Starting Price *</Label>
+                        <Label htmlFor="startingPrice">Starting Price</Label>
                         <Input
                           id="startingPrice"
                           type="number"
                           className="rounded-lg"
                           value={formData.startingPrice}
                           onChange={(e) => setFormData({ ...formData, startingPrice: e.target.value })}
-                          required
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="endingPrice">Ending Price *</Label>
+                        <Label htmlFor="endingPrice">Ending Price</Label>
                         <Input
                           id="endingPrice"
                           type="number"
                           className="rounded-lg"
                           value={formData.endingPrice}
                           onChange={(e) => setFormData({ ...formData, endingPrice: e.target.value })}
-                          required
                         />
                       </div>
                       <div className="space-y-2">
@@ -2273,7 +2261,7 @@ export function PreConProjectForm({
                               {/* Row 1: Unit Name, Beds, Baths, Sqft */}
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <div className="space-y-2">
-                                  <Label htmlFor={`unit-name-${unit.id}`}>Unit Name *</Label>
+                                  <Label htmlFor={`unit-name-${unit.id}`}>Unit Name</Label>
                                   <Input
                                     id={`unit-name-${unit.id}`}
                                     className="rounded-lg"
@@ -2287,11 +2275,10 @@ export function PreConProjectForm({
                                         ) || [],
                                       }))
                                     }}
-                                    required
                                   />
                                 </div>
                                 <div className="space-y-2">
-                                  <Label htmlFor={`unit-beds-${unit.id}`}>Beds *</Label>
+                                  <Label htmlFor={`unit-beds-${unit.id}`}>Beds</Label>
                                   <Input
                                     id={`unit-beds-${unit.id}`}
                                     type="number"
@@ -2306,11 +2293,10 @@ export function PreConProjectForm({
                                         ) || [],
                                       }))
                                     }}
-                                    required
                                   />
                                 </div>
                                 <div className="space-y-2">
-                                  <Label htmlFor={`unit-baths-${unit.id}`}>Baths *</Label>
+                                  <Label htmlFor={`unit-baths-${unit.id}`}>Baths</Label>
                                   <Input
                                     id={`unit-baths-${unit.id}`}
                                     type="number"
@@ -2325,11 +2311,10 @@ export function PreConProjectForm({
                                         ) || [],
                                       }))
                                     }}
-                                    required
                                   />
                                 </div>
                                 <div className="space-y-2">
-                                  <Label htmlFor={`unit-sqft-${unit.id}`}>Sqft *</Label>
+                                  <Label htmlFor={`unit-sqft-${unit.id}`}>Sqft</Label>
                                   <Input
                                     id={`unit-sqft-${unit.id}`}
                                     type="number"
@@ -2344,7 +2329,6 @@ export function PreConProjectForm({
                                         ) || [],
                                       }))
                                     }}
-                                    required
                                   />
                                 </div>
                               </div>
@@ -2352,7 +2336,7 @@ export function PreConProjectForm({
                               {/* Row 2: Price, Maintenance Fee, Status */}
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="space-y-2">
-                                  <Label htmlFor={`unit-price-${unit.id}`}>Price *</Label>
+                                  <Label htmlFor={`unit-price-${unit.id}`}>Price</Label>
                                   <Input
                                     id={`unit-price-${unit.id}`}
                                     type="number"
@@ -2368,7 +2352,6 @@ export function PreConProjectForm({
                                         ) || [],
                                       }))
                                     }}
-                                    required
                                   />
                                 </div>
                                 <div className="space-y-2">
@@ -2391,7 +2374,7 @@ export function PreConProjectForm({
                                   />
                                 </div>
                                 <div className="space-y-2">
-                                  <Label htmlFor={`unit-status-${unit.id}`}>Status *</Label>
+                                  <Label htmlFor={`unit-status-${unit.id}`}>Status</Label>
                                   <Select
                                     value={unit.status}
                                     onValueChange={(value) => {
