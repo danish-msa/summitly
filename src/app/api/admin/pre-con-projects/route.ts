@@ -218,8 +218,15 @@ export async function POST(request: NextRequest) {
       marketingInfo,
       salesMarketingCompany,
       developmentTeamOverview,
+      isPublished = false,
       units = [],
     } = body
+
+    // Convert empty strings to null for optional fields
+    const normalizeField = (value: any): any => {
+      if (value === '' || value === undefined) return null
+      return value
+    }
 
     // Only projectName is required (for both drafts and published projects)
     if (!projectName || projectName.trim() === '') {
@@ -330,11 +337,11 @@ export async function POST(request: NextRequest) {
       data: {
         mlsNumber,
         projectName,
-        developer: developer || null,
-        startingPrice: startingPrice ? (typeof startingPrice === 'number' ? startingPrice : parseFloat(String(startingPrice))) : null,
-        endingPrice: endingPrice ? (typeof endingPrice === 'number' ? endingPrice : parseFloat(String(endingPrice))) : null,
-        avgPricePerSqft: avgPricePerSqft ? (typeof avgPricePerSqft === 'number' ? avgPricePerSqft : parseFloat(String(avgPricePerSqft))) : null,
-        status: status || null,
+        developer: normalizeField(developer),
+        startingPrice: startingPrice && startingPrice !== '' ? (typeof startingPrice === 'number' ? startingPrice : parseFloat(String(startingPrice))) : null,
+        endingPrice: endingPrice && endingPrice !== '' ? (typeof endingPrice === 'number' ? endingPrice : parseFloat(String(endingPrice))) : null,
+        avgPricePerSqft: avgPricePerSqft && avgPricePerSqft !== '' ? (typeof avgPricePerSqft === 'number' ? avgPricePerSqft : parseFloat(String(avgPricePerSqft))) : null,
+        status: normalizeField(status),
         parkingPrice: parkingPrice ? (typeof parkingPrice === 'number' ? parkingPrice : parseFloat(String(parkingPrice))) : null,
         parkingPriceDetail: parkingPriceDetail && parkingPriceDetail.trim() ? parkingPriceDetail.trim() : null,
         lockerPrice: lockerPrice ? (typeof lockerPrice === 'number' ? lockerPrice : parseFloat(String(lockerPrice))) : null,
@@ -344,19 +351,19 @@ export async function POST(request: NextRequest) {
         developmentCharges: developmentCharges ? (typeof developmentCharges === 'number' ? developmentCharges : parseFloat(String(developmentCharges))) : null,
         streetNumber: streetNumber || null,
         streetName: streetName || null,
-        city: city || null,
-        state: state || null,
+        city: normalizeField(city),
+        state: normalizeField(state),
         zip: zip || null,
         country: country || "Canada",
         neighborhood: neighborhood || null,
         majorIntersection: majorIntersection || null,
         latitude: latitude ? (typeof latitude === 'number' ? latitude : parseFloat(String(latitude))) : null,
         longitude: longitude ? (typeof longitude === 'number' ? longitude : parseFloat(String(longitude))) : null,
-        propertyType: propertyType || null,
-        subPropertyType: subPropertyType || null,
-        bedroomRange: bedroomRange || null,
-        bathroomRange: bathroomRange || null,
-        sqftRange: sqftRange || null,
+        propertyType: normalizeField(propertyType),
+        subPropertyType: normalizeField(subPropertyType),
+        bedroomRange: normalizeField(bedroomRange),
+        bathroomRange: normalizeField(bathroomRange),
+        sqftRange: normalizeField(sqftRange),
         hasDen: hasDen === true || hasDen === 'true',
         hasStudio: hasStudio === true || hasStudio === 'true',
         hasLoft: hasLoft === true || hasLoft === 'true',
