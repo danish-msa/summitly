@@ -36,14 +36,16 @@ export async function GET(request: NextRequest) {
           })
           if (developer?.name) {
             developerNames.add(developer.name)
-          } else {
+          } else if (developerId) {
             // If not found in Developer table, use the ID as fallback
             developerNames.add(developerId)
           }
         }
       } catch (error) {
-        // If lookup fails, use the ID as fallback
-        developerNames.add(developerId)
+        // If lookup fails, use the ID as fallback (only if it's not null)
+        if (developerId) {
+          developerNames.add(developerId)
+        }
       }
     }
     const developers = Array.from(developerNames).sort()
