@@ -25,10 +25,10 @@ export async function GET(request: NextRequest) {
     for (const developerId of developerIds) {
       try {
         // Check if it's already a name (not an ID format)
-        if (!developerId.match(/^[a-z0-9]{25}$/)) {
+        if (developerId && !developerId.match(/^[a-z0-9]{25}$/)) {
           // It's likely already a name
           developerNames.add(developerId)
-        } else {
+        } else if (developerId) {
           // It's an ID, fetch the name
           const developer = await prisma.developer.findUnique({
             where: { id: developerId },
