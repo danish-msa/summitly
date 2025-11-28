@@ -151,10 +151,12 @@ export async function GET(request: NextRequest) {
     const developerNamesMap = new Map<string, string>()
     
     await Promise.all(
-      developerIds.map(async (id) => {
-        const name = await getDeveloperName(id)
-        developerNamesMap.set(id, name)
-      })
+      developerIds
+        .filter((id): id is string => id !== null && id !== undefined)
+        .map(async (id) => {
+          const name = await getDeveloperName(id)
+          developerNamesMap.set(id, name)
+        })
     )
 
     const formattedProjects = projects.map((project) => {
