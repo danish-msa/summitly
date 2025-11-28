@@ -207,7 +207,9 @@ export async function GET(
               1: 'Construction',
               2: 'Complete',
             }
-            return progressMap[project.completionProgress] || 'Pre-construction'
+            return project.completionProgress !== null && project.completionProgress !== undefined 
+              ? (progressMap[project.completionProgress] || 'Pre-construction')
+              : 'Pre-construction'
           })(),
         },
         details: {
