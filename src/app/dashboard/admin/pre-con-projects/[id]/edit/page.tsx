@@ -82,6 +82,7 @@ interface PreConProject {
     price: number
     maintenanceFee: number | null
     status: string
+    studio: boolean
     images: string[]
     description: string | null
     features: string[]
@@ -296,7 +297,7 @@ export default function EditProjectPage() {
           price: unit.price?.toString() || "",
           maintenanceFee: unit.maintenanceFee?.toString() || "",
           status: unit.status || "for-sale",
-          studio: (unit as any).studio || false,
+          studio: unit.studio ?? false,
           images: Array.isArray(unit.images) ? unit.images : [],
           pendingImages: [],
           description: unit.description || "",

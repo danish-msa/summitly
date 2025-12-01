@@ -101,7 +101,7 @@ export async function GET(
     const formattedUnits = project.units.map((unit) => {
       // Handle both old floorplanImage and new images array for backward compatibility
       // Type assertion needed because Prisma types may not be fully updated yet
-      type UnitWithImages = typeof unit & { images?: string[]; floorplanImage?: string | null }
+      type UnitWithImages = typeof unit & { images?: string[]; floorplanImage?: string | null; studio?: boolean }
       const unitWithImages = unit as UnitWithImages
       const unitImages = unitWithImages.images || (unitWithImages.floorplanImage ? [unitWithImages.floorplanImage] : [])
       return {
@@ -117,6 +117,7 @@ export async function GET(
         description: unit.description,
         features: unit.features || [],
         amenities: unit.amenities || [],
+        studio: unitWithImages.studio ?? false,
       }
     })
 

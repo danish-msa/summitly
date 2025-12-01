@@ -12,5 +12,6 @@ export interface UnitListing {
   description?: string;
   features?: string[];
   amenities?: string[];
+  studio?: boolean;
 }
 

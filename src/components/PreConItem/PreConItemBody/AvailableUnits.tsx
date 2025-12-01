@@ -33,6 +33,7 @@ interface DatabaseUnit {
   price: number;
   maintenanceFee?: number | null;
   status: string;
+  studio?: boolean;
   images?: string[];
   description?: string | null;
   features?: string[];
@@ -72,6 +73,7 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
     description: unit.description || undefined,
     features: unit.features || [],
     amenities: unit.amenities || [],
+    studio: unit.studio ?? false,
   })) : mockUnits;
 
   const filteredAndSortedUnits = useMemo(() => {
