@@ -143,7 +143,7 @@ export function PreConProjectForm({
   submitLabel = "Create Project",
   onCancel,
 }: PreConProjectFormProps) {
-  const [openSections, setOpenSections] = useState<string[]>(["basic", "address", "details", "pricing", "media", "team", "units"])
+  const [openSections, setOpenSections] = useState<string[]>(["basic", "address", "details", "pricing", "content", "media", "team", "units"])
   const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
   const [mapLoaded, setMapLoaded] = useState(false)
   const mapRef = useRef<google.maps.Map | null>(null)
@@ -866,7 +866,8 @@ export function PreConProjectForm({
     { id: "address", label: "Address" },
     { id: "details", label: "Property Details" },
     { id: "pricing", label: "Pricing Details" },
-    { id: "media", label: "Media & Content" },
+    { id: "content", label: "Content" },
+    { id: "media", label: "Media" },
     { id: "team", label: "Development Team" },
     { id: "units", label: "Units Details" },
   ]
@@ -1715,495 +1716,507 @@ export function PreConProjectForm({
           </AccordionItem>
         </div>
 
-        {/* Media & Content Section */}
-        <div ref={(el) => { sectionRefs.current["media"] = el }}>
-          <AccordionItem value="media">
+        {/* Content Section */}
+        <div ref={(el) => { sectionRefs.current["content"] = el }}>
+          <AccordionItem value="content">
             <AccordionTrigger className="container text-lg font-semibold px-6">
-              Media & Content
+              Content
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-6 container">
-          {/* Images and Videos in the same row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Images Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Images</CardTitle>
-                <CardDescription>
-                  Project images and media URLs
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Upload Section */}
-                <div className="space-y-2">
-                  <Label htmlFor="imageUpload">Upload Image</Label>
-                  <div className="flex gap-2">
-                    <input
-                      ref={fileInputRef}
-                      id="imageUpload"
-                      type="file"
-                      accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="rounded-lg"
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Choose File
-                    </Button>
-                    <p className="text-sm text-muted-foreground self-center">
-                      Max 10MB (JPEG, PNG, WebP, GIF)
-                    </p>
-                  </div>
-                </div>
-
-                {/* URL Input Section */}
-                <div className="space-y-2">
-                  <Label htmlFor="imageUrl">Or Enter Image URL</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="imageUrl"
-                      className="rounded-lg"
-                      placeholder="Image URL"
-                      value={formData.imageInput}
-                      onChange={(e) => setFormData({ ...formData, imageInput: e.target.value })}
-                      onKeyPress={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault()
-                          addArrayItem("images", "imageInput")
-                        }
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      onClick={() => addArrayItem("images", "imageInput")}
-                      className="rounded-lg"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Pending Images Preview (not yet uploaded) */}
-                {formData.pendingImages && formData.pendingImages.length > 0 && (
-                  <div className="space-y-2">
-                    <Label>Selected Images ({formData.pendingImages.length}) - Will be uploaded when project is created</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {formData.pendingImages.map((pendingImg) => (
-                        <div
-                          key={pendingImg.id}
-                          className="relative group border rounded-lg overflow-hidden aspect-square border-primary/50"
-                        >
-                          <img
-                            src={pendingImg.preview}
-                            alt={`Pending image ${pendingImg.file.name}`}
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removePendingImage(pendingImg.id)}
-                            className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                          <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate">
-                            {pendingImg.file.name}
-                          </div>
-                        </div>
-                      ))}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Description & Documents</CardTitle>
+                    <CardDescription>
+                      Project description and downloadable documents
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        rows={6}
+                        placeholder="Detailed project description..."
+                      />
                     </div>
-                  </div>
-                )}
-
-                {/* Already Uploaded Images Preview (from URLs) */}
-                {formData.images.length > 0 && (
-                  <div className="space-y-2">
-                    <Label>Image URLs ({formData.images.length})</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {formData.images.map((img, index) => (
-                        <div
-                          key={index}
-                          className="relative group border rounded-lg overflow-hidden aspect-square"
-                        >
-                          <img
-                            src={img}
-                            alt={`Project image ${index + 1}`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              // Fallback if image fails to load
-                              const target = e.target as HTMLImageElement
-                              target.src = '/images/p1.jpg'
-                            }}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeArrayItem("images", index)}
-                            className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                          <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate">
-                            {img.split('/').pop()}
-                          </div>
-                        </div>
-                      ))}
+                    <div className="space-y-2">
+                      <Label htmlFor="depositStructure">Deposit Structure</Label>
+                      <Textarea
+                        id="depositStructure"
+                        value={formData.depositStructure}
+                        onChange={(e) => setFormData({ ...formData, depositStructure: e.target.value })}
+                        rows={2}
+                        placeholder="e.g., 5% on signing, 10% within 6 months, 5% at occupancy"
+                      />
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Videos Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Videos</CardTitle>
-                <CardDescription>
-                  Project videos and media URLs
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* URL Input Section */}
-                <div className="space-y-2">
-                  <Label htmlFor="videoUrl">Enter Video URL</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="videoUrl"
-                      className="rounded-lg"
-                      placeholder="Video URL (YouTube, Vimeo, etc.)"
-                      value={formData.videoInput}
-                      onChange={(e) => setFormData({ ...formData, videoInput: e.target.value })}
-                      onKeyPress={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault()
-                          addArrayItem("videos", "videoInput")
-                        }
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      onClick={() => addArrayItem("videos", "videoInput")}
-                      className="rounded-lg"
-                    >
-                      <Plus className="h-4 w-4" /> 
-                    </Button>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Supports YouTube, Vimeo, and direct video URLs
-                  </p>
-                </div>
-
-                {/* Videos Preview */}
-                {formData.videos.length > 0 && (
-                  <div className="space-y-2">
-                    <Label>Added Videos ({formData.videos.length})</Label>
-                    <div className="space-y-3">
-                      {formData.videos.map((video, index) => (
-                        <div
-                          key={index}
-                          className="relative group border rounded-lg overflow-hidden"
-                        >
-                          <div className="aspect-video bg-muted flex items-center justify-center">
-                            {getVideoEmbedUrl(video) ? (
-                              <iframe
-                                src={getVideoEmbedUrl(video)}
-                                className="w-full h-full"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                                title={`Project video ${index + 1}`}
-                              />
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label>Documents</Label>
+                        <div className="flex gap-2">
+                          <input
+                            type="file"
+                            ref={documentFileInputRef}
+                            onChange={handleDocumentUpload}
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png"
+                            className="hidden"
+                            disabled={uploadingDocument}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => documentFileInputRef.current?.click()}
+                            disabled={uploadingDocument}
+                          >
+                            {uploadingDocument ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Uploading...
+                              </>
                             ) : (
-                              <div className="text-center p-4">
-                                <p className="text-sm text-muted-foreground mb-2">Video Preview</p>
-                                <a
-                                  href={video}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-sm text-primary hover:underline"
-                                >
-                                  {video.length > 50 ? `${video.substring(0, 50)}...` : video}
-                                </a>
-                              </div>
+                              <>
+                                <Upload className="h-4 w-4 mr-2" />
+                                Upload Document
+                              </>
                             )}
-                          </div>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
-                            onClick={() => removeArrayItem("videos", index)}
-                            className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90"
+                            variant="outline"
+                            size="sm"
+                            onClick={addDocument}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add URL
+                          </Button>
+                        </div>
+                      </div>
+                      {formData.documents.map((doc, index) => (
+                        <div key={index} className="grid grid-cols-4 gap-2 items-end p-3 border rounded-lg">
+                          <Input
+                            className="rounded-lg"
+                            placeholder="Document name"
+                            value={doc.name}
+                            onChange={(e) => updateDocument(index, "name", e.target.value)}
+                          />
+                          <Input
+                            className="rounded-lg"
+                            placeholder="URL"
+                            value={doc.url}
+                            onChange={(e) => updateDocument(index, "url", e.target.value)}
+                          />
+                          <Select
+                            value={doc.type}
+                            onValueChange={(value) => updateDocument(index, "type", value)}
+                          >
+                            <SelectTrigger className="rounded-lg">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="brochure">Brochure</SelectItem>
+                              <SelectItem value="floorplan">Floorplan</SelectItem>
+                              <SelectItem value="specification">Specification</SelectItem>
+                              <SelectItem value="contract">Contract</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeDocument(index)}
                           >
                             <X className="h-4 w-4" />
-                          </button>
+                          </Button>
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                  </CardContent>
+                </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Amenities</CardTitle>
-              <CardDescription>
-                Select predefined amenities or add custom ones
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Searchable Amenities Dropdown */}
-              <div className="space-y-3">
-                <Label>Select Amenities</Label>
-                <Popover open={amenitySearchOpen} onOpenChange={setAmenitySearchOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={amenitySearchOpen}
-                      className="w-full justify-between rounded-lg"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Search className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-muted-foreground">
-                          {formData.amenities.length > 0 
-                            ? `${formData.amenities.length} selected` 
-                            : "Search and select amenities..."}
-                        </span>
-                      </div>
-                      <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-                    <div className="p-2">
-                      <div className="flex items-center border-b px-3">
-                        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Amenities</CardTitle>
+                    <CardDescription>
+                      Select predefined amenities or add custom ones
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Searchable Amenities Dropdown */}
+                    <div className="space-y-3">
+                      <Label>Select Amenities</Label>
+                      <Popover open={amenitySearchOpen} onOpenChange={setAmenitySearchOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={amenitySearchOpen}
+                            className="w-full justify-between rounded-lg"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Search className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">
+                                {formData.amenities.length > 0 
+                                  ? `${formData.amenities.length} selected` 
+                                  : "Search and select amenities..."}
+                              </span>
+                            </div>
+                            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                          <div className="p-2">
+                            <div className="flex items-center border-b px-3">
+                              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                              <Input
+                                placeholder="Search amenities..."
+                                value={amenitySearchQuery}
+                                onChange={(e) => setAmenitySearchQuery(e.target.value)}
+                                className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                              />
+                            </div>
+                            <div className="max-h-[300px] overflow-y-auto p-1">
+                              {predefinedAmenities
+                                .filter((amenity) =>
+                                  amenity.name.toLowerCase().includes(amenitySearchQuery.toLowerCase())
+                                )
+                                .map((amenity) => {
+                                  const isSelected = formData.amenities.some(a => a.name === amenity.name)
+                                  const IconComponent = featureIcons[amenity.icon as FeatureIconName] || Sparkles
+                                  return (
+                                    <div
+                                      key={amenity.name}
+                                      className="flex items-center space-x-2 p-2 rounded-md hover:bg-secondary/50 cursor-pointer"
+                                      onClick={() => {
+                                        togglePredefinedAmenity(amenity)
+                                      }}
+                                    >
+                                      <Checkbox
+                                        checked={isSelected}
+                                        onCheckedChange={() => {
+                                          togglePredefinedAmenity(amenity)
+                                        }}
+                                      />
+                                      <IconComponent className="h-4 w-4 text-muted-foreground" />
+                                      <span className="text-sm flex-1">{amenity.name}</span>
+                                    </div>
+                                  )
+                                })}
+                              {predefinedAmenities.filter((amenity) =>
+                                amenity.name.toLowerCase().includes(amenitySearchQuery.toLowerCase())
+                              ).length === 0 && (
+                                <div className="p-4 text-center text-sm text-muted-foreground">
+                                  No amenities found
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+
+                    {/* Custom Amenities */}
+                    <div className="space-y-3">
+                      <Label htmlFor="customAmenityInput">Add Custom Amenity</Label>
+                      <div className="flex gap-2">
                         <Input
-                          placeholder="Search amenities..."
-                          value={amenitySearchQuery}
-                          onChange={(e) => setAmenitySearchQuery(e.target.value)}
-                          className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                          id="customAmenityInput"
+                          className="rounded-lg"
+                          placeholder="Enter custom amenity name"
+                          value={formData.customAmenityInput}
+                          onChange={(e) => setFormData({ ...formData, customAmenityInput: e.target.value })}
+                          onKeyPress={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault()
+                              addCustomAmenity()
+                            }
+                          }}
                         />
+                        <Button
+                          type="button"
+                          onClick={addCustomAmenity}
+                          className="rounded-lg"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <div className="max-h-[300px] overflow-y-auto p-1">
-                        {predefinedAmenities
-                          .filter((amenity) =>
-                            amenity.name.toLowerCase().includes(amenitySearchQuery.toLowerCase())
-                          )
-                          .map((amenity) => {
-                            const isSelected = formData.amenities.some(a => a.name === amenity.name)
+                    </div>
+
+                    {/* Selected Amenities List */}
+                    {(formData.amenities.length > 0 || formData.customAmenities.length > 0) && (
+                      <div className="space-y-2">
+                        <Label>Selected Amenities ({formData.amenities.length + formData.customAmenities.length})</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {formData.amenities.map((amenity, index) => {
                             const IconComponent = featureIcons[amenity.icon as FeatureIconName] || Sparkles
                             return (
-                              <div
-                                key={amenity.name}
-                                className="flex items-center space-x-2 p-2 rounded-md hover:bg-secondary/50 cursor-pointer"
-                                onClick={() => {
-                                  togglePredefinedAmenity(amenity)
-                                }}
-                              >
-                                <Checkbox
-                                  checked={isSelected}
-                                  onCheckedChange={() => {
-                                    togglePredefinedAmenity(amenity)
-                                  }}
-                                />
-                                <IconComponent className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-sm flex-1">{amenity.name}</span>
-                              </div>
+                              <Badge key={index} variant="secondary" className="flex items-center gap-2 px-3 py-1.5">
+                                <IconComponent className="h-4 w-4" />
+                                {amenity.name}
+                                <button
+                                  type="button"
+                                  onClick={() => togglePredefinedAmenity(amenity)}
+                                  className="ml-1 hover:text-destructive"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </Badge>
                             )
                           })}
-                        {predefinedAmenities.filter((amenity) =>
-                          amenity.name.toLowerCase().includes(amenitySearchQuery.toLowerCase())
-                        ).length === 0 && (
-                          <div className="p-4 text-center text-sm text-muted-foreground">
-                            No amenities found
-                          </div>
-                        )}
+                          {formData.customAmenities.map((amenity, index) => (
+                            <Badge key={`custom-${index}`} variant="secondary" className="flex items-center gap-2 px-3 py-1.5">
+                              {amenity}
+                              <button
+                                type="button"
+                                onClick={() => removeCustomAmenity(index)}
+                                className="ml-1 hover:text-destructive"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
+            </AccordionContent>
+          </AccordionItem>
+        </div>
 
-              {/* Custom Amenities */}
-              <div className="space-y-3">
-                <Label htmlFor="customAmenityInput">Add Custom Amenity</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="customAmenityInput"
-                    className="rounded-lg"
-                    placeholder="Enter custom amenity name"
-                    value={formData.customAmenityInput}
-                    onChange={(e) => setFormData({ ...formData, customAmenityInput: e.target.value })}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault()
-                        addCustomAmenity()
-                      }
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    onClick={addCustomAmenity}
-                    className="rounded-lg"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Selected Amenities List */}
-              {(formData.amenities.length > 0 || formData.customAmenities.length > 0) && (
-                <div className="space-y-2">
-                  <Label>Selected Amenities ({formData.amenities.length + formData.customAmenities.length})</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {formData.amenities.map((amenity, index) => {
-                      const IconComponent = featureIcons[amenity.icon as FeatureIconName] || Sparkles
-                      return (
-                        <Badge key={index} variant="secondary" className="flex items-center gap-2 px-3 py-1.5">
-                          <IconComponent className="h-4 w-4" />
-                          {amenity.name}
-                          <button
+        {/* Media Section */}
+        <div ref={(el) => { sectionRefs.current["media"] = el }}>
+          <AccordionItem value="media">
+            <AccordionTrigger className="container text-lg font-semibold px-6">
+              Media
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-6 container">
+                {/* Images and Videos in the same row */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Images Card */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Images</CardTitle>
+                      <CardDescription>
+                        Project images and media URLs
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Upload Section */}
+                      <div className="space-y-2">
+                        <Label htmlFor="imageUpload">Upload Image</Label>
+                        <div className="flex gap-2">
+                          <input
+                            ref={fileInputRef}
+                            id="imageUpload"
+                            type="file"
+                            accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                          />
+                          <Button
                             type="button"
-                            onClick={() => togglePredefinedAmenity(amenity)}
-                            className="ml-1 hover:text-destructive"
+                            variant="outline"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="rounded-lg"
                           >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      )
-                    })}
-                    {formData.customAmenities.map((amenity, index) => (
-                      <Badge key={`custom-${index}`} variant="secondary" className="flex items-center gap-2 px-3 py-1.5">
-                        {amenity}
-                        <button
-                          type="button"
-                          onClick={() => removeCustomAmenity(index)}
-                          className="ml-1 hover:text-destructive"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                            <Upload className="h-4 w-4 mr-2" />
+                            Choose File
+                          </Button>
+                          <p className="text-sm text-muted-foreground self-center">
+                            Max 10MB (JPEG, PNG, WebP, GIF)
+                          </p>
+                        </div>
+                      </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Description & Documents</CardTitle>
-              <CardDescription>
-                Project description and downloadable documents
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={6}
-                  placeholder="Detailed project description..."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="depositStructure">Deposit Structure</Label>
-                <Textarea
-                  id="depositStructure"
-                  value={formData.depositStructure}
-                  onChange={(e) => setFormData({ ...formData, depositStructure: e.target.value })}
-                  rows={2}
-                  placeholder="e.g., 5% on signing, 10% within 6 months, 5% at occupancy"
-                />
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label>Documents</Label>
-                  <div className="flex gap-2">
-                    <input
-                      type="file"
-                      ref={documentFileInputRef}
-                      onChange={handleDocumentUpload}
-                      accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png"
-                      className="hidden"
-                      disabled={uploadingDocument}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => documentFileInputRef.current?.click()}
-                      disabled={uploadingDocument}
-                    >
-                      {uploadingDocument ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="h-4 w-4 mr-2" />
-                          Upload Document
-                        </>
+                      {/* URL Input Section */}
+                      <div className="space-y-2">
+                        <Label htmlFor="imageUrl">Or Enter Image URL</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="imageUrl"
+                            className="rounded-lg"
+                            placeholder="Image URL"
+                            value={formData.imageInput}
+                            onChange={(e) => setFormData({ ...formData, imageInput: e.target.value })}
+                            onKeyPress={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault()
+                                addArrayItem("images", "imageInput")
+                              }
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            onClick={() => addArrayItem("images", "imageInput")}
+                            className="rounded-lg"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Pending Images Preview (not yet uploaded) */}
+                      {formData.pendingImages && formData.pendingImages.length > 0 && (
+                        <div className="space-y-2">
+                          <Label>Selected Images ({formData.pendingImages.length}) - Will be uploaded when project is created</Label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {formData.pendingImages.map((pendingImg) => (
+                              <div
+                                key={pendingImg.id}
+                                className="relative group border rounded-lg overflow-hidden aspect-square border-primary/50"
+                              >
+                                <img
+                                  src={pendingImg.preview}
+                                  alt={`Pending image ${pendingImg.file.name}`}
+                                  className="w-full h-full object-cover"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removePendingImage(pendingImg.id)}
+                                  className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate">
+                                  {pendingImg.file.name}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       )}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={addDocument}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add URL
-                    </Button>
-                  </div>
+
+                      {/* Already Uploaded Images Preview (from URLs) */}
+                      {formData.images.length > 0 && (
+                        <div className="space-y-2">
+                          <Label>Image URLs ({formData.images.length})</Label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {formData.images.map((img, index) => (
+                              <div
+                                key={index}
+                                className="relative group border rounded-lg overflow-hidden aspect-square"
+                              >
+                                <img
+                                  src={img}
+                                  alt={`Project image ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    // Fallback if image fails to load
+                                    const target = e.target as HTMLImageElement
+                                    target.src = '/images/p1.jpg'
+                                  }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removeArrayItem("images", index)}
+                                  className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate">
+                                  {img.split('/').pop()}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Videos Card */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Videos</CardTitle>
+                      <CardDescription>
+                        Project videos and media URLs
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* URL Input Section */}
+                      <div className="space-y-2">
+                        <Label htmlFor="videoUrl">Enter Video URL</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="videoUrl"
+                            className="rounded-lg"
+                            placeholder="Video URL (YouTube, Vimeo, etc.)"
+                            value={formData.videoInput}
+                            onChange={(e) => setFormData({ ...formData, videoInput: e.target.value })}
+                            onKeyPress={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault()
+                                addArrayItem("videos", "videoInput")
+                              }
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            onClick={() => addArrayItem("videos", "videoInput")}
+                            className="rounded-lg"
+                          >
+                            <Plus className="h-4 w-4" /> 
+                          </Button>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Supports YouTube, Vimeo, and direct video URLs
+                        </p>
+                      </div>
+
+                      {/* Videos Preview */}
+                      {formData.videos.length > 0 && (
+                        <div className="space-y-2">
+                          <Label>Added Videos ({formData.videos.length})</Label>
+                          <div className="space-y-3">
+                            {formData.videos.map((video, index) => (
+                              <div
+                                key={index}
+                                className="relative group border rounded-lg overflow-hidden"
+                              >
+                                <div className="aspect-video bg-muted flex items-center justify-center">
+                                  {getVideoEmbedUrl(video) ? (
+                                    <iframe
+                                      src={getVideoEmbedUrl(video)}
+                                      className="w-full h-full"
+                                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                      allowFullScreen
+                                      title={`Project video ${index + 1}`}
+                                    />
+                                  ) : (
+                                    <div className="text-center p-4">
+                                      <p className="text-sm text-muted-foreground mb-2">Video Preview</p>
+                                      <a
+                                        href={video}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-sm text-primary hover:underline"
+                                      >
+                                        {video.length > 50 ? `${video.substring(0, 50)}...` : video}
+                                      </a>
+                                    </div>
+                                  )}
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => removeArrayItem("videos", index)}
+                                  className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
-                {formData.documents.map((doc, index) => (
-                  <div key={index} className="grid grid-cols-4 gap-2 items-end p-3 border rounded-lg">
-                    <Input
-                      className="rounded-lg"
-                      placeholder="Document name"
-                      value={doc.name}
-                      onChange={(e) => updateDocument(index, "name", e.target.value)}
-                    />
-                    <Input
-                      className="rounded-lg"
-                      placeholder="URL"
-                      value={doc.url}
-                      onChange={(e) => updateDocument(index, "url", e.target.value)}
-                    />
-                    <Select
-                      value={doc.type}
-                      onValueChange={(value) => updateDocument(index, "type", value)}
-                    >
-                      <SelectTrigger className="rounded-lg">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="brochure">Brochure</SelectItem>
-                        <SelectItem value="floorplan">Floorplan</SelectItem>
-                        <SelectItem value="specification">Specification</SelectItem>
-                        <SelectItem value="contract">Contract</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeDocument(index)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
               </div>
             </AccordionContent>
           </AccordionItem>

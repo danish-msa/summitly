@@ -191,8 +191,8 @@ const PreConSearchBar: React.FC<PreConSearchBarProps> = ({
   };
 
   return (
-    <div ref={searchContainerRef} className={cn("relative w-full", className)}>
-      <div className="relative">
+    <div ref={searchContainerRef} className={cn("relative rounded-full w-full", className)}>
+      <div className="relative rounded-full">
         <Input
           type="text"
           value={searchValue}
