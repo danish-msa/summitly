@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
     const subPropertyType = searchParams.get('subPropertyType') || ''
     const completionYear = searchParams.get('completionYear') || ''
     const developer = searchParams.get('developer') || ''
+    const featured = searchParams.get('featured')
     const limit = searchParams.get('limit')
 
     // Build where clause
@@ -22,6 +23,7 @@ export async function GET(request: NextRequest) {
       occupancyDate?: { contains: string }
       developer?: string | { contains: string; mode: 'insensitive' }
       isPublished?: boolean
+      featured?: boolean
     } = {
       isPublished: true, // Only show published projects on public website
     }
@@ -62,6 +64,10 @@ export async function GET(request: NextRequest) {
         where.developer = { contains: developer, mode: 'insensitive' }
       }
     }
+    if (featured !== null && featured !== undefined) {
+      // Convert string to boolean
+      where.featured = featured === 'true' || featured === '1'
+    }
 
     // Retry logic for connection issues
     let retries = 3
@@ -71,10 +77,19 @@ export async function GET(request: NextRequest) {
     while (retries > 0) {
       try {
         // Get projects
+        // When filtering by featured, just order by createdAt
+        // Otherwise, prioritize featured projects first
+        const orderBy = featured === 'true' || featured === '1'
+          ? { createdAt: 'desc' }
+          : [
+              { featured: 'desc' as const },
+              { createdAt: 'desc' as const }
+            ]
+
         projects = await prisma.preConstructionProject.findMany({
           where,
           take: limit ? parseInt(limit) : undefined,
-          orderBy: { createdAt: 'desc' },
+          orderBy,
           include: {
             units: {
               select: {

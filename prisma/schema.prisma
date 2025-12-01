@@ -415,6 +415,7 @@ model PreConstructionProject {
 
   // Publication Status
   isPublished Boolean @default(false) // Draft projects are not visible on public website
+  featured Boolean @default(false) // Featured projects are highlighted on the website
 
   // Timestamps
   createdAt DateTime @default(now())
@@ -427,6 +428,7 @@ model PreConstructionProject {
   @@index([status])
   @@index([propertyType])
   @@index([isPublished])
+  @@index([featured])
 }
 
 // Pre-Construction Units - stores individual units within a project

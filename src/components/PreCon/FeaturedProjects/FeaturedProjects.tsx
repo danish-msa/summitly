@@ -51,7 +51,7 @@ const FeaturedProjects: React.FC = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch('/api/pre-con-projects?limit=2');
+        const response = await fetch('/api/pre-con-projects?featured=true&limit=2');
         if (response.ok) {
           const data = await response.json();
           setProjects(data.projects || []);
@@ -66,12 +66,11 @@ const FeaturedProjects: React.FC = () => {
     fetchProjects();
   }, []);
 
-  // Convert and get top 2 featured projects
+  // Convert featured projects (already filtered by API)
   const featuredProperties = useMemo(() => {
     return projects
       .map(convertToPreConProperty)
-      .filter((project): project is PreConstructionProperty => project !== null)
-      .slice(0, 2);
+      .filter((project): project is PreConstructionProperty => project !== null);
   }, [projects]);
 
   if (loading) {

@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Plus, Search, Edit, Trash2, Building2, TrendingUp, Package, MapPin, CheckCircle2 } from "lucide-react"
+import { Plus, Search, Edit, Trash2, Building2, TrendingUp, Package, MapPin, CheckCircle2, Star } from "lucide-react"
 import { isAdmin } from "@/lib/roles"
 import { Badge } from "@/components/ui/badge"
 import { formatCurrency } from "@/lib/utils"
@@ -36,6 +36,7 @@ interface PreConProject {
   totalUnits: number
   availableUnits: number
   isPublished: boolean
+  featured?: boolean
   createdAt: string
   units?: Array<{ id: string; status: string }>
 }
@@ -58,6 +59,7 @@ export default function PreConProjectsPage() {
   })
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [projectToDelete, setProjectToDelete] = useState<PreConProject | null>(null)
+  const [togglingFeatured, setTogglingFeatured] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -143,7 +145,61 @@ export default function PreConProjectsPage() {
     }
   }
 
+  const handleToggleFeatured = async (projectId: string, currentFeatured: boolean) => {
+    setTogglingFeatured(projectId)
+    try {
+      const response = await fetch(`/api/admin/pre-con-projects/${projectId}/featured`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ featured: !currentFeatured }),
+      })
+
+      if (!response.ok) throw new Error("Failed to update featured status")
+
+      // Update the project in the local state
+      setProjects((prevProjects) =>
+        prevProjects.map((project) =>
+          project.id === projectId
+            ? { ...project, featured: !currentFeatured }
+            : project
+        )
+      )
+    } catch (error) {
+      console.error("Error toggling featured status:", error)
+      const errorMessage = error instanceof Error ? error.message : "Failed to update featured status"
+      alert(errorMessage)
+    } finally {
+      setTogglingFeatured(null)
+    }
+  }
+
   const columns: Column<PreConProject>[] = [
+    {
+      key: "featured",
+      header: "",
+      render: (project) => (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            handleToggleFeatured(project.id, project.featured || false)
+          }}
+          disabled={togglingFeatured === project.id}
+          className="p-1 hover:bg-muted rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title={project.featured ? "Unfeature project" : "Feature project"}
+        >
+          <Star
+            className={`h-5 w-5 transition-colors ${
+              project.featured
+                ? "fill-yellow-400 text-yellow-400"
+                : "text-muted-foreground hover:text-yellow-400"
+            }`}
+          />
+        </button>
+      ),
+      className: "w-12",
+    },
     {
       key: "projectName",
       header: "Project Name",
