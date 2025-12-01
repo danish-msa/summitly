@@ -60,6 +60,24 @@ const slugifyCity = (city: string): string => {
     return city.toLowerCase().replace(/\s+/g, '-');
 };
 
+// Helper function to convert status to slug
+const getStatusSlug = (status: string): string => {
+    const statusMap: Record<string, string> = {
+        'now-selling': 'selling',
+        'selling': 'selling',
+        'coming-soon': 'coming-soon',
+        'sold-out': 'sold-out',
+        'platinum-access': 'platinum-access',
+        'register-now': 'register-now',
+        'assignments': 'assignments',
+        'resale': 'resale',
+        'new-release-coming-soon': 'coming-soon',
+    };
+    
+    const normalizedStatus = status?.toLowerCase() || '';
+    return statusMap[normalizedStatus] || normalizedStatus.replace(/\s+/g, '-');
+};
+
 const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = false }) => {
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [isScheduleTourModalOpen, setIsScheduleTourModalOpen] = useState(false);
@@ -146,23 +164,23 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
         
         // PreCon statuses
         if (normalizedStatus === 'selling' || normalizedStatus === 'active' || normalizedStatus === 'available') {
-            return 'bg-green-600 text-white hover:bg-green-700';
+            return 'bg-green-600 text-white hover:bg-green-800';
         }
         if (normalizedStatus === 'coming-soon' || normalizedStatus === 'coming soon') {
-            return 'bg-blue-600 text-white hover:bg-blue-700';
+            return 'bg-blue-600 text-white hover:bg-blue-800';
         }
         if (normalizedStatus === 'sold-out' || normalizedStatus === 'sold out' || normalizedStatus === 'sold') {
-            return 'bg-red-600 text-white hover:bg-red-700';
+            return 'bg-red-600 text-white hover:bg-red-800';
         }
         if (normalizedStatus === 'pending') {
-            return 'bg-yellow-500 text-white hover:bg-yellow-600';
+            return 'bg-yellow-500 text-white hover:bg-yellow-700';
         }
         if (normalizedStatus === 'rented' || normalizedStatus === 'inactive') {
-            return 'bg-gray-500 text-white hover:bg-gray-600';
+            return 'bg-gray-500 text-white hover:bg-gray-700';
         }
         
         // Default color
-        return 'bg-secondary text-white hover:bg-primary/20';
+        return 'bg-secondary text-white hover:bg-secondary/90';
     };
 
     // Get status text
@@ -188,25 +206,66 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                                 <h1 className="text-2xl font-bold text-foreground sm:text-3xl lg:text-3xl">
                                     {isPreCon ? preConData?.projectName : shortAddress}
                                 </h1>
-                                <Badge className={`${getStatusColor(statusText)} uppercase py-1 px-4`}>
-                                    <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-white"></span>
-                                    {statusText}
-                                </Badge>
-                                {isPreCon && preConData?.developer && (
-                                    <span className="text-base text-foreground font-medium">
-                                        by <a href="#" className="underline text-primary">{preConData.developer}</a>
-                                    </span>
-                                )}  
+                                {isPreCon ? (
+                                    <Link href={`/pre-construction/${getStatusSlug(statusText)}`}>
+                                        <Badge className={`${getStatusColor(statusText)} uppercase py-1 px-4 cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl`}>
+                                            <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-white"></span>
+                                            {statusText}
+                                        </Badge>
+                                    </Link>
+                                ) : (
+                                    <Badge className={`${getStatusColor(statusText)} uppercase py-1 px-4`}>
+                                        <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-white"></span>
+                                        {statusText}
+                                    </Badge>
+                                )}
+                                
                             </div>
-
+                            {isPreCon && preConData?.developer && (
+                                <span className="text-base text-foreground font-medium">
+                                    Developed by{' '}
+                                    <Link 
+                                        href={`/pre-construction?developer=${encodeURIComponent(preConData.developer)}`}
+                                        className="relative inline-block text-primary group"
+                                    >
+                                        <span className="relative z-10">{preConData.developer}</span>
+                                        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                                    </Link>
+                                </span>
+                            )}  
                             
                             
                             <div className="flex flex-col gap-2 justify-start">
                                 {/* Address */}
-                                <div className="flex items-start text-primary">
-                                    <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0 mr-1" />
-                                    <span className="text-sm font-medium sm:text-lg max-w-xl">{fullAddress}</span>
-                                </div>
+                                {isPreCon && property.address.city ? (
+                                    <div className="flex items-start text-primary">
+                                        <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0 mr-1" />
+                                        <span className="text-sm font-medium sm:text-lg max-w-xl">
+                                            {property.address.streetNumber && property.address.streetName ? (
+                                                <>
+                                                    {property.address.streetNumber} {property.address.streetName}
+                                                    {property.address.streetSuffix && ` ${property.address.streetSuffix}`},{' '}
+                                                </>
+                                            ) : null}
+                                            <Link 
+                                                href={`/pre-construction/${slugifyCity(property.address.city)}`}
+                                                className="relative inline-block group"
+                                            >
+                                                <span className="relative z-10 hover:text-primary/80 transition-colors duration-300">
+                                                    {property.address.city}
+                                                </span>
+                                                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                                            </Link>
+                                            {property.address.state && `, ${property.address.state}`}
+                                            {property.address.zip && ` ${property.address.zip}`}
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-start text-primary">
+                                        <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0 mr-1" />
+                                        <span className="text-sm font-medium sm:text-lg max-w-xl">{fullAddress}</span>
+                                    </div>
+                                )}
                                 {/* MLS Number or Project ID - Same line as heading */}
                                 {!isPreCon && !isRent && (
                                     <span className="text-base text-muted-foreground font-normal">
@@ -242,13 +301,16 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                                                     const linkUrl = `/pre-construction/${getSubPropertyTypeSlug(subPropertyType, propertyType)}`;
                                                     
                                                     return (
-                                                        <div className="flex flex-row items-center gap-1">
-                                                            <Building2 className="h-6 w-6 text-primary" />
+                                                        <div className="flex flex-row items-center gap-1 group">
+                                                            <Building2 className="h-6 w-6 text-primary transition-transform duration-300 group-hover:scale-110" />
                                                             <Link 
                                                                 href={linkUrl}
-                                                                className="text-sm text-foreground font-medium hover:text-primary transition-colors underline"
+                                                                className="relative inline-block text-sm text-foreground font-medium"
                                                             >
-                                                                {displayText}
+                                                                <span className="relative z-10 transition-colors duration-300 group-hover:text-primary">
+                                                                    {displayText}
+                                                                </span>
+                                                                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
                                                             </Link>
                                                         </div>
                                                     );
@@ -262,14 +324,17 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                                                 const linkUrl = year ? `/pre-construction/${year}` : null;
                                                 
                                                 return (
-                                                    <div className="flex flex-row items-center gap-1">
-                                                        <CalendarIcon className="h-6 w-6 text-primary" />
+                                                    <div className="flex flex-row items-center gap-1 group">
+                                                        <CalendarIcon className="h-6 w-6 text-primary transition-transform duration-300 group-hover:scale-110" />
                                                         {linkUrl ? (
                                                             <Link 
                                                                 href={linkUrl}
-                                                                className="text-sm text-foreground font-medium hover:text-primary transition-colors underline"
+                                                                className="relative inline-block text-sm text-foreground font-medium"
                                                             >
-                                                                {displayText}
+                                                                <span className="relative z-10 transition-colors duration-300 group-hover:text-primary">
+                                                                    {displayText}
+                                                                </span>
+                                                                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
                                                             </Link>
                                                         ) : (
                                                             <span className="text-sm text-foreground font-medium">
@@ -279,21 +344,37 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                                                     </div>
                                                 );
                                             })()}
-                                            {/* Property Type (e.g., Condos) */}
+                                            {/* Property Type (e.g., Condos) - Only show if no sub-property type exists for Condos/Houses */}
                                             {(() => {
                                                 const propertyType = property.details?.propertyType || 
                                                                      property.preCon?.details?.propertyType || 
                                                                      'Condominium';
+                                                const subPropertyType = property.preCon?.details?.subPropertyType;
+                                                const isCondo = propertyType.toLowerCase().includes('condo');
+                                                const isHouse = propertyType.toLowerCase().includes('house');
+                                                
+                                                // Only show property type if:
+                                                // 1. It's not Condos or Houses, OR
+                                                // 2. It's Condos/Houses but no sub-property type exists
+                                                const shouldShowPropertyType = !(isCondo || isHouse) || !subPropertyType;
+                                                
+                                                if (!shouldShowPropertyType) {
+                                                    return null;
+                                                }
+                                                
                                                 const propertyTypeSlug = getPropertyTypeSlug(propertyType);
                                                 
                                                 return (
-                                                    <div className="flex flex-row items-center gap-1">
-                                                        <Building2 className="h-6 w-6 text-primary" />
+                                                    <div className="flex flex-row items-center gap-1 group">
+                                                        <Building2 className="h-6 w-6 text-primary transition-transform duration-300 group-hover:scale-110" />
                                                         <Link 
                                                             href={`/pre-construction/${propertyTypeSlug}`}
-                                                            className="text-sm text-foreground font-medium hover:text-primary transition-colors underline"
+                                                            className="relative inline-block text-sm text-foreground font-medium"
                                                         >
-                                                            Property Type: {propertyType}
+                                                            <span className="relative z-10 transition-colors duration-300 group-hover:text-primary">
+                                                                Property Type: {propertyType}
+                                                            </span>
+                                                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
                                                         </Link>
                                                     </div>
                                                 );

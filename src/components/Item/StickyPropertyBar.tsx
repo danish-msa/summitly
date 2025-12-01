@@ -7,11 +7,73 @@ import { Button } from '@/components/ui/button';
 import { PropertyListing } from '@/lib/types';
 import ShareModal from './Banner/ShareModal';
 import ScheduleTourModal from './ItemBody/ScheduleTourModal';
+import Link from 'next/link';
 
 interface StickyPropertyBarProps {
   property: PropertyListing;
   bannerRef: React.RefObject<HTMLDivElement | null>;
 }
+
+// Helper function to generate slug for property type
+const getPropertyTypeSlug = (propertyType: string): string => {
+  const typeMap: Record<string, string> = {
+    'Condos': 'condos',
+    'Houses': 'houses',
+    'Lofts': 'lofts',
+    'Master-Planned Communities': 'master-planned-communities',
+    'Multi Family': 'multi-family',
+    'Offices': 'offices',
+    'Condominium': 'condos',
+    'Condo': 'condos',
+  };
+  return typeMap[propertyType] || propertyType.toLowerCase().replace(/\s+/g, '-');
+};
+
+// Helper function to generate slug for sub-property type
+const getSubPropertyTypeSlug = (subPropertyType: string, propertyType: string): string => {
+  const subTypeSlug = subPropertyType.toLowerCase().replace(/\s+/g, '-');
+  const propertyTypeSlug = getPropertyTypeSlug(propertyType);
+  
+  // For Condos: high-rise-condos, mid-rise-condos, low-rise-condos
+  if (propertyTypeSlug === 'condos') {
+    return `${subTypeSlug}-condos`;
+  }
+  // For Houses: link-houses, townhouse-houses, semi-detached-houses, detached-houses
+  if (propertyTypeSlug === 'houses') {
+    return `${subTypeSlug}-houses`;
+  }
+  
+  return `${subTypeSlug}-${propertyTypeSlug}`;
+};
+
+// Helper function to extract year from completion date
+const extractYear = (dateString: string): string | null => {
+  const yearMatch = dateString.match(/\d{4}/);
+  return yearMatch ? yearMatch[0] : null;
+};
+
+// Helper function to slugify city name
+const slugifyCity = (city: string): string => {
+  return city.toLowerCase().replace(/\s+/g, '-');
+};
+
+// Helper function to convert status to slug
+const getStatusSlug = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    'now-selling': 'selling',
+    'selling': 'selling',
+    'coming-soon': 'coming-soon',
+    'sold-out': 'sold-out',
+    'platinum-access': 'platinum-access',
+    'register-now': 'register-now',
+    'assignments': 'assignments',
+    'resale': 'resale',
+    'new-release-coming-soon': 'coming-soon',
+  };
+  
+  const normalizedStatus = status?.toLowerCase() || '';
+  return statusMap[normalizedStatus] || normalizedStatus.replace(/\s+/g, '-');
+};
 
 const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerRef }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -122,6 +184,7 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
   const isPreCon = !!property.preCon;
 
   const formatPrice = (price: number) => {
+    if (!price || price === 0) return 'Coming Soon';
     return new Intl.NumberFormat('en-CA', {
       style: 'currency',
       currency: 'CAD',
@@ -181,11 +244,11 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
                     {/* Starting Price */}
                     <div className="flex-shrink-0">
                       <div className="text-base lg:text-lg xl:text-2xl font-bold text-primary whitespace-nowrap">
-                        {property.preCon?.startingPrice
-                          ? formatPrice(property.preCon.startingPrice)
-                          : property.preCon?.priceRange 
+                        {property.preCon?.priceRange && property.preCon.priceRange.min > 0
                           ? formatPrice(property.preCon.priceRange.min)
-                          : 'Contact for Pricing'}
+                          : property.preCon?.startingPrice && property.preCon.startingPrice > 0
+                          ? formatPrice(property.preCon.startingPrice)
+                          : 'Coming Soon'}
                       </div>
                     </div>
 
@@ -195,7 +258,7 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
                       {property.preCon?.projectName && (
                         <div className="flex items-center gap-1.5">
                           <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                          <span className="text-sm text-foreground whitespace-nowrap truncate max-w-[150px]">
+                          <span className="text-sm text-foreground whitespace-nowrap truncate max-w-[200px] lg:max-w-[250px]">
                             {property.preCon.projectName}
                           </span>
                         </div>
@@ -203,24 +266,70 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
 
                       {/* Developer */}
                       {property.preCon?.developer && (
-                        <div className="flex items-center gap-1.5">
-                          <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                          <span className="text-sm text-foreground whitespace-nowrap truncate max-w-[120px]">
-                            {property.preCon.developer}
-                          </span>
+                        <div className="flex items-center gap-1.5 group">
+                          <User className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-transform duration-300 group-hover:scale-110" />
+                          <Link 
+                            href={`/pre-construction?developer=${encodeURIComponent(property.preCon.developer)}`}
+                            className="relative inline-block text-sm text-foreground whitespace-nowrap truncate max-w-[180px] lg:max-w-[220px]"
+                          >
+                            <span className="relative z-10 transition-colors duration-300 group-hover:text-primary">
+                              {property.preCon.developer}
+                            </span>
+                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                          </Link>
                         </div>
                       )}
 
-                      {/* Project Type */}
-                      <div className="flex items-center gap-1.5">
-                        <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                        <span className="text-sm text-foreground whitespace-nowrap">
-                          {property.details.propertyType || 'Condominium'}
-                        </span>
-                      </div>
+                      {/* Property Type - Show sub-property type if available for Condos/Houses */}
+                      {(() => {
+                        const propertyType = property.details?.propertyType || 
+                                             property.preCon?.details?.propertyType || 
+                                             'Condominium';
+                        const subPropertyType = property.preCon?.details?.subPropertyType;
+                        const isCondo = propertyType.toLowerCase().includes('condo');
+                        const isHouse = propertyType.toLowerCase().includes('house');
+                        
+                        // Show sub-property type if available for Condos/Houses
+                        if (subPropertyType && (isCondo || isHouse)) {
+                          const displayText = isCondo ? `${subPropertyType} Condo` : `${subPropertyType} House`;
+                          const linkUrl = `/pre-construction/${getSubPropertyTypeSlug(subPropertyType, propertyType)}`;
+                          
+                          return (
+                            <div className="flex items-center gap-1.5 group">
+                              <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-transform duration-300 group-hover:scale-110" />
+                              <Link 
+                                href={linkUrl}
+                                className="relative inline-block text-sm text-foreground whitespace-nowrap"
+                              >
+                                <span className="relative z-10 transition-colors duration-300 group-hover:text-primary">
+                                  {displayText}
+                                </span>
+                                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                              </Link>
+                            </div>
+                          );
+                        }
+                        
+                        // Show property type if not Condos/Houses or no sub-property type
+                        const propertyTypeSlug = getPropertyTypeSlug(propertyType);
+                        return (
+                          <div className="flex items-center gap-1.5 group">
+                            <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-transform duration-300 group-hover:scale-110" />
+                            <Link 
+                              href={`/pre-construction/${propertyTypeSlug}`}
+                              className="relative inline-block text-sm text-foreground whitespace-nowrap"
+                            >
+                              <span className="relative z-10 transition-colors duration-300 group-hover:text-primary">
+                                {propertyType}
+                              </span>
+                              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                            </Link>
+                          </div>
+                        );
+                      })()}
 
                       {/* Units */}
-                      {property.preCon?.details?.totalUnits && (
+                      {property.preCon?.details?.totalUnits && property.preCon.details.totalUnits > 0 && (
                         <div className="flex items-center gap-1.5">
                           <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                           <span className="text-sm text-foreground whitespace-nowrap">
@@ -230,7 +339,9 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
                       )}
 
                       {/* Suites */}
-                      {property.preCon?.details?.availableUnits !== undefined && (
+                      {property.preCon?.details?.availableUnits !== undefined && 
+                       property.preCon.details.availableUnits !== null && 
+                       property.preCon.details.availableUnits > 0 && (
                         <div className="flex items-center gap-1.5">
                           <Home className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                           <span className="text-sm text-foreground whitespace-nowrap">
@@ -240,7 +351,7 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
                       )}
 
                       {/* Stories */}
-                      {property.preCon?.details?.storeys && (
+                      {property.preCon?.details?.storeys && property.preCon.details.storeys > 0 && (
                         <div className="flex items-center gap-1.5">
                           <Layers className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                           <span className="text-sm text-foreground whitespace-nowrap">
@@ -250,17 +361,32 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
                       )}
 
                       {/* Completion */}
-                      {property.preCon?.completion?.date && (
-                        <div className="flex items-center gap-1.5">
-                          <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                          <p className="text-sm text-foreground whitespace-nowrap">
-                            {(() => {
-                              const yearMatch = property.preCon.completion.date.match(/\d{4}/);
-                              return yearMatch ? `Completion: ${yearMatch[0]}` : `Completion: ${property.preCon.completion.date}`;
-                            })()}
-                          </p>
-                        </div>
-                      )}
+                      {property.preCon?.completion?.date && (() => {
+                        const year = extractYear(property.preCon.completion.date);
+                        const displayText = year ? `Completion: ${year}` : `Completion: ${property.preCon.completion.date}`;
+                        const linkUrl = year ? `/pre-construction/${year}` : null;
+                        
+                        return (
+                          <div className="flex items-center gap-1.5 group">
+                            <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-transform duration-300 group-hover:scale-110" />
+                            {linkUrl ? (
+                              <Link 
+                                href={linkUrl}
+                                className="relative inline-block text-sm text-foreground whitespace-nowrap"
+                              >
+                                <span className="relative z-10 transition-colors duration-300 group-hover:text-primary">
+                                  {displayText}
+                                </span>
+                                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                              </Link>
+                            ) : (
+                              <span className="text-sm text-foreground whitespace-nowrap">
+                                {displayText}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </>
                 ) : (
@@ -270,45 +396,57 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
                     <div className="flex-shrink-0">
                       <div className="text-base lg:text-lg xl:text-2xl font-bold text-primary whitespace-nowrap">
                         {isRental 
-                          ? `${formatPrice(property.listPrice)}/mo`
-                          : formatPrice(property.listPrice)}
+                          ? (property.listPrice && property.listPrice > 0
+                              ? `${formatPrice(property.listPrice)}/mo`
+                              : 'Coming Soon')
+                          : (property.listPrice && property.listPrice > 0
+                              ? formatPrice(property.listPrice)
+                              : 'Coming Soon')}
                       </div>
                     </div>
 
                     {/* Property Stats (Beds, Baths, Sqft) */}
                     <div className="hidden md:flex justify-start items-center gap-4 lg:gap-6 flex-shrink-0">
                       {/* Beds */}
-                      <div className="flex items-center gap-1.5">
-                        <Bed className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                        <span className="text-base text-foreground whitespace-nowrap">
-                          {getBedrooms()}
-                        </span>
-                      </div>
+                      {getBedrooms() && (
+                        <div className="flex items-center gap-1.5">
+                          <Bed className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <span className="text-base text-foreground whitespace-nowrap">
+                            {getBedrooms()}
+                          </span>
+                        </div>
+                      )}
 
                       {/* Baths */}
-                      <div className="flex items-center gap-1.5">
-                        <Bath className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                        <span className="text-base text-foreground whitespace-nowrap">
-                          {getBathrooms()}
-                        </span>
-                      </div>
+                      {getBathrooms() && (
+                        <div className="flex items-center gap-1.5">
+                          <Bath className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <span className="text-base text-foreground whitespace-nowrap">
+                            {getBathrooms()}
+                          </span>
+                        </div>
+                      )}
 
                       {/* Square Feet */}
-                      <div className="flex items-center gap-1.5">
-                        <Maximize2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                        <span className="text-base text-foreground whitespace-nowrap">
-                          {getSquareFeet()}
-                        </span>
-                      </div>
+                      {getSquareFeet() && getSquareFeet() !== 'N/A sqft' && (
+                        <div className="flex items-center gap-1.5">
+                          <Maximize2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <span className="text-base text-foreground whitespace-nowrap">
+                            {getSquareFeet()}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Address */}
-                    <div className="flex flex-col justify-center gap-1 flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0 min-w-0">
-                        <MapPin className="h-5 w-5 flex-shrink-0" />
-                        <span className="truncate text-base">{shortAddress}</span>
+                    {shortAddress && shortAddress !== 'Unknown Location' && (
+                      <div className="flex flex-col justify-center gap-1 flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0 min-w-0">
+                          <MapPin className="h-5 w-5 flex-shrink-0" />
+                          <span className="truncate text-base max-w-[300px] lg:max-w-[400px] xl:max-w-[500px]">{shortAddress}</span>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Right Side: Action Buttons */}
                     <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">

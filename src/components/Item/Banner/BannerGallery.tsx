@@ -125,9 +125,9 @@ const BannerGallery: React.FC<BannerGalleryProps> = ({ property }) => {
     return (
         <>
             {/* 50-50 Split Layout: Slider Left + 2x2 Grid Right */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-xl overflow-hidden h-[400px] md:h-[500px]">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Left Side: Large Image Slider (50%) */}
-                <div className="relative overflow-hidden bg-muted group h-full">
+                <div className="relative overflow-hidden bg-muted group aspect-[4/3] rounded-2xl">
                     <img
                         src={categorizedImages[currentSlideIndex]?.src}
                         alt={categorizedImages[currentSlideIndex]?.alt}
@@ -177,7 +177,7 @@ const BannerGallery: React.FC<BannerGalleryProps> = ({ property }) => {
                 </div>
 
                 {/* Right Side: 2x2 Grid (50%) */}
-                <div className="hidden md:grid grid-cols-2 grid-rows-2 gap-4 h-full">
+                <div className="hidden md:grid grid-cols-2 grid-rows-2 aspect-[4/3] gap-4">
                     {categorizedImages.slice(1, 5).map((image, index) => {
                         const actualIndex = index + 1;
                         const isLastImage = index === 3;
@@ -185,7 +185,7 @@ const BannerGallery: React.FC<BannerGalleryProps> = ({ property }) => {
                         return (
                             <div 
                                 key={actualIndex}
-                                className="relative overflow-hidden bg-muted cursor-pointer group"
+                                className="relative overflow-hidden bg-muted cursor-pointer group aspect-[4/3] rounded-2xl"
                                 onClick={() => isLastImage && categorizedImages.length > 5 ? handleModalOpen('all') : handleImageClick(actualIndex)}
                             >
                                 <img

@@ -16,7 +16,7 @@ const Hero = () => {
         <p className="text-lg  md:text-xl text-center mb-8">
           Get first access to floor plans, pricing, and VIP incentives before public release.
         </p>
-        <div className="relative w-full max-w-sm">
+        <div className="relative w-full max-w-xl">
           <PreConSearchBar
             placeholder="Enter location to search pre-construction properties"
             className='bg-white/90 rounded-full'
