@@ -100,7 +100,10 @@ export async function GET(
     // Convert units to UnitListing format
     const formattedUnits = project.units.map((unit) => {
       // Handle both old floorplanImage and new images array for backward compatibility
-      const unitImages = (unit as any).images || ((unit as any).floorplanImage ? [(unit as any).floorplanImage] : [])
+      // Type assertion needed because Prisma types may not be fully updated yet
+      type UnitWithImages = typeof unit & { images?: string[]; floorplanImage?: string | null }
+      const unitWithImages = unit as UnitWithImages
+      const unitImages = unitWithImages.images || (unitWithImages.floorplanImage ? [unitWithImages.floorplanImage] : [])
       return {
         id: unit.id,
         name: unit.unitName,
