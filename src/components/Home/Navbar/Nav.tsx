@@ -14,7 +14,8 @@ import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { ChevronDown, Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { MegaMenu, buyMenuColumns, rentMenuColumns } from './MegaMenu';
+import { BuyMegaMenu } from './BuyMegaMenu';
+import { RentMegaMenu } from './RentMegaMenu';
 import { ProjectsMegaMenu } from './ProjectsMegaMenu';
 
 type Props = {
@@ -193,17 +194,10 @@ const Nav = ({ openNav }: Props) => {
               {/* Buy, Rent, Mortgage - Desktop Only */}
               <nav className="hidden lg:flex items-center space-x-1">
                 {/* Buy Mega Menu */}
-                <MegaMenu
+                <BuyMegaMenu
                   isOpen={showBuyDropdown}
                   onMouseEnter={() => setShowBuyDropdown(true)}
                   onMouseLeave={() => setShowBuyDropdown(false)}
-                  columns={buyMenuColumns}
-                  featuredContent={{
-                    title: "Find Your Dream Home",
-                    description: "Explore thousands of properties and find the perfect home that matches your lifestyle and budget.",
-                    image: "/images/hero.jpg",
-                    link: "/buy"
-                  }}
                 >
                   <motion.div
                     className="px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide flex items-center gap-1 cursor-pointer"
@@ -216,20 +210,13 @@ const Nav = ({ openNav }: Props) => {
                     Buy
                     <ChevronDown className={cn("w-4 h-4 transition-transform", showBuyDropdown && "rotate-180")} />
                   </motion.div>
-                </MegaMenu>
+                </BuyMegaMenu>
 
                 {/* Rent Mega Menu */}
-                <MegaMenu
+                <RentMegaMenu
                   isOpen={showRentDropdown}
                   onMouseEnter={() => setShowRentDropdown(true)}
                   onMouseLeave={() => setShowRentDropdown(false)}
-                  columns={rentMenuColumns}
-                  featuredContent={{
-                    title: "Find Your Perfect Rental",
-                    description: "Discover amazing rental properties that fit your lifestyle and budget. Start your search today.",
-                    image: "/images/hero.jpg",
-                    link: "/rent"
-                  }}
                 >
                   <motion.div
                     className="px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide flex items-center gap-1 cursor-pointer"
@@ -242,7 +229,7 @@ const Nav = ({ openNav }: Props) => {
                     Rent
                     <ChevronDown className={cn("w-4 h-4 transition-transform", showRentDropdown && "rotate-180")} />
                   </motion.div>
-                </MegaMenu>
+                </RentMegaMenu>
 
                 {/* Pre-Con Mega Menu */}
                 <ProjectsMegaMenu

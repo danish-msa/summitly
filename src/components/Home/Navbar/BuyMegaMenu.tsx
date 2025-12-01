@@ -7,22 +7,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 import { 
-  Building2, 
-  Calendar, 
-  Tag, 
-  Users, 
   Home, 
-  Warehouse, 
-  Building, 
-  CheckCircle, 
-  Clock, 
-  XCircle,
+  Building2, 
+  MapPin, 
+  Calculator, 
+  BookOpen, 
+  FileText, 
+  TrendingUp, 
+  Search, 
+  DollarSign,
   ChevronRight,
   ArrowUpRight
 } from 'lucide-react';
 import { getBlogPosts } from '@/data/data';
 
-interface ProjectsMegaMenuProps {
+interface BuyMegaMenuProps {
   isOpen: boolean;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
@@ -30,7 +29,7 @@ interface ProjectsMegaMenuProps {
   children: React.ReactNode;
 }
 
-type CategoryType = 'property-type' | 'occupancy-year' | 'selling-status' | 'developer';
+type CategoryType = 'for-sale' | 'new-homes' | 'buying-resources';
 
 interface CategoryItem {
   id: CategoryType;
@@ -46,109 +45,78 @@ interface ContentItem {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-interface FilterData {
-  propertyTypes: string[];
-  developers: string[];
-  sellingStatuses: string[];
-  occupancyYears: number[];
-}
-
 const mainCategories: CategoryItem[] = [
   {
-    id: 'property-type',
-    title: 'Property Type',
-    description: 'Browse by building category'
+    id: 'for-sale',
+    title: 'For Sale',
+    description: 'Browse properties for sale'
   },
   {
-    id: 'occupancy-year',
-    title: 'Occupancy Year',
-    description: 'Filter by move-in date'
+    id: 'new-homes',
+    title: 'New Homes',
+    description: 'Explore new construction'
   },
   {
-    id: 'selling-status',
-    title: 'Selling Status',
-    description: 'View by availability'
-  },
-  {
-    id: 'developer',
-    title: 'Developer',
-    description: 'Explore by builder'
+    id: 'buying-resources',
+    title: 'Buying Resources',
+    description: 'Tools and guides'
   }
 ];
 
-const propertyTypes: ContentItem[] = [
-  { id: 'condos', label: 'Condos', description: 'Explore condominium projects', href: '/pre-construction/condos', icon: Building2 },
-  { id: 'houses', label: 'Houses', description: 'Browse house developments', href: '/pre-construction/houses', icon: Home },
-  { id: 'lofts', label: 'Lofts', description: 'Discover loft projects', href: '/pre-construction/lofts', icon: Warehouse },
-  { id: 'master-planned', label: 'Master-Planned Communities', description: 'View master-planned communities', href: '/pre-construction/master-planned-communities', icon: Building },
-  { id: 'multi-family', label: 'Multi Family', description: 'Multi-family developments', href: '/pre-construction/multi-family', icon: Building2 },
-  { id: 'offices', label: 'Offices', description: 'Find office spaces', href: '/pre-construction/offices', icon: Building2 },
+const forSaleItems: ContentItem[] = [
+  { id: 'houses', label: 'Houses', description: 'Browse all houses for sale in your area', href: '/buy?type=houses', icon: Home },
+  { id: 'townhouses', label: 'Townhouses', description: 'Find your perfect townhouse today', href: '/buy?type=townhouses', icon: Building2 },
+  { id: 'condos', label: 'Condos', description: 'Explore condominiums and apartments', href: '/buy?type=condos', icon: Building2 },
+  { id: 'mobile-homes', label: 'Mobile Homes', description: 'Affordable mobile home options', href: '/buy?type=mobile-homes', icon: Home },
+  { id: 'open-houses', label: 'Open Houses', description: 'View scheduled open house events', href: '/buy?type=open-houses', icon: Search },
 ];
 
-const currentYear = new Date().getFullYear();
-const occupancyYears: ContentItem[] = Array.from({ length: 7 }, (_, i) => ({
-  id: `year-${currentYear + i}`,
-  label: `Move in ${currentYear + i}`,
-  description: `Projects completing in ${currentYear + i}`,
-  href: `/pre-construction/${currentYear + i}`,
-  icon: Calendar
-}));
+const newHomesItems: ContentItem[] = [
+  { id: 'discover', label: 'Discover Your New Home', description: 'Find new construction projects', href: '/new-homes/discover', icon: MapPin },
+  { id: 'new-homes-sale', label: 'New Homes For Sale', description: 'Browse all new construction listings', href: '/new-homes', icon: Home },
+  { id: 'communities', label: 'New Home Communities', description: 'Explore master-planned communities', href: '/new-homes/communities', icon: Building2 },
+  { id: 'news', label: 'New Construction News', description: 'Stay updated on new developments', href: '/new-homes/news', icon: TrendingUp },
+];
 
-const sellingStatuses: ContentItem[] = [
-  { id: 'platinum-access', label: 'Platinum Access', description: 'Exclusive early access projects', href: '/pre-construction/platinum-access', icon: CheckCircle },
-  { id: 'now-selling', label: 'Now Selling', description: 'Currently available for purchase', href: '/pre-construction/now-selling', icon: CheckCircle },
-  { id: 'coming-soon', label: 'Coming Soon', description: 'Upcoming projects launching soon', href: '/pre-construction/coming-soon', icon: Clock },
-  { id: 'assignments', label: 'Assignments', description: 'Assignment opportunities available', href: '/pre-construction/assignments', icon: Tag },
-  { id: 'register-now', label: 'Register Now', description: 'Projects accepting registrations', href: '/pre-construction/register-now', icon: Clock },
-  { id: 'resale', label: 'Resale', description: 'Resale properties available', href: '/pre-construction/resale', icon: Tag },
-  { id: 'sold-out', label: 'Sold Out', description: 'Fully sold projects', href: '/pre-construction/sold-out', icon: XCircle },
+const buyingResourcesItems: ContentItem[] = [
+  { id: 'affordability', label: 'How Much Can I Afford', description: 'Calculate your home buying budget', href: '/calculators/affordability', icon: Calculator },
+  { id: 'mortgage-calculator', label: 'Mortgage Calculator', description: 'Estimate your monthly payments', href: '/calculators', icon: DollarSign },
+  { id: 'buying-guide', label: 'Buying Guide', description: 'Complete guide to buying a home', href: '/buying-guide', icon: BookOpen },
+  { id: 'articles', label: 'Home Buying Articles', description: 'Expert tips and advice', href: '/articles?category=home-buying', icon: FileText },
 ];
 
 const getCategoryTitle = (category: CategoryType): string => {
   const titles: Record<CategoryType, string> = {
-    'property-type': 'Browse by Property Type',
-    'occupancy-year': 'Select Occupancy Year',
-    'selling-status': 'Filter by Status',
-    'developer': 'Top Developers'
+    'for-sale': 'Browse Properties For Sale',
+    'new-homes': 'Explore New Construction',
+    'buying-resources': 'Buying Tools & Resources'
   };
   return titles[category];
 };
 
 const getCategoryDescription = (category: CategoryType): string => {
   const descriptions: Record<CategoryType, string> = {
-    'property-type': 'Find your perfect property type from condos to master-planned communities.',
-    'occupancy-year': 'Plan ahead with projects organized by their expected completion dates.',
-    'selling-status': 'Discover opportunities from platinum access to resale properties.',
-    'developer': 'Explore projects from the most trusted builders in the market.'
+    'for-sale': 'Find your perfect home from houses to condos. Browse thousands of properties available for sale in your area.',
+    'new-homes': 'Discover new construction projects and master-planned communities. Get early access to the latest developments.',
+    'buying-resources': 'Use our calculators and guides to make informed decisions. Learn everything you need to know about buying a home.'
   };
   return descriptions[category];
 };
 
-const getContentForCategory = (
-  category: CategoryType, 
-  developers: string[]
-): ContentItem[] => {
+const getContentForCategory = (category: CategoryType): ContentItem[] => {
   switch (category) {
-    case 'property-type': 
-      return propertyTypes;
-    case 'occupancy-year': 
-      return occupancyYears;
-    case 'selling-status': 
-      return sellingStatuses;
-    case 'developer': 
-      return developers.map((dev) => ({
-        id: dev.toLowerCase().replace(/\s+/g, '-'),
-        label: dev,
-        description: `View all projects by ${dev}`,
-        href: `/pre-construction?developer=${encodeURIComponent(dev)}`,
-        icon: Users
-      }));
+    case 'for-sale': 
+      return forSaleItems;
+    case 'new-homes': 
+      return newHomesItems;
+    case 'buying-resources': 
+      return buyingResourcesItems;
     default: 
-      return propertyTypes;
+      return forSaleItems;
   }
 };
 
-export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
+export const BuyMegaMenu: React.FC<BuyMegaMenuProps> = ({
   isOpen,
   onMouseEnter,
   onMouseLeave,
@@ -156,56 +124,25 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
   children
 }) => {
   const [mounted, setMounted] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<CategoryType>('property-type');
+  const [activeCategory, setActiveCategory] = useState<CategoryType>('for-sale');
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
-  const [filterData, setFilterData] = useState<FilterData>({
-    propertyTypes: [],
-    developers: [],
-    sellingStatuses: [],
-    occupancyYears: [],
-  });
-  const [loading, setLoading] = useState(false);
-  const [dataFetched, setDataFetched] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    // Fetch data once when component mounts, not every time menu opens
-    if (mounted && !dataFetched) {
-      fetchFilterData();
-    }
-  }, [mounted, dataFetched]);
-
-  const fetchFilterData = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/pre-con-projects/filters');
-      if (response.ok) {
-        const data = await response.json();
-        setFilterData(data);
-        setDataFetched(true);
-      }
-    } catch (error) {
-      console.error('Error fetching filter data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Get blogs related to pre-construction
-  const preConBlogs = getBlogPosts({ 
-    category: 'Pre-Construction',
-    search: 'pre-construction'
+  // Get blogs related to home buying
+  const blogs = getBlogPosts({
+    category: 'Home Buying',
+    search: 'buying'
   }).slice(0, 2);
 
-  // If no category match, try searching by tags/title
-  const fallbackBlogs = preConBlogs.length === 0 
-    ? getBlogPosts({ search: 'construction' }).slice(0, 2)
-    : preConBlogs;
+  // Fallback to general blogs if no category match
+  const displayBlogs = blogs.length === 0 
+    ? getBlogPosts({ search: 'home' }).slice(0, 2)
+    : blogs;
 
-  const contentItems = getContentForCategory(activeCategory, filterData.developers);
+  const contentItems = getContentForCategory(activeCategory);
 
   const menuContent = (
     <AnimatePresence>
@@ -276,7 +213,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                       {getCategoryTitle(activeCategory)}
                     </h4>
                     <div className="grid grid-cols-2 gap-1">
-                      {contentItems.slice(0, 10).map((item) => {
+                      {contentItems.map((item) => {
                         const Icon = item.icon;
                         return (
                           <Link
@@ -318,7 +255,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                       })}
                     </div>
                     <Link
-                      href="/pre-construction/projects"
+                      href="/buy"
                       className="inline-flex items-center gap-1 mt-4 text-xs font-semibold text-primary hover:underline"
                     >
                       View all {activeCategory.replace('-', ' ')}
@@ -337,7 +274,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                   {getCategoryDescription(activeCategory)}
                 </p>
                 <div className="space-y-3">
-                  {fallbackBlogs.map((blog) => (
+                  {displayBlogs.map((blog) => (
                     <Link
                       key={blog.id}
                       href={`/blogs?id=${blog.id}`}
@@ -393,3 +330,5 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
     </div>
   );
 };
+
+export default BuyMegaMenu;
