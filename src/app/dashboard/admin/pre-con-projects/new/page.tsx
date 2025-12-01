@@ -203,7 +203,7 @@ export default function NewProjectPage() {
         marketingInfo: formData.marketingInfo || null,
         salesMarketingCompany: formData.salesMarketingCompany || null,
         developmentTeamOverview: formData.developmentTeamOverview || null,
-        isPublished: formData.isPublished || false,
+        isPublished: formData.isPublished === true,
         units: formData.units?.map((unit) => ({
           unitName: unit.unitName,
           beds: parseInt(unit.beds) || 0,

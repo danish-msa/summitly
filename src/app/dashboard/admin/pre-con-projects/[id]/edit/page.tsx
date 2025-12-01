@@ -411,7 +411,7 @@ export default function EditProjectPage() {
         marketingInfo: formData.marketingInfo || null,
         salesMarketingCompany: formData.salesMarketingCompany || null,
         developmentTeamOverview: formData.developmentTeamOverview || null,
-        isPublished: formData.isPublished || false,
+        isPublished: formData.isPublished === true,
         units: formData.units?.map((unit) => ({
           id: unit.id.startsWith('unit-') ? undefined : unit.id, // Don't send ID for new units
           unitName: unit.unitName,

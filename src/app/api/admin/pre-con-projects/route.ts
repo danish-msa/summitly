@@ -411,7 +411,7 @@ export async function POST(request: NextRequest) {
         marketingInfo: marketingInfo ? await fetchDeveloperData(marketingInfo) : null,
         salesMarketingCompany: salesMarketingCompany && salesMarketingCompany.trim() ? salesMarketingCompany.trim() : null,
         developmentTeamOverview: developmentTeamOverview && developmentTeamOverview.trim() ? developmentTeamOverview.trim() : null,
-        isPublished: isPublished || false,
+        isPublished: isPublished === true || isPublished === 'true',
         units: Array.isArray(units) && units.length > 0 ? {
           create: units.map((unit: {
             unitName: string

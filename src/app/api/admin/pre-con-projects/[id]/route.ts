@@ -368,6 +368,7 @@ export async function PUT(
     if (body.marketingInfo !== undefined) updateData.marketingInfo = body.marketingInfo ? await fetchDeveloperData(body.marketingInfo) : null
     if (body.salesMarketingCompany !== undefined) updateData.salesMarketingCompany = body.salesMarketingCompany || null
     if (body.developmentTeamOverview !== undefined) updateData.developmentTeamOverview = body.developmentTeamOverview || null
+    if (body.isPublished !== undefined) updateData.isPublished = body.isPublished === true || body.isPublished === 'true'
     if (body.mlsNumber !== undefined) updateData.mlsNumber = body.mlsNumber
 
     // Handle units update (delete all existing and create new ones)
