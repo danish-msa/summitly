@@ -445,7 +445,7 @@ model PreConstructionUnit {
   maintenanceFee Float?
   status         String // 'for-sale', 'sold-out', 'reserved'
 
-  floorplanImage String?
+  images         String[] @default([]) // Multiple images for the unit (floorplans, renderings, etc.)
   description    String?  @db.Text
   features       String[] @default([])
   amenities      String[] @default([])

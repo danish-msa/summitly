@@ -40,7 +40,8 @@ export interface Unit {
   price: string
   maintenanceFee: string
   status: string
-  floorplanImage: string
+  images: string[]
+  pendingImages: PendingImage[]
   description: string
   features: string[]
   amenities: string[]
@@ -150,6 +151,8 @@ export function PreConProjectForm({
   const [uploadingDocument, setUploadingDocument] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const documentFileInputRef = useRef<HTMLInputElement>(null)
+  const unitFileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
+  const [unitImageInputs, setUnitImageInputs] = useState<Record<string, string>>({})
   const [amenitySearchOpen, setAmenitySearchOpen] = useState(false)
   const [amenitySearchQuery, setAmenitySearchQuery] = useState("")
   const [unitAmenitySearchOpen, setUnitAmenitySearchOpen] = useState<Record<string, boolean>>({})
@@ -196,8 +199,18 @@ export function PreConProjectForm({
           URL.revokeObjectURL(img.preview)
         })
       }
+      // Cleanup unit pending images
+      if (formData.units) {
+        formData.units.forEach((unit) => {
+          if (unit.pendingImages) {
+            unit.pendingImages.forEach((img) => {
+              URL.revokeObjectURL(img.preview)
+            })
+          }
+        })
+      }
     }
-  }, [formData.pendingImages])
+  }, [formData.pendingImages, formData.units])
 
   // Fetch developers for dropdowns
   useEffect(() => {
@@ -666,6 +679,100 @@ export function PreConProjectForm({
         pendingImages: prev.pendingImages?.filter((img) => img.id !== id) || [],
       }
     })
+  }
+
+  // Handle unit image file selection
+  const handleUnitImageUpload = (unitId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
+    if (!allowedTypes.includes(file.type)) {
+      alert('Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.')
+      return
+    }
+
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024 // 10MB
+    if (file.size > maxSize) {
+      alert('File size exceeds 10MB limit.')
+      return
+    }
+
+    // Create preview URL
+    const preview = URL.createObjectURL(file)
+    const pendingImage: PendingImage = {
+      file,
+      preview,
+      id: `pending-${Date.now()}-${Math.random()}`,
+    }
+
+    // Add to unit's pending images
+    setFormData((prev) => ({
+      ...prev,
+      units: prev.units?.map((u) =>
+        u.id === unitId
+          ? { ...u, pendingImages: [...(u.pendingImages || []), pendingImage] }
+          : u
+      ) || [],
+    }))
+
+    // Reset file input
+    if (unitFileInputRefs.current[unitId]) {
+      unitFileInputRefs.current[unitId]!.value = ''
+    }
+  }
+
+  // Remove unit pending image
+  const removeUnitPendingImage = (unitId: string, imageId: string) => {
+    setFormData((prev) => {
+      const unit = prev.units?.find((u) => u.id === unitId)
+      if (unit) {
+        const imageToRemove = unit.pendingImages?.find((img) => img.id === imageId)
+        if (imageToRemove) {
+          URL.revokeObjectURL(imageToRemove.preview)
+        }
+      }
+      return {
+        ...prev,
+        units: prev.units?.map((u) =>
+          u.id === unitId
+            ? { ...u, pendingImages: u.pendingImages?.filter((img) => img.id !== imageId) || [] }
+            : u
+        ) || [],
+      }
+    })
+  }
+
+  // Add unit image URL
+  const addUnitImageUrl = (unitId: string) => {
+    const imageUrl = unitImageInputs[unitId]?.trim()
+    if (!imageUrl) return
+
+    setFormData((prev) => ({
+      ...prev,
+      units: prev.units?.map((u) =>
+        u.id === unitId
+          ? { ...u, images: [...(u.images || []), imageUrl] }
+          : u
+      ) || [],
+    }))
+
+    // Clear input
+    setUnitImageInputs((prev) => ({ ...prev, [unitId]: '' }))
+  }
+
+  // Remove unit image
+  const removeUnitImage = (unitId: string, index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      units: prev.units?.map((u) =>
+        u.id === unitId
+          ? { ...u, images: u.images?.filter((_, i) => i !== index) || [] }
+          : u
+      ) || [],
+    }))
   }
 
   // Handle document file upload
@@ -2275,7 +2382,8 @@ export function PreConProjectForm({
                             price: "",
                             maintenanceFee: "",
                             status: "for-sale",
-                            floorplanImage: "",
+                            images: [],
+                            pendingImages: [],
                             description: "",
                             features: [],
                             amenities: [],
@@ -2459,34 +2567,127 @@ export function PreConProjectForm({
                                 </div>
                               </div>
 
-                              {/* Row 3: Floorplan Image */}
-                              <div className="space-y-2">
-                                <Label htmlFor={`unit-floorplan-${unit.id}`}>Floorplan Image URL</Label>
-                                <Input
-                                  id={`unit-floorplan-${unit.id}`}
-                                  className="rounded-lg"
-                                  placeholder="https://example.com/floorplan.jpg"
-                                  value={unit.floorplanImage}
-                                  onChange={(e) => {
-                                    setFormData((prev) => ({
-                                      ...prev,
-                                      units: prev.units?.map((u) =>
-                                        u.id === unit.id ? { ...u, floorplanImage: e.target.value } : u
-                                      ) || [],
-                                    }))
-                                  }}
-                                />
-                                {unit.floorplanImage && (
-                                  <div className="mt-2 border rounded-lg overflow-hidden max-w-xs">
-                                    <img
-                                      src={unit.floorplanImage}
-                                      alt={`Floorplan for ${unit.unitName}`}
-                                      className="w-full h-auto"
-                                      onError={(e) => {
-                                        const target = e.target as HTMLImageElement
-                                        target.style.display = "none"
+                              {/* Row 3: Unit Images */}
+                              <div className="space-y-4">
+                                <Label>Unit Images</Label>
+                                
+                                {/* File Upload Section */}
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="file"
+                                      ref={(el) => {
+                                        unitFileInputRefs.current[unit.id] = el
+                                      }}
+                                      onChange={(e) => handleUnitImageUpload(unit.id, e)}
+                                      accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                                      className="hidden"
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => unitFileInputRefs.current[unit.id]?.click()}
+                                    >
+                                      <Upload className="h-4 w-4 mr-2" />
+                                      Upload Image
+                                    </Button>
+                                    <p className="text-sm text-muted-foreground self-center">
+                                      Max 10MB (JPEG, PNG, WebP, GIF)
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* URL Input Section */}
+                                <div className="space-y-2">
+                                  <Label htmlFor={`unit-image-url-${unit.id}`}>Or Enter Image URL</Label>
+                                  <div className="flex gap-2">
+                                    <Input
+                                      id={`unit-image-url-${unit.id}`}
+                                      className="rounded-lg"
+                                      placeholder="Image URL"
+                                      value={unitImageInputs[unit.id] || ''}
+                                      onChange={(e) => setUnitImageInputs((prev) => ({ ...prev, [unit.id]: e.target.value }))}
+                                      onKeyPress={(e) => {
+                                        if (e.key === "Enter") {
+                                          e.preventDefault()
+                                          addUnitImageUrl(unit.id)
+                                        }
                                       }}
                                     />
+                                    <Button
+                                      type="button"
+                                      onClick={() => addUnitImageUrl(unit.id)}
+                                      className="rounded-lg"
+                                    >
+                                      <Plus className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+
+                                {/* Pending Images Preview (not yet uploaded) */}
+                                {unit.pendingImages && unit.pendingImages.length > 0 && (
+                                  <div className="space-y-2">
+                                    <Label>Selected Images ({unit.pendingImages.length}) - Will be uploaded when project is saved</Label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                      {unit.pendingImages.map((pendingImg) => (
+                                        <div
+                                          key={pendingImg.id}
+                                          className="relative group border rounded-lg overflow-hidden aspect-square border-primary/50"
+                                        >
+                                          <img
+                                            src={pendingImg.preview}
+                                            alt={`Pending image ${pendingImg.file.name}`}
+                                            className="w-full h-full object-cover"
+                                          />
+                                          <button
+                                            type="button"
+                                            onClick={() => removeUnitPendingImage(unit.id, pendingImg.id)}
+                                            className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90"
+                                          >
+                                            <X className="h-4 w-4" />
+                                          </button>
+                                          <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate">
+                                            {pendingImg.file.name}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Already Uploaded Images Preview (from URLs) */}
+                                {unit.images && unit.images.length > 0 && (
+                                  <div className="space-y-2">
+                                    <Label>Image URLs ({unit.images.length})</Label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                      {unit.images.map((img, index) => (
+                                        <div
+                                          key={index}
+                                          className="relative group border rounded-lg overflow-hidden aspect-square"
+                                        >
+                                          <img
+                                            src={img}
+                                            alt={`Unit image ${index + 1}`}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                              const target = e.target as HTMLImageElement
+                                              target.src = '/images/p1.jpg'
+                                            }}
+                                          />
+                                          <button
+                                            type="button"
+                                            onClick={() => removeUnitImage(unit.id, index)}
+                                            className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90"
+                                          >
+                                            <X className="h-4 w-4" />
+                                          </button>
+                                          <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate">
+                                            {img.split('/').pop()}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
                                 )}
                               </div>

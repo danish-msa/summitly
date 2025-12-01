@@ -82,7 +82,7 @@ interface PreConProject {
     price: number
     maintenanceFee: number | null
     status: string
-    floorplanImage: string | null
+    images: string[]
     description: string | null
     features: string[]
     amenities: string[]
@@ -296,7 +296,8 @@ export default function EditProjectPage() {
           price: unit.price?.toString() || "",
           maintenanceFee: unit.maintenanceFee?.toString() || "",
           status: unit.status || "for-sale",
-          floorplanImage: unit.floorplanImage || "",
+          images: Array.isArray(unit.images) ? unit.images : [],
+          pendingImages: [],
           description: unit.description || "",
           features: unit.features || [],
           amenities: unit.amenities || [],
@@ -421,7 +422,7 @@ export default function EditProjectPage() {
           price: parseFloat(unit.price) || 0,
           maintenanceFee: unit.maintenanceFee ? parseFloat(unit.maintenanceFee) : null,
           status: unit.status,
-          floorplanImage: unit.floorplanImage || null,
+          images: Array.isArray(unit.images) ? unit.images : [],
           description: unit.description || null,
           features: unit.features || [],
           amenities: unit.amenities || [],
