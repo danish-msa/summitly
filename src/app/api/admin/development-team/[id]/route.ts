@@ -41,9 +41,9 @@ export async function GET(
 
     return NextResponse.json(developer)
   } catch (error) {
-    console.error('Error fetching developer:', error)
+    console.error('Error fetching development team member:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch developer' },
+      { error: 'Failed to fetch development team member' },
       { status: 500 }
     )
   }
@@ -117,9 +117,9 @@ export async function PUT(
 
     return NextResponse.json(developer)
   } catch (error) {
-    console.error('Error updating developer:', error)
+    console.error('Error updating development team member:', error)
     return NextResponse.json(
-      { error: 'Failed to update developer' },
+      { error: 'Failed to update development team member' },
       { status: 500 }
     )
   }
@@ -167,9 +167,9 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error deleting developer:', error)
+    console.error('Error deleting development team member:', error)
     return NextResponse.json(
-      { error: 'Failed to delete developer' },
+      { error: 'Failed to delete development team member' },
       { status: 500 }
     )
   }

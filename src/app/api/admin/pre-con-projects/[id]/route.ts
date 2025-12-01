@@ -9,7 +9,7 @@ import type { Prisma } from '@prisma/client'
 async function fetchDeveloperData(developerId: string): Promise<string | null> {
   if (!developerId) return null
   try {
-    const developer = await prisma.developer.findUnique({
+    const developer = await prisma.developmentTeam.findUnique({
       where: { id: developerId },
       select: {
         id: true,

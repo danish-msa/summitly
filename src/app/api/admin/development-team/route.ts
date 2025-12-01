@@ -66,9 +66,9 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('Error fetching developers:', error)
+    console.error('Error fetching development team members:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch developers' },
+      { error: 'Failed to fetch development team members' },
       { status: 500 }
     )
   }
@@ -125,9 +125,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(developer, { status: 201 })
   } catch (error) {
-    console.error('Error creating developer:', error)
+    console.error('Error creating development team member:', error)
     return NextResponse.json(
-      { error: 'Failed to create developer' },
+      { error: 'Failed to create development team member' },
       { status: 500 }
     )
   }

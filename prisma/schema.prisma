@@ -297,8 +297,8 @@ enum TourStatus {
   CANCELLED
 }
 
-// Developer - stores developer and development team member information
-model Developer {
+// DevelopmentTeam - stores developer and development team member information
+model DevelopmentTeam {
   id          String   @id @default(cuid())
   name        String
   type        DeveloperType

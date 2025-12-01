@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     if (developer) {
       // Try to find developer by name first, then fall back to ID
       try {
-        const developerRecord = await prisma.developer.findFirst({
+        const developerRecord = await prisma.developmentTeam.findFirst({
           where: { 
             name: { contains: developer, mode: 'insensitive' }
           },
@@ -156,7 +156,7 @@ export async function GET(request: NextRequest) {
     const getDeveloperName = async (developerId: string): Promise<string> => {
       if (!developerId) return 'Unknown Developer'
       try {
-        const developer = await prisma.developer.findUnique({
+        const developer = await prisma.developmentTeam.findUnique({
           where: { id: developerId },
           select: { name: true },
         })

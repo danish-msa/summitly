@@ -38,7 +38,7 @@ export async function GET(
     const getDeveloperName = async (developerId: string): Promise<string> => {
       if (!developerId) return 'Unknown Developer'
       try {
-        const developer = await prisma.developer.findUnique({
+        const developer = await prisma.developmentTeam.findUnique({
           where: { id: developerId },
           select: { name: true },
         })

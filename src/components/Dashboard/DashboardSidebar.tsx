@@ -57,9 +57,8 @@ type MenuItem = {
   }>
 }
 
-// Subscriber menu items
+// Subscriber menu items (excluding Dashboard which is handled separately)
 const subscriberMenuItems: MenuItem[] = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Chat", url: "/dashboard/chat", icon: MessageSquare },
   { title: "Saved", url: "/dashboard/saved", icon: Heart },
   { title: "Alerts", url: "/dashboard/alerts", icon: Bell },
@@ -69,24 +68,28 @@ const subscriberMenuItems: MenuItem[] = [
   { title: "Market Reports", url: "/dashboard/market-reports", icon: FileText },
 ]
 
-// Admin menu items (includes subscriber items + admin items)
+// Pre-Constructions menu item
+const preConstructionsMenuItem: MenuItem = {
+  title: "Pre-Con", 
+  url: "/dashboard/admin/pre-con-projects", 
+  icon: Building2,
+  hasSubmenu: true,
+  submenu: [
+    { title: "All Projects", url: "/dashboard/admin/pre-con-projects", icon: List },
+    { title: "Add New Project", url: "/dashboard/admin/pre-con-projects/new", icon: Plus },
+    { title: "by Property Type", url: "/dashboard/admin/pre-con-projects/by-property-type", icon: Tag },
+    { title: "by Selling Status", url: "/dashboard/admin/pre-con-projects/by-selling-status", icon: Tag },
+    { title: "by Completion Year", url: "/dashboard/admin/pre-con-projects/by-completion-year", icon: CalendarIcon },
+    { title: "by Location", url: "/dashboard/admin/pre-con-projects/by-location", icon: MapPin },
+    { title: "Development Team", url: "/dashboard/admin/development-team", icon: Briefcase },
+  ]
+}
+
+// Admin menu items (Dashboard first, then Pre-Constructions, then subscriber items)
 const adminMenuItems: MenuItem[] = [
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  preConstructionsMenuItem,
   ...subscriberMenuItems,
-  { 
-    title: "Pre-Constructions", 
-    url: "/dashboard/admin/pre-con-projects", 
-    icon: Building2,
-    hasSubmenu: true,
-    submenu: [
-      { title: "All Projects", url: "/dashboard/admin/pre-con-projects", icon: List },
-      { title: "Add New Project", url: "/dashboard/admin/pre-con-projects/new", icon: Plus },
-      { title: "by Property Type", url: "/dashboard/admin/pre-con-projects/by-property-type", icon: Tag },
-      { title: "by Selling Status", url: "/dashboard/admin/pre-con-projects/by-selling-status", icon: Tag },
-      { title: "by Completion Year", url: "/dashboard/admin/pre-con-projects/by-completion-year", icon: CalendarIcon },
-      { title: "by Location", url: "/dashboard/admin/pre-con-projects/by-location", icon: MapPin },
-    ]
-  },
-  { title: "Developers", url: "/dashboard/admin/developers", icon: Briefcase },
 ]
 
 // Super Admin menu items (includes admin items + super admin items)

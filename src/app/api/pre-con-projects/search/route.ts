@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
     const developerMap = new Map<string, string>();
     
     if (developerIds.length > 0) {
-      const developers = await prisma.developer.findMany({
+      const developers = await prisma.developmentTeam.findMany({
         where: {
           id: { in: developerIds },
         },

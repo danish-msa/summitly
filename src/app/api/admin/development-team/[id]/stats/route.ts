@@ -80,9 +80,9 @@ export async function GET(
 
     return NextResponse.json({ stats })
   } catch (error) {
-    console.error('Error fetching developer stats:', error)
+    console.error('Error fetching development team member stats:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch developer stats' },
+      { error: 'Failed to fetch development team member stats' },
       { status: 500 }
     )
   }

@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
           developerNames.add(developerId)
         } else if (developerId) {
           // It's an ID, fetch the name
-          const developer = await prisma.developer.findUnique({
+          const developer = await prisma.developmentTeam.findUnique({
             where: { id: developerId },
             select: { name: true }
           })

@@ -17,7 +17,7 @@ const DeveloperFilter: React.FC<IndividualFilterProps> = ({
   useEffect(() => {
     const fetchDevelopers = async () => {
       try {
-        const response = await fetch('/api/admin/developers?limit=1000');
+        const response = await fetch('/api/admin/development-team?limit=1000');
         if (response.ok) {
           const data = await response.json();
           const developerList = [
