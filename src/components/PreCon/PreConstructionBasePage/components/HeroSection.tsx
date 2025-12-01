@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useSession } from 'next-auth/react';
 import PreConSearchBar from '@/components/common/PreConSearchBar';
+import PropertyAlertsDialog from '@/components/common/PropertyAlertsDialog';
+import { usePropertyAlerts } from '@/hooks/usePropertyAlerts';
 import type { PageType } from '../types';
 
 interface HeroSectionProps {
@@ -22,6 +25,44 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   displayCount,
 }) => {
   const imageSrc = heroImage || '/images/HeroBackImage.jpg';
+  const { data: session } = useSession();
+  const [alertsOpen, setAlertsOpen] = useState(false);
+  const [alertOptions, setAlertOptions] = useState<Record<string, boolean>>({
+    newProjects: false,
+    newUnits: false,
+    priceChanges: false,
+    statusUpdates: false,
+  });
+
+  // Get location name based on page type
+  const locationName = pageType === 'by-location' ? title : undefined;
+
+  // Use property alerts hook for saving alerts
+  const { currentAlert, saveAlert } = usePropertyAlerts(
+    undefined, // No specific property
+    locationName, // City name for location-based alerts
+    undefined // No specific neighborhood
+  );
+
+  // Load existing alert options when alert is found
+  useEffect(() => {
+    if (currentAlert) {
+      setAlertOptions({
+        newProjects: currentAlert.newProperties || false,
+        newUnits: false, // Map to appropriate field if available
+        priceChanges: false, // Map to appropriate field if available
+        statusUpdates: false, // Map to appropriate field if available
+      });
+    }
+  }, [currentAlert]);
+
+  // Toggle alert option
+  const toggleAlertOption = (option: string) => {
+    setAlertOptions(prev => ({
+      ...prev,
+      [option]: !prev[option]
+    }));
+  };
 
   const buildHeading = () => {
     if (pageType === 'by-location') {
@@ -78,13 +119,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   Be the first to hear about new properties
                 </p>
                 <button 
-                  onClick={() => {
-                    toast({
-                      title: "Alerts Coming Soon",
-                      description: "Property alerts for pre-construction projects will be available soon.",
-                      variant: "default",
-                    });
-                  }}
+                  onClick={() => setAlertsOpen(true)}
                   className="flex items-center gap-2 px-6 py-3 bg-secondary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors shadow-lg font-medium whitespace-nowrap"
                 >
                   <Bell className="w-5 h-5" />
@@ -109,6 +144,52 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           </div>
         </header>
       )}
+
+      {/* Alerts Dialog */}
+      <PropertyAlertsDialog
+        open={alertsOpen}
+        onOpenChange={setAlertsOpen}
+        alertOptions={alertOptions}
+        onToggleOption={toggleAlertOption}
+        locationName={locationName}
+        propertyType="pre-construction"
+        onSave={async (options) => {
+          if (!session) {
+            toast({
+              title: "Sign in required",
+              description: "Please sign in to set up property alerts.",
+              variant: "destructive",
+            });
+            setAlertsOpen(false);
+            return;
+          }
+
+          try {
+            // Map pre-con alert options to the alert API format
+            await saveAlert({
+              cityName: locationName,
+              propertyType: 'pre-construction',
+              newProperties: options.newProjects || false,
+              // Note: The API currently supports newProperties, soldListings, expiredListings
+              // For pre-con specific alerts, we'll use newProperties for newProjects
+              // and can extend the API later for newUnits, priceChanges, statusUpdates
+            });
+
+            toast({
+              title: "Alerts Saved",
+              description: `Your pre-construction property alerts${locationName ? ` for ${locationName}` : ''} have been saved successfully.`,
+              variant: "default",
+            });
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Failed to save alerts. Please try again.";
+            toast({
+              title: "Error",
+              description: errorMessage,
+              variant: "destructive",
+            });
+          }
+        }}
+      />
     </div>
   );
 };

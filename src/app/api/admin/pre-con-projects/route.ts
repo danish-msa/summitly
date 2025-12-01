@@ -9,8 +9,7 @@ import { Prisma } from '@prisma/client'
 async function fetchDeveloperData(developerId: string): Promise<string | null> {
   if (!developerId) return null
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const developer = await (prisma as any).developer.findUnique({
+    const developer = await prisma.developmentTeam.findUnique({
       where: { id: developerId },
       select: {
         id: true,
@@ -100,21 +99,34 @@ export async function GET(request: NextRequest) {
 
     const total = await prisma.preConstructionProject.count({ where })
 
-    // Parse developerInfo JSON to extract developer name
-    const parseDeveloperName = (developerInfo: string | null): string | null => {
-      if (!developerInfo) return null
+    // Fetch developer names from DevelopmentTeam table
+    const developerIds = [...new Set(projects.map(p => p.developer).filter(Boolean) as string[])]
+    const developerNamesMap = new Map<string, string>()
+    
+    if (developerIds.length > 0) {
       try {
-        const parsed = JSON.parse(developerInfo)
-        return parsed?.name || null
-      } catch {
-        return null
+        const developers = await prisma.developmentTeam.findMany({
+          where: {
+            id: { in: developerIds },
+          },
+          select: {
+            id: true,
+            name: true,
+          },
+        })
+        
+        developers.forEach(dev => {
+          developerNamesMap.set(dev.id, dev.name)
+        })
+      } catch (error) {
+        console.error('Error fetching developer names:', error)
       }
     }
 
     // Map projects to include developer name
     const projectsWithDeveloperName = projects.map((project: typeof projects[0]) => ({
       ...project,
-      developerName: parseDeveloperName(project.developerInfo),
+      developerName: project.developer ? (developerNamesMap.get(project.developer) || null) : null,
     }))
 
     return NextResponse.json({
