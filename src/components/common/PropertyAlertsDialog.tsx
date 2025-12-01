@@ -141,7 +141,7 @@ const PropertyAlertsDialog: React.FC<PropertyAlertsDialogProps> = ({
   const dialogDescription = description || 
     (locationName 
       ? `Choose what types of property alerts you'd like to receive for ${locationName}.`
-      : 'Choose what types of property alerts you'd like to receive.');
+      : `Choose what types of property alerts you'd like to receive.`);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
