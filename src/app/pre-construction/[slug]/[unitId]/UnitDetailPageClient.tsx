@@ -55,18 +55,32 @@ const UnitDetailPageClient: React.FC<UnitDetailPageClientProps> = ({ unit, prope
             {/* Floorplan */}
             <Card>
               <CardHeader>
-                <CardTitle>Floorplan</CardTitle>
+                <CardTitle>Floorplan{unit.images && unit.images.length > 1 ? `s (${unit.images.length})` : ''}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="bg-muted rounded-lg p-8 flex items-center justify-center">
-                  <img
-                    src={unit.floorplanImage}
-                    alt={`${unit.name} floorplan`}
-                    className="max-w-full h-auto"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/images/floorplan-placeholder.jpg';
-                    }}
-                  />
+                <div className="space-y-4">
+                  {unit.images && unit.images.length > 0 ? (
+                    unit.images.map((image, index) => (
+                      <div key={index} className="bg-muted rounded-lg p-8 flex items-center justify-center">
+                        <img
+                          src={image}
+                          alt={`${unit.name} floorplan ${index + 1}`}
+                          className="max-w-full h-auto"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/images/floorplan-placeholder.jpg';
+                          }}
+                        />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="bg-muted rounded-lg p-8 flex items-center justify-center">
+                      <img
+                        src="/images/floorplan-placeholder.jpg"
+                        alt={`${unit.name} floorplan`}
+                        className="max-w-full h-auto"
+                      />
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

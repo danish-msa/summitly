@@ -33,7 +33,7 @@ interface DatabaseUnit {
   price: number;
   maintenanceFee?: number | null;
   status: string;
-  floorplanImage?: string | null;
+  images?: string[];
   description?: string | null;
   features?: string[];
   amenities?: string[];
@@ -68,7 +68,7 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
     price: unit.price,
     maintenanceFee: unit.maintenanceFee || 0,
     status: unit.status === 'for-sale' ? 'for-sale' : unit.status === 'sold-out' ? 'sold-out' : 'for-sale',
-    floorplanImage: unit.floorplanImage || '/images/floorplan-placeholder.jpg',
+    images: (unit.images && unit.images.length > 0) ? unit.images : ['/images/floorplan-placeholder.jpg'],
     description: unit.description || undefined,
     features: unit.features || [],
     amenities: unit.amenities || [],
@@ -255,7 +255,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, propertyId }) => {
           {/* Floorplan Image */}
           <div className="flex-shrink-0">
             <img
-              src={unit.floorplanImage}
+              src={unit.images && unit.images.length > 0 ? unit.images[0] : '/images/floorplan-placeholder.jpg'}
               alt={`${unit.name} floorplan`}
               className="w-20 h-20 object-contain bg-muted rounded"
               onError={(e) => {

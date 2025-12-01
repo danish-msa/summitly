@@ -98,20 +98,24 @@ export async function GET(
     if (marketingInfo) developmentTeam.marketing = marketingInfo as DevelopmentTeamMember
 
     // Convert units to UnitListing format
-    const formattedUnits = project.units.map((unit) => ({
-      id: unit.id,
-      name: unit.unitName,
-      beds: unit.beds,
-      baths: unit.baths,
-      sqft: unit.sqft,
-      price: unit.price,
-      maintenanceFee: unit.maintenanceFee,
-      status: unit.status === 'for-sale' ? 'for-sale' : unit.status === 'sold-out' ? 'sold-out' : 'reserved',
-      floorplanImage: unit.floorplanImage || '/images/floorplan-placeholder.jpg',
-      description: unit.description,
-      features: unit.features || [],
-      amenities: unit.amenities || [],
-    }))
+    const formattedUnits = project.units.map((unit) => {
+      // Handle both old floorplanImage and new images array for backward compatibility
+      const unitImages = (unit as any).images || ((unit as any).floorplanImage ? [(unit as any).floorplanImage] : [])
+      return {
+        id: unit.id,
+        name: unit.unitName,
+        beds: unit.beds,
+        baths: unit.baths,
+        sqft: unit.sqft,
+        price: unit.price,
+        maintenanceFee: unit.maintenanceFee,
+        status: unit.status === 'for-sale' ? 'for-sale' : unit.status === 'sold-out' ? 'sold-out' : 'reserved',
+        images: unitImages && unitImages.length > 0 ? unitImages : ['/images/floorplan-placeholder.jpg'],
+        description: unit.description,
+        features: unit.features || [],
+        amenities: unit.amenities || [],
+      }
+    })
 
     // Convert to PropertyListing format
     const formattedProject = {
