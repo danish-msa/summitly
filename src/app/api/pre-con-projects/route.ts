@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 
 // GET - Public endpoint to fetch all pre-con projects for website display
 export async function GET(request: NextRequest) {
@@ -79,12 +80,16 @@ export async function GET(request: NextRequest) {
         // Get projects
         // When filtering by featured, just order by createdAt
         // Otherwise, prioritize featured projects first
-        const orderBy = featured === 'true' || featured === '1'
-          ? { createdAt: 'desc' }
-          : [
-              { featured: 'desc' as const },
-              { createdAt: 'desc' as const }
-            ]
+        let orderBy: Prisma.PreConstructionProjectOrderByWithRelationInput | Prisma.PreConstructionProjectOrderByWithRelationInput[]
+        if (featured === 'true' || featured === '1') {
+          orderBy = { createdAt: 'desc' }
+        } else {
+          // Use type assertion since featured field exists in schema but types may not be regenerated yet
+          orderBy = [
+            { featured: 'desc' } as Prisma.PreConstructionProjectOrderByWithRelationInput,
+            { createdAt: 'desc' }
+          ]
+        }
 
         projects = await prisma.preConstructionProject.findMany({
           where,

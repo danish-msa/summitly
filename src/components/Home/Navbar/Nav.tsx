@@ -161,7 +161,7 @@ const Nav = ({ openNav }: Props) => {
             : "bg-background/95 backdrop-blur-sm border-b border-border/40"
         )}
       >
-        <div className="container mx-auto px-4">
+        <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 lg:h-16">
             {/* Left Side: Logo + Buy, Rent, Mortgage */}
             <div className="flex items-center space-x-4 lg:space-x-6">
