@@ -53,7 +53,7 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
   const [selectedProperty, setSelectedProperty] = useState<PropertyListing | null>(null);
   const [communities, setCommunities] = useState<string[]>([]);
   const [alertsOpen, setAlertsOpen] = useState(false);
-  const [alertOptions, setAlertOptions] = useState({
+  const [alertOptions, setAlertOptions] = useState<Record<string, boolean>>({
     newProperties: false,
     soldListings: false,
     expiredListings: false,
@@ -75,7 +75,7 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
   };
 
   // Toggle alert option
-  const toggleAlertOption = (option: keyof typeof alertOptions) => {
+  const toggleAlertOption = (option: string) => {
     setAlertOptions(prev => ({
       ...prev,
       [option]: !prev[option]
