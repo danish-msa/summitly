@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
     // Search projects
     const projects = await prisma.preConstructionProject.findMany({
       where: {
+        isPublished: true, // Only show published projects
         OR: [
           { projectName: { contains: searchTerm, mode: 'insensitive' } },
           { developer: { contains: searchTerm, mode: 'insensitive' } },
@@ -48,6 +49,26 @@ export async function GET(request: NextRequest) {
       ],
     });
 
+    // Fetch developer names for all projects
+    const developerIds = [...new Set(projects.map(p => p.developer).filter(Boolean))] as string[];
+    const developerMap = new Map<string, string>();
+    
+    if (developerIds.length > 0) {
+      const developers = await prisma.developer.findMany({
+        where: {
+          id: { in: developerIds },
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      });
+      
+      developers.forEach(dev => {
+        developerMap.set(dev.id, dev.name);
+      });
+    }
+
     // Search location pages
     const pages = await prisma.preConstructionPageContent.findMany({
       where: {
@@ -74,20 +95,32 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      projects: projects.map(project => ({
-        id: project.id,
-        mlsNumber: project.mlsNumber,
-        name: project.projectName,
-        developer: project.developer,
-        city: project.city,
-        neighborhood: project.neighborhood,
-        propertyType: project.propertyType,
-        status: project.status,
-        price: project.startingPrice,
-        image: project.images?.[0] || null,
-        address: [project.streetNumber, project.streetName].filter(Boolean).join(' ') || null,
-        type: 'project',
-      })),
+      projects: projects.map(project => {
+        // Get developer name from map, fallback to ID if not found
+        const developerName = project.developer 
+          ? (developerMap.get(project.developer) || project.developer)
+          : null;
+        
+        // Get first image, ensure it's a valid URL
+        const firstImage = project.images && project.images.length > 0 
+          ? project.images[0] 
+          : null;
+        
+        return {
+          id: project.id,
+          mlsNumber: project.mlsNumber,
+          name: project.projectName,
+          developer: developerName,
+          city: project.city,
+          neighborhood: project.neighborhood,
+          propertyType: project.propertyType,
+          status: project.status,
+          price: project.startingPrice,
+          image: firstImage,
+          address: [project.streetNumber, project.streetName].filter(Boolean).join(' ') || null,
+          type: 'project',
+        };
+      }),
       pages: pages.map(page => ({
         id: page.id,
         name: page.title || page.pageValue,
