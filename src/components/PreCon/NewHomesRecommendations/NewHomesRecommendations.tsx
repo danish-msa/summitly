@@ -59,8 +59,8 @@ export const NewHomesRecommendations = () => {
   const condosRecommendations = generateRecommendations("Condos");
 
   return (
-    <section className="w-full py-16 px-4 bg-white">
-      <div className="container-1400 mx-auto">
+    <section className="w-full py-16 bg-white">
+      <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading
           heading="New Homes and Condos in Canada"
           subheading="New Homes and Condos in Canada"

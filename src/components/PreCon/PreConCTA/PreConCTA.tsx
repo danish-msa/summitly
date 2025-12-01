@@ -5,8 +5,8 @@ import Link from 'next/link';
 
 const PreConCTA = () => {
   return (
-    <section className="py-16 bg-background">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-16 bg-white">
+      <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
         {/* Info Section */}
         <div className="bg-gradient-to-r from-brand-celestial/40 via-green-50/50 to-purple-50 rounded-2xl p-8 md:p-12 text-center relative overflow-hidden">
           {/* Decorative background elements */}
@@ -34,7 +34,7 @@ const PreConCTA = () => {
 
             {/* Benefits Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8 max-w-4xl mx-auto">
-              <div className="flex flex-col items-center p-4 bg-orange-50 rounded-xl backdrop-blur-sm border border-border/50">
+              <div className="flex flex-col items-center">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
                   <DollarSign className="w-6 h-6 text-primary" />
                 </div>
@@ -44,7 +44,7 @@ const PreConCTA = () => {
                 </p>
               </div>
 
-              <div className="flex flex-col items-center p-4 bg-brand-celestial/20 rounded-xl backdrop-blur-sm border border-border/50">
+              <div className="flex flex-col items-center">
                 <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mb-3">
                   <TrendingUp className="w-6 h-6 text-accent" />
                 </div>
@@ -54,7 +54,7 @@ const PreConCTA = () => {
                 </p>
               </div>
 
-              <div className="flex flex-col items-center p-4 bg-purple-50 rounded-xl backdrop-blur-sm border border-border/50">
+              <div className="flex flex-col items-center">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
                   <Home className="w-6 h-6 text-primary" />
                 </div>

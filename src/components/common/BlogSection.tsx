@@ -92,7 +92,7 @@ const BlogSection: React.FC<BlogSectionProps> = ({
 
   return (
     <div className={`pt-16 pb-16 bg-background ${className}`}>
-      <div className='max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8'>
+      <div className='container-1400 mx-auto px-4 sm:px-6 lg:px-8'>
         <SectionHeading 
           heading={heading}
           subheading={subheading || ''}

@@ -72,8 +72,8 @@ const testimonials: Testimonial[] = [
 
 export const Testimonials = () => {
   return (
-    <section className="py-24 px-4 bg-background">
-      <div className="container mx-auto max-w-7xl">
+    <section className="py-24 bg-white">
+      <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <SectionHeading
           heading="What Our Clients Say"

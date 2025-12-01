@@ -34,7 +34,7 @@ const PreConCityProperties = () => {
 
   return (
     <div className='pt-16 pb-16 bg-white'>
-      <div className='max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8'>
+      <div className='container-1400 mx-auto px-4 sm:px-6 lg:px-8'>
         <SectionHeading 
           heading='Explore Pre-Construction Cities' 
           subheading='Pre-Construction Cities' 

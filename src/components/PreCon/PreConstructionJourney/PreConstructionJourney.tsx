@@ -7,7 +7,7 @@ import SectionHeading from '@/components/Helper/SectionHeading'
 const PreConstructionJourney = () => {
   return (
     <section className='py-16 md:py-20 bg-background'>
-      <div className='max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8'>
+      <div className='container-1400 mx-auto px-4 sm:px-6 lg:px-8'>
         {/* Title and Description */}
         <SectionHeading
           heading="Your Path to Investment Success"
@@ -17,7 +17,7 @@ const PreConstructionJourney = () => {
         />
 
         {/* Grid of 3 Blocks */}
-        <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mt-10'>
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-10 mt-10'>
           {/* Guides & Insights */}
           <div className='rounded-xl p-6 bg-white shadow-sm hover:translate-y-[-10px] transition-all duration-300'>
             <div className='flex flex-col h-full'>

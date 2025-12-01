@@ -184,7 +184,7 @@ const PreConSection: React.FC<PreConSectionProps> = ({
   if (loading) {
     return (
       <section className="py-16 bg-background">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-start justify-between gap-4 mb-4">
             <div className="flex-1">
               <h2 className="text-2xl md:text-4xl font-bold mb-2 text-primary">{heading}</h2>
@@ -216,7 +216,7 @@ const PreConSection: React.FC<PreConSectionProps> = ({
 
   return (
     <section className="py-10 bg-background">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex-1">
             <h2 className="text-2xl md:text-4xl font-bold mb-2 text-primary">{heading}</h2>

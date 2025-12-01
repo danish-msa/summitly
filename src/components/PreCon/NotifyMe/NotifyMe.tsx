@@ -29,10 +29,10 @@ const NotifyMe: React.FC = () => {
 
   return (
     <section 
-      className="container-1400 rounded-2xl mx-auto relative overflow-hidden "
+      className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 rounded-2xl relative overflow-hidden "
       
     >
-      <div className="px-4 sm:px-6 lg:px-8 relative z-10 bg-cover bg-center bg-no-repeat py-16 " style={{ backgroundImage: 'url(/images/pre-con/notify.png)' }}>
+      <div className="px-4 sm:px-6 lg:px-8 relative z-10 bg-cover bg-center rounded-2xl bg-no-repeat py-16 " style={{ backgroundImage: 'url(/images/pre-con/notify.png)' }}>
         <div className="max-w-2xl mx-auto text-center">
           {/* Title */}
           <h2 className="text-4xl md:text-5xl font-bold text-[#CBF4FA] mb-4">

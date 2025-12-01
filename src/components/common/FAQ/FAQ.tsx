@@ -53,7 +53,7 @@ export function FAQ({
 
   return (
     <section className={`w-full py-16 px-4 sm:px-6 lg:px-8 bg-background ${className}`}>
-      <div className="max-w-[1300px] mx-auto">
+      <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading 
           heading={heading}
           subheading={subheading}

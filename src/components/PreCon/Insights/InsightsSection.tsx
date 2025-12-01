@@ -25,7 +25,7 @@ export function InsightsSection() {
 
   return (
     <section className="w-full py-16 px-4 bg-background">
-      <div className="max-w-7xl mx-auto">
+      <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <SectionHeading
           heading="Market Insights"

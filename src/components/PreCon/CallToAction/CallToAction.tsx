@@ -4,8 +4,8 @@ import Link from 'next/link'
 
 const PreConCallToAction = () => {
   return (
-    <div className='relative bg-cover bg-center'>
-      <div className='container-1400 mx-auto px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-secondary to-primary rounded-2xl p-8 relative'>
+    <div className='container-1400 mx-auto px-4 sm:px-6 lg:px-8 relative bg-cover bg-center'>
+      <div className='bg-gradient-to-r from-secondary to-primary rounded-2xl p-8 relative'>
         <div className='flex flex-row gap-4'>
           <div className='flex items-center gap-8 w-[80%]'>
             <Image src='/images/key.svg' className='invert' alt='pre-construction' width={50} height={50} />
