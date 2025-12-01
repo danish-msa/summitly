@@ -40,6 +40,7 @@ export interface Unit {
   price: string
   maintenanceFee: string
   status: string
+  studio: boolean
   images: string[]
   pendingImages: PendingImage[]
   description: string
@@ -2395,6 +2396,7 @@ export function PreConProjectForm({
                             price: "",
                             maintenanceFee: "",
                             status: "for-sale",
+                            studio: false,
                             images: [],
                             pendingImages: [],
                             description: "",
@@ -2578,6 +2580,28 @@ export function PreConProjectForm({
                                     </SelectContent>
                                   </Select>
                                 </div>
+                              </div>
+
+                              {/* Studio Checkbox */}
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`unit-studio-${unit.id}`}
+                                  checked={unit.studio}
+                                  onCheckedChange={(checked) => {
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      units: prev.units?.map((u) =>
+                                        u.id === unit.id ? { ...u, studio: checked === true } : u
+                                      ) || [],
+                                    }))
+                                  }}
+                                />
+                                <Label
+                                  htmlFor={`unit-studio-${unit.id}`}
+                                  className="text-sm font-normal cursor-pointer"
+                                >
+                                  Studio
+                                </Label>
                               </div>
 
                               {/* Row 3: Unit Images */}

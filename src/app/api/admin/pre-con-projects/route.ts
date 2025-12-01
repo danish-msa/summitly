@@ -433,6 +433,7 @@ export async function POST(request: NextRequest) {
             price: number | string
             maintenanceFee?: number | string | null
             status: string
+            studio?: boolean
             images?: string[]
             description?: string | null
             features?: string[]
@@ -445,6 +446,7 @@ export async function POST(request: NextRequest) {
             price: typeof unit.price === 'number' ? unit.price : parseFloat(String(unit.price)),
             maintenanceFee: unit.maintenanceFee ? (typeof unit.maintenanceFee === 'number' ? unit.maintenanceFee : parseFloat(String(unit.maintenanceFee))) : null,
             status: unit.status || 'for-sale',
+            studio: unit.studio === true,
             images: Array.isArray(unit.images) ? unit.images.filter((img): img is string => typeof img === 'string' && img.length > 0) : [],
             description: unit.description || null,
             features: Array.isArray(unit.features) ? unit.features : [],

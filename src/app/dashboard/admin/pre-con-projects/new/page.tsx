@@ -212,6 +212,7 @@ export default function NewProjectPage() {
           price: parseFloat(unit.price) || 0,
           maintenanceFee: unit.maintenanceFee ? parseFloat(unit.maintenanceFee) : null,
           status: unit.status,
+          studio: unit.studio || false,
           images: Array.isArray(unit.images) ? unit.images : [],
           description: unit.description || null,
           features: unit.features || [],
