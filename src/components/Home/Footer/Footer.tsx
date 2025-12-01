@@ -27,7 +27,7 @@ const Footer = () => {
 
       {/* CTA Section */}
       <div className='w-full py-8 sm:py-10 bg-gradient-to-r from-primary to-primary/90'>
-        <div className='w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-4 sm:gap-6 justify-between items-center'>
+        <div className='container-1400 mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-4 sm:gap-6 justify-between items-center'>
           <div className='w-full md:w-[60%] text-white text-center md:text-left'>
             <h2 className='text-lg sm:text-xl md:text-2xl font-bold mb-2'>Want to Become a Real Estate Agent?</h2>
             <p className='text-sm sm:text-base text-white/90'>Join Summitly and grow your real estate career with our comprehensive platform and tools.</p>
@@ -43,7 +43,7 @@ const Footer = () => {
 
       {/* Main Footer */}
       <footer className='pt-12 sm:pt-16 md:pt-20 pb-8 sm:pb-12 bg-muted'>
-        <div className='w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
+        <div className='container-1400 mx-auto px-4 sm:px-6 lg:px-8'>
           {/* Top Section - Logo and Social */}
           <div className='flex flex-col sm:flex-row space-y-6 sm:space-y-0 sm:space-x-8 justify-between items-center sm:items-start pb-8 sm:pb-10 mb-8 sm:mb-10 border-b border-border'>
             {/* Logo and Description */}

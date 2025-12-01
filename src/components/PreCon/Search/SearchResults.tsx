@@ -87,8 +87,22 @@ const SearchResults: React.FC<SearchResultsProps> = ({
       'coming-soon': 'Coming Soon',
       'sold-out': 'Sold Out',
       'platinum-access': 'Platinum Access',
+      'register-now': 'Register Now',
+      'assignments': 'Assignments',
+      'resale': 'Resale',
+      'new-release': 'New Release',
     };
-    return statusMap[status.toLowerCase()] || status;
+    
+    const lowerStatus = status.toLowerCase();
+    if (statusMap[lowerStatus]) {
+      return statusMap[lowerStatus];
+    }
+    
+    // Fallback: Format status by replacing hyphens with spaces and capitalizing words
+    return status
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
   const getProjectUrl = (result: SearchResult) => {

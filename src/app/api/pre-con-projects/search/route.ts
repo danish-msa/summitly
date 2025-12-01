@@ -1,6 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+// Helper function to strip HTML tags from text
+function stripHtmlTags(html: string | null): string {
+  if (!html) return '';
+  
+  // Remove HTML tags (including self-closing tags and attributes)
+  let text = html.replace(/<[^>]+>/g, '');
+  
+  // Decode common HTML entities
+  const entityMap: Record<string, string> = {
+    '&nbsp;': ' ',
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&#39;': "'",
+    '&apos;': "'",
+    '&hellip;': '...',
+    '&mdash;': '—',
+    '&ndash;': '–',
+  };
+  
+  // Replace HTML entities
+  Object.entries(entityMap).forEach(([entity, replacement]) => {
+    text = text.replace(new RegExp(entity, 'g'), replacement);
+  });
+  
+  // Replace numeric HTML entities (e.g., &#8217;)
+  text = text.replace(/&#\d+;/g, '');
+  
+  // Clean up multiple spaces and trim
+  return text.replace(/\s+/g, ' ').trim();
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -126,7 +159,7 @@ export async function GET(request: NextRequest) {
         name: page.title || page.pageValue,
         location: page.pageValue,
         locationType: page.locationType,
-        description: page.description,
+        description: stripHtmlTags(page.description),
         image: page.heroImage,
         type: 'page',
       })),

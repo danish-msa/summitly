@@ -2342,7 +2342,7 @@ export function PreConProjectForm({
                                   <Label htmlFor={`unit-beds-${unit.id}`}>Beds</Label>
                                   <Input
                                     id={`unit-beds-${unit.id}`}
-                                    type="number"
+                                    type="text"
                                     className="rounded-lg"
                                     placeholder="e.g., 2"
                                     value={unit.beds}
@@ -2360,7 +2360,7 @@ export function PreConProjectForm({
                                   <Label htmlFor={`unit-baths-${unit.id}`}>Baths</Label>
                                   <Input
                                     id={`unit-baths-${unit.id}`}
-                                    type="number"
+                                    type="text"
                                     className="rounded-lg"
                                     placeholder="e.g., 2"
                                     value={unit.baths}

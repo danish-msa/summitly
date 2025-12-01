@@ -212,7 +212,7 @@ const PreConSearchBar: React.FC<PreConSearchBarProps> = ({
           <button
             type="button"
             onClick={handleClear}
-            className="absolute inset-y-0 right-0 flex items-center pr-4 h-8 w-8 rounded-full hover:bg-gray-200 transition-colors"
+            className="absolute inset-y-0 right-0 flex items-center justify-center pr-4 w-12 h-full rounded-full hover:bg-gray-200 transition-colors"
             title="Clear search"
           >
             <X className="h-4 w-4 text-gray-500" />
