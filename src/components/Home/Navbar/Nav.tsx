@@ -17,6 +17,7 @@ import { BuyMegaMenu } from './BuyMegaMenu';
 import { RentMegaMenu } from './RentMegaMenu';
 import { ProjectsMegaMenu } from './ProjectsMegaMenu';
 import { MoreMegaMenu } from './MoreMegaMenu';
+import { AIButton } from '@/components/ui/ai-button';
 
 type Props = {
   openNav: () => void;
@@ -250,8 +251,15 @@ const Nav = ({ openNav }: Props) => {
               </nav>
             </div>
 
-            {/* Right Side: Search, Login, Mobile Menu Button */}
+            {/* Right Side: AI Button, Search, Login, Mobile Menu Button */}
             <div className="flex items-center space-x-2 lg:space-x-3">
+              {/* AI Button */}
+              <div className="hidden lg:flex">
+                <AIButton size="sm">
+                  AI Assistant
+                </AIButton>
+              </div>
+              
               {/* Search Input Field */}
               <div className="hidden lg:flex">
                 <div className="relative w-64">

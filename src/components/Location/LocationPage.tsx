@@ -16,7 +16,7 @@ import { useGlobalFilters } from '@/hooks/useGlobalFilters';
 import GlobalFilters from '@/components/common/filters/GlobalFilters';
 import { LOCATIONS } from '@/lib/types/filters';
 import SellRentToggle from '../common/filters/SellRentToggle';
-import PropertyAlertsDialog from '../City/PropertyAlertsDialog';
+import PropertyAlertsDialog from '@/components/common/PropertyAlertsDialog';
 import { usePropertyAlerts } from '@/hooks/usePropertyAlerts';
 import { useSession } from 'next-auth/react';
 import { toast } from '@/hooks/use-toast';
@@ -615,7 +615,8 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
         onOpenChange={setAlertsOpen}
         alertOptions={alertOptions}
         onToggleOption={toggleAlertOption}
-        cityName={displayLocationName}
+        locationName={displayLocationName}
+        propertyType="property"
         onSave={async (options) => {
           if (!session) {
             toast({

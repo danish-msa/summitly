@@ -10,7 +10,6 @@ import type { PreConstructionBasePageProps } from './types';
 import { usePreConProjectsData } from './hooks';
 import { LoadingState } from './components/LoadingState';
 import { HeroSection } from './components/HeroSection';
-import { HeaderSection } from './components/HeaderSection';
 import { NavigationButtons } from './components/NavigationButtons';
 import { ViewModeToggle } from './components/ViewModeToggle';
 import { ProjectListings } from './components/ProjectListings';
@@ -103,11 +102,9 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({ slug,
 
   return (
     <div className="min-h-screen">
-      {/* Hero Image Section */}
-      <HeroSection heroImage={pageContent?.heroImage || null} title={displayTitle} />
-      
-      {/* Header Section */}
-      <HeaderSection
+      {/* Hero Section with Header */}
+      <HeroSection
+        heroImage={pageContent?.heroImage || null}
         title={displayTitle}
         customContent={pageContent?.customContent || null}
         lastUpdatedDate={lastUpdatedDate}
@@ -124,8 +121,6 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({ slug,
           slug={slug} 
           displayTitle={displayTitle} 
         />
-        <Separator />
-
         {/* Filters */}
         <section>
           <div className="flex flex-col md:flex-row gap-4">
