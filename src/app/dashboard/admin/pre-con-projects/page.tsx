@@ -38,6 +38,7 @@ interface PreConProject {
   isPublished: boolean
   featured?: boolean
   createdAt: string
+  creatorName?: string
   units?: Array<{ id: string; status: string }>
 }
 
@@ -246,36 +247,13 @@ export default function PreConProjectsPage() {
       ),
     },
     {
-      key: "status",
-      header: "Status",
-      render: (project) => {
-        const statusColors: Record<string, string> = {
-          "platinum-access": "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-          "now-selling": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-          "assignments": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-          "new-release-coming-soon": "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-          "coming-soon": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-          "register-now": "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
-          "resale": "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200",
-          "sold-out": "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
-        }
-        
-        // Format status text: replace hyphens with spaces and capitalize words
-        const formatStatus = (status: string) => {
-          return status
-            .split("-")
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(" ")
-        }
-        
-        return (
-          <Badge 
-            className={`${statusColors[project.status] || "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"} [&:hover]:!bg-[inherit]`}
-          >
-            {formatStatus(project.status)}
-          </Badge>
-        )
-      },
+      key: "creator",
+      header: "Created By",
+      render: (project) => (
+        <div className="text-sm font-medium text-foreground">
+          {project.creatorName || "Unknown"}
+        </div>
+      ),
     },
     {
       key: "units",

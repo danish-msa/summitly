@@ -57,6 +57,7 @@ model User {
   propertyWatchlists PropertyWatchlist[]
   agentProfile       AgentProfile?
   tours              Tour[]
+  preConProjects     PreConstructionProject[]
 }
 
 model VerificationToken {
@@ -417,12 +418,16 @@ model PreConstructionProject {
   isPublished Boolean @default(false) // Draft projects are not visible on public website
   featured Boolean @default(false) // Featured projects are highlighted on the website
 
+  // Creator tracking
+  createdBy String? // User ID who created this project
+
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
   units PreConstructionUnit[]
+  creator User? @relation(fields: [createdBy], references: [id])
 
   @@index([city])
   @@index([status])

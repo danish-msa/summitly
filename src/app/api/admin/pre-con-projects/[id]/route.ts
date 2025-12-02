@@ -56,6 +56,13 @@ export async function GET(
       where: { id },
       include: {
         units: true,
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
     })
 
@@ -88,6 +95,7 @@ export async function GET(
       landscapeArchitectInfo: string | null
       marketingInfo: string | null
       developmentTeamOverview: string | null
+      creator: { id: string; name: string | null; email: string } | null
     }
 
     // Convert completionProgress integer back to string for form compatibility
@@ -112,6 +120,7 @@ export async function GET(
       landscapeArchitectInfo: extractDeveloperId(projectWithAllFields.landscapeArchitectInfo ?? null),
       marketingInfo: extractDeveloperId(projectWithAllFields.marketingInfo ?? null),
       developmentTeamOverview: projectWithAllFields.developmentTeamOverview ?? null,
+      creatorName: projectWithAllFields.creator?.name || projectWithAllFields.creator?.email || null,
     }
 
     return NextResponse.json({ project: parsedProject })
@@ -418,6 +427,13 @@ export async function PUT(
       data: updateData as Prisma.PreConstructionProjectUncheckedUpdateInput,
       include: {
         units: true,
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
     })
 
@@ -456,6 +472,11 @@ export async function PUT(
       return progressMap[progress] || 'Pre-construction'
     }
 
+    // Type assertion to include creator
+    const projectWithCreator = project as typeof project & {
+      creator: { id: string; name: string | null; email: string } | null
+    }
+
     const parsedProject = {
       ...project,
       completionProgress: progressToString(project.completionProgress as unknown as number),
@@ -467,6 +488,7 @@ export async function PUT(
       landscapeArchitectInfo: extractDeveloperId(projectWithAllFields.landscapeArchitectInfo ?? null),
       marketingInfo: extractDeveloperId(projectWithAllFields.marketingInfo ?? null),
       developmentTeamOverview: projectWithAllFields.developmentTeamOverview ?? null,
+      creatorName: projectWithCreator.creator?.name || projectWithCreator.creator?.email || null,
     }
 
     return NextResponse.json({ project: parsedProject })
