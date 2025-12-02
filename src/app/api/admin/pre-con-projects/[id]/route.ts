@@ -200,7 +200,7 @@ export async function PUT(
       lockerPrice?: number | null
       lockerPriceDetail?: string | null
       assignmentFee?: number | null
-      developmentLevies?: number | null
+      developmentLevies?: string | null
       developmentCharges?: number | null
       streetNumber?: string | null
       streetName?: string | null

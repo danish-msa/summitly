@@ -26,7 +26,7 @@ interface PreConProject {
   lockerPrice: number | null
   lockerPriceDetail: string | null
   assignmentFee: number | null
-  developmentLevies: number | null
+  developmentLevies: string | null
   developmentCharges: number | null
   streetNumber: string | null
   streetName: string | null
@@ -236,7 +236,7 @@ export default function EditProjectPage() {
         lockerPrice: project.lockerPrice?.toString() || "",
         lockerPriceDetail: project.lockerPriceDetail || "",
         assignmentFee: project.assignmentFee?.toString() || "",
-        developmentLevies: project.developmentLevies?.toString() || "",
+        developmentLevies: project.developmentLevies || "",
         developmentCharges: project.developmentCharges?.toString() || "",
         streetNumber: project.streetNumber || "",
         streetName: project.streetName || "",
