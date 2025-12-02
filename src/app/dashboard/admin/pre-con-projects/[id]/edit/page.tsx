@@ -4,12 +4,11 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { ArrowLeft, Save } from "lucide-react"
 import { isAdmin } from "@/lib/roles"
 import { PreConProjectForm, type FormData } from "@/components/Dashboard/PreConProjectForm"
 import { useBackgroundFetch } from "@/hooks/useBackgroundFetch"
-import { useAutoSave, useLoadSavedData, useClearSavedData, getSavedDataTimestamp } from "@/hooks/useAutoSave"
-import { RecoveryDialog } from "@/components/Dashboard/RecoveryDialog"
 
 // Type for the project returned from the API
 interface PreConProject {
@@ -98,17 +97,14 @@ export default function EditProjectPage() {
   const { data: session } = useSession()
   const { loading, fetchData } = useBackgroundFetch<PreConProject>()
   const [saving, setSaving] = useState(false)
-  const [showRecoveryDialog, setShowRecoveryDialog] = useState(false)
-  const [hasInitialized, setHasInitialized] = useState(false)
+  const [isAutoSaving, setIsAutoSaving] = useState(false)
+  const [lastAutoSaved, setLastAutoSaved] = useState<Date | null>(null)
   // Track if form has been initially loaded to prevent background updates from overwriting edits
   const formInitializedRef = useRef(false)
   // Track which project ID we've loaded to prevent unnecessary refetches
   const loadedProjectIdRef = useRef<string | null>(null)
-  
-  // Storage key for this specific project
-  const STORAGE_KEY = params?.id ? `precon_project_draft_${params.id}` : null
-  const savedData = useLoadSavedData<FormData>(STORAGE_KEY)
-  const clearSavedData = useClearSavedData(STORAGE_KEY)
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isAutoSavingRef = useRef(false)
   const [formData, setFormData] = useState<FormData>({
     projectName: "",
     developer: "",
@@ -223,8 +219,8 @@ export default function EditProjectPage() {
 
       formInitializedRef.current = true
       
-      // Check for saved data first, otherwise use project data
-      const initialData: FormData = savedData && !hasInitialized ? savedData : {
+      // Use project data to initialize form
+      const initialData: FormData = {
         projectName: project.projectName || "",
         developer: project.developer || "",
         startingPrice: project.startingPrice?.toString() || "",
@@ -318,12 +314,6 @@ export default function EditProjectPage() {
       }
       
       setFormData(initialData)
-      
-      // Show recovery dialog if saved data exists and form hasn't been initialized
-      if (savedData && !hasInitialized) {
-        setShowRecoveryDialog(true)
-      }
-      setHasInitialized(true)
     } catch (error) {
       console.error("Error fetching project:", error)
       alert("Failed to load project")
@@ -331,124 +321,119 @@ export default function EditProjectPage() {
     }
   }
 
-  // Check for saved data on mount
+  // Auto-save functionality - saves directly to backend
   useEffect(() => {
-    if (savedData && !hasInitialized && params?.id) {
-      setShowRecoveryDialog(true)
-    }
-  }, [savedData, hasInitialized, params?.id])
+    // Only auto-save if form is initialized and project ID exists
+    if (!params?.id || !formInitializedRef.current) return
 
-  // Handle recovery dialog actions
-  const handleRestore = () => {
-    if (savedData) {
-      setFormData(savedData)
+    // Clear existing timeout
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current)
     }
-    setShowRecoveryDialog(false)
-  }
 
-  const handleDiscard = () => {
-    clearSavedData()
-    // Reload project data
-    if (params?.id) {
-      formInitializedRef.current = false
-      fetchProject()
-    }
-    setShowRecoveryDialog(false)
-  }
+    // Debounce auto-save (3 seconds)
+    autoSaveTimeoutRef.current = setTimeout(async () => {
+      if (isAutoSavingRef.current) return
 
-  // Auto-save functionality - saves to localStorage and optionally to backend
-  useAutoSave({
-    data: formData,
-    onSave: async (data) => {
-      // Only auto-save to backend if form is initialized and project ID exists
-      if (!params?.id || !formInitializedRef.current) return
-      
       try {
+        isAutoSavingRef.current = true
+        setIsAutoSaving(true)
+
         // Create a simplified payload for auto-save (exclude pending images and complex fields)
         const autoSavePayload = {
-          projectName: data.projectName,
-          developer: data.developer,
-          startingPrice: data.startingPrice,
-          endingPrice: data.endingPrice,
-          avgPricePerSqft: data.avgPricePerSqft || null,
-          status: data.status,
-          parkingPrice: data.parkingPrice || null,
-          parkingPriceDetail: data.parkingPriceDetail || null,
-          lockerPrice: data.lockerPrice || null,
-          lockerPriceDetail: data.lockerPriceDetail || null,
-          assignmentFee: data.assignmentFee || null,
-          developmentLevies: data.developmentLevies || null,
-          developmentCharges: data.developmentCharges || null,
-          streetNumber: data.streetNumber,
-          streetName: data.streetName,
-          city: data.city,
-          state: data.state,
-          zip: data.zip,
-          neighborhood: data.neighborhood,
-          majorIntersection: data.majorIntersection,
-          latitude: data.latitude,
-          longitude: data.longitude,
-          propertyType: data.propertyType,
-          subPropertyType: data.subPropertyType,
-          bedroomRange: data.bedroomRange,
-          bathroomRange: data.bathroomRange,
-          sqftRange: data.sqftMin && data.sqftMax 
-            ? `${data.sqftMin}-${data.sqftMax}` 
-            : data.sqftMin || data.sqftMax || '',
-          hasDen: data.hasDen,
-          hasStudio: data.hasStudio,
-          hasLoft: data.hasLoft,
-          hasWorkLiveLoft: data.hasWorkLiveLoft,
-          totalUnits: data.totalUnits,
-          availableUnits: data.availableUnits,
-          suites: data.suites || null,
-          storeys: data.storeys,
-          height: data.height || null,
-          maintenanceFeesPerSqft: data.maintenanceFeesPerSqft || null,
-          maintenanceFeesDetail: data.maintenanceFeesDetail || null,
-          floorPremiums: data.floorPremiums || null,
-          occupancyDate: data.occupancyDate,
-          completionProgress: data.completionProgress,
-          promotions: data.promotions,
-          ownershipType: data.ownershipType || null,
-          garage: data.garage || null,
-          basement: data.basement || null,
-          images: data.images, // Only saved images, not pending ones
-          videos: data.videos,
-          amenities: data.amenities,
-          customAmenities: data.customAmenities,
-          depositStructure: data.depositStructure,
-          description: data.description,
-          documents: data.documents.length > 0 ? data.documents : null,
-          developerInfo: data.developerInfo || null,
-          architectInfo: data.architectInfo || null,
-          builderInfo: data.builderInfo || null,
-          interiorDesignerInfo: data.interiorDesignerInfo || null,
-          landscapeArchitectInfo: data.landscapeArchitectInfo || null,
-          marketingInfo: data.marketingInfo || null,
-          salesMarketingCompany: data.salesMarketingCompany || null,
-          developmentTeamOverview: data.developmentTeamOverview || null,
-          isPublished: data.isPublished === true,
+          projectName: formData.projectName,
+          developer: formData.developer,
+          startingPrice: formData.startingPrice,
+          endingPrice: formData.endingPrice,
+          avgPricePerSqft: formData.avgPricePerSqft || null,
+          status: formData.status,
+          parkingPrice: formData.parkingPrice || null,
+          parkingPriceDetail: formData.parkingPriceDetail || null,
+          lockerPrice: formData.lockerPrice || null,
+          lockerPriceDetail: formData.lockerPriceDetail || null,
+          assignmentFee: formData.assignmentFee || null,
+          developmentLevies: formData.developmentLevies || null,
+          developmentCharges: formData.developmentCharges || null,
+          streetNumber: formData.streetNumber,
+          streetName: formData.streetName,
+          city: formData.city,
+          state: formData.state,
+          zip: formData.zip,
+          neighborhood: formData.neighborhood,
+          majorIntersection: formData.majorIntersection,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
+          propertyType: formData.propertyType,
+          subPropertyType: formData.subPropertyType,
+          bedroomRange: formData.bedroomRange,
+          bathroomRange: formData.bathroomRange,
+          sqftRange: formData.sqftMin && formData.sqftMax 
+            ? `${formData.sqftMin}-${formData.sqftMax}` 
+            : formData.sqftMin || formData.sqftMax || '',
+          hasDen: formData.hasDen,
+          hasStudio: formData.hasStudio,
+          hasLoft: formData.hasLoft,
+          hasWorkLiveLoft: formData.hasWorkLiveLoft,
+          totalUnits: formData.totalUnits,
+          availableUnits: formData.availableUnits,
+          suites: formData.suites || null,
+          storeys: formData.storeys,
+          height: formData.height || null,
+          maintenanceFeesPerSqft: formData.maintenanceFeesPerSqft || null,
+          maintenanceFeesDetail: formData.maintenanceFeesDetail || null,
+          floorPremiums: formData.floorPremiums || null,
+          occupancyDate: formData.occupancyDate,
+          completionProgress: formData.completionProgress,
+          promotions: formData.promotions,
+          ownershipType: formData.ownershipType || null,
+          garage: formData.garage || null,
+          basement: formData.basement || null,
+          images: formData.images, // Only saved images, not pending ones
+          videos: formData.videos,
+          amenities: formData.amenities,
+          customAmenities: formData.customAmenities,
+          depositStructure: formData.depositStructure,
+          description: formData.description,
+          documents: formData.documents.length > 0 ? formData.documents : null,
+          developerInfo: formData.developerInfo || null,
+          architectInfo: formData.architectInfo || null,
+          builderInfo: formData.builderInfo || null,
+          interiorDesignerInfo: formData.interiorDesignerInfo || null,
+          landscapeArchitectInfo: formData.landscapeArchitectInfo || null,
+          marketingInfo: formData.marketingInfo || null,
+          salesMarketingCompany: formData.salesMarketingCompany || null,
+          developmentTeamOverview: formData.developmentTeamOverview || null,
+          isPublished: formData.isPublished === true,
           // Note: We don't auto-save units to avoid conflicts
         }
 
         // Auto-save to backend (silent, don't show errors to user)
-        await fetch(`/api/admin/pre-con-projects/${params.id}`, {
+        const response = await fetch(`/api/admin/pre-con-projects/${params.id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(autoSavePayload),
         })
+
+        if (response.ok) {
+          setLastAutoSaved(new Date())
+        }
       } catch (error) {
         // Silently fail - auto-save errors shouldn't interrupt user
         console.error("Auto-save error:", error)
+      } finally {
+        setIsAutoSaving(false)
+        isAutoSavingRef.current = false
       }
-    },
-    debounceMs: 3000, // 3 seconds debounce for backend saves
-    storageKey: STORAGE_KEY || undefined,
-    enabled: hasInitialized && formInitializedRef.current,
-  })
+    }, 3000) // 3 seconds debounce
+
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current)
+      }
+    }
+  }, [formData, params?.id])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -592,9 +577,6 @@ export default function EditProjectPage() {
         URL.revokeObjectURL(img.preview)
       })
 
-      // Clear saved data on successful save
-      clearSavedData()
-
       router.push("/dashboard/admin/pre-con-projects")
     } catch (error) {
       console.error("Error updating project:", error)
@@ -620,22 +602,51 @@ export default function EditProjectPage() {
     )
   }
 
+  // Format time ago for auto-save status
+  const getTimeAgo = (date: Date | null): string => {
+    if (!date) return ''
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMins / 60)
+
+    if (diffMins < 1) return 'just now'
+    if (diffMins < 60) return `${diffMins}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    return `${Math.floor(diffHours / 24)}d ago`
+  }
+
   return (
     <div className="space-y-6 pt-20">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.back()}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold">Edit Pre-Con Project</h1>
-          <p className="text-muted-foreground mt-1">
-            Update project information
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.back()}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Edit Pre-Con Project</h1>
+            <p className="text-muted-foreground mt-1">
+              Update project information
+            </p>
+          </div>
         </div>
+        
+        {/* Auto-save Status Indicator */}
+        {isAutoSaving ? (
+          <Badge variant="outline" className="gap-2">
+            <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+            Auto-saving...
+          </Badge>
+        ) : lastAutoSaved ? (
+          <Badge variant="outline" className="gap-2">
+            <Save className="h-3 w-3" />
+            Auto-saved {getTimeAgo(lastAutoSaved)}
+          </Badge>
+        ) : null}
       </div>
 
       <PreConProjectForm
@@ -645,13 +656,6 @@ export default function EditProjectPage() {
         loading={saving}
         submitLabel="Update Project"
         onCancel={() => router.back()}
-      />
-
-      <RecoveryDialog
-        open={showRecoveryDialog}
-        onRestore={handleRestore}
-        onDiscard={handleDiscard}
-        savedAt={getSavedDataTimestamp(STORAGE_KEY)}
       />
     </div>
   )
