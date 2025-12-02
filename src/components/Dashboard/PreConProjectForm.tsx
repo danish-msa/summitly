@@ -1651,12 +1651,11 @@ export function PreConProjectForm({
                         <Label htmlFor="developmentLevies">Development Levies</Label>
                         <Input
                           id="developmentLevies"
-                          type="number"
-                          step="0.01"
+                          type="text"
                           className="rounded-lg"
                           value={formData.developmentLevies}
                           onChange={(e) => setFormData({ ...formData, developmentLevies: e.target.value })}
-                          placeholder="e.g., 15000"
+                          placeholder="e.g., $15,000 or Details about development levies"
                         />
                       </div>
                       <div className="space-y-2">

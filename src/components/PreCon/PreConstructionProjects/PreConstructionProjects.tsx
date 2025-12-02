@@ -1,44 +1,28 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import SectionHeading from '@/components/Helper/SectionHeading';
 import type { PreConstructionProperty } from '../PropertyCards/types';
 import { usePreConProjects } from './hooks/usePreConProjects';
 import ProjectList from './components/ProjectList';
-import ProjectMapView from './components/ProjectMapView';
 import PropertyTypeToggle from './components/PropertyTypeToggle';
 
 const PreConstructionProjects = () => {
-  const [viewMode] = useState<'list' | 'split' | 'map'>('list');
   const [selectedProject, setSelectedProject] = useState<PreConstructionProperty | null>(null);
   
   // Use custom hook for project management
   const {
     filteredProjects: visibleProjects,
-    mapProperties,
     filters,
     handleFilterChange,
     allProjects,
     loading
   } = usePreConProjects();
 
-  // Handle project click for map
+  // Handle project click
   const handleProjectClick = (project: PreConstructionProperty) => {
     setSelectedProject(project);
   };
-
-  // Handle map bounds change (currently unused, but required by map component)
-   
-  const handleMapBoundsChange = (_bounds: {north: number; south: number; east: number; west: number}) => {
-    // Map bounds are tracked but not currently used for filtering
-    // This can be implemented in the future if needed
-  };
-
-  // Find selected property for map
-  const selectedPropertyForMap = useMemo(() => {
-    if (!selectedProject) return null;
-    return mapProperties.find(p => p.mlsNumber === selectedProject.id) || null;
-  }, [selectedProject, mapProperties]);
 
   return (
     <section className="py-16 bg-background">
@@ -86,29 +70,11 @@ const PreConstructionProjects = () => {
             <div className="text-muted-foreground">Loading projects...</div>
           </div>
         ) : visibleProjects.length > 0 ? (
-          <div className={`flex ${viewMode === 'map' ? 'flex-col' : viewMode === 'list' ? 'flex-col' : 'flex-col md:flex-row'} gap-6`}>
-            {/* Project Listings */}
-            {(viewMode === 'list' || viewMode === 'split') && (
-              <ProjectList
-                projects={visibleProjects}
-                selectedProject={selectedProject}
-                viewMode={viewMode}
-                onProjectClick={handleProjectClick}
-              />
-            )}
-
-            {/* Map View */}
-            {(viewMode === 'map' || viewMode === 'split') && (
-              <ProjectMapView
-                mapProperties={mapProperties}
-                selectedPropertyForMap={selectedPropertyForMap}
-                visibleProjects={visibleProjects}
-                viewMode={viewMode}
-                onProjectClick={handleProjectClick}
-                onBoundsChange={handleMapBoundsChange}
-              />
-            )}
-          </div>
+          <ProjectList
+            projects={visibleProjects}
+            selectedProject={selectedProject}
+            onProjectClick={handleProjectClick}
+          />
         ) : (
           <div className="text-center py-12">
             <p className="text-muted-foreground text-lg">
