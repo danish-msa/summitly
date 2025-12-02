@@ -50,6 +50,7 @@ export default function PreConProjectsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [cityFilter, setCityFilter] = useState("")
+  const [publicationFilter, setPublicationFilter] = useState("all")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [stats, setStats] = useState({
@@ -77,7 +78,7 @@ export default function PreConProjectsPage() {
       fetchStats()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, session, router, page, searchTerm, statusFilter, cityFilter])
+  }, [status, session, router, page, searchTerm, statusFilter, cityFilter, publicationFilter])
 
   const fetchProjects = async () => {
     await fetchData(async () => {
@@ -87,6 +88,7 @@ export default function PreConProjectsPage() {
         ...(searchTerm && { search: searchTerm }),
         ...(statusFilter && statusFilter !== "all" && { status: statusFilter }),
         ...(cityFilter && { city: cityFilter }),
+        ...(publicationFilter && publicationFilter !== "all" && { isPublished: publicationFilter }),
       })
 
       const response = await fetch(`/api/admin/pre-con-projects?${params}`)
@@ -424,6 +426,19 @@ export default function PreConProjectsPage() {
           }}
           className="w-[180px]"
         />
+        <Select value={publicationFilter} onValueChange={(value) => {
+          setPublicationFilter(value)
+          setPage(1)
+        }}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="All Projects" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Projects</SelectItem>
+            <SelectItem value="true">Published</SelectItem>
+            <SelectItem value="false">Draft</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Error Display */}

@@ -53,6 +53,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || ''
     const status = searchParams.get('status') || ''
     const city = searchParams.get('city') || ''
+    const isPublished = searchParams.get('isPublished')
 
     const skip = (page - 1) * limit
 
@@ -65,6 +66,7 @@ export async function GET(request: NextRequest) {
       }>
       status?: string
       city?: { contains: string; mode: 'insensitive' }
+      isPublished?: boolean
     } = {}
     if (search) {
       where.OR = [
@@ -78,6 +80,9 @@ export async function GET(request: NextRequest) {
     }
     if (city) {
       where.city = { contains: city, mode: 'insensitive' }
+    }
+    if (isPublished !== null && isPublished !== '') {
+      where.isPublished = isPublished === 'true'
     }
 
     // Get projects and total count
