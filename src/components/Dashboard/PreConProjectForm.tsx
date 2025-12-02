@@ -1649,13 +1649,13 @@ export function PreConProjectForm({
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="developmentLevies">Development Levies</Label>
-                        <Input
+                        <Textarea
                           id="developmentLevies"
-                          type="text"
                           className="rounded-lg"
                           value={formData.developmentLevies}
                           onChange={(e) => setFormData({ ...formData, developmentLevies: e.target.value })}
                           placeholder="e.g., $15,000 or Details about development levies"
+                          rows={3}
                         />
                       </div>
                       <div className="space-y-2">
