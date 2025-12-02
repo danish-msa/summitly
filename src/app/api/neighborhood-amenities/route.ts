@@ -350,10 +350,17 @@ export async function GET(request: NextRequest) {
       const filterFn = config.filters[filterLabel as keyof typeof config.filters];
       const count = amenitiesWithPlaces.filter(({ place }) => {
         try {
-          // Ensure place.types exists
-          if (!place.types || !Array.isArray(place.types) || place.types.length === 0) {
-            return filterLabel === 'All'; // Only "All" filter passes if no types
+          // Handle "All" filter separately (it doesn't take arguments)
+          if (filterLabel === 'All') {
+            return true;
           }
+          
+          // Ensure place.types exists for other filters
+          if (!place.types || !Array.isArray(place.types) || place.types.length === 0) {
+            return false; // No types means it doesn't match any specific filter
+          }
+          
+          // Call filter function with place object
           return filterFn(place);
         } catch (error) {
           console.error(`Error in filter ${filterLabel}:`, error);
