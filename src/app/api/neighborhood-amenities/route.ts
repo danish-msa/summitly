@@ -570,9 +570,9 @@ export async function GET(request: NextRequest) {
       // Find the corresponding type(s) for this filter label
       let filterTypes: string[] = [];
       
-      // Check if it's a predefined filter
-      const predefinedFilterFn = config.filters[filter.label as keyof typeof config.filters];
-      if (predefinedFilterFn) {
+      // Check if it's a predefined filter by checking if the key exists in config.filters
+      const filterKey = filter.label as keyof typeof config.filters;
+      if (filterKey in config.filters) {
         // For predefined filters, extract the types they're likely to match
         // by analyzing the filter function or using the category's types
         // The frontend will use complex logic for predefined filters
