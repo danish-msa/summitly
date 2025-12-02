@@ -22,5 +22,7 @@ export interface AmenityCategory {
 
 export interface NeighborhoodAmenitiesProps {
   address?: string;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 

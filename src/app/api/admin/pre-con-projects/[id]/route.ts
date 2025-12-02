@@ -361,9 +361,33 @@ export async function PUT(
     if (body.images !== undefined) updateData.images = Array.isArray(body.images) ? body.images : []
     if (body.videos !== undefined) updateData.videos = Array.isArray(body.videos) ? body.videos : []
     if (body.amenities !== undefined || body.customAmenities !== undefined) {
-      const predefinedAmenities = Array.isArray(body.amenities) ? body.amenities : []
-      const customAmenities = Array.isArray(body.customAmenities) ? body.customAmenities : []
-      updateData.amenities = [...predefinedAmenities, ...customAmenities]
+      const amenitiesArray = (() => {
+        const amenityStrings: string[] = []
+        
+        // Handle predefined amenities (can be objects with { name, icon } or strings)
+        if (Array.isArray(body.amenities)) {
+          body.amenities.forEach((a: { name: string; icon: string } | string) => {
+            if (typeof a === 'string' && a.trim().length > 0) {
+              amenityStrings.push(a.trim())
+            } else if (typeof a === 'object' && a !== null && 'name' in a && typeof a.name === 'string' && a.name.trim().length > 0) {
+              amenityStrings.push(a.name.trim())
+            }
+          })
+        }
+        
+        // Handle custom amenities (should be strings)
+        if (Array.isArray(body.customAmenities)) {
+          body.customAmenities.forEach((a: string) => {
+            if (typeof a === 'string' && a.trim().length > 0) {
+              amenityStrings.push(a.trim())
+            }
+          })
+        }
+        
+        return amenityStrings
+      })()
+      
+      updateData.amenities = amenitiesArray
     }
     if (body.depositStructure !== undefined) updateData.depositStructure = body.depositStructure
     if (body.description !== undefined) updateData.description = body.description

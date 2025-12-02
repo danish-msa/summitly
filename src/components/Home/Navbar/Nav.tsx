@@ -38,33 +38,62 @@ const Nav = ({ openNav }: Props) => {
       return true;
     }
     
-    // Pre-construction: only treat as property page if it's a specific project (MLS number pattern)
+    // Pre-construction: only treat as property page if it's a specific project detail page
     // NOT listing pages like /pre-construction, /pre-construction/toronto, /pre-construction/condos
     if (pathname.startsWith('/pre-construction/')) {
       const pathParts = pathname.split('/').filter(Boolean);
+      
+      // If path has more than 2 parts (e.g., /pre-construction/[slug]/[unitId]), it's a detail page
+      if (pathParts.length > 2) {
+        return true; // Detail page (e.g., unit detail) - no sticky navbar
+      }
+      
       if (pathParts.length === 2) {
         const slug = pathParts[1];
+        const slugLower = slug.toLowerCase();
+        
         // Known listing/category pages that should have sticky navbar
         const knownCategories = ['condos', 'houses', 'lofts', 'master-planned-communities', 'multi-family', 'offices', 
                                'selling', 'coming-soon', 'sold-out', 'platinum-access', 'now-selling', 'assignments', 
                                'register-now', 'resale', 'projects'];
-        const isYear = /^\d{4}$/.test(slug); // Completion year (e.g., 2025)
-        const isKnownCategory = knownCategories.includes(slug.toLowerCase());
-        const isSubPropertyType = slug.includes('-condos') || slug.includes('-houses') || 
-                                 slug.includes('-lofts') || slug.includes('-communities');
         
-        // If it's a known category, year, or sub-property type, it's a listing page (not property page)
-        if (isKnownCategory || isYear || isSubPropertyType) {
+        // Known city slugs (from preConCities - these are listing pages, not project pages)
+        const knownCitySlugs = ['toronto', 'brampton', 'hamilton', 'calgary', 'mississauga', 'oakville', 'milton', 'edmonton'];
+        
+        // Known sub-property type slugs (exact matches only - these are listing pages)
+        const knownSubPropertyTypeSlugs = [
+          'high-rise-condos',
+          'mid-rise-condos',
+          'low-rise-condos',
+          'link-houses',
+          'townhouse-houses',
+          'semi-detached-houses',
+          'detached-houses',
+        ];
+        
+        // Check if it's a completion year (4-digit number between 2020-2100)
+        const isYear = /^\d{4}$/.test(slug) && parseInt(slug, 10) >= 2020 && parseInt(slug, 10) <= 2100;
+        
+        // Check if it's a known category
+        const isKnownCategory = knownCategories.includes(slugLower);
+        
+        // Check if it's a known city
+        const isKnownCity = knownCitySlugs.includes(slugLower);
+        
+        // Check if it's a known sub-property type (exact match only)
+        const isSubPropertyType = knownSubPropertyTypeSlugs.includes(slugLower);
+        
+        // If it's a known listing page pattern (category, city, year, sub-property type), it should have sticky navbar
+        if (isKnownCategory || isKnownCity || isYear || isSubPropertyType) {
           return false; // Listing page - should have sticky navbar
         }
         
-        // If slug contains numbers and is not a known category, it's likely a property detail page (MLS number)
-        // City names typically don't contain numbers, so this should catch property pages
-        if (/\d/.test(slug)) {
-          return true; // Property detail page - no sticky navbar
-        }
+        // If it's NOT a known listing page, treat it as a project detail page (no sticky navbar)
+        // This covers all project slugs (with or without numbers)
+        return true; // Project detail page - no sticky navbar
       }
-      return false; // Pre-construction listing/category pages should have sticky navbar
+      
+      return false; // Default: treat as listing page (sticky navbar)
     }
     
     // Rent: only match actual property detail pages

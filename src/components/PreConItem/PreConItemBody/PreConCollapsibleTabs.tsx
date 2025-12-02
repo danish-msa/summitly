@@ -132,7 +132,11 @@ const PreConCollapsibleTabs: React.FC<PreConCollapsibleTabsProps> = ({ property 
             <ProjectAmenities property={property} />
           </TabsContent>
           <TabsContent value="neighborhood" className="mt-6">
-            <NeighborhoodAmenities address={property.address.location || `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim()} />
+            <NeighborhoodAmenities 
+              address={property.address.location || `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim()}
+              latitude={property.map?.latitude || null}
+              longitude={property.map?.longitude || null}
+            />
           </TabsContent>
           <TabsContent value="lifestyle" className="mt-6">
             <LifestyleAmenities address={property.address.location || `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim()} />
