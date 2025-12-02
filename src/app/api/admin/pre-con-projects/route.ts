@@ -54,6 +54,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') || ''
     const city = searchParams.get('city') || ''
     const isPublished = searchParams.get('isPublished')
+    const createdBy = searchParams.get('createdBy') || ''
 
     const skip = (page - 1) * limit
 
@@ -67,6 +68,7 @@ export async function GET(request: NextRequest) {
       status?: string
       city?: { contains: string; mode: 'insensitive' }
       isPublished?: boolean
+      createdBy?: string
     } = {}
     if (search) {
       where.OR = [
@@ -83,6 +85,9 @@ export async function GET(request: NextRequest) {
     }
     if (isPublished !== null && isPublished !== '') {
       where.isPublished = isPublished === 'true'
+    }
+    if (createdBy) {
+      where.createdBy = createdBy
     }
 
     // Get projects and total count
@@ -140,6 +145,7 @@ export async function GET(request: NextRequest) {
       ...project,
       developerName: project.developer ? (developerNamesMap.get(project.developer) || null) : null,
       creatorName: project.creator?.name || project.creator?.email || 'Unknown',
+      creatorId: project.creator?.id || null,
     }))
 
     return NextResponse.json({

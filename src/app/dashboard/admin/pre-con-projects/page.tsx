@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Plus, Search, Edit, Trash2, Building2, TrendingUp, Package, MapPin, CheckCircle2, Star } from "lucide-react"
+import { Plus, Search, Edit, Trash2, Building2, TrendingUp, Package, MapPin, CheckCircle2, Star, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import { isAdmin } from "@/lib/roles"
 import { Badge } from "@/components/ui/badge"
 import { formatCurrency } from "@/lib/utils"
@@ -39,6 +39,7 @@ interface PreConProject {
   featured?: boolean
   createdAt: string
   creatorName?: string
+  creatorId?: string | null
   units?: Array<{ id: string; status: string }>
 }
 
@@ -51,8 +52,12 @@ export default function PreConProjectsPage() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [cityFilter, setCityFilter] = useState("")
   const [publicationFilter, setPublicationFilter] = useState("all")
+  const [userFilter, setUserFilter] = useState("all")
+  const [creators, setCreators] = useState<Array<{ id: string; name: string }>>([])
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [limit, setLimit] = useState(10)
   const [stats, setStats] = useState({
     total: 0,
     selling: 0,
@@ -76,19 +81,21 @@ export default function PreConProjectsPage() {
       }
       fetchProjects()
       fetchStats()
+      fetchCreators()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, session, router, page, searchTerm, statusFilter, cityFilter, publicationFilter])
+  }, [status, session, router, page, limit, searchTerm, statusFilter, cityFilter, publicationFilter, userFilter])
 
   const fetchProjects = async () => {
     await fetchData(async () => {
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: "10",
+        limit: limit.toString(),
         ...(searchTerm && { search: searchTerm }),
         ...(statusFilter && statusFilter !== "all" && { status: statusFilter }),
         ...(cityFilter && { city: cityFilter }),
         ...(publicationFilter && publicationFilter !== "all" && { isPublished: publicationFilter }),
+        ...(userFilter && userFilter !== "all" && { createdBy: userFilter }),
       })
 
       const response = await fetch(`/api/admin/pre-con-projects?${params}`)
@@ -100,6 +107,7 @@ export default function PreConProjectsPage() {
       const data = await response.json()
       setProjects(data.projects || [])
       setTotalPages(data.pagination?.totalPages || 1)
+      setTotal(data.pagination?.total || 0)
       return data
     })
   }
@@ -124,6 +132,31 @@ export default function PreConProjectsPage() {
       })
     } catch (error) {
       console.error("Error fetching stats:", error)
+    }
+  }
+
+  const fetchCreators = async () => {
+    try {
+      const response = await fetch("/api/admin/pre-con-projects?limit=1000")
+      if (!response.ok) return
+
+      const data = await response.json()
+      const allProjects = data.projects || []
+      
+      // Extract unique creators with their IDs
+      const creatorMap = new Map<string, { id: string; name: string }>()
+      allProjects.forEach((p: PreConProject) => {
+        if (p.creatorId && p.creatorName && p.creatorName !== "Unknown") {
+          if (!creatorMap.has(p.creatorId)) {
+            creatorMap.set(p.creatorId, { id: p.creatorId, name: p.creatorName })
+          }
+        }
+      })
+
+      const uniqueCreators = Array.from(creatorMap.values())
+      setCreators(uniqueCreators)
+    } catch (error) {
+      console.error("Error fetching creators:", error)
     }
   }
 
@@ -274,7 +307,8 @@ export default function PreConProjectsPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => router.push(`/dashboard/admin/pre-con-projects/${project.id}/edit`)}
+            onClick={() => window.open(`/dashboard/admin/pre-con-projects/${project.id}/edit`, '_blank')}
+            title="Edit project (opens in new tab)"
           >
             <Edit className="h-4 w-4" />
           </Button>
@@ -439,6 +473,22 @@ export default function PreConProjectsPage() {
             <SelectItem value="false">Draft</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={userFilter} onValueChange={(value) => {
+          setUserFilter(value)
+          setPage(1)
+        }}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="All Users" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Users</SelectItem>
+            {creators.map((creator) => (
+              <SelectItem key={creator.id} value={creator.id}>
+                {creator.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Error Display */}
@@ -469,29 +519,143 @@ export default function PreConProjectsPage() {
       />
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
+      {totalPages > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>
+              Showing {projects.length > 0 ? (page - 1) * limit + 1 : 0} to {Math.min(page * limit, total)} of {total} projects
+            </span>
+            <Select
+              value={limit.toString()}
+              onValueChange={(value) => {
+                setLimit(parseInt(value))
+                setPage(1)
+              }}
             >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-            >
-              Next
-            </Button>
+              <SelectTrigger className="w-[80px] h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="text-xs">per page</span>
           </div>
+          
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(1)}
+                disabled={page === 1}
+                className="h-8 w-8 p-0"
+                title="First page"
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="h-8 w-8 p-0"
+                title="Previous page"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              
+              {/* Page Numbers */}
+              <div className="flex items-center gap-1">
+                {(() => {
+                  const pages: (number | string)[] = []
+                  const maxVisible = 7
+                  
+                  if (totalPages <= maxVisible) {
+                    // Show all pages if total pages is less than max visible
+                    for (let i = 1; i <= totalPages; i++) {
+                      pages.push(i)
+                    }
+                  } else {
+                    // Always show first page
+                    pages.push(1)
+                    
+                    if (page <= 4) {
+                      // Near the beginning
+                      for (let i = 2; i <= 5; i++) {
+                        pages.push(i)
+                      }
+                      pages.push('ellipsis-end')
+                      pages.push(totalPages)
+                    } else if (page >= totalPages - 3) {
+                      // Near the end
+                      pages.push('ellipsis-start')
+                      for (let i = totalPages - 4; i <= totalPages; i++) {
+                        pages.push(i)
+                      }
+                    } else {
+                      // In the middle
+                      pages.push('ellipsis-start')
+                      for (let i = page - 1; i <= page + 1; i++) {
+                        pages.push(i)
+                      }
+                      pages.push('ellipsis-end')
+                      pages.push(totalPages)
+                    }
+                  }
+                  
+                  return pages.map((pageNum, index) => {
+                    if (pageNum === 'ellipsis-start' || pageNum === 'ellipsis-end') {
+                      return (
+                        <span key={`ellipsis-${index}`} className="px-2 text-muted-foreground">
+                          ...
+                        </span>
+                      )
+                    }
+                    
+                    const pageNumber = pageNum as number
+                    const isActive = pageNumber === page
+                    
+                    return (
+                      <Button
+                        key={pageNumber}
+                        variant={isActive ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setPage(pageNumber)}
+                        className={`h-8 w-8 p-0 ${isActive ? "bg-primary text-primary-foreground" : ""}`}
+                      >
+                        {pageNumber}
+                      </Button>
+                    )
+                  })
+                })()}
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="h-8 w-8 p-0"
+                title="Next page"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(totalPages)}
+                disabled={page === totalPages}
+                className="h-8 w-8 p-0"
+                title="Last page"
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
