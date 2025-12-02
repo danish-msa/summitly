@@ -101,7 +101,7 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({ slug,
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pt-10">
       {/* Hero Section with Header */}
       <HeroSection
         heroImage={pageContent?.heroImage || null}

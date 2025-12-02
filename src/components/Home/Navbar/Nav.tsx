@@ -27,17 +27,52 @@ const Nav = ({ openNav }: Props) => {
   const pathname = usePathname();
   const { data: session } = useSession();
   
-  // Check if current page is a property page
-  // Property pages: /{citySlug}/{slug} where citySlug doesn't end with -real-estate and slug contains numbers
+  // Check if current page is a property detail page (not listing/category pages)
+  // Property pages: actual property detail pages, not listing or category pages
   const isPropertyPage = (() => {
     if (!pathname) return false;
     
-    // Old property page patterns
-    if (pathname.includes('/property/') || pathname.includes('/pre-construction/') || pathname.includes('/rent/')) {
+    // Old property page patterns - only match actual property detail pages
+    if (pathname.includes('/property/') && pathname.split('/').length > 2) {
+      // /property/{id} format
       return true;
     }
     
-    // New property page pattern: /{citySlug}/{slug}
+    // Pre-construction: only treat as property page if it's a specific project (MLS number pattern)
+    // NOT listing pages like /pre-construction, /pre-construction/toronto, /pre-construction/condos
+    if (pathname.startsWith('/pre-construction/')) {
+      const pathParts = pathname.split('/').filter(Boolean);
+      if (pathParts.length === 2) {
+        const slug = pathParts[1];
+        // Known listing/category pages that should have sticky navbar
+        const knownCategories = ['condos', 'houses', 'lofts', 'master-planned-communities', 'multi-family', 'offices', 
+                               'selling', 'coming-soon', 'sold-out', 'platinum-access', 'now-selling', 'assignments', 
+                               'register-now', 'resale', 'projects'];
+        const isYear = /^\d{4}$/.test(slug); // Completion year (e.g., 2025)
+        const isKnownCategory = knownCategories.includes(slug.toLowerCase());
+        const isSubPropertyType = slug.includes('-condos') || slug.includes('-houses') || 
+                                 slug.includes('-lofts') || slug.includes('-communities');
+        
+        // If it's a known category, year, or sub-property type, it's a listing page (not property page)
+        if (isKnownCategory || isYear || isSubPropertyType) {
+          return false; // Listing page - should have sticky navbar
+        }
+        
+        // If slug contains numbers and is not a known category, it's likely a property detail page (MLS number)
+        // City names typically don't contain numbers, so this should catch property pages
+        if (/\d/.test(slug)) {
+          return true; // Property detail page - no sticky navbar
+        }
+      }
+      return false; // Pre-construction listing/category pages should have sticky navbar
+    }
+    
+    // Rent: only match actual property detail pages
+    if (pathname.startsWith('/rent/') && pathname.split('/').length > 2) {
+      return true;
+    }
+    
+    // New property page pattern: /{citySlug}/{slug} where slug contains numbers
     const pathParts = pathname.split('/').filter(Boolean);
     if (pathParts.length === 2) {
       const [citySlug, slug] = pathParts;
@@ -70,9 +105,21 @@ const Nav = ({ openNav }: Props) => {
   useEffect(() => {
     if (isPropertyPage) return; // Disable sticky behavior on property pages
     
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
     const controlNavbar = () => {
       const currentScrollY = window.scrollY;
-      setIsAtTop(currentScrollY < 50);
+      
+      // Use requestAnimationFrame for smooth updates
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setIsAtTop(currentScrollY < 50);
+          lastScrollY = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
     window.addEventListener('scroll', controlNavbar, { passive: true });
@@ -80,24 +127,6 @@ const Nav = ({ openNav }: Props) => {
     
     return () => window.removeEventListener('scroll', controlNavbar);
   }, [isPropertyPage]);
-
-  // Update body padding based on navbar state (disabled on property pages)
-  useEffect(() => {
-    if (isPropertyPage) {
-      document.body.style.paddingTop = '0';
-      return;
-    }
-    
-    if (isAtTop) {
-      document.body.style.paddingTop = '0';
-    } else {
-      document.body.style.paddingTop = '4rem';
-    }
-    
-    return () => {
-      document.body.style.paddingTop = '0';
-    };
-  }, [isAtTop, isPropertyPage]);
 
 
 
@@ -114,17 +143,24 @@ const Nav = ({ openNav }: Props) => {
           ease: "easeInOut"
         }}
         className={cn(
-          "w-full top-0 left-0 right-0 z-[99] transition-all duration-300",
+          "w-full top-0 left-0 right-0 z-[99]",
+          "navbar-smooth",
+          "will-change-[background-color,backdrop-filter,border-color,box-shadow]",
           isPropertyPage 
             ? "relative" // Use relative positioning on property pages
             : "fixed", // Use fixed positioning on other pages
           isAtTop && !isPropertyPage
             ? "bg-transparent backdrop-blur-none shadow-none border-transparent" 
-            : "bg-background/95 backdrop-blur-sm border-b border-border/40"
+            : "bg-background/95 backdrop-blur-md border-b border-border/40 shadow-sm"
         )}
+        style={{
+          // Ensure consistent height to prevent layout shifts
+          minHeight: '4rem',
+          height: '4rem',
+        }}
       >
-        <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14 lg:h-16">
+        <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 h-full">
+          <div className="flex items-center justify-between h-full">
             {/* Left Side: Logo + Buy, Rent, Mortgage */}
             <div className="flex items-center space-x-4 lg:space-x-6">
               {/* Logo */}
@@ -145,7 +181,7 @@ const Nav = ({ openNav }: Props) => {
                       alt="Summitly Logo"
                       width={200}
                       height={60}
-                      className="h-8 lg:h-14 w-auto transition-opacity duration-300"
+                      className="h-8 lg:h-14 w-auto transition-all duration-300"
                       priority
                       quality={100}
                     />
