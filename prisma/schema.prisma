@@ -340,7 +340,7 @@ model PreConstructionProject {
   lockerPrice       Float?
   lockerPriceDetail String? @db.Text
   assignmentFee     Float?
-  developmentLevies Float?
+  developmentLevies String? @db.Text
   developmentCharges Float?
 
   // Address

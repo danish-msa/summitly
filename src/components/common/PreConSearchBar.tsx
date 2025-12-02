@@ -5,43 +5,53 @@ import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import PreConSuggestions, { PreConCity, PreConLaunch } from '@/components/PreCon/Search/PreConSuggestions';
+import PreConSuggestions, { PreConCity, PreConSellingStatus } from '@/components/PreCon/Search/PreConSuggestions';
 import SearchResults, { SearchResult } from '@/components/PreCon/Search/SearchResults';
-import { preConCities, preConLaunches } from '@/components/PreCon/Search/preConSearchData';
-import { preConCityProjectsData } from '@/components/PreCon/PreConCityProperties/preConCityProjectsData';
 
 export interface PreConSearchBarProps {
   value?: string;
   onChange?: (value: string) => void;
   onCitySelect?: (city: PreConCity) => void;
-  onLaunchSelect?: (launch: PreConLaunch) => void;
+  onStatusSelect?: (status: PreConSellingStatus) => void;
   placeholder?: string;
   className?: string;
   inputClassName?: string;
   showSuggestions?: boolean;
   autoNavigate?: boolean; // If true, automatically navigate on selection
   cities?: PreConCity[];
-  launches?: PreConLaunch[];
+  sellingStatuses?: PreConSellingStatus[];
 }
+
+// Helper function to format status name (e.g., "now-selling" -> "Now Selling")
+const formatStatusName = (status: string): string => {
+  return status
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
 
 const PreConSearchBar: React.FC<PreConSearchBarProps> = ({
   value: controlledValue,
   onChange,
   onCitySelect,
-  onLaunchSelect,
+  onStatusSelect,
   placeholder = "Enter location to search pre-construction properties",
   className,
   inputClassName,
   showSuggestions = true,
   autoNavigate = true,
   cities: providedCities,
-  launches: providedLaunches,
+  sellingStatuses: providedSellingStatuses,
 }) => {
   const router = useRouter();
   const [internalValue, setInternalValue] = useState('');
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [cities, setCities] = useState<PreConCity[]>([]);
+  const [sellingStatuses, setSellingStatuses] = useState<PreConSellingStatus[]>([]);
+  const [loadingCities, setLoadingCities] = useState(true);
+  const [loadingStatuses, setLoadingStatuses] = useState(true);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -49,20 +59,97 @@ const PreConSearchBar: React.FC<PreConSearchBarProps> = ({
   const searchValue = controlledValue !== undefined ? controlledValue : internalValue;
   const setSearchValue = onChange || setInternalValue;
 
-  // Use provided cities/launches or default ones
-  const cities = providedCities || preConCities;
-  const launches = providedLaunches || preConLaunches;
+  // Fetch cities from backend
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        setLoadingCities(true);
+        const response = await fetch('/api/pre-con-cities');
+        if (response.ok) {
+          const data = await response.json();
+          setCities(data.cities || []);
+        } else {
+          console.error('Failed to fetch cities');
+          setCities([]);
+        }
+      } catch (error) {
+        console.error('Error fetching cities:', error);
+        setCities([]);
+      } finally {
+        setLoadingCities(false);
+      }
+    };
 
-  // Merge cities with project counts from mock data
-  const citiesWithCounts = useMemo(() => {
-    return cities.map((city) => {
-      const projectData = preConCityProjectsData.find((p) => p.id === city.id);
-      return {
-        ...city,
-        numberOfProjects: projectData?.numberOfProjects,
-      };
-    });
-  }, [cities]);
+    // Only fetch if cities are not provided via props
+    if (!providedCities) {
+      fetchCities();
+    } else {
+      setCities(providedCities);
+      setLoadingCities(false);
+    }
+  }, [providedCities]);
+
+  // Fetch selling statuses from backend
+  useEffect(() => {
+    const fetchSellingStatuses = async () => {
+      try {
+        setLoadingStatuses(true);
+        // Fetch both filters and projects in parallel
+        const [filtersResponse, projectsResponse] = await Promise.all([
+          fetch('/api/pre-con-projects/filters'),
+          fetch('/api/pre-con-projects?limit=1000') // Get projects to count statuses
+        ]);
+        
+        if (filtersResponse.ok) {
+          const filtersData = await filtersResponse.json();
+          const statusList = filtersData.sellingStatuses || [];
+          
+          // Count projects per status if projects data is available
+          let statusCounts: Record<string, number> = {};
+          if (projectsResponse.ok) {
+            const projectsData = await projectsResponse.json();
+            const projects = projectsData.projects || [];
+            
+            projects.forEach((project: any) => {
+              if (project.preCon?.status) {
+                const status = project.preCon.status;
+                statusCounts[status] = (statusCounts[status] || 0) + 1;
+              }
+            });
+          }
+          
+          // Map statuses with counts (status is already in slug format from API)
+          const statusesWithCounts: PreConSellingStatus[] = statusList.map((status: string) => ({
+            id: status.toLowerCase(), // Status is already in slug format
+            name: formatStatusName(status),
+            numberOfProjects: statusCounts[status] || 0,
+          }));
+          
+          setSellingStatuses(statusesWithCounts);
+        } else {
+          console.error('Failed to fetch selling statuses');
+          setSellingStatuses([]);
+        }
+      } catch (error) {
+        console.error('Error fetching selling statuses:', error);
+        setSellingStatuses([]);
+      } finally {
+        setLoadingStatuses(false);
+      }
+    };
+
+    // Only fetch if statuses are not provided via props
+    if (!providedSellingStatuses) {
+      fetchSellingStatuses();
+    } else {
+      setSellingStatuses(providedSellingStatuses);
+      setLoadingStatuses(false);
+    }
+  }, [providedSellingStatuses]);
+
+  // Use provided cities/statuses or fetched ones
+  const displayCities = providedCities || cities;
+  const displayStatuses = providedSellingStatuses || sellingStatuses;
 
   // Perform search
   const performSearch = useCallback(async (query: string) => {
@@ -174,19 +261,19 @@ const PreConSearchBar: React.FC<PreConSearchBarProps> = ({
     }
   };
 
-  const handleLaunchSelectInternal = (launch: PreConLaunch) => {
-    setSearchValue(launch.title);
+  const handleStatusSelectInternal = (status: PreConSellingStatus) => {
+    setSearchValue(status.name);
     setIsSuggestionsOpen(false);
     
     // Call custom handler if provided
-    if (onLaunchSelect) {
-      onLaunchSelect(launch);
+    if (onStatusSelect) {
+      onStatusSelect(status);
       return; // Don't auto-navigate if custom handler is provided
     }
     
     // Auto-navigate if enabled and no custom handler
     if (autoNavigate) {
-      router.push(`/pre-construction/${launch.id}`);
+      router.push(`/pre-construction/${status.id}`);
     }
   };
 
@@ -237,11 +324,11 @@ const PreConSearchBar: React.FC<PreConSearchBarProps> = ({
           ) : (
             /* Show static suggestions when input is empty or less than 2 characters */
             <PreConSuggestions
-              cities={citiesWithCounts}
-              launches={launches}
+              cities={displayCities}
+              sellingStatuses={displayStatuses}
               onCitySelect={handleCitySelectInternal}
-              onLaunchSelect={handleLaunchSelectInternal}
-              isOpen={isSuggestionsOpen}
+              onStatusSelect={handleStatusSelectInternal}
+              isOpen={isSuggestionsOpen && !loadingCities && !loadingStatuses}
             />
           )}
         </>

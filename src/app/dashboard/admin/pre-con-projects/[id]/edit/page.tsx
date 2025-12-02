@@ -8,6 +8,8 @@ import { ArrowLeft } from "lucide-react"
 import { isAdmin } from "@/lib/roles"
 import { PreConProjectForm, type FormData } from "@/components/Dashboard/PreConProjectForm"
 import { useBackgroundFetch } from "@/hooks/useBackgroundFetch"
+import { useAutoSave, useLoadSavedData, useClearSavedData, getSavedDataTimestamp } from "@/hooks/useAutoSave"
+import { RecoveryDialog } from "@/components/Dashboard/RecoveryDialog"
 
 // Type for the project returned from the API
 interface PreConProject {
@@ -96,10 +98,17 @@ export default function EditProjectPage() {
   const { data: session } = useSession()
   const { loading, fetchData } = useBackgroundFetch<PreConProject>()
   const [saving, setSaving] = useState(false)
+  const [showRecoveryDialog, setShowRecoveryDialog] = useState(false)
+  const [hasInitialized, setHasInitialized] = useState(false)
   // Track if form has been initially loaded to prevent background updates from overwriting edits
   const formInitializedRef = useRef(false)
   // Track which project ID we've loaded to prevent unnecessary refetches
   const loadedProjectIdRef = useRef<string | null>(null)
+  
+  // Storage key for this specific project
+  const STORAGE_KEY = params?.id ? `precon_project_draft_${params.id}` : null
+  const savedData = useLoadSavedData<FormData>(STORAGE_KEY)
+  const clearSavedData = useClearSavedData(STORAGE_KEY)
   const [formData, setFormData] = useState<FormData>({
     projectName: "",
     developer: "",
@@ -213,7 +222,9 @@ export default function EditProjectPage() {
       }
 
       formInitializedRef.current = true
-      setFormData({
+      
+      // Check for saved data first, otherwise use project data
+      const initialData: FormData = savedData && !hasInitialized ? savedData : {
         projectName: project.projectName || "",
         developer: project.developer || "",
         startingPrice: project.startingPrice?.toString() || "",
@@ -304,13 +315,140 @@ export default function EditProjectPage() {
           features: unit.features || [],
           amenities: unit.amenities || [],
         })) || [],
-      })
+      }
+      
+      setFormData(initialData)
+      
+      // Show recovery dialog if saved data exists and form hasn't been initialized
+      if (savedData && !hasInitialized) {
+        setShowRecoveryDialog(true)
+      }
+      setHasInitialized(true)
     } catch (error) {
       console.error("Error fetching project:", error)
       alert("Failed to load project")
       router.push("/dashboard/admin/pre-con-projects")
     }
   }
+
+  // Check for saved data on mount
+  useEffect(() => {
+    if (savedData && !hasInitialized && params?.id) {
+      setShowRecoveryDialog(true)
+    }
+  }, [savedData, hasInitialized, params?.id])
+
+  // Handle recovery dialog actions
+  const handleRestore = () => {
+    if (savedData) {
+      setFormData(savedData)
+    }
+    setShowRecoveryDialog(false)
+  }
+
+  const handleDiscard = () => {
+    clearSavedData()
+    // Reload project data
+    if (params?.id) {
+      formInitializedRef.current = false
+      fetchProject()
+    }
+    setShowRecoveryDialog(false)
+  }
+
+  // Auto-save functionality - saves to localStorage and optionally to backend
+  useAutoSave({
+    data: formData,
+    onSave: async (data) => {
+      // Only auto-save to backend if form is initialized and project ID exists
+      if (!params?.id || !formInitializedRef.current) return
+      
+      try {
+        // Create a simplified payload for auto-save (exclude pending images and complex fields)
+        const autoSavePayload = {
+          projectName: data.projectName,
+          developer: data.developer,
+          startingPrice: data.startingPrice,
+          endingPrice: data.endingPrice,
+          avgPricePerSqft: data.avgPricePerSqft || null,
+          status: data.status,
+          parkingPrice: data.parkingPrice || null,
+          parkingPriceDetail: data.parkingPriceDetail || null,
+          lockerPrice: data.lockerPrice || null,
+          lockerPriceDetail: data.lockerPriceDetail || null,
+          assignmentFee: data.assignmentFee || null,
+          developmentLevies: data.developmentLevies || null,
+          developmentCharges: data.developmentCharges || null,
+          streetNumber: data.streetNumber,
+          streetName: data.streetName,
+          city: data.city,
+          state: data.state,
+          zip: data.zip,
+          neighborhood: data.neighborhood,
+          majorIntersection: data.majorIntersection,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          propertyType: data.propertyType,
+          subPropertyType: data.subPropertyType,
+          bedroomRange: data.bedroomRange,
+          bathroomRange: data.bathroomRange,
+          sqftRange: data.sqftMin && data.sqftMax 
+            ? `${data.sqftMin}-${data.sqftMax}` 
+            : data.sqftMin || data.sqftMax || '',
+          hasDen: data.hasDen,
+          hasStudio: data.hasStudio,
+          hasLoft: data.hasLoft,
+          hasWorkLiveLoft: data.hasWorkLiveLoft,
+          totalUnits: data.totalUnits,
+          availableUnits: data.availableUnits,
+          suites: data.suites || null,
+          storeys: data.storeys,
+          height: data.height || null,
+          maintenanceFeesPerSqft: data.maintenanceFeesPerSqft || null,
+          maintenanceFeesDetail: data.maintenanceFeesDetail || null,
+          floorPremiums: data.floorPremiums || null,
+          occupancyDate: data.occupancyDate,
+          completionProgress: data.completionProgress,
+          promotions: data.promotions,
+          ownershipType: data.ownershipType || null,
+          garage: data.garage || null,
+          basement: data.basement || null,
+          images: data.images, // Only saved images, not pending ones
+          videos: data.videos,
+          amenities: data.amenities,
+          customAmenities: data.customAmenities,
+          depositStructure: data.depositStructure,
+          description: data.description,
+          documents: data.documents.length > 0 ? data.documents : null,
+          developerInfo: data.developerInfo || null,
+          architectInfo: data.architectInfo || null,
+          builderInfo: data.builderInfo || null,
+          interiorDesignerInfo: data.interiorDesignerInfo || null,
+          landscapeArchitectInfo: data.landscapeArchitectInfo || null,
+          marketingInfo: data.marketingInfo || null,
+          salesMarketingCompany: data.salesMarketingCompany || null,
+          developmentTeamOverview: data.developmentTeamOverview || null,
+          isPublished: data.isPublished === true,
+          // Note: We don't auto-save units to avoid conflicts
+        }
+
+        // Auto-save to backend (silent, don't show errors to user)
+        await fetch(`/api/admin/pre-con-projects/${params.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(autoSavePayload),
+        })
+      } catch (error) {
+        // Silently fail - auto-save errors shouldn't interrupt user
+        console.error("Auto-save error:", error)
+      }
+    },
+    debounceMs: 3000, // 3 seconds debounce for backend saves
+    storageKey: STORAGE_KEY || undefined,
+    enabled: hasInitialized && formInitializedRef.current,
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -454,6 +592,9 @@ export default function EditProjectPage() {
         URL.revokeObjectURL(img.preview)
       })
 
+      // Clear saved data on successful save
+      clearSavedData()
+
       router.push("/dashboard/admin/pre-con-projects")
     } catch (error) {
       console.error("Error updating project:", error)
@@ -504,6 +645,13 @@ export default function EditProjectPage() {
         loading={saving}
         submitLabel="Update Project"
         onCancel={() => router.back()}
+      />
+
+      <RecoveryDialog
+        open={showRecoveryDialog}
+        onRestore={handleRestore}
+        onDiscard={handleDiscard}
+        savedAt={getSavedDataTimestamp(STORAGE_KEY)}
       />
     </div>
   )

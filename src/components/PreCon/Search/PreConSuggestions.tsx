@@ -2,27 +2,27 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Calendar } from 'lucide-react';
+import { Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import { PreConCity, PreConLaunch } from './types';
+import { PreConCity, PreConSellingStatus } from './types';
 
-export type { PreConCity, PreConLaunch };
+export type { PreConCity, PreConSellingStatus };
 
 export interface PreConSuggestionsProps {
   cities: PreConCity[];
-  launches: PreConLaunch[];
+  sellingStatuses: PreConSellingStatus[];
   onCitySelect: (city: PreConCity) => void;
-  onLaunchSelect: (launch: PreConLaunch) => void;
+  onStatusSelect: (status: PreConSellingStatus) => void;
   isOpen: boolean;
   className?: string;
 }
 
 const PreConSuggestions: React.FC<PreConSuggestionsProps> = ({
   cities,
-  launches,
+  sellingStatuses,
   onCitySelect,
-  onLaunchSelect,
+  onStatusSelect,
   isOpen,
   className,
 }) => {
@@ -65,26 +65,32 @@ const PreConSuggestions: React.FC<PreConSuggestionsProps> = ({
           </div>
         </div>
 
-        {/* New Pre construction Launches Section */}
-        {launches.length > 0 && (
+        {/* Selling Status Section */}
+        {sellingStatuses.length > 0 && (
           <div>
-            <h3 className="text-sm font-bold text-gray-900 mb-3">New Pre construction Launches</h3>
+            <h3 className="text-sm font-bold text-gray-900 mb-3">Selling Status</h3>
             <div className="grid grid-cols-4 gap-1">
-              {launches.map((launch) => (
-                <div
-                  key={launch.id}
-                  onClick={() => onLaunchSelect(launch)}
+              {sellingStatuses.map((status) => (
+                <Link
+                  key={status.id}
+                  href={`/pre-construction/${status.id}`}
+                  onClick={() => onStatusSelect(status)}
                   className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
                 >
                   <div className="w-6 h-6 flex-shrink-0 rounded-full bg-gray-100 flex items-center justify-center">
-                    <Calendar className="h-3 w-3 text-gray-600" />
+                    <Tag className="h-3 w-3 text-gray-600" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-gray-900 truncate">
-                      {launch.title}
+                      {status.name}
                     </p>
+                    {status.numberOfProjects !== undefined && (
+                      <p className="text-xs text-gray-500">
+                        {status.numberOfProjects} Projects
+                      </p>
+                    )}
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

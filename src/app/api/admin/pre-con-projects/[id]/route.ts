@@ -284,8 +284,7 @@ export async function PUT(
       updateData.assignmentFee = isNaN(parsed as number) ? null : parsed
     }
     if (body.developmentLevies !== undefined) {
-      const parsed = body.developmentLevies === '' || body.developmentLevies === null ? null : parseFloat(String(body.developmentLevies))
-      updateData.developmentLevies = isNaN(parsed as number) ? null : parsed
+      updateData.developmentLevies = body.developmentLevies === '' || body.developmentLevies === null ? null : String(body.developmentLevies).trim()
     }
     if (body.developmentCharges !== undefined) {
       const parsed = body.developmentCharges === '' || body.developmentCharges === null ? null : parseFloat(String(body.developmentCharges))

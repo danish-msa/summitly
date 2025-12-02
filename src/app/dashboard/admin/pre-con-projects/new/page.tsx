@@ -1,19 +1,35 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import { isAdmin } from "@/lib/roles"
 import { PreConProjectForm, type FormData, type Document } from "@/components/Dashboard/PreConProjectForm"
+import { useAutoSave, useLoadSavedData, useClearSavedData, getSavedDataTimestamp } from "@/hooks/useAutoSave"
+import { RecoveryDialog } from "@/components/Dashboard/RecoveryDialog"
+
+const STORAGE_KEY = "precon_project_draft_new"
 
 export default function NewProjectPage() {
   const router = useRouter()
   const { data: session } = useSession()
   const [loading, setLoading] = useState(false)
+  const [showRecoveryDialog, setShowRecoveryDialog] = useState(false)
+  const [hasInitialized, setHasInitialized] = useState(false)
   
-  const [formData, setFormData] = useState<FormData>({
+  // Load saved data on mount
+  const savedData = useLoadSavedData<FormData>(STORAGE_KEY)
+  const clearSavedData = useClearSavedData(STORAGE_KEY)
+  
+  // Initialize form data - check for saved data first
+  const getInitialFormData = (): FormData => {
+    if (savedData) {
+      return savedData
+    }
+    
+    return {
     // Basic Information
     projectName: "",
     developer: "",
@@ -96,6 +112,45 @@ export default function NewProjectPage() {
     developmentTeamOverview: "",
     isPublished: false,
     units: [],
+  }
+  }
+
+  const [formData, setFormData] = useState<FormData>(getInitialFormData)
+
+  // Check for saved data on mount
+  useEffect(() => {
+    if (savedData && !hasInitialized) {
+      setShowRecoveryDialog(true)
+      setHasInitialized(true)
+    } else {
+      setHasInitialized(true)
+    }
+  }, [savedData, hasInitialized])
+
+  // Handle recovery dialog actions
+  const handleRestore = () => {
+    if (savedData) {
+      setFormData(savedData)
+    }
+    setShowRecoveryDialog(false)
+  }
+
+  const handleDiscard = () => {
+    clearSavedData()
+    setFormData(getInitialFormData())
+    setShowRecoveryDialog(false)
+  }
+
+  // Auto-save functionality (only saves to localStorage, no backend call for new projects)
+  useAutoSave({
+    data: formData,
+    onSave: async () => {
+      // For new projects, we only save to localStorage
+      // Backend save happens on explicit submit
+    },
+    debounceMs: 2000,
+    storageKey: STORAGE_KEY,
+    enabled: hasInitialized,
   })
 
   if (session?.user && !isAdmin(session.user.role)) {
@@ -242,6 +297,9 @@ export default function NewProjectPage() {
         URL.revokeObjectURL(img.preview)
       })
 
+      // Clear saved data on successful save
+      clearSavedData()
+
       router.push("/dashboard/admin/pre-con-projects")
     } catch (error) {
       console.error("Error creating project:", error)
@@ -284,6 +342,13 @@ export default function NewProjectPage() {
         loading={loading}
         submitLabel="Create Project"
         onCancel={() => router.back()}
+      />
+
+      <RecoveryDialog
+        open={showRecoveryDialog}
+        onRestore={handleRestore}
+        onDiscard={handleDiscard}
+        savedAt={getSavedDataTimestamp(STORAGE_KEY)}
       />
     </div>
   )

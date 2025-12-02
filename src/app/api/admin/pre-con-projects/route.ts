@@ -359,7 +359,7 @@ export async function POST(request: NextRequest) {
         lockerPrice: lockerPrice ? (typeof lockerPrice === 'number' ? lockerPrice : parseFloat(String(lockerPrice))) : null,
         lockerPriceDetail: lockerPriceDetail && lockerPriceDetail.trim() ? lockerPriceDetail.trim() : null,
         assignmentFee: assignmentFee ? (typeof assignmentFee === 'number' ? assignmentFee : parseFloat(String(assignmentFee))) : null,
-        developmentLevies: developmentLevies ? (typeof developmentLevies === 'number' ? developmentLevies : parseFloat(String(developmentLevies))) : null,
+        developmentLevies: developmentLevies && String(developmentLevies).trim() ? String(developmentLevies).trim() : null,
         developmentCharges: developmentCharges ? (typeof developmentCharges === 'number' ? developmentCharges : parseFloat(String(developmentCharges))) : null,
         streetNumber: streetNumber || null,
         streetName: streetName || null,
