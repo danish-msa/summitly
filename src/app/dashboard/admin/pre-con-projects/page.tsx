@@ -50,10 +50,11 @@ export default function PreConProjectsPage() {
   const { loading, error, setError, fetchData } = useBackgroundFetch()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [cityFilter, setCityFilter] = useState("")
+  const [cityFilter, setCityFilter] = useState("all")
   const [publicationFilter, setPublicationFilter] = useState("all")
   const [userFilter, setUserFilter] = useState("all")
   const [creators, setCreators] = useState<Array<{ id: string; name: string }>>([])
+  const [cities, setCities] = useState<Array<string>>([])
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
@@ -82,6 +83,7 @@ export default function PreConProjectsPage() {
       fetchProjects()
       fetchStats()
       fetchCreators()
+      fetchCities()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, session, router, page, limit, searchTerm, statusFilter, cityFilter, publicationFilter, userFilter])
@@ -93,7 +95,7 @@ export default function PreConProjectsPage() {
         limit: limit.toString(),
         ...(searchTerm && { search: searchTerm }),
         ...(statusFilter && statusFilter !== "all" && { status: statusFilter }),
-        ...(cityFilter && { city: cityFilter }),
+        ...(cityFilter && cityFilter !== "all" && { city: cityFilter }),
         ...(publicationFilter && publicationFilter !== "all" && { isPublished: publicationFilter }),
         ...(userFilter && userFilter !== "all" && { createdBy: userFilter }),
       })
@@ -157,6 +159,30 @@ export default function PreConProjectsPage() {
       setCreators(uniqueCreators)
     } catch (error) {
       console.error("Error fetching creators:", error)
+    }
+  }
+
+  const fetchCities = async () => {
+    try {
+      const response = await fetch("/api/admin/pre-con-projects?limit=1000")
+      if (!response.ok) return
+
+      const data = await response.json()
+      const allProjects = data.projects || []
+      
+      // Extract unique cities
+      const citySet = new Set<string>()
+      allProjects.forEach((p: PreConProject) => {
+        if (p.city && p.city.trim() !== "") {
+          citySet.add(p.city.trim())
+        }
+      })
+
+      // Sort cities alphabetically
+      const uniqueCities = Array.from(citySet).sort()
+      setCities(uniqueCities)
+    } catch (error) {
+      console.error("Error fetching cities:", error)
     }
   }
 
@@ -268,11 +294,6 @@ export default function PreConProjectsPage() {
       ),
     },
     {
-      key: "startingPrice",
-      header: "Starting Price",
-      render: (project) => formatCurrency(project.startingPrice),
-    },
-    {
       key: "isPublished",
       header: "Publication",
       render: (project) => (
@@ -287,15 +308,6 @@ export default function PreConProjectsPage() {
       render: (project) => (
         <div className="text-sm font-medium text-foreground">
           {project.creatorName || "Unknown"}
-        </div>
-      ),
-    },
-    {
-      key: "units",
-      header: "Units",
-      render: (project) => (
-        <div className="text-sm">
-          {project.availableUnits} / {project.totalUnits} available
         </div>
       ),
     },
@@ -451,15 +463,22 @@ export default function PreConProjectsPage() {
             <SelectItem value="sold-out">Sold Out</SelectItem>
           </SelectContent>
         </Select>
-        <Input
-          placeholder="City"
-          value={cityFilter}
-          onChange={(e) => {
-            setCityFilter(e.target.value)
-            setPage(1)
-          }}
-          className="w-[180px]"
-        />
+        <Select value={cityFilter} onValueChange={(value) => {
+          setCityFilter(value)
+          setPage(1)
+        }}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="All Cities" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Cities</SelectItem>
+            {cities.map((city) => (
+              <SelectItem key={city} value={city}>
+                {city}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={publicationFilter} onValueChange={(value) => {
           setPublicationFilter(value)
           setPage(1)
