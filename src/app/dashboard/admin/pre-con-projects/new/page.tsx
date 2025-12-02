@@ -203,7 +203,21 @@ export default function NewProjectPage() {
                 salesMarketingCompany: project.salesMarketingCompany || "",
                 developmentTeamOverview: project.developmentTeamOverview || "",
                 isPublished: project.isPublished ?? false,
-                units: project.units?.map((unit: any) => ({
+                units: project.units?.map((unit: {
+                  id: string
+                  unitName: string
+                  beds: number
+                  baths: number
+                  sqft: number
+                  price: number
+                  maintenanceFee: number | null
+                  status: string
+                  studio: boolean
+                  images: string[]
+                  description: string | null
+                  features: string[]
+                  amenities: string[]
+                }) => ({
                   id: unit.id,
                   unitName: unit.unitName || "",
                   beds: unit.beds?.toString() || "",
