@@ -153,7 +153,7 @@ export const RentMegaMenu: React.FC<RentMegaMenuProps> = ({
                       className={cn(
                         "w-full text-left p-4 rounded-lg transition-all duration-200 flex items-center justify-between group",
                         activeCategory === category.id
-                          ? "bg-primary/10 border-l-2 border-l-primary"
+                          ? "bg-secondary/10 border-l-2 border-l-secondary"
                           : "hover:bg-muted/50 border-l-2 border-l-transparent"
                       )}
                     >
@@ -202,7 +202,7 @@ export const RentMegaMenu: React.FC<RentMegaMenuProps> = ({
                             className={cn(
                               "flex items-start gap-3 p-3 rounded-lg transition-all duration-200",
                               hoveredItem === item.id 
-                                ? "bg-primary/10" 
+                                ? "bg-secondary/10" 
                                 : "hover:bg-muted/50"
                             )}
                             onMouseEnter={() => setHoveredItem(item.id)}
@@ -212,7 +212,7 @@ export const RentMegaMenu: React.FC<RentMegaMenuProps> = ({
                               "w-10 h-10 rounded-lg flex items-center justify-center transition-colors flex-shrink-0",
                               hoveredItem === item.id 
                                 ? "bg-primary/20" 
-                                : "bg-muted"
+                                : "bg-secondary/20"
                             )}>
                               <Icon className={cn(
                                 "w-5 h-5 transition-colors",

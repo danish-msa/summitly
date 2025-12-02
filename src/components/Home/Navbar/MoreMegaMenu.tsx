@@ -205,11 +205,11 @@ export const MoreMegaMenu: React.FC<MoreMegaMenuProps> = ({
                               >
                                 <Link
                                   href={item.href}
-                                  className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                                  className="flex items-start space-x-3 p-3 rounded-lg hover:bg-secondary/10 transition-colors"
                                 >
                                   <div className="flex-shrink-0 mt-0.5">
-                                    <div className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg group-hover:bg-primary group-hover:text-white transition-colors">
-                                      <IconComponent className="w-5 h-5 text-gray-600 group-hover:text-white transition-colors" />
+                                    <div className="w-10 h-10 flex items-center justify-center bg-secondary/20 rounded-lg group-hover:bg-primary/20 group-hover:text-white transition-colors">
+                                      <IconComponent className="w-5 h-5 text-gray-600 group-hover:text-primary transition-colors" />
                                     </div>
                                   </div>
                                   <div className="flex-1 min-w-0">

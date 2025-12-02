@@ -18,7 +18,8 @@ import {
   Clock, 
   XCircle,
   ChevronRight,
-  ArrowUpRight
+  ArrowUpRight,
+  MapPin
 } from 'lucide-react';
 import { getBlogPosts } from '@/data/data';
 
@@ -30,7 +31,7 @@ interface ProjectsMegaMenuProps {
   children: React.ReactNode;
 }
 
-type CategoryType = 'property-type' | 'occupancy-year' | 'selling-status' | 'developer';
+type CategoryType = 'property-type' | 'occupancy-year' | 'selling-status' | 'developer' | 'top-cities';
 
 interface CategoryItem {
   id: CategoryType;
@@ -51,6 +52,7 @@ interface FilterData {
   developers: string[];
   sellingStatuses: string[];
   occupancyYears: number[];
+  cities: string[];
 }
 
 const mainCategories: CategoryItem[] = [
@@ -58,6 +60,11 @@ const mainCategories: CategoryItem[] = [
     id: 'property-type',
     title: 'Property Type',
     description: 'Browse by building category'
+  },
+  {
+    id: 'top-cities',
+    title: 'Top Cities',
+    description: 'Explore by location'
   },
   {
     id: 'occupancy-year',
@@ -107,6 +114,7 @@ const sellingStatuses: ContentItem[] = [
 const getCategoryTitle = (category: CategoryType): string => {
   const titles: Record<CategoryType, string> = {
     'property-type': 'Browse by Property Type',
+    'top-cities': 'Explore Top Cities',
     'occupancy-year': 'Select Occupancy Year',
     'selling-status': 'Filter by Status',
     'developer': 'Top Developers'
@@ -117,6 +125,7 @@ const getCategoryTitle = (category: CategoryType): string => {
 const getCategoryDescription = (category: CategoryType): string => {
   const descriptions: Record<CategoryType, string> = {
     'property-type': 'Find your perfect property type from condos to master-planned communities.',
+    'top-cities': 'Discover pre-construction projects in the most popular cities across Canada.',
     'occupancy-year': 'Plan ahead with projects organized by their expected completion dates.',
     'selling-status': 'Discover opportunities from platinum access to resale properties.',
     'developer': 'Explore projects from the most trusted builders in the market.'
@@ -124,13 +133,30 @@ const getCategoryDescription = (category: CategoryType): string => {
   return descriptions[category];
 };
 
+// Helper function to slugify city name for URL
+const slugifyCityName = (cityName: string): string => {
+  return cityName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+};
+
 const getContentForCategory = (
   category: CategoryType, 
-  developers: string[]
+  developers: string[],
+  cities: string[] = []
 ): ContentItem[] => {
   switch (category) {
     case 'property-type': 
       return propertyTypes;
+    case 'top-cities':
+      return cities.map((city) => ({
+        id: slugifyCityName(city),
+        label: city,
+        description: `View pre-construction projects in ${city}`,
+        href: `/pre-construction/${slugifyCityName(city)}`,
+        icon: MapPin
+      }));
     case 'occupancy-year': 
       return occupancyYears;
     case 'selling-status': 
@@ -163,6 +189,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
     developers: [],
     sellingStatuses: [],
     occupancyYears: [],
+    cities: [],
   });
   const [loading, setLoading] = useState(false);
   const [dataFetched, setDataFetched] = useState(false);
@@ -205,7 +232,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
     ? getBlogPosts({ search: 'construction' }).slice(0, 2)
     : preConBlogs;
 
-  const contentItems = getContentForCategory(activeCategory, filterData.developers);
+  const contentItems = getContentForCategory(activeCategory, filterData.developers, filterData.cities);
 
   const menuContent = (
     <AnimatePresence>
@@ -236,7 +263,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                       className={cn(
                         "w-full text-left p-4 rounded-lg transition-all duration-200 flex items-center justify-between group",
                         activeCategory === category.id
-                          ? "bg-primary/10 border-l-2 border-l-primary"
+                          ? "bg-secondary/10 border-l-2 border-l-secondary"
                           : "hover:bg-muted/50 border-l-2 border-l-transparent"
                       )}
                     >
@@ -285,7 +312,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                             className={cn(
                               "flex items-start gap-3 p-3 rounded-lg transition-all duration-200",
                               hoveredItem === item.id 
-                                ? "bg-primary/10" 
+                                ? "bg-secondary/10" 
                                 : "hover:bg-muted/50"
                             )}
                             onMouseEnter={() => setHoveredItem(item.id)}
@@ -295,7 +322,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                               "w-10 h-10 rounded-lg flex items-center justify-center transition-colors flex-shrink-0",
                               hoveredItem === item.id 
                                 ? "bg-primary/20" 
-                                : "bg-muted"
+                                : "bg-secondary/20"
                             )}>
                               <Icon className={cn(
                                 "w-5 h-5 transition-colors",
@@ -321,7 +348,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                       href="/pre-construction/projects"
                       className="inline-flex items-center gap-1 mt-4 text-xs font-semibold text-primary hover:underline"
                     >
-                      View all {activeCategory.replace('-', ' ')}
+                      View all {activeCategory === 'top-cities' ? 'cities' : activeCategory.replace('-', ' ')}
                       <ArrowUpRight className="w-3 h-3" />
                     </Link>
                   </motion.div>

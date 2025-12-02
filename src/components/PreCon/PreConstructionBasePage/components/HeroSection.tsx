@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Bell } from 'lucide-react';
+import Link from 'next/link';
+import { Bell, ChevronRight } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useSession } from 'next-auth/react';
 import PreConSearchBar from '@/components/common/PreConSearchBar';
@@ -96,6 +97,19 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         {/* Content Overlay - Two Column Layout */}
         <div className="absolute inset-0 flex items-center px-4 py-6 md:py-8 z-10">
           <div className="container-1400 mx-auto w-full">
+            {/* Breadcrumb Navigation */}
+            <div className="mb-4 relative z-20">
+              <nav className="flex items-center gap-2 text-sm text-white/90 drop-shadow-md" aria-label="Breadcrumb">
+                <Link 
+                  href="/pre-construction" 
+                  className="text-primary transition-colors font-medium"
+                >
+                  Pre-Construction
+                </Link>
+                <ChevronRight className="h-4 w-4 text-primary" />
+                <span className="text-primary font-medium">{title}</span>
+              </nav>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
               {/* Left Column: Title and Search Bar */}
               <div className="space-y-4 relative z-20">

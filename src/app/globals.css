@@ -367,7 +367,7 @@
 @layer base {
   :root {
     /* Brand Identity Colors - Light Mode */
-    --background: 209 100% 96%; /* #EFF7FD */
+    --background: 209 100% 98%; /* # */
     --foreground: 220 65% 15%; /* #0A1730 - MIDNIGHT */
     --card: 0 0% 100%; /* Pure white for cards */
     --card-foreground: 220 65% 15%; /* #0A1730 - MIDNIGHT */

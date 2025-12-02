@@ -6,11 +6,15 @@ export async function GET(request: NextRequest) {
   try {
     // Fetch all projects to extract unique values
     const projects = await prisma.preConstructionProject.findMany({
+      where: {
+        isPublished: true, // Only count published projects
+      },
       select: {
         propertyType: true,
         developer: true,
         status: true,
         occupancyDate: true,
+        city: true,
       },
     })
 
@@ -66,11 +70,27 @@ export async function GET(request: NextRequest) {
     })
     const sortedOccupancyYears = Array.from(occupancyYears).sort()
 
+    // Extract unique cities with project counts (top cities by project count)
+    const cityCounts: Record<string, number> = {}
+    projects.forEach(project => {
+      if (project.city) {
+        cityCounts[project.city] = (cityCounts[project.city] || 0) + 1
+      }
+    })
+    
+    // Sort cities by project count (descending) and get top cities
+    const topCities = Object.entries(cityCounts)
+      .sort(([, countA], [, countB]) => countB - countA)
+      .slice(0, 12) // Top 12 cities
+      .map(([cityName]) => cityName)
+      .sort() // Alphabetical sort for display
+
     return NextResponse.json({
       propertyTypes,
       developers,
       sellingStatuses,
       occupancyYears: sortedOccupancyYears,
+      cities: topCities,
     })
   } catch (error) {
     console.error('Error fetching filter values:', error)
@@ -81,6 +101,7 @@ export async function GET(request: NextRequest) {
         developers: [],
         sellingStatuses: [],
         occupancyYears: [],
+        cities: [],
       },
       { status: 500 }
     )
