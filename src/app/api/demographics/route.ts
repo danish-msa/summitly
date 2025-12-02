@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 const LOCAL_LOGIC_CLIENT_ID = process.env.LOCAL_LOGIC_CLIENT_ID;
 const LOCAL_LOGIC_CLIENT_SECRET = process.env.LOCAL_LOGIC_CLIENT_SECRET;
 const LOCAL_LOGIC_API_BASE = 'https://api.locallogic.co';
@@ -39,6 +38,68 @@ export interface DemographicsData {
   lastUpdated?: string;
 }
 
+// Local Logic API response types
+interface LocalLogicDistributionItem {
+  range?: string;
+  label?: string;
+  name?: string;
+  category?: string;
+  language?: string;
+  type?: string;
+  method?: string;
+  count?: number;
+  value?: number;
+  percentage?: number;
+}
+
+interface LocalLogicStats {
+  population?: number;
+  total_population?: number;
+  average_age?: number;
+  median_age?: number;
+  average_household_income?: number;
+  median_household_income?: number;
+  renters_percentage?: number;
+  renter_rate?: number;
+  average_household_size?: number;
+  median_household_size?: number;
+  single_person_households_percentage?: number;
+  households_with_children?: number;
+  not_in_labour_force_percentage?: number;
+}
+
+interface LocalLogicDemographics {
+  stats?: LocalLogicStats;
+  distributions?: {
+    income?: LocalLogicDistributionItem[];
+    household_income?: LocalLogicDistributionItem[];
+    age?: LocalLogicDistributionItem[];
+    occupation?: LocalLogicDistributionItem[];
+    employment?: LocalLogicDistributionItem[];
+    ethnicity?: LocalLogicDistributionItem[];
+    visible_minority?: LocalLogicDistributionItem[];
+    language?: LocalLogicDistributionItem[];
+    mother_tongue?: LocalLogicDistributionItem[];
+    year_built?: LocalLogicDistributionItem[];
+    housing_age?: LocalLogicDistributionItem[];
+    property_type?: LocalLogicDistributionItem[];
+    housing_type?: LocalLogicDistributionItem[];
+    commute?: LocalLogicDistributionItem[];
+    commute_method?: LocalLogicDistributionItem[];
+  };
+}
+
+interface LocalLogicApiResponse {
+  demographics?: LocalLogicDemographics;
+  dissemination_area?: string;
+  da_code?: string;
+  last_updated?: string;
+}
+
+interface LocalLogicTokenResponse {
+  access_token?: string;
+}
+
 /**
  * Get access token from Local Logic API
  */
@@ -61,7 +122,7 @@ async function getLocalLogicAccessToken(): Promise<string | null> {
       return null;
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as LocalLogicTokenResponse;
     return data.access_token || null;
   } catch (error) {
     console.error('Error getting Local Logic access token:', error);
@@ -72,7 +133,7 @@ async function getLocalLogicAccessToken(): Promise<string | null> {
 /**
  * Transform Local Logic demographics data to our format
  */
-function transformLocalLogicData(localLogicData: any): DemographicsData {
+function transformLocalLogicData(localLogicData: LocalLogicApiResponse): DemographicsData {
   // Extract demographic data from Local Logic response
   const demographics = localLogicData.demographics || {};
   const stats = demographics.stats || {};
@@ -92,64 +153,64 @@ function transformLocalLogicData(localLogicData: any): DemographicsData {
 
   // Transform income distribution
   const incomeDistribution = distributions.income || distributions.household_income || [];
-  const incomeChart: ChartDataItem[] = incomeDistribution.map((item: any) => ({
-    name: item.range || item.label || item.name,
+  const incomeChart: ChartDataItem[] = incomeDistribution.map((item: LocalLogicDistributionItem) => ({
+    name: item.range || item.label || item.name || 'Unknown',
     value: item.count || item.value || 0,
     percentage: item.percentage || ((item.count || 0) / (transformedStats.population || 1)) * 100,
   }));
 
   // Transform age distribution
   const ageDistribution = distributions.age || [];
-  const ageChart: ChartDataItem[] = ageDistribution.map((item: any) => ({
-    name: item.range || item.label || item.name,
+  const ageChart: ChartDataItem[] = ageDistribution.map((item: LocalLogicDistributionItem) => ({
+    name: item.range || item.label || item.name || 'Unknown',
     value: item.count || item.value || 0,
     percentage: item.percentage,
   }));
 
   // Transform occupation distribution
   const occupationDistribution = distributions.occupation || distributions.employment || [];
-  const occupationChart: ChartDataItem[] = occupationDistribution.map((item: any) => ({
-    name: item.category || item.label || item.name,
+  const occupationChart: ChartDataItem[] = occupationDistribution.map((item: LocalLogicDistributionItem) => ({
+    name: item.category || item.label || item.name || 'Unknown',
     value: item.count || item.value || 0,
     percentage: item.percentage,
   }));
 
   // Transform ethnicity distribution
   const ethnicityDistribution = distributions.ethnicity || distributions.visible_minority || [];
-  const ethnicityChart: ChartDataItem[] = ethnicityDistribution.map((item: any) => ({
-    name: item.category || item.label || item.name,
+  const ethnicityChart: ChartDataItem[] = ethnicityDistribution.map((item: LocalLogicDistributionItem) => ({
+    name: item.category || item.label || item.name || 'Unknown',
     value: item.count || item.value || 0,
     percentage: item.percentage,
   }));
 
   // Transform language distribution
   const languageDistribution = distributions.language || distributions.mother_tongue || [];
-  const languageChart: ChartDataItem[] = languageDistribution.map((item: any) => ({
-    name: item.language || item.label || item.name,
+  const languageChart: ChartDataItem[] = languageDistribution.map((item: LocalLogicDistributionItem) => ({
+    name: item.language || item.label || item.name || 'Unknown',
     value: item.count || item.value || 0,
     percentage: item.percentage,
   }));
 
   // Transform year built distribution
   const yearBuiltDistribution = distributions.year_built || distributions.housing_age || [];
-  const yearBuiltChart: ChartDataItem[] = yearBuiltDistribution.map((item: any) => ({
-    name: item.range || item.label || item.name,
+  const yearBuiltChart: ChartDataItem[] = yearBuiltDistribution.map((item: LocalLogicDistributionItem) => ({
+    name: item.range || item.label || item.name || 'Unknown',
     value: item.count || item.value || 0,
     percentage: item.percentage,
   }));
 
   // Transform property type distribution
   const propertyTypeDistribution = distributions.property_type || distributions.housing_type || [];
-  const propertyTypeChart: ChartDataItem[] = propertyTypeDistribution.map((item: any) => ({
-    name: item.type || item.label || item.name,
+  const propertyTypeChart: ChartDataItem[] = propertyTypeDistribution.map((item: LocalLogicDistributionItem) => ({
+    name: item.type || item.label || item.name || 'Unknown',
     value: item.count || item.value || 0,
     percentage: item.percentage,
   }));
 
   // Transform commute method distribution
   const commuteDistribution = distributions.commute || distributions.commute_method || [];
-  const commuteChart: ChartDataItem[] = commuteDistribution.map((item: any) => ({
-    name: item.method || item.label || item.name,
+  const commuteChart: ChartDataItem[] = commuteDistribution.map((item: LocalLogicDistributionItem) => ({
+    name: item.method || item.label || item.name || 'Unknown',
     value: item.count || item.value || 0,
     percentage: item.percentage,
   }));
@@ -239,7 +300,7 @@ async function fetchDemographicData(
       return null;
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as LocalLogicApiResponse;
     return transformLocalLogicData(data);
   } catch (error) {
     console.error('Error fetching demographic data from Local Logic:', error);

@@ -295,6 +295,49 @@ export async function POST(request: NextRequest) {
         data: updateData,
       })
 
+      // Handle units update (delete all existing and create new ones)
+      if (units !== undefined && Array.isArray(units)) {
+        // Delete all existing units
+        await prisma.preConstructionUnit.deleteMany({
+          where: { projectId: draftId },
+        })
+
+        // Create new units if any
+        if (units.length > 0) {
+          await prisma.preConstructionUnit.createMany({
+            data: units.map((unit: {
+              id?: string
+              unitName: string
+              beds: number | string
+              baths: number | string
+              sqft: number | string
+              price: number | string
+              maintenanceFee?: number | string | null
+              status: string
+              studio?: boolean
+              images?: string[]
+              description?: string | null
+              features?: string[]
+              amenities?: string[]
+            }) => ({
+              projectId: draftId,
+              unitName: unit.unitName,
+              beds: typeof unit.beds === 'number' ? unit.beds : parseInt(String(unit.beds), 10),
+              baths: typeof unit.baths === 'number' ? unit.baths : parseInt(String(unit.baths), 10),
+              sqft: typeof unit.sqft === 'number' ? unit.sqft : parseInt(String(unit.sqft), 10),
+              price: typeof unit.price === 'number' ? unit.price : parseFloat(String(unit.price)),
+              maintenanceFee: unit.maintenanceFee ? (typeof unit.maintenanceFee === 'number' ? unit.maintenanceFee : parseFloat(String(unit.maintenanceFee))) : null,
+              status: unit.status || 'for-sale',
+              studio: unit.studio === true,
+              images: Array.isArray(unit.images) ? unit.images.filter((img): img is string => typeof img === 'string' && img.length > 0) : [],
+              description: unit.description || null,
+              features: Array.isArray(unit.features) ? unit.features : [],
+              amenities: Array.isArray(unit.amenities) ? unit.amenities : [],
+            })),
+          })
+        }
+      }
+
       return NextResponse.json({
         draft: updatedDraft,
         id: updatedDraft.id,
@@ -402,6 +445,41 @@ export async function POST(request: NextRequest) {
         isPublished: false, // Always create as draft
       } as unknown as Prisma.PreConstructionProjectCreateInput,
     })
+
+    // Handle units creation for new draft
+    if (units !== undefined && Array.isArray(units) && units.length > 0) {
+      await prisma.preConstructionUnit.createMany({
+        data: units.map((unit: {
+          id?: string
+          unitName: string
+          beds: number | string
+          baths: number | string
+          sqft: number | string
+          price: number | string
+          maintenanceFee?: number | string | null
+          status: string
+          studio?: boolean
+          images?: string[]
+          description?: string | null
+          features?: string[]
+          amenities?: string[]
+        }) => ({
+          projectId: newDraft.id,
+          unitName: unit.unitName,
+          beds: typeof unit.beds === 'number' ? unit.beds : parseInt(String(unit.beds), 10),
+          baths: typeof unit.baths === 'number' ? unit.baths : parseInt(String(unit.baths), 10),
+          sqft: typeof unit.sqft === 'number' ? unit.sqft : parseInt(String(unit.sqft), 10),
+          price: typeof unit.price === 'number' ? unit.price : parseFloat(String(unit.price)),
+          maintenanceFee: unit.maintenanceFee ? (typeof unit.maintenanceFee === 'number' ? unit.maintenanceFee : parseFloat(String(unit.maintenanceFee))) : null,
+          status: unit.status || 'for-sale',
+          studio: unit.studio === true,
+          images: Array.isArray(unit.images) ? unit.images.filter((img): img is string => typeof img === 'string' && img.length > 0) : [],
+          description: unit.description || null,
+          features: Array.isArray(unit.features) ? unit.features : [],
+          amenities: Array.isArray(unit.amenities) ? unit.amenities : [],
+        })),
+      })
+    }
 
     return NextResponse.json({
       draft: newDraft,

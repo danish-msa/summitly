@@ -404,7 +404,21 @@ export default function EditProjectPage() {
           salesMarketingCompany: formData.salesMarketingCompany || null,
           developmentTeamOverview: formData.developmentTeamOverview || null,
           isPublished: formData.isPublished === true,
-          // Note: We don't auto-save units to avoid conflicts
+          units: formData.units?.map((unit) => ({
+            id: unit.id.startsWith('unit-') ? undefined : unit.id, // Don't send ID for new units
+            unitName: unit.unitName,
+            beds: parseInt(unit.beds) || 0,
+            baths: parseInt(unit.baths) || 0,
+            sqft: parseInt(unit.sqft) || 0,
+            price: parseFloat(unit.price) || 0,
+            maintenanceFee: unit.maintenanceFee ? parseFloat(unit.maintenanceFee) : null,
+            status: unit.status,
+            studio: unit.studio || false,
+            images: Array.isArray(unit.images) ? unit.images : [],
+            description: unit.description || null,
+            features: unit.features || [],
+            amenities: unit.amenities || [],
+          })) || [],
         }
 
         // Auto-save to backend (silent, don't show errors to user)

@@ -339,6 +339,20 @@ export default function NewProjectPage() {
           salesMarketingCompany: formData.salesMarketingCompany || null,
           developmentTeamOverview: formData.developmentTeamOverview || null,
           isPublished: false, // Always save as draft
+          units: formData.units?.map((unit) => ({
+            unitName: unit.unitName,
+            beds: parseInt(unit.beds) || 0,
+            baths: parseInt(unit.baths) || 0,
+            sqft: parseInt(unit.sqft) || 0,
+            price: parseFloat(unit.price) || 0,
+            maintenanceFee: unit.maintenanceFee ? parseFloat(unit.maintenanceFee) : null,
+            status: unit.status,
+            studio: unit.studio || false,
+            images: Array.isArray(unit.images) ? unit.images : [],
+            description: unit.description || null,
+            features: unit.features || [],
+            amenities: unit.amenities || [],
+          })) || [],
         }
 
         const response = await fetch('/api/admin/pre-con-projects/draft', {
