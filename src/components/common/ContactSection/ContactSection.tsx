@@ -23,7 +23,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
       <div className='absolute inset-0 bg-black bg-opacity-70'></div>
       
       {/* Content */}
-      <div className='flex flex-col gap-7 md:flex-row items-center justify-between text-white max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 h-full relative'>
+      <div className='flex flex-col gap-7 md:flex-row items-center justify-between text-white container-1400 mx-auto px-4 sm:px-6 lg:px-8 h-full relative'>
         <div className='w-[90%] lg:w-[45%]'>
           <h2 className='text-3xl lg:text-5xl text-left font-bold mb-2 text-white'>{title}</h2>
           <p className='text-sm lg:text-lg text-white text-left mt-4'>{description}</p>

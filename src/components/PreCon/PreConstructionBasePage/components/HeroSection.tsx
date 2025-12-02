@@ -96,7 +96,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         
         {/* Content Overlay - Two Column Layout */}
         <div className="absolute inset-0 flex items-center px-4 py-6 md:py-8 z-10">
-          <div className="container-1400 mx-auto w-full">
+          <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 w-full ">
             {/* Breadcrumb Navigation */}
             <div className="mb-4 relative z-20">
               <nav className="flex items-center gap-2 text-sm text-white/90 drop-shadow-md" aria-label="Breadcrumb">

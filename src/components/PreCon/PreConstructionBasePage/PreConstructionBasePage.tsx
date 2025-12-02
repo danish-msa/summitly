@@ -113,7 +113,7 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({ slug,
       />
 
       {/* Main Content */}
-      <main className="container-1400 mx-auto px-4 py-8 space-y-4">
+      <main className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-4">
         
         {/* Navigation Buttons */}
         <NavigationButtons 

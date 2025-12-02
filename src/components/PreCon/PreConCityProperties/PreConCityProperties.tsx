@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import SectionHeading from '@/components/Helper/SectionHeading'
 import PreConCitySlider from './PreConCitySlider';
-import { preConCityProjectsData } from './preConCityProjectsData';
 
 interface PreConCity {
   id: string;
@@ -15,15 +14,26 @@ interface PreConCity {
 const PreConCityProperties = () => {
   const [cities, setCities] = useState<PreConCity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulate loading and use preConCityProjectsData
     const loadCities = async () => {
       try {
-        // Use the mock data with project counts
-        setCities(preConCityProjectsData);
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch('/api/pre-con-cities');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch cities');
+        }
+
+        const data = await response.json();
+        setCities(data.cities || []);
       } catch (err) {
-        console.error(err);
+        console.error('Error loading cities:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load cities');
+        setCities([]);
       } finally {
         setLoading(false);
       }
@@ -73,6 +83,15 @@ const PreConCityProperties = () => {
               <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden mb-4">
                 <div className="h-full bg-gradient-to-r from-secondary via-blue-500 to-secondary rounded-full animate-progress-fill"></div>
               </div>
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <p className="text-red-600 mb-4">Error: {error}</p>
+              <p className="text-gray-600 text-sm">Please try refreshing the page.</p>
+            </div>
+          ) : cities.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <p className="text-gray-600">No cities found.</p>
             </div>
           ) : (
             <PreConCitySlider cities={cities} />

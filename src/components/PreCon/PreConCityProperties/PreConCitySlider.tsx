@@ -1,6 +1,14 @@
-import React from 'react';
-import Carousel from 'react-multi-carousel';
-import 'react-multi-carousel/lib/styles.css';
+"use client";
+
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Carousel,
+  CarouselApi,
+  CarouselContent,
+  CarouselItem,
+} from '@/components/ui/carousel';
 import PreConCityCard from './PreConCityCard';
 
 interface PreConCity {
@@ -15,45 +23,79 @@ interface PreConCitySliderProps {
 }
 
 const PreConCitySlider = ({ cities }: PreConCitySliderProps) => {
-  const responsive = {
-    superLargeDesktop: {
-      breakpoint: { max: 4000, min: 1024 },
-      items: 5
-    },
-    desktop: {
-      breakpoint: { max: 1024, min: 768 },
-      items: 3
-    },
-    tablet: {
-      breakpoint: { max: 768, min: 640 },
-      items: 2
-    },
-    mobile: {
-      breakpoint: { max: 640, min: 0 },
-      items: 1
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
+
+  useEffect(() => {
+    if (!carouselApi) {
+      return;
     }
-  };
+
+    const updateSelection = () => {
+      setCanScrollPrev(carouselApi.canScrollPrev());
+      setCanScrollNext(carouselApi.canScrollNext());
+    };
+
+    updateSelection();
+    carouselApi.on("select", updateSelection);
+    return () => {
+      carouselApi.off("select", updateSelection);
+    };
+  }, [carouselApi]);
 
   return (
-    <Carousel
-      responsive={responsive}
-      infinite={true}
-      autoPlay={true}
-      autoPlaySpeed={3000}
-      keyBoardControl={true}
-      customTransition="all .5s"
-      transitionDuration={500}
-      containerClass="carousel-container"
-      removeArrowOnDeviceType={["tablet", "mobile"]}
-      dotListClass="custom-dot-list-style"
-      itemClass="carousel-item-padding-40-px"
-    >
-      {cities.map((city) => (
-        <div key={city.id} className="px-2">
-          <PreConCityCard city={city} />
-        </div>
-      ))}
-    </Carousel>
+    <div className="relative">
+      {/* Navigation Buttons - Positioned above the carousel */}
+      <div className="absolute top-1/2 -translate-y-1/2 -left-10 -right-10 flex gap-1 justify-between items-center z-10 pointer-events-none">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => carouselApi?.scrollPrev()}
+          disabled={!canScrollPrev}
+          className="h-10 w-10 rounded-full bg-white/95 text-primary backdrop-blur-sm shadow-lg border border-border hover:bg-white hover:shadow-xl transition-all duration-300 hidden md:flex pointer-events-auto"
+          aria-label="Previous slide"
+        >
+          <ArrowLeft className="h-6 w-6" />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => carouselApi?.scrollNext()}
+          disabled={!canScrollNext}
+          className="h-10 w-10 rounded-full bg-white/95 text-primary backdrop-blur-sm shadow-lg border border-border hover:bg-white hover:shadow-xl transition-all duration-300 hidden md:flex pointer-events-auto"
+          aria-label="Next slide"
+        >
+          <ArrowRight className="h-6 w-6" />
+        </Button>
+      </div>
+
+      <Carousel
+        setApi={setCarouselApi}
+        opts={{
+          align: "start",
+          loop: true,
+          breakpoints: {
+            "(max-width: 640px)": {
+              dragFree: true,
+            },
+          },
+        }}
+        className="w-full"
+      >
+        <CarouselContent className="-ml-2 md:-ml-4">
+          {cities.map((city) => (
+            <CarouselItem
+              key={city.id}
+              className="pl-2 md:pl-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/5"
+            >
+              <PreConCityCard city={city} />
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+      </Carousel>
+    </div>
   );
 };
 

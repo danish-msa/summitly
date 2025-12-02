@@ -1,15 +1,19 @@
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
-import Carousel from 'react-multi-carousel';
-import 'react-multi-carousel/lib/styles.css';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ChevronRight } from 'lucide-react';
 import { PreConstructionPropertyCardV3 } from './PropertyCards';
 import type { PreConstructionProperty } from './PropertyCards/types';
 import SectionHeading from '@/components/Helper/SectionHeading';
 import { PropertyListing } from '@/lib/types';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import {
+  Carousel,
+  CarouselApi,
+  CarouselContent,
+  CarouselItem,
+} from '@/components/ui/carousel';
 
 // Convert PropertyListing to PreConstructionProperty format
 const convertToPreConProperty = (property: PropertyListing): PreConstructionProperty | null => {
@@ -49,26 +53,6 @@ const convertToPreConProperty = (property: PropertyListing): PreConstructionProp
   };
 };
 
-// Custom Arrow Components
-const CustomLeftArrow = ({ onClick }: { onClick?: () => void }) => (
-  <button
-    onClick={onClick}
-    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white/95 backdrop-blur-sm rounded-full shadow-lg border border-border hover:bg-white hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
-    aria-label="Previous slide"
-  >
-    <ChevronLeft className="w-6 h-6 text-foreground group-hover:text-primary transition-colors" />
-  </button>
-);
-
-const CustomRightArrow = ({ onClick }: { onClick?: () => void }) => (
-  <button
-    onClick={onClick}
-    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white/95 backdrop-blur-sm rounded-full shadow-lg border border-border hover:bg-white hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
-    aria-label="Next slide"
-  >
-    <ChevronRight className="w-6 h-6 text-foreground group-hover:text-primary transition-colors" />
-  </button>
-);
 
 type FilterType = 
   | { type: 'high-rise-condos' }
@@ -95,6 +79,9 @@ const PreConSection: React.FC<PreConSectionProps> = ({
 }) => {
   const [projects, setProjects] = useState<PropertyListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -158,28 +145,23 @@ const PreConSection: React.FC<PreConSectionProps> = ({
       .filter((project): project is PreConstructionProperty => project !== null);
   }, [projects, filter, limit]);
 
-  const responsive = {
-    superLargeDesktop: {
-      breakpoint: { max: 4000, min: 1536 },
-      items: 4,
-      slidesToSlide: 1
-    },
-    desktop: {
-      breakpoint: { max: 1536, min: 1024 },
-      items: 4,
-      slidesToSlide: 1
-    },
-    tablet: {
-      breakpoint: { max: 1024, min: 768 },
-      items: 2,
-      slidesToSlide: 1
-    },
-    mobile: {
-      breakpoint: { max: 768, min: 0 },
-      items: 1,
-      slidesToSlide: 1
+  useEffect(() => {
+    if (!carouselApi) {
+      return;
     }
-  };
+
+    const updateSelection = () => {
+      setCanScrollPrev(carouselApi.canScrollPrev());
+      setCanScrollNext(carouselApi.canScrollNext());
+    };
+
+    updateSelection();
+    carouselApi.on("select", updateSelection);
+    return () => {
+      carouselApi.off("select", updateSelection);
+    };
+  }, [carouselApi]);
+
 
   if (loading) {
     return (
@@ -236,29 +218,56 @@ const PreConSection: React.FC<PreConSectionProps> = ({
         </div>
 
         <div className="mt-12 relative">
+          {/* Navigation Buttons - Positioned above the carousel */}
+          <div className="absolute -top-10 right-0 flex gap-1 justify-between items-center z-10 pointer-events-none">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => carouselApi?.scrollPrev()}
+              disabled={!canScrollPrev}
+              className="h-8 w-8 rounded-lg bg-secondary/95 text-white backdrop-blur-sm shadow-lg border border-border hover:bg-primary hover:shadow-xl transition-all duration-300 hidden md:flex pointer-events-auto"
+              aria-label="Previous slide"
+            >
+              <ArrowLeft className="h-6 w-6" />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => carouselApi?.scrollNext()}
+              disabled={!canScrollNext}
+              className="h-8 w-8 rounded-lg bg-secondary/95 text-white backdrop-blur-sm shadow-lg border border-border hover:bg-primary hover:shadow-xl transition-all duration-300 hidden md:flex pointer-events-auto"
+              aria-label="Next slide"
+            >
+              <ArrowRight className="h-6 w-6" />
+            </Button>
+          </div>
+
           <Carousel
-            responsive={responsive}
-            infinite={true}
-            autoPlay={false}
-            keyBoardControl={true}
-            customTransition="all .5s"
-            transitionDuration={500}
-            containerClass="carousel-container"
-            removeArrowOnDeviceType={[]}
-            dotListClass="custom-dot-list-style"
-            itemClass="carousel-item-padding-40-px"
-            slidesToSlide={1}
-            customLeftArrow={<CustomLeftArrow />}
-            customRightArrow={<CustomRightArrow />}
-            arrows={true}
+            setApi={setCarouselApi}
+            opts={{
+              align: "start",
+              loop: true,
+              breakpoints: {
+                "(max-width: 768px)": {
+                  dragFree: true,
+                },
+              },
+            }}
+            className="w-full"
           >
-            {filteredProjects.map((property) => (
-              <div key={property.id} className="px-2">
-                <PreConstructionPropertyCardV3
-                  property={property}
-                />
-              </div>
-            ))}
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {filteredProjects.map((property) => (
+                <CarouselItem
+                  key={property.id}
+                  className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/4"
+                >
+                  <PreConstructionPropertyCardV3
+                    property={property}
+                  />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
           </Carousel>
         </div>
       </div>

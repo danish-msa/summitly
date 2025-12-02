@@ -243,7 +243,9 @@ const Nav = ({ openNav }: Props) => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.3 }}
                   >
-                    Pre-Con
+                    <Link href="/pre-construction" className="hover:text-primary">
+                      Pre-Con
+                    </Link>
                     <ChevronDown className={cn("w-4 h-4 transition-transform", showProjectsDropdown && "rotate-180")} />
                   </motion.div>
                 </ProjectsMegaMenu>

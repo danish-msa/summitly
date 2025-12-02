@@ -1,11 +1,15 @@
-import React from 'react';
-import Carousel from 'react-multi-carousel';
-import 'react-multi-carousel/lib/styles.css';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { PreConstructionPropertyCardV3 } from '../../PropertyCards';
 import type { PreConstructionProperty } from '../../PropertyCards/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import {
+  Carousel,
+  CarouselApi,
+  CarouselContent,
+  CarouselItem,
+} from '@/components/ui/carousel';
 
 type ViewMode = 'list' | 'split' | 'map';
 
@@ -16,55 +20,32 @@ interface ProjectListProps {
   onProjectClick: (project: PreConstructionProperty) => void;
 }
 
-// Custom Arrow Components
-const CustomLeftArrow = ({ onClick }: { onClick?: () => void }) => (
-  <button
-    onClick={onClick}
-    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white/95 backdrop-blur-sm rounded-full shadow-lg border border-border hover:bg-white hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
-    aria-label="Previous slide"
-  >
-    <ChevronLeft className="w-6 h-6 text-foreground group-hover:text-primary transition-colors" />
-  </button>
-);
-
-const CustomRightArrow = ({ onClick }: { onClick?: () => void }) => (
-  <button
-    onClick={onClick}
-    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white/95 backdrop-blur-sm rounded-full shadow-lg border border-border hover:bg-white hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
-    aria-label="Next slide"
-  >
-    <ChevronRight className="w-6 h-6 text-foreground group-hover:text-primary transition-colors" />
-  </button>
-);
-
 const ProjectList: React.FC<ProjectListProps> = ({
   projects,
   selectedProject,
   viewMode,
   onProjectClick
 }) => {
-  const responsive = {
-    superLargeDesktop: {
-      breakpoint: { max: 4000, min: 1536 },
-      items: 4,
-      slidesToSlide: 1
-    },
-    desktop: {
-      breakpoint: { max: 1536, min: 1024 },
-      items: 4,
-      slidesToSlide: 1
-    },
-    tablet: {
-      breakpoint: { max: 1024, min: 768 },
-      items: 2,
-      slidesToSlide: 1
-    },
-    mobile: {
-      breakpoint: { max: 768, min: 0 },
-      items: 1,
-      slidesToSlide: 1
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
+
+  useEffect(() => {
+    if (!carouselApi) {
+      return;
     }
-  };
+
+    const updateSelection = () => {
+      setCanScrollPrev(carouselApi.canScrollPrev());
+      setCanScrollNext(carouselApi.canScrollNext());
+    };
+
+    updateSelection();
+    carouselApi.on("select", updateSelection);
+    return () => {
+      carouselApi.off("select", updateSelection);
+    };
+  }, [carouselApi]);
 
   return (
     <div className={`${viewMode === 'split' ? 'md:w-1/2' : 'w-full'} overflow-y-auto`} style={{ maxHeight: viewMode === 'split' ? 'calc(100vh - 300px)' : 'auto' }}>
@@ -78,33 +59,57 @@ const ProjectList: React.FC<ProjectListProps> = ({
       {/* Projects Display */}
       {viewMode === 'list' ? (
         <div className="relative">
+          {/* Navigation Buttons - Positioned above the carousel */}
+          <div className="absolute top-0 left-0 right-0 flex justify-between items-center z-10 pointer-events-none mb-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => carouselApi?.scrollPrev()}
+              disabled={!canScrollPrev}
+              className="h-12 w-12 rounded-full bg-white/95 backdrop-blur-sm shadow-lg border border-border hover:bg-white hover:shadow-xl transition-all duration-300 hidden md:flex pointer-events-auto"
+              aria-label="Previous slide"
+            >
+              <ArrowLeft className="h-6 w-6" />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => carouselApi?.scrollNext()}
+              disabled={!canScrollNext}
+              className="h-12 w-12 rounded-full bg-white/95 backdrop-blur-sm shadow-lg border border-border hover:bg-white hover:shadow-xl transition-all duration-300 hidden md:flex pointer-events-auto"
+              aria-label="Next slide"
+            >
+              <ArrowRight className="h-6 w-6" />
+            </Button>
+          </div>
+
           <Carousel
-            responsive={responsive}
-            infinite={true}
-            autoPlay={false}
-            keyBoardControl={true}
-            customTransition="all .5s"
-            transitionDuration={500}
-            containerClass="carousel-container"
-            removeArrowOnDeviceType={[]}
-            dotListClass="custom-dot-list-style"
-            itemClass="carousel-item-padding-40-px"
-            slidesToSlide={1}
-            customLeftArrow={<CustomLeftArrow />}
-            customRightArrow={<CustomRightArrow />}
-            arrows={true}
+            setApi={setCarouselApi}
+            opts={{
+              align: "start",
+              loop: true,
+              breakpoints: {
+                "(max-width: 768px)": {
+                  dragFree: true,
+                },
+              },
+            }}
+            className="w-full"
           >
-            {projects.map((project) => (
-              <div 
-                key={project.id}
-                className={`px-2 cursor-pointer transition-all ${selectedProject?.id === project.id ? 'ring-2 ring-secondary' : ''}`}
-                onClick={() => onProjectClick(project)}
-              >
-                <PreConstructionPropertyCardV3
-                  property={project}
-                />
-              </div>
-            ))}
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {projects.map((project) => (
+                <CarouselItem
+                  key={project.id}
+                  className={`pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/4 cursor-pointer transition-all ${selectedProject?.id === project.id ? 'ring-2 ring-secondary' : ''}`}
+                  onClick={() => onProjectClick(project)}
+                >
+                  <PreConstructionPropertyCardV3
+                    property={project}
+                  />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
           </Carousel>
         </div>
       ) : (
