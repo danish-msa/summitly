@@ -298,7 +298,7 @@ const Nav = ({ openNav }: Props) => {
               ) : (
                 <motion.button
                   onClick={handleLoginClick}
-                  className="flex items-center space-x-2 px-3 py-2 text-sm lg:text-base font-medium bg-brand-cb-blue text-white hover:bg-white hover:text-brand-cb-blue transition-colors rounded-lg"
+                  className="flex items-center space-x-2 px-3 py-2 text-sm lg:text-base font-medium bg-primary text-white hover:bg-white hover:text-brand-cb-blue transition-colors rounded-full"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   initial={{ opacity: 0, x: 20 }}
