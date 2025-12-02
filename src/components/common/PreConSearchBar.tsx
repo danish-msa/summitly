@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Search, X } from 'lucide-react';
@@ -105,12 +105,19 @@ const PreConSearchBar: React.FC<PreConSearchBarProps> = ({
           const statusList = filtersData.sellingStatuses || [];
           
           // Count projects per status if projects data is available
-          let statusCounts: Record<string, number> = {};
+          const statusCounts: Record<string, number> = {};
           if (projectsResponse.ok) {
             const projectsData = await projectsResponse.json();
             const projects = projectsData.projects || [];
             
-            projects.forEach((project: any) => {
+            // Type for project from API response
+            interface ProjectWithPreCon {
+              preCon?: {
+                status?: string;
+              };
+            }
+            
+            projects.forEach((project: ProjectWithPreCon) => {
               if (project.preCon?.status) {
                 const status = project.preCon.status;
                 statusCounts[status] = (statusCounts[status] || 0) + 1;
