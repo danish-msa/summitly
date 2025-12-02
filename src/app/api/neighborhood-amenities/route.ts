@@ -90,6 +90,104 @@ const CATEGORY_CONFIG = {
       'Subway': (place: GooglePlace) => place.types.includes('subway_station'),
     },
   },
+  // Lifestyle amenities
+  entertainment: {
+    types: ['casino', 'movie_theater', 'amusement_park', 'bowling_alley', 'night_club'],
+    radius: 5000, // 5km
+    filters: {
+      'All': (_place: GooglePlace) => true,
+      'Casinos': (place: GooglePlace) => place.types.includes('casino'),
+      'Cinemas': (place: GooglePlace) => place.types.includes('movie_theater'),
+      'Theaters': (place: GooglePlace) => 
+        place.types.includes('amusement_park') || 
+        place.name.toLowerCase().includes('theater') || 
+        place.name.toLowerCase().includes('theatre'),
+    },
+  },
+  shopping: {
+    types: ['shopping_mall', 'supermarket', 'department_store', 'grocery_or_supermarket', 'store'],
+    radius: 3000, // 3km
+    filters: {
+      'All': (_place: GooglePlace) => true,
+      'Malls': (place: GooglePlace) => place.types.includes('shopping_mall'),
+      'Department Stores': (place: GooglePlace) => place.types.includes('department_store'),
+      'Grocery': (place: GooglePlace) => 
+        place.types.includes('supermarket') || 
+        place.types.includes('grocery_or_supermarket'),
+    },
+  },
+  worship: {
+    types: ['church', 'hindu_temple', 'mosque', 'synagogue', 'place_of_worship'],
+    radius: 5000, // 5km
+    filters: {
+      'All': (_place: GooglePlace) => true,
+      'Churches': (place: GooglePlace) => place.types.includes('church'),
+      'Temples': (place: GooglePlace) => 
+        place.types.includes('hindu_temple') || 
+        place.name.toLowerCase().includes('temple'),
+      'Mosques': (place: GooglePlace) => 
+        place.types.includes('mosque') || 
+        place.name.toLowerCase().includes('mosque'),
+    },
+  },
+  sports: {
+    types: ['gym', 'stadium', 'sports_complex', 'park'],
+    radius: 3000, // 3km
+    filters: {
+      'All': (_place: GooglePlace) => true,
+      'Arenas': (place: GooglePlace) => 
+        place.types.includes('stadium') || 
+        place.name.toLowerCase().includes('arena'),
+      'Gyms': (place: GooglePlace) => 
+        place.types.includes('gym') || 
+        place.name.toLowerCase().includes('fitness') ||
+        place.name.toLowerCase().includes('gym'),
+      'Parks': (place: GooglePlace) => place.types.includes('park'),
+    },
+  },
+  food: {
+    types: ['restaurant', 'cafe', 'food', 'meal_takeaway', 'bakery'],
+    radius: 2000, // 2km
+    filters: {
+      'All': (_place: GooglePlace) => true,
+      'Restaurants': (place: GooglePlace) => 
+        place.types.includes('restaurant') && 
+        !place.types.includes('meal_takeaway'),
+      'Fast Food': (place: GooglePlace) => 
+        place.types.includes('meal_takeaway') || 
+        place.name.toLowerCase().includes('mcdonald') ||
+        place.name.toLowerCase().includes('burger') ||
+        place.name.toLowerCase().includes('pizza'),
+      'Cafes': (place: GooglePlace) => 
+        place.types.includes('cafe') || 
+        place.name.toLowerCase().includes('coffee') ||
+        place.name.toLowerCase().includes('tim hortons') ||
+        place.name.toLowerCase().includes('starbucks'),
+    },
+  },
+  miscellaneous: {
+    types: ['library', 'bank', 'post_office', 'pharmacy', 'hospital', 'gas_station', 'atm'],
+    radius: 3000, // 3km
+    filters: {
+      'All': (_place: GooglePlace) => true,
+      'Services': (place: GooglePlace) => 
+        place.types.includes('library') || 
+        place.types.includes('post_office') ||
+        place.types.includes('pharmacy'),
+      'Utilities': (place: GooglePlace) => 
+        place.types.includes('bank') || 
+        place.types.includes('atm') ||
+        place.types.includes('gas_station'),
+      'Other': (place: GooglePlace) => 
+        place.types.includes('hospital') || 
+        (!place.types.includes('library') && 
+         !place.types.includes('post_office') && 
+         !place.types.includes('pharmacy') &&
+         !place.types.includes('bank') &&
+         !place.types.includes('atm') &&
+         !place.types.includes('gas_station')),
+    },
+  },
 };
 
 // Fetch nearby places from Google Places API
@@ -336,6 +434,7 @@ export async function GET(request: NextRequest) {
           id: place.place_id,
           name: place.name || 'Unnamed Place',
           type: placeTypes[0]?.replace(/_/g, ' ') || 'Unknown',
+          types: placeTypes, // Include full types array for filtering
           rating: place.rating,
           walkTime: travel.walkTime,
           driveTime: travel.driveTime,
@@ -348,28 +447,193 @@ export async function GET(request: NextRequest) {
     // Extract amenities for response
     const amenities = amenitiesWithPlaces.map(item => item.amenity);
 
-    // Calculate filter counts using original place objects
-    const filters = Object.keys(config.filters).map(filterLabel => {
-      const filterFn = config.filters[filterLabel as keyof typeof config.filters] as FilterFunction;
-      const count = amenitiesWithPlaces.filter(({ place }) => {
-        try {
-          // Ensure place.types exists
-          if (!place.types || !Array.isArray(place.types) || place.types.length === 0) {
-            // For "All" filter, return true even if no types
-            return filterLabel === 'All';
+    // Generate dynamic filters based on actual places found
+    const generateDynamicFilters = (places: GooglePlace[]): Array<{ label: string; count: number }> => {
+      const mergedFilters = new Map<string, { label: string; count: number }>();
+      
+      // Always include "All" filter first
+      mergedFilters.set('All', { label: 'All', count: places.length });
+
+      // Calculate predefined filters first (they take priority)
+      Object.keys(config.filters).forEach(filterLabel => {
+        if (filterLabel === 'All') return; // Skip "All" as we already have it
+        
+        const filterFn = config.filters[filterLabel as keyof typeof config.filters] as FilterFunction;
+        const count = amenitiesWithPlaces.filter(({ place }) => {
+          try {
+            if (!place.types || !Array.isArray(place.types) || place.types.length === 0) {
+              return false;
+            }
+            return filterFn(place);
+          } catch (error) {
+            console.error(`Error in predefined filter ${filterLabel}:`, error);
+            return false;
           }
-          
-          // Call filter function with place object
-          return filterFn(place);
-        } catch (error) {
-          console.error(`Error in filter ${filterLabel}:`, error);
-          return false;
+        }).length;
+
+        if (count > 0) {
+          mergedFilters.set(filterLabel, { label: filterLabel, count });
         }
-      }).length;
-      return {
-        label: filterLabel,
-        count,
+      });
+
+      // Collect all unique types from places for dynamic filters
+      const typeCounts = new Map<string, Set<string>>(); // Map<type, Set<place_ids>>
+
+      places.forEach(place => {
+        if (place.types && Array.isArray(place.types)) {
+          place.types.forEach(type => {
+            // Skip generic types that aren't useful for filtering
+            const skipTypes = ['establishment', 'point_of_interest', 'store', 'food'];
+            if (skipTypes.includes(type)) return;
+
+            // Track unique places per type
+            if (!typeCounts.has(type)) {
+              typeCounts.set(type, new Set());
+            }
+            typeCounts.get(type)!.add(place.place_id);
+          });
+        }
+      });
+
+      // Format type names to be more user-friendly
+      const typeNameMap: Record<string, string> = {
+        'movie_theater': 'Movie Theaters',
+        'shopping_mall': 'Shopping Malls',
+        'grocery_or_supermarket': 'Grocery Stores',
+        'department_store': 'Department Stores',
+        'hindu_temple': 'Hindu Temples',
+        'place_of_worship': 'Places of Worship',
+        'sports_complex': 'Sports Complexes',
+        'meal_takeaway': 'Fast Food',
+        'gas_station': 'Gas Stations',
+        'post_office': 'Post Offices',
+        'transit_station': 'Transit Stations',
+        'bus_station': 'Bus Stations',
+        'subway_station': 'Subway Stations',
+        'fire_station': 'Fire Stations',
+        'restaurant': 'Restaurants',
+        'cafe': 'Cafes',
+        'bakery': 'Bakeries',
+        'gym': 'Gyms',
+        'stadium': 'Stadiums',
+        'park': 'Parks',
+        'playground': 'Playgrounds',
+        'library': 'Libraries',
+        'bank': 'Banks',
+        'pharmacy': 'Pharmacies',
+        'hospital': 'Hospitals',
+        'atm': 'ATMs',
+        'casino': 'Casinos',
+        'amusement_park': 'Amusement Parks',
+        'bowling_alley': 'Bowling Alleys',
+        'night_club': 'Night Clubs',
+        'supermarket': 'Supermarkets',
+        'church': 'Churches',
+        'mosque': 'Mosques',
+        'synagogue': 'Synagogues',
+        'school': 'Schools',
+        'police': 'Police Stations',
       };
+
+      // Add dynamic filters for types that aren't already covered by predefined filters
+      typeCounts.forEach((placeIds, type) => {
+        const count = placeIds.size;
+        if (count > 0) {
+          // Use mapped name if available, otherwise format the type name
+          const formattedLabel = typeNameMap[type] || type
+            .split('_')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+          
+          // Only add if not already in predefined filters
+          if (!mergedFilters.has(formattedLabel)) {
+            mergedFilters.set(formattedLabel, { label: formattedLabel, count });
+          }
+        }
+      });
+
+      // Sort by count (descending), but keep "All" first
+      const sortedFilters = Array.from(mergedFilters.values()).sort((a, b) => {
+        if (a.label === 'All') return -1;
+        if (b.label === 'All') return 1;
+        return b.count - a.count;
+      });
+
+      return sortedFilters;
+    };
+
+    // Generate dynamic filters
+    const filters = generateDynamicFilters(limitedPlaces);
+
+    // Enhance filters with type information for accurate frontend filtering
+    const enhancedFilters = filters.map(filter => {
+      // Find the corresponding type(s) for this filter label
+      let filterTypes: string[] = [];
+      
+      // Check if it's a predefined filter
+      const predefinedFilterFn = config.filters[filter.label as keyof typeof config.filters];
+      if (predefinedFilterFn) {
+        // For predefined filters, extract the types they're likely to match
+        // by analyzing the filter function or using the category's types
+        // The frontend will use complex logic for predefined filters
+        return { 
+          ...filter, 
+          isPredefined: true,
+          // Provide category types as a hint, but frontend will use complex logic
+          types: config.types
+        };
+      }
+      
+      // For dynamic filters, find the type from the reverse map
+      const reverseTypeMap: Record<string, string> = {
+        'Movie Theaters': 'movie_theater',
+        'Shopping Malls': 'shopping_mall',
+        'Grocery Stores': 'grocery_or_supermarket',
+        'Department Stores': 'department_store',
+        'Hindu Temples': 'hindu_temple',
+        'Places of Worship': 'place_of_worship',
+        'Sports Complexes': 'sports_complex',
+        'Fast Food': 'meal_takeaway',
+        'Gas Stations': 'gas_station',
+        'Post Offices': 'post_office',
+        'Transit Stations': 'transit_station',
+        'Bus Stations': 'bus_station',
+        'Subway Stations': 'subway_station',
+        'Fire Stations': 'fire_station',
+        'Restaurants': 'restaurant',
+        'Cafes': 'cafe',
+        'Bakeries': 'bakery',
+        'Gyms': 'gym',
+        'Stadiums': 'stadium',
+        'Parks': 'park',
+        'Playgrounds': 'playground',
+        'Libraries': 'library',
+        'Banks': 'bank',
+        'Pharmacies': 'pharmacy',
+        'Hospitals': 'hospital',
+        'ATMs': 'atm',
+        'Casinos': 'casino',
+        'Amusement Parks': 'amusement_park',
+        'Bowling Alleys': 'bowling_alley',
+        'Night Clubs': 'night_club',
+        'Supermarkets': 'supermarket',
+        'Churches': 'church',
+        'Mosques': 'mosque',
+        'Synagogues': 'synagogue',
+        'Schools': 'school',
+        'Police Stations': 'police',
+      };
+      
+      const typeFromLabel = reverseTypeMap[filter.label];
+      if (typeFromLabel) {
+        filterTypes = [typeFromLabel];
+      } else {
+        // Try to reverse-engineer from formatted label
+        const possibleType = filter.label.toLowerCase().replace(/\s+/g, '_');
+        filterTypes = [possibleType];
+      }
+      
+      return { ...filter, types: filterTypes, isPredefined: false };
     });
 
     return NextResponse.json({
@@ -377,7 +641,7 @@ export async function GET(request: NextRequest) {
         id: category,
         label: category.charAt(0).toUpperCase() + category.slice(1),
         items: amenities,
-        filters,
+        filters: enhancedFilters,
       },
     });
   } catch (error) {

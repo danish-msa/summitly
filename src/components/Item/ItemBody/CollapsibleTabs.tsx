@@ -110,7 +110,11 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property, isPreCon = 
       id: 'lifestyle',
       label: 'Lifestyle Amenities',
       content: (
-        <LifestyleAmenities address={property.address.location || `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim()} />
+        <LifestyleAmenities 
+          address={property.address.location || `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim()}
+          latitude={property.map?.latitude || null}
+          longitude={property.map?.longitude || null}
+        />
       )
     },
     {

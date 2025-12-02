@@ -1,11 +1,4 @@
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { AmenityCategory } from './types';
 
 interface FiltersSectionProps {
@@ -18,15 +11,6 @@ export const FiltersSection = ({ category, activeFilter, onFilterChange }: Filte
   return (
     <div className="flex flex-wrap items-center gap-3">
       <span className="text-sm font-medium">Filters:</span>
-      <Select value={activeFilter} onValueChange={onFilterChange}>
-        <SelectTrigger className="w-32">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="Public">Public</SelectItem>
-          <SelectItem value="Private">Private</SelectItem>
-        </SelectContent>
-      </Select>
       <div className="flex flex-wrap gap-2">
         {category.filters.map((filter) => (
           <Badge

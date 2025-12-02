@@ -1,31 +1,32 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PieChart } from './PieChart';
-import {
-  householdIncomeData,
-  ageData,
-  occupationData,
-  ethnicityData,
-  languageData,
-  yearBuiltData,
-  propertyTypeData,
-  commuteMethodData,
-} from './mockData';
+import { ChartDataItem } from './types';
 
 interface DemographicsTabsProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  chartsData: {
+    income: ChartDataItem[];
+    age: ChartDataItem[];
+    occupation: ChartDataItem[];
+    ethnicity: ChartDataItem[];
+    language: ChartDataItem[];
+    yearBuilt: ChartDataItem[];
+    propertyType: ChartDataItem[];
+    commute: ChartDataItem[];
+  };
 }
 
-export const DemographicsTabs = ({ activeTab, onTabChange }: DemographicsTabsProps) => {
+export const DemographicsTabs = ({ activeTab, onTabChange, chartsData }: DemographicsTabsProps) => {
   const tabConfigs = [
-    { value: "income", label: "Household Income", data: householdIncomeData, title: "Household Income Distribution" },
-    { value: "age", label: "Age", data: ageData, title: "Age Distribution" },
-    { value: "occupation", label: "Occupation", data: occupationData, title: "Occupation Distribution" },
-    { value: "ethnicity", label: "Ethnicity", data: ethnicityData, title: "Ethnicity Distribution" },
-    { value: "language", label: "Language", data: languageData, title: "Language Distribution" },
-    { value: "yearBuilt", label: "Year Built", data: yearBuiltData, title: "Year Built Distribution" },
-    { value: "propertyType", label: "Property Type", data: propertyTypeData, title: "Property Type Distribution" },
-    { value: "commute", label: "Commute Method", data: commuteMethodData, title: "Commute Method Distribution" },
+    { value: "income", label: "Household Income", data: chartsData.income, title: "Household Income Distribution" },
+    { value: "age", label: "Age", data: chartsData.age, title: "Age Distribution" },
+    { value: "occupation", label: "Occupation", data: chartsData.occupation, title: "Occupation Distribution" },
+    { value: "ethnicity", label: "Ethnicity", data: chartsData.ethnicity, title: "Ethnicity Distribution" },
+    { value: "language", label: "Language", data: chartsData.language, title: "Language Distribution" },
+    { value: "yearBuilt", label: "Year Built", data: chartsData.yearBuilt, title: "Year Built Distribution" },
+    { value: "propertyType", label: "Property Type", data: chartsData.propertyType, title: "Property Type Distribution" },
+    { value: "commute", label: "Commute Method", data: chartsData.commute, title: "Commute Method Distribution" },
   ];
 
   return (
