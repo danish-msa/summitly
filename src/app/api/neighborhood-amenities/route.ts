@@ -33,13 +33,16 @@ interface DistanceMatrixResponse {
   status: string;
 }
 
+// Filter function type
+type FilterFunction = (place: GooglePlace) => boolean;
+
 // Category configuration
 const CATEGORY_CONFIG = {
   schools: {
     types: ['school'],
     radius: 5000, // 5km
     filters: {
-      'All': () => true,
+      'All': (_place: GooglePlace) => true,
       'Assigned': (place: GooglePlace) => place.types.includes('school'),
       'Elementary': (place: GooglePlace) => 
         place.name.toLowerCase().includes('elementary') || 
@@ -58,7 +61,7 @@ const CATEGORY_CONFIG = {
     types: ['park'],
     radius: 3000, // 3km
     filters: {
-      'All': () => true,
+      'All': (_place: GooglePlace) => true,
       'Playgrounds': (place: GooglePlace) => 
         place.types.includes('playground') || 
         place.name.toLowerCase().includes('playground'),
@@ -71,7 +74,7 @@ const CATEGORY_CONFIG = {
     types: ['fire_station', 'police'],
     radius: 5000, // 5km
     filters: {
-      'All': () => true,
+      'All': (_place: GooglePlace) => true,
       'Fire Stations': (place: GooglePlace) => place.types.includes('fire_station'),
       'Police Stations': (place: GooglePlace) => place.types.includes('police'),
     },
@@ -80,7 +83,7 @@ const CATEGORY_CONFIG = {
     types: ['transit_station', 'bus_station', 'subway_station'],
     radius: 2000, // 2km
     filters: {
-      'All': () => true,
+      'All': (_place: GooglePlace) => true,
       'Bus Stops': (place: GooglePlace) => 
         place.types.includes('bus_station') || 
         (place.types.includes('transit_station') && !place.types.includes('subway_station')),
@@ -347,17 +350,13 @@ export async function GET(request: NextRequest) {
 
     // Calculate filter counts using original place objects
     const filters = Object.keys(config.filters).map(filterLabel => {
-      const filterFn = config.filters[filterLabel as keyof typeof config.filters];
+      const filterFn = config.filters[filterLabel as keyof typeof config.filters] as FilterFunction;
       const count = amenitiesWithPlaces.filter(({ place }) => {
         try {
-          // Handle "All" filter separately (it doesn't take arguments)
-          if (filterLabel === 'All') {
-            return true;
-          }
-          
-          // Ensure place.types exists for other filters
+          // Ensure place.types exists
           if (!place.types || !Array.isArray(place.types) || place.types.length === 0) {
-            return false; // No types means it doesn't match any specific filter
+            // For "All" filter, return true even if no types
+            return filterLabel === 'All';
           }
           
           // Call filter function with place object
