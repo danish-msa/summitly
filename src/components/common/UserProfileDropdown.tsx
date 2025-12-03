@@ -8,7 +8,8 @@ import {
   MessageSquare,
   Calendar,
   Settings,
-  ArrowRightFromLine 
+  ArrowRightFromLine,
+  Building2
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -20,6 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Link from 'next/link'
+import { isAdmin } from '@/lib/roles'
 
 export function UserProfileDropdown() {
   const { data: session } = useSession()
@@ -34,6 +36,9 @@ export function UserProfileDropdown() {
     .join('')
     .toUpperCase()
     .slice(0, 2) || 'U'
+
+  const userRole = session.user.role || 'SUBSCRIBER'
+  const canAccessPreCon = isAdmin(userRole)
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: '/' })
@@ -69,6 +74,14 @@ export function UserProfileDropdown() {
             <span>Dashboard</span>
           </DropdownMenuItem>
         </Link>
+        {canAccessPreCon && (
+          <Link href="/dashboard/admin/pre-con-projects">
+            <DropdownMenuItem>
+              <Building2 className="mr-2 h-4 w-4" />
+              <span>Pre-Con Projects</span>
+            </DropdownMenuItem>
+          </Link>
+        )}
         <Link href="/dashboard/saved">
           <DropdownMenuItem>
             <Heart className="mr-2 h-4 w-4" />
