@@ -13,7 +13,7 @@ import { isAdmin } from "@/lib/roles"
 import { useBackgroundFetch } from "@/hooks/useBackgroundFetch"
 import { preConCityProjectsData } from "@/components/PreCon/PreConCityProperties/preConCityProjectsData"
 import { FAQField } from "@/components/Dashboard/FAQField"
-import { RichTextEditor } from "@/components/Dashboard/RichTextEditor"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import type { FaqItem } from "@/components/common/FAQ"
 
 interface PageContent {

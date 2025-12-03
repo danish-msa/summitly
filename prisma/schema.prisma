@@ -58,6 +58,7 @@ model User {
   agentProfile       AgentProfile?
   tours              Tour[]
   preConProjects     PreConstructionProject[]
+  pages              Page[]
 }
 
 model VerificationToken {
@@ -204,6 +205,11 @@ enum UserRole {
   SUBSCRIBER
   ADMIN
   SUPER_ADMIN
+}
+
+enum PageStatus {
+  DRAFT
+  PUBLISHED
 }
 
 enum PropertyType {
@@ -510,4 +516,44 @@ model PreConstructionPageContent {
   @@index([isPublished])
   @@index([locationType])
   @@index([parentId])
+}
+
+model Page {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  content     String?  @db.Text
+  excerpt     String?  @db.Text
+  status      PageStatus @default(DRAFT)
+  parentId    String?
+  categoryId  String?
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  parent     Page?     @relation("PageHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children   Page[]    @relation("PageHierarchy")
+  category   PageCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  creator    User      @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@index([slug])
+  @@index([status])
+  @@index([parentId])
+  @@index([categoryId])
+  @@index([createdBy])
+}
+
+model PageCategory {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  pages       Page[]
+
+  @@index([slug])
 }

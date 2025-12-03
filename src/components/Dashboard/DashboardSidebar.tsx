@@ -26,6 +26,7 @@ import {
   Tag,
   Calendar as CalendarIcon,
   MapPin,
+  FolderTree,
 } from "lucide-react"
 import {
   Sidebar,
@@ -85,10 +86,24 @@ const preConstructionsMenuItem: MenuItem = {
   ]
 }
 
-// Admin menu items (Dashboard first, then Pre-Constructions, then subscriber items)
+// Pages menu item
+const pagesMenuItem: MenuItem = {
+  title: "Pages",
+  url: "/dashboard/admin/pages",
+  icon: FileText,
+  hasSubmenu: true,
+  submenu: [
+    { title: "All Pages", url: "/dashboard/admin/pages", icon: List },
+    { title: "Add New Page", url: "/dashboard/admin/pages/new", icon: Plus },
+    { title: "Categories", url: "/dashboard/admin/pages/categories", icon: FolderTree },
+  ]
+}
+
+// Admin menu items (Dashboard first, then Pre-Constructions, then Pages, then subscriber items)
 const adminMenuItems: MenuItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   preConstructionsMenuItem,
+  pagesMenuItem,
   ...subscriberMenuItems,
 ]
 

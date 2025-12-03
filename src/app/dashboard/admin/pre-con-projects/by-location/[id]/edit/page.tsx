@@ -13,7 +13,7 @@ import { ArrowLeft, Loader2 } from "lucide-react"
 import { isAdmin } from "@/lib/roles"
 import { useBackgroundFetch } from "@/hooks/useBackgroundFetch"
 import { FAQField } from "@/components/Dashboard/FAQField"
-import { RichTextEditor } from "@/components/Dashboard/RichTextEditor"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import type { FaqItem } from "@/components/common/FAQ"
 
 type LocationType = 'by-city' | 'by-area' | 'by-neighbourhood' | 'by-intersection' | 'by-communities'
