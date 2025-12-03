@@ -11,12 +11,15 @@ import {
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { ReactNode } from "react"
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
 
 export interface Column<T> {
   key: string
   header: string
   render?: (item: T) => ReactNode
   className?: string
+  sortable?: boolean
+  sortKey?: string // Optional: use different key for sorting than display key
 }
 
 interface DataTableProps<T> {
@@ -26,6 +29,9 @@ interface DataTableProps<T> {
   emptyMessage?: string
   className?: string
   onRowClick?: (item: T) => void
+  sortBy?: string
+  sortOrder?: "asc" | "desc"
+  onSort?: (key: string) => void
 }
 
 export function DataTable<T>({
@@ -35,6 +41,9 @@ export function DataTable<T>({
   emptyMessage = "No data available",
   className,
   onRowClick,
+  sortBy,
+  sortOrder,
+  onSort,
 }: DataTableProps<T>) {
   if (data.length === 0) {
     return (
@@ -44,14 +53,47 @@ export function DataTable<T>({
     )
   }
 
+  const handleSort = (column: Column<T>) => {
+    if (column.sortable && onSort) {
+      onSort(column.sortKey || column.key)
+    }
+  }
+
+  const getSortIcon = (column: Column<T>) => {
+    if (!column.sortable) return null
+    
+    const sortKey = column.sortKey || column.key
+    const isActive = sortBy === sortKey
+
+    if (!isActive) {
+      return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />
+    }
+
+    if (sortOrder === "asc") {
+      return <ArrowUp className="ml-2 h-4 w-4 text-primary" />
+    }
+
+    return <ArrowDown className="ml-2 h-4 w-4 text-primary" />
+  }
+
   return (
     <Card className={className}>
       <Table>
         <TableHeader>
           <TableRow>
             {columns.map((column) => (
-              <TableHead key={column.key} className={column.className}>
-                {column.header}
+              <TableHead 
+                key={column.key} 
+                className={cn(
+                  column.className,
+                  column.sortable && "cursor-pointer hover:bg-muted/50 select-none"
+                )}
+                onClick={() => handleSort(column)}
+              >
+                <div className="flex items-center">
+                  {column.header}
+                  {getSortIcon(column)}
+                </div>
               </TableHead>
             ))}
           </TableRow>

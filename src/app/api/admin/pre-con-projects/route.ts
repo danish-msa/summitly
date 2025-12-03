@@ -55,6 +55,8 @@ export async function GET(request: NextRequest) {
     const city = searchParams.get('city') || ''
     const isPublished = searchParams.get('isPublished')
     const createdBy = searchParams.get('createdBy') || ''
+    const sortBy = searchParams.get('sortBy') || 'createdAt'
+    const sortOrder = searchParams.get('sortOrder') || 'desc'
 
     const skip = (page - 1) * limit
 
@@ -90,13 +92,30 @@ export async function GET(request: NextRequest) {
       where.createdBy = createdBy
     }
 
+    // Build orderBy clause
+    // Map sortBy to Prisma field names
+    const sortFieldMap: Record<string, keyof Prisma.PreConstructionProjectOrderByWithRelationInput> = {
+      projectName: 'projectName',
+      developer: 'developer',
+      city: 'city',
+      isPublished: 'isPublished',
+      createdAt: 'createdAt',
+    }
+    
+    const sortField = sortFieldMap[sortBy] || 'createdAt'
+    const order = sortOrder === 'asc' ? 'asc' : 'desc'
+    
+    const orderBy: Prisma.PreConstructionProjectOrderByWithRelationInput = {
+      [sortField]: order,
+    }
+
     // Get projects and total count
     // Using separate queries to avoid prepared statement conflicts
     const projects = await prisma.preConstructionProject.findMany({
       where,
       skip,
       take: limit,
-      orderBy: { createdAt: 'desc' },
+      orderBy,
       include: {
         units: {
           select: {

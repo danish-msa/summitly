@@ -59,6 +59,8 @@ export default function PreConProjectsPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
   const [limit, setLimit] = useState(10)
+  const [sortBy, setSortBy] = useState<string>("createdAt")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [stats, setStats] = useState({
     total: 0,
     selling: 0,
@@ -86,7 +88,19 @@ export default function PreConProjectsPage() {
       fetchCities()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, session, router, page, limit, searchTerm, statusFilter, cityFilter, publicationFilter, userFilter])
+  }, [status, session, router, page, limit, searchTerm, statusFilter, cityFilter, publicationFilter, userFilter, sortBy, sortOrder])
+
+  const handleSort = (key: string) => {
+    if (sortBy === key) {
+      // Toggle sort order if clicking the same column
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+    } else {
+      // Set new sort column and default to ascending
+      setSortBy(key)
+      setSortOrder("asc")
+    }
+    setPage(1) // Reset to first page when sorting changes
+  }
 
   const fetchProjects = async () => {
     await fetchData(async () => {
@@ -98,6 +112,8 @@ export default function PreConProjectsPage() {
         ...(cityFilter && cityFilter !== "all" && { city: cityFilter }),
         ...(publicationFilter && publicationFilter !== "all" && { isPublished: publicationFilter }),
         ...(userFilter && userFilter !== "all" && { createdBy: userFilter }),
+        ...(sortBy && { sortBy }),
+        ...(sortOrder && { sortOrder }),
       })
 
       const response = await fetch(`/api/admin/pre-con-projects?${params}`)
@@ -241,6 +257,7 @@ export default function PreConProjectsPage() {
     {
       key: "featured",
       header: "",
+      sortable: false,
       render: (project) => (
         <button
           onClick={(e) => {
@@ -265,6 +282,8 @@ export default function PreConProjectsPage() {
     {
       key: "projectName",
       header: "Project Name",
+      sortable: true,
+      sortKey: "projectName",
       render: (project) => (
         <div>
           <div className="font-medium">{project.projectName}</div>
@@ -275,6 +294,8 @@ export default function PreConProjectsPage() {
     {
       key: "developer",
       header: "Developer",
+      sortable: true,
+      sortKey: "developer",
       render: (project) => (
         <div className="text-sm">
           {project.developerName || project.developer || "N/A"}
@@ -284,6 +305,8 @@ export default function PreConProjectsPage() {
     {
       key: "location",
       header: "Location",
+      sortable: true,
+      sortKey: "city",
       render: (project) => (
         <div className="text-sm">
           <div className="flex items-center gap-1">
@@ -296,6 +319,8 @@ export default function PreConProjectsPage() {
     {
       key: "isPublished",
       header: "Publication",
+      sortable: true,
+      sortKey: "isPublished",
       render: (project) => (
         <Badge variant={project.isPublished ? "default" : "secondary"}>
           {project.isPublished ? "Published" : "Draft"}
@@ -305,6 +330,8 @@ export default function PreConProjectsPage() {
     {
       key: "creator",
       header: "Created By",
+      sortable: true,
+      sortKey: "createdAt",
       render: (project) => (
         <div className="text-sm font-medium text-foreground">
           {project.creatorName || "Unknown"}
@@ -314,6 +341,7 @@ export default function PreConProjectsPage() {
     {
       key: "actions",
       header: "Actions",
+      sortable: false,
       render: (project) => (
         <div className="flex items-center gap-2">
           <Button
@@ -535,6 +563,9 @@ export default function PreConProjectsPage() {
         columns={columns}
         keyExtractor={(project) => project.id}
         emptyMessage="No projects found"
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onSort={handleSort}
       />
 
       {/* Pagination */}
