@@ -36,7 +36,7 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
   // Get units from backend data - the API already formats them as UnitListing[]
   // Units are stored in property.preCon.units
   const units: UnitListing[] = (preCon?.units && Array.isArray(preCon.units) && preCon.units.length > 0)
-    ? preCon.units.map((unit: any) => {
+    ? preCon.units.map((unit: UnitListing) => {
         // Normalize status - handle various status values from database
         // The form allows: "for-sale", "sold-out", "reserved"
         // We map "reserved" to "for-sale" for display purposes
