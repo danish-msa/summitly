@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PropertyListing } from '@/lib/types';
-import { ChevronDown, Sparkles } from 'lucide-react';
+import { ChevronDown, Sparkles, ThumbsUp, ThumbsDown } from 'lucide-react';
 
 interface DescriptionProps {
   property: PropertyListing;
@@ -9,6 +9,7 @@ interface DescriptionProps {
 
 const Description: React.FC<DescriptionProps> = ({ property, isPreCon = false }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [feedback, setFeedback] = useState<'yes' | 'no' | null>(null);
   const description = isPreCon && property.preCon?.description 
     ? property.preCon.description 
     : property.lot.legalDescription;
@@ -72,6 +73,35 @@ const Description: React.FC<DescriptionProps> = ({ property, isPreCon = false })
             </button>
           </div>
         )}
+        
+        {/* Feedback Section */}
+        <div className="mt-3 pt-3 border-t flex flex-col md:flex-row gap-4 justify-between items-center border-white/20">
+          <p className="text-white font-semibold">Was this helpful?</p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setFeedback('yes')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+                feedback === 'yes'
+                  ? 'bg-white/20 border-white text-white'
+                  : 'bg-transparent border-white/30 text-white hover:bg-white/10'
+              }`}
+            >
+              <ThumbsUp className="h-4 w-4" />
+              <span>Yes</span>
+            </button>
+            <button
+              onClick={() => setFeedback('no')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+                feedback === 'no'
+                  ? 'bg-white/20 border-white text-white'
+                  : 'bg-transparent border-white/30 text-white hover:bg-white/10'
+              }`}
+            >
+              <ThumbsDown className="h-4 w-4" />
+              <span>No</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       

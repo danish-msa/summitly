@@ -12,9 +12,10 @@ import { UnitListing } from '@/lib/types/units'
 interface UnitDetailPageClientProps {
   unit: UnitListing;
   propertyId: string;
+  projectName?: string;
 }
 
-const UnitDetailPageClient: React.FC<UnitDetailPageClientProps> = ({ unit, propertyId }) => {
+const UnitDetailPageClient: React.FC<UnitDetailPageClientProps> = ({ unit, propertyId, projectName }) => {
   const router = useRouter();
 
   return (
@@ -38,7 +39,7 @@ const UnitDetailPageClient: React.FC<UnitDetailPageClientProps> = ({ unit, prope
                 Unit {unit.name}
               </h1>
               <p className="text-xl text-muted-foreground">
-                {propertyId ? propertyId.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Pre-Construction Condos'}
+                {projectName || (propertyId ? propertyId.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Pre-Construction Project')}
               </p>
             </div>
             {unit.status === "sold-out" && (

@@ -23,14 +23,7 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({ property }) => {
   // Get documents from preCon data
   const documents: Document[] = property.preCon?.documents || [];
 
-  if (documents.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-        <p className="text-gray-500 text-lg">No documents available for this project.</p>
-      </div>
-    );
-  }
+  const hasDocuments = documents.length > 0;
 
   // Group documents by type
   const documentsByType = documents.reduce((acc, doc) => {
@@ -61,7 +54,13 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({ property }) => {
 
   return (
     <div className="space-y-2">
-      {Object.entries(documentsByType).map(([type, docs]) => (
+      {!hasDocuments ? (
+        <div className="text-center py-12">
+          <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-500 text-lg">No documents available for this project.</p>
+        </div>
+      ) : (
+        Object.entries(documentsByType).map(([type, docs]) => (
         <div key={type} className="space-y-2">
           
           <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
@@ -117,7 +116,18 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({ property }) => {
             ))}
           </div>
         </div>
-      ))}
+      ))
+      )}
+
+      {/* CTA Section */}
+      <div className="text-center mt-16">
+        <p className="text-muted-foreground mb-6">
+          Need more information about this project?
+        </p>
+        <button className="bg-gradient-to-r from-primary to-accent text-primary-foreground px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity shadow-lg">
+          Schedule a Consultation
+        </button>
+      </div>
     </div>
   );
 };

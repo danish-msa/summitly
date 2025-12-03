@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { PropertyListing } from '@/lib/types'
 import { UnitListing } from '@/lib/types/units'
 import { Card, CardContent } from '@/components/ui/card'
@@ -13,8 +13,7 @@ import PriceFilter from '@/components/common/filters/PriceFilter'
 import BedroomFilter from '@/components/common/filters/BedroomFilter'
 import SquareFeetFilter from '@/components/common/filters/SquareFeetFilter'
 import { FilterChangeEvent } from '@/lib/types/filters'
-import { getPreConUnits } from '@/data/mockPreConData'
-
+import { slugify } from '@/lib/utils/propertyUrl'
 interface AvailableUnitsProps {
   property: PropertyListing;
 }
@@ -22,31 +21,9 @@ interface AvailableUnitsProps {
 type TabType = "for-sale" | "sold-out";
 type SortOption = "price-low" | "price-high" | "beds-low" | "beds-high";
 
-// Type for database unit structure
-interface DatabaseUnit {
-  id: string;
-  name?: string;
-  unitName?: string;
-  beds: number;
-  baths: number;
-  sqft: number;
-  price: number;
-  maintenanceFee?: number | null;
-  status: string;
-  studio?: boolean;
-  images?: string[];
-  description?: string | null;
-  features?: string[];
-  amenities?: string[];
-}
-
-interface PreConWithUnits {
-  units?: DatabaseUnit[];
-}
-
 const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
   const preCon = property.preCon;
-  const propertyId = property.mlsNumber || 'featured-1';
+  const propertyId = property.mlsNumber || '';
   
   const [activeTab, setActiveTab] = useState<TabType>("for-sale");
   const [sortBy] = useState<SortOption>("price-low");
@@ -56,28 +33,71 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
   const [minSquareFeet, setMinSquareFeet] = useState<number | undefined>(undefined);
   const [maxSquareFeet, setMaxSquareFeet] = useState<number | undefined>(undefined);
 
-  // Use real units from property data if available, otherwise fall back to mock
-  const preConWithUnits = (property.preCon as PreConWithUnits | undefined);
-  const realUnits = preConWithUnits?.units || [];
-  const mockUnits = getPreConUnits(propertyId);
-  const units: UnitListing[] = realUnits.length > 0 ? realUnits.map((unit: DatabaseUnit) => ({
-    id: unit.id,
-    name: unit.name || unit.unitName || '',
-    beds: unit.beds,
-    baths: unit.baths,
-    sqft: unit.sqft,
-    price: unit.price,
-    maintenanceFee: unit.maintenanceFee || 0,
-    status: unit.status === 'for-sale' ? 'for-sale' : unit.status === 'sold-out' ? 'sold-out' : 'for-sale',
-    images: (unit.images && unit.images.length > 0) ? unit.images : ['/images/floorplan-placeholder.jpg'],
-    description: unit.description || undefined,
-    features: unit.features || [],
-    amenities: unit.amenities || [],
-    studio: unit.studio ?? false,
-  })) : mockUnits;
+  // Get units from backend data - the API already formats them as UnitListing[]
+  // Units are stored in property.preCon.units
+  const units: UnitListing[] = (preCon?.units && Array.isArray(preCon.units) && preCon.units.length > 0)
+    ? preCon.units.map((unit: any) => {
+        // Normalize status - handle various status values from database
+        // The form allows: "for-sale", "sold-out", "reserved"
+        // We map "reserved" to "for-sale" for display purposes
+        let normalizedStatus: 'for-sale' | 'sold-out' = 'for-sale';
+        if (unit.status) {
+          const statusLower = String(unit.status).toLowerCase().trim();
+          if (statusLower === 'sold-out' || statusLower === 'soldout' || statusLower === 'sold') {
+            normalizedStatus = 'sold-out';
+          } else {
+            // "for-sale", "reserved", or any other status -> show as "for-sale"
+            normalizedStatus = 'for-sale';
+          }
+        }
+
+        return {
+          id: unit.id,
+          name: unit.name || '',
+          beds: unit.beds || 0,
+          baths: unit.baths || 0,
+          sqft: unit.sqft || undefined,
+          price: unit.price || undefined,
+          maintenanceFee: unit.maintenanceFee || 0,
+          status: normalizedStatus,
+          images: (unit.images && Array.isArray(unit.images) && unit.images.length > 0) 
+            ? unit.images 
+            : ['/images/floorplan-placeholder.jpg'],
+          description: unit.description,
+          features: unit.features || [],
+          amenities: unit.amenities || [],
+          studio: unit.studio ?? false,
+        };
+      })
+    : [];
+
+  // Debug: Log units to console (remove in production)
+  useEffect(() => {
+    if (units.length > 0) {
+      console.log('AvailableUnits: Loaded units from backend:', units);
+      console.log('AvailableUnits: Units count:', units.length);
+      console.log('AvailableUnits: For-sale count:', units.filter(u => u.status === 'for-sale').length);
+      console.log('AvailableUnits: Sold-out count:', units.filter(u => u.status === 'sold-out').length);
+    } else {
+      console.log('AvailableUnits: No units found in property.preCon.units');
+      console.log('AvailableUnits: preCon object:', preCon);
+    }
+  }, [units, preCon]);
 
   const filteredAndSortedUnits = useMemo(() => {
     let filtered = units.filter((unit: UnitListing) => unit.status === activeTab);
+
+    // Debug: Log filtering steps
+    console.log('AvailableUnits: Filtering units', {
+      totalUnits: units.length,
+      activeTab,
+      afterStatusFilter: filtered.length,
+      bedrooms,
+      minPrice,
+      maxPrice,
+      minSquareFeet,
+      maxSquareFeet,
+    });
 
     // Apply bedroom filter
     if (bedrooms > 0) {
@@ -89,23 +109,27 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
       }
     }
 
-    // Apply price filter
+    // Apply price filter - only if price is set and within range
     if (activeTab === "for-sale") {
       filtered = filtered.filter(unit => {
-        if (!unit.price) return false;
+        // If unit has no price, still show it (might be "Contact for pricing")
+        if (!unit.price) return true;
         return unit.price >= minPrice && unit.price <= maxPrice;
       });
     }
 
-    // Apply square feet filter
+    // Apply square feet filter - only if square feet filter is set
     if (minSquareFeet !== undefined || maxSquareFeet !== undefined) {
       filtered = filtered.filter(unit => {
-        if (!unit.sqft) return false;
+        // If unit has no sqft, still show it
+        if (!unit.sqft) return true;
         if (minSquareFeet !== undefined && unit.sqft < minSquareFeet) return false;
         if (maxSquareFeet !== undefined && unit.sqft > maxSquareFeet) return false;
         return true;
       });
     }
+
+    console.log('AvailableUnits: After all filters:', filtered.length);
 
     // Sort
     const sorted = [...filtered].sort((a, b) => {
@@ -227,7 +251,16 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
 
       {/* Units Grid */}
       <div className="space-y-4">
-        {filteredAndSortedUnits.length > 0 ? (
+        {units.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground text-lg">
+              No units available for this project.
+            </p>
+            <p className="text-muted-foreground text-sm mt-2">
+              Please add units in the dashboard to display them here.
+            </p>
+          </div>
+        ) : filteredAndSortedUnits.length > 0 ? (
           filteredAndSortedUnits.map((unit) => (
             <UnitCard key={unit.id} unit={unit} propertyId={propertyId} />
           ))
@@ -235,6 +268,15 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
           <div className="text-center py-12">
             <p className="text-muted-foreground text-lg">
               No units found matching your criteria.
+            </p>
+            <p className="text-muted-foreground text-sm mt-2">
+              {units.length} unit{units.length !== 1 ? 's' : ''} available, but none match the current filters.
+              {activeTab === 'for-sale' && forSaleCount === 0 && soldOutCount > 0 && (
+                <span className="block mt-2">Try switching to the "Sold Out" tab.</span>
+              )}
+              {activeTab === 'sold-out' && soldOutCount === 0 && forSaleCount > 0 && (
+                <span className="block mt-2">Try switching to the "For Sale" tab.</span>
+              )}
             </p>
           </div>
         )}
@@ -249,17 +291,20 @@ interface UnitCardProps {
 }
 
 const UnitCard: React.FC<UnitCardProps> = ({ unit, propertyId }) => {
+  // Create URL-friendly slug from unit name
+  const unitSlug = slugify(unit.name || unit.id);
+  
   return (
-    <Link href={`/pre-construction/${propertyId}/${unit.id}`} className="block">
+    <Link href={`/pre-construction/${propertyId}/${unitSlug}`} className="block">
       <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
         <CardContent className="p-0">
-          <div className="flex flex-col md:flex-row gap-4 p-4">
+          <div className="flex flex-col md:flex-row gap-4 p-2">
           {/* Floorplan Image */}
           <div className="flex-shrink-0">
             <img
               src={unit.images && unit.images.length > 0 ? unit.images[0] : '/images/floorplan-placeholder.jpg'}
               alt={`${unit.name} floorplan`}
-              className="w-20 h-20 object-contain bg-muted rounded"
+              className="w-16 h-16 object-contain bg-muted rounded"
               onError={(e) => {
                 (e.target as HTMLImageElement).src = '/images/floorplan-placeholder.jpg';
               }}
@@ -268,9 +313,9 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, propertyId }) => {
 
           {/* Details */}
           <div className="flex-1 space-y-2">
-            <div className="flex items-start justify-between gap-2 w-full flex-1">
-              <div>
-                <h3 className="text-xl font-semibold text-foreground">Unit {unit.name}</h3>
+            <div className="flex items-center justify-between gap-2 w-full flex-1">
+              <div className="flex flex-col">
+                <h3 className="text-lg font-semibold text-foreground">Unit {unit.name}</h3>
                 <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Bed className="w-4 h-4" />
@@ -293,10 +338,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, propertyId }) => {
                   )}
                 </div>
                 <div className="flex flex-row justify-between gap-2 w-full flex-1">
-                  <div className="text-sm mt-2">
-                    <span className="text-muted-foreground">Maint Fees: </span>
-                    <span className="font-medium">${unit.maintenanceFee || 0}/mo</span>
-                  </div>
+                  
                   
                   {/* {unit.features && unit.features.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
@@ -319,7 +361,11 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, propertyId }) => {
                   Sold Out
                 </Badge>
               )}
-              <div className="flex flex-col items-center gap-3">
+              <div className="flex flex-row items-center gap-3">
+                <div className="text-sm">
+                    <span className="text-muted-foreground">Maint Fees: </span>
+                    <span className="font-medium">${unit.maintenanceFee || 0}/mo</span>
+                  </div>
                   <Button 
                     variant="default" 
                     size="sm"
@@ -330,19 +376,6 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, propertyId }) => {
                     }}
                   >
                     Contact for pricing
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="text-primary"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      window.location.href = `/pre-construction/${propertyId}/${unit.id}`;
-                    }}
-                  >
-                    <Eye className="w-4 h-4" />
-                    Floorplan
                   </Button>
                 </div>
             </div>

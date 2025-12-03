@@ -755,6 +755,21 @@ export interface PropertyListing {
                 };
             };
         };
+        units?: Array<{
+            id: string;
+            name: string;
+            beds: number;
+            baths: number;
+            sqft?: number;
+            images: string[];
+            status: 'for-sale' | 'sold-out';
+            maintenanceFee: number;
+            price?: number;
+            description?: string;
+            features?: string[];
+            amenities?: string[];
+            studio?: boolean;
+        }>;
     };
 }
 
