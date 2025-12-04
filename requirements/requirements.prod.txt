@@ -41,6 +41,15 @@ PyJWT>=2.8.0
 
 # HTTP client
 urllib3>=1.26.0
+httpx>=0.25.0
+
+# Async HTTP and WebSockets (CRITICAL - fixes 503 errors)
+aiohttp>=3.8.0
+asyncio-mqtt>=0.13.0
+websockets>=11.0.0
+
+# Web framework dependencies
+tornado>=6.3.0
 
 # Time and date utilities
 python-dateutil>=2.8.0
