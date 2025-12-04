@@ -516,7 +516,7 @@ export default function NewProjectPage() {
 
       const finalPayload = {
         ...payload,
-        isPublished: true, // Publish the project
+        isPublished: formData.isPublished === true, // Use checkbox value
       }
 
       const response = await fetch(url, {
