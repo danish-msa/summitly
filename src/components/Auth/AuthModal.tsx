@@ -1,24 +1,35 @@
 "use client"
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import LoginForm from '@/components/Auth/LoginForm';
 import RegisterForm from '@/components/Auth/RegisterForm';
+import { Button } from '@/components/ui/button';
 import { 
   Bell, 
   Home, 
   Shield, 
   Star, 
-  Calendar 
+  Calendar,
+  CheckCircle2
 } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  welcomeMessage?: {
+    title?: string;
+    description?: string;
+    footer?: string;
+  };
 }
 
-const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
+const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, welcomeMessage }) => {
+  const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [userName, setUserName] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -26,10 +37,38 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     } else {
       const timer = setTimeout(() => {
         setIsMounted(false);
+        setShowWelcome(false);
+        setUserName('');
       }, 300);
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
+
+  const handleWelcome = (name: string) => {
+    setUserName(name);
+    setShowWelcome(true);
+  };
+
+  const handleWelcomeClose = () => {
+    setShowWelcome(false);
+    setUserName('');
+    onClose();
+    router.push('/dashboard');
+    router.refresh();
+  };
+
+  // Default welcome messages
+  const defaultWelcome = {
+    title: "Welcome {username}!",
+    description: "You've unlocked access to exclusive listings, price trends, and market insights.",
+    footer: "One of our agents will be in touch to help you with your search."
+  };
+
+  const welcome = {
+    title: welcomeMessage?.title || defaultWelcome.title,
+    description: welcomeMessage?.description || defaultWelcome.description,
+    footer: welcomeMessage?.footer || defaultWelcome.footer
+  };
 
   if (!isMounted) return null;
 
@@ -45,11 +84,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         <div 
           className="fixed inset-0 bg-black transition-opacity duration-300 ease-in-out"
           style={{ opacity: isOpen ? 0.5 : 0 }}
-          onClick={onClose}
+          onClick={showWelcome ? undefined : onClose}
         />
         <div 
           className={`bg-white rounded-lg relative transform overflow-hidden z-[10000] ${
-            isLogin ? 'p-8 w-full max-w-md' : 'p-0 w-full max-w-5xl'
+            showWelcome ? 'p-8 w-full max-w-md' : isLogin ? 'p-8 w-full max-w-md' : 'p-0 w-full max-w-5xl'
           }`}
           style={{
             transform: `translateY(${isOpen ? '0' : '-20px'}) scale(${isOpen ? '1' : '0.95'})`,
@@ -57,14 +96,41 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             transition: 'transform 300ms ease-in-out, opacity 300ms ease-in-out'
           }}
         >
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors z-10"
-          >
-            ✕
-          </button>
+          {!showWelcome && (
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors z-10"
+            >
+              ✕
+            </button>
+          )}
           
-          {isLogin ? (
+          {showWelcome ? (
+            <div className="text-center space-y-6">
+              <div className="flex justify-center mb-2">
+                <div className="rounded-full bg-green-100 p-3">
+                  <CheckCircle2 className="h-8 w-8 text-green-600" />
+                </div>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  {welcome.title.replace('{username}', userName)}
+                </h2>
+                <p className="text-base text-gray-700 mt-4">
+                  {welcome.description}
+                </p>
+                <p className="text-sm text-gray-600 mt-3">
+                  {welcome.footer}
+                </p>
+              </div>
+              <Button 
+                onClick={handleWelcomeClose}
+                className="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200"
+              >
+                Get Started
+              </Button>
+            </div>
+          ) : isLogin ? (
             <>
               <div className="text-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">
@@ -162,7 +228,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     Sign up to get started with Summitly
                   </p>
                 </div>
-                <RegisterForm onLoginClick={() => setIsLogin(true)} onClose={onClose} />
+                <RegisterForm 
+                  onLoginClick={() => setIsLogin(true)} 
+                  onClose={onClose}
+                  onWelcome={handleWelcome}
+                  welcomeMessage={welcomeMessage}
+                />
               </div>
             </div>
           )}

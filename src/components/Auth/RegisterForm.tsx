@@ -3,13 +3,25 @@ import React, { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 
 interface RegisterFormProps {
   onLoginClick: () => void;
   onClose?: () => void;
+  onWelcome?: (username: string) => void;
+  welcomeMessage?: {
+    title?: string; // Default: "Welcome {username}!"
+    description?: string; // Default: "You've unlocked access to exclusive listings, price trends, and market insights."
+    footer?: string; // Default: "One of our agents will be in touch to help you with your search."
+  };
 }
 
-const RegisterForm: React.FC<RegisterFormProps> = ({ onLoginClick, onClose }) => {
+const RegisterForm: React.FC<RegisterFormProps> = ({ 
+  onLoginClick, 
+  onClose,
+  onWelcome,
+  welcomeMessage 
+}) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -60,20 +72,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onLoginClick, onClose }) =>
         throw new Error('Failed to sign in after registration');
       }
 
-      // Show success message for login
-      toast({
-        title: "Welcome!",
-        description: "You have been successfully logged in.",
-      });
-
-      // Close modal if provided
-      if (onClose) {
-        onClose();
+      // Show welcome message in the same modal
+      if (onWelcome) {
+        onWelcome(formData.name);
       }
-
-      // Redirect to dashboard
-      router.push('/dashboard');
-      router.refresh();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Something went wrong. Please try again."
       toast({
