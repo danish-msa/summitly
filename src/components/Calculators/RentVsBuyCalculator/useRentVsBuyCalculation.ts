@@ -133,18 +133,6 @@ export function useMemoizedCalculation(params: CalculationParams): CalculationRe
       breakevenYear,
       yearlyData,
     };
-  }, [
-    params,
-    params.mortgageRate,
-    params.amortization,
-    params.annualRentIncrease,
-    params.homeAppreciation,
-    params.investmentReturn,
-    params.annualPropertyTax,
-    params.annualInsurance,
-    params.annualMaintenance,
-    params.closingCosts,
-     
-  ]);
+  }, [params]);
 }
 

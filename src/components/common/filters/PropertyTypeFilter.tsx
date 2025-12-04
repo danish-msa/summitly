@@ -42,7 +42,7 @@ const PropertyTypeFilter: React.FC<IndividualFilterProps> = ({
       // Reset subfilter view when dropdown closes
       setShowSubFilter(false);
     }
-  }, [activeDropdown, hasSubFilter]);
+  }, [activeDropdown, hasSubFilter, showSubFilter]);
 
   // Handle property type selection
   const handlePropertyTypeSelect = (value: string) => {

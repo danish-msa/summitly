@@ -6,7 +6,6 @@ import {
   Building2, 
   Calculator, 
   BookOpen, 
-  MapPin, 
   Users,
   TrendingUp,
   Shield,

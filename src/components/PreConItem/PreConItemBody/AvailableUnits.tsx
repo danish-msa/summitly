@@ -35,8 +35,11 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
 
   // Get units from backend data - the API already formats them as UnitListing[]
   // Units are stored in property.preCon.units
-  const units: UnitListing[] = (preCon?.units && Array.isArray(preCon.units) && preCon.units.length > 0)
-    ? preCon.units.map((unit: UnitListing) => {
+  const units: UnitListing[] = useMemo(() => {
+    if (!preCon?.units || !Array.isArray(preCon.units) || preCon.units.length === 0) {
+      return [];
+    }
+    return preCon.units.map((unit: UnitListing) => {
         // Normalize status - handle various status values from database
         // The form allows: "for-sale", "sold-out", "reserved"
         // We map "reserved" to "for-sale" for display purposes
@@ -68,8 +71,8 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
           amenities: unit.amenities || [],
           studio: unit.studio ?? false,
         };
-      })
-    : [];
+      });
+  }, [preCon?.units]);
 
   // Debug: Log units to console (remove in production)
   useEffect(() => {
@@ -82,7 +85,6 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
       console.log('AvailableUnits: No units found in property.preCon.units');
       console.log('AvailableUnits: preCon object:', preCon);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [units, preCon]);
 
   const filteredAndSortedUnits = useMemo(() => {
@@ -149,7 +151,6 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
     });
 
     return sorted;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, sortBy, bedrooms, minPrice, maxPrice, minSquareFeet, maxSquareFeet, units]);
 
   // Handle price filter change
