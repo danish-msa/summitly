@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligent Canadian Real Estate Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .chat-header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .chat-header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .status-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #2ecc71;
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .conversation-stage {
+            background: rgba(52, 152, 219, 0.1);
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            padding: 10px 15px;
+            margin: 10px 20px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            color: #2c3e50;
+            display: none;
+        }
+
+        .conversation-stage.active {
+            display: block;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: rgba(247, 249, 252, 0.5);
+        }
+
+        .message {
+            margin-bottom: 20px;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message.assistant {
+            text-align: left;
+        }
+
+        .message-bubble {
+            display: inline-block;
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.assistant .message-bubble {
+            background: white;
+            color: #2c3e50;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-bottom-left-radius: 5px;
+        }
+
+        .quick-replies {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+            justify-content: flex-start;
+        }
+
+        .quick-reply-btn {
+            background: rgba(52, 152, 219, 0.1);
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            color: #2c3e50;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quick-reply-btn:hover {
+            background: rgba(52, 152, 219, 0.2);
+            border-color: rgba(52, 152, 219, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .chat-input-container {
+            background: white;
+            padding: 20px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            border: 2px solid rgba(52, 152, 219, 0.2);
+            border-radius: 25px;
+            padding: 15px 20px;
+            font-size: 0.95rem;
+            outline: none;
+            resize: none;
+            min-height: 50px;
+            max-height: 120px;
+            transition: border-color 0.3s ease;
+        }
+
+        .chat-input:focus {
+            border-color: rgba(52, 152, 219, 0.5);
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            color: #7f8c8d;
+            font-style: italic;
+            margin-top: 10px;
+        }
+
+        .typing-indicator.active {
+            display: flex;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #bdc3c7;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typingAnimation {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        .context-display {
+            background: rgba(46, 204, 113, 0.1);
+            border: 1px solid rgba(46, 204, 113, 0.3);
+            border-radius: 12px;
+            padding: 12px;
+            margin: 10px 20px;
+            font-size: 0.85rem;
+            color: #27ae60;
+            display: none;
+        }
+
+        .context-display.active {
+            display: block;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+        }
+
+        .action-btn.secondary {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .action-btn.secondary:hover {
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .chat-container {
+                height: 95vh;
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .chat-header {
+                padding: 15px;
+            }
+
+            .chat-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .message-bubble {
+                max-width: 85%;
+            }
+
+            .quick-replies {
+                justify-content: center;
+            }
+        }
+
+        /* Scrollbar Styling */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(52, 152, 219, 0.3);
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(52, 152, 219, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="status-indicator" id="statusIndicator"></div>
+            <h1>🏠 Intelligent Canadian Real Estate Assistant</h1>
+            <p>Powered by Llama 3.2 - Your AI guide to Canadian property markets</p>
+        </div>
+
+        <div class="conversation-stage" id="conversationStage">
+            <strong>Current Step:</strong> <span id="stageText">Getting Started</span>
+        </div>
+
+        <div class="context-display" id="contextDisplay">
+            <strong>Your Preferences:</strong> <span id="contextText"></span>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="message assistant">
+                <div class="message-bubble">
+                    👋 Welcome! I'm your intelligent Canadian real estate assistant. I'll help you find the perfect property by asking contextual questions based on your responses.
+                    <br><br>
+                    Let's start - <strong>which Canadian city are you interested in?</strong>
+                </div>
+                <div class="quick-replies" id="initialQuickReplies">
+                    <button class="quick-reply-btn" onclick="sendQuickReply('Toronto')">Toronto</button>
+                    <button class="quick-reply-btn" onclick="sendQuickReply('Vancouver')">Vancouver</button>
+                    <button class="quick-reply-btn" onclick="sendQuickReply('Calgary')">Calgary</button>
+                    <button class="quick-reply-btn" onclick="sendQuickReply('Montreal')">Montreal</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <span>Assistant is thinking</span>
+            <div class="typing-dots">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+
+        <div class="chat-input-container">
+            <div class="chat-input-wrapper">
+                <textarea 
+                    id="chatInput" 
+                    class="chat-input" 
+                    placeholder="Type your message or use the quick reply buttons above..."
+                    rows="1"
+                ></textarea>
+                <button id="sendBtn" class="send-btn" onclick="sendMessage()">
+                    ➤
+                </button>
+            </div>
+            
+            <div class="action-buttons" id="actionButtons" style="display: none;">
+                <button class="action-btn" onclick="searchProperties()">🔍 Search Properties</button>
+                <button class="action-btn secondary" onclick="resetChat()">🔄 Start Over</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sessionId = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        let currentStage = 'greeting';
+        let isTyping = false;
+        let chatContext = {};
+
+        // Stage descriptions for user-friendly display
+        const stageDescriptions = {
+            'greeting': 'Getting Started',
+            'city_selection': 'Choosing Your City',
+            'transaction_type': 'How Can We Help?',
+            'bedroom_count': 'Bedroom Requirements',
+            'property_type': 'Property Type Preference',
+            'budget_range': 'Budget Planning',
+            'neighborhood': 'Location Preferences',
+            'features': 'Special Features',
+            'property_search': 'Ready to Search!'
+        };
+
+        // Auto-resize textarea
+        document.getElementById('chatInput').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        // Send message on Enter (Shift+Enter for new line)
+        document.getElementById('chatInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message || isTyping) return;
+            
+            // Add user message to chat
+            addMessage(message, 'user');
+            input.value = '';
+            input.style.height = 'auto';
+            
+            // Send to intelligent chatbot
+            sendToIntelligentChatbot(message);
+        }
+
+        function sendQuickReply(reply) {
+            if (isTyping) return;
+            
+            // Add user message to chat
+            addMessage(reply, 'user');
+            
+            // Send to intelligent chatbot
+            sendToIntelligentChatbot(reply);
+        }
+
+        async function sendToIntelligentChatbot(message) {
+            setTyping(true);
+            
+            try {
+                const response = await fetch('/api/intelligent-chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        session_id: sessionId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Add assistant response
+                    addMessage(data.response, 'assistant', data.quick_replies);
+                    
+                    // Update conversation stage
+                    updateConversationStage(data.stage);
+                    
+                    // Update context display
+                    updateContextDisplay(data.context);
+                    
+                    // Show action buttons if ready for search
+                    if (data.ready_for_search) {
+                        showActionButtons();
+                    }
+                } else {
+                    addMessage(data.message || "I'm having some technical difficulties. Please try again.", 'assistant');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage("I'm having trouble connecting. Please try again in a moment.", 'assistant');
+            } finally {
+                setTyping(false);
+            }
+        }
+
+        function addMessage(content, sender, quickReplies = []) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            let messageHTML = `<div class="message-bubble">${content}</div>`;
+            
+            if (quickReplies && quickReplies.length > 0) {
+                messageHTML += '<div class="quick-replies">';
+                quickReplies.forEach(reply => {
+                    messageHTML += `<button class="quick-reply-btn" onclick="sendQuickReply('${reply}')">${reply}</button>`;
+                });
+                messageHTML += '</div>';
+            }
+            
+            messageDiv.innerHTML = messageHTML;
+            messagesContainer.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function updateConversationStage(stage) {
+            currentStage = stage;
+            const stageElement = document.getElementById('conversationStage');
+            const stageText = document.getElementById('stageText');
+            
+            if (stageDescriptions[stage]) {
+                stageText.textContent = stageDescriptions[stage];
+                stageElement.classList.add('active');
+            }
+        }
+
+        function updateContextDisplay(context) {
+            chatContext = context;
+            const contextDisplay = document.getElementById('contextDisplay');
+            const contextText = document.getElementById('contextText');
+            
+            let contextParts = [];
+            
+            if (context.city) contextParts.push(`📍 ${context.city}`);
+            if (context.transaction_type) contextParts.push(`💼 ${context.transaction_type.charAt(0).toUpperCase() + context.transaction_type.slice(1)}`);
+            if (context.property_type) contextParts.push(`🏠 ${context.property_type}`);
+            if (context.bedrooms) contextParts.push(`🛏️ ${context.bedrooms}`);
+            
+            if (contextParts.length > 0) {
+                contextText.textContent = contextParts.join(' • ');
+                contextDisplay.classList.add('active');
+            }
+        }
+
+        function showActionButtons() {
+            document.getElementById('actionButtons').style.display = 'flex';
+        }
+
+        function setTyping(typing) {
+            isTyping = typing;
+            const typingIndicator = document.getElementById('typingIndicator');
+            const sendBtn = document.getElementById('sendBtn');
+            
+            if (typing) {
+                typingIndicator.classList.add('active');
+                sendBtn.disabled = true;
+            } else {
+                typingIndicator.classList.remove('active');
+                sendBtn.disabled = false;
+            }
+        }
+
+        async function searchProperties() {
+            setTyping(true);
+            
+            try {
+                const response = await fetch('/api/intelligent-search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    addMessage(data.message, 'assistant');
+                    // Here you would typically show search results
+                    // For now, we'll show a placeholder message
+                    setTimeout(() => {
+                        addMessage("🔍 Searching our database for properties that match your criteria...\n\n📊 This feature connects to your property database. In a real implementation, this would show actual property listings based on the collected preferences.", 'assistant');
+                    }, 1500);
+                } else {
+                    addMessage("Unable to perform search at this time. Please try again.", 'assistant');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage("Search functionality is currently unavailable.", 'assistant');
+            } finally {
+                setTyping(false);
+            }
+        }
+
+        async function resetChat() {
+            try {
+                await fetch('/api/intelligent-reset', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId
+                    })
+                });
+                
+                // Reset UI
+                sessionId = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                currentStage = 'greeting';
+                chatContext = {};
+                
+                document.getElementById('chatMessages').innerHTML = `
+                    <div class="message assistant">
+                        <div class="message-bubble">
+                            👋 Welcome back! Let's start fresh - <strong>which Canadian city are you interested in?</strong>
+                        </div>
+                        <div class="quick-replies">
+                            <button class="quick-reply-btn" onclick="sendQuickReply('Toronto')">Toronto</button>
+                            <button class="quick-reply-btn" onclick="sendQuickReply('Vancouver')">Vancouver</button>
+                            <button class="quick-reply-btn" onclick="sendQuickReply('Calgary')">Calgary</button>
+                            <button class="quick-reply-btn" onclick="sendQuickReply('Montreal')">Montreal</button>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('conversationStage').classList.remove('active');
+                document.getElementById('contextDisplay').classList.remove('active');
+                document.getElementById('actionButtons').style.display = 'none';
+                
+            } catch (error) {
+                console.error('Error resetting chat:', error);
+            }
+        }
+
+        // Check service status on load
+        async function checkServiceStatus() {
+            try {
+                const response = await fetch('/api/intelligent-status');
+                const data = await response.json();
+                
+                const indicator = document.getElementById('statusIndicator');
+                if (data.available) {
+                    indicator.style.background = '#2ecc71';
+                    indicator.title = 'Intelligent Chatbot Online';
+                } else {
+                    indicator.style.background = '#e74c3c';
+                    indicator.title = 'Service Unavailable';
+                }
+            } catch (error) {
+                console.error('Status check failed:', error);
+                document.getElementById('statusIndicator').style.background = '#f39c12';
+            }
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            checkServiceStatus();
+        });
+    </script>
+</body>
+</html>

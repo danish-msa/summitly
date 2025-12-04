@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: summitly_backend
+    ports:
+      - "5050:5050"
+    environment:
+      - FLASK_ENV=production
+      - FLASK_APP=app/voice_assistant_clean.py
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - config/.env
+    volumes:
+      - ./logs:/app/logs
+      - ./temp_audio:/app/temp_audio
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5050/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # Optional: Redis for caching/sessions
+  redis:
+    image: redis:7-alpine
+    container_name: summitly_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # Optional: PostgreSQL for persistent storage
+  postgres:
+    image: postgres:15-alpine
+    container_name: summitly_postgres
+    environment:
+      POSTGRES_USER: summitly
+      POSTGRES_PASSWORD: summitly_password
+      POSTGRES_DB: summitly_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U summitly"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  redis_data:
+  postgres_data:
+
+networks:
+  default:
+    name: summitly_network

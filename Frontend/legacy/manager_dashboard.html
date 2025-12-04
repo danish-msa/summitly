@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summitly Lead Management Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c5aa0 0%, #1a3f73 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #2c5aa0;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            color: #2c5aa0;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c5aa0;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-new { background: #fff3cd; color: #856404; }
+        .status-contacted { background: #d4edda; color: #155724; }
+        .status-progress { background: #cce5f0; color: #0c5460; }
+        .status-closed-won { background: #d1ecf1; color: #0c5460; }
+        .status-closed-lost { background: #f8d7da; color: #721c24; }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #2c5aa0;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1a3f73;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        select, input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters {
+                flex-direction: column;
+            }
+            
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+            
+            thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            
+            tr {
+                border: 1px solid #ccc;
+                margin-bottom: 10px;
+                padding: 10px;
+                border-radius: 8px;
+            }
+            
+            td {
+                border: none;
+                border-bottom: 1px solid #eee;
+                position: relative;
+                padding-left: 50% !important;
+            }
+            
+            td:before {
+                content: attr(data-label) ": ";
+                position: absolute;
+                left: 6px;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                font-weight: bold;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>🏠 Summitly Lead Management</h1>
+            <p>Real Estate CRM Dashboard - AI-Powered Lead Assignment & Tracking</p>
+        </div>
+
+        <!-- Statistics Dashboard -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalLeads">-</div>
+                <div class="stat-label">Total Leads</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="newLeads">-</div>
+                <div class="stat-label">New Leads</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="inProgressLeads">-</div>
+                <div class="stat-label">In Progress</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="conversionRate">-</div>
+                <div class="stat-label">Conversion Rate</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Leads Management Section -->
+            <div class="section">
+                <h2>📊 Leads Management</h2>
+                
+                <div class="filters">
+                    <div class="filter-group">
+                        <label>Status Filter:</label>
+                        <select id="statusFilter">
+                            <option value="">All Statuses</option>
+                            <option value="New">New</option>
+                            <option value="Contacted">Contacted</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Viewing Scheduled">Viewing Scheduled</option>
+                            <option value="Offer Made">Offer Made</option>
+                            <option value="Closed Won">Closed Won</option>
+                            <option value="Closed Lost">Closed Lost</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Broker Filter:</label>
+                        <select id="brokerFilter">
+                            <option value="">All Brokers</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>&nbsp;</label>
+                        <button class="btn btn-primary" onclick="loadLeads()">🔍 Filter</button>
+                    </div>
+                </div>
+
+                <div id="leadsTableContainer" class="table-container">
+                    <div class="loading">Loading leads...</div>
+                </div>
+            </div>
+
+            <!-- Brokers Management Section -->
+            <div class="section">
+                <h2>👥 Brokers Performance</h2>
+                <div id="brokersTableContainer" class="table-container">
+                    <div class="loading">Loading brokers...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let leadsData = [];
+        let brokersData = [];
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardStats();
+            loadBrokers();
+            loadLeads();
+        });
+
+        async function loadDashboardStats() {
+            try {
+                const response = await fetch('/api/manager/dashboard-stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const stats = data.stats;
+                    document.getElementById('totalLeads').textContent = stats.total_leads;
+                    document.getElementById('newLeads').textContent = stats.new_leads;
+                    document.getElementById('inProgressLeads').textContent = stats.in_progress_leads;
+                    document.getElementById('conversionRate').textContent = stats.conversion_rate.toFixed(1) + '%';
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadBrokers() {
+            try {
+                const response = await fetch('/api/manager/brokers');
+                const data = await response.json();
+                
+                if (data.success) {
+                    brokersData = data.brokers;
+                    renderBrokersTable();
+                    populateBrokerFilter();
+                }
+            } catch (error) {
+                console.error('Error loading brokers:', error);
+                document.getElementById('brokersTableContainer').innerHTML = 
+                    '<div class="error">Failed to load brokers data</div>';
+            }
+        }
+
+        async function loadLeads() {
+            try {
+                const statusFilter = document.getElementById('statusFilter').value;
+                const brokerFilter = document.getElementById('brokerFilter').value;
+                
+                let url = '/api/manager/leads';
+                const params = new URLSearchParams();
+                if (statusFilter) params.append('status', statusFilter);
+                if (brokerFilter) params.append('broker_id', brokerFilter);
+                if (params.toString()) url += '?' + params.toString();
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.success) {
+                    leadsData = data.leads;
+                    renderLeadsTable();
+                }
+            } catch (error) {
+                console.error('Error loading leads:', error);
+                document.getElementById('leadsTableContainer').innerHTML = 
+                    '<div class="error">Failed to load leads data</div>';
+            }
+        }
+
+        function renderLeadsTable() {
+            const container = document.getElementById('leadsTableContainer');
+            
+            if (leadsData.length === 0) {
+                container.innerHTML = '<div class="loading">No leads found</div>';
+                return;
+            }
+
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Lead ID</th>
+                            <th>Client Name</th>
+                            <th>Email</th>
+                            <th>Location</th>
+                            <th>Budget</th>
+                            <th>Assigned Broker</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            leadsData.forEach(lead => {
+                const statusClass = getStatusClass(lead.Status);
+                html += `
+                    <tr>
+                        <td data-label="Lead ID">${lead['Lead ID'] || 'N/A'}</td>
+                        <td data-label="Client Name">${lead['User Name'] || 'N/A'}</td>
+                        <td data-label="Email">${lead['User Email'] || 'N/A'}</td>
+                        <td data-label="Location">${lead['Location Searched'] || 'N/A'}</td>
+                        <td data-label="Budget">${lead['Budget Range'] || 'N/A'}</td>
+                        <td data-label="Assigned Broker">${lead['Assigned Broker Name'] || 'Unassigned'}</td>
+                        <td data-label="Status">
+                            <span class="status-badge ${statusClass}">${lead.Status || 'New'}</span>
+                        </td>
+                        <td data-label="Actions">
+                            <button class="btn btn-primary" onclick="updateLeadStatus('${lead['Lead ID']}')">
+                                Update Status
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderBrokersTable() {
+            const container = document.getElementById('brokersTableContainer');
+            
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Broker Name</th>
+                            <th>Email</th>
+                            <th>Location</th>
+                            <th>Success Rate</th>
+                            <th>Current Workload</th>
+                            <th>Total Leads Handled</th>
+                            <th>Experience</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            brokersData.forEach(broker => {
+                html += `
+                    <tr>
+                        <td data-label="Broker Name">${broker.name}</td>
+                        <td data-label="Email">${broker.email}</td>
+                        <td data-label="Location">${broker.location}</td>
+                        <td data-label="Success Rate">${broker.success_rate}%</td>
+                        <td data-label="Current Workload">${broker.current_workload || 0}</td>
+                        <td data-label="Total Leads">${broker.total_leads_handled || 0}</td>
+                        <td data-label="Experience">${broker.experience}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function populateBrokerFilter() {
+            const select = document.getElementById('brokerFilter');
+            select.innerHTML = '<option value="">All Brokers</option>';
+            
+            brokersData.forEach(broker => {
+                const option = document.createElement('option');
+                option.value = broker.broker_id;
+                option.textContent = broker.name;
+                select.appendChild(option);
+            });
+        }
+
+        function getStatusClass(status) {
+            const statusMap = {
+                'New': 'status-new',
+                'Contacted': 'status-contacted',
+                'In Progress': 'status-progress',
+                'Viewing Scheduled': 'status-progress',
+                'Offer Made': 'status-progress',
+                'Closed Won': 'status-closed-won',
+                'Closed Lost': 'status-closed-lost'
+            };
+            return statusMap[status] || 'status-new';
+        }
+
+        async function updateLeadStatus(leadId) {
+            const newStatus = prompt('Enter new status:\n- New\n- Contacted\n- In Progress\n- Viewing Scheduled\n- Offer Made\n- Closed Won\n- Closed Lost');
+            if (!newStatus) return;
+
+            const notes = prompt('Add notes (optional):') || '';
+
+            try {
+                const response = await fetch('/api/manager/update-lead-status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        lead_id: leadId,
+                        status: newStatus,
+                        notes: notes
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Lead status updated successfully!');
+                    loadLeads();
+                    loadDashboardStats();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error updating lead status: ' + error.message);
+            }
+        }
+
+        // Refresh data every 30 seconds
+        setInterval(() => {
+            loadDashboardStats();
+            loadLeads();
+        }, 30000);
+    </script>
+</body>
+</html>
