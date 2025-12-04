@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Heart, Share2, Video, Images, ArrowUp, MessageCircle, XCircle, Calculator } from 'lucide-react'
 import { PropertyListing } from '@/lib/types'
@@ -8,6 +8,7 @@ import { useSavedProperties } from '@/hooks/useSavedProperties'
 import { toast } from '@/hooks/use-toast'
 import AuthModal from '@/components/Auth/AuthModal'
 import VideoModal from '@/components/PreConItem/PreConItemBody/VideoModal'
+import { hasPricingData, hasDepositStructure, hasDocuments, hasAvailableUnits } from '@/utils/preConDataHelpers'
 
 interface Section {
   id: string;
@@ -26,17 +27,45 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
   property
 }) => {
   const { data: session } = useSession()
-  const [activeSection, setActiveSection] = useState<string>(sections[0]?.id || '');
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [isScrolledPastBanner, setIsScrolledPastBanner] = useState(false);
-  const [navigationBarHeight, setNavigationBarHeight] = useState(64);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const isScrollingRef = useRef(false);
   const navBarRef = useRef<HTMLDivElement>(null);
 
   const { checkIsSaved, saveProperty, unsaveProperty, isSaving, isUnsaving } = useSavedProperties()
   const isSaved = property ? checkIsSaved(property.mlsNumber) : false;
+
+  // Filter sections based on available data
+  const filteredSections = useMemo(() => {
+    return sections.filter(section => {
+      if (!property?.preCon) return true; // Show all sections for non-pre-con properties
+      
+      switch (section.id) {
+        case 'pricing-incentives':
+          return hasPricingData(property);
+        case 'deposit-structure':
+          return hasDepositStructure(property);
+        case 'documents':
+          return hasDocuments(property);
+        case 'available-units':
+          return hasAvailableUnits(property);
+        default:
+          return true; // Show all other sections
+      }
+    });
+  }, [sections, property]);
+
+  const [activeSection, setActiveSection] = useState<string>(filteredSections[0]?.id || '');
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [isScrolledPastBanner, setIsScrolledPastBanner] = useState(false);
+  const [navigationBarHeight, setNavigationBarHeight] = useState(64);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  // Update activeSection when filteredSections changes
+  useEffect(() => {
+    if (filteredSections.length > 0 && !filteredSections.find(s => s.id === activeSection)) {
+      setActiveSection(filteredSections[0]?.id || '');
+    }
+  }, [filteredSections, activeSection]);
 
   const handleSave = async () => {
     if (!property) return;
@@ -202,12 +231,12 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
       const viewportTop = window.scrollY + totalOffset;
       
       // Find the section that's currently at or above the viewport top
-      let activeId = sections[0]?.id || '';
-      let lastSectionAboveViewport = sections[0]?.id || '';
+      let activeId = filteredSections[0]?.id || '';
+      let lastSectionAboveViewport = filteredSections[0]?.id || '';
 
       // Check each section from bottom to top to find the first one that's above viewport
-      for (let i = sections.length - 1; i >= 0; i--) {
-        const section = sections[i];
+      for (let i = filteredSections.length - 1; i >= 0; i--) {
+        const section = filteredSections[i];
         const element = document.getElementById(section.id);
         if (!element) continue;
 
@@ -229,13 +258,13 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
       }
 
       // If no section is currently crossing the viewport top, use the last one above
-      if (activeId === sections[0]?.id && lastSectionAboveViewport !== sections[0]?.id) {
+      if (activeId === filteredSections[0]?.id && lastSectionAboveViewport !== filteredSections[0]?.id) {
         activeId = lastSectionAboveViewport;
       }
 
       // If we're at the top, use the first section
       if (window.scrollY < 100) {
-        activeId = sections[0]?.id || '';
+        activeId = filteredSections[0]?.id || '';
       }
 
       setActiveSection(activeId);
@@ -263,7 +292,7 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
       clearTimeout(timeoutId);
       window.removeEventListener('scroll', throttledHandleScroll);
     };
-  }, [sections, navigationBarHeight]);
+  }, [filteredSections, navigationBarHeight]);
 
   return (
     <div 
@@ -307,7 +336,7 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
             </div>
           )}
 
-          {sections.map((section) => (
+          {filteredSections.map((section) => (
             <Button
               key={section.id}
               variant={activeSection === section.id ? 'default' : 'ghost'}

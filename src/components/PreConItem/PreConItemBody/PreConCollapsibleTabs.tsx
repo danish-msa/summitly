@@ -14,6 +14,7 @@ import PricingIncentives from './PricingIncentives'
 import ProjectAmenities from './ProjectAmenities'
 import AvailableUnits from './AvailableUnits'
 import ProjectDocuments from './ProjectDocuments'
+import { hasPricingData, hasDepositStructure, hasDocuments, hasAvailableUnits } from '@/utils/preConDataHelpers'
 
 interface PreConCollapsibleTabsProps {
   property: PropertyListing;
@@ -26,15 +27,15 @@ interface TabSection {
 }
 
 const PreConCollapsibleTabs: React.FC<PreConCollapsibleTabsProps> = ({ property }) => {
-  // Pre-construction sections are expanded by default
+  // Pre-construction sections are expanded by default (only include sections that have data)
   const defaultExpanded = [
     'description', 
     'project-details',
-    'pricing-incentives',
-    'deposit-structure',
-    'available-units',
+    ...(hasPricingData(property) ? ['pricing-incentives'] : []),
+    ...(hasDepositStructure(property) ? ['deposit-structure'] : []),
+    ...(hasAvailableUnits(property) ? ['available-units'] : []),
     'amenities-neighborhood-lifestyle',
-    'documents',
+    ...(hasDocuments(property) ? ['documents'] : []),
     'market-analytics', 
     'calculators'
   ];
@@ -89,34 +90,34 @@ const PreConCollapsibleTabs: React.FC<PreConCollapsibleTabsProps> = ({ property 
         <ProjectDetails property={property} />
       )
     },
-    {
+    ...(hasPricingData(property) ? [{
       id: 'pricing-incentives',
       label: 'Pricing & Incentives',
       content: (
         <PricingIncentives property={property} />
       )
-    },
-    {
+    }] : []),
+    ...(hasDepositStructure(property) ? [{
       id: 'deposit-structure',
       label: 'Deposit Structure',
       content: (
         <DepositStructure property={property} />
       )
-    },
-    {
+    }] : []),
+    ...(hasDocuments(property) ? [{
       id: 'documents',
       label: 'Documents (PDFs)',
       content: (
         <ProjectDocuments property={property} />
       )
-    },
-    {
+    }] : []),
+    ...(hasAvailableUnits(property) ? [{
       id: 'available-units',
       label: 'Available Units',
       content: (
         <AvailableUnits property={property} />
       )
-    },
+    }] : []),
     {
       id: 'amenities-neighborhood-lifestyle',
       label: 'Amenities & Lifestyle',
