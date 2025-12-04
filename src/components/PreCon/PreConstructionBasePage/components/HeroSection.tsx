@@ -6,7 +6,8 @@ import { useSession } from 'next-auth/react';
 import PreConSearchBar from '@/components/common/PreConSearchBar';
 import PropertyAlertsDialog from '@/components/common/PropertyAlertsDialog';
 import { usePropertyAlerts } from '@/hooks/usePropertyAlerts';
-import type { PageType } from '../types';
+import type { PageType, TeamMemberInfo } from '../types';
+import Image from 'next/image';
 
 interface HeroSectionProps {
   heroImage: string | null;
@@ -15,6 +16,7 @@ interface HeroSectionProps {
   lastUpdatedDate: string;
   pageType: PageType;
   displayCount: string;
+  teamMemberInfo?: TeamMemberInfo | null;
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
@@ -24,8 +26,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   lastUpdatedDate,
   pageType,
   displayCount,
+  teamMemberInfo,
 }) => {
-  const imageSrc = heroImage || '/images/HeroBackImage.jpg';
+  const isDevelopmentTeamPage = ['developer', 'architect', 'interior-designer', 'builder', 'landscape-architect', 'marketing'].includes(pageType);
+  const imageSrc = heroImage || '/images/HeroBackImage-3.jpg';
   const { data: session } = useSession();
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [alertOptions, setAlertOptions] = useState<Record<string, boolean>>({
@@ -72,6 +76,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           {displayCount} Pre Construction Homes in <span className='text-secondary'>{title}</span>
         </>
       );
+    } else if (isDevelopmentTeamPage) {
+      // For development team pages, just show the name without project count
+      return (
+        <>
+          <span className='text-secondary'>{title}</span>
+        </>
+      );
     } else {
       return (
         <>
@@ -83,39 +94,58 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
   return (
     <div className="w-full relative">
-      {/* Hero Image with Overlays */}
-      <div className="w-full h-48 md:h-64 relative">
-        <div className="absolute inset-0 overflow-hidden">
-          <img 
-            src={imageSrc} 
-            alt={title}
-            className="w-full h-full object-cover"
-          />
+      {/* Hero Image with Overlays - Only show background if not a development team page */}
+      {!isDevelopmentTeamPage && (
+        <div className="w-full h-48 md:h-64 relative">
+          <div className="absolute inset-0 overflow-hidden">
+            <img 
+              src={imageSrc} 
+              alt={title}
+              className="w-full h-full object-cover"
+            />
+          </div>
         </div>
-        {/* <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" /> */}
-        
-        {/* Content Overlay - Two Column Layout */}
-        <div className="absolute inset-0 flex items-center px-4 py-6 md:py-8 z-10">
-          <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 w-full ">
+      )}
+      
+      {/* Content Section - Two Column Layout */}
+      <div className={`w-full ${isDevelopmentTeamPage ? 'bg-card py-8 md:py-12' : 'absolute inset-0 flex items-center'} px-4 z-10`}>
+          <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 w-full">
             {/* Breadcrumb Navigation */}
             <div className="mb-4 relative z-20">
-              <nav className="flex items-center gap-2 text-sm text-white/90 drop-shadow-md" aria-label="Breadcrumb">
+              <nav className={`flex items-center gap-2 text-sm ${isDevelopmentTeamPage ? 'text-foreground' : 'text-white/90 drop-shadow-md'}`} aria-label="Breadcrumb">
                 <Link 
                   href="/pre-construction" 
-                  className="text-primary transition-colors font-medium"
+                  className={`${isDevelopmentTeamPage ? 'text-primary hover:text-primary/80' : 'text-primary'} transition-colors font-medium`}
                 >
                   Pre-Construction
                 </Link>
-                <ChevronRight className="h-4 w-4 text-primary" />
-                <span className="text-primary font-medium">{title}</span>
+                <ChevronRight className={`h-4 w-4 ${isDevelopmentTeamPage ? 'text-foreground' : 'text-primary'}`} />
+                <span className={`${isDevelopmentTeamPage ? 'text-foreground' : 'text-primary'} font-medium`}>{title}</span>
               </nav>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
               {/* Left Column: Title and Search Bar */}
               <div className="space-y-4 relative z-20">
-                <h1 className="text-2xl md:text-3xl font-bold drop-shadow-lg">
-                  {buildHeading()}
-                </h1>
+                {isDevelopmentTeamPage && teamMemberInfo?.image ? (
+                  <div className="space-y-4">
+                    <div className="relative w-full max-w-xs h-20 md:h-20">
+                      <Image
+                        src={teamMemberInfo.image}
+                        alt={title}
+                        fill
+                        className="object-contain"
+                        sizes="(max-width: 768px) 100vw, 400px"
+                      />
+                    </div>
+                    <h1 className={`text-2xl md:text-3xl font-bold ${isDevelopmentTeamPage ? 'text-foreground' : 'drop-shadow-lg'}`}>
+                      {buildHeading()}
+                    </h1>
+                  </div>
+                ) : (
+                  <h1 className="text-2xl md:text-3xl font-bold drop-shadow-lg">
+                    {buildHeading()}
+                  </h1>
+                )}
                 
                 {/* Search Bar - Positioned below title, self-contained styling */}
                 <div className="w-full relative z-30">
@@ -143,7 +173,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             </div>
           </div>
         </div>
-      </div>
 
       {/* Additional Content Section (if customContent exists) */}
       {customContent && (

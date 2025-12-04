@@ -19,15 +19,17 @@ interface UsePreConProjectsDataProps {
   slug: string;
   pageType: PageType;
   filters: FilterState;
+  teamType?: string; // For development team pages: 'developer', 'architect', etc.
 }
 
-export const usePreConProjectsData = ({ slug, pageType, filters }: UsePreConProjectsDataProps) => {
+export const usePreConProjectsData = ({ slug, pageType, filters, teamType }: UsePreConProjectsDataProps) => {
   const [projects, setProjects] = useState<PropertyListing[]>([]);
   const [allProjects, setAllProjects] = useState<PropertyListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageInfo, setPageInfo] = useState<PageInfo | null>(null);
   const [pageContent, setPageContent] = useState<PageContent | null>(null);
   const [communities, setCommunities] = useState<string[]>([]);
+  const [teamMemberInfo, setTeamMemberInfo] = useState<any>(null);
 
   // Helper to get pageValue from slug based on pageType
   const getPageValue = useMemo(() => {
@@ -39,6 +41,9 @@ export const usePreConProjectsData = ({ slug, pageType, filters }: UsePreConProj
       return slugToPropertyType(slug);
     } else if (pageType === 'completionYear') {
       return slug;
+    } else if (['developer', 'architect', 'interior-designer', 'builder', 'landscape-architect', 'marketing'].includes(pageType)) {
+      // For development team pages, convert slug to name
+      return slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
     }
     return null;
   }, [slug, pageType]);
@@ -61,6 +66,10 @@ export const usePreConProjectsData = ({ slug, pageType, filters }: UsePreConProj
       }
     } else if (pageType === 'completionYear') {
       return `/api/pre-con-projects?completionYear=${encodeURIComponent(slug)}`;
+    } else if (['developer', 'architect', 'interior-designer', 'builder', 'landscape-architect', 'marketing'].includes(pageType)) {
+      // For development team pages, fetch by developer name
+      const developerName = slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+      return `/api/pre-con-projects?developer=${encodeURIComponent(developerName)}`;
     }
     return '';
   }, [slug, pageType]);
@@ -138,6 +147,50 @@ export const usePreConProjectsData = ({ slug, pageType, filters }: UsePreConProj
         } else if (pageType === 'completionYear') {
           title = `${slug} Completion Pre-Construction Projects`;
           description = `Discover pre-construction projects completing in ${slug}. Explore upcoming developments, pricing, and availability for projects expected to be ready in ${slug}.`;
+        } else if (['developer', 'architect', 'interior-designer', 'builder', 'landscape-architect', 'marketing'].includes(pageType)) {
+          // For development team pages, fetch team member info
+          const developerName = slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+          try {
+            const teamResponse = await fetch(`/api/development-team/${teamType || pageType}/${slug}`);
+            if (teamResponse.ok) {
+              const teamData = await teamResponse.json();
+              const teamMember = teamData.teamMember;
+              if (teamMember) {
+                // Store team member info for use in HeroSection
+                setTeamMemberInfo({
+                  id: teamMember.id,
+                  name: teamMember.name,
+                  image: teamMember.image,
+                  description: teamMember.description,
+                  website: teamMember.website,
+                  email: teamMember.email,
+                  phone: teamMember.phone,
+                });
+                
+                const typeLabels: Record<string, string> = {
+                  'developer': 'Developer',
+                  'architect': 'Architect',
+                  'interior-designer': 'Interior Designer',
+                  'builder': 'Builder',
+                  'landscape-architect': 'Landscape Architect',
+                  'marketing': 'Marketing',
+                };
+                const typeLabel = typeLabels[pageType] || 'Development Team Member';
+                title = teamMember.name;
+                description = teamMember.description || `Explore pre-construction projects by ${teamMember.name}, a leading ${typeLabel.toLowerCase()} in the industry.`;
+              } else {
+                title = developerName;
+                description = `Explore pre-construction projects by ${developerName}.`;
+              }
+            } else {
+              title = developerName;
+              description = `Explore pre-construction projects by ${developerName}.`;
+            }
+          } catch (error) {
+            console.error('Error fetching team member info:', error);
+            title = developerName;
+            description = `Explore pre-construction projects by ${developerName}.`;
+          }
         }
 
         setPageInfo({
@@ -169,7 +222,7 @@ export const usePreConProjectsData = ({ slug, pageType, filters }: UsePreConProj
     if (slug && buildApiQuery) {
       loadData();
     }
-  }, [slug, buildApiQuery, pageType]);
+  }, [slug, buildApiQuery, pageType, teamType]);
 
   // Filter projects based on filter state
   useEffect(() => {
@@ -243,6 +296,7 @@ export const usePreConProjectsData = ({ slug, pageType, filters }: UsePreConProj
     communities,
     preConProjects,
     mapProperties,
+    teamMemberInfo,
   };
 };
 

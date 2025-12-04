@@ -55,6 +55,23 @@ interface FilterData {
   cities: string[];
 }
 
+interface DevelopmentTeamMember {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image: string | null;
+  projectCount: number;
+  url: string;
+}
+
+interface DevelopmentTeamGroup {
+  type: string;
+  typeLabel: string;
+  typeUrl: string;
+  members: DevelopmentTeamMember[];
+}
+
 const mainCategories: CategoryItem[] = [
   {
     id: 'property-type',
@@ -78,8 +95,8 @@ const mainCategories: CategoryItem[] = [
   },
   {
     id: 'developer',
-    title: 'Developer',
-    description: 'Explore by builder'
+    title: 'Development Team',
+    description: 'Explore by team member'
   }
 ];
 
@@ -117,7 +134,7 @@ const getCategoryTitle = (category: CategoryType): string => {
     'top-cities': 'Explore Top Cities',
     'occupancy-year': 'Select Occupancy Year',
     'selling-status': 'Filter by Status',
-    'developer': 'Top Developers'
+    'developer': 'Development Team'
   };
   return titles[category];
 };
@@ -128,7 +145,7 @@ const getCategoryDescription = (category: CategoryType): string => {
     'top-cities': 'Discover pre-construction projects in the most popular cities across Canada.',
     'occupancy-year': 'Plan ahead with projects organized by their expected completion dates.',
     'selling-status': 'Discover opportunities from platinum access to resale properties.',
-    'developer': 'Explore projects from the most trusted builders in the market.'
+    'developer': 'Explore projects from developers, architects, builders, and other team members.'
   };
   return descriptions[category];
 };
@@ -144,7 +161,8 @@ const slugifyCityName = (cityName: string): string => {
 const getContentForCategory = (
   category: CategoryType, 
   developers: string[],
-  cities: string[] = []
+  cities: string[] = [],
+  developmentTeams: DevelopmentTeamGroup[] = []
 ): ContentItem[] => {
   switch (category) {
     case 'property-type': 
@@ -162,13 +180,16 @@ const getContentForCategory = (
     case 'selling-status': 
       return sellingStatuses;
     case 'developer': 
-      return developers.map((dev) => ({
-        id: dev.toLowerCase().replace(/\s+/g, '-'),
-        label: dev,
-        description: `View all projects by ${dev}`,
-        href: `/pre-construction?developer=${encodeURIComponent(dev)}`,
-        icon: Users
-      }));
+      // Flatten all development team members from all groups
+      return developmentTeams.flatMap((group) =>
+        group.members.map((member) => ({
+          id: member.slug,
+          label: member.name,
+          description: member.description || `View all projects by ${member.name}`,
+          href: member.url,
+          icon: Users
+        }))
+      );
     default: 
       return propertyTypes;
   }
@@ -191,6 +212,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
     occupancyYears: [],
     cities: [],
   });
+  const [developmentTeams, setDevelopmentTeams] = useState<DevelopmentTeamGroup[]>([]);
   const [loading, setLoading] = useState(false);
   const [dataFetched, setDataFetched] = useState(false);
 
@@ -205,15 +227,52 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
     }
   }, [mounted, dataFetched]);
 
+  // Also fetch when menu opens if data hasn't been fetched yet
+  useEffect(() => {
+    if (isOpen && mounted && !dataFetched && !loading) {
+      console.log('Menu opened, fetching data...');
+      fetchFilterData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, mounted, dataFetched, loading]);
+
   const fetchFilterData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/pre-con-projects/filters');
-      if (response.ok) {
-        const data = await response.json();
-        setFilterData(data);
-        setDataFetched(true);
+      // Fetch filter data
+      const filterResponse = await fetch('/api/pre-con-projects/filters');
+      if (filterResponse.ok) {
+        const filterData = await filterResponse.json();
+        setFilterData(filterData);
       }
+      
+      // Fetch development teams
+      console.log('Fetching development teams from API...');
+      const teamsResponse = await fetch('/api/development-team');
+      console.log('Teams response status:', teamsResponse.status);
+      
+      if (teamsResponse.ok) {
+        const teamsData = await teamsResponse.json();
+        console.log('Development teams data received:', teamsData); // Debug log
+        console.log('Teams array:', teamsData.teams);
+        console.log('Teams array length:', teamsData.teams?.length);
+        
+        if (teamsData.teams && Array.isArray(teamsData.teams)) {
+          console.log(`Setting ${teamsData.teams.length} team groups`);
+          setDevelopmentTeams(teamsData.teams);
+        } else {
+          console.warn('Invalid teams data format:', teamsData);
+          console.warn('Expected teams array but got:', typeof teamsData.teams);
+          setDevelopmentTeams([]);
+        }
+      } else {
+        const errorText = await teamsResponse.text().catch(() => 'Unknown error');
+        console.error('Failed to fetch development teams:', teamsResponse.status, teamsResponse.statusText);
+        console.error('Error response:', errorText);
+        setDevelopmentTeams([]);
+      }
+      
+      setDataFetched(true);
     } catch (error) {
       console.error('Error fetching filter data:', error);
     } finally {
@@ -232,7 +291,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
     ? getBlogPosts({ search: 'construction' }).slice(0, 2)
     : preConBlogs;
 
-  const contentItems = getContentForCategory(activeCategory, filterData.developers, filterData.cities);
+  const contentItems = getContentForCategory(activeCategory, filterData.developers, filterData.cities, developmentTeams);
 
   const menuContent = (
     <AnimatePresence>
@@ -302,55 +361,262 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                     <h4 className="text-sm font-medium text-muted-foreground mb-4">
                       {getCategoryTitle(activeCategory)}
                     </h4>
-                    <div className="grid grid-cols-2 gap-1">
-                      {contentItems.slice(0, 10).map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <Link
-                            key={item.id}
-                            href={item.href}
-                            className={cn(
-                              "flex items-start gap-3 p-3 rounded-lg transition-all duration-200",
-                              hoveredItem === item.id 
-                                ? "bg-secondary/10" 
-                                : "hover:bg-muted/50"
-                            )}
-                            onMouseEnter={() => setHoveredItem(item.id)}
-                            onMouseLeave={() => setHoveredItem(null)}
-                          >
-                            <div className={cn(
-                              "w-10 h-10 rounded-lg flex items-center justify-center transition-colors flex-shrink-0",
-                              hoveredItem === item.id 
-                                ? "bg-primary/20" 
-                                : "bg-secondary/20"
-                            )}>
-                              <Icon className={cn(
-                                "w-5 h-5 transition-colors",
-                                hoveredItem === item.id ? "text-primary" : "text-muted-foreground"
-                              )} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h5 className={cn(
-                                "text-sm font-semibold transition-colors",
-                                hoveredItem === item.id ? "text-primary" : "text-foreground"
+                    {activeCategory === 'developer' ? (
+                      developmentTeams.length > 0 ? (
+                        <div className="space-y-4">
+                          {(() => {
+                            // Separate groups into Developers, Architects, and Others
+                            const developersGroup = developmentTeams.find(g => g.type === 'DEVELOPER');
+                            const architectsGroup = developmentTeams.find(g => g.type === 'ARCHITECT');
+                            const othersGroups = developmentTeams.filter(g => 
+                              !['DEVELOPER', 'ARCHITECT'].includes(g.type)
+                            );
+                            
+                            // Combine all "others" into one group
+                            const combinedOthers = othersGroups.flatMap(g => g.members);
+                            
+                            return (
+                              <>
+                                {/* Developers Section */}
+                                {developersGroup && developersGroup.members.length > 0 && (
+                                  <div className="space-y-2">
+                                    <h5 className="text-xs font-semibold text-foreground uppercase tracking-wide">
+                                      {developersGroup.typeLabel}
+                                    </h5>
+                                    <div className="grid grid-cols-2 gap-1">
+                                      {developersGroup.members.slice(0, 4).map((member) => (
+                                        <Link
+                                          key={member.id}
+                                          href={member.url}
+                                          className={cn(
+                                            "flex items-start gap-3 p-3 rounded-lg transition-all duration-200",
+                                            hoveredItem === member.id 
+                                              ? "bg-secondary/10" 
+                                              : "hover:bg-muted/50"
+                                          )}
+                                          onMouseEnter={() => setHoveredItem(member.id)}
+                                          onMouseLeave={() => setHoveredItem(null)}
+                                        >
+                                          <div className={cn(
+                                            "w-10 h-10 rounded-lg flex items-center justify-center transition-colors flex-shrink-0",
+                                            hoveredItem === member.id 
+                                              ? "bg-primary/20" 
+                                              : "bg-secondary/20"
+                                          )}>
+                                            <Users className={cn(
+                                              "w-5 h-5 transition-colors",
+                                              hoveredItem === member.id ? "text-primary" : "text-muted-foreground"
+                                            )} />
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                            <h5 className={cn(
+                                              "text-sm font-semibold transition-colors",
+                                              hoveredItem === member.id ? "text-primary" : "text-foreground"
+                                            )}>
+                                              {member.name}
+                                            </h5>
+                                            <p className="text-xs text-muted-foreground line-clamp-1">
+                                              {member.description || `${member.projectCount} project${member.projectCount !== 1 ? 's' : ''}`}
+                                            </p>
+                                          </div>
+                                        </Link>
+                                      ))}
+                                    </div>
+                                    {developersGroup.members.length > 4 && (
+                                      <Link
+                                        href="/developer"
+                                        className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-primary hover:underline"
+                                      >
+                                        View all developers
+                                        <ArrowUpRight className="w-3 h-3" />
+                                      </Link>
+                                    )}
+                                  </div>
+                                )}
+                                
+                                {/* Architects Section */}
+                                {architectsGroup && architectsGroup.members.length > 0 && (
+                                  <div className="space-y-2">
+                                    <h5 className="text-xs font-semibold text-foreground uppercase tracking-wide">
+                                      {architectsGroup.typeLabel}
+                                    </h5>
+                                    <div className="grid grid-cols-2 gap-1">
+                                      {architectsGroup.members.slice(0, 4).map((member) => (
+                                        <Link
+                                          key={member.id}
+                                          href={member.url}
+                                          className={cn(
+                                            "flex items-start gap-3 p-3 rounded-lg transition-all duration-200",
+                                            hoveredItem === member.id 
+                                              ? "bg-secondary/10" 
+                                              : "hover:bg-muted/50"
+                                          )}
+                                          onMouseEnter={() => setHoveredItem(member.id)}
+                                          onMouseLeave={() => setHoveredItem(null)}
+                                        >
+                                          <div className={cn(
+                                            "w-10 h-10 rounded-lg flex items-center justify-center transition-colors flex-shrink-0",
+                                            hoveredItem === member.id 
+                                              ? "bg-primary/20" 
+                                              : "bg-secondary/20"
+                                          )}>
+                                            <Users className={cn(
+                                              "w-5 h-5 transition-colors",
+                                              hoveredItem === member.id ? "text-primary" : "text-muted-foreground"
+                                            )} />
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                            <h5 className={cn(
+                                              "text-sm font-semibold transition-colors",
+                                              hoveredItem === member.id ? "text-primary" : "text-foreground"
+                                            )}>
+                                              {member.name}
+                                            </h5>
+                                            <p className="text-xs text-muted-foreground line-clamp-1">
+                                              {member.description || `${member.projectCount} project${member.projectCount !== 1 ? 's' : ''}`}
+                                            </p>
+                                          </div>
+                                        </Link>
+                                      ))}
+                                    </div>
+                                    {architectsGroup.members.length > 4 && (
+                                      <Link
+                                        href="/architect"
+                                        className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-primary hover:underline"
+                                      >
+                                        View all architects
+                                        <ArrowUpRight className="w-3 h-3" />
+                                      </Link>
+                                    )}
+                                  </div>
+                                )}
+                                
+                                {/* Others Section */}
+                                {combinedOthers.length > 0 && (
+                                  <div className="space-y-2">
+                                    <h5 className="text-xs font-semibold text-foreground uppercase tracking-wide">
+                                      Others
+                                    </h5>
+                                    <div className="grid grid-cols-2 gap-1">
+                                      {combinedOthers.slice(0, 4).map((member) => {
+                                        // Find the group this member belongs to for the URL
+                                        const memberGroup = othersGroups.find(g => 
+                                          g.members.some(m => m.id === member.id)
+                                        );
+                                        return (
+                                          <Link
+                                            key={member.id}
+                                            href={member.url}
+                                            className={cn(
+                                              "flex items-start gap-3 p-3 rounded-lg transition-all duration-200",
+                                              hoveredItem === member.id 
+                                                ? "bg-secondary/10" 
+                                                : "hover:bg-muted/50"
+                                            )}
+                                            onMouseEnter={() => setHoveredItem(member.id)}
+                                            onMouseLeave={() => setHoveredItem(null)}
+                                          >
+                                            <div className={cn(
+                                              "w-10 h-10 rounded-lg flex items-center justify-center transition-colors flex-shrink-0",
+                                              hoveredItem === member.id 
+                                                ? "bg-primary/20" 
+                                                : "bg-secondary/20"
+                                            )}>
+                                              <Users className={cn(
+                                                "w-5 h-5 transition-colors",
+                                                hoveredItem === member.id ? "text-primary" : "text-muted-foreground"
+                                              )} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                              <h5 className={cn(
+                                                "text-sm font-semibold transition-colors",
+                                                hoveredItem === member.id ? "text-primary" : "text-foreground"
+                                              )}>
+                                                {member.name}
+                                              </h5>
+                                              <p className="text-xs text-muted-foreground line-clamp-1">
+                                                {member.description || `${member.projectCount} project${member.projectCount !== 1 ? 's' : ''}`}
+                                              </p>
+                                            </div>
+                                          </Link>
+                                        );
+                                      })}
+                                    </div>
+                                    {combinedOthers.length > 4 && (
+                                      <Link
+                                        href="/pre-construction/projects"
+                                        className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-primary hover:underline"
+                                      >
+                                        View all others
+                                        <ArrowUpRight className="w-3 h-3" />
+                                      </Link>
+                                    )}
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <p className="text-sm text-muted-foreground">
+                            {loading ? 'Loading development teams...' : 'No development teams found.'}
+                          </p>
+                        </div>
+                      )
+                    ) : (
+                      <div className="grid grid-cols-2 gap-1">
+                        {contentItems.slice(0, 10).map((item) => {
+                          const Icon = item.icon;
+                          return (
+                            <Link
+                              key={item.id}
+                              href={item.href}
+                              className={cn(
+                                "flex items-start gap-3 p-3 rounded-lg transition-all duration-200",
+                                hoveredItem === item.id 
+                                  ? "bg-secondary/10" 
+                                  : "hover:bg-muted/50"
+                              )}
+                              onMouseEnter={() => setHoveredItem(item.id)}
+                              onMouseLeave={() => setHoveredItem(null)}
+                            >
+                              <div className={cn(
+                                "w-10 h-10 rounded-lg flex items-center justify-center transition-colors flex-shrink-0",
+                                hoveredItem === item.id 
+                                  ? "bg-primary/20" 
+                                  : "bg-secondary/20"
                               )}>
-                                {item.label}
-                              </h5>
-                              <p className="text-xs text-muted-foreground line-clamp-1">
-                                {item.description}
-                              </p>
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                    <Link
-                      href="/pre-construction/projects"
-                      className="inline-flex items-center gap-1 mt-4 text-xs font-semibold text-primary hover:underline"
-                    >
-                      View all {activeCategory === 'top-cities' ? 'cities' : activeCategory.replace('-', ' ')}
-                      <ArrowUpRight className="w-3 h-3" />
-                    </Link>
+                                <Icon className={cn(
+                                  "w-5 h-5 transition-colors",
+                                  hoveredItem === item.id ? "text-primary" : "text-muted-foreground"
+                                )} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h5 className={cn(
+                                  "text-sm font-semibold transition-colors",
+                                  hoveredItem === item.id ? "text-primary" : "text-foreground"
+                                )}>
+                                  {item.label}
+                                </h5>
+                                <p className="text-xs text-muted-foreground line-clamp-1">
+                                  {item.description}
+                                </p>
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {activeCategory !== 'developer' && (
+                      <Link
+                        href="/pre-construction/projects"
+                        className="inline-flex items-center gap-1 mt-4 text-xs font-semibold text-primary hover:underline"
+                      >
+                        View all {activeCategory === 'top-cities' ? 'cities' : activeCategory.replace('-', ' ')}
+                        <ArrowUpRight className="w-3 h-3" />
+                      </Link>
+                    )}
                   </motion.div>
                 </AnimatePresence>
               </div>

@@ -1,8 +1,9 @@
-export type PageType = 'by-location' | 'status' | 'propertyType' | 'subPropertyType' | 'completionYear';
+export type PageType = 'by-location' | 'status' | 'propertyType' | 'subPropertyType' | 'completionYear' | 'developer' | 'architect' | 'interior-designer' | 'builder' | 'landscape-architect' | 'marketing';
 
 export interface PreConstructionBasePageProps {
   slug: string;
   pageType: PageType;
+  teamType?: string; // For development team pages: 'developer', 'architect', etc.
 }
 
 export interface PageContent {
@@ -24,5 +25,15 @@ export interface PageInfo {
   numberOfProjects: number;
   province?: string;
   description?: string;
+}
+
+export interface TeamMemberInfo {
+  id: string;
+  name: string;
+  image: string | null;
+  description: string | null;
+  website: string | null;
+  email: string | null;
+  phone: string | null;
 }
 

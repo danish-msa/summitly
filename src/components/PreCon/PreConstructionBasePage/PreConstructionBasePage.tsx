@@ -18,7 +18,7 @@ import { BlogSectionWrapper } from './components/BlogSectionWrapper';
 import { FAQSection } from './components/FAQSection';
 import { PreConContactSection } from './components/ContactSection';
 
-const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({ slug, pageType }) => {
+const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({ slug, pageType, teamType }) => {
   const [viewMode, setViewMode] = useState<'list' | 'mixed' | 'map'>('list');
   const [selectedProject, setSelectedProject] = useState<PreConstructionProperty | null>(null);
   
@@ -33,7 +33,8 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({ slug,
     communities,
     preConProjects,
     mapProperties,
-  } = usePreConProjectsData({ slug, pageType, filters });
+    teamMemberInfo,
+  } = usePreConProjectsData({ slug, pageType, filters, teamType });
 
   // Find selected property for map
   const selectedPropertyForMap = useMemo(() => {
@@ -101,15 +102,16 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({ slug,
   };
 
   return (
-    <div className="min-h-screen pt-10">
+    <div className="min-h-screen pt-16">
       {/* Hero Section with Header */}
       <HeroSection
-        heroImage={pageContent?.heroImage || null}
+        heroImage={pageContent?.heroImage || teamMemberInfo?.image || null}
         title={displayTitle}
         customContent={pageContent?.customContent || null}
         lastUpdatedDate={lastUpdatedDate}
         pageType={pageType}
         displayCount={displayCount}
+        teamMemberInfo={teamMemberInfo}
       />
 
       {/* Main Content */}
