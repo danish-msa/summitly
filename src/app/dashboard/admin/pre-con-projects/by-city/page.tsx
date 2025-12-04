@@ -8,7 +8,7 @@ import { DataTable, Column } from "@/components/Dashboard/DataTable"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Edit, Search, Plus } from "lucide-react"
+import { Edit, Search } from "lucide-react"
 import { isAdmin } from "@/lib/roles"
 import { preConCityProjectsData } from "@/components/PreCon/PreConCityProperties/preConCityProjectsData"
 

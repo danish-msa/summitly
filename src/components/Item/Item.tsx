@@ -225,6 +225,7 @@ const Item: React.FC = () => {
       setLoading(false);
       setError('Invalid URL');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cityName, propertyAddress, propertyId, router]);
 
   if (loading) {

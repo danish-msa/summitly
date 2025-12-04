@@ -6,7 +6,7 @@ import { UnitListing } from '@/lib/types/units'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Bed, Bath, Maximize2, Eye } from 'lucide-react'
+import { Bed, Bath, Maximize2 } from 'lucide-react'
 import Link from 'next/link'
 import ForSaleSoldOutToggle from './ForSaleSoldOutToggle'
 import PriceFilter from '@/components/common/filters/PriceFilter'
@@ -82,6 +82,7 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
       console.log('AvailableUnits: No units found in property.preCon.units');
       console.log('AvailableUnits: preCon object:', preCon);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [units, preCon]);
 
   const filteredAndSortedUnits = useMemo(() => {
@@ -148,6 +149,7 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
     });
 
     return sorted;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, sortBy, bedrooms, minPrice, maxPrice, minSquareFeet, maxSquareFeet, units]);
 
   // Handle price filter change

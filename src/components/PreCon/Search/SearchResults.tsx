@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Building2, MapPin, DollarSign, Calendar, ArrowRight } from 'lucide-react';
+import { Building2, MapPin, DollarSign, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface SearchResult {

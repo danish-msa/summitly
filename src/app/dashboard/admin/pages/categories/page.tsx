@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Plus, Search, Edit, Trash2, ArrowLeft, Save, X } from "lucide-react"
+import { Plus, Search, Edit, Trash2, ArrowLeft, Save } from "lucide-react"
 import { isAdmin } from "@/lib/roles"
 import { slugify } from "@/lib/utils/propertyUrl"
 import { toast } from "@/hooks/use-toast"
@@ -62,6 +62,7 @@ export default function CategoriesPage() {
       }
       fetchCategories()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, session, router])
 
   const fetchCategories = async () => {
@@ -92,6 +93,7 @@ export default function CategoriesPage() {
     if (status === "authenticated") {
       fetchCategories()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, status])
 
   const handleNameChange = (value: string) => {

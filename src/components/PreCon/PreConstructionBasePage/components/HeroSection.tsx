@@ -23,7 +23,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   heroImage,
   title,
   customContent,
-  lastUpdatedDate,
+  lastUpdatedDate: _lastUpdatedDate,
   pageType,
   displayCount,
   teamMemberInfo,

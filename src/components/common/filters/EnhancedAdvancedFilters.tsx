@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Filter, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { FilterState } from '@/lib/types/filters';
@@ -116,7 +115,7 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
   onFilterChange,
   onApplyFilters,
   onResetAdvanced,
-  isPreCon = false,
+  isPreCon: _isPreCon = false,
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);

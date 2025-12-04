@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 
-import { CheckCircle2, DollarSign, TrendingUp, Star, Bed, Calculator, Car, Package, FileText, Wrench, Home, ChevronRight } from "lucide-react"
+import { CheckCircle2, DollarSign, TrendingUp, Star, Bed, Calculator, Car, Package, FileText, Home, ChevronRight } from "lucide-react"
 
 import { PropertyListing } from '@/lib/types'
 import RequestFurtherInfoModal from './RequestFurtherInfoModal'

@@ -192,6 +192,7 @@ const Map: React.FC<MapProps> = ({
     } finally {
       setIsLoadingListings(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zoom]);
 
   // Fetch listings when map loads or center changes

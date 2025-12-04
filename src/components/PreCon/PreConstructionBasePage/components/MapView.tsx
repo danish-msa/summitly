@@ -22,7 +22,7 @@ export const MapView: React.FC<MapViewProps> = ({
   viewMode,
   mapProperties,
   selectedProperty,
-  selectedProject,
+  selectedProject: _selectedProject,
   onPropertySelect,
   preConProjects,
   onProjectSelect,

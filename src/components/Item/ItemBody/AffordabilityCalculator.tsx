@@ -43,6 +43,7 @@ const AffordabilityCalculator = ({ propertyPrice = 1999000 }: AffordabilityCalcu
 
   useEffect(() => {
     calculateAffordability();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   const calculateAffordability = () => {

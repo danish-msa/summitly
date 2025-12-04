@@ -1,6 +1,5 @@
 import React from 'react'
-import { Building2, Palette, Hammer, Sprout, Megaphone, LucideIcon } from 'lucide-react'
-import { PropertyListing } from '@/lib/types'
+import { LucideIcon } from 'lucide-react'
 
 interface TeamMemberStats {
   totalProjects: number

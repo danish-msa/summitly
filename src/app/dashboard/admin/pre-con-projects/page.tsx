@@ -20,7 +20,6 @@ import {
 import { Plus, Search, Edit, Trash2, Building2, TrendingUp, Package, MapPin, CheckCircle2, Star, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import { isAdmin } from "@/lib/roles"
 import { Badge } from "@/components/ui/badge"
-import { formatCurrency } from "@/lib/utils"
 
 interface PreConProject {
   id: string

@@ -9,7 +9,6 @@ import { ActionButton } from "@/components/Dashboard/ActionButton"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -17,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Plus, Search, Edit, Trash2, FileText, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
+import { Plus, Search, Edit, Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import { isAdmin } from "@/lib/roles"
 import { Badge } from "@/components/ui/badge"
 
@@ -56,7 +55,7 @@ export default function PagesPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [pages, setPages] = useState<Page[]>([])
-  const { loading, error, setError, fetchData } = useBackgroundFetch()
+  const { loading, fetchData } = useBackgroundFetch()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [categoryFilter, setCategoryFilter] = useState("all")
@@ -66,7 +65,7 @@ export default function PagesPage() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
-  const [limit, setLimit] = useState(10)
+  const [limit] = useState(10)
   const [sortBy, setSortBy] = useState<string>("createdAt")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)

@@ -35,17 +35,6 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({ property }) => {
     return acc;
   }, {} as Record<string, Document[]>);
 
-  const typeLabels: Record<string, string> = {
-    brochure: 'Brochures',
-    floorplan: 'Floor Plans',
-    specification: 'Specifications',
-    contract: 'Contracts & Agreements',
-    other: 'Other Documents'
-  };
-
-  const getTypeIcon = () => {
-    return <FileText className="h-5 w-5" />;
-  };
 
   const handleDownload = (url: string) => {
     // Open in new tab for download

@@ -3,11 +3,32 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import PreConstructionBasePage from '@/components/PreCon/PreConstructionBasePage';
+
+interface DevelopmentTeamMember {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image: string | null;
+  projectCount: number;
+  url: string;
+}
+
+interface DevelopmentTeamGroup {
+  type: string;
+  typeLabel: string;
+  typeUrl: string;
+  members: DevelopmentTeamMember[];
+}
+
+interface DevelopmentTeamResponse {
+  teams: DevelopmentTeamGroup[];
+  total: number;
+}
 
 const AllDevelopersPage: React.FC = () => {
   const router = useRouter();
-  const [developers, setDevelopers] = useState<any[]>([]);
+  const [developers, setDevelopers] = useState<DevelopmentTeamMember[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -15,8 +36,8 @@ const AllDevelopersPage: React.FC = () => {
       try {
         const response = await fetch('/api/development-team');
         if (response.ok) {
-          const data = await response.json();
-          const developersGroup = data.teams?.find((t: any) => t.type === 'DEVELOPER');
+          const data = await response.json() as DevelopmentTeamResponse;
+          const developersGroup = data.teams?.find((t) => t.type === 'DEVELOPER');
           if (developersGroup) {
             setDevelopers(developersGroup.members || []);
           }

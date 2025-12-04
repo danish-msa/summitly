@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
           try {
             await prisma.$disconnect()
             await prisma.$connect()
-          } catch (reconnectError) {
+          } catch (_reconnectError) {
             console.warn('Reconnection attempt failed, will retry query')
           }
         } else {

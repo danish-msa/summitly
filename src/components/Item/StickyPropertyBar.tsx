@@ -52,13 +52,8 @@ const extractYear = (dateString: string): string | null => {
   return yearMatch ? yearMatch[0] : null;
 };
 
-// Helper function to slugify city name
-const slugifyCity = (city: string): string => {
-  return city.toLowerCase().replace(/\s+/g, '-');
-};
-
 // Helper function to convert status to slug
-const getStatusSlug = (status: string): string => {
+const _getStatusSlug = (status: string): string => {
   const statusMap: Record<string, string> = {
     'now-selling': 'selling',
     'selling': 'selling',

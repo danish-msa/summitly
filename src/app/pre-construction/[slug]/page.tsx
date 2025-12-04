@@ -120,6 +120,7 @@ const PreConstructionPage: React.FC = () => {
     if (slug) {
       determinePageType();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, knownCitySlugs]);
 
   // Show loading state

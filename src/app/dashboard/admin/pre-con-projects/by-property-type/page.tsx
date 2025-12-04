@@ -7,9 +7,8 @@ import { useBackgroundFetch } from "@/hooks/useBackgroundFetch"
 import { DataTable, Column } from "@/components/Dashboard/DataTable"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Building2, Edit, Plus, Search } from "lucide-react"
+import { Edit, Search } from "lucide-react"
 import { isAdmin } from "@/lib/roles"
 
 interface PageContent {

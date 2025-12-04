@@ -39,7 +39,7 @@ export async function GET(
     const slugName = slug.replace(/-/g, ' ')
 
     // Find development team member by type and name (try both formats)
-    let teamMember = await prisma.developmentTeam.findFirst({
+    const teamMember = await prisma.developmentTeam.findFirst({
       where: {
         type: developerType,
         OR: [

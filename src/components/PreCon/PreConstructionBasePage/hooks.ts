@@ -29,7 +29,15 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType }: Use
   const [pageInfo, setPageInfo] = useState<PageInfo | null>(null);
   const [pageContent, setPageContent] = useState<PageContent | null>(null);
   const [communities, setCommunities] = useState<string[]>([]);
-  const [teamMemberInfo, setTeamMemberInfo] = useState<any>(null);
+  const [teamMemberInfo, setTeamMemberInfo] = useState<{
+    id: string;
+    name: string;
+    image: string | null;
+    description: string | null;
+    website: string | null;
+    email: string | null;
+    phone: string | null;
+  } | null>(null);
 
   // Helper to get pageValue from slug based on pageType
   const getPageValue = useMemo(() => {

@@ -52,7 +52,6 @@ import {
   Minus,
   CheckSquare,
   Type,
-  Palette,
   Highlighter,
   Subscript as SubscriptIcon,
   Superscript as SuperscriptIcon,

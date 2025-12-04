@@ -197,6 +197,7 @@ const FindRealtor: React.FC<FindRealtorProps> = ({ initialUserType }) => {
     if (formData.location !== searchTerm) {
       setSearchTerm(formData.location);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.location]);
 
   // Render current step

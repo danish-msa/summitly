@@ -134,7 +134,7 @@ const Nav = ({ openNav }: Props) => {
   useEffect(() => {
     if (isPropertyPage) return; // Disable sticky behavior on property pages
     
-    let lastScrollY = window.scrollY;
+    const _lastScrollY = window.scrollY;
     let ticking = false;
 
     const controlNavbar = () => {

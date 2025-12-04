@@ -4,7 +4,6 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { ArrowLeft, ArrowRight, ChevronRight } from 'lucide-react';
 import { PreConstructionPropertyCardV3 } from './PropertyCards';
 import type { PreConstructionProperty } from './PropertyCards/types';
-import SectionHeading from '@/components/Helper/SectionHeading';
 import { PropertyListing } from '@/lib/types';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -71,7 +70,7 @@ interface PreConSectionProps {
 
 const PreConSection: React.FC<PreConSectionProps> = ({
   heading,
-  subheading,
+  subheading: _subheading,
   description,
   filter,
   viewAllLink,

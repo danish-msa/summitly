@@ -66,6 +66,7 @@ export default function EditPagePage() {
         fetchParentPages()
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, session, router, pageId])
 
   const fetchPage = async () => {

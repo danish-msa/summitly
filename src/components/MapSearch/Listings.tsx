@@ -106,6 +106,7 @@ const Listings = () => {
     };
 
     loadProperties();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, pagination.currentPage, pagination.resultsPerPage]);
 
   // Handle property card click

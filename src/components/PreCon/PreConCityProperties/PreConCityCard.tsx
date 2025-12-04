@@ -13,8 +13,8 @@ interface PreConCityCardProps {
   city: PreConCity;
 }
 
-// Helper function to convert city name to URL-friendly slug
-const slugifyCityName = (cityName: string): string => {
+// Helper function to convert city name to URL-friendly slug - unused but kept for potential future use
+const _slugifyCityName = (cityName: string): string => {
   return cityName
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')

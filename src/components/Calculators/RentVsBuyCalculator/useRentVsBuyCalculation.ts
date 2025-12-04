@@ -134,9 +134,7 @@ export function useMemoizedCalculation(params: CalculationParams): CalculationRe
       yearlyData,
     };
   }, [
-    params.homePrice,
-    params.downPaymentPercent,
-    params.monthlyRent,
+    params,
     params.mortgageRate,
     params.amortization,
     params.annualRentIncrease,

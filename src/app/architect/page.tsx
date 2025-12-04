@@ -4,9 +4,31 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+interface DevelopmentTeamMember {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image: string | null;
+  projectCount: number;
+  url: string;
+}
+
+interface DevelopmentTeamGroup {
+  type: string;
+  typeLabel: string;
+  typeUrl: string;
+  members: DevelopmentTeamMember[];
+}
+
+interface DevelopmentTeamResponse {
+  teams: DevelopmentTeamGroup[];
+  total: number;
+}
+
 const AllArchitectsPage: React.FC = () => {
   const router = useRouter();
-  const [architects, setArchitects] = useState<any[]>([]);
+  const [architects, setArchitects] = useState<DevelopmentTeamMember[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,8 +36,8 @@ const AllArchitectsPage: React.FC = () => {
       try {
         const response = await fetch('/api/development-team');
         if (response.ok) {
-          const data = await response.json();
-          const architectsGroup = data.teams?.find((t: any) => t.type === 'ARCHITECT');
+          const data = await response.json() as DevelopmentTeamResponse;
+          const architectsGroup = data.teams?.find((t) => t.type === 'ARCHITECT');
           if (architectsGroup) {
             setArchitects(architectsGroup.members || []);
           }

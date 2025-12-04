@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { DeveloperType } from '@prisma/client'
 
 // GET - Public endpoint to fetch all development team members for website display
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     console.log('Fetching development team members...')
     

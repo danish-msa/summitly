@@ -233,7 +233,6 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
       console.log('Menu opened, fetching data...');
       fetchFilterData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, mounted, dataFetched, loading]);
 
   const fetchFilterData = async () => {
@@ -499,10 +498,6 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                                     </h5>
                                     <div className="grid grid-cols-2 gap-1">
                                       {combinedOthers.slice(0, 4).map((member) => {
-                                        // Find the group this member belongs to for the URL
-                                        const memberGroup = othersGroups.find(g => 
-                                          g.members.some(m => m.id === member.id)
-                                        );
                                         return (
                                           <Link
                                             key={member.id}

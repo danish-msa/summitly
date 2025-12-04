@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 // GET - Fetch unique filter values for pre-construction projects
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Fetch all projects to extract unique values
     const projects = await prisma.preConstructionProject.findMany({
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
             developerNames.add(developerId)
           }
         }
-      } catch (error) {
+      } catch (_error) {
         // If lookup fails, use the ID as fallback (only if it's not null)
         if (developerId) {
           developerNames.add(developerId)

@@ -10,7 +10,7 @@ function slugifyCityName(cityName: string): string {
 }
 
 // GET - Fetch cities with project counts for the city slider
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Fetch all published projects with city and image data
     const projects = await prisma.preConstructionProject.findMany({

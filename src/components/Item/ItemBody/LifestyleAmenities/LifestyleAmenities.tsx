@@ -81,6 +81,7 @@ export const LifestyleAmenities = ({
     if (latitude && longitude) {
       fetchCategoryData(activeTab);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, latitude, longitude]);
 
   // Fetch initial category on mount
@@ -88,6 +89,7 @@ export const LifestyleAmenities = ({
     if (latitude && longitude) {
       fetchCategoryData("entertainment");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latitude, longitude]);
 
   const currentCategory = categories.find((cat) => cat.id === activeTab);
