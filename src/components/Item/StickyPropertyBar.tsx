@@ -231,7 +231,7 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
             style={{ top: `${sectionNavHeight}px` }}
             className="fixed left-0 right-0 z-[9] bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg"
           >
-            <div className="container-1400 mx-auto px-4">
+            <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 ">
               <div className="flex items-center justify-between py-2 gap-3 lg:gap-8">
                 {isPreCon ? (
                   <>
@@ -355,10 +355,10 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
                         </div>
                       )}
 
-                      {/* Completion */}
+                      {/* Occupancy */}
                       {property.preCon?.completion?.date && (() => {
                         const year = extractYear(property.preCon.completion.date);
-                        const displayText = year ? `Completion: ${year}` : `Completion: ${property.preCon.completion.date}`;
+                        const displayText = year ? `Occupancy: ${year}` : `Occupancy: ${property.preCon.completion.date}`;
                         const linkUrl = year ? `/pre-construction/${year}` : null;
                         
                         return (

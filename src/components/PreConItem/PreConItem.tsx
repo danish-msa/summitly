@@ -92,14 +92,14 @@ const PreConItem: React.FC = () => {
     <div className='bg-background'>
       {/* Sticky Property Bar */}
       <StickyPropertyBar property={property} bannerRef={bannerRef} />
-      <div className='container-1400 mt-5 mb-4'>
+      <div className='container-1400 mx-auto px-4 sm:px-6 lg:px-8 mt-5 mb-4'>
         {/* Breadcrumbs */}
         <Breadcrumbs property={property} />
         <BannerGallery property={property} />
       </div>
       {/* Sticky Navigation Panel */}
       <SectionNavigation sections={navigationSections} property={property} />
-      <div className='container-1400'>
+      <div className='container-1400 mx-auto px-4 sm:px-6 lg:px-8'>
         <div className='flex flex-row gap-8'>
           <div className='w-[75%] flex flex-col gap-6'>
             <div ref={bannerRef} data-banner-section>
@@ -112,10 +112,10 @@ const PreConItem: React.FC = () => {
           </div>
         </div>
       </div>
-      <div className='container-1400 mt-20 mb-4'>
+      <div className='container-1400 mx-auto px-4 sm:px-6 lg:px-8 mt-20 mb-4'>
         <PreConFAQ />
       </div>
-      <div className='container-1400 mt-20 mb-4'>
+      <div className='container-1400 mx-auto px-4 sm:px-6 lg:px-8 mt-20 mb-4'>
         <PreConContactSection />
       </div>
     </div>

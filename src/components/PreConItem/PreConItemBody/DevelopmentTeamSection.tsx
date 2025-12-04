@@ -55,14 +55,14 @@ const DevelopmentTeamSection: React.FC<DevelopmentTeamSectionProps> = ({ develop
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card variant="transparent" className="py-10">
+      <CardHeader className="p-0">
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
           Development Team
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="py-4 px-0">
         {/* Team Overview */}
         {developmentTeam.overview && (
           <div className="mb-6 p-4 bg-muted rounded-lg">

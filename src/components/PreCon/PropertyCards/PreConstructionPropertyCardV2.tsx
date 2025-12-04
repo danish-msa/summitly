@@ -243,7 +243,7 @@ const PreConstructionPropertyCardV2 = ({ property, onHide, className }: PreConst
                 <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                   <Calendar className="text-primary flex-shrink-0" size={16} />
                   <div>
-                    <p className="text-xs text-gray-500">Completion</p>
+                    <p className="text-xs text-gray-500">Occupancy</p>
                     <p className="text-sm font-semibold text-gray-900">{property.completion.date}</p>
                   </div>
                 </div>

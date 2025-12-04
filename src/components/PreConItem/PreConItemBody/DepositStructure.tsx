@@ -34,13 +34,10 @@ const DepositStructure: React.FC<DepositStructureProps> = ({ property }) => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Deposit Structure</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Card variant="transparent">
+        <CardContent className="p-0">
           <div className="space-y-4">
-            <div className="flex items-start gap-4 p-4 rounded-lg bg-green-50">
+            <div className="flex items-start gap-4 p-4 rounded-lg">
               <div className="w-10 h-10 rounded-lg bg-brand-celestial/20 flex items-center justify-center flex-shrink-0">
                 <FileText className="h-5 w-5 text-muted-foreground" />
               </div>
@@ -50,7 +47,7 @@ const DepositStructure: React.FC<DepositStructureProps> = ({ property }) => {
               </div>
             </div>
             {getIncentivesExpiryDate() && (
-              <div className="flex items-start gap-4 p-4 rounded-lg bg-blue-50">
+              <div className="flex items-start gap-4 p-4 rounded-lg">
                 <div className="w-10 h-10 rounded-lg bg-brand-celestial/20 flex items-center justify-center flex-shrink-0">
                   <Calendar className="h-5 w-5 text-muted-foreground" />
                 </div>
@@ -64,11 +61,11 @@ const DepositStructure: React.FC<DepositStructureProps> = ({ property }) => {
         </CardContent>
       </Card>
 
-      <Card className="border-none bg-red-50">
-        <CardHeader className="bg-red-100 rounded-t-lg mb-2">
+      <Card variant="transparent">
+        <CardHeader className="bg-red-100 rounded-t-lg">
           <CardTitle>Important Information</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="bg-red-50 pt-2">
           <div className="space-y-3 text-sm text-muted-foreground">
             <p>• Deposit structure may vary by unit type and floor plan</p>
             <p>• All deposits are held in trust until closing</p>

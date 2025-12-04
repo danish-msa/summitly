@@ -16,7 +16,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({ property }) => {
   return (
     <div className="w-full flex flex-col gap-4">
       {/* Request Further Info CTA */}
-      <Card className="border border-border">
+      <Card variant="light">
         <CardContent className="p-6">
           <div className="space-y-4">
             <div className="text-center">

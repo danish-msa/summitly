@@ -122,7 +122,7 @@ const PreConCollapsibleTabs: React.FC<PreConCollapsibleTabsProps> = ({ property 
       label: 'Amenities & Lifestyle',
       content: (
         <Tabs defaultValue="project-amenities" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 h-12 p-1">
+          <TabsList className="h-12 p-1">
             <TabsTrigger value="project-amenities" className="py-2 text-sm">Project Amenities</TabsTrigger>
             <TabsTrigger value="neighborhood" className="py-2 text-sm">Neighborhood</TabsTrigger>
             <TabsTrigger value="lifestyle" className="py-2 text-sm">Lifestyle</TabsTrigger>
@@ -160,7 +160,7 @@ const PreConCollapsibleTabs: React.FC<PreConCollapsibleTabsProps> = ({ property 
       label: 'Calculators',
       content: (
         <Tabs defaultValue="mortgage" className="w-full mt-6">
-          <TabsList className="grid w-full grid-cols-2 h-12 p-1">
+          <TabsList className="h-12 p-1">
             <TabsTrigger value="mortgage" className="py-2 text-sm">Mortgage Calculator</TabsTrigger>
             <TabsTrigger value="affordability" className="py-2 text-sm">Affordability Calculator</TabsTrigger>
           </TabsList>
@@ -191,13 +191,13 @@ const PreConCollapsibleTabs: React.FC<PreConCollapsibleTabsProps> = ({ property 
               id={section.id}
               className="scroll-mt-24"
             >
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+              <div className="bg-white rounded-lg overflow-hidden shadow-sm">
                 {/* Tab Header */}
                 <button
                   onClick={() => toggleTab(section.id)}
                   className={`w-full px-6 py-4 text-left flex items-center justify-between transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20 ${
                     isExpanded 
-                      ? 'border-l-4 border-l-primary bg-gradient-to-r from-brand-celestial/10 to-brand-celestial/20 border-b-0' 
+                      ? 'bg-secondary/20 border-b-0' 
                       : 'hover:bg-gray-50'
                   }`}
                 >

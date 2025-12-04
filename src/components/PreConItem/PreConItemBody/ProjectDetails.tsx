@@ -281,7 +281,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
       show: !!preCon.completion?.date,
     },
     {
-      label: 'Completion Year',
+      label: 'Occupancy Year',
       value: extractYear(preCon.completion?.date),
       icon: Calendar,
       show: !!preCon.completion?.date && extractYear(preCon.completion.date) !== 'N/A',
@@ -353,12 +353,9 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Project Information</CardTitle>
-        </CardHeader>
-        <CardContent>
+    <div>
+      <Card variant="transparent">
+        <CardContent className="p-0">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {details.map((detail, index) => {
               const Icon = detail.icon;
@@ -368,7 +365,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
               if (detail.value) {
                 if (detail.label === 'Status') {
                   linkUrl = `/pre-construction/${getStatusSlug(detail.value)}`;
-                } else if (detail.label === 'Completion Year') {
+                } else if (detail.label === 'Occupancy Year') {
                   const year = extractYear(detail.value);
                   if (year && /^\d{4}$/.test(year)) {
                     linkUrl = `/pre-construction/${year}`;
@@ -407,7 +404,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
       </Card>
 
       {preCon.features && preCon.features.length > 0 && (
-        <Card>
+        <Card variant="transparent">
           <CardHeader>
             <CardTitle>Project Features</CardTitle>
           </CardHeader>
@@ -455,7 +452,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
         <DevelopmentTeamSection developmentTeam={preCon.developmentTeam} />
       )}
       {/* CTA Section */}
-      <div className="text-center mt-16">
+      <div className="text-center">
           <p className="text-muted-foreground mb-6">
             Ready to start your pre-construction journey?
           </p>

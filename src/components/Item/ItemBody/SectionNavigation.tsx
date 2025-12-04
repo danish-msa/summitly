@@ -271,18 +271,21 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
       data-section-navigation
       className="sticky top-0 bg-white border-b border-gray-200 shadow-sm mb-4 z-50"
     >
-      <div className="container-1400 mx-auto">
+      <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-0.5 overflow-x-auto py-2 scrollbar-hide">
           {/* Video, Gallery, and Scroll to Top Icons */}
           {property && (
             <div className="flex items-center gap-0.5 flex-shrink-0 mr-2 border-r border-gray-200 pr-3">
-              <button
-                onClick={handleVideoClick}
-                className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-primary transition-all duration-200"
-                aria-label="Play property video"
-              >
-                <Video className="h-5 w-5" />
-              </button>
+              {/* Only show video icon if property has videos */}
+              {(property.preCon?.videos && property.preCon.videos.length > 0) && (
+                <button
+                  onClick={handleVideoClick}
+                  className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-primary transition-all duration-200"
+                  aria-label="Play property video"
+                >
+                  <Video className="h-5 w-5" />
+                </button>
+              )}
               
               <button
                 onClick={handleGalleryClick}
@@ -309,7 +312,7 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
               key={section.id}
               variant={activeSection === section.id ? 'default' : 'ghost'}
               onClick={() => scrollToSection(section.id)}
-              className={`whitespace-nowrap text-base rounded-lg ${
+              className={`whitespace-nowrap text-sm rounded-lg ${
                 activeSection === section.id 
                   ? 'bg-secondary text-primary-foreground' 
                   : 'text-gray-700 hover:text-primary'

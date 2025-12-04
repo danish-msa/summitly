@@ -317,10 +317,10 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                                                 }
                                                 return null;
                                             })()}
-                                            {/* Completion Date */}
+                                            {/* Occupancy Date */}
                                             {preConData?.completion?.date && (() => {
                                                 const year = extractYear(preConData.completion.date);
-                                                const displayText = year ? `Completion: ${year}` : `Completion: ${preConData.completion.date}`;
+                                                const displayText = year ? `Occupancy: ${year}` : `Occupancy: ${preConData.completion.date}`;
                                                 const linkUrl = year ? `/pre-construction/${year}` : null;
                                                 
                                                 return (

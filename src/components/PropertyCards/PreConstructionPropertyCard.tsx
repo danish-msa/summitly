@@ -362,7 +362,7 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
             <div className="flex items-start gap-1.5 p-2 bg-muted/50 rounded-lg">
               <Calendar className="text-primary flex-shrink-0 mt-0.5" size={14} />
               <div>
-                <p className="text-xs text-muted-foreground">Completion</p>
+                <p className="text-xs text-muted-foreground">Occupancy</p>
                 <p className="text-xs font-semibold text-foreground">
                   {(hasPreCon(property) && property.preCon.completion?.date) || 
                    ('completion' in property ? property.completion?.date : undefined) || 

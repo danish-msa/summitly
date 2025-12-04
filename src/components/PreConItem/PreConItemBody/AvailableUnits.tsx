@@ -32,6 +32,7 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
   const [bedrooms, setBedrooms] = useState<number>(0);
   const [minSquareFeet, setMinSquareFeet] = useState<number | undefined>(undefined);
   const [maxSquareFeet, setMaxSquareFeet] = useState<number | undefined>(undefined);
+  const [showAllUnits, setShowAllUnits] = useState(false);
 
   // Get units from backend data - the API already formats them as UnitListing[]
   // Units are stored in property.preCon.units
@@ -86,6 +87,11 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
       console.log('AvailableUnits: preCon object:', preCon);
     }
   }, [units, preCon]);
+
+  // Reset showAllUnits when filters change
+  useEffect(() => {
+    setShowAllUnits(false);
+  }, [activeTab, bedrooms, minPrice, maxPrice, minSquareFeet, maxSquareFeet]);
 
   const filteredAndSortedUnits = useMemo(() => {
     let filtered = units.filter((unit: UnitListing) => unit.status === activeTab);
@@ -253,36 +259,67 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
       </div>
 
       {/* Units Grid */}
-      <div className="space-y-4">
-        {units.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground text-lg">
-              No units available for this project.
-            </p>
-            <p className="text-muted-foreground text-sm mt-2">
-              Please add units in the dashboard to display them here.
-            </p>
-          </div>
-        ) : filteredAndSortedUnits.length > 0 ? (
-          filteredAndSortedUnits.map((unit) => (
-            <UnitCard key={unit.id} unit={unit} propertyId={propertyId} />
-          ))
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground text-lg">
-              No units found matching your criteria.
-            </p>
-            <p className="text-muted-foreground text-sm mt-2">
-              {units.length} unit{units.length !== 1 ? 's' : ''} available, but none match the current filters.
-              {activeTab === 'for-sale' && forSaleCount === 0 && soldOutCount > 0 && (
-                <span className="block mt-2">Try switching to the "Sold Out" tab.</span>
+      <div className="relative">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {units.length === 0 ? (
+            <div className="col-span-full text-center py-12">
+              <p className="text-muted-foreground text-lg">
+                No units available for this project.
+              </p>
+              <p className="text-muted-foreground text-sm mt-2">
+                Please add units in the dashboard to display them here.
+              </p>
+            </div>
+          ) : filteredAndSortedUnits.length > 0 ? (
+            <>
+              {/* Visible Units */}
+              {filteredAndSortedUnits.slice(0, showAllUnits ? filteredAndSortedUnits.length : 6).map((unit) => (
+                <UnitCard key={unit.id} unit={unit} propertyId={propertyId} />
+              ))}
+              
+              {/* Blurred Preview Units with View More Button Overlay (only show if not showing all and there are more than 6) */}
+              {!showAllUnits && filteredAndSortedUnits.length > 6 && (
+                <div className="col-span-full relative">
+                  {/* All 4 blurred units */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {filteredAndSortedUnits.slice(6, 10).map((unit) => (
+                      <div key={unit.id} className="blur-sm opacity-50 pointer-events-none">
+                        <UnitCard unit={unit} propertyId={propertyId} />
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* View More Button - Overlay on top */}
+                  <div className="absolute inset-0 flex items-center justify-center z-10">
+                    <Button
+                      onClick={() => setShowAllUnits(true)}
+                      variant="default"
+                      size="lg"
+                      className="shadow-lg"
+                    >
+                      View More Units ({filteredAndSortedUnits.length - 6} more)
+                    </Button>
+                  </div>
+                </div>
               )}
-              {activeTab === 'sold-out' && soldOutCount === 0 && forSaleCount > 0 && (
-                <span className="block mt-2">Try switching to the "For Sale" tab.</span>
-              )}
-            </p>
-          </div>
-        )}
+            </>
+          ) : (
+            <div className="col-span-full text-center py-12">
+              <p className="text-muted-foreground text-lg">
+                No units found matching your criteria.
+              </p>
+              <p className="text-muted-foreground text-sm mt-2">
+                {units.length} unit{units.length !== 1 ? 's' : ''} available, but none match the current filters.
+                {activeTab === 'for-sale' && forSaleCount === 0 && soldOutCount > 0 && (
+                  <span className="block mt-2">Try switching to the "Sold Out" tab.</span>
+                )}
+                {activeTab === 'sold-out' && soldOutCount === 0 && forSaleCount > 0 && (
+                  <span className="block mt-2">Try switching to the "For Sale" tab.</span>
+                )}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -317,28 +354,32 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, propertyId }) => {
           {/* Details */}
           <div className="flex-1 space-y-2">
             <div className="flex items-center justify-between gap-2 w-full flex-1">
-              <div className="flex flex-col">
-                <h3 className="text-lg font-semibold text-foreground">Unit {unit.name}</h3>
-                <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+              <div className="flex flex-col gap-1">
+                <h3 className="text-base font-semibold text-foreground">Unit {unit.name}</h3>
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Bed className="w-4 h-4" />
-                    <span>{unit.beds === 2 && unit.name.includes("+") ? "2+1" : unit.beds} bed</span>
+                    <span>{unit.beds === 2 && unit.name.includes("+") ? "2+1" : unit.beds}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Bath className="w-4 h-4" />
-                    <span>{unit.baths} bath</span>
+                    <span>{unit.baths}</span>
                   </div>
                   {unit.sqft ? (
                     <div className="flex items-center gap-1">
                       <Maximize2 className="w-4 h-4" />
-                      <span>{unit.sqft} sqft</span>
+                      <span>{unit.sqft}</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-1">
                       <Maximize2 className="w-4 h-4" />
-                      <span>- sqft</span>
+                      <span>-</span>
                     </div>
                   )}
+                </div>
+                <div className="text-xs">
+                  <span className="text-muted-foreground">Maint Fees: </span>
+                  <span className="font-medium">${unit.maintenanceFee || 0}/mo</span>
                 </div>
                 <div className="flex flex-row justify-between gap-2 w-full flex-1">
                   
@@ -365,10 +406,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, propertyId }) => {
                 </Badge>
               )}
               <div className="flex flex-row items-center gap-3">
-                <div className="text-sm">
-                    <span className="text-muted-foreground">Maint Fees: </span>
-                    <span className="font-medium">${unit.maintenanceFee || 0}/mo</span>
-                  </div>
+                  
                   <Button 
                     variant="default" 
                     size="sm"
