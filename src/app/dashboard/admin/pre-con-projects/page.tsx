@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useBackgroundFetch } from "@/hooks/useBackgroundFetch"
 import { DataTable, Column } from "@/components/Dashboard/DataTable"
 import { ActionButton } from "@/components/Dashboard/ActionButton"
@@ -45,21 +45,24 @@ interface PreConProject {
 export default function PreConProjectsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [projects, setProjects] = useState<PreConProject[]>([])
   const { loading, error, setError, fetchData } = useBackgroundFetch()
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [cityFilter, setCityFilter] = useState("all")
-  const [publicationFilter, setPublicationFilter] = useState("all")
-  const [userFilter, setUserFilter] = useState("all")
+  
+  // Initialize filters from URL params or defaults
+  const [searchTerm, setSearchTerm] = useState(searchParams?.get("search") || "")
+  const [statusFilter, setStatusFilter] = useState(searchParams?.get("status") || "all")
+  const [cityFilter, setCityFilter] = useState(searchParams?.get("city") || "all")
+  const [publicationFilter, setPublicationFilter] = useState(searchParams?.get("isPublished") || "all")
+  const [userFilter, setUserFilter] = useState(searchParams?.get("createdBy") || "all")
   const [creators, setCreators] = useState<Array<{ id: string; name: string }>>([])
   const [cities, setCities] = useState<Array<string>>([])
-  const [page, setPage] = useState(1)
+  const [page, setPage] = useState(parseInt(searchParams?.get("page") || "1"))
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
-  const [limit, setLimit] = useState(10)
-  const [sortBy, setSortBy] = useState<string>("createdAt")
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+  const [limit, setLimit] = useState(parseInt(searchParams?.get("limit") || "10"))
+  const [sortBy, setSortBy] = useState<string>(searchParams?.get("sortBy") || "createdAt")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">((searchParams?.get("sortOrder") as "asc" | "desc") || "desc")
   const [stats, setStats] = useState({
     total: 0,
     selling: 0,
@@ -89,16 +92,34 @@ export default function PreConProjectsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, session, router, page, limit, searchTerm, statusFilter, cityFilter, publicationFilter, userFilter, sortBy, sortOrder])
 
-  const handleSort = (key: string) => {
-    if (sortBy === key) {
-      // Toggle sort order if clicking the same column
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
-    } else {
-      // Set new sort column and default to ascending
-      setSortBy(key)
-      setSortOrder("asc")
+  // Update URL params when filters change
+  const updateURLParams = (updates: Record<string, string | number>) => {
+    const params = new URLSearchParams(searchParams?.toString() || "")
+    
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === "" || value === "all" || value === null || value === undefined) {
+        params.delete(key)
+      } else {
+        params.set(key, value.toString())
+      }
+    })
+    
+    // Remove page param if it's 1 (default)
+    if (params.get("page") === "1") {
+      params.delete("page")
     }
-    setPage(1) // Reset to first page when sorting changes
+    
+    router.push(`?${params.toString()}`, { scroll: false })
+  }
+
+  const handleSort = (key: string) => {
+    const newSortOrder = sortBy === key ? (sortOrder === "asc" ? "desc" : "asc") : "asc"
+    const newSortBy = sortBy === key ? key : key
+    
+    setSortBy(newSortBy)
+    setSortOrder(newSortOrder)
+    setPage(1)
+    updateURLParams({ sortBy: newSortBy, sortOrder: newSortOrder, page: 1 })
   }
 
   const fetchProjects = async () => {
@@ -465,8 +486,10 @@ export default function PreConProjectsPage() {
               placeholder="Search projects..."
               value={searchTerm}
               onChange={(e) => {
-                setSearchTerm(e.target.value)
+                const value = e.target.value
+                setSearchTerm(value)
                 setPage(1)
+                updateURLParams({ search: value, page: 1 })
               }}
               className="pl-10"
             />
@@ -475,6 +498,7 @@ export default function PreConProjectsPage() {
         <Select value={statusFilter} onValueChange={(value) => {
           setStatusFilter(value)
           setPage(1)
+          updateURLParams({ status: value, page: 1 })
         }}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="All Status" />
@@ -493,6 +517,7 @@ export default function PreConProjectsPage() {
         <Select value={cityFilter} onValueChange={(value) => {
           setCityFilter(value)
           setPage(1)
+          updateURLParams({ city: value, page: 1 })
         }}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="All Cities" />
@@ -509,6 +534,7 @@ export default function PreConProjectsPage() {
         <Select value={publicationFilter} onValueChange={(value) => {
           setPublicationFilter(value)
           setPage(1)
+          updateURLParams({ isPublished: value, page: 1 })
         }}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="All Projects" />
@@ -522,6 +548,7 @@ export default function PreConProjectsPage() {
         <Select value={userFilter} onValueChange={(value) => {
           setUserFilter(value)
           setPage(1)
+          updateURLParams({ createdBy: value, page: 1 })
         }}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="All Users" />
@@ -577,8 +604,10 @@ export default function PreConProjectsPage() {
             <Select
               value={limit.toString()}
               onValueChange={(value) => {
-                setLimit(parseInt(value))
+                const newLimit = parseInt(value)
+                setLimit(newLimit)
                 setPage(1)
+                updateURLParams({ limit: newLimit, page: 1 })
               }}
             >
               <SelectTrigger className="w-[80px] h-8">
@@ -599,7 +628,10 @@ export default function PreConProjectsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setPage(1)}
+                onClick={() => {
+                  setPage(1)
+                  updateURLParams({ page: 1 })
+                }}
                 disabled={page === 1}
                 className="h-8 w-8 p-0"
                 title="First page"
@@ -609,7 +641,11 @@ export default function PreConProjectsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                onClick={() => {
+                  const newPage = Math.max(1, page - 1)
+                  setPage(newPage)
+                  updateURLParams({ page: newPage })
+                }}
                 disabled={page === 1}
                 className="h-8 w-8 p-0"
                 title="Previous page"
@@ -673,7 +709,10 @@ export default function PreConProjectsPage() {
                         key={pageNumber}
                         variant={isActive ? "default" : "outline"}
                         size="sm"
-                        onClick={() => setPage(pageNumber)}
+                        onClick={() => {
+                          setPage(pageNumber)
+                          updateURLParams({ page: pageNumber })
+                        }}
                         className={`h-8 w-8 p-0 ${isActive ? "bg-primary text-primary-foreground" : ""}`}
                       >
                         {pageNumber}
@@ -686,7 +725,11 @@ export default function PreConProjectsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() => {
+                  const newPage = Math.min(totalPages, page + 1)
+                  setPage(newPage)
+                  updateURLParams({ page: newPage })
+                }}
                 disabled={page === totalPages}
                 className="h-8 w-8 p-0"
                 title="Next page"
@@ -696,7 +739,10 @@ export default function PreConProjectsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setPage(totalPages)}
+                onClick={() => {
+                  setPage(totalPages)
+                  updateURLParams({ page: totalPages })
+                }}
                 disabled={page === totalPages}
                 className="h-8 w-8 p-0"
                 title="Last page"
