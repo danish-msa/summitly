@@ -280,9 +280,9 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
               {/* Blurred Preview Units with View More Button Overlay (only show if not showing all and there are more than 6) */}
               {!showAllUnits && filteredAndSortedUnits.length > 6 && (
                 <div className="col-span-full relative">
-                  {/* All 4 blurred units */}
+                  {/* 2 blurred units (1 row) */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {filteredAndSortedUnits.slice(6, 10).map((unit) => (
+                    {filteredAndSortedUnits.slice(6, 8).map((unit) => (
                       <div key={unit.id} className="blur-sm opacity-50 pointer-events-none">
                         <UnitCard unit={unit} propertyId={propertyId} />
                       </div>
@@ -295,7 +295,7 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
                       onClick={() => setShowAllUnits(true)}
                       variant="default"
                       size="lg"
-                      className="shadow-lg"
+                      className="shadow-lg bg-primary"
                     >
                       View More Units ({filteredAndSortedUnits.length - 6} more)
                     </Button>

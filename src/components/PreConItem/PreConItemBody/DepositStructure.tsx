@@ -18,8 +18,27 @@ const DepositStructure: React.FC<DepositStructureProps> = ({ property }) => {
     );
   }
 
-  // Parse deposit structure (this is a simple parser, you may want to enhance it)
-  const depositInfo = preCon.depositStructure;
+  // Parse deposit structure
+  const parseDepositStructure = (depositInfo: string) => {
+    // Split by bullet points and clean up
+    const parts = depositInfo
+      .split('•')
+      .map(part => part.trim())
+      .filter(part => part.length > 0);
+
+    if (parts.length === 0) return { type: null, schedule: [] };
+
+    // First part might be the type (e.g., "Standard")
+    const firstPart = parts[0];
+    const isType = !firstPart.includes('$') && !firstPart.includes('%') && parts.length > 1;
+    
+    const type = isType ? firstPart : null;
+    const schedule = isType ? parts.slice(1) : parts;
+
+    return { type, schedule };
+  };
+
+  const { type, schedule } = parseDepositStructure(preCon.depositStructure);
 
   // Extract completion date for incentives expiry (similar to PricingIncentives)
   const getIncentivesExpiryDate = () => {
@@ -43,7 +62,17 @@ const DepositStructure: React.FC<DepositStructureProps> = ({ property }) => {
               </div>
               <div className="flex-1">
                 <p className="text-sm text-muted-foreground mb-2">Payment Schedule</p>
-                <p className="font-semibold text-foreground">{depositInfo}</p>
+                {type && (
+                  <p className="text-xs font-medium text-primary mb-2">{type}</p>
+                )}
+                <div className="space-y-2">
+                  {schedule.map((item, index) => (
+                    <div key={index} className="flex items-start gap-1">
+                      <span className="text-muted-foreground -mt-1.5">•</span>
+                      <p className="font-semibold text-foreground text-xs">{item}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
             {getIncentivesExpiryDate() && (
@@ -66,7 +95,7 @@ const DepositStructure: React.FC<DepositStructureProps> = ({ property }) => {
           <CardTitle>Important Information</CardTitle>
         </CardHeader>
         <CardContent className="bg-red-50 pt-2">
-          <div className="space-y-3 text-sm text-muted-foreground">
+          <div className="space-y-3 text-muted-foreground">
             <p>• Deposit structure may vary by unit type and floor plan</p>
             <p>• All deposits are held in trust until closing</p>
             <p>• Please consult with your real estate agent for specific deposit requirements</p>
