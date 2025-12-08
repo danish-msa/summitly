@@ -14,8 +14,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy requirements
 COPY requirements/requirements.prod.txt ./requirements.txt
 
-# Create wheels
-RUN pip install --wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
+# Create wheels - simplified approach
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Stage 2: Runtime
 FROM python:3.11-slim
@@ -27,12 +27,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsndfile1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy wheels from builder
-COPY --from=builder /app/wheels /wheels
+# Copy requirements from builder
 COPY --from=builder /app/requirements.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache /wheels/*
+# Install Python dependencies directly
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .

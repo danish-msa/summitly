@@ -1,0 +1,56 @@
+# Summitly AI - Minimal Production Requirements
+# Optimized for Render deployment
+
+# Core Flask dependencies
+Flask==2.3.3
+flask-cors==4.0.0
+requests==2.31.0
+Werkzeug==2.3.7
+gunicorn==21.2.0
+
+# AI and OpenAI
+openai==1.3.0
+
+# Exa AI
+exa-py==1.0.0
+
+# Email system
+Flask-Mail==0.9.1
+
+# Excel operations
+openpyxl==3.1.2
+
+# Data processing
+pandas==1.5.3
+numpy==1.24.3
+
+# Environment variables
+python-dotenv==1.0.0
+
+# JSON Web Tokens
+PyJWT==2.8.0
+
+# HTTP client
+urllib3==1.26.18
+
+# Date utilities
+python-dateutil==2.8.2
+
+# YAML support
+PyYAML==6.0.1
+
+# Performance monitoring
+psutil==5.9.6
+
+# Retry patterns
+tenacity==8.2.3
+
+# Security
+cryptography==41.0.8
+
+# Locale support
+babel==2.13.1
+pytz==2023.3
+
+# Utilities
+click==8.1.7
