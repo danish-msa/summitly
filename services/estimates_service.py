@@ -214,7 +214,7 @@ class EstimatesService:
                                 'property_details': structured_data.get('property', {}),
                                 'markdown': valuation_result.get('markdown', ''),
                                 'estimated_value': estimated_value,
-                                'value_range': (value_range['min'], value_range['high']),
+                                'value_range': (value_range['min'], value_range['max']),
                                 'listing_price': list_price
                             }
                     except Exception as e:

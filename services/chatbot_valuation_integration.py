@@ -144,17 +144,25 @@ def extract_asking_price(user_query: str, chatbot_context: Dict) -> Optional[flo
         logger.info(f"Extracted asking price from query: ${price:,.0f}")
         return price
     
-    # Try to extract from chatbot context (Exa AI results)
-    if chatbot_context and 'property_data' in chatbot_context:
-        prop_data = chatbot_context['property_data']
-        if 'asking_price' in prop_data:
-            price = float(prop_data['asking_price'])
-            logger.info(f"Extracted asking price from context: ${price:,.0f}")
+    # Try to extract from chatbot context (Exa AI results OR direct listing data)
+    if chatbot_context:
+        # Check for direct list_price in context (from estimates_service)
+        if 'list_price' in chatbot_context:
+            price = float(chatbot_context['list_price'])
+            logger.info(f"✅ Extracted list price from context: ${price:,.0f}")
             return price
-        if 'list_price' in prop_data:
-            price = float(prop_data['list_price'])
-            logger.info(f"Extracted list price from context: ${price:,.0f}")
-            return price
+            
+        # Check for property_data (from Exa AI results)
+        if 'property_data' in chatbot_context:
+            prop_data = chatbot_context['property_data']
+            if 'asking_price' in prop_data:
+                price = float(prop_data['asking_price'])
+                logger.info(f"Extracted asking price from context: ${price:,.0f}")
+                return price
+            if 'list_price' in prop_data:
+                price = float(prop_data['list_price'])
+                logger.info(f"Extracted list price from context: ${price:,.0f}")
+                return price
     
     logger.debug("No asking price found in query or context")
     return None
@@ -614,7 +622,14 @@ def process_valuation_request(
         logger.info(f"Confidence: {valuation_result.confidence_score:.0f}%")
         
         # Step 7: Extract asking price if available
-        asking_price = extract_asking_price(user_query, chatbot_context)
+        # Use the list_price we already fetched from the API (line 347)
+        # Fall back to extract_asking_price from context if list_price wasn't found
+        if list_price and list_price > 0:
+            asking_price = float(list_price)
+            logger.info(f"✅ Using list price from API: ${asking_price:,.0f}")
+        else:
+            asking_price = extract_asking_price(user_query, chatbot_context)
+            logger.info(f"📋 Extracted asking price from context: ${asking_price:,.0f}" if asking_price else "⚠️ No asking price found")
         
         # Step 8: Generate natural language explanation
         logger.info("Generating explanation...")

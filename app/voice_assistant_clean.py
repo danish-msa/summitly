@@ -109,6 +109,297 @@ except ImportError:
     AUDIO_AVAILABLE = False
     print("⚠️ Audio libraries not available. Voice features disabled.")
 
+# ==================== PROPERTY DATA STANDARDIZATION ====================
+
+def standardize_property_data(property_data):
+    """
+    Standardize property data to ensure consistent field names between backend and frontend
+    Frontend expects: bedrooms, bathrooms, sqft, price, mls_number, images
+    Backend might return: beds, baths, square_footage, list_price, mls_id, photos
+    """
+    if not property_data:
+        return property_data
+    
+    # Handle both single property and array of properties
+    if isinstance(property_data, list):
+        return [standardize_property_data(prop) for prop in property_data]
+    
+    # Create a copy to avoid mutating original data
+    standardized = dict(property_data)
+    
+    # Standardize bedroom fields (safely handle details that might be None)
+    details = standardized.get('details') or {}
+    if 'beds' in standardized and 'bedrooms' not in standardized:
+        standardized['bedrooms'] = standardized['beds']
+    elif 'numBedrooms' in standardized and 'bedrooms' not in standardized:
+        standardized['bedrooms'] = standardized['numBedrooms']
+    elif isinstance(details, dict) and details.get('numBedrooms') and 'bedrooms' not in standardized:
+        standardized['bedrooms'] = details['numBedrooms']
+    
+    # Standardize bathroom fields (safely handle details that might be None)
+    if 'baths' in standardized and 'bathrooms' not in standardized:
+        standardized['bathrooms'] = standardized['baths']
+    elif 'numBathrooms' in standardized and 'bathrooms' not in standardized:
+        standardized['bathrooms'] = standardized['numBathrooms']
+    elif isinstance(details, dict) and details.get('numBathrooms') and 'bathrooms' not in standardized:
+        standardized['bathrooms'] = details['numBathrooms']
+    
+    # Standardize square footage fields (safely handle details that might be None)
+    if 'square_footage' in standardized and 'sqft' not in standardized:
+        standardized['sqft'] = standardized['square_footage']
+    elif 'squareFeet' in standardized and 'sqft' not in standardized:
+        standardized['sqft'] = standardized['squareFeet']
+    elif isinstance(details, dict) and details.get('sqft') and 'sqft' not in standardized:
+        standardized['sqft'] = details['sqft']
+    
+    # Standardize price fields (safely handle price objects)
+    if 'list_price' in standardized and 'price' not in standardized:
+        standardized['price'] = standardized['list_price']
+    elif 'listPrice' in standardized and 'price' not in standardized:
+        standardized['price'] = standardized['listPrice']
+    elif isinstance(standardized.get('price'), dict) and standardized['price'].get('amount'):
+        standardized['price'] = standardized['price']['amount']
+    
+    # Standardize MLS number fields
+    if 'mls_id' in standardized and 'mls_number' not in standardized:
+        standardized['mls_number'] = standardized['mls_id']
+    elif 'mlsNumber' in standardized and 'mls_number' not in standardized:
+        standardized['mls_number'] = standardized['mlsNumber']
+    elif 'mlsId' in standardized and 'mls_number' not in standardized:
+        standardized['mls_number'] = standardized['mlsId']
+    
+    # Standardize image fields
+    if 'photos' in standardized and 'images' not in standardized:
+        # Convert photos array to images array with proper URLs
+        photos = standardized['photos']
+        if isinstance(photos, list):
+            standardized['images'] = []
+            for photo in photos:
+                if isinstance(photo, dict) and 'url' in photo:
+                    standardized['images'].append(photo['url'])
+                elif isinstance(photo, str):
+                    # Handle case where it's just a URL string
+                    if photo.startswith('IMG-') or not photo.startswith('http'):
+                        standardized['images'].append(f'https://cdn.repliers.io/{photo}')
+                    else:
+                        standardized['images'].append(photo)
+        else:
+            standardized['images'] = []
+    elif isinstance(standardized.get('media'), dict) and standardized['media'].get('photos'):
+        photos = standardized['media']['photos']
+        if isinstance(photos, list):
+            standardized['images'] = []
+            for photo in photos:
+                if isinstance(photo, dict) and 'url' in photo:
+                    standardized['images'].append(photo['url'])
+                elif isinstance(photo, str):
+                    if photo.startswith('IMG-') or not photo.startswith('http'):
+                        standardized['images'].append(f'https://cdn.repliers.io/{photo}')
+                    else:
+                        standardized['images'].append(photo)
+    
+    # Ensure images is always an array
+    if 'images' not in standardized or not isinstance(standardized['images'], list):
+        standardized['images'] = []
+    
+    # Standardize address field
+    if 'full_address' in standardized and 'address' not in standardized:
+        standardized['address'] = standardized['full_address']
+    elif hasattr(standardized.get('address', {}), 'get'):
+        # Build address from address object
+        addr_obj = standardized['address']
+        if isinstance(addr_obj, dict):
+            parts = []
+            if addr_obj.get('streetNumber'):
+                parts.append(str(addr_obj['streetNumber']))
+            if addr_obj.get('streetName'):
+                parts.append(addr_obj['streetName'])
+            if addr_obj.get('streetSuffix'):
+                parts.append(addr_obj['streetSuffix'])
+            if addr_obj.get('unitNumber'):
+                parts.append(f"Unit {addr_obj['unitNumber']}")
+            if parts:
+                standardized['address'] = ' '.join(parts)
+    
+    # Add fallback values for missing required fields
+    if 'bedrooms' not in standardized or standardized['bedrooms'] is None:
+        standardized['bedrooms'] = 'N/A'
+    if 'bathrooms' not in standardized or standardized['bathrooms'] is None:
+        standardized['bathrooms'] = 'N/A'
+    if 'sqft' not in standardized or standardized['sqft'] is None:
+        standardized['sqft'] = 'N/A'
+    if 'price' not in standardized or standardized['price'] is None:
+        standardized['price'] = 0
+    if 'address' not in standardized or not standardized['address']:
+        standardized['address'] = 'Address not available'
+    if 'mls_number' not in standardized or not standardized['mls_number']:
+        standardized['mls_number'] = f"ID_{standardized.get('id', 'unknown')}"
+    
+    return standardized
+
+# ==================== CONVERSATION CONTEXT MANAGEMENT ====================
+
+class ConversationContext:
+    """Manage conversation state and context for better user experience"""
+    
+    def __init__(self):
+        self.sessions = {}  # Dictionary to store session contexts
+    
+    def get_or_create_session(self, session_id):
+        """Get existing session or create new one"""
+        if session_id not in self.sessions:
+            self.sessions[session_id] = {
+                'filters': {
+                    'location': None,
+                    'property_type': None,
+                    'min_price': None,
+                    'max_price': None,
+                    'bedrooms': None,
+                    'bathrooms': None,
+                    'sqft_min': None,
+                    'sqft_max': None
+                },
+                'current_search_results': [],
+                'last_mls_viewed': None,
+                'user_preferences': {
+                    'investor_profile': False,  # vs end-user
+                    'first_time_buyer': None,
+                    'budget_range': None,
+                    'preferred_locations': [],
+                    'property_types_interested': []
+                },
+                'conversation_history': [],
+                'last_updated': datetime.now(),
+                'stage': 'initial'  # initial, searching, viewing_details, comparing, etc.
+            }
+        return self.sessions[session_id]
+    
+    def update_filters_from_message(self, session_id, message):
+        """Extract and update search filters from user message"""
+        session = self.get_or_create_session(session_id)
+        message_lower = message.lower()
+        
+        # Extract location
+        location_keywords = {
+            'mississauga': 'Mississauga',
+            'markham': 'Markham', 
+            'vaughan': 'Vaughan',
+            'brampton': 'Brampton',
+            'toronto': 'Toronto',
+            'scarborough': 'Scarborough',
+            'north york': 'North York',
+            'etobicoke': 'Etobicoke',
+            'richmond hill': 'Richmond Hill',
+            'oakville': 'Oakville'
+        }
+        
+        for keyword, city_name in location_keywords.items():
+            if keyword in message_lower:
+                session['filters']['location'] = city_name
+                break
+        
+        # Extract price range
+        import re
+        price_patterns = [
+            r'under \$?([0-9,]+)',
+            r'below \$?([0-9,]+)', 
+            r'up to \$?([0-9,]+)',
+            r'max \$?([0-9,]+)'
+        ]
+        
+        for pattern in price_patterns:
+            match = re.search(pattern, message_lower)
+            if match:
+                price = int(match.group(1).replace(',', ''))
+                session['filters']['max_price'] = price
+                break
+        
+        # Extract minimum price
+        min_price_patterns = [
+            r'over \$?([0-9,]+)',
+            r'above \$?([0-9,]+)',
+            r'starting at \$?([0-9,]+)',
+            r'minimum \$?([0-9,]+)'
+        ]
+        
+        for pattern in min_price_patterns:
+            match = re.search(pattern, message_lower)
+            if match:
+                price = int(match.group(1).replace(',', ''))
+                session['filters']['min_price'] = price
+                break
+        
+        # Extract price range (between X and Y)
+        range_match = re.search(r'between \$?([0-9,]+) and \$?([0-9,]+)', message_lower)
+        if range_match:
+            session['filters']['min_price'] = int(range_match.group(1).replace(',', ''))
+            session['filters']['max_price'] = int(range_match.group(2).replace(',', ''))
+        
+        # Extract bedrooms
+        bed_patterns = [
+            r'(\d+)[- ]bedroom',
+            r'(\d+)[- ]bed\b',
+            r'(\d+)br\b'
+        ]
+        for pattern in bed_patterns:
+            match = re.search(pattern, message_lower)
+            if match:
+                session['filters']['bedrooms'] = int(match.group(1))
+                break
+        
+        # Extract bathrooms  
+        bath_patterns = [
+            r'(\d+(?:\.\d+)?)[- ]bathroom',
+            r'(\d+(?:\.\d+)?)[- ]bath\b'
+        ]
+        for pattern in bath_patterns:
+            match = re.search(pattern, message_lower)
+            if match:
+                session['filters']['bathrooms'] = float(match.group(1))
+                break
+        
+        # Extract property type
+        if 'condo' in message_lower:
+            session['filters']['property_type'] = 'condo'
+        elif 'house' in message_lower or 'detached' in message_lower:
+            session['filters']['property_type'] = 'house'
+        elif 'townhouse' in message_lower:
+            session['filters']['property_type'] = 'townhouse'
+        
+        # Update last activity
+        session['last_updated'] = datetime.now()
+        
+        return session['filters']
+    
+    def should_refine_search(self, session_id, message):
+        """Determine if user is refining their previous search"""
+        session = self.get_or_create_session(session_id)
+        message_lower = message.lower()
+        
+        # Keywords that suggest refinement
+        refinement_keywords = [
+            'different area', 'other location', 'change location',
+            'more bedrooms', 'fewer bedrooms', 'less bedrooms',
+            'higher price', 'lower price', 'cheaper', 'more expensive',
+            'show me others', 'something else', 'different properties',
+            'increase budget', 'reduce budget', 'adjust price'
+        ]
+        
+        # Check if user has previous search results and is using refinement language
+        has_previous_results = len(session.get('current_search_results', [])) > 0
+        is_refinement_language = any(keyword in message_lower for keyword in refinement_keywords)
+        
+        return has_previous_results and is_refinement_language
+    
+    def update_search_results(self, session_id, properties):
+        """Update current search results in session"""
+        session = self.get_or_create_session(session_id)
+        session['current_search_results'] = properties
+        session['last_updated'] = datetime.now()
+
+# Global conversation context manager
+conversation_context = ConversationContext()
+
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app, origins=["*"])
@@ -116,7 +407,7 @@ CORS(app, origins=["*"])
 # Configuration
 SUMMITLY_BASE_URL = "https://api.summitly.ca"  # Legacy URL for display
 REPLIERS_BASE_URL = "https://api.repliers.io"
-REPLIERS_API_KEY = "tVbura2ggfQb1yEdnz0lmP8cEAaL7n"
+REPLIERS_API_KEY = os.environ.get('REPLIERS_API_KEY', '')
 UPLOAD_FOLDER = 'temp_audio'
 EXCEL_FILE_PATH = "leads_data.xlsx"
 
@@ -669,13 +960,13 @@ def send_lead_confirmation_to_user(user_data: Dict, broker_info: Dict, lead_id: 
 
 # ==================== REPLIERS API INTEGRATION ====================
 
-def search_repliers_properties(location: str = "", property_type: str = "", max_price: int = None, limit: int = 6) -> Dict:
+def search_repliers_properties(location: str = "", property_type: str = "", max_price: int = None, bedrooms: int = None, bathrooms: float = None, limit: int = 6) -> Dict:
     """
     Search real properties using Repliers API with professional integration
     Now uses the listings_service module for robust API calls
     """
     try:
-        print(f"🔍 [REPLIERS API] Searching properties: location='{location}', type='{property_type}', max_price={max_price}")
+        print(f"🔍 [REPLIERS API] Searching properties: location='{location}', type='{property_type}', max_price={max_price}, bedrooms={bedrooms}, bathrooms={bathrooms}")
         
         # Use the professional Repliers integration if available
         if REPLIERS_INTEGRATION_AVAILABLE:
@@ -700,11 +991,13 @@ def search_repliers_properties(location: str = "", property_type: str = "", max_
                         property_style = value
                         break
             
-            # Call listings_service with proper parameters
+            # Call listings_service with proper parameters including bed/bath filters
             result = listings_service.search_listings(
                 city=city,
                 property_style=property_style,
                 max_price=max_price,
+                min_bedrooms=bedrooms,
+                min_bathrooms=bathrooms,
                 status='active',
                 page_size=limit,
                 page=1
@@ -716,28 +1009,38 @@ def search_repliers_properties(location: str = "", property_type: str = "", max_
             
             print(f"✅ [REPLIERS API] Found {total} total properties, showing {len(listings)} listings")
             
-            # Format properties for your frontend
+            # Format properties for your frontend - use actual API response structure
             properties = []
             for listing in listings[:limit]:
-                address = listing.get('address', {})
-                price_info = listing.get('price', {})
-                details = listing.get('details', {})
-                
-                property_data = {
-                    'id': listing.get('id', listing.get('mlsNumber', 'N/A')),
-                    'title': f"{details.get('propertyStyle', '')} in {address.get('city', location)}".strip(),
-                    'location': f"{address.get('city', location)}, {address.get('state', 'ON')}",
-                    'price': f"${price_info.get('amount', 0):,}",
-                    'bedrooms': str(details.get('bedrooms', 'N/A')),
-                    'bathrooms': str(details.get('bathrooms', 'N/A')),
-                    'sqft': f"{details.get('sqft', 'N/A'):,}" if details.get('sqft') else 'N/A',
-                    'property_type': details.get('propertyStyle', property_type or 'Property'),
-                    'image_url': listing.get('media', {}).get('photos', [{}])[0].get('url', 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400'),
-                    'listing_url': f"https://repliers.io/listing/{listing.get('id', '')}",
-                    'description': listing.get('description', f"{details.get('propertyStyle', 'Property')} in {address.get('city', location)}"),
-                    'mls_number': listing.get('mlsNumber'),
-                    'full_address': f"{address.get('street', '')}, {address.get('city', '')}, {address.get('state', '')} {address.get('postalCode', '')}".strip()
-                }
+                try:
+                    # Handle the actual API response structure
+                    address = listing.get('address', {})
+                    details = listing.get('details', {}) or {}  # Ensure it's a dict, not None
+                    
+                    # Extract key data safely
+                    list_price = listing.get('listPrice', 0)
+                    property_style = details.get('propertyStyle', 'Residential')
+                    city = address.get('city', location or 'Toronto')
+                    
+                    property_data = {
+                        'id': listing.get('mlsNumber', listing.get('id', 'N/A')),
+                        'title': f"{property_style} in {city}".strip(),
+                        'location': f"{city}, {address.get('province', 'ON')}",
+                        'price': f"${list_price:,}" if list_price else 'Price on request',
+                        'bedrooms': str(details.get('numBedrooms', details.get('bedrooms', 'N/A'))),
+                        'bathrooms': str(details.get('numBathrooms', details.get('bathrooms', 'N/A'))),
+                        'sqft': f"{details.get('sqft', 'N/A'):,}" if details.get('sqft') else 'N/A',
+                        'property_type': property_style,
+                        'image_url': get_first_image_url(listing),
+                        'listing_url': f"https://summitly.ca/property/{listing.get('mlsNumber', '')}",
+                        'description': details.get('description', f"{property_style} in {city}"),
+                        'mls_number': listing.get('mlsNumber'),
+                        'full_address': f"{address.get('streetNumber', '')} {address.get('streetName', '')} {address.get('streetSuffix', '')}, {city}, {address.get('province', 'ON')} {address.get('zip', '')}".strip()
+                    }
+                    properties.append(property_data)
+                except Exception as e:
+                    print(f"⚠️ [PROPERTY PARSE ERROR] Skipping property due to: {e}")
+                    continue
                 properties.append(property_data)
             
             return {
@@ -755,26 +1058,42 @@ def search_repliers_properties(location: str = "", property_type: str = "", max_
         # Fallback to basic HTTP requests if integration not available
         print("⚠️ Using fallback basic HTTP request")
         
-        # Define Ontario/GTA coordinates map (formatted like your working example)
+        # Define accurate GTA coordinates map - more precise boundaries
         location_maps = {
-            'toronto': [[-79.8, 43.9], [-79.1, 43.9], [-79.1, 43.5], [-79.8, 43.5]],
-            'mississauga': [[-79.8, 43.7], [-79.4, 43.7], [-79.4, 43.5], [-79.8, 43.5]],
-            'markham': [[-79.4, 43.9], [-79.2, 43.9], [-79.2, 43.7], [-79.4, 43.7]],  
-            'brampton': [[-79.9, 43.8], [-79.6, 43.8], [-79.6, 43.6], [-79.9, 43.6]],
-            'scarborough': [[-79.3, 43.9], [-79.0, 43.9], [-79.0, 43.6], [-79.3, 43.6]],
-            'north york': [[-79.6, 43.8], [-79.3, 43.8], [-79.3, 43.6], [-79.6, 43.6]],
-            'ontario': [[-82.93036962053748, 42.07088416140104], [-88.07379550946587, 42.07088416140104], [-88.07379550946587, 16.242913731111116], [-82.93036962053748, 16.242913731111116]]
+            'toronto': [[-79.639, 43.855], [-79.115, 43.855], [-79.115, 43.581], [-79.639, 43.581]],
+            'mississauga': [[-79.842, 43.685], [-79.489, 43.685], [-79.489, 43.521], [-79.842, 43.521]],
+            'markham': [[-79.468, 43.957], [-79.201, 43.957], [-79.201, 43.781], [-79.468, 43.781]],
+            'vaughan': [[-79.725, 43.889], [-79.423, 43.889], [-79.423, 43.731], [-79.725, 43.731]],
+            'brampton': [[-79.960, 43.827], [-79.648, 43.827], [-79.648, 43.623], [-79.960, 43.623]],
+            'scarborough': [[-79.306, 43.806], [-79.054, 43.806], [-79.054, 43.634], [-79.306, 43.634]],
+            'north york': [[-79.543, 43.786], [-79.346, 43.786], [-79.346, 43.690], [-79.543, 43.690]],
+            'etobicoke': [[-79.639, 43.710], [-79.463, 43.710], [-79.463, 43.581], [-79.639, 43.581]],
+            'richmond hill': [[-79.468, 43.906], [-79.312, 43.906], [-79.312, 43.847], [-79.468, 43.847]],
+            'oakville': [[-79.790, 43.535], [-79.618, 43.535], [-79.618, 43.387], [-79.790, 43.387]]
         }
         
-        # Get map coordinates
+        # Get map coordinates - match exactly, no fuzzy matching to avoid wrong city results
         map_coords = None
-        location_lower = location.lower()
-        for city, coords in location_maps.items():
-            if city in location_lower or location_lower in city:
-                map_coords = coords
-                break
+        if location:
+            location_lower = location.lower().strip()
+            print(f"🔍 [COORDINATE LOOKUP] Searching for: '{location_lower}'")
+            
+            # Exact match first
+            if location_lower in location_maps:
+                map_coords = location_maps[location_lower]
+                print(f"✅ [COORDINATE FOUND] Exact match: {location_lower}")
+            else:
+                # Check if location contains any city name
+                for city_key in location_maps.keys():
+                    if city_key in location_lower:
+                        map_coords = location_maps[city_key]
+                        print(f"✅ [COORDINATE FOUND] Partial match: '{city_key}' in '{location_lower}'")
+                        break
+        
         if not map_coords:
-            map_coords = location_maps['ontario']
+            print(f"⚠️ [COORDINATE WARNING] No coordinates found for location: '{location}'")
+            # Don't fall back to Ontario coordinates - this causes wrong results
+            return {'success': False, 'properties': [], 'total_found': 0, 'error': f"Location '{location}' not supported. Please specify a GTA city."}
         
         # Build API request
         url = f"{REPLIERS_BASE_URL}/listings"
@@ -902,19 +1221,56 @@ def search_repliers_properties(location: str = "", property_type: str = "", max_
         return {'success': False, 'properties': [], 'total_found': 0, 'error': str(e)}
 
 
-def get_live_properties(city="Toronto", max_price=None, bedrooms=None, property_type=None, limit=20) -> List[Dict]:
+def get_first_image_url(listing):
+    """Get the first image URL from a listing, with fallback to default image"""
+    try:
+        # Try multiple possible image locations in the API response
+        images = listing.get('images', [])
+        if images and len(images) > 0:
+            # If images is a list of URLs
+            if isinstance(images[0], str):
+                return images[0]
+            # If images is a list of objects with url property
+            elif isinstance(images[0], dict) and 'url' in images[0]:
+                return images[0]['url']
+        
+        # Try media photos
+        media = listing.get('media', {})
+        photos = media.get('photos', [])
+        if photos and len(photos) > 0:
+            if isinstance(photos[0], dict) and 'url' in photos[0]:
+                return photos[0]['url']
+        
+        # Try direct photoCount approach - construct URL
+        mls_number = listing.get('mlsNumber', '')
+        if mls_number and listing.get('photoCount', 0) > 0:
+            return f"https://cdn.repliers.io/IMG-{mls_number}_1.jpg"
+            
+    except Exception as e:
+        print(f"⚠️ [IMAGE URL] Error getting image: {e}")
+    
+    # Fallback to default property image
+    return 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=300&fit=crop'
+
+
+def get_live_properties(city=None, max_price=None, bedrooms=None, bathrooms=None, property_type=None, limit=20) -> List[Dict]:
     """
     Get live properties from Repliers API - replaces MOCK_PROPERTIES
     Returns list of properties in the same format as MOCK_PROPERTIES for compatibility
     """
     try:
-        print(f"🔴 [LIVE DATA] Fetching {limit} real properties from MLS...")
+        if not city:
+            print(f"⚠️ [LIVE DATA] No city specified - cannot search without location")
+            return []
+            
+        print(f"🔴 [LIVE DATA] Fetching {limit} real properties from MLS in {city}...")
         
         if REPLIERS_INTEGRATION_AVAILABLE:
             result = listings_service.search_listings(
                 city=city,
                 max_price=max_price,
                 min_bedrooms=bedrooms,
+                min_bathrooms=bathrooms,
                 property_style=property_type,
                 status='active',
                 transaction_type='sale',  # Only show properties for sale, not lease
@@ -2803,23 +3159,95 @@ def search_summitly_properties(query: str, filters: Dict = None) -> Dict:
         # Extract search parameters from query
         query_lower = query.lower()
         
-        # Parse location
-        city = "Toronto"  # Default
-        if "mississauga" in query_lower:
-            city = "Mississauga"
-        elif "markham" in query_lower:
-            city = "Markham"
-        elif "vaughan" in query_lower:
-            city = "Vaughan"
-        elif "brampton" in query_lower:
-            city = "Brampton"
+        # Parse location - DO NOT DEFAULT TO TORONTO
+        city = None
+        # More comprehensive location detection with common misspellings
+        location_keywords = {
+            'mississauga': 'Mississauga',
+            'missiauga': 'Mississauga',  # Common misspelling
+            'mississuaga': 'Mississauga',  # Common misspelling  
+            'mississauga': 'Mississauga',  # Common misspelling
+            'markham': 'Markham', 
+            'vaughan': 'Vaughan',
+            'vaughn': 'Vaughan',  # Common misspelling
+            'brampton': 'Brampton',
+            'toronto': 'Toronto',
+            'toranto': 'Toronto',  # Common misspelling
+            'scarborough': 'Scarborough',
+            'scarbrough': 'Scarborough',  # Common misspelling
+            'north york': 'North York',
+            'northyork': 'North York',
+            'etobicoke': 'Etobicoke',
+            'etobicok': 'Etobicoke',  # Common misspelling
+            'richmond hill': 'Richmond Hill',
+            'richmondhill': 'Richmond Hill',
+            'oakville': 'Oakville',
+            'oakvile': 'Oakville',  # Common misspelling
+            'burlington': 'Burlington',
+            'hamilton': 'Hamilton',
+            'oshawa': 'Oshawa',
+            'pickering': 'Pickering',
+            'ajax': 'Ajax',
+            'whitby': 'Whitby'
+        }
         
-        # Parse bedrooms
+        # Find the most specific location match
+        for keyword, city_name in location_keywords.items():
+            if keyword in query_lower:
+                city = city_name
+                print(f"🎯 [LOCATION DETECTED] Found '{keyword}' -> {city_name}")
+                break
+        
+        # Check for address patterns if no city was found
+        if not city:
+            address_patterns = [
+                r'\d+\s+[A-Za-z]+\s+(street|st|avenue|ave|road|rd|drive|dr|lane|ln|court|ct|place|pl|boulevard|blvd|way|circle|cir)',
+                r'\d+\s+[A-Za-z\s]+\s+(street|st|avenue|ave|road|rd|drive|dr|lane|ln|court|ct|place|pl|boulevard|blvd|way|circle|cir)',
+            ]
+            has_address = any(re.search(pattern, query_lower, re.IGNORECASE) for pattern in address_patterns)
+            
+            if has_address:
+                # For address-based proximity searches, default to Mississauga 
+                # This allows searching properties near the specified address
+                print(f"🏠 [ADDRESS DETECTED] Found address pattern in query, defaulting to Mississauga")
+                city = "Mississauga"  # Default city for address-based proximity searches
+            else:
+                print(f"⚠️ [LOCATION WARNING] No specific location found in query: '{query}'")
+                # Don't default to Toronto - let the user specify
+        
+        # Parse bedrooms - improved patterns
         bedrooms = None
         import re
-        bed_match = re.search(r'(\d+)[- ]bedroom', query_lower)
-        if bed_match:
-            bedrooms = int(bed_match.group(1))
+        # More comprehensive bedroom patterns
+        bed_patterns = [
+            r'(\d+)[- ]bedroom',
+            r'(\d+)[- ]bed\b',
+            r'(\d+)br\b',
+            r'(\d+)\s*bed\s*room',
+            r'(\d+)\s*bed\s*(?:room)?s?\b'
+        ]
+        for pattern in bed_patterns:
+            bed_match = re.search(pattern, query_lower)
+            if bed_match:
+                bedrooms = int(bed_match.group(1))
+                print(f"🛏️ [BEDROOM DETECTED] Found {bedrooms} bedrooms")
+                break
+        
+        # Parse bathrooms
+        bathrooms = None
+        bath_patterns = [
+            r'(\d+(?:\.\d+)?)[- ]bathroom',
+            r'(\d+(?:\.\d+)?)[- ]bath\b',
+            r'(\d+(?:\.\d+)?)ba\b',
+            r'(\d+(?:\.\d+)?)\s*bath\s*room',
+            r'(\d+(?:\.\d+)?)\s*bath\s*(?:room)?s?\b'
+        ]
+        for pattern in bath_patterns:
+            bath_match = re.search(pattern, query_lower)
+            if bath_match:
+                bathrooms = float(bath_match.group(1))
+                print(f"🛁 [BATHROOM DETECTED] Found {bathrooms} bathrooms")
+                break
         
         # Parse property type
         property_type = None
@@ -2840,7 +3268,7 @@ def search_summitly_properties(query: str, filters: Dict = None) -> Dict:
             if price_match:
                 max_price = int(price_match.group(1)) * 1000
         
-        print(f"🔍 [LIVE SEARCH] Parsed: city={city}, bedrooms={bedrooms}, type={property_type}, max_price={max_price}")
+        print(f"🔍 [LIVE SEARCH] Parsed: city={city}, bedrooms={bedrooms}, bathrooms={bathrooms}, type={property_type}, max_price={max_price}")
         
         # PRIORITY 1: Try real_property_service (uses Repliers API with better error handling)
         if REAL_PROPERTY_SERVICE_AVAILABLE:
@@ -2850,6 +3278,7 @@ def search_summitly_properties(query: str, filters: Dict = None) -> Dict:
                     location=city,
                     max_price=max_price,
                     bedrooms=bedrooms,
+                    bathrooms=bathrooms,
                     property_type=property_type,
                     limit=20
                 )
@@ -2871,6 +3300,7 @@ def search_summitly_properties(query: str, filters: Dict = None) -> Dict:
                 city=city,
                 max_price=max_price,
                 bedrooms=bedrooms,
+                bathrooms=bathrooms,
                 property_type=property_type,
                 limit=20
             )
@@ -2880,12 +3310,15 @@ def search_summitly_properties(query: str, filters: Dict = None) -> Dict:
         # Limit results
         limited_properties = matching_properties[:10]
         
-        print(f"✅ [LIVE DATA] Found {len(limited_properties)} properties")
-        print(f"📋 [LIVE DATA] Properties: {[p['title'] for p in limited_properties]}")
+        # CRITICAL: Standardize property data for frontend consistency
+        standardized_properties = standardize_property_data(limited_properties)
+        
+        print(f"✅ [LIVE DATA] Found {len(standardized_properties)} standardized properties")
+        print(f"📋 [LIVE DATA] Properties: {[p.get('title', p.get('address', 'Unknown')) for p in standardized_properties]}")
         
         return {
             'success': True,
-            'properties': limited_properties,
+            'properties': standardized_properties,
             'total_found': len(matching_properties)
         }
         
@@ -2903,17 +3336,45 @@ def answer_property_question_with_summitly(query: str, user_context: Dict = None
         property_type = ""
         max_price = None
         
-        # Extract location from query or user context
+        # Extract location from query or user context - USE CONSISTENT LOGIC
         if user_context and user_context.get('location'):
             location = user_context['location']
+            print(f"🎯 [LOCATION FROM CONTEXT] Using: {location}")
         else:
-            # Try to extract location from query
-            location_keywords = ['toronto', 'mississauga', 'markham', 'brampton', 'scarborough', 'north york', 'ontario']
+            # Try to extract location from query using comprehensive list
+            location_keywords = {
+                'mississauga': 'Mississauga',
+                'missiauga': 'Mississauga',
+                'mississuaga': 'Mississauga',
+                'markham': 'Markham', 
+                'vaughan': 'Vaughan',
+                'vaughn': 'Vaughan',
+                'brampton': 'Brampton',
+                'toronto': 'Toronto',
+                'toranto': 'Toronto',
+                'scarborough': 'Scarborough',
+                'scarbrough': 'Scarborough',
+                'north york': 'North York',
+                'northyork': 'North York',
+                'etobicoke': 'Etobicoke',
+                'etobicok': 'Etobicoke',
+                'richmond hill': 'Richmond Hill',
+                'richmondhill': 'Richmond Hill',
+                'oakville': 'Oakville',
+                'oakvile': 'Oakville',
+                'burlington': 'Burlington',
+                'hamilton': 'Hamilton'
+            }
+            
             query_lower = query.lower()
-            for keyword in location_keywords:
+            for keyword, city_name in location_keywords.items():
                 if keyword in query_lower:
-                    location = keyword
+                    location = city_name
+                    print(f"🎯 [LOCATION FROM QUERY] Found '{keyword}' -> {city_name}")
                     break
+            
+            if not location:
+                print(f"⚠️ [LOCATION WARNING] No specific location found in query: '{query}'")
         
         # Extract property type from query or user context
         if user_context and user_context.get('property_type'):
@@ -2931,6 +3392,46 @@ def answer_property_question_with_summitly(query: str, user_context: Dict = None
                     property_type = prop_type
                     break
         
+        # Extract bedrooms from query or user context
+        bedrooms = None
+        if user_context and user_context.get('bedrooms'):
+            bedrooms = user_context['bedrooms']
+        else:
+            # Parse bedrooms from query
+            bed_patterns = [
+                r'(\d+)[- ]bedroom',
+                r'(\d+)[- ]bed\b',
+                r'(\d+)br\b',
+                r'(\d+)\s*bed\s*room',
+                r'(\d+)\s*bed\s*(?:room)?s?\b'
+            ]
+            for pattern in bed_patterns:
+                bed_match = re.search(pattern, query_lower)
+                if bed_match:
+                    bedrooms = int(bed_match.group(1))
+                    print(f"🛏️ [BEDROOMS FROM QUERY] Found {bedrooms} bedrooms")
+                    break
+        
+        # Extract bathrooms from query or user context  
+        bathrooms = None
+        if user_context and user_context.get('bathrooms'):
+            bathrooms = user_context['bathrooms']
+        else:
+            # Parse bathrooms from query
+            bath_patterns = [
+                r'(\d+(?:\.\d+)?)[- ]bathroom',
+                r'(\d+(?:\.\d+)?)[- ]bath\b',
+                r'(\d+(?:\.\d+)?)ba\b',
+                r'(\d+(?:\.\d+)?)\s*bath\s*room',
+                r'(\d+(?:\.\d+)?)\s*bath\s*(?:room)?s?\b'
+            ]
+            for pattern in bath_patterns:
+                bath_match = re.search(pattern, query_lower)
+                if bath_match:
+                    bathrooms = float(bath_match.group(1))
+                    print(f"🛁 [BATHROOMS FROM QUERY] Found {bathrooms} bathrooms")
+                    break
+
         # Extract budget/price from query or user context
         if user_context and user_context.get('budget'):
             budget_text = user_context['budget'].lower()
@@ -2964,6 +3465,44 @@ def answer_property_question_with_summitly(query: str, user_context: Dict = None
                     numbers = re.findall(r'[\d,]+', price_match.group())
                     if numbers:
                         max_price = int(numbers[0].replace(',', ''))
+
+        # Handle income-based affordability queries (e.g., "What can I afford with $150K income?")
+        income_keywords = ['income', 'household income', 'annual income', 'salary', 'earn', 'make', 'afford with']
+        if any(keyword in query_lower for keyword in income_keywords):
+            print(f"💰 [INCOME DETECTION] Found affordability query in: '{query}'")
+            
+            # Parse income amount with various formats
+            income_patterns = [
+                r'(?:with|earning|making?|income\s+of?)\s*\$?(\d+)k\b',  # "$150K", "with 150K", "income 150k"
+                r'\$(\d{2,3})k\b',  # "$150K" standalone
+                r'(\d{2,3})k\s*(?:income|salary|household)',  # "150K income"
+                r'(\d{3,6})\s*(?:income|salary|per\s*year)',  # "150000 income"
+                r'\$(\d{3,6})\b'  # "$150000"
+            ]
+            
+            income_amount = None
+            for pattern in income_patterns:
+                income_match = re.search(pattern, query_lower)
+                if income_match:
+                    raw_amount = int(income_match.group(1))
+                    # Handle different formats
+                    if 'k' in pattern or raw_amount < 1000:  # Likely in thousands
+                        income_amount = raw_amount * 1000 if raw_amount < 1000 else raw_amount
+                    else:
+                        income_amount = raw_amount
+                    print(f"💰 [INCOME PARSED] Extracted ${income_amount:,} from pattern: {pattern}")
+                    break
+            
+            if income_amount:
+                # Calculate affordable price based on income (rough 4-5x income rule)
+                affordable_price = income_amount * 4.5  # Conservative multiplier
+                max_price = int(affordable_price)
+                print(f"💰 [AFFORDABILITY] Income ${income_amount:,} -> Max affordable ${max_price:,}")
+                
+                # Update query to be more specific
+                location_part = f" in {location}" if location else ""
+                query = f"properties under ${max_price:,}{location_part} affordable with ${income_amount:,} income"
+                print(f"💰 [AFFORDABILITY SEARCH] Updated query: '{query}'")
         
         # Try Repliers API for real properties first
         print(f"🚀 [PROPERTY SEARCH] Trying Repliers API first...")
@@ -2971,6 +3510,8 @@ def answer_property_question_with_summitly(query: str, user_context: Dict = None
             location=location,
             property_type=property_type,
             max_price=max_price,
+            bedrooms=bedrooms,
+            bathrooms=bathrooms,
             limit=6
         )
         
@@ -3054,13 +3595,39 @@ def extract_property_preferences_naturally(user_text, session):
         responses = []
         preferences_found = False
         
-        # Extract location preferences
-        locations = ['toronto', 'mississauga', 'markham', 'brampton', 'scarborough', 'north york', 'downtown', 'waterfront']
-        mentioned_locations = [loc for loc in locations if loc in user_lower]
-        if mentioned_locations:
-            session.user_data['location'] = mentioned_locations[0]
-            responses.append(f"Great! {mentioned_locations[0].title()} is a fantastic area.")
-            preferences_found = True
+        # Extract location preferences - use same logic as main search with typo handling
+        location_keywords = {
+            'mississauga': 'Mississauga',
+            'missiauga': 'Mississauga',
+            'mississuaga': 'Mississauga',
+            'markham': 'Markham', 
+            'vaughan': 'Vaughan',
+            'vaughn': 'Vaughan',
+            'brampton': 'Brampton',
+            'toronto': 'Toronto',
+            'toranto': 'Toronto',
+            'scarborough': 'Scarborough',
+            'scarbrough': 'Scarborough',
+            'north york': 'North York',
+            'northyork': 'North York',
+            'etobicoke': 'Etobicoke',
+            'etobicok': 'Etobicoke',
+            'richmond hill': 'Richmond Hill',
+            'richmondhill': 'Richmond Hill',
+            'oakville': 'Oakville',
+            'oakvile': 'Oakville',
+            'burlington': 'Burlington',
+            'hamilton': 'Hamilton'
+        }
+        
+        # Find the most specific location match
+        for keyword, city_name in location_keywords.items():
+            if keyword in user_lower:
+                session.user_data['location'] = city_name
+                responses.append(f"Great! {city_name} is a fantastic area.")
+                preferences_found = True
+                print(f"🎯 [PREFERENCE LOCATION] Found '{keyword}' -> {city_name}")
+                break
         
         # Extract property type preferences
         if any(word in user_lower for word in ['condo', 'condominium', 'apartment']):
@@ -3865,9 +4432,9 @@ def text_chat():
         
         print(f"🤖 [TEXT CHAT] Attempting HuggingFace integration for: '{user_message}'")
         
-        # Try HuggingFace FastAPI integration first
+        # Try HuggingFace FastAPI integration first - NO DEFAULT LOCATION
         user_preferences = {
-            "location": session.user_data.get('location', 'Toronto'),
+            "location": session.user_data.get('location'),  # No default - must be specified
             "budget_max": 800000,
             "property_type": session.user_data.get('property_type', 'any'),
             "language": "en",
@@ -3913,13 +4480,22 @@ def text_chat():
             if ai_data.get('trigger_property_search', False):
                 print(f"🏠 [PROPERTY SEARCH] HuggingFace triggered property search")
                 
-                # Perform property search based on session context
-                search_query = f"condo in Toronto"
-                if session.user_data.get('budget'):
-                    search_query += f" under {session.user_data.get('budget')}"
+                # Perform property search based on session context - BUILD PROPER QUERY
+                location = session.user_data.get('location')
+                property_type = session.user_data.get('property_type', 'property')
                 
-                property_result = answer_property_question_with_summitly(search_query, session.user_data)
-                properties_to_show = property_result.get('properties', [])
+                if not location:
+                    print(f"⚠️ [PROPERTY SEARCH] No location in session data - cannot search")
+                    properties_to_show = []
+                else:
+                    search_query = f"{property_type} in {location}"
+                    if session.user_data.get('budget'):
+                        search_query += f" under {session.user_data.get('budget')}"
+                    
+                    print(f"🔍 [PROPERTY SEARCH] Built query: '{search_query}'")
+                    
+                    property_result = answer_property_question_with_summitly(search_query, session.user_data)
+                    properties_to_show = property_result.get('properties', [])
                 
                 # Keep AI response short - properties will be displayed separately in cards
                 # No need to append property details here since frontend handles that
@@ -3957,9 +4533,9 @@ def text_chat():
                             if 'agent' in entry:
                                 openai_history.append({"role": "assistant", "content": str(entry['agent'])[:500]})
                     
-                    # Build context
+                    # Build context - NO DEFAULT LOCATION
                     context = {
-                        "location": session.user_data.get('location', 'Toronto'),
+                        "location": session.user_data.get('location'),  # No default
                         "budget": session.user_data.get('budget'),
                         "property_type": session.user_data.get('property_type'),
                         "stage": session.stage
@@ -4641,13 +5217,21 @@ def huggingface_property_search():
     try:
         data = request.get_json()
         
-        # Build enhanced search query
-        location = data.get('location', 'Toronto')
+        # Build enhanced search query - NO DEFAULT LOCATIONS
+        location = data.get('location')
         budget = data.get('budget', 800000)
         property_type = data.get('property_type', 'any')
         bedrooms = data.get('bedrooms')
         bathrooms = data.get('bathrooms')
         search_query = data.get('query', '')
+        
+        # Validate required location
+        if not location:
+            return jsonify({
+                "success": False,
+                "error": "Location is required. Please specify a city (e.g., Toronto, Mississauga, Markham).",
+                "message": "Please specify which city you'd like to search in."
+            }), 400
         
         # Create comprehensive search message
         search_parts = [f"I'm looking for {property_type} properties in {location}"]
@@ -5679,14 +6263,35 @@ def intelligent_chat():
             print(f"💰 [VALUATION] Detected valuation query: {message}")
             try:
                 # Import the valuation integration
-                from services.chatbot_valuation_integration import process_valuation_request
+                from services.chatbot_valuation_integration import process_valuation_request, extract_property_identifier
                 
-                # Build chatbot context
+                # Build chatbot context with list price if available
                 chatbot_context = {
                     'user_id': session_id,
                     'session_id': session_id,
                     'timestamp': datetime.now().isoformat()
                 }
+                
+                # Try to extract MLS number and get list price
+                mls_id, address = extract_property_identifier(message)
+                if mls_id and REPLIERS_INTEGRATION_AVAILABLE:
+                    try:
+                        # Fetch property details to get the correct list price
+                        property_details = listings_service.get_listing_details(mls_id)
+                        if property_details:
+                            # Extract list price from property data
+                            if 'success' in property_details and property_details.get('success'):
+                                list_price = property_details.get('property', {}).get('listPrice', 0)
+                            else:
+                                # Direct property data format
+                                list_price = property_details.get('listPrice', 0)
+                            
+                            if list_price and list_price > 0:
+                                chatbot_context['listing_id'] = mls_id
+                                chatbot_context['list_price'] = list_price
+                                print(f"💰 [VALUATION] Added list price to context: ${list_price:,}")
+                    except Exception as e:
+                        print(f"⚠️ [VALUATION] Could not fetch list price: {e}")
                 
                 # Process valuation request (returns dict with markdown and structured_data)
                 valuation_response = process_valuation_request(message, chatbot_context)
@@ -5783,6 +6388,16 @@ def intelligent_chat_sync():
             }), 400
         
         message_lower = message.lower()
+        
+        # ========== CONVERSATION CONTEXT UPDATE ==========
+        # Update conversation context with filters from current message
+        conversation_context.update_filters_from_message(session_id, message)
+        session_data = conversation_context.get_or_create_session(session_id)
+        
+        # Check if this is a search refinement
+        is_refinement = conversation_context.should_refine_search(session_id, message)
+        if is_refinement:
+            print(f"🔄 [CONTEXT] Detected search refinement for session {session_id}")
         
         # ========== ENHANCED MLS NUMBER EXTRACTION ==========
         # Extract MLS number if present - supports multiple formats
@@ -6190,49 +6805,125 @@ def intelligent_chat_sync():
         
         # ========== PROPERTY SEARCH DETECTION (HIGH PRIORITY - CHECK FIRST) ==========
         # Check if this is a property search query (UNIVERSAL - works for any city)
-        property_search_keywords = ['show me', 'find', 'search', 'looking for', 'properties', 'condo', 'house', 'townhouse', 'bedroom', 'under $', 'near', 'in ', 'at ']
-        property_type_keywords = ['condo', 'house', 'townhouse', 'apartment', 'property', 'properties', 'home', 'homes']
-        price_filter_keywords = ['priced between', 'between $', 'under $', '$ to $', 'budget of', 'price range']
+        property_search_keywords = ['show me', 'find', 'search', 'looking for', 'properties', 'condo', 'house', 'townhouse', 'bedroom', 'under $', 'near', ' in ', 'at ', 'with parking', 'downtown', 'waterfront', 'transit', 'subway', 'ttc']
+        property_type_keywords = ['condo', 'house', 'townhouse', 'apartment', 'property', 'properties', 'home', 'homes', 'residential']
+        price_filter_keywords = ['priced between', 'between $', 'under $', '$ to $', 'budget of', 'price range', 'afford']
         
         # Check if message contains property search keywords
         has_search_keyword = any(keyword in message_lower for keyword in property_search_keywords)
         has_property_type = any(ptype in message_lower for ptype in property_type_keywords)
         has_price_filter = any(pf in message_lower for pf in price_filter_keywords)
         
-        # Universal property search detection - works for ANY city
-        is_property_search = (has_search_keyword and has_property_type) or has_price_filter
+        # DEBUG: Print search detection results
+        print(f"🔍 [DEBUG SEARCH DETECTION] Message: '{message_lower}'")
+        print(f"🔍 [DEBUG SEARCH DETECTION] has_search_keyword: {has_search_keyword}")
+        print(f"🔍 [DEBUG SEARCH DETECTION] has_property_type: {has_property_type}")  
+        print(f"🔍 [DEBUG SEARCH DETECTION] has_price_filter: {has_price_filter}")
         
-        # If it's a property search, use our live MLS data
-        if is_property_search:
+        # Check for address patterns (numbers + street names)
+        address_patterns = [
+            r'\d+\s+[A-Za-z]+\s+(street|st|avenue|ave|road|rd|drive|dr|lane|ln|court|ct|place|pl|boulevard|blvd|way|circle|cir)',
+            r'\d+\s+[A-Za-z\s]+\s+(street|st|avenue|ave|road|rd|drive|dr|lane|ln|court|ct|place|pl|boulevard|blvd|way|circle|cir)',
+        ]
+        has_address = any(re.search(pattern, message_lower, re.IGNORECASE) for pattern in address_patterns)
+        print(f"🔍 [DEBUG SEARCH DETECTION] has_address: {has_address}")
+        
+        # Universal property search detection - works for ANY city
+        # Include address-based proximity queries as property searches
+        is_property_search = (has_search_keyword and has_property_type) or has_price_filter or (has_search_keyword and has_address)
+        print(f"🔍 [DEBUG SEARCH DETECTION] is_property_search: {is_property_search}")
+        
+        # If it's a property search, use our live MLS data with context awareness
+        if is_property_search or is_refinement:
             print(f"🏠 [PROPERTY SEARCH] Detected property query: {message}")
-            search_result = search_summitly_properties(message)
+            
+            # For refinements, build query from updated session context
+            if is_refinement:
+                current_filters = session_data['filters']
+                print(f"🔄 [CONTEXT REFINEMENT] Current filters: {current_filters}")
+                
+                # Build search query from context
+                search_query = ""
+                if current_filters['bedrooms']:
+                    search_query += f"{current_filters['bedrooms']} bedroom "
+                if current_filters['property_type']:
+                    search_query += f"{current_filters['property_type']} "
+                else:
+                    search_query += "properties "
+                if current_filters['location']:
+                    search_query += f"in {current_filters['location']} "
+                if current_filters['max_price']:
+                    search_query += f"under ${current_filters['max_price']:,} "
+                if current_filters['min_price']:
+                    search_query += f"over ${current_filters['min_price']:,} "
+                    
+                search_query = search_query.strip() or message
+                print(f"🔄 [CONTEXT REFINEMENT] Using refined search query: {search_query}")
+            else:
+                search_query = message
+            
+            search_result = search_summitly_properties(search_query)
             properties = search_result.get('properties', []) if isinstance(search_result, dict) else []
             
+            # Update context with search results
+            conversation_context.update_search_results(session_id, properties)
+            
             if properties and len(properties) > 0:
-                # Format a nice response with the property count
-                response_text = f"🏠 **Property Listings & Opportunities**<br><br>"
-                response_text += f"I found **{len(properties)} properties** matching your criteria from the Toronto MLS listings.<br><br>"
-                response_text += "Here are the available properties:"
+                # Format response based on context
+                if is_refinement:
+                    response_text = f"🔄 **Refined Search Results**<br><br>"
+                    response_text += f"Based on your updated criteria, I found **{len(properties)} properties**.<br><br>"
+                    
+                    # Show what changed
+                    filters = session_data['filters']
+                    changes = []
+                    if filters['location']:
+                        changes.append(f"📍 {filters['location']}")
+                    if filters['bedrooms']:
+                        changes.append(f"🛏️ {filters['bedrooms']}+ bedrooms")
+                    if filters['max_price']:
+                        changes.append(f"💰 Under ${filters['max_price']:,}")
+                    if filters['property_type']:
+                        changes.append(f"🏠 {filters['property_type'].title()}")
+                    
+                    if changes:
+                        response_text += f"**Current search:** {' • '.join(changes)}<br><br>"
+                    
+                    response_text += "Here are your updated results:"
+                else:
+                    response_text = f"🏠 **Property Listings & Opportunities**<br><br>"
+                    response_text += f"I found **{len(properties)} properties** matching your criteria from live MLS listings.<br><br>"
+                    response_text += "Here are the available properties:"
                 
                 print(f"📤 [RESPONSE] Sending {len(properties)} properties to frontend")
                 print(f"📤 [RESPONSE] First property: {properties[0] if properties else 'None'}")
+                
+                # Context-aware quick replies
+                quick_replies = []
+                if not session_data['filters']['location']:
+                    quick_replies.append("Search different city")
+                if session_data['filters']['max_price']:
+                    quick_replies.append("Increase budget")
+                else:
+                    quick_replies.append("Set price range")
+                if not session_data['filters']['bedrooms']:
+                    quick_replies.append("Filter by bedrooms")
+                quick_replies.extend(["Investment analysis", "Schedule viewings"])
                 
                 return jsonify({
                     "success": True,
                     "response": response_text,
                     "properties": properties,  # Send real properties to frontend
-                    "quick_replies": [
-                        "Tell me more",
-                        "Show different area",
-                        "Investment potential",
-                        "Price trends"
-                    ],
+                    "quick_replies": quick_replies[:5],  # Limit to 5 replies
                     "stage": "showing_properties",
                     "ready_for_search": True,
+                    "is_refinement": is_refinement,
+                    "current_filters": session_data['filters'],
                     "session_id": session_id,
                     "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "exa_enhanced": False,
-                    "live_mls_data": True
+                    "live_mls_data": True,
+                    "context_aware": True
                 })
         
         # ========== VALUATION DETECTION (AFTER PROPERTY SEARCH) ==========
@@ -6287,6 +6978,193 @@ def intelligent_chat_sync():
                 print(f"❌ [VALUATION ERROR] {val_error}")
                 traceback.print_exc()
                 # Fall through to regular chat if valuation fails
+        
+        # ========== ADDITIONAL INTENT DETECTION ==========
+        # Check for other specific intents before falling back to OpenAI
+        
+        # ROI / Investment Analysis Intent
+        roi_keywords = ['roi', 'return on investment', 'cash flow', 'investment potential', 'rental income', 'cap rate', 'yield']
+        if any(keyword in message_lower for keyword in roi_keywords):
+            print(f"📊 [ROI INTENT] Detected investment analysis query")
+            if mls_match:
+                # Direct to ROI endpoint if MLS provided
+                try:
+                    # Try to extract price from context if possible
+                    price_match = re.search(r'\$?([0-9,]+)', message)
+                    estimated_price = int(price_match.group(1).replace(',', '')) if price_match else None
+                    
+                    return jsonify({
+                        "success": True,
+                        "response": f"I can help you analyze the investment potential for MLS {mls_match.group(1)}. Click the button below to calculate ROI, cash flow, and other investment metrics.",
+                        "mls_number": mls_match.group(1),
+                        "estimated_price": estimated_price,
+                        "quick_replies": [
+                            f"Calculate ROI for {mls_match.group(1)}",
+                            "Show rental comparables", 
+                            "Investment neighborhood analysis",
+                            "Financing options"
+                        ],
+                        "stage": "roi_ready",
+                        "session_id": session_id
+                    })
+                except:
+                    pass
+            else:
+                return jsonify({
+                    "success": True,
+                    "response": "I'd be happy to help analyze investment potential! Please provide a property MLS number or specific address, and I'll calculate ROI, cash flow, rental estimates, and more.",
+                    "quick_replies": [
+                        "Search investment properties",
+                        "Show market analysis",
+                        "Rental market trends",
+                        "Best investment neighborhoods"
+                    ],
+                    "stage": "roi_info_needed",
+                    "session_id": session_id
+                })
+        
+        # Mortgage / Affordability Intent
+        mortgage_keywords = ['mortgage', 'monthly payment', 'afford', 'down payment', 'qualify', 'pre-approved', 'financing', 'interest rate']
+        if any(keyword in message_lower for keyword in mortgage_keywords):
+            print(f"🏦 [MORTGAGE INTENT] Detected mortgage/affordability query")
+            # Try to extract price from message
+            price_match = re.search(r'\$?([0-9,]+)', message)
+            if price_match:
+                estimated_price = int(price_match.group(1).replace(',', ''))
+                return jsonify({
+                    "success": True,
+                    "response": f"I can help calculate mortgage payments for a ${estimated_price:,} property. I'll show you monthly payments, required down payment, and affordability analysis.",
+                    "estimated_price": estimated_price,
+                    "quick_replies": [
+                        f"Calculate mortgage for ${estimated_price:,}",
+                        "Pre-approval requirements",
+                        "Down payment options", 
+                        "Find mortgage broker"
+                    ],
+                    "stage": "mortgage_ready",
+                    "session_id": session_id
+                })
+            else:
+                return jsonify({
+                    "success": True,
+                    "response": "I can help with mortgage calculations and affordability analysis! What's your target purchase price, or would you like me to find properties in your budget?",
+                    "quick_replies": [
+                        "Calculate my affordability",
+                        "Current interest rates",
+                        "Down payment assistance",
+                        "Find properties in budget"
+                    ],
+                    "stage": "mortgage_info_needed",
+                    "session_id": session_id
+                })
+        
+        # Comparison Intent
+        comparison_keywords = ['compare', 'comparison', 'versus', 'vs', 'which is better', 'difference between']
+        if any(keyword in message_lower for keyword in comparison_keywords):
+            print(f"⚖️ [COMPARISON INTENT] Detected property comparison query")
+            # Try to extract MLS numbers for comparison
+            mls_numbers = re.findall(r'[A-Z]\d{7,8}', message.upper())
+            if len(mls_numbers) >= 2:
+                return jsonify({
+                    "success": True,
+                    "response": f"I'll compare these {len(mls_numbers)} properties for you: {', '.join(mls_numbers)}",
+                    "mls_numbers": mls_numbers,
+                    "quick_replies": [
+                        "Show detailed comparison",
+                        "Investment analysis comparison",
+                        "Neighborhood comparison",
+                        "Find similar properties"
+                    ],
+                    "stage": "comparison_ready",
+                    "session_id": session_id
+                })
+            else:
+                return jsonify({
+                    "success": True,
+                    "response": "I can compare properties side by side! Please provide MLS numbers or addresses for the properties you'd like to compare.",
+                    "quick_replies": [
+                        "Find properties to compare",
+                        "Compare neighborhoods",
+                        "Compare market trends",
+                        "Investment comparison tools"
+                    ],
+                    "stage": "comparison_info_needed",
+                    "session_id": session_id
+                })
+        
+        # Offers / Incentives / Deals Intent
+        offers_keywords = ['offers', 'deal', 'incentive', 'discount', 'cashback', 'promotion', 'special', 'bonus', 'rebate']
+        if any(keyword in message_lower for keyword in offers_keywords):
+            print(f"🎁 [OFFERS INTENT] Detected offers/incentives query")
+            return jsonify({
+                "success": True,
+                "response": "Let me show you current offers and incentives available right now!",
+                "quick_replies": [
+                    "View current offers",
+                    "First-time buyer programs",
+                    "Developer incentives",
+                    "Assignment sale deals"
+                ],
+                "stage": "offers_ready",
+                "session_id": session_id
+            })
+        
+        # Alerts / Save / Notifications Intent  
+        alerts_keywords = ['alert', 'notify', 'save search', 'watch', 'track', 'email me', 'let me know']
+        if any(keyword in message_lower for keyword in alerts_keywords):
+            print(f"🔔 [ALERTS INTENT] Detected alerts/save search query")
+            return jsonify({
+                "success": True,
+                "response": "I can set up property alerts to notify you when new properties match your criteria. What are you looking for?",
+                "quick_replies": [
+                    "Create property alert",
+                    "Set price drop alerts",
+                    "New listing notifications",
+                    "Market update alerts"
+                ],
+                "stage": "alerts_ready",
+                "session_id": session_id
+            })
+        
+        # Proximity / Transit / Schools / Amenities Intent
+        proximity_keywords = ['near', 'close to', 'walking distance', 'transit', 'subway', 'ttc', 'go train', 'schools', 'shopping', 'amenities', 'parks', 'hospital']
+        if any(keyword in message_lower for keyword in proximity_keywords):
+            print(f"📍 [PROXIMITY INTENT] Detected proximity/amenities query")
+            # Try to extract location
+            location_match = None
+            cities = ['toronto', 'mississauga', 'markham', 'vaughan', 'brampton', 'scarborough', 'north york', 'etobicoke', 'richmond hill']
+            for city in cities:
+                if city in message_lower:
+                    location_match = city.title()
+                    break
+            
+            if location_match:
+                return jsonify({
+                    "success": True,
+                    "response": f"I can help you find properties in {location_match} near specific amenities, transit, schools, and more. What's important to you?",
+                    "location": location_match,
+                    "quick_replies": [
+                        f"Transit-friendly properties in {location_match}",
+                        "Top-rated school districts",
+                        "Shopping and amenities nearby",
+                        "Parks and recreation access"
+                    ],
+                    "stage": "proximity_ready",
+                    "session_id": session_id
+                })
+            else:
+                return jsonify({
+                    "success": True,
+                    "response": "I can help you find properties based on proximity to transit, schools, shopping, and other amenities. Which city or area are you interested in?",
+                    "quick_replies": [
+                        "Transit-accessible properties",
+                        "School district search",
+                        "Walkable neighborhoods", 
+                        "Amenity-rich areas"
+                    ],
+                    "stage": "proximity_info_needed",
+                    "session_id": session_id
+                })
         
         # ========== OPENAI PRIORITY (HIGHEST QUALITY FOR GENERAL CHAT) ==========
         # Try OpenAI first for general chat messages
@@ -7459,7 +8337,7 @@ def property_details_api():
                     "postal_code": repliers_response.get('address', {}).get('postalCode', ''),
                     "full_address": repliers_response.get('address', {}).get('full_address', '')
                 },
-                "price": repliers_response.get('price', {}).get('amount', 0),
+                "price": repliers_response.get('listPrice', 0),
                 "description": repliers_response.get('details', {}).get('description', 'Property details available'),
                 "details": {
                     "bedrooms": repliers_response.get('details', {}).get('bedrooms', 'N/A'),
@@ -7738,16 +8616,23 @@ def repliers_test_search():
 # ==================== MAIN ====================
 
 if __name__ == '__main__':
+    # Production readiness checks
+    required_env_vars = ['REPLIERS_API_KEY', 'OPENAI_API_KEY']
+    missing_vars = [var for var in required_env_vars if not os.environ.get(var)]
+    
+    if missing_vars:
+        print(f"⚠️ Missing required environment variables: {', '.join(missing_vars)}")
+        print("Please set these in your .env file or environment before running.")
+    
     print("\n" + "="*70)
-    print("🏠 ENHANCED REAL ESTATE AI WITH HUGGINGFACE INTEGRATION")
-    print("✨ Features: HuggingFace FastAPI, Advanced AI Chat, Real Estate Intelligence,")
-    print("   Summitly Integration, Broker Assignment, Excel Tracking, Email Notifications")
+    print("🏠 SUMMITLY AI - PRODUCTION REAL ESTATE ASSISTANT")
+    print("✨ Features: OpenAI Enhanced, Live MLS Data, Investment Analysis,")
+    print("   Context-Aware Chat, ROI Calculations, Mortgage Tools, Property Alerts")
     print("="*70)
-    print(f"📍 Flask Server: http://0.0.0.0:5050")
-    print(f"📍 Local Access: http://localhost:5050")
-    print(f"🤖 HuggingFace FastAPI: http://localhost:8000")
+    print(f"📍 Server: http://0.0.0.0:5050")
+    print(f"📍 Frontend: http://localhost:5050")
     print(f"📊 Manager Dashboard: http://localhost:5050/manager")
-    print(f"🏠 Summitly API: {SUMMITLY_BASE_URL}")
+    print(f"🔗 Repliers API: {REPLIERS_BASE_URL}")
     print("="*70)
     print("🚀 HuggingFace Endpoints:")
     print("   • /api/huggingface-chat - Enhanced AI chat")
@@ -7793,3 +8678,676 @@ if __name__ == '__main__':
     print()
     
     app.run(debug=True, host='0.0.0.0', port=5050, use_reloader=False, threaded=True)
+
+
+# ==================== MISSING INTENT ENDPOINTS ====================
+
+@app.route('/api/roi-analysis', methods=['POST'])
+def roi_analysis_endpoint():
+    """Calculate ROI, cash flow, and investment metrics for properties"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "No JSON data provided"}), 400
+        
+        mls_number = data.get('mls_number')
+        purchase_price = data.get('purchase_price')
+        down_payment = data.get('down_payment', 20)
+        rental_income = data.get('rental_income')
+        
+        if not all([mls_number, purchase_price]):
+            return jsonify({
+                "success": False, 
+                "error": "MLS number and purchase price are required"
+            }), 400
+        
+        # Calculate basic investment metrics
+        down_payment_amount = (purchase_price * down_payment) / 100
+        mortgage_amount = purchase_price - down_payment_amount
+        
+        # Estimate monthly costs (simplified calculation)
+        monthly_mortgage = mortgage_amount * 0.004  # ~4% annual / 12 months
+        monthly_taxes = purchase_price * 0.015 / 12  # ~1.5% annual taxes
+        monthly_maintenance = purchase_price * 0.005 / 12  # ~0.5% annual maintenance
+        total_monthly_costs = monthly_mortgage + monthly_taxes + monthly_maintenance
+        
+        # Calculate cash flow and ROI
+        monthly_cash_flow = (rental_income or 0) - total_monthly_costs
+        annual_cash_flow = monthly_cash_flow * 12
+        roi = (annual_cash_flow / down_payment_amount) * 100 if down_payment_amount > 0 else 0
+        
+        response_html = f"""
+<div style="background: linear-gradient(135deg, #2c5234 0%, #1e3a26 100%); border-radius: 16px; padding: 24px; margin: 16px 0; color: white;">
+    <h2 style="margin: 0 0 16px 0; display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 32px;">📊</span>
+        <span>Investment Analysis</span>
+    </h2>
+    
+    <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px;">
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px;">
+            <div style="background: rgba(255,255,255,0.1); border-radius: 8px; padding: 16px;">
+                <h4 style="margin: 0 0 8px 0; font-size: 14px; opacity: 0.8;">💰 Purchase Price</h4>
+                <p style="margin: 0; font-size: 24px; font-weight: 700;">${purchase_price:,}</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); border-radius: 8px; padding: 16px;">
+                <h4 style="margin: 0 0 8px 0; font-size: 14px; opacity: 0.8;">🏦 Down Payment</h4>
+                <p style="margin: 0; font-size: 24px; font-weight: 700;">${down_payment_amount:,.0f} ({down_payment}%)</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); border-radius: 8px; padding: 16px;">
+                <h4 style="margin: 0 0 8px 0; font-size: 14px; opacity: 0.8;">🏠 Monthly Cash Flow</h4>
+                <p style="margin: 0; font-size: 24px; font-weight: 700; color: {'#4ade80' if monthly_cash_flow >= 0 else '#f87171'};">${monthly_cash_flow:,.0f}</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); border-radius: 8px; padding: 16px;">
+                <h4 style="margin: 0 0 8px 0; font-size: 14px; opacity: 0.8;">📈 Annual ROI</h4>
+                <p style="margin: 0; font-size: 24px; font-weight: 700; color: {'#4ade80' if roi >= 0 else '#f87171'};">{roi:.1f}%</p>
+            </div>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+            <h4 style="margin: 0 0 12px 0;">Monthly Cost Breakdown</h4>
+            <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                <span style="background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 20px; font-size: 14px;">
+                    Mortgage: ${monthly_mortgage:,.0f}
+                </span>
+                <span style="background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 20px; font-size: 14px;">
+                    Taxes: ${monthly_taxes:,.0f}
+                </span>
+                <span style="background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 20px; font-size: 14px;">
+                    Maintenance: ${monthly_maintenance:,.0f}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>"""
+        
+        return jsonify({
+            "success": True,
+            "response": response_html,
+            "analysis": {
+                "purchase_price": purchase_price,
+                "down_payment_amount": down_payment_amount,
+                "monthly_cash_flow": monthly_cash_flow,
+                "annual_cash_flow": annual_cash_flow,
+                "roi": roi,
+                "monthly_costs": {
+                    "mortgage": monthly_mortgage,
+                    "taxes": monthly_taxes,
+                    "maintenance": monthly_maintenance,
+                    "total": total_monthly_costs
+                }
+            },
+            "quick_replies": [
+                "Adjust down payment",
+                "Compare different scenarios",
+                "Find similar investments",
+                "Contact mortgage broker"
+            ],
+            "session_id": data.get('session_id', f'roi_{int(time.time())}')
+        })
+        
+    except Exception as e:
+        print(f"❌ [ROI ANALYSIS ERROR] {e}")
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "error": "Failed to calculate ROI analysis",
+            "message": "I encountered an error calculating the investment analysis. Please try again."
+        }), 500
+
+
+@app.route('/api/mortgage-calculator', methods=['POST'])
+def mortgage_calculator_endpoint():
+    """Calculate mortgage payments and affordability"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "No JSON data provided"}), 400
+        
+        purchase_price = data.get('purchase_price')
+        down_payment_percent = data.get('down_payment', 20)
+        interest_rate = data.get('interest_rate', 5.25)  # Default current rate
+        amortization_years = data.get('amortization', 25)
+        annual_income = data.get('annual_income')
+        monthly_debts = data.get('monthly_debts', 0)
+        
+        if not purchase_price:
+            return jsonify({
+                "success": False,
+                "error": "Purchase price is required"
+            }), 400
+        
+        # Calculate mortgage details
+        down_payment = (purchase_price * down_payment_percent) / 100
+        mortgage_amount = purchase_price - down_payment
+        
+        # Monthly mortgage payment calculation
+        monthly_rate = interest_rate / 100 / 12
+        num_payments = amortization_years * 12
+        
+        if monthly_rate > 0:
+            monthly_payment = mortgage_amount * (monthly_rate * (1 + monthly_rate)**num_payments) / ((1 + monthly_rate)**num_payments - 1)
+        else:
+            monthly_payment = mortgage_amount / num_payments
+        
+        # Additional monthly costs
+        property_tax = purchase_price * 0.015 / 12  # ~1.5% annual
+        home_insurance = purchase_price * 0.003 / 12  # ~0.3% annual
+        cmhc_insurance = 0
+        
+        # CMHC insurance if down payment < 20%
+        if down_payment_percent < 20:
+            cmhc_insurance = mortgage_amount * 0.025 / 12  # ~2.5% annual on mortgage amount
+        
+        total_monthly_payment = monthly_payment + property_tax + home_insurance + cmhc_insurance
+        
+        # Affordability calculation
+        max_monthly_housing = 0
+        debt_service_ratio = 0
+        can_afford = False
+        
+        if annual_income:
+            monthly_income = annual_income / 12
+            max_monthly_housing = monthly_income * 0.32  # 32% gross debt service ratio
+            debt_service_ratio = ((total_monthly_payment + monthly_debts) / monthly_income) * 100
+            can_afford = debt_service_ratio <= 40  # 40% total debt service ratio
+        
+        response_html = f"""
+<div style="background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); border-radius: 16px; padding: 24px; margin: 16px 0; color: white;">
+    <h2 style="margin: 0 0 16px 0; display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 32px;">🏦</span>
+        <span>Mortgage Calculator</span>
+    </h2>
+    
+    <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px;">
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px;">
+            <div style="background: rgba(255,255,255,0.1); border-radius: 8px; padding: 16px;">
+                <h4 style="margin: 0 0 8px 0; font-size: 14px; opacity: 0.8;">🏠 Purchase Price</h4>
+                <p style="margin: 0; font-size: 24px; font-weight: 700;">${purchase_price:,}</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); border-radius: 8px; padding: 16px;">
+                <h4 style="margin: 0 0 8px 0; font-size: 14px; opacity: 0.8;">💰 Down Payment</h4>
+                <p style="margin: 0; font-size: 24px; font-weight: 700;">${down_payment:,.0f} ({down_payment_percent}%)</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); border-radius: 8px; padding: 16px;">
+                <h4 style="margin: 0 0 8px 0; font-size: 14px; opacity: 0.8;">📋 Mortgage Amount</h4>
+                <p style="margin: 0; font-size: 24px; font-weight: 700;">${mortgage_amount:,.0f}</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); border-radius: 8px; padding: 16px;">
+                <h4 style="margin: 0 0 8px 0; font-size: 14px; opacity: 0.8;">💳 Monthly Payment</h4>
+                <p style="margin: 0; font-size: 24px; font-weight: 700; color: #60a5fa;">${total_monthly_payment:,.0f}</p>
+            </div>
+        </div>
+        
+        <div style="margin: 20px 0; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+            <h4 style="margin: 0 0 12px 0;">Monthly Payment Breakdown</h4>
+            <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                <span style="background: rgba(96,165,250,0.2); padding: 8px 12px; border-radius: 20px; font-size: 14px;">
+                    Principal + Interest: ${monthly_payment:,.0f}
+                </span>
+                <span style="background: rgba(96,165,250,0.2); padding: 8px 12px; border-radius: 20px; font-size: 14px;">
+                    Property Tax: ${property_tax:,.0f}
+                </span>
+                <span style="background: rgba(96,165,250,0.2); padding: 8px 12px; border-radius: 20px; font-size: 14px;">
+                    Home Insurance: ${home_insurance:,.0f}
+                </span>
+                {f'<span style="background: rgba(251,146,60,0.2); padding: 8px 12px; border-radius: 20px; font-size: 14px;">CMHC Insurance: ${cmhc_insurance:,.0f}</span>' if cmhc_insurance > 0 else ''}
+            </div>
+        </div>
+        
+        {f'''
+        <div style="margin: 20px 0; padding: 16px; background: rgba({'34,197,94' if can_afford else '239,68,68'},0.2); border-radius: 8px;">
+            <h4 style="margin: 0 0 12px 0;">Affordability Assessment</h4>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                <div>
+                    <p style="margin: 0 0 4px 0; font-size: 14px; opacity: 0.8;">Monthly Income</p>
+                    <p style="margin: 0; font-size: 18px; font-weight: 600;">${annual_income/12:,.0f}</p>
+                </div>
+                <div>
+                    <p style="margin: 0 0 4px 0; font-size: 14px; opacity: 0.8;">Debt Service Ratio</p>
+                    <p style="margin: 0; font-size: 18px; font-weight: 600; color: {'#22c55e' if can_afford else '#ef4444'};">{debt_service_ratio:.1f}%</p>
+                </div>
+            </div>
+            <p style="margin: 16px 0 0 0; font-size: 14px; font-weight: 600; color: {'#22c55e' if can_afford else '#ef4444'};">
+                {'✅ You can afford this mortgage!' if can_afford else '⚠️ This mortgage may be challenging to qualify for'}
+            </p>
+        </div>
+        ''' if annual_income else ''}
+    </div>
+</div>"""
+        
+        return jsonify({
+            "success": True,
+            "response": response_html,
+            "calculation": {
+                "purchase_price": purchase_price,
+                "down_payment": down_payment,
+                "mortgage_amount": mortgage_amount,
+                "monthly_payment": monthly_payment,
+                "total_monthly_payment": total_monthly_payment,
+                "interest_rate": interest_rate,
+                "amortization_years": amortization_years,
+                "affordability": {
+                    "can_afford": can_afford,
+                    "debt_service_ratio": debt_service_ratio,
+                    "max_monthly_housing": max_monthly_housing
+                } if annual_income else None
+            },
+            "quick_replies": [
+                "Adjust down payment",
+                "Try different interest rate", 
+                "Find properties in budget",
+                "Contact mortgage broker"
+            ],
+            "session_id": data.get('session_id', f'mortgage_{int(time.time())}')
+        })
+        
+    except Exception as e:
+        print(f"❌ [MORTGAGE CALCULATOR ERROR] {e}")
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "error": "Failed to calculate mortgage",
+            "message": "I encountered an error calculating the mortgage. Please try again."
+        }), 500
+
+
+@app.route('/api/property-comparison', methods=['POST'])
+def property_comparison_endpoint():
+    """Compare multiple properties side by side"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "No JSON data provided"}), 400
+        
+        property_ids = data.get('property_ids', [])
+        if len(property_ids) < 2:
+            return jsonify({
+                "success": False,
+                "error": "At least 2 properties are required for comparison"
+            }), 400
+        
+        # Fetch property details for each MLS number
+        properties = []
+        if REPLIERS_INTEGRATION_AVAILABLE:
+            for mls_id in property_ids:
+                try:
+                    prop_details = listings_service.get_listing_details(mls_id)
+                    if prop_details and prop_details.get('mlsNumber'):
+                        properties.append(prop_details)
+                except Exception as e:
+                    print(f"⚠️ Failed to fetch property {mls_id}: {e}")
+        
+        if len(properties) < 2:
+            return jsonify({
+                "success": False,
+                "error": "Could not fetch enough property details for comparison"
+            }), 400
+        
+        # Build comparison table
+        comparison_html = f"""
+<div style="background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); border-radius: 16px; padding: 24px; margin: 16px 0; color: white;">
+    <h2 style="margin: 0 0 16px 0; display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 32px;">⚖️</span>
+        <span>Property Comparison</span>
+    </h2>
+    
+    <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <thead>
+                <tr style="border-bottom: 2px solid rgba(255,255,255,0.2);">
+                    <th style="text-align: left; padding: 12px 8px; font-weight: 600; opacity: 0.8;">Feature</th>"""
+        
+        # Add property headers
+        for i, prop in enumerate(properties):
+            address = prop.get('address', {})
+            street = f"{address.get('streetNumber', '')} {address.get('streetName', '')}".strip()
+            comparison_html += f"""
+                    <th style="text-align: center; padding: 12px 8px; font-weight: 600; min-width: 200px;">
+                        Property {i+1}<br>
+                        <span style="font-size: 12px; opacity: 0.8;">{street}</span>
+                    </th>"""
+        
+        comparison_html += """
+                </tr>
+            </thead>
+            <tbody>"""
+        
+        # Define comparison rows
+        comparison_features = [
+            ("💰 List Price", lambda p: f"${p.get('listPrice', 0):,}" if p.get('listPrice') else 'N/A'),
+            ("🛏️ Bedrooms", lambda p: str(p.get('details', {}).get('numBedrooms', 'N/A'))),
+            ("🚿 Bathrooms", lambda p: str(p.get('details', {}).get('numBathrooms', 'N/A'))),
+            ("📐 Square Feet", lambda p: f"{p.get('details', {}).get('sqft', 'N/A'):,}" if p.get('details', {}).get('sqft') else 'N/A'),
+            ("🏡 Property Type", lambda p: p.get('details', {}).get('propertyStyle', 'N/A')),
+            ("📅 Year Built", lambda p: str(p.get('details', {}).get('yearBuilt', 'N/A'))),
+            ("🚗 Parking", lambda p: str(p.get('details', {}).get('numParkingSpaces', 'N/A'))),
+            ("💵 Property Taxes", lambda p: str(p.get('details', {}).get('taxes', 'N/A'))),
+            ("📍 Neighborhood", lambda p: p.get('address', {}).get('neighborhood', 'N/A')),
+            ("📊 Days on Market", lambda p: str(p.get('daysOnMarket', 'N/A')))
+        ]
+        
+        for feature_name, extractor in comparison_features:
+            comparison_html += f"""
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <td style="padding: 12px 8px; font-weight: 500; background: rgba(255,255,255,0.05);">{feature_name}</td>"""
+            
+            for prop in properties:
+                value = extractor(prop)
+                comparison_html += f"""
+                    <td style="padding: 12px 8px; text-align: center;">{value}</td>"""
+            
+            comparison_html += "</tr>"
+        
+        comparison_html += """
+            </tbody>
+        </table>
+    </div>
+    
+    <div style="margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap;">"""
+        
+        for i, prop in enumerate(properties):
+            mls_number = prop.get('mlsNumber')
+            comparison_html += f"""
+        <button onclick="viewPropertyDetails('{mls_number}', '{mls_number}')" style="
+            flex: 1; min-width: 200px; padding: 16px; background: white; color: #7c3aed; border: none; border-radius: 12px;
+            font-size: 16px; font-weight: 700; cursor: pointer; transition: transform 0.2s;">
+            📋 View Property {i+1} Details
+        </button>"""
+        
+        comparison_html += """
+    </div>
+</div>"""
+        
+        return jsonify({
+            "success": True,
+            "response": comparison_html,
+            "properties": properties,
+            "comparison_count": len(properties),
+            "quick_replies": [
+                "Get AI recommendation",
+                "Calculate ROI for each",
+                "Find similar properties",
+                "Schedule viewings"
+            ],
+            "session_id": data.get('session_id', f'compare_{int(time.time())}')
+        })
+        
+    except Exception as e:
+        print(f"❌ [PROPERTY COMPARISON ERROR] {e}")
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "error": "Failed to compare properties",
+            "message": "I encountered an error comparing the properties. Please try again."
+        }), 500
+
+
+@app.route('/api/property-alerts', methods=['POST'])
+def property_alerts_endpoint():
+    """Save search criteria and set up property alerts"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "No JSON data provided"}), 400
+        
+        user_id = data.get('user_id', 'anonymous')
+        alert_name = data.get('alert_name', 'My Property Alert')
+        criteria = data.get('criteria', {})
+        
+        # Extract criteria
+        location = criteria.get('location', 'Toronto')
+        min_price = criteria.get('min_price', 0)
+        max_price = criteria.get('max_price', 2000000)
+        bedrooms = criteria.get('bedrooms')
+        bathrooms = criteria.get('bathrooms')
+        property_type = criteria.get('property_type', 'Any')
+        
+        # Create alert object (in production, this would save to database)
+        alert_data = {
+            'id': f'alert_{int(time.time())}_{uuid.uuid4().hex[:8]}',
+            'user_id': user_id,
+            'name': alert_name,
+            'criteria': criteria,
+            'created_at': datetime.now().isoformat(),
+            'status': 'active'
+        }
+        
+        response_html = f"""
+<div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); border-radius: 16px; padding: 24px; margin: 16px 0; color: white;">
+    <h2 style="margin: 0 0 16px 0; display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 32px;">🔔</span>
+        <span>Property Alert Created</span>
+    </h2>
+    
+    <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px;">
+        <div style="margin-bottom: 20px;">
+            <h3 style="margin: 0 0 12px 0; color: #86efac;">"{alert_name}"</h3>
+            <p style="margin: 0; font-size: 14px; opacity: 0.9;">You'll receive notifications when new properties match your criteria.</p>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px;">
+            <div style="background: rgba(255,255,255,0.1); border-radius: 8px; padding: 12px;">
+                <p style="margin: 0 0 4px 0; font-size: 12px; opacity: 0.8;">📍 Location</p>
+                <p style="margin: 0; font-size: 16px; font-weight: 600;">{location}</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); border-radius: 8px; padding: 12px;">
+                <p style="margin: 0 0 4px 0; font-size: 12px; opacity: 0.8;">💰 Price Range</p>
+                <p style="margin: 0; font-size: 16px; font-weight: 600;">${min_price:,} - ${max_price:,}</p>
+            </div>
+            {f'''<div style="background: rgba(255,255,255,0.1); border-radius: 8px; padding: 12px;">
+                <p style="margin: 0 0 4px 0; font-size: 12px; opacity: 0.8;">🛏️ Bedrooms</p>
+                <p style="margin: 0; font-size: 16px; font-weight: 600;">{bedrooms}+</p>
+            </div>''' if bedrooms else ''}
+            {f'''<div style="background: rgba(255,255,255,0.1); border-radius: 8px; padding: 12px;">
+                <p style="margin: 0 0 4px 0; font-size: 12px; opacity: 0.8;">🚿 Bathrooms</p>
+                <p style="margin: 0; font-size: 16px; font-weight: 600;">{bathrooms}+</p>
+            </div>''' if bathrooms else ''}
+            <div style="background: rgba(255,255,255,0.1); border-radius: 8px; padding: 12px;">
+                <p style="margin: 0 0 4px 0; font-size: 12px; opacity: 0.8;">🏠 Property Type</p>
+                <p style="margin: 0; font-size: 16px; font-weight: 600;">{property_type}</p>
+            </div>
+        </div>
+        
+        <div style="padding: 16px; background: rgba(34,197,94,0.2); border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #86efac; text-align: center;">
+                ✅ Alert is now active! We'll notify you about matching properties.
+            </p>
+        </div>
+        
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px;">
+            <button onclick="modifyAlert('{alert_data['id']}')" style="
+                flex: 1; min-width: 200px; padding: 16px; background: white; color: #047857; border: none; border-radius: 12px;
+                font-size: 16px; font-weight: 700; cursor: pointer;">
+                ⚙️ Modify Alert
+            </button>
+            <button onclick="searchPropertiesNow()" style="
+                flex: 1; min-width: 200px; padding: 16px; background: rgba(255,255,255,0.2); color: white; border: none; border-radius: 12px;
+                font-size: 16px; font-weight: 700; cursor: pointer;">
+                🔍 Search Now
+            </button>
+        </div>
+    </div>
+</div>"""
+        
+        return jsonify({
+            "success": True,
+            "response": response_html,
+            "alert": alert_data,
+            "quick_replies": [
+                "View current properties",
+                "Create another alert",
+                "Manage all alerts",
+                "Contact agent"
+            ],
+            "session_id": data.get('session_id', f'alert_{int(time.time())}')
+        })
+        
+    except Exception as e:
+        print(f"❌ [PROPERTY ALERTS ERROR] {e}")
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "error": "Failed to create property alert",
+            "message": "I encountered an error creating the alert. Please try again."
+        }), 500
+
+
+@app.route('/api/offers-incentives', methods=['GET'])
+def offers_incentives_endpoint():
+    """Get current offers, incentives, and special deals"""
+    try:
+        # In production, this would fetch from database or external API
+        current_offers = [
+            {
+                'id': 'dev_cashback_2024',
+                'title': 'Developer Cashback Program',
+                'description': 'Get up to $25,000 cashback on select new construction properties',
+                'type': 'cashback',
+                'amount': 25000,
+                'conditions': ['New construction only', 'Min purchase $800K', 'Valid until Dec 31, 2024'],
+                'properties_available': 47,
+                'badge': 'Limited Time'
+            },
+            {
+                'id': 'assignment_sale_2024',
+                'title': 'Assignment Sale Opportunities',
+                'description': 'Pre-construction units available for immediate possession with significant savings',
+                'type': 'discount',
+                'amount': 50000,
+                'conditions': ['Ready for occupancy', 'Savings vs. original price', 'Prime locations'],
+                'properties_available': 23,
+                'badge': 'Exclusive'
+            },
+            {
+                'id': 'first_time_buyer',
+                'title': 'First-Time Buyer Incentive',
+                'description': 'Special financing and down payment assistance programs',
+                'type': 'financing',
+                'amount': 10000,
+                'conditions': ['First-time buyers only', 'Income restrictions apply', 'Government programs'],
+                'properties_available': 156,
+                'badge': 'Government Program'
+            },
+            {
+                'id': 'luxury_bonus_2024',
+                'title': 'Luxury Property Bonus',
+                'description': 'Exclusive amenities and upgrades on luxury properties over $2M',
+                'type': 'upgrade',
+                'amount': 100000,
+                'conditions': ['Luxury properties $2M+', 'Premium upgrades included', 'Private showing available'],
+                'properties_available': 12,
+                'badge': 'VIP'
+            }
+        ]
+        
+        offers_html = f"""
+<div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); border-radius: 16px; padding: 24px; margin: 16px 0; color: white;">
+    <h2 style="margin: 0 0 16px 0; display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 32px;">🎁</span>
+        <span>Current Offers & Incentives</span>
+    </h2>
+    
+    <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px;">
+        <p style="margin: 0 0 20px 0; font-size: 16px; opacity: 0.9;">
+            Exclusive deals and incentives available right now. Don't miss out on these limited-time opportunities!
+        </p>
+        
+        <div style="display: grid; gap: 16px;">"""
+        
+        for offer in current_offers:
+            badge_color = {
+                'Limited Time': '#f59e0b',
+                'Exclusive': '#7c3aed', 
+                'Government Program': '#059669',
+                'VIP': '#dc2626'
+            }.get(offer['badge'], '#6b7280')
+            
+            type_icon = {
+                'cashback': '💰',
+                'discount': '🏷️',
+                'financing': '🏦',
+                'upgrade': '⭐'
+            }.get(offer['type'], '🎁')
+            
+            offers_html += f"""
+            <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; position: relative;">
+                <div style="position: absolute; top: 16px; right: 16px;">
+                    <span style="background: {badge_color}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                        {offer['badge']}
+                    </span>
+                </div>
+                
+                <div style="display: flex; align-items: flex-start; gap: 16px; margin-bottom: 16px;">
+                    <span style="font-size: 32px; flex-shrink: 0;">{type_icon}</span>
+                    <div style="flex: 1;">
+                        <h3 style="margin: 0 0 8px 0; font-size: 20px; font-weight: 700;">{offer['title']}</h3>
+                        <p style="margin: 0 0 12px 0; font-size: 14px; opacity: 0.9; line-height: 1.5;">
+                            {offer['description']}
+                        </p>
+                        
+                        <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 16px;">
+                            <div>
+                                <p style="margin: 0 0 4px 0; font-size: 12px; opacity: 0.8;">Value</p>
+                                <p style="margin: 0; font-size: 24px; font-weight: 700; color: #fbbf24;">
+                                    {f'${offer["amount"]:,}' if offer["type"] in ["cashback", "discount", "financing"] else f'Up to ${offer["amount"]:,}'}
+                                </p>
+                            </div>
+                            <div>
+                                <p style="margin: 0 0 4px 0; font-size: 12px; opacity: 0.8;">Available Properties</p>
+                                <p style="margin: 0; font-size: 18px; font-weight: 600;">{offer['properties_available']} properties</p>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 16px;">
+                            <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: 600; opacity: 0.9;">Conditions:</p>
+                            <ul style="margin: 0; padding-left: 20px; font-size: 13px; opacity: 0.8;">"""
+            
+            for condition in offer['conditions']:
+                offers_html += f"<li>{condition}</li>"
+            
+            offers_html += f"""
+                            </ul>
+                        </div>
+                        
+                        <button onclick="viewOfferProperties('{offer['id']}')" style="
+                            width: 100%; padding: 12px; background: white; color: #dc2626; border: none; border-radius: 8px;
+                            font-size: 14px; font-weight: 700; cursor: pointer;">
+                            View {offer['properties_available']} Available Properties
+                        </button>
+                    </div>
+                </div>
+            </div>"""
+        
+        offers_html += """
+        </div>
+        
+        <div style="margin-top: 24px; padding: 16px; background: rgba(251,191,36,0.2); border-radius: 12px; text-align: center;">
+            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #fbbf24;">
+                💡 Want to discuss these offers? Our agents can help you find the best deals and navigate the process.
+            </p>
+        </div>
+    </div>
+</div>"""
+        
+        return jsonify({
+            "success": True,
+            "response": offers_html,
+            "offers": current_offers,
+            "total_offers": len(current_offers),
+            "quick_replies": [
+                "Show cashback properties",
+                "Find first-time buyer deals", 
+                "Contact agent about offers",
+                "Set up offer alerts"
+            ],
+            "session_id": f'offers_{int(time.time())}'
+        })
+        
+    except Exception as e:
+        print(f"❌ [OFFERS INCENTIVES ERROR] {e}")
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "error": "Failed to fetch offers",
+            "message": "I encountered an error fetching current offers. Please try again."
+        }), 500
