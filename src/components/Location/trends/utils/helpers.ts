@@ -20,7 +20,7 @@ export const calculateAvgPrice = (props: { listPrice?: number }[]): number => {
   return Math.round(total / props.length);
 };
 
-export const getDateRanges = (years?: number) => {
+export const getDateRanges = (_years?: number) => {
   const now = new Date();
   
   // For Stats Overview, always show the most recent period (last 28 days / 4 weeks)

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { RepliersAPI } from '@/lib/api/repliers';
 import { getDateRanges } from '@/components/Location/trends/utils/helpers';
+import type { AnalyticsParams } from '@/lib/api/repliers/services/analytics';
 
 // ISR: Revalidate every 30 days (monthly market data)
 export const revalidate = 2592000; // 30 days in seconds
@@ -72,7 +73,7 @@ export async function GET(
     // If not forcing refresh and no property/community filters, try to get data from database first
     // Years filter is now cached separately, so we can use cache even with different year ranges
     if (shouldUseCache) {
-      let marketTrends = await prisma.marketTrends.findUnique({
+      const marketTrends = await prisma.marketTrends.findUnique({
         where: {
           locationType_locationName_month_years: {
             locationType: locationType,
@@ -114,7 +115,7 @@ export async function GET(
     console.log(`[MarketTrends API] Fetching fresh data for ${locationType}:${cleanName} (${years} years)`);
     
     // Build analytics params based on location type
-    const analyticsParams: any = {};
+    const analyticsParams: AnalyticsParams = {};
     
     if (locationType === 'city') {
       analyticsParams.city = cleanName;
@@ -233,10 +234,11 @@ export async function GET(
           },
         });
         console.log(`[MarketTrends API] Cached data for ${locationType}:${cleanName} with ${years} years of history`);
-      } catch (dbError: any) {
+      } catch (dbError: unknown) {
         // If constraint error, migration might not be run yet - log warning but continue
-        if (dbError.code === 'P2002' || dbError.message?.includes('Unique constraint')) {
-          console.warn(`[MarketTrends API] Database constraint error - migration may not be applied yet. Error: ${dbError.message}`);
+        const error = dbError as { code?: string; message?: string };
+        if (error.code === 'P2002' || error.message?.includes('Unique constraint')) {
+          console.warn(`[MarketTrends API] Database constraint error - migration may not be applied yet. Error: ${error.message}`);
           console.warn(`[MarketTrends API] Please run the migration: prisma/migrations/add_years_to_market_trends.sql`);
         } else {
           // Re-throw if it's a different error
@@ -279,9 +281,10 @@ export async function GET(
             },
           },
         });
-      } catch (constraintError: any) {
+      } catch (constraintError: unknown) {
         // If new constraint doesn't exist yet (migration not run), try old constraint
-        if (constraintError.code === 'P2025' || constraintError.message?.includes('Unique constraint')) {
+        const error = constraintError as { code?: string; message?: string };
+        if (error.code === 'P2025' || error.message?.includes('Unique constraint')) {
           console.log('[MarketTrends API] New constraint not found, trying old constraint format');
           staleData = await prisma.marketTrends.findUnique({
             where: {
