@@ -208,11 +208,11 @@ const PropertyCard = ({ property, onHide }: PropertyCardProps) => {
       >
         <div className='bg-card rounded-3xl overflow-hidden transition-all duration-500 hover:shadow-xl' style={{ boxShadow: '0 8px 16px 0 rgba(0, 0, 0, 0.05)' }}>
         {/* Image Section */}
-        <div className='relative h-62 w-full overflow-hidden'>
+        <div className='relative h-60 w-full overflow-hidden'>
           <img 
             src={imageSrc} 
             alt={`${property.details.propertyType} in ${property.address.city || 'Unknown City'}`}
-            className='w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 p-2 rounded-3xl'
+            className='w-full h-full object-cover group-hover:scale-110 transition-transform duration-700'
             onError={(e) => {
               // Only set error if it's not already a fallback image
               if (!imageSrc.includes('/images/p')) {

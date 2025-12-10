@@ -262,43 +262,90 @@ export const fetchPropertyListings = async (): Promise<PropertyListing[]> => {
 };
 
 // Function to fetch top cities
-// In the fetchTopCities function, update the data type assertion
 export const fetchTopCities = async (): Promise<City[]> => {
   try {
-    const options = {
-      method: 'GET',
-      headers: {
-        accept: 'application/json',
-        'REPLIERS-API-KEY': process.env.NEXT_PUBLIC_REPLIERS_API_KEY || ''
-      }
-    };
-
-    const response = await fetch('https://api.repliers.io/listings', options);
-
-    if (!response.ok) {
-      console.error('API Response:', await response.text());
-      throw new Error(`Failed to fetch listings: ${response.status}`);
-    }
-
-    const data = await response.json() as ListingsResponse;
+    // Import RepliersAPI dynamically to avoid circular dependencies
+    const { RepliersAPI } = await import('@/lib/api/repliers');
     
-    // Count properties by city
+    // Fetch all active listings with a large page size to get accurate city counts
+    // We'll fetch multiple pages if needed to get comprehensive data
     const cityCounts: Record<string, number> = {};
+    let page = 1;
+    const resultsPerPage = 100; // Maximum allowed by API
+    let hasMorePages = true;
     
-    data.listings.forEach((listing: ApiListing) => {
-      const city = listing.address?.city;
-      if (city) {
-        cityCounts[city] = (cityCounts[city] || 0) + 1;
+    // Fetch multiple pages to get all listings for accurate city counts
+    while (hasMorePages && page <= 10) { // Limit to 10 pages to avoid infinite loops
+      const result = await RepliersAPI.listings.getFiltered({
+        status: 'A', // Active listings only
+        resultsPerPage,
+        page,
+      });
+      
+      if (!result || !result.listings || result.listings.length === 0) {
+        hasMorePages = false;
+        break;
       }
-    });
+      
+      // Count properties by city
+      result.listings.forEach((listing) => {
+        const city = listing.address?.city;
+        if (city) {
+          cityCounts[city] = (cityCounts[city] || 0) + 1;
+        }
+      });
+      
+      // Check if there are more pages
+      const totalPages = result.numPages || Math.ceil((result.count || 0) / resultsPerPage);
+      hasMorePages = page < totalPages;
+      page++;
+    }
     
-    // Rest of the function remains the same
+    // Helper function to get city image path
+    const getCityImage = (cityName: string): string => {
+      // Normalize city name to match image file names (lowercase, remove spaces/special chars)
+      const normalizedName = cityName.toLowerCase().trim();
+      
+      // Map of city names to image file names
+      const cityImageMap: Record<string, string> = {
+        'ajax': 'ajax.webp',
+        'aurora': 'aurora.webp',
+        'barrie': 'barrie.webp',
+        'brampton': 'brampton.webp',
+        'calgary': 'calgary.webp',
+        'edmonton': 'edmonton.webp',
+        'hamilton': 'hamilton.webp',
+        'milton': 'milton.webp',
+        'mississauga': 'mississauga.webp',
+        'oakville': 'oakville.webp',
+        'toronto': 'toronto.webp',
+      };
+      
+      // Check if we have a direct match
+      if (cityImageMap[normalizedName]) {
+        return `/images/cities/${cityImageMap[normalizedName]}`;
+      }
+      
+      // Try to find a partial match (e.g., "Toronto" matches "toronto")
+      const matchingCity = Object.keys(cityImageMap).find(key => 
+        normalizedName.includes(key) || key.includes(normalizedName)
+      );
+      
+      if (matchingCity) {
+        return `/images/cities/${cityImageMap[matchingCity]}`;
+      }
+      
+      // Fallback to default city image
+      return `/images/cities/toronto.webp`;
+    };
+    
+    // Sort by count and return top 6 cities
     const sortedCities = Object.entries(cityCounts)
       .sort(([, countA], [, countB]) => countB - countA)
       .slice(0, 6)
       .map(([cityName, count], index) => ({
         id: index + 1,
-        image: `/images/c${(index % 6) + 1}.jpg`,
+        image: getCityImage(cityName),
         cityName,
         numberOfProperties: count
       }));

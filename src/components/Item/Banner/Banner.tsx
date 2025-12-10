@@ -78,16 +78,56 @@ const getStatusSlug = (status: string): string => {
     return statusMap[normalizedStatus] || normalizedStatus.replace(/\s+/g, '-');
 };
 
-const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = false }) => {
+const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false, isRent = false }) => {
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [isScheduleTourModalOpen, setIsScheduleTourModalOpen] = useState(false);
     
     // For pre-con, use project name if available, otherwise use property type
     const preConData = property.preCon;
     
-    // Format the full address
-    const fullAddress = property.address.location || 
-        `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim();
+    // Format the full address according to Canadian standards
+    // Build street address (Line 1)
+    const streetParts = [];
+    if (property.address.unitNumber) streetParts.push(property.address.unitNumber);
+    if (property.address.streetNumber) streetParts.push(property.address.streetNumber);
+    if (property.address.streetName) streetParts.push(property.address.streetName);
+    if (property.address.streetSuffix) streetParts.push(property.address.streetSuffix);
+    if (property.address.streetDirection) streetParts.push(property.address.streetDirection);
+    const streetAddress = streetParts.length > 0 ? streetParts.join(' ') : '';
+    
+    // Build city line (Line 2) - Canadian format: "Area, City, Province Postal Code"
+    // Include area if available (e.g., "Parry Sound, The Archipelago, ON P0G 1K0")
+    const cityParts = [];
+    if (property.address.area) cityParts.push(property.address.area);
+    if (property.address.city) cityParts.push(property.address.city);
+    if (property.address.state) cityParts.push(property.address.state);
+    if (property.address.zip) cityParts.push(property.address.zip);
+    const cityLine = cityParts.length > 0 ? cityParts.join(' ') : '';
+    
+    // Parse location if it contains newline (from formatLocation function)
+    let addressLine1 = streetAddress;
+    let addressLine2 = cityLine;
+    
+    if (property.address.location) {
+      const locationParts = property.address.location.split('\n');
+      if (locationParts.length === 2) {
+        addressLine1 = locationParts[0];
+        addressLine2 = locationParts[1];
+      } else {
+        // Fallback: use location as single line
+        addressLine1 = property.address.location;
+      }
+    }
+    
+    // Fallback if we don't have parsed address
+    if (!addressLine1 && !addressLine2) {
+      addressLine1 = streetAddress || cityLine || 'Location not available';
+    }
+    
+    // For single-line display (used in some places)
+    const fullAddress = addressLine1 && addressLine2 
+        ? `${addressLine1}, ${addressLine2}` 
+        : addressLine1 || addressLine2 || 'Location not available';
     
     // Format the short address (city, state)
     const shortAddress = property.address.city 
@@ -190,6 +230,9 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
         ? (property.status || 'Available Now')
         : (property.status || 'Active');
 
+    // Get days on market from property or rawProperty
+    const daysOnMarket = property.daysOnMarket ?? rawProperty?.daysOnMarket ?? rawProperty?.simpleDaysOnMarket;
+
     return (
         <div className="">
             
@@ -263,7 +306,9 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                                 ) : (
                                     <div className="flex items-start text-primary">
                                         <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0 mr-1" />
-                                        <span className="text-sm font-medium sm:text-lg max-w-xl">{fullAddress}</span>
+                                        <span className="text-sm font-medium sm:text-lg max-w-xl">
+                                            {fullAddress}
+                                        </span>
                                     </div>
                                 )}
                                 {/* MLS Number or Project ID - Same line as heading */}
@@ -474,9 +519,9 @@ const Banner: React.FC<BannerProps> = ({ property, isPreCon = false, isRent = fa
                                             ? `${formatPrice(property.listPrice)}/month`
                                             : formatPrice(property.listPrice)}
                                     </div>
-                                    {!isPreCon && !isRent && (
+                                    {!isPreCon && !isRent && daysOnMarket !== undefined && daysOnMarket > 0 && (
                                         <span className="text-xs text-gray-500">
-                                            21 days on market
+                                            {daysOnMarket} {daysOnMarket === 1 ? 'day' : 'days'} on market
                                         </span>
                                     )}
                                     {isRent && (

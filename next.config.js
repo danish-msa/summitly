@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['api.repliers.io', 'cdn.repliers.io', 'omsefyactufffyqaxowx.supabase.co', 'shared-s3.property.ca'],
+    // Removed deprecated 'domains', using only 'remotePatterns'
     remotePatterns: [
       {
         protocol: 'https',
@@ -34,6 +34,8 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
+    // Configure image qualities for Next.js 16 compatibility
+    qualities: [75, 100],
   },
 }
 

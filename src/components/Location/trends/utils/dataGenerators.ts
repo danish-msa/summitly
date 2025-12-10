@@ -136,11 +136,21 @@ export const generateSalesVolumeMockData = (): SalesVolumeData => {
 export const generateAverageSoldPriceData = (properties: PropertyListing[]) => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const basePrice = calculateAvgPrice(properties) || 1400000;
+  const baseMedianPrice = basePrice * 0.92; // Median is typically ~8% lower than average
   const prices = months.map((_, index) => {
     const variation = 1 + (Math.sin(index * Math.PI / 6) * 0.1) - 0.05;
     return Math.round(basePrice * variation);
   });
-  return { months, prices };
+  const medianPrices = months.map((_, index) => {
+    const variation = 1 + (Math.sin(index * Math.PI / 6) * 0.1) - 0.05;
+    return Math.round(baseMedianPrice * variation);
+  });
+  const counts = months.map((_, index) => {
+    const base = 150;
+    const variation = 0.7 + (Math.sin(index * Math.PI / 6) * 0.3);
+    return Math.round(base * variation);
+  });
+  return { months, prices, medianPrices, counts };
 };
 
 // Generate Sales Volume Graph Data
@@ -284,13 +294,59 @@ export const generateDaysOnMarketData = () => {
   };
 };
 
-// Generate Ranking Overview Data
-export const generateRankingOverviewData = () => {
+// Generate Ranking Overview Data - calculates ranks based on city name for consistency
+export const generateRankingOverviewData = (currentCityName?: string) => {
+  // If no city name provided, return default values
+  if (!currentCityName) {
+    return {
+      mostExpensive: 18,
+      fastestGrowing: 5,
+      fastestSelling: 12,
+      highestTurnover: 24
+    };
+  }
+
+  const cities = [
+    'Toronto', 'Mississauga', 'Brampton', 'Markham', 'Vaughan', 'Richmond Hill',
+    'Oakville', 'Burlington', 'Ajax', 'Pickering', 'Whitby', 'Oshawa',
+    'Aurora', 'Milton', 'Caledon', 'Newmarket', 'Georgina', 'East Gwillimbury',
+    'Halton Hills', 'Orangeville', 'Bradford', 'Innisfil', 'Barrie', 'Hamilton',
+    'St. Catharines', 'Niagara Falls', 'Kitchener', 'Waterloo', 'Cambridge', 'Guelph'
+  ];
+
+  const cleanCityName = currentCityName
+    .replace(/\s+Real\s+Estate$/i, '')
+    .replace(/\s+RE$/i, '')
+    .trim()
+    .toLowerCase();
+
+  // Find city index in the list
+  const cityIndex = cities.findIndex(city => 
+    city.toLowerCase() === cleanCityName
+  );
+
+  // If city not found, return default
+  if (cityIndex === -1) {
+    return {
+      mostExpensive: 18,
+      fastestGrowing: 5,
+      fastestSelling: 12,
+      highestTurnover: 24
+    };
+  }
+
+  // Calculate different ranks based on city position (for variety)
+  // This ensures each city gets different mock ranks
+  const mostExpensive = Math.max(1, Math.min(30, cityIndex + 1 + Math.floor(cityIndex / 3)));
+  const fastestGrowing = Math.max(1, Math.min(30, 30 - cityIndex + Math.floor(cityIndex / 2)));
+  const fastestSelling = Math.max(1, Math.min(30, cityIndex + 5 - Math.floor(cityIndex / 4)));
+  const highestTurnover = Math.max(1, Math.min(30, 25 - cityIndex + Math.floor(cityIndex / 5)));
+
   return {
-    mostExpensive: 18,
-    fastestGrowing: 5,
-    fastestSelling: 12,
-    highestTurnover: 24
+    mostExpensive,
+    fastestGrowing,
+    fastestSelling,
+    highestTurnover
   };
 };
 

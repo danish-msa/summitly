@@ -7,8 +7,6 @@ import { Button } from "@/components/ui/button";
 import { TrendingUp, ChevronDown, ChevronUp, Table2, Download } from "lucide-react";
 import * as echarts from "echarts";
 import ReactECharts from "echarts-for-react";
-import { getListings } from "@/lib/api/properties";
-import { PropertyListing } from "@/lib/types";
 import { toast } from "sonner";
 import {
   Table,
@@ -18,169 +16,291 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { MarketTrendsData } from '@/hooks/useMarketTrends';
+
+type LocationType = 'city' | 'area' | 'neighbourhood' | 'intersection' | 'community';
 
 interface MarketStatsProps {
   cityName: string;
-  properties?: PropertyListing[];
+  locationType?: LocationType;
+  locationName?: string;
+  parentCity?: string;
+  parentArea?: string;
+  parentNeighbourhood?: string;
+  propertyType?: string;
+  community?: string;
+  years?: number;
+  marketTrendsData?: MarketTrendsData;
+  onRefresh?: () => Promise<void>;
 }
 
-export const MarketStats: React.FC<MarketStatsProps> = ({ cityName, properties = [] }) => {
+export const MarketStats: React.FC<MarketStatsProps> = ({ 
+  cityName, 
+  locationType = 'city',
+  locationName,
+  parentCity,
+  parentArea,
+  parentNeighbourhood,
+  propertyType,
+  community,
+  years = 5,
+  marketTrendsData,
+  onRefresh,
+}) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [dataView, setDataView] = useState<"sold" | "rented">("sold");
   const [cityViewMode, setCityViewMode] = useState<"chart" | "table">("chart");
-  const [downtownViewMode, setDowntownViewMode] = useState<"chart" | "table">("chart");
-  const [downtownProperties, setDowntownProperties] = useState<PropertyListing[]>([]);
-  
-  // Filter properties by type
-  const getPropertiesByType = (props: PropertyListing[], type: string) => {
-    return props.filter(property => {
-      const propertyType = property.details?.propertyType?.toLowerCase() || '';
-      if (type === 'condo') {
-        return propertyType.includes('condo') || propertyType.includes('condominium');
-      } else if (type === 'detached') {
-        return propertyType.includes('detached') || propertyType.includes('house') || propertyType.includes('single family');
-      } else if (type === 'townhouse') {
-        return propertyType.includes('townhouse') || propertyType.includes('town house') || propertyType.includes('town-home');
+  const [refreshing, setRefreshing] = useState(false);
+  const [averageSoldPriceByType, setAverageSoldPriceByType] = useState<{
+    months: string[];
+    detached: number[];
+    townhouse: number[];
+    condo: number[];
+  } | null>(null);
+  const [priceOverview, setPriceOverview] = useState<{
+    current: {
+      avgPrice: number;
+      salesCount: number;
+      monthlyChange: number;
+      quarterlyChange: number;
+      yearlyChange: number;
+    };
+    past: {
+      avgPrice: number;
+      salesCount: number;
+      monthlyChange: number;
+      quarterlyChange: number;
+      yearlyChange: number;
+    };
+  } | null>(null);
+  const [averageSoldPrice, setAverageSoldPrice] = useState<{
+    months: string[];
+    prices: number[];
+    medianPrices?: number[];
+    counts: number[];
+  } | null>(null);
+
+  // Handle refresh - delegate to parent's refresh function
+  const handleRefresh = async () => {
+    if (onRefresh) {
+      setRefreshing(true);
+      try {
+        await onRefresh();
+      } finally {
+        setRefreshing(false);
       }
-      return false;
-    });
+    }
   };
 
-  const detachedProperties = getPropertiesByType(properties, 'detached');
-  const condoProperties = getPropertiesByType(properties, 'condo');
-  const townhouseProperties = getPropertiesByType(properties, 'townhouse');
-
-  // Fetch Downtown properties
+  // Process market trends data when it changes (if provided)
   useEffect(() => {
-    const fetchDowntownProperties = async () => {
-      if (cityName.toLowerCase() !== "downtown") {
-        try {
-          const listingsData = await getListings({
-            status: "A",
-            resultsPerPage: 50,
-            pageNum: 1,
-          });
-
-          // Filter for Downtown Toronto properties
-          const downtown = listingsData.listings.filter(
-            (property) =>
-              property.address?.city?.toLowerCase() === "toronto" &&
-              (property.address?.neighborhood?.toLowerCase().includes("downtown") ||
-                property.address?.area?.toLowerCase().includes("downtown"))
-          );
-
-          setDowntownProperties(downtown);
-        } catch (error) {
-          console.error("Error fetching downtown properties:", error);
-        }
+    if (marketTrendsData) {
+      if (marketTrendsData.averageSoldPriceByType) {
+        setAverageSoldPriceByType(marketTrendsData.averageSoldPriceByType);
       }
-    };
+      if (marketTrendsData.priceOverview) {
+        setPriceOverview(marketTrendsData.priceOverview);
+      }
+      if (marketTrendsData.averageSoldPrice) {
+        setAverageSoldPrice(marketTrendsData.averageSoldPrice);
+      }
+    } else {
+      // Fallback: fetch data if marketTrendsData is not provided (backward compatibility)
+      const fetchMarketData = async () => {
+        try {
+          const cleanLocationName = (locationName || cityName)
+            .replace(/\s+Real\s+Estate$/i, '')
+            .replace(/\s+RE$/i, '')
+            .trim();
+          
+          const params = new URLSearchParams();
+          if (parentCity) params.append('parentCity', parentCity);
+          if (parentArea) params.append('parentArea', parentArea);
+          if (parentNeighbourhood) params.append('parentNeighbourhood', parentNeighbourhood);
+          if (propertyType) params.append('propertyType', propertyType);
+          if (community) params.append('community', community);
+          if (years) params.append('years', years.toString());
+          
+          const queryString = params.toString();
+          const apiUrl = `/api/market-trends/${locationType}/${encodeURIComponent(cleanLocationName)}${queryString ? `?${queryString}` : ''}`;
+          
+          const response = await fetch(apiUrl);
+          if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+          }
+          
+          const marketData = await response.json();
+          
+          if (marketData.averageSoldPriceByType) {
+            setAverageSoldPriceByType(marketData.averageSoldPriceByType);
+          }
+          if (marketData.priceOverview) {
+            setPriceOverview(marketData.priceOverview);
+          }
+          if (marketData.averageSoldPrice) {
+            setAverageSoldPrice(marketData.averageSoldPrice);
+          }
+        } catch (error) {
+          console.error('Error fetching market data:', error);
+        }
+      };
 
-    fetchDowntownProperties();
-  }, [cityName]);
+      fetchMarketData();
+    }
+  }, [marketTrendsData, locationType, locationName, cityName, parentCity, parentArea, parentNeighbourhood, propertyType, community, years]);
 
-  // Calculate stats for city
-  const calculateCityStats = (props: PropertyListing[]) => {
-    if (props.length === 0) return { avgPrice: 1050, change: "+3.2%", basedOn: 0 };
+  // Calculate stats from API data
+  const getCityStats = () => {
+    if (!priceOverview) {
+      return {
+        avgPrice: 0,
+        change: 0,
+        basedOn: 0,
+      };
+    }
 
-    const totalPrice = props.reduce((sum, p) => sum + (p.listPrice || 0), 0);
-    const avgPrice = Math.round(totalPrice / props.length);
-    const avgPricePSF = dataView === "sold" ? Math.round(avgPrice / 1000) : Math.round(avgPrice / 100);
+    const current = priceOverview.current;
+    const avgPricePSF = dataView === "sold" 
+      ? Math.round(current.avgPrice / 1000) 
+      : Math.round(current.avgPrice / 100);
+    
+    const change = dataView === "sold" 
+      ? current.yearlyChange 
+      : 0; // Rented data not available in priceOverview
 
     return {
       avgPrice: avgPricePSF,
-      change: "+3.2%", // Mock - replace with actual calculation
-      basedOn: props.length,
+      change: change,
+      basedOn: current.salesCount,
     };
   };
 
-  const cityStats = calculateCityStats(properties);
-  const downtownStats = calculateCityStats(downtownProperties);
+  const cityStats = getCityStats();
 
-  // Mock data for demonstration (replace with actual calculations)
+  // Format data for display
   const citySoldData = {
     avgPrice: cityStats.avgPrice,
     change: cityStats.change,
-    trend: "up" as const,
-    basedOn: `${cityStats.basedOn} recent sales`,
+    trend: cityStats.change >= 0 ? "up" as const : "down" as const,
+    basedOn: `${cityStats.basedOn.toLocaleString()} recent sales`,
   };
 
-  const downtownSoldData = {
-    avgPrice: downtownStats.avgPrice || 978,
-    change: downtownStats.change || "+2.8%",
-    trend: "up" as const,
-    basedOn: `${downtownStats.basedOn || 2341} recent sales`,
-  };
-
+  // Note: Rented data is not available in the current API response
+  // If needed, we would need to add a separate endpoint for rental data
   const cityRentedData = {
-    avgPrice: 2450,
-    change: "+5.1%",
+    avgPrice: 0,
+    change: 0,
     trend: "up" as const,
-    basedOn: `${Math.floor(properties.length * 1.5)} recent rentals`,
+    basedOn: `0 recent rentals`,
   };
 
-  const downtownRentedData = {
-    avgPrice: 2280,
-    change: "+4.3%",
-    trend: "up" as const,
-    basedOn: `${Math.floor((downtownProperties.length || 1000) * 1.5)} recent rentals`,
+  // Transform monthly data to quarterly format
+  const transformMonthlyToQuarterly = (
+    months: string[],
+    detached: number[],
+    townhouse: number[],
+    condo: number[]
+  ) => {
+    const quarterlyData: {
+      quarters: string[];
+      detached: number[];
+      townhouse: number[];
+      condo: number[];
+    } = {
+      quarters: [],
+      detached: [],
+      townhouse: [],
+      condo: [],
+    };
+
+    // Group months by quarter
+    const quarterMap = new Map<string, { detached: number[]; townhouse: number[]; condo: number[] }>();
+
+    months.forEach((month, index) => {
+      // Parse month string (e.g., "Jan 2024")
+      const [monthName, yearStr] = month.split(' ');
+      const year = parseInt(yearStr, 10);
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const monthIndex = monthNames.indexOf(monthName);
+      
+      if (monthIndex === -1) return;
+      
+      // Determine quarter (0-indexed: 0=Q1, 1=Q2, 2=Q3, 3=Q4)
+      const quarter = Math.floor(monthIndex / 3);
+      const quarterKey = `${year} Q${quarter + 1}`;
+      
+      if (!quarterMap.has(quarterKey)) {
+        quarterMap.set(quarterKey, { detached: [], townhouse: [], condo: [] });
+      }
+      
+      const quarterData = quarterMap.get(quarterKey)!;
+      if (detached[index] > 0) quarterData.detached.push(detached[index]);
+      if (townhouse[index] > 0) quarterData.townhouse.push(townhouse[index]);
+      if (condo[index] > 0) quarterData.condo.push(condo[index]);
+    });
+
+    // Calculate averages for each quarter and sort by date
+    const sortedQuarters = Array.from(quarterMap.entries()).sort((a, b) => {
+      const [yearA, qA] = a[0].split(' Q').map(Number);
+      const [yearB, qB] = b[0].split(' Q').map(Number);
+      if (yearA !== yearB) return yearA - yearB;
+      return qA - qB;
+    });
+
+    sortedQuarters.forEach(([quarter, data]) => {
+      quarterlyData.quarters.push(quarter);
+      quarterlyData.detached.push(
+        data.detached.length > 0
+          ? Math.round(data.detached.reduce((sum, val) => sum + val, 0) / data.detached.length)
+          : 0
+      );
+      quarterlyData.townhouse.push(
+        data.townhouse.length > 0
+          ? Math.round(data.townhouse.reduce((sum, val) => sum + val, 0) / data.townhouse.length)
+          : 0
+      );
+      quarterlyData.condo.push(
+        data.condo.length > 0
+          ? Math.round(data.condo.reduce((sum, val) => sum + val, 0) / data.condo.length)
+          : 0
+      );
+    });
+
+    return quarterlyData;
   };
 
-  // Calculate average prices for each property type
-  const calculateTypeStats = (props: PropertyListing[]) => {
-    if (props.length === 0) return { avgPrice: 0, count: 0 };
-    const totalPrice = props.reduce((sum, p) => sum + (p.listPrice || 0), 0);
-    const avgPrice = Math.round(totalPrice / props.length);
-    const avgPricePSF = dataView === "sold" ? Math.round(avgPrice / 1000) : Math.round(avgPrice / 100);
-    return { avgPrice: avgPricePSF, count: props.length };
-  };
-
-  const detachedStats = calculateTypeStats(detachedProperties);
-  const condoStats = calculateTypeStats(condoProperties);
-  const townhouseStats = calculateTypeStats(townhouseProperties);
-
-  // Generate historical data for table view
-  const generateHistoricalData = (currentPrice: number, type: string) => {
-    const baseMultiplier = type === 'detached' ? 1.2 : type === 'townhouse' ? 1.1 : 1.0;
-    const startPrice = currentPrice * 0.7;
-    const increment = (currentPrice - startPrice) / 9;
-    return Array.from({ length: 10 }, (_, i) => 
-      Math.round(startPrice + (increment * i) * baseMultiplier)
-    );
-  };
-
+  // Generate historical data - use API data only
   const getHistoricalData = (area: "city" | "downtown") => {
-    const detachedData = generateHistoricalData(
-      area === "city" ? detachedStats.avgPrice || 1200 : 1100,
-      'detached'
-    );
-    const condoData = generateHistoricalData(
-      area === "city" ? condoStats.avgPrice || 1050 : 978,
-      'condo'
-    );
-    const townhouseData = generateHistoricalData(
-      area === "city" ? townhouseStats.avgPrice || 1150 : 1050,
-      'townhouse'
-    );
-    
-    return { detachedData, condoData, townhouseData };
-  };
+    // Only use API data for city
+    if (area === "city" && averageSoldPriceByType) {
+      const quarterly = transformMonthlyToQuarterly(
+        averageSoldPriceByType.months,
+        averageSoldPriceByType.detached,
+        averageSoldPriceByType.townhouse,
+        averageSoldPriceByType.condo
+      );
+      return {
+        detachedData: quarterly.detached,
+        condoData: quarterly.condo,
+        townhouseData: quarterly.townhouse,
+        quarters: quarterly.quarters,
+      };
+    }
 
-  const quarters = [
-    "2023 Q1", "2023 Q2", "2023 Q3", "2023 Q4",
-    "2024 Q1", "2024 Q2", "2024 Q3", "2024 Q4",
-    "2025 Q1", "2025 Q2"
-  ];
+    // Return empty data if no API data available
+    return {
+      detachedData: [],
+      condoData: [],
+      townhouseData: [],
+      quarters: [],
+    };
+  };
 
   const handleToggleCityView = () => {
     setCityViewMode(prev => prev === "chart" ? "table" : "chart");
     toast.success(`Switched to ${cityViewMode === "chart" ? "table" : "chart"} view`);
   };
 
-  const handleToggleDowntownView = () => {
-    setDowntownViewMode(prev => prev === "chart" ? "table" : "chart");
-    toast.success(`Switched to ${downtownViewMode === "chart" ? "table" : "chart"} view`);
-  };
 
   const handleDownload = () => {
     toast.success("Market data downloaded!");
@@ -188,7 +308,17 @@ export const MarketStats: React.FC<MarketStatsProps> = ({ cityName, properties =
 
   const getChartOption = (area: "city" | "downtown") => {
     const isSold = dataView === "sold";
-    const { detachedData, condoData, townhouseData } = getHistoricalData(area);
+    const { detachedData, condoData, townhouseData, quarters } = getHistoricalData(area);
+    
+    // If no data, return empty chart option
+    if (quarters.length === 0) {
+      return {
+        backgroundColor: "transparent",
+        xAxis: { type: "category", data: [] },
+        yAxis: { type: "value" },
+        series: [],
+      };
+    }
 
     // Define colors for each property type
     const colors = {
@@ -255,18 +385,7 @@ export const MarketStats: React.FC<MarketStatsProps> = ({ cityName, properties =
       },
       xAxis: {
         type: "category",
-        data: [
-          "2023 Q1",
-          "2023 Q2",
-          "2023 Q3",
-          "2023 Q4",
-          "2024 Q1",
-          "2024 Q2",
-          "2024 Q3",
-          "2024 Q4",
-          "2025 Q1",
-          "2025 Q2",
-        ],
+        data: getHistoricalData(area).quarters,
         axisLabel: {
           interval: 1,
           rotate: 45,
@@ -441,14 +560,15 @@ export const MarketStats: React.FC<MarketStatsProps> = ({ cityName, properties =
 
       {isExpanded && (
         <div className="space-y-6 animate-in slide-in-from-top-4">
-          <Tabs value={dataView} onValueChange={(v) => setDataView(v as "sold" | "rented")}>
+          {/* Note: Rented data not available from current API - only showing Sold data */}
+          <Tabs value="sold" onValueChange={(v) => setDataView(v as "sold" | "rented")}>
             <TabsList>
               <TabsTrigger value="sold">Sold</TabsTrigger>
-              <TabsTrigger value="rented">Rented</TabsTrigger>
+              <TabsTrigger value="rented" disabled>Rented (Coming Soon)</TabsTrigger>
             </TabsList>
           </Tabs>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-1 gap-6">
             {/* City Stats Card */}
             <Card className="p-6 space-y-4">
               <div className="space-y-2">
@@ -459,242 +579,131 @@ export const MarketStats: React.FC<MarketStatsProps> = ({ cityName, properties =
               </div>
 
               <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-bold text-primary">
-                  {dataView === "sold"
-                    ? `$${citySoldData.avgPrice}`
-                    : `$${cityRentedData.avgPrice}`}
-                  <span className="text-lg text-muted-foreground ml-1">
-                    {dataView === "sold" ? "PSF" : "/mo"}
-                  </span>
-                </span>
-                <div className="flex items-center gap-1 text-green-600">
-                  <TrendingUp className="h-4 w-4" />
-                  <span className="font-medium">
-                    {dataView === "sold" ? citySoldData.change : cityRentedData.change}
-                  </span>
-                </div>
-              </div>
-
-              <p className="text-sm text-muted-foreground">
-                Based on{" "}
-                {dataView === "sold" ? citySoldData.basedOn : cityRentedData.basedOn}{" "}
-                in {cityName}
-              </p>
-
-              <div className="pt-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-sm font-medium">Historical Avg. Prices</h4>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleToggleCityView}
-                      className="h-8 w-8 rounded-lg transition-all duration-300"
-                      title="Switch to table view"
-                    >
-                      <Table2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleDownload}
-                      className="h-8 w-8 rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-                      title="Download data"
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
+                    <span className="text-4xl font-bold text-primary">
+                      {dataView === "sold"
+                        ? `$${citySoldData.avgPrice || 0}`
+                        : `$${cityRentedData.avgPrice || 0}`}
+                      <span className="text-lg text-muted-foreground ml-1">
+                        {dataView === "sold" ? "PSF" : "/mo"}
+                      </span>
+                    </span>
+                    {citySoldData.change !== 0 && (
+                      <div className={`flex items-center gap-1 ${citySoldData.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {citySoldData.change >= 0 ? (
+                          <TrendingUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                        <span className="font-medium">
+                          {citySoldData.change >= 0 ? '+' : ''}{citySoldData.change.toFixed(1)}%
+                        </span>
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-red-50 text-red-700 rounded border border-red-200">
-                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                    Detached {detachedStats.count > 0 && `(${detachedStats.count})`}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-teal-50 text-teal-700 rounded border border-teal-200">
-                    <span className="w-2 h-2 rounded-full bg-teal-500"></span>
-                    Condos {condoStats.count > 0 && `(${condoStats.count})`}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-blue-50 text-blue-700 rounded border border-blue-200">
-                    <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                    Townhouse {townhouseStats.count > 0 && `(${townhouseStats.count})`}
-                  </span>
-                </div>
-                {cityViewMode === "chart" ? (
-                  <div className="mt-4">
-                    <ReactECharts
-                      option={getChartOption("city")}
-                      style={{ height: "300px" }}
-                    />
-                  </div>
-                ) : (
-                  <div className="mt-4 overflow-auto max-h-[400px] rounded-lg border border-border">
-                    <Table>
-                      <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
-                        <TableRow>
-                          <TableHead className="font-semibold">Period</TableHead>
-                          <TableHead className="text-right font-semibold">Detached</TableHead>
-                          <TableHead className="text-right font-semibold">Condos</TableHead>
-                          <TableHead className="text-right font-semibold">Townhouse</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {(() => {
-                          const { detachedData, condoData, townhouseData } = getHistoricalData("city");
-                          return quarters.map((quarter, index) => (
-                            <TableRow key={quarter} className="hover:bg-muted/50 transition-colors">
-                              <TableCell className="font-medium">{quarter}</TableCell>
-                              <TableCell className="text-right">
-                                <span className="inline-flex items-center gap-2">
-                                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                                  ${detachedData[index]}K
-                                </span>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <span className="inline-flex items-center gap-2">
-                                  <span className="w-2 h-2 rounded-full bg-teal-500"></span>
-                                  ${condoData[index]}K
-                                </span>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <span className="inline-flex items-center gap-2">
-                                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                                  ${townhouseData[index]}K
-                                </span>
-                              </TableCell>
+
+                  <p className="text-sm text-muted-foreground">
+                    Based on{" "}
+                    {dataView === "sold" ? citySoldData.basedOn : cityRentedData.basedOn}{" "}
+                    in {cityName}
+                  </p>
+
+                  <div className="pt-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-sm font-medium">Historical Avg. Prices</h4>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={handleToggleCityView}
+                          className="h-8 w-8 rounded-lg transition-all duration-300"
+                          title="Switch to table view"
+                        >
+                          <Table2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={handleDownload}
+                          className="h-8 w-8 rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                          title="Download data"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-red-50 text-red-700 rounded border border-red-200">
+                        <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                        Detached
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-teal-50 text-teal-700 rounded border border-teal-200">
+                        <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+                        Condos
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-blue-50 text-blue-700 rounded border border-blue-200">
+                        <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                        Townhouse
+                      </span>
+                    </div>
+                    {cityViewMode === "chart" ? (
+                      <div className="mt-4">
+                        <ReactECharts
+                          option={getChartOption("city")}
+                          style={{ height: "300px" }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="mt-4 overflow-auto max-h-[400px] rounded-lg border border-border">
+                        <Table>
+                          <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
+                            <TableRow>
+                              <TableHead className="font-semibold">Period</TableHead>
+                              <TableHead className="text-right font-semibold">Detached</TableHead>
+                              <TableHead className="text-right font-semibold">Condos</TableHead>
+                              <TableHead className="text-right font-semibold">Townhouse</TableHead>
                             </TableRow>
-                          ));
-                        })()}
-                      </TableBody>
-                    </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {(() => {
+                              const { detachedData, condoData, townhouseData, quarters } = getHistoricalData("city");
+                              if (quarters.length === 0) {
+                                return (
+                                  <TableRow>
+                                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                                      No data available
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              }
+                              return quarters.map((quarter, index) => (
+                                <TableRow key={quarter} className="hover:bg-muted/50 transition-colors">
+                                  <TableCell className="font-medium">{quarter}</TableCell>
+                                  <TableCell className="text-right">
+                                    <span className="inline-flex items-center gap-2">
+                                      <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                                      ${detachedData[index] || 0}K
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    <span className="inline-flex items-center gap-2">
+                                      <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+                                      ${condoData[index] || 0}K
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    <span className="inline-flex items-center gap-2">
+                                      <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                      ${townhouseData[index] || 0}K
+                                    </span>
+                                  </TableCell>
+                                </TableRow>
+                              ));
+                            })()}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </Card>
-
-            {/* Downtown Stats Card */}
-            <Card className="p-6 space-y-4">
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold">Downtown</h3>
-                <p className="text-sm text-muted-foreground">
-                  Year over year change in values
-                </p>
-              </div>
-
-              <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-bold text-primary">
-                  {dataView === "sold"
-                    ? `$${downtownSoldData.avgPrice}`
-                    : `$${downtownRentedData.avgPrice}`}
-                  <span className="text-lg text-muted-foreground ml-1">
-                    {dataView === "sold" ? "PSF" : "/mo"}
-                  </span>
-                </span>
-                <div className="flex items-center gap-1 text-green-600">
-                  <TrendingUp className="h-4 w-4" />
-                  <span className="font-medium">
-                    {dataView === "sold"
-                      ? downtownSoldData.change
-                      : downtownRentedData.change}
-                  </span>
-                </div>
-              </div>
-
-              <p className="text-sm text-muted-foreground">
-                Based on{" "}
-                {dataView === "sold"
-                  ? downtownSoldData.basedOn
-                  : downtownRentedData.basedOn}{" "}
-                in Downtown
-              </p>
-
-              <div className="pt-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-sm font-medium">Historical Avg. Prices</h4>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleToggleDowntownView}
-                      className="h-8 w-8 rounded-lg transition-all duration-300"
-                      title="Switch to table view"
-                    >
-                      <Table2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleDownload}
-                      className="h-8 w-8 rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-                      title="Download data"
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-red-50 text-red-700 rounded border border-red-200">
-                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                    Detached
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-teal-50 text-teal-700 rounded border border-teal-200">
-                    <span className="w-2 h-2 rounded-full bg-teal-500"></span>
-                    Condos
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-blue-50 text-blue-700 rounded border border-blue-200">
-                    <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                    Townhouse
-                  </span>
-                </div>
-                {downtownViewMode === "chart" ? (
-                  <div className="mt-4">
-                    <ReactECharts
-                      option={getChartOption("downtown")}
-                      style={{ height: "300px" }}
-                    />
-                  </div>
-                ) : (
-                  <div className="mt-4 overflow-auto max-h-[400px] rounded-lg border border-border">
-                    <Table>
-                      <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
-                        <TableRow>
-                          <TableHead className="font-semibold">Period</TableHead>
-                          <TableHead className="text-right font-semibold">Detached</TableHead>
-                          <TableHead className="text-right font-semibold">Condos</TableHead>
-                          <TableHead className="text-right font-semibold">Townhouse</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {(() => {
-                          const { detachedData, condoData, townhouseData } = getHistoricalData("downtown");
-                          return quarters.map((quarter, index) => (
-                            <TableRow key={quarter} className="hover:bg-muted/50 transition-colors">
-                              <TableCell className="font-medium">{quarter}</TableCell>
-                              <TableCell className="text-right">
-                                <span className="inline-flex items-center gap-2">
-                                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                                  ${detachedData[index]}K
-                                </span>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <span className="inline-flex items-center gap-2">
-                                  <span className="w-2 h-2 rounded-full bg-teal-500"></span>
-                                  ${condoData[index]}K
-                                </span>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <span className="inline-flex items-center gap-2">
-                                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                                  ${townhouseData[index]}K
-                                </span>
-                              </TableCell>
-                            </TableRow>
-                          ));
-                        })()}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </div>
             </Card>
           </div>
         </div>

@@ -35,12 +35,30 @@ export const getTimeAgo = (dateString: string): string => {
 
 /**
  * Calculate days on market
+ * For active listings (dateEnd is empty or in the future), use current date
  */
 export const getDaysOnMarket = (dateStart: string, dateEnd: string): number => {
+  if (!dateStart) return 0;
+  
   const start = new Date(dateStart);
-  const end = new Date(dateEnd);
+  if (isNaN(start.getTime())) return 0;
+  
+  // If no end date or end date is in the future, use current date (active listing)
+  let end: Date;
+  if (!dateEnd) {
+    end = new Date();
+  } else {
+    const endDate = new Date(dateEnd);
+    if (isNaN(endDate.getTime())) {
+      end = new Date();
+    } else {
+      // Use current date if end date is in the future (still active)
+      end = endDate > new Date() ? new Date() : endDate;
+    }
+  }
+  
   const diffMs = end.getTime() - start.getTime();
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  const diffDays = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
   return diffDays;
 };
 

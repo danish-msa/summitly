@@ -111,21 +111,25 @@ export const garamondPro = localFont({
 })
 
 // Rubik - Testing font for headings
+// Using fallback configuration to handle network issues gracefully
 export const rubik = Rubik({
   subsets: ['latin'],
   variable: '--font-rubik',
   weight: ['300', '400', '500', '600', '700', '800', '900'],
   display: 'swap',
-  preload: true,
+  preload: false, // Disable preload to reduce connection attempts
   adjustFontFallback: true,
+  fallback: ['system-ui', 'arial', 'sans-serif'], // Better fallback chain
 })
 
 // Outfit - Testing font for headings
+// Using fallback configuration to handle network issues gracefully
 export const outfit = Outfit({
   subsets: ['latin'],
   variable: '--font-outfit',
   weight: ['300', '400', '500', '600', '700', '800', '900'],
   display: 'swap',
-  preload: true,
+  preload: false, // Disable preload to reduce connection attempts
   adjustFontFallback: true,
+  fallback: ['system-ui', 'arial', 'sans-serif'], // Better fallback chain
 })

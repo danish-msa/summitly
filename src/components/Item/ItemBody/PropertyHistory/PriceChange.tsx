@@ -38,7 +38,7 @@ export default function PriceChange({ groupedHistory, propertyAddress }: PriceCh
   });
 
   return (
-    <div className="bg-white p-8">
+    <div className="bg-white py-4">
       <p className="text-sm text-gray-600 mt-1 mb-6">Price change history for {propertyAddress}</p>
       
       <div className="space-y-6">

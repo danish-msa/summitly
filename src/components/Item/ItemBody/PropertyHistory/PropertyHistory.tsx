@@ -13,9 +13,13 @@ export default function PropertyHistory({ listingHistory, property }: PropertyHi
   const propertyAddress = getPropertyAddress(property);
 
   // Group listings by period (for now, treat each as separate)
-  // In a real implementation, you'd group by listing period
+  // History is already sorted by most recent first from generatePropertyDetailsData
   const groupedHistory: GroupedHistoryRecord[] = listingHistory.map((record, index) => {
-    const isActive = index === 0 && property?.status === 'Active';
+    // First record (index 0) is the most recent listing
+    // Check if it's active based on property status and whether it has an end date
+    const isMostRecent = index === 0;
+    const hasEndDate = record.dateEnd && new Date(record.dateEnd) < new Date();
+    const isActive = isMostRecent && property?.status === 'Active' && !hasEndDate;
     const daysOnMarket = getDaysOnMarket(record.dateStart, record.dateEnd);
     
     return {
@@ -34,7 +38,7 @@ export default function PropertyHistory({ listingHistory, property }: PropertyHi
   return (
     <div className="w-full mt-5">
       <Tabs defaultValue="timeline" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 h-12 p-1 mb-6">
+        <TabsList className=" h-12 p-1">
           <TabsTrigger value="timeline" className="py-2 text-base">Listing Timeline</TabsTrigger>
           <TabsTrigger value="price" className="py-2 text-base">Price Change</TabsTrigger>
           <TabsTrigger value="tax" className="py-2 text-base">Tax History</TabsTrigger>

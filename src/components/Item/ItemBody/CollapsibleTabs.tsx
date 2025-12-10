@@ -7,8 +7,9 @@ import { LifestyleAmenities } from './LifestyleAmenities'
 import { MortgageCalculator } from './MortgageCalculator'
 import AffordabilityCalculator from './AffordabilityCalculator'
 import { MarketAnalytics } from './MarketAnalytics'
-import { generateMockListingData } from './mockListingData'
+import { generatePropertyDetailsData } from './generatePropertyDetails'
 import { PropertyListing } from '@/lib/types'
+import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/single-listing'
 import PropertyHistory from './PropertyHistory'
 import Description from './Description'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -16,6 +17,7 @@ import { AvailableUnits } from './AvailableUnits'
 
 interface CollapsibleTabsProps {
   property: PropertyListing;
+  rawProperty?: SinglePropertyListingResponse | null;
   isPreCon?: boolean;
   isRent?: boolean;
 }
@@ -26,7 +28,7 @@ interface TabSection {
   content: React.ReactNode;
 }
 
-const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property, isPreCon = false, isRent = false }) => {
+const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property, rawProperty, isPreCon = false, isRent = false }) => {
   const defaultExpanded = (isPreCon || isRent)
     ? ['listing-details', 'description', 'available-units', 'features', 'lifestyle', 'location', 'demographics', 'market-analytics']
     : ['listing-details', 'description', 'features', 'lifestyle', 'location', 'demographics', 'market-analytics', 'history'];
@@ -78,7 +80,10 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property, isPreCon = 
       id: 'listing-details',
       label: 'Listing Details',
       content: (
-        <PropertyListingDetails data={generateMockListingData()} property={property} />
+        <PropertyListingDetails 
+          data={generatePropertyDetailsData(property, rawProperty)} 
+          property={property} 
+        />
       )
     },
     ...(isRent ? [{
@@ -92,7 +97,10 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property, isPreCon = 
       id: 'history',
       label: 'Property History',
       content: (
-        <PropertyHistory listingHistory={generateMockListingData().listingHistory} property={property} />
+        <PropertyHistory 
+          listingHistory={generatePropertyDetailsData(property, rawProperty).listingHistory} 
+          property={property} 
+        />
       )
     }]),
     {
@@ -135,6 +143,9 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property, isPreCon = 
         <MarketAnalytics 
           propertyAddress={property.address.location || `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim()}
           propertyClass={property.class || 'residential'}
+          latitude={property.map?.latitude}
+          longitude={property.map?.longitude}
+          city={property.address.city || undefined} // Pass city directly from property
         />
       )
     },
@@ -173,13 +184,13 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property, isPreCon = 
               id={section.id}
               className="scroll-mt-24"
             >
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+              <div className="bg-white rounded-lg overflow-hidden shadow-sm">
                 {/* Tab Header */}
                 <button
                   onClick={() => toggleTab(section.id)}
                   className={`w-full px-6 py-4 text-left flex items-center justify-between transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20 ${
                     isExpanded 
-                      ? 'border-l-4 border-l-primary bg-gradient-to-r from-brand-celestial/10 to-brand-celestial/20 border-b-0' 
+                      ? 'bg-secondary/20 border-b-0' 
                       : 'hover:bg-gray-50'
                   }`}
                 >

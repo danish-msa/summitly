@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
-import { HelpCircle, ChevronDown, ChevronUp, ArrowUp, ArrowDown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { HelpCircle, ChevronDown, ChevronUp, ArrowUp, ArrowDown, RefreshCw, Table2, Download } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -13,11 +14,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import ReactECharts from "echarts-for-react";
+import { toast } from "sonner";
 import { formatPrice } from '../utils/helpers';
 import { 
   getAverageSoldPriceChartOption, 
-  getSalesVolumeChartOption,
-  getProRatedMonthIndex
+  getSalesVolumeChartOption
 } from '../utils/chartOptions';
 import { 
   generateSalesVolumeMockData,
@@ -26,27 +27,40 @@ import {
   generatePriceOverviewData
 } from '../utils/dataGenerators';
 import { PropertyListing } from '@/lib/types';
+import { MarketTrendsData } from '@/hooks/useMarketTrends';
+
+type LocationType = 'city' | 'area' | 'neighbourhood' | 'intersection' | 'community';
 
 interface HousingPricesSectionProps {
-  cityName: string;
+  locationType: LocationType;
+  locationName: string;
+  parentCity?: string;
+  parentArea?: string;
+  parentNeighbourhood?: string;
   properties: PropertyListing[];
   dateRanges: {
     current: string;
     past: string;
   };
+  propertyType?: string;
+  community?: string;
+  years?: number;
+  marketTrendsData: MarketTrendsData;
+  onRefresh?: () => Promise<void>;
 }
 
-const PriceCard = ({ label, value, change, showChange = false }: { 
+const PriceCard = ({ label, value, change, showChange = false, subtitle }: { 
   label: string; 
   value: string | number; 
   change?: number; 
   showChange?: boolean;
+  subtitle?: string;
 }) => {
   const isPositive = change !== undefined && change > 0;
   const isNegative = change !== undefined && change < 0;
   
   return (
-    <Card className="p-6 flex flex-col">
+    <Card className="p-6 flex flex-col" variant="white">
       <div className="flex items-baseline gap-2 mb-2">
         <div className={`text-2xl font-bold ${showChange && change !== undefined ? (isPositive ? 'text-green-600' : isNegative ? 'text-red-600' : 'text-foreground') : 'text-foreground'}`}>
           {typeof value === 'number' ? formatPrice(value) : value}
@@ -61,6 +75,11 @@ const PriceCard = ({ label, value, change, showChange = false }: {
           </div>
         )}
       </div>
+      {subtitle && (
+        <div className="text-sm text-muted-foreground mb-1">
+          {subtitle}
+        </div>
+      )}
       <div className="text-sm text-muted-foreground mt-auto pt-2">
         {label}
       </div>
@@ -69,25 +88,145 @@ const PriceCard = ({ label, value, change, showChange = false }: {
 };
 
 export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({ 
-  cityName, 
+  locationType,
+  locationName,
+  parentCity,
+  parentArea,
+  parentNeighbourhood,
   properties,
-  dateRanges 
+  dateRanges,
+  propertyType,
+  community,
+  years = 2,
+  marketTrendsData,
+  onRefresh,
 }) => {
   const [isExplanationExpanded, setIsExplanationExpanded] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [averageSoldPriceViewMode, setAverageSoldPriceViewMode] = useState<"chart" | "table">("chart");
+  const [salesVolumeViewMode, setSalesVolumeViewMode] = useState<"chart" | "table">("chart");
+  const [averageSoldPriceData, setAverageSoldPriceData] = useState<{ months: string[]; prices: number[]; medianPrices?: number[]; counts: number[] }>({ months: [], prices: [], medianPrices: [], counts: [] });
+  const [salesVolumeGraphData, setSalesVolumeGraphData] = useState<{ months: string[]; detached: number[]; townhouse: number[]; condo: number[] }>({ months: [], detached: [], townhouse: [], condo: [] });
+  const [salesVolumeTableData, setSalesVolumeTableData] = useState(generateSalesVolumeMockData());
+  const [priceOverviewData, setPriceOverviewData] = useState({
+    current: {
+      avgPrice: 0,
+      salesCount: 0,
+      monthlyChange: 0,
+      quarterlyChange: 0,
+      yearlyChange: 0,
+    },
+    past: {
+      avgPrice: 0,
+      salesCount: 0,
+      monthlyChange: 0,
+      quarterlyChange: 0,
+      yearlyChange: 0,
+    },
+  });
 
-  // Generate data
-  const salesVolumeTableData = generateSalesVolumeMockData();
-  const averageSoldPriceData = generateAverageSoldPriceData(properties);
-  const salesVolumeGraphData = generateSalesVolumeData(salesVolumeTableData);
-  const priceOverviewData = generatePriceOverviewData(properties);
-  const proRatedIndex = getProRatedMonthIndex(salesVolumeGraphData.months);
+  // Handle refresh - delegate to parent's refresh function
+  const handleRefresh = async () => {
+    if (onRefresh) {
+      setRefreshing(true);
+      try {
+        await onRefresh();
+      } finally {
+        setRefreshing(false);
+      }
+    }
+  };
+
+  // Process market trends data when it changes
+  useEffect(() => {
+    // Extract data from marketTrendsData prop
+    const avgPriceData = marketTrendsData.averageSoldPrice;
+    const salesVolumeData = marketTrendsData.salesVolumeByType;
+    const priceOverview = marketTrendsData.priceOverview;
+
+    // Update state with fetched data or fallback to mock data
+    if (avgPriceData) {
+      // Handle backward compatibility: if medianPrices is missing, use empty array
+      setAverageSoldPriceData({
+        ...avgPriceData,
+        medianPrices: avgPriceData.medianPrices || []
+      });
+    } else {
+      setAverageSoldPriceData(generateAverageSoldPriceData(properties));
+    }
+
+    if (salesVolumeData) {
+      setSalesVolumeGraphData(salesVolumeData);
+      // Generate table data from graph data
+      const tableData = generateSalesVolumeMockData(); // Keep mock for now, can enhance later
+      setSalesVolumeTableData(tableData);
+    } else {
+      const mockTableData = generateSalesVolumeMockData();
+      setSalesVolumeTableData(mockTableData);
+      setSalesVolumeGraphData(generateSalesVolumeData(mockTableData));
+    }
+
+    // Keep mock data for table (price by bedrooms aggregation not yet implemented)
+    setSalesVolumeTableData(generateSalesVolumeMockData());
+
+    // Only use API data for price overview - no mock fallback
+    if (priceOverview) {
+      console.log('[HousingPricesSection] Price overview data received:', priceOverview);
+      setPriceOverviewData(priceOverview);
+    } else {
+      console.warn('[HousingPricesSection] Price overview API returned null. Date ranges:', dateRanges);
+      // If API fails, show zeros instead of mock data
+      setPriceOverviewData({
+        current: {
+          avgPrice: 0,
+          salesCount: 0,
+          monthlyChange: 0,
+          quarterlyChange: 0,
+          yearlyChange: 0,
+        },
+        past: {
+          avgPrice: 0,
+          salesCount: 0,
+          monthlyChange: 0,
+          quarterlyChange: 0,
+          yearlyChange: 0,
+        },
+      });
+    }
+  }, [marketTrendsData, properties, dateRanges]);
+
+  const handleToggleAveragePriceView = () => {
+    setAverageSoldPriceViewMode(prev => prev === "chart" ? "table" : "chart");
+    toast.success(`Switched to ${averageSoldPriceViewMode === "chart" ? "table" : "chart"} view`);
+  };
+
+  const handleToggleSalesVolumeView = () => {
+    setSalesVolumeViewMode(prev => prev === "chart" ? "table" : "chart");
+    toast.success(`Switched to ${salesVolumeViewMode === "chart" ? "table" : "chart"} view`);
+  };
+
+  const handleDownload = (type: "averagePrice" | "salesVolume") => {
+    toast.success(`${type === "averagePrice" ? "Average price" : "Sales volume"} data downloaded!`);
+  };
+
 
   return (
-    <section className="border-b">
+      <section className="border-b">
       <div className="container-1400 mx-auto px-4 py-8">
-        <h2 className="text-3xl font-bold text-foreground mb-8">
-          {cityName}'s Housing Prices
-        </h2>
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-3xl font-bold text-foreground">
+            {locationName}'s Housing Prices
+          </h2>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Refresh data from API"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
 
         {/* Stats Overview Section */}
         <div className="mb-8">
@@ -110,6 +249,7 @@ export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({
                 <PriceCard 
                   label="Avg sold price" 
                   value={priceOverviewData.current.avgPrice}
+                  subtitle={priceOverviewData.current.salesCount > 0 ? `${priceOverviewData.current.salesCount.toLocaleString()} sold` : undefined}
                 />
                 <PriceCard 
                   label="Monthly change" 
@@ -137,6 +277,7 @@ export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({
                 <PriceCard 
                   label="Avg sold price" 
                   value={priceOverviewData.past.avgPrice}
+                  subtitle={priceOverviewData.past.salesCount > 0 ? `${priceOverviewData.past.salesCount.toLocaleString()} sold` : undefined}
                 />
                 <PriceCard 
                   label="Monthly change" 
@@ -215,35 +356,165 @@ export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({
 
         {/* Graphs Section - Side by Side */}
         <div className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Average Sold Price Graph */}
+          {/* Average & Median Sold Price Graph */}
           <div>
-            <h3 className="text-xl font-semibold text-foreground mb-4">
-              Average Sold Price in {cityName}
-            </h3>
-            <Card className="p-6">
-              <ReactECharts
-                option={getAverageSoldPriceChartOption(averageSoldPriceData)}
-                style={{ height: '400px' }}
-              />
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-foreground">
+                Average & Median Sold Price in {locationName}
+              </h3>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleToggleAveragePriceView}
+                  className="h-8 w-8 rounded-lg transition-all duration-300"
+                  title="Switch to table view"
+                >
+                  <Table2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleDownload("averagePrice")}
+                  className="h-8 w-8 rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                  title="Download data"
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <Card className="p-6" variant='white'>
+              {averageSoldPriceViewMode === "chart" ? (
+                <ReactECharts
+                  option={getAverageSoldPriceChartOption(averageSoldPriceData)}
+                  style={{ height: '400px' }}
+                />
+              ) : (
+                <div className="overflow-auto max-h-[400px] rounded-lg border border-border">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
+                      <TableRow>
+                        <TableHead className="font-semibold">Month</TableHead>
+                        <TableHead className="text-right font-semibold">Average Price</TableHead>
+                        <TableHead className="text-right font-semibold">Median Price</TableHead>
+                        <TableHead className="text-right font-semibold">Sales Count</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {averageSoldPriceData.months.map((month, index) => (
+                        <TableRow key={month} className="hover:bg-muted/50 transition-colors">
+                          <TableCell className="font-medium">{month}</TableCell>
+                          <TableCell className="text-right">
+                            {averageSoldPriceData.prices[index] ? formatPrice(averageSoldPriceData.prices[index]) : '-'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {averageSoldPriceData.medianPrices?.[index] ? formatPrice(averageSoldPriceData.medianPrices[index]) : '-'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {averageSoldPriceData.counts[index] || '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </Card>
           </div>
 
           {/* Sales Volume by Property Type Graph */}
           <div>
-            <h3 className="text-xl font-semibold text-foreground mb-4">
-              Sales Volume by Property Type in {cityName}
-            </h3>
-            <Card className="p-6">
-              <ReactECharts
-                option={getSalesVolumeChartOption(salesVolumeGraphData, proRatedIndex)}
-                style={{ height: '400px' }}
-              />
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-foreground">
+                Sales Volume by Property Type in {locationName}
+              </h3>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleToggleSalesVolumeView}
+                  className="h-8 w-8 rounded-lg transition-all duration-300"
+                  title="Switch to table view"
+                >
+                  <Table2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleDownload("salesVolume")}
+                  className="h-8 w-8 rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                  title="Download data"
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <Card className="p-6" variant='white'>
+              {salesVolumeViewMode === "chart" ? (
+                <ReactECharts
+                  option={getSalesVolumeChartOption(salesVolumeGraphData)}
+                  style={{ height: '400px' }}
+                />
+              ) : (
+                <div className="overflow-auto max-h-[400px] rounded-lg border border-border">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
+                      <TableRow>
+                        <TableHead className="font-semibold">Month</TableHead>
+                        <TableHead className="text-right font-semibold">
+                          <span className="inline-flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                            Detached
+                          </span>
+                        </TableHead>
+                        <TableHead className="text-right font-semibold">
+                          <span className="inline-flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+                            Condos
+                          </span>
+                        </TableHead>
+                        <TableHead className="text-right font-semibold">
+                          <span className="inline-flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                            Townhouse
+                          </span>
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {salesVolumeGraphData.months.map((month, index) => (
+                        <TableRow key={month} className="hover:bg-muted/50 transition-colors">
+                          <TableCell className="font-medium">{month}</TableCell>
+                          <TableCell className="text-right">
+                            <span className="inline-flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                              {salesVolumeGraphData.detached[index] || 0}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <span className="inline-flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+                              {salesVolumeGraphData.condo[index] || 0}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <span className="inline-flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                              {salesVolumeGraphData.townhouse[index] || 0}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </Card>
           </div>
         </div>
 
         {/* Average Sold Price Breakdown Table */}
-        <div className="mb-8">
+        {/* <div className="mb-8">
           <h3 className="text-xl font-semibold text-foreground mb-4">
             Average Prices by Bedrooms
           </h3>
@@ -372,7 +643,7 @@ export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({
               </p>
             </TabsContent>
           </Tabs>
-        </div>
+        </div> */}
       </div>
     </section>
   );

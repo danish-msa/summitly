@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { ButtonColorful } from '@/components/ui/button-colorful';
@@ -11,72 +11,105 @@ interface PropertyCategory {
   count: number;
   image: string;
   href: string;
+  apiKey: string;
 }
 
-const propertyCategories: PropertyCategory[] = [
+const propertyCategoriesConfig: Omit<PropertyCategory, 'count'>[] = [
   {
     id: 1,
     title: "New Listings",
-    count: 951,
     image: "/images/PropertyCategories/newlistings.jpeg",
-    href: "/listings?type=new"
+    href: "/listings?type=new",
+    apiKey: "new",
   },
   {
     id: 2,
     title: "Price Reduced",
-    count: 754,
     image: "/images/propertycategories/pricereduced.jpeg",
-    href: "/listings?type=reduced"
+    href: "/listings?type=reduced",
+    apiKey: "priceReduced",
   },
   {
     id: 3,
     title: "Open Houses",
-    count: 58,
     image: "/images/propertycategories/openhouses.jpeg",
-    href: "/listings?type=open-houses"
+    href: "/listings?type=open-houses",
+    apiKey: "openHouses",
   },
   {
     id: 4,
     title: "Recently Sold",
-    count: 1287,
     image: "/images/propertycategories/recentlysold.jpeg",
-    href: "/listings?type=sold"
+    href: "/listings?type=sold",
+    apiKey: "sold",
   },
   {
     id: 5,
     title: "New Construction",
-    count: 889,
     image: "/images/propertycategories/newconstruction.jpeg",
-    href: "/listings?type=construction"
+    href: "/listings?type=construction",
+    apiKey: "construction",
   },
   {
     id: 6,
     title: "New Home Communities",
-    count: 72,
     image: "/images/propertycategories/newhomecommunities.jpeg",
-    href: "/listings?type=communities"
+    href: "/listings?type=communities",
+    apiKey: "communities",
   },
   {
     id: 7,
     title: "Land",
-    count: 142,
     image: "/images/propertycategories/land.jpeg",
-    href: "/listings?type=land"
+    href: "/listings?type=land",
+    apiKey: "land",
   },
   {
     id: 8,
     title: "Foreclosures",
-    count: 13,
     image: "/images/propertycategories/foreclosures.jpeg",
-    href: "/listings?type=foreclosures"
+    href: "/listings?type=foreclosures",
+    apiKey: "foreclosures",
   }
 ];
 
 const PropertyCategories = () => {
   const { location } = useLocationDetection();
+  const [categories, setCategories] = useState<PropertyCategory[]>(
+    propertyCategoriesConfig.map(cat => ({ ...cat, count: 0 }))
+  );
+  const [loading, setLoading] = useState(true);
   
   // Get display location - use detected location or fallback to Henderson, NV
   const displayLocation = location ? location.fullLocation : "Henderson, NV";
+
+  useEffect(() => {
+    const fetchCategoryCounts = async () => {
+      try {
+        const response = await fetch('/api/property-categories');
+        if (!response.ok) {
+          throw new Error('Failed to fetch category counts');
+        }
+        
+        const data = await response.json();
+        
+        // Map API data to categories
+        const updatedCategories = propertyCategoriesConfig.map(cat => ({
+          ...cat,
+          count: data[cat.apiKey]?.count || 0,
+        }));
+        
+        setCategories(updatedCategories);
+      } catch (error) {
+        console.error('Error fetching category counts:', error);
+        // Keep default counts (0) on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategoryCounts();
+  }, []);
 
   return (
     <section className="py-16 bg-background">
@@ -96,7 +129,7 @@ const PropertyCategories = () => {
 
         {/* Property Categories Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {propertyCategories.map((category, index) => (
+          {categories.map((category, index) => (
             <motion.div
               key={category.id}
               initial={{ opacity: 0, y: 30 }}

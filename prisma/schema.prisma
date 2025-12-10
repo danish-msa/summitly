@@ -306,16 +306,16 @@ enum TourStatus {
 
 // DevelopmentTeam - stores developer and development team member information
 model DevelopmentTeam {
-  id          String   @id @default(cuid())
+  id          String        @id @default(cuid())
   name        String
   type        DeveloperType
-  description String?  @db.Text
+  description String?       @db.Text
   website     String?
   image       String? // Profile/image URL
   email       String?
   phone       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   @@index([type])
   @@index([name])
@@ -332,22 +332,22 @@ enum DeveloperType {
 
 // Pre-Construction Projects - stores pre-construction project data
 model PreConstructionProject {
-  id            String @id @default(cuid())
-  mlsNumber     String @unique // Auto-generated unique identifier from project name
-  projectName   String
-  developer     String?
-  startingPrice Float?
-  endingPrice   Float?
+  id              String  @id @default(cuid())
+  mlsNumber       String  @unique // Auto-generated unique identifier from project name
+  projectName     String
+  developer       String?
+  startingPrice   Float?
+  endingPrice     Float?
   avgPricePerSqft Float? // Average price per square foot
-  status        String? // 'platinum-access', 'now-selling', 'assignments', 'new-release-coming-soon', 'coming-soon', 'register-now', 'resale', 'sold-out'
-  
+  status          String? // 'platinum-access', 'now-selling', 'assignments', 'new-release-coming-soon', 'coming-soon', 'register-now', 'resale', 'sold-out'
+
   // Additional Pricing
-  parkingPrice      Float?
+  parkingPrice       Float?
   parkingPriceDetail String? @db.Text
-  lockerPrice       Float?
-  lockerPriceDetail String? @db.Text
-  assignmentFee     Float?
-  developmentLevies String? @db.Text
+  lockerPrice        Float?
+  lockerPriceDetail  String? @db.Text
+  assignmentFee      Float?
+  developmentLevies  String? @db.Text
   developmentCharges Float?
 
   // Address
@@ -356,7 +356,7 @@ model PreConstructionProject {
   city              String?
   state             String?
   zip               String?
-  country           String?  @default("Canada")
+  country           String? @default("Canada")
   neighborhood      String?
   majorIntersection String?
 
@@ -365,21 +365,21 @@ model PreConstructionProject {
   longitude Float?
 
   // Property Details
-  propertyType   String? // 'Condos', 'Houses', 'Lofts', 'Master-Planned Communities', 'Multi Family', 'Offices'
+  propertyType    String? // 'Condos', 'Houses', 'Lofts', 'Master-Planned Communities', 'Multi Family', 'Offices'
   subPropertyType String? // 'Low-Rise', 'Mid-Rise', 'High-Rise' (for Condos) or 'Link', 'Townhouse', 'Semi-Detached', 'Detached' (for Houses)
-  bedroomRange   String? // e.g., '1-3' (range format)
-  bathroomRange  String? // e.g., '1-3'
-  sqftRange      String? // e.g., '650-1,450'
-  hasDen         Boolean @default(false) // Unit has den available
-  hasStudio      Boolean @default(false) // Studio units available
-  hasLoft        Boolean @default(false) // Loft units available
+  bedroomRange    String? // e.g., '1-3' (range format)
+  bathroomRange   String? // e.g., '1-3'
+  sqftRange       String? // e.g., '650-1,450'
+  hasDen          Boolean @default(false) // Unit has den available
+  hasStudio       Boolean @default(false) // Studio units available
+  hasLoft         Boolean @default(false) // Loft units available
   hasWorkLiveLoft Boolean @default(false) // Work/Live Loft units available
-  totalUnits     Int?
-  availableUnits Int?
-  suites         Int?
-  storeys        Int?
-  height         String? // Height in meters (e.g., "9'0\" to 10'0\"")
-  
+  totalUnits      Int?
+  availableUnits  Int?
+  suites          Int?
+  storeys         Int?
+  height          String? // Height in meters (e.g., "9'0\" to 10'0\"")
+
   // Maintenance & Fees
   maintenanceFeesPerSqft Float?
   maintenanceFeesDetail  String? @db.Text
@@ -389,7 +389,7 @@ model PreConstructionProject {
   occupancyDate      String? // e.g., 'Q4 2025'
   completionProgress Int? // 0 = Pre-construction, 1 = Construction, 2 = Complete
   promotions         String? // '5% Down Payment', '10% Down Payment', '15% Down Payment'
-  
+
   // Additional Details
   ownershipType String? // Ownership type
   garage        String? // 'single', 'double', 'triple', 'other'
@@ -411,18 +411,18 @@ model PreConstructionProject {
   documents        String? @db.Text // JSON string for documents array
 
   // Development Team (stored as JSON)
-  developerInfo         String? @db.Text // JSON string for developer details
-  architectInfo         String? @db.Text // JSON string for architect details
-  builderInfo           String? @db.Text // JSON string for builder details
-  interiorDesignerInfo  String? @db.Text // JSON string for interior designer details
-  landscapeArchitectInfo String? @db.Text // JSON string for landscape architect details
-  marketingInfo         String? @db.Text // JSON string for marketing details
-  salesMarketingCompany String? // Sales & Marketing Company ID
+  developerInfo           String? @db.Text // JSON string for developer details
+  architectInfo           String? @db.Text // JSON string for architect details
+  builderInfo             String? @db.Text // JSON string for builder details
+  interiorDesignerInfo    String? @db.Text // JSON string for interior designer details
+  landscapeArchitectInfo  String? @db.Text // JSON string for landscape architect details
+  marketingInfo           String? @db.Text // JSON string for marketing details
+  salesMarketingCompany   String? // Sales & Marketing Company ID
   developmentTeamOverview String? @db.Text // Overview of the development team
 
   // Publication Status
   isPublished Boolean @default(false) // Draft projects are not visible on public website
-  featured Boolean @default(false) // Featured projects are highlighted on the website
+  featured    Boolean @default(false) // Featured projects are highlighted on the website
 
   // Creator tracking
   createdBy String? // User ID who created this project
@@ -432,8 +432,8 @@ model PreConstructionProject {
   updatedAt DateTime @updatedAt
 
   // Relations
-  units PreConstructionUnit[]
-  creator User? @relation(fields: [createdBy], references: [id])
+  units   PreConstructionUnit[]
+  creator User?                 @relation(fields: [createdBy], references: [id])
 
   @@index([city])
   @@index([status])
@@ -457,10 +457,10 @@ model PreConstructionUnit {
   status         String // 'for-sale', 'sold-out', 'reserved'
   studio         Boolean @default(false)
 
-  images         String[] @default([]) // Multiple images for the unit (floorplans, renderings, etc.)
-  description    String?  @db.Text
-  features       String[] @default([])
-  amenities      String[] @default([])
+  images      String[] @default([]) // Multiple images for the unit (floorplans, renderings, etc.)
+  description String?  @db.Text
+  features    String[] @default([])
+  amenities   String[] @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -490,24 +490,24 @@ model PropertyRating {
 
 // Pre-Construction Page Content - stores custom content for filtered pages
 model PreConstructionPageContent {
-  id          String   @id @default(cuid())
-  pageType    String   // 'propertyType', 'status', 'completionYear', 'by-location'
-  pageValue   String   // e.g., 'Condos', 'now-selling', '2025', 'Toronto'
-  locationType String? // 'by-city', 'by-area', 'by-neighbourhood', 'by-intersection', 'by-communities' (only for pageType='by-location')
-  parentId    String?  // ID of parent location (for hierarchy: city -> area -> neighbourhood -> intersection)
-  title       String?  @db.Text
-  description String?  @db.Text
-  heroImage   String?
-  metaTitle   String?  @db.Text
-  metaDescription String? @db.Text
-  customContent String? @db.Text // JSON or rich text content
-  faqs        String?  @db.Text // JSON array of FAQ items
-  isPublished Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(cuid())
+  pageType        String // 'propertyType', 'status', 'completionYear', 'by-location'
+  pageValue       String // e.g., 'Condos', 'now-selling', '2025', 'Toronto'
+  locationType    String? // 'by-city', 'by-area', 'by-neighbourhood', 'by-intersection', 'by-communities' (only for pageType='by-location')
+  parentId        String? // ID of parent location (for hierarchy: city -> area -> neighbourhood -> intersection)
+  title           String?  @db.Text
+  description     String?  @db.Text
+  heroImage       String?
+  metaTitle       String?  @db.Text
+  metaDescription String?  @db.Text
+  customContent   String?  @db.Text // JSON or rich text content
+  faqs            String?  @db.Text // JSON array of FAQ items
+  isPublished     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   // Self-referential relation for parent-child hierarchy
-  parent   PreConstructionPageContent? @relation("LocationHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  parent   PreConstructionPageContent?  @relation("LocationHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
   children PreConstructionPageContent[] @relation("LocationHierarchy")
 
   @@unique([pageType, pageValue])
@@ -519,23 +519,23 @@ model PreConstructionPageContent {
 }
 
 model Page {
-  id          String   @id @default(cuid())
-  title       String
-  slug        String   @unique
-  content     String?  @db.Text
-  excerpt     String?  @db.Text
-  status      PageStatus @default(DRAFT)
-  parentId    String?
-  categoryId  String?
-  createdBy   String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String     @id @default(cuid())
+  title      String
+  slug       String     @unique
+  content    String?    @db.Text
+  excerpt    String?    @db.Text
+  status     PageStatus @default(DRAFT)
+  parentId   String?
+  categoryId String?
+  createdBy  String
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 
   // Relations
-  parent     Page?     @relation("PageHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
-  children   Page[]    @relation("PageHierarchy")
-  category   PageCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  creator    User      @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  parent   Page?         @relation("PageHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children Page[]        @relation("PageHierarchy")
+  category PageCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  creator  User          @relation(fields: [createdBy], references: [id], onDelete: Cascade)
 
   @@index([slug])
   @@index([status])
@@ -553,7 +553,72 @@ model PageCategory {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  pages       Page[]
+  pages Page[]
 
   @@index([slug])
+}
+
+// Market Trends - stores monthly market statistics for all location types
+model MarketTrends {
+  id String @id @default(cuid())
+
+  // Location identification (supports: city, area, neighbourhood, intersection, community)
+  locationType String // 'city' | 'area' | 'neighbourhood' | 'intersection' | 'community'
+  locationName String // The name of the location (e.g., "Oakville", "Downtown", "Main & King")
+
+  // Parent location hierarchy (for filtering and context)
+  parentCity          String? // City this location belongs to (if not a city)
+  parentArea          String? // Area this location belongs to (if neighbourhood/intersection/community)
+  parentNeighbourhood String? // Neighbourhood this location belongs to (if intersection/community)
+
+  month String // Format: "2025-01" (YYYY-MM)
+  years Int @default(2) // Number of years of historical data (5, 10, 15, 20)
+
+  // Price data (stored as JSON)
+  priceOverview          Json? // PriceOverviewData
+  averageSoldPrice       Json? // AverageSoldPriceData
+  averageSoldPriceByType Json? // AverageSoldPriceByTypeData
+  salesVolumeByType      Json? // SalesVolumeByTypeData
+  priceByBedrooms        Json? // PriceByBedroomsData
+
+  // Inventory data (stored as JSON)
+  inventoryOverview  Json? // InventoryOverviewData
+  newClosedAvailable Json? // NewClosedAvailableData
+  daysOnMarket       Json? // DaysOnMarketData
+
+  // Metadata
+  lastFetchedAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Unique constraint: one record per location type + location name + month + years
+  // This allows caching different year ranges separately
+  @@unique([locationType, locationName, month, years])
+  @@index([locationType])
+  @@index([locationName])
+  @@index([locationType, locationName])
+  @@index([month])
+  @@index([years])
+  @@index([locationType, locationName, month, years])
+  @@index([parentCity])
+  @@index([parentArea])
+  @@index([lastFetchedAt])
+}
+
+// Market Rankings - stores GTA city rankings (same data for all cities, stored once per month)
+model MarketRankings {
+  id    String @id @default(cuid())
+  month String @unique // Format: "2025-01" (YYYY-MM) - one ranking per month for all cities
+
+  // Rankings data (stored as JSON)
+  rankings        Json // RankingData - contains rankings for all cities
+  rankingOverview Json? // RankingOverviewData - DEPRECATED: Calculated dynamically per city, not stored
+
+  // Metadata
+  lastFetchedAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([month])
+  @@index([lastFetchedAt])
 }

@@ -439,6 +439,8 @@ export async function GET(request: NextRequest) {
           walkTime: travel.walkTime,
           driveTime: travel.driveTime,
           distance: travel.distance !== 'N/A' ? travel.distance : formatDistance(distance),
+          latitude: place.geometry.location.lat,
+          longitude: place.geometry.location.lng,
         },
         place, // Keep original place for filtering
       };

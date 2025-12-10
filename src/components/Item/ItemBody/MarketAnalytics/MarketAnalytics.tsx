@@ -11,17 +11,48 @@ import { TableView } from './TableView';
 import { Button } from "@/components/ui/button";
 import { UserCheck } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Download, Table2, TrendingUp, RefreshCw, ArrowDown } from "lucide-react";
+import { Download, Table2, TrendingUp, RefreshCw, ArrowDown, BarChart3 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { getLocationName, getPropertyClassLabel } from './dataGenerators';
+import { RepliersAPI } from '@/lib/api/repliers';
 
 export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({ 
   propertyAddress, 
-  propertyClass 
+  propertyClass,
+  latitude,
+  longitude,
+  city // Add city as optional prop
 }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [viewMode, setViewMode] = useState<"chart" | "table">("chart");
+  const [isLoading, setIsLoading] = useState(false);
+  // Separate view modes for each tab
+  const [marketViewMode, setMarketViewMode] = useState<"chart" | "table">("chart");
+  const [listingsViewMode, setListingsViewMode] = useState<"chart" | "table">("chart");
+  const [soldPriceViewMode, setSoldPriceViewMode] = useState<"chart" | "table">("chart");
   const [locationData, setLocationData] = useState<ProcessedLocation | null>(null);
-  const [chartKey, setChartKey] = useState(0); // Force chart re-render on data change
+  const [chartKey, setChartKey] = useState(0);
+  
+  // API data state
+  const [apiMarketData, setApiMarketData] = useState<MarketData | null>(null);
+  const [apiListingsData, setApiListingsData] = useState<ListingsData | null>(null);
+  const [apiSoldPriceData, setApiSoldPriceData] = useState<SoldPriceData | null>(null);
+  const [apiSummaryStats, setApiSummaryStats] = useState<{
+    activeListings: number;
+    newListings: number;
+    soldProperties: number;
+    medianPrice: number;
+    avgDOM: number;
+    last1YearGrowth: number;
+    last5YearsGrowth: number;
+  } | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
   
   const { searchLocations } = useLocationData();
   
@@ -49,7 +80,6 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
         }
         
         setLocationData(bestMatch);
-        setChartKey(prev => prev + 1); // Trigger chart re-render with new data
       } catch (error) {
         console.error('Error finding location data:', error);
       }
@@ -58,18 +88,136 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
     findLocationData();
   }, [propertyAddress, searchLocations]);
   
-  // Always use mock data (API calls disabled)
+  // Fetch data from repliers API
+  useEffect(() => {
+    const fetchAnalyticsData = async () => {
+      // Only fetch if we have coordinates
+      if (!latitude || !longitude) {
+        console.log('[MarketAnalytics] No coordinates available, using mock data');
+        return;
+      }
+
+      setIsLoading(true);
+      setApiError(null);
+
+      try {
+        console.log('[MarketAnalytics] Fetching analytics data with params:', {
+          latitude,
+          longitude,
+          propertyClass,
+        });
+
+        // Use city prop if available, otherwise try to extract from address
+        let cityName = city;
+        if (!cityName) {
+          const addressParts = propertyAddress.split(',');
+          cityName = addressParts[1]?.trim() || addressParts[2]?.trim() || '';
+        }
+
+        console.log('[MarketAnalytics] City extraction:', {
+          cityProp: city,
+          extractedCity: cityName,
+          propertyAddress,
+          willUseCity: !!cityName,
+        });
+
+        const analyticsParams = {
+          latitude,
+          longitude,
+          radiusKm: 10, // 10km radius (fallback if city not available)
+          propertyClass: propertyClass || undefined,
+          city: cityName || undefined, // Use city if available (matches Postman format)
+        };
+
+        // Fetch all analytics endpoints in parallel
+        const [marketTrends, listingsActivity, soldPriceTrends, summaryStats] = await Promise.all([
+          RepliersAPI.analytics.getMarketTrends(analyticsParams),
+          RepliersAPI.analytics.getListingsActivity(analyticsParams),
+          RepliersAPI.analytics.getSoldPriceTrends(analyticsParams),
+          RepliersAPI.analytics.getMarketSummaryStats(analyticsParams),
+        ]);
+
+        console.log('[MarketAnalytics] API Results:', {
+          marketTrends: marketTrends ? `✓ ${marketTrends.months.length} months` : '✗ null',
+          listingsActivity: listingsActivity ? `✓ ${listingsActivity.months.length} months` : '✗ null',
+          soldPriceTrends: soldPriceTrends ? `✓ ${soldPriceTrends.months.length} months` : '✗ null',
+        });
+
+        if (marketTrends) {
+          setApiMarketData(marketTrends);
+        }
+        if (listingsActivity) {
+          setApiListingsData(listingsActivity);
+        }
+        if (soldPriceTrends) {
+          setApiSoldPriceData(soldPriceTrends);
+        }
+        if (summaryStats) {
+          setApiSummaryStats(summaryStats);
+        }
+
+        // If all three failed, show error
+        if (!marketTrends && !listingsActivity && !soldPriceTrends) {
+          setApiError('No market analytics data available');
+          toast.error('Failed to load market analytics. Using sample data.');
+        } else {
+          setChartKey(prev => prev + 1); // Trigger chart re-render
+        }
+      } catch (error) {
+        // Handle both ApiResponse errors and regular exceptions
+        let errorMessage = 'Failed to load market analytics data';
+        
+        if (error && typeof error === 'object' && 'error' in error && 'data' in error) {
+          // This is an ApiResponse object thrown by the client
+          const apiResponse = error as { error: { code: string; message: string } | null; data: unknown };
+          console.error('[MarketAnalytics] API Response Error:', {
+            errorCode: apiResponse.error?.code,
+            errorMessage: apiResponse.error?.message,
+            hasData: !!apiResponse.data,
+          });
+          errorMessage = apiResponse.error?.message || errorMessage;
+        } else if (error instanceof Error) {
+          console.error('[MarketAnalytics] Exception:', {
+            message: error.message,
+            name: error.name,
+            stack: error.stack,
+          });
+          errorMessage = error.message || errorMessage;
+        } else {
+          console.error('[MarketAnalytics] Unknown error:', error);
+        }
+        
+        setApiError(errorMessage);
+        toast.error('Failed to load market analytics. Using sample data.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAnalyticsData();
+  }, [latitude, longitude, propertyClass]);
+
+  // Use API data if available, otherwise fall back to mock data
   const chartData = useMemo(() => {
+    if (apiMarketData) {
+      return apiMarketData;
+    }
     return generateMarketData(locationData, propertyClass);
-  }, [locationData, propertyClass]);
+  }, [apiMarketData, locationData, propertyClass]);
 
   const listingsData = useMemo(() => {
+    if (apiListingsData) {
+      return apiListingsData;
+    }
     return generateListingsData(locationData);
-  }, [locationData]);
+  }, [apiListingsData, locationData]);
 
   const soldPriceData = useMemo(() => {
+    if (apiSoldPriceData) {
+      return apiSoldPriceData;
+    }
     return generateSoldPriceData(locationData);
-  }, [locationData]);
+  }, [apiSoldPriceData, locationData]);
   
   // Ensure data arrays are always valid
   const marketData: MarketData = {
@@ -92,21 +240,144 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
   
   // Always using mock data (API calls disabled)
   
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
+    if (!latitude || !longitude) {
+      toast.info("Coordinates not available. Using sample data.");
+      return;
+    }
+
     setIsRefreshing(true);
-    setChartKey(prev => prev + 1); // Force chart re-render with new mock data
+    setApiError(null);
+
+    try {
+      // Use city prop if available, otherwise try to extract from address
+      let cityName = city;
+      if (!cityName) {
+        const addressParts = propertyAddress.split(',');
+        cityName = addressParts[1]?.trim() || addressParts[2]?.trim() || '';
+      }
+
+      const analyticsParams = {
+        latitude,
+        longitude,
+        radiusKm: 10,
+        propertyClass: propertyClass || undefined,
+        city: cityName || undefined,
+      };
+
+      const [marketTrends, listingsActivity, soldPriceTrends, summaryStats] = await Promise.all([
+        RepliersAPI.analytics.getMarketTrends(analyticsParams),
+        RepliersAPI.analytics.getListingsActivity(analyticsParams),
+        RepliersAPI.analytics.getSoldPriceTrends(analyticsParams),
+        RepliersAPI.analytics.getMarketSummaryStats(analyticsParams),
+      ]);
+
+      if (marketTrends) {
+        setApiMarketData(marketTrends);
+      }
+      if (listingsActivity) {
+        setApiListingsData(listingsActivity);
+      }
+      if (soldPriceTrends) {
+        setApiSoldPriceData(soldPriceTrends);
+      }
+      if (summaryStats) {
+        setApiSummaryStats(summaryStats);
+      }
+
+      setChartKey(prev => prev + 1);
+      toast.success("Market data refreshed!");
+    } catch (error) {
+      console.error('[MarketAnalytics] Error refreshing data:', error);
+      toast.error('Failed to refresh market data');
+      setApiError('Failed to refresh data');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Separate handlers for each tab
+  const handleToggleMarketView = () => {
+    setMarketViewMode(prev => prev === "chart" ? "table" : "chart");
+    toast.success(`Switched to ${marketViewMode === "chart" ? "table" : "chart"} view`);
+  };
+
+  const handleToggleListingsView = () => {
+    setListingsViewMode(prev => prev === "chart" ? "table" : "chart");
+    toast.success(`Switched to ${listingsViewMode === "chart" ? "table" : "chart"} view`);
+  };
+
+  const handleToggleSoldPriceView = () => {
+    setSoldPriceViewMode(prev => prev === "chart" ? "table" : "chart");
+    toast.success(`Switched to ${soldPriceViewMode === "chart" ? "table" : "chart"} view`);
+  };
+
+  // Download handlers for each tab
+  const handleDownloadMarket = () => {
+    // Convert data to CSV format
+    const csvContent = [
+      ['Period', 'Median Sold Price', 'Average Sold Price'],
+      ...marketData.months.map((month, index) => [
+        month,
+        marketData.prices[index]?.toLocaleString() || '',
+        marketData.days[index]?.toLocaleString() || ''
+      ])
+    ].map(row => row.join(',')).join('\n');
     
-    toast.success("Market data refreshed!");
-    setTimeout(() => setIsRefreshing(false), 1000);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `market-trends-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Market trends data downloaded!");
   };
 
-  const handleDownload = () => {
-    toast.success("Market data downloaded!");
+  const handleDownloadListings = () => {
+    const csvContent = [
+      ['Month', 'New Listings', 'Closed Listings'],
+      ...listingsDataFormatted.months.map((month, index) => [
+        month,
+        listingsDataFormatted.newListings[index] || 0,
+        listingsDataFormatted.closedListings[index] || 0
+      ])
+    ].map(row => row.join(',')).join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `listings-activity-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Listings activity data downloaded!");
   };
 
-  const handleToggleView = () => {
-    setViewMode(prev => prev === "chart" ? "table" : "chart");
-    toast.success(`Switched to ${viewMode === "chart" ? "table" : "chart"} view`);
+  const handleDownloadSoldPrice = () => {
+    const csvContent = [
+      ['Month', 'Median Price', 'Average Price'],
+      ...soldPriceDataFormatted.months.map((month, index) => [
+        month,
+        soldPriceDataFormatted.medianPrices[index]?.toLocaleString() || '',
+        soldPriceDataFormatted.averagePrices[index]?.toLocaleString() || ''
+      ])
+    ].map(row => row.join(',')).join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `sold-price-trends-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Sold price trends data downloaded!");
   };
 
   // Format price for display
@@ -151,14 +422,13 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
     };
   };
 
-  const { neighborhood, city } = getNeighborhoodAndCity();
+  const { neighborhood, city: displayCity } = getNeighborhoodAndCity();
 
-  // Mock stats data - replace with actual data from API or props
-  const marketStats = {
+  // Use real data from API if available, otherwise use mock data as fallback
+  const marketStats = apiSummaryStats || {
     activeListings: 195,
     newListings: 97,
     soldProperties: 47,
-    expiredSuspendedTerminated: 320000,
     medianPrice: 640725,
     avgDOM: 36,
     last1YearGrowth: -11.6, // Negative for decrease
@@ -167,76 +437,105 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
 
   return (
     <div className="w-full px-6 mt-6 pb-6">
-      {viewMode === "chart" ? (
-        <>
-          {/* Market Stats Section */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-semibold text-foreground">
-                Market Insights in {neighborhood}, {city}
-              </h3>
-              <span className="text-sm text-muted-foreground">As of Oct 2025</span>
-            </div>
-            
-            {/* Stats Grid - Top Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">Active Listings</p>
-                <p className="text-2xl font-bold text-foreground">{marketStats.activeListings}</p>
-              </div>
-              
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">New Listings</p>
-                <p className="text-2xl font-bold text-foreground">{marketStats.newListings}</p>
-              </div>
-              
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">Sold Properties</p>
-                <p className="text-2xl font-bold text-foreground">{marketStats.soldProperties}</p>
-              </div>
-              
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">Exp/Sus/Ter</p>
-                <p className="text-2xl font-bold text-foreground">{formatPrice(marketStats.expiredSuspendedTerminated)}</p>
-              </div>
-            </div>
+      {isLoading && (
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-700">Loading market analytics data...</p>
+        </div>
+      )}
+      {apiError && (
+        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-sm text-yellow-700">{apiError}. Using sample data.</p>
+        </div>
+      )}
 
-            {/* Stats Grid - Bottom Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">Median Price</p>
-                <p className="text-2xl font-bold text-foreground">{formatPrice(marketStats.medianPrice)}</p>
-              </div>
-              
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">Avg DOM</p>
-                <p className="text-2xl font-bold text-foreground">{marketStats.avgDOM}</p>
-              </div>
-              
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">Last 1 Year's Growth</p>
-                <div className="flex items-center gap-1">
+      {/* Market Stats Section - Always Visible */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold text-foreground">
+            Market Insights in {neighborhood}, {displayCity}
+          </h3>
+          <span className="text-sm text-muted-foreground">
+            As of {new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+          </span>
+        </div>
+        
+        {/* Stats Grid - Top Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <p className="text-sm text-muted-foreground mb-1">Active Listings</p>
+            <p className="text-2xl font-bold text-foreground">{marketStats.activeListings}</p>
+          </div>
+          
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <p className="text-sm text-muted-foreground mb-1">New Listings</p>
+            <p className="text-2xl font-bold text-foreground">{marketStats.newListings}</p>
+          </div>
+          
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <p className="text-sm text-muted-foreground mb-1">Sold Properties</p>
+            <p className="text-2xl font-bold text-foreground">{marketStats.soldProperties}</p>
+          </div>
+          
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <p className="text-sm text-muted-foreground mb-1">Total Count</p>
+            <p className="text-2xl font-bold text-foreground">{marketStats.activeListings + marketStats.soldProperties}</p>
+          </div>
+        </div>
+
+        {/* Stats Grid - Bottom Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <p className="text-sm text-muted-foreground mb-1">Median Price</p>
+            <p className="text-2xl font-bold text-foreground">{formatPrice(marketStats.medianPrice)}</p>
+          </div>
+          
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <p className="text-sm text-muted-foreground mb-1">Avg DOM</p>
+            <p className="text-2xl font-bold text-foreground">{marketStats.avgDOM}</p>
+          </div>
+          
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <p className="text-sm text-muted-foreground mb-1">Last 1 Year's Growth</p>
+            <div className="flex items-center gap-1">
+              {marketStats.last1YearGrowth >= 0 ? (
+                <>
+                  <TrendingUp className="h-4 w-4 text-green-600" />
+                  <p className="text-2xl font-bold text-green-600">{marketStats.last1YearGrowth.toFixed(1)}%</p>
+                </>
+              ) : (
+                <>
                   <ArrowDown className="h-4 w-4 text-red-600" />
-                  <p className="text-2xl font-bold text-red-600">{Math.abs(marketStats.last1YearGrowth)}%</p>
-                </div>
-              </div>
-              
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">Last 5 Years' Growth</p>
-                <div className="flex items-center gap-1">
-                  <ArrowDown className="h-4 w-4 text-red-600" />
-                  <p className="text-2xl font-bold text-red-600">{Math.abs(marketStats.last5YearsGrowth)}%</p>
-                </div>
-              </div>
+                  <p className="text-2xl font-bold text-red-600">{Math.abs(marketStats.last1YearGrowth).toFixed(1)}%</p>
+                </>
+              )}
             </div>
           </div>
+          
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <p className="text-sm text-muted-foreground mb-1">Last 5 Years' Growth</p>
+            <div className="flex items-center gap-1">
+              {marketStats.last5YearsGrowth >= 0 ? (
+                <>
+                  <TrendingUp className="h-4 w-4 text-green-600" />
+                  <p className="text-2xl font-bold text-green-600">{marketStats.last5YearsGrowth.toFixed(1)}%</p>
+                </>
+              ) : (
+                <>
+                  <ArrowDown className="h-4 w-4 text-red-600" />
+                  <p className="text-2xl font-bold text-red-600">{Math.abs(marketStats.last5YearsGrowth).toFixed(1)}%</p>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
 
-          <Tabs defaultValue="market" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="market">Market Trends</TabsTrigger>
-            <TabsTrigger value="listings">Listings Activity</TabsTrigger>
-            <TabsTrigger value="prices">Sold Prices</TabsTrigger>
-          </TabsList>
+      <Tabs defaultValue="market" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsTrigger value="market">Market Trends</TabsTrigger>
+          <TabsTrigger value="listings">Listings Activity</TabsTrigger>
+          <TabsTrigger value="prices">Sold Prices</TabsTrigger>
+        </TabsList>
 
           <TabsContent value="market" className="mt-0">
             {/* Header Section for Market Trends */}
@@ -246,7 +545,7 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
                   {getLocationName(locationData, propertyAddress)} • {getPropertyClassLabel(propertyClass)}
                 </p>
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-                  Median Sold Price & Average Days On Market
+                  Median & Average Sold Price last 12 months
                 </h2>
                 <div className="mt-2 flex items-center gap-4">
                   {locationData && (
@@ -259,20 +558,22 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
                       </span>
                     </div>
                   )}
-                  <div className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
-                    Sample Data
+                  <div className={`text-xs px-2 py-1 rounded-full ${
+                    apiMarketData ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {apiMarketData ? 'Live Data' : 'Sample Data'}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <Button
-                  variant="outline"
+                  variant={marketViewMode === "table" ? "default" : "outline"}
                   size="icon"
-                  onClick={handleToggleView}
+                  onClick={handleToggleMarketView}
                   className="h-9 w-9 rounded-lg transition-all duration-300"
-                  title="Switch to table view"
+                  title={marketViewMode === "chart" ? "Switch to table view" : "Switch to chart view"}
                 >
-                  <Table2 className="h-4 w-4" />
+                  {marketViewMode === "chart" ? <Table2 className="h-4 w-4" /> : <BarChart3 className="h-4 w-4" />}
                 </Button>
                 <Button
                   variant="outline"
@@ -286,7 +587,7 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={handleDownload}
+                  onClick={handleDownloadMarket}
                   className="h-9 w-9 rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-300"
                   title="Download data"
                 >
@@ -304,10 +605,46 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
                 </Button>
               </div>
             </div>
-            {/* Main Chart: Median Sold Price & Average Days On Market */}
-            <div className="w-full h-[500px] md:h-[400px]">
-              <MarketChartSection data={marketData} chartKey={chartKey} />
-            </div>
+            {/* Main Chart or Table: Median Sold Price & Average Sold Price */}
+            {marketViewMode === "chart" ? (
+              <div className="w-full h-[500px] md:h-[400px]">
+                <MarketChartSection data={marketData} chartKey={chartKey} />
+              </div>
+            ) : (
+              <div className="w-full overflow-auto max-h-[500px] md:max-h-[600px] rounded-lg border border-border">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
+                    <TableRow>
+                      <TableHead className="font-semibold">Period</TableHead>
+                      <TableHead className="text-right font-semibold">Median Sold Price</TableHead>
+                      <TableHead className="text-right font-semibold">Average Sold Price</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {marketData.months.map((month, index) => (
+                      <TableRow 
+                        key={index} 
+                        className="hover:bg-muted/50 transition-colors"
+                      >
+                        <TableCell className="font-medium">{month}</TableCell>
+                        <TableCell className="text-right">
+                          <span className="inline-flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-blue-500" />
+                            ${marketData.prices[index]?.toLocaleString('en-US', { maximumFractionDigits: 0 }) || 'N/A'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span className="inline-flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-green-500" />
+                            ${marketData.days[index]?.toLocaleString('en-US', { maximumFractionDigits: 0 }) || 'N/A'}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="listings" className="mt-0">
@@ -324,20 +661,22 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
                   <p className="text-sm text-muted-foreground">
                     Track market activity with new listings and closed sales
                   </p>
-                  <div className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
-                    Sample Data
+                  <div className={`text-xs px-2 py-1 rounded-full ${
+                    apiListingsData ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {apiListingsData ? 'Live Data' : 'Sample Data'}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <Button
-                  variant="outline"
+                  variant={listingsViewMode === "table" ? "default" : "outline"}
                   size="icon"
-                  onClick={handleToggleView}
+                  onClick={handleToggleListingsView}
                   className="h-9 w-9 rounded-lg transition-all duration-300"
-                  title="Switch to table view"
+                  title={listingsViewMode === "chart" ? "Switch to table view" : "Switch to chart view"}
                 >
-                  <Table2 className="h-4 w-4" />
+                  {listingsViewMode === "chart" ? <Table2 className="h-4 w-4" /> : <BarChart3 className="h-4 w-4" />}
                 </Button>
                 <Button
                   variant="outline"
@@ -351,7 +690,7 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={handleDownload}
+                  onClick={handleDownloadListings}
                   className="h-9 w-9 rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-300"
                   title="Download data"
                 >
@@ -369,10 +708,46 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
                 </Button>
               </div>
             </div>
-            {/* Second Chart: New/Closed Listings */}
-            <div className="w-full h-[400px] md:h-[350px]">
-              <ListingsChartSection data={listingsDataFormatted} chartKey={chartKey} />
-            </div>
+            {/* Second Chart or Table: New/Closed Listings */}
+            {listingsViewMode === "chart" ? (
+              <div className="w-full h-[400px] md:h-[350px]">
+                <ListingsChartSection data={listingsDataFormatted} chartKey={chartKey} />
+              </div>
+            ) : (
+              <div className="w-full overflow-auto max-h-[400px] md:max-h-[500px] rounded-lg border border-border">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
+                    <TableRow>
+                      <TableHead className="font-semibold">Month</TableHead>
+                      <TableHead className="text-right font-semibold">New Listings</TableHead>
+                      <TableHead className="text-right font-semibold">Closed Listings</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {listingsDataFormatted.months.map((month, index) => (
+                      <TableRow 
+                        key={index} 
+                        className="hover:bg-muted/50 transition-colors"
+                      >
+                        <TableCell className="font-medium">{month}</TableCell>
+                        <TableCell className="text-right">
+                          <span className="inline-flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-blue-500" />
+                            {listingsDataFormatted.newListings[index] || 0} listings
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span className="inline-flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-red-500" />
+                            {listingsDataFormatted.closedListings[index] || 0} listings
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="prices" className="mt-0">
@@ -389,20 +764,22 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
                   <p className="text-sm text-muted-foreground">
                     Track median and average sold prices over time
                   </p>
-                  <div className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
-                    Sample Data
+                  <div className={`text-xs px-2 py-1 rounded-full ${
+                    apiSoldPriceData ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {apiSoldPriceData ? 'Live Data' : 'Sample Data'}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <Button
-                  variant="outline"
+                  variant={soldPriceViewMode === "table" ? "default" : "outline"}
                   size="icon"
-                  onClick={handleToggleView}
+                  onClick={handleToggleSoldPriceView}
                   className="h-9 w-9 rounded-lg transition-all duration-300"
-                  title="Switch to table view"
+                  title={soldPriceViewMode === "chart" ? "Switch to table view" : "Switch to chart view"}
                 >
-                  <Table2 className="h-4 w-4" />
+                  {soldPriceViewMode === "chart" ? <Table2 className="h-4 w-4" /> : <BarChart3 className="h-4 w-4" />}
                 </Button>
                 <Button
                   variant="outline"
@@ -416,7 +793,7 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={handleDownload}
+                  onClick={handleDownloadSoldPrice}
                   className="h-9 w-9 rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-300"
                   title="Download data"
                 >
@@ -434,21 +811,45 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
                 </Button>
               </div>
             </div>
-            {/* Third Chart: Sold Price Trends */}
-            <div className="w-full h-[400px] md:h-[350px]">
-              <SoldPriceChartSection data={soldPriceDataFormatted} chartKey={chartKey} />
-            </div>
+            {/* Third Chart or Table: Sold Price Trends */}
+            {soldPriceViewMode === "chart" ? (
+              <div className="w-full h-[400px] md:h-[350px]">
+                <SoldPriceChartSection data={soldPriceDataFormatted} chartKey={chartKey} />
+              </div>
+            ) : (
+              <div className="w-full overflow-auto max-h-[400px] md:max-h-[500px] rounded-lg border border-border">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
+                    <TableRow>
+                      <TableHead className="font-semibold">Month</TableHead>
+                      <TableHead className="font-semibold text-right">Median Price</TableHead>
+                      <TableHead className="font-semibold text-right">Average Price</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {soldPriceDataFormatted.months.map((month, index) => (
+                      <TableRow key={month} className="hover:bg-muted/50 transition-colors">
+                        <TableCell className="font-medium">{month}</TableCell>
+                        <TableCell className="text-right">
+                          <span className="inline-flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-green-500" />
+                            ${(soldPriceDataFormatted.medianPrices[index] / 1000).toFixed(0)}k
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span className="inline-flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-purple-500" />
+                            ${(soldPriceDataFormatted.averagePrices[index] / 1000).toFixed(0)}k
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </TabsContent>
-        </Tabs>
-        </>
-      ) : (
-        <TableView
-          viewMode={viewMode}
-          marketData={marketData}
-          listingsData={listingsDataFormatted}
-          soldPriceData={soldPriceDataFormatted}
-        />
-      )}
+      </Tabs>
 
       {/* Call to Action */}
       <div className="flex justify-center pt-6 pb-4">

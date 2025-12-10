@@ -171,7 +171,7 @@ export const RecommendationsSection = () => {
 
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
-          <TabsList className="grid grid-cols-2 md:grid-cols-5 h-auto gap-2 bg-brand-glacier/30 p-2 rounded-xl">
+          <TabsList className="grid grid-cols-2 md:grid-cols-5 h-auto gap-2 bg-brand-glacier/30 p-2 rounded-xl m-auto">
             {recommendationsData.map((category) => (
               <TabsTrigger
                 key={category.id}

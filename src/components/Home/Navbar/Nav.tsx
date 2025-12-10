@@ -210,7 +210,7 @@ const Nav = ({ openNav }: Props) => {
                       height={60}
                       className="h-8 lg:h-14 w-auto transition-all duration-300"
                       priority
-                      quality={100}
+                      quality={75}
                     />
                   </motion.div>
                 </Link>

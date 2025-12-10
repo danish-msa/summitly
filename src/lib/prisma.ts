@@ -53,12 +53,7 @@ function getDatabaseUrl(): string {
     console.warn('⚠️  Get pooler URL: Supabase Dashboard → Settings → Database → Session mode')
   }
   
-  // Debug logging in development
-  if (process.env.NODE_ENV === 'development') {
-    const maskedUrl = url.replace(/:\/\/([^:]+):[^@]+@/, '://$1:****@')
-    console.log('🔍 Prisma DB URL preview:', maskedUrl)
-    console.log('🔍 Connection type:', isPooler ? '✅ POOLER (recommended)' : isDirect ? '⚠️  DIRECT' : '❓ UNKNOWN')
-  }
+  // Debug logging removed for cleaner output
   
   return url
 }
@@ -120,10 +115,7 @@ function createSupabasePool(): Pool {
   // Create pool with explicit SSL configuration
   const pool = new Pool(poolConfig)
   
-  // Verify SSL config is set (for debugging)
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🔒 SSL Configuration:', pool.options.ssl ? 'Enabled' : 'Disabled')
-  }
+  // SSL configuration verified (logging removed)
   
   return pool
 }
@@ -136,9 +128,7 @@ export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === 'development' 
-      ? ['query', 'info', 'warn', 'error'] // Enhanced logging for debugging
-      : ['error'],
+    log: ['error'], // Only log errors
   })
 
 // Prevent multiple instances in development
@@ -167,28 +157,4 @@ pool.on('error', (err) => {
   console.error('Unexpected error on idle PostgreSQL client', err)
 })
 
-// Log connection info in development
-if (process.env.NODE_ENV === 'development') {
-  pool.on('connect', () => {
-    console.log('✅ PostgreSQL connection established')
-  })
-  
-  pool.on('acquire', () => {
-    console.log('📊 PostgreSQL connection acquired from pool')
-  })
-  
-  pool.on('remove', () => {
-    console.log('🗑️ PostgreSQL connection removed from pool')
-  })
-  
-  // Log pool statistics periodically (only in development to avoid noise in production)
-  if (process.env.NODE_ENV === 'development') {
-    setInterval(() => {
-      console.log('📈 Pool stats:', {
-        totalCount: pool.totalCount,
-        idleCount: pool.idleCount,
-        waitingCount: pool.waitingCount,
-      })
-    }, 30000) // Every 30 seconds
-  }
-}
+// Connection logging removed for cleaner output

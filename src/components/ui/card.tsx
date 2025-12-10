@@ -2,7 +2,7 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-export type CardVariant = "bordered" | "light" | "transparent"
+export type CardVariant = "bordered" | "light" | "transparent" | "white"
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: CardVariant
@@ -12,8 +12,9 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant = "bordered", ...props }, ref) => {
     const variantClasses = {
       bordered: "rounded-xl border bg-card text-card-foreground shadow",
-      light: "rounded-xl bg-white text-card-foreground shadow",
+      light: "rounded-xl bg-secondary/5 text-card-foreground",
       transparent: "rounded-xl text-card-foreground",
+      white: "rounded-xl bg-white shadow-lg text-card-foreground",
     }
 
     return (

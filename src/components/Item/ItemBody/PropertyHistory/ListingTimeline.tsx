@@ -9,7 +9,7 @@ interface ListingTimelineProps {
 
 export default function ListingTimeline({ groupedHistory, propertyAddress }: ListingTimelineProps) {
   return (
-    <div className="bg-white p-8">
+    <div className="bg-white py-4">
       <p className="text-sm text-gray-600 mt-1 mt-4 mb-4">Listing history of {propertyAddress}</p>
       <div className="relative">
         {/* Timeline line */}

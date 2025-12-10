@@ -13,6 +13,9 @@ import { HousingInventorySection } from '@/components/Location/trends/components
 import { RankingSection } from '@/components/Location/trends/components/RankingSection';
 import { AboutReportSection } from '@/components/Location/trends/components/AboutReportSection';
 import { CTABar } from '@/components/Location/trends/components/CTABar';
+import { TrendsFilters } from '@/components/Location/trends/components/TrendsFilters';
+import { FilterState, FilterChangeEvent, DEFAULT_FILTER_STATE, LOCATIONS } from '@/lib/types/filters';
+import { useMarketTrends } from '@/hooks/useMarketTrends';
 
 // Helper function to convert slug back to name
 const unslugifyName = (slug: string): string => {
@@ -22,7 +25,7 @@ const unslugifyName = (slug: string): string => {
     .join(' ');
 };
 
-export type LocationType = 'city' | 'area' | 'neighbourhood';
+export type LocationType = 'city' | 'area' | 'neighbourhood' | 'intersection' | 'community';
 
 interface LocationTrendsPageProps {
   locationType: LocationType;
@@ -37,6 +40,9 @@ const LocationTrendsPage: React.FC<LocationTrendsPageProps> = ({ locationType })
   const [properties, setProperties] = useState<PropertyListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [locationInfo, setLocationInfo] = useState<{ name: string } | null>(null);
+  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTER_STATE);
+  const [communities, setCommunities] = useState<string[]>([]);
+  const [selectedYears, setSelectedYears] = useState<number>(5);
 
   // Determine location names based on type
   const cityName = useMemo(() => {
@@ -119,6 +125,16 @@ const LocationTrendsPage: React.FC<LocationTrendsPageProps> = ({ locationType })
         });
 
         setProperties(locationProperties);
+
+        // Extract unique communities from the properties
+        const uniqueCommunities = Array.from(
+          new Set(
+            locationProperties
+              .map(property => property.address?.neighborhood)
+              .filter(Boolean) as string[]
+          )
+        ).sort();
+        setCommunities(uniqueCommunities);
       } catch (error) {
         console.error('Error loading location data:', error);
       } finally {
@@ -134,7 +150,86 @@ const LocationTrendsPage: React.FC<LocationTrendsPageProps> = ({ locationType })
     }
   }, [citySlug, areaSlug, neighbourhoodSlug, locationType, cityName, areaName, neighbourhoodName, displayName]);
 
-  if (loading) {
+  const displayLocationName = locationInfo?.name || displayName;
+  // Calculate date ranges based on selected years - updates when selectedYears changes
+  const dateRanges = useMemo(() => getDateRanges(selectedYears), [selectedYears]);
+
+  // Handle filter changes
+  const handleFilterChange = (e: FilterChangeEvent) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  // Calculate date range based on selected years
+  const getDateRangeForYears = (years: number) => {
+    const now = new Date();
+    const startDate = new Date(now);
+    startDate.setFullYear(now.getFullYear() - years);
+    
+    return {
+      start: startDate.toISOString().split('T')[0],
+      end: now.toISOString().split('T')[0],
+    };
+  };
+
+  // Map property type filter to API format
+  const getPropertyTypeForAPI = (propertyType: string): string | undefined => {
+    if (propertyType === 'all') return undefined;
+    // Map to Repliers API property types
+    const mapping: Record<string, string> = {
+      'house': 'Detached',
+      'condo': 'Condo Apartment',
+      'townhouse': 'Condo Townhouse',
+      'apartment': 'Condo Apartment',
+    };
+    return mapping[propertyType];
+  };
+
+  // Get effective location based on filters
+  const getEffectiveLocation = () => {
+    // If location filter is set and not 'all', use it
+    if (filters.location !== 'all') {
+      // Find location from LOCATIONS
+      const location = LOCATIONS.find(loc => loc.id === filters.location);
+      if (location) {
+        return {
+          locationType: 'city' as LocationType,
+          locationName: location.name,
+          parentCity: undefined,
+          parentArea: filters.locationArea !== 'all' ? filters.locationArea : undefined,
+        };
+      }
+    }
+    
+    // Otherwise use URL-based location
+    return {
+      locationType,
+      locationName: displayLocationName,
+      parentCity: locationType !== 'city' ? cityName : undefined,
+      parentArea: locationType === 'neighbourhood' || locationType === 'intersection' || locationType === 'community' ? areaName : undefined,
+      parentNeighbourhood: locationType === 'intersection' || locationType === 'community' ? neighbourhoodName : undefined,
+    };
+  };
+
+  const effectiveLocation = getEffectiveLocation();
+
+  // Centralized data fetching - ONE API call for all components
+  const { data: marketTrendsData, loading: marketTrendsLoading, error: marketTrendsError, refresh: refreshMarketTrends } = useMarketTrends({
+    locationType: effectiveLocation.locationType,
+    locationName: effectiveLocation.locationName,
+    parentCity: effectiveLocation.parentCity,
+    parentArea: effectiveLocation.parentArea,
+    parentNeighbourhood: effectiveLocation.parentNeighbourhood,
+    propertyType: getPropertyTypeForAPI(filters.propertyType),
+    community: filters.community !== 'all' ? filters.community : undefined,
+    years: selectedYears,
+  });
+
+  // Show loading state if either properties or market trends are loading
+  if (loading || marketTrendsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center">
@@ -145,31 +240,80 @@ const LocationTrendsPage: React.FC<LocationTrendsPageProps> = ({ locationType })
     );
   }
 
-  const displayLocationName = locationInfo?.name || displayName;
-  const dateRanges = getDateRanges();
+  // Show error state if market trends failed to load
+  if (marketTrendsError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <p className="text-red-600 mb-4">Error loading market trends: {marketTrendsError}</p>
+          <button
+            onClick={() => refreshMarketTrends()}
+            className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
       {/* Header Section */}
       <PageHeader cityName={displayLocationName} citySlug={backUrl} backLabel={`Back to ${displayLocationName} Page`} />
 
+      {/* Filters Section */}
+      <TrendsFilters
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        communities={communities}
+        selectedYears={selectedYears}
+        onYearsChange={setSelectedYears}
+      />
+      
       {/* Housing Prices Section */}
       <HousingPricesSection 
-        cityName={displayLocationName}
+        locationType={effectiveLocation.locationType}
+        locationName={effectiveLocation.locationName}
+        parentCity={effectiveLocation.parentCity}
+        parentArea={effectiveLocation.parentArea}
+        parentNeighbourhood={effectiveLocation.parentNeighbourhood}
         properties={properties}
         dateRanges={dateRanges}
+        propertyType={getPropertyTypeForAPI(filters.propertyType)}
+        community={filters.community !== 'all' ? filters.community : undefined}
+        years={selectedYears}
+        marketTrendsData={marketTrendsData}
+        onRefresh={refreshMarketTrends}
       />
       <Separator />
 
       {/* Housing Inventory Section */}
       <HousingInventorySection 
-        cityName={displayLocationName}
+        locationType={effectiveLocation.locationType}
+        locationName={effectiveLocation.locationName}
+        parentCity={effectiveLocation.parentCity}
+        parentArea={effectiveLocation.parentArea}
+        parentNeighbourhood={effectiveLocation.parentNeighbourhood}
         dateRanges={dateRanges}
+        propertyType={getPropertyTypeForAPI(filters.propertyType)}
+        community={filters.community !== 'all' ? filters.community : undefined}
+        years={selectedYears}
+        marketTrendsData={marketTrendsData}
+        onRefresh={refreshMarketTrends}
       />
       <Separator />
 
-      {/* Ranking Section */}
-      <RankingSection cityName={displayLocationName} />
+      {/* Ranking Section - Only show for cities */}
+      {locationType === 'city' && (
+        <>
+          <RankingSection 
+            locationType={locationType}
+            locationName={displayLocationName}
+          />
+          <Separator />
+        </>
+      )}
       <Separator />
 
       {/* CTA Bar */}
@@ -182,7 +326,19 @@ const LocationTrendsPage: React.FC<LocationTrendsPageProps> = ({ locationType })
           <h2 className="text-3xl font-bold text-foreground mb-6">
             Market Value Change in {displayLocationName}
           </h2>
-          <MarketStats cityName={displayLocationName} properties={properties} />
+          <MarketStats 
+            cityName={effectiveLocation.locationName} 
+            locationType={effectiveLocation.locationType}
+            locationName={effectiveLocation.locationName}
+            parentCity={effectiveLocation.parentCity}
+            parentArea={effectiveLocation.parentArea}
+            parentNeighbourhood={effectiveLocation.parentNeighbourhood}
+            propertyType={getPropertyTypeForAPI(filters.propertyType)}
+            community={filters.community !== 'all' ? filters.community : undefined}
+            years={selectedYears}
+            marketTrendsData={marketTrendsData}
+            onRefresh={refreshMarketTrends}
+          />
         </section>
         <Separator />
 

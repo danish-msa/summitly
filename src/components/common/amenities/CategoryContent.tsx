@@ -9,6 +9,8 @@ interface CategoryContentProps {
   onFilterChange: (filter: string) => void;
   showAll: boolean;
   onToggleShowAll: () => void;
+  showDirections?: boolean;
+  onAmenityClick?: (amenity: Amenity) => void;
 }
 
 // Filter function to match API filter logic
@@ -102,6 +104,52 @@ const filterAmenity = (
 
   // Handle predefined filters
   switch (categoryId) {
+    case 'schools':
+      switch (filterLabel) {
+        case 'Assigned':
+          return hasType('school');
+        case 'Elementary':
+          return name.includes('elementary') || name.includes('primary') || name.includes('public school');
+        case 'Secondary':
+          return name.includes('secondary') || name.includes('high school') || name.includes('collegiate');
+        case 'French Immersion':
+          return name.includes('french') || name.includes('immersion');
+        default:
+          // Try to match by type name if it's a formatted type name
+          const typeName = filterLabel.toLowerCase().replace(/\s+/g, '_');
+          return hasType(typeName);
+      }
+    case 'parks':
+      switch (filterLabel) {
+        case 'Playgrounds':
+          return hasType('playground') || name.includes('playground');
+        case 'Dog Parks':
+          return hasType('park') && (name.includes('dog') || name.includes('off-leash'));
+        default:
+          const parkTypeName = filterLabel.toLowerCase().replace(/\s+/g, '_');
+          return hasType(parkTypeName);
+      }
+    case 'safety':
+      switch (filterLabel) {
+        case 'Fire Stations':
+          return hasType('fire_station');
+        case 'Police Stations':
+          return hasType('police');
+        default:
+          const safetyTypeName = filterLabel.toLowerCase().replace(/\s+/g, '_');
+          return hasType(safetyTypeName);
+      }
+    case 'transit':
+      switch (filterLabel) {
+        case 'Bus Stops':
+          return hasType('bus_station') || 
+                 (hasType('transit_station') && !hasType('subway_station'));
+        case 'Subway':
+          return hasType('subway_station');
+        default:
+          const transitTypeName = filterLabel.toLowerCase().replace(/\s+/g, '_');
+          return hasType(transitTypeName);
+      }
     case 'entertainment':
       switch (filterLabel) {
         case 'Casinos':
@@ -109,11 +157,8 @@ const filterAmenity = (
         case 'Cinemas':
           return hasType('movie_theater');
         case 'Theaters':
-          return hasType('amusement_park') || 
-                 name.includes('theater') || 
-                 name.includes('theatre');
+          return hasType('amusement_park') || name.includes('theater') || name.includes('theatre');
         default:
-          // Try to match by type name if it's a formatted type name
           const entTypeName = filterLabel.toLowerCase().replace(/\s+/g, '_');
           return hasType(entTypeName);
       }
@@ -206,6 +251,8 @@ export const CategoryContent = ({
   onFilterChange,
   showAll,
   onToggleShowAll,
+  showDirections = false,
+  onAmenityClick,
 }: CategoryContentProps) => {
   // Find the active filter object to get its types and predefined status
   const activeFilterObj = category.filters.find(f => f.label === activeFilter);
@@ -239,7 +286,13 @@ export const CategoryContent = ({
         <>
           <div className="space-y-4">
             {displayItems.map((item) => (
-              <AmenityCard key={item.id} amenity={item} categoryId={category.id} />
+              <AmenityCard 
+                key={item.id} 
+                amenity={item} 
+                categoryId={category.id}
+                showDirections={showDirections}
+                onClick={() => onAmenityClick?.(item)}
+              />
             ))}
           </div>
 

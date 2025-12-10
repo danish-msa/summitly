@@ -1,8 +1,12 @@
+"use client";
+
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import RequestInfoModal from "./RequestInfoModal";
 import { 
   Home,  
   MapPin, 
@@ -39,7 +43,8 @@ import {
   UtensilsCrossed,
   Coffee,
   Gamepad2,
-  ShoppingBag
+  ShoppingBag,
+  CreditCard
 } from "lucide-react";
 import { PropertyListing } from "@/lib/types";
 
@@ -87,6 +92,7 @@ interface ListingDetailsProps {
 }
 
 export default function PropertyListingDetails({ data, property }: ListingDetailsProps) {
+  const [isRequestInfoModalOpen, setIsRequestInfoModalOpen] = useState(false);
   // Debug: Check if property has preCon data
   // console.log('Property preCon data:', property?.preCon);
   
@@ -227,7 +233,7 @@ export default function PropertyListingDetails({ data, property }: ListingDetail
     }
     
     // Rooms
-    if (keyLower.includes('room')) {
+    if (keyLower.includes('room') || keyLower.includes('den') || keyLower.includes('family')) {
       return DoorOpen;
     }
     
@@ -241,8 +247,8 @@ export default function PropertyListingDetails({ data, property }: ListingDetail
       return Droplet;
     }
     
-    // Parking
-    if (keyLower.includes('parking') || keyLower.includes('garage')) {
+    // Parking/Garage
+    if (keyLower.includes('parking') || keyLower.includes('garage') || keyLower.includes('driveway')) {
       return Car;
     }
     
@@ -252,18 +258,108 @@ export default function PropertyListingDetails({ data, property }: ListingDetail
     }
     
     // Cooling/AC
-    if (keyLower.includes('cool') || keyLower.includes('ac') || keyLower.includes('air')) {
+    if (keyLower.includes('cool') || keyLower.includes('ac') || keyLower.includes('air conditioning')) {
       return Snowflake;
     }
     
-    // Water
-    if (keyLower.includes('water')) {
+    // Water/Water Source
+    if (keyLower.includes('water') || keyLower.includes('waterfront')) {
+      return Waves;
+    }
+    
+    // Sewer
+    if (keyLower.includes('sewer')) {
       return Waves;
     }
     
     // View
     if (keyLower.includes('view')) {
-      return Wind;
+      return Eye;
+    }
+    
+    // Fireplace
+    if (keyLower.includes('fireplace') || keyLower.includes('fire')) {
+      return Flame;
+    }
+    
+    // Swimming Pool
+    if (keyLower.includes('pool') || keyLower.includes('swim')) {
+      return Pool;
+    }
+    
+    // Elevator
+    if (keyLower.includes('elevator') || keyLower.includes('lift')) {
+      return ArrowUpDown;
+    }
+    
+    // Patio/Balcony
+    if (keyLower.includes('patio') || keyLower.includes('balcony') || keyLower.includes('deck')) {
+      return Square;
+    }
+    
+    // Basement
+    if (keyLower.includes('basement')) {
+      return Layers;
+    }
+    
+    // Exterior
+    if (keyLower.includes('exterior')) {
+      return Building2;
+    }
+    
+    // Foundation
+    if (keyLower.includes('foundation')) {
+      return Building2;
+    }
+    
+    // Roof
+    if (keyLower.includes('roof')) {
+      return Building2;
+    }
+    
+    // Flooring
+    if (keyLower.includes('flooring') || keyLower.includes('floor')) {
+      return Layers;
+    }
+    
+    // Style
+    if (keyLower.includes('style')) {
+      return Home;
+    }
+    
+    // Zoning
+    if (keyLower.includes('zoning')) {
+      return MapPin;
+    }
+    
+    // Furnished
+    if (keyLower.includes('furnished')) {
+      return Home;
+    }
+    
+    // Central Vacuum
+    if (keyLower.includes('vacuum') || keyLower.includes('central vac')) {
+      return Zap;
+    }
+    
+    // Laundry
+    if (keyLower.includes('laundry')) {
+      return Zap;
+    }
+    
+    // HOA Fee
+    if (keyLower.includes('hoa') || keyLower.includes('fee')) {
+      return CreditCard;
+    }
+    
+    // Construction Status
+    if (keyLower.includes('construction')) {
+      return Building2;
+    }
+    
+    // Energy/EnerGuide
+    if (keyLower.includes('energy') || keyLower.includes('energuide') || keyLower.includes('certification')) {
+      return Zap;
     }
     
     // Status
@@ -271,342 +367,406 @@ export default function PropertyListingDetails({ data, property }: ListingDetail
       return Gauge;
     }
     
+    // Days on Market
+    if (keyLower.includes('days') || keyLower.includes('market')) {
+      return Calendar;
+    }
+    
+    // Price
+    if (keyLower.includes('price') || keyLower.includes('per sq')) {
+      return TrendingUp;
+    }
+    
     // Default
     return Info;
   };
 
+  // Check if sections have data
+  const hasKeyFacts = Object.keys(data.keyFacts).length > 0 || 
+    (property && property.preCon && property.preCon.completion && property.preCon.completion.date);
+  const hasPricePrediction = data.pricePrediction && 
+    (data.pricePrediction.lower > 0 || data.pricePrediction.mid > 0 || data.pricePrediction.higher > 0);
+  const hasPropertyDetails = Object.keys(data.propertyDetails.property).length > 0;
+  const hasBuildingDetails = Object.keys(data.propertyDetails.building).length > 0;
+  const hasInsideDetails = Object.keys(data.propertyDetails.inside).length > 0;
+  const hasUtilitiesDetails = Object.keys(data.propertyDetails.utilities).length > 0;
+  const hasParkingDetails = Object.keys(data.propertyDetails.parking).length > 0;
+  const hasLandDetails = Object.keys(data.propertyDetails.land).length > 0;
+  const hasHighlights = Object.keys(data.propertyDetails.highlights).length > 0;
+  const hasRooms = data.rooms && data.rooms.length > 0;
+  const hasComparableSales = data.comparableSales && data.comparableSales.count > 0;
+  
+  // Determine default tab (first available)
+  const hasDetailsTab = hasPropertyDetails || hasBuildingDetails || hasInsideDetails || 
+    hasUtilitiesDetails || hasParkingDetails || hasLandDetails || hasHighlights;
+  const defaultTab = hasDetailsTab ? 'details' : hasRooms ? 'rooms' : 'comparable';
+
   return (
-    <div className="w-full p-6 space-y-6">
+    <div className="w-full">
       {/* Key Facts Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Info className="h-5 w-5 text-primary" />
-            Key Facts
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Object.entries(data.keyFacts).map(([key, value]) => {
-              const Icon = getFactIcon(key);
-              return (
-                <div key={key} className="flex items-center gap-3 hover:shadow-sm transition-shadow">
+      {hasKeyFacts && (
+        <Card variant="transparent">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Info className="h-5 w-5 text-primary" />
+              Key Facts
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Object.entries(data.keyFacts).map(([key, value]) => {
+                const Icon = getFactIcon(key);
+                return (
+                  <div key={key} className="flex items-center gap-3 transition-shadow">
+                    <div className="w-10 h-10 rounded-lg bg-brand-celestial/20 flex items-center justify-center flex-shrink-0">
+                      <Icon className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-muted-foreground">{key}</p>
+                      <p className="font-semibold text-foreground">{value}</p>
+                    </div>
+                  </div>
+                );
+              })}
+              {/* Occupancy / Completion Year for Pre-Construction Properties */}
+              {property && property.preCon && property.preCon.completion && property.preCon.completion.date && (
+                <div className="flex items-center gap-3 hover:shadow-sm transition-shadow">
                   <div className="w-10 h-10 rounded-lg bg-brand-celestial/20 flex items-center justify-center flex-shrink-0">
-                    <Icon className="h-5 w-5 text-muted-foreground" />
+                    <Calendar className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <div className="flex-1 min-w-0 space-y-1">
-                    <p className="text-sm text-muted-foreground">{key}</p>
-                    <p className="font-semibold text-foreground">{value}</p>
+                    <p className="text-sm text-muted-foreground">Occupancy / Completion Year</p>
+                    <p className="font-semibold text-foreground">
+                      {(() => {
+                        const completionDate = property.preCon.completion.date;
+                        // Extract year from completion.date (e.g., "Q4 2025" -> "2025", "2025" -> "2025")
+                        const yearMatch = completionDate.match(/\d{4}/);
+                        if (yearMatch) {
+                          return yearMatch[0];
+                        }
+                        // If no year found, try to parse as date string
+                        try {
+                          const parsedDate = new Date(completionDate);
+                          if (!isNaN(parsedDate.getTime())) {
+                            return parsedDate.getFullYear().toString();
+                          }
+                        } catch {
+                          // If parsing fails, return the original string
+                        }
+                        return completionDate;
+                      })()}
+                    </p>
                   </div>
                 </div>
-              );
-            })}
-            {/* Occupancy / Completion Year for Pre-Construction Properties */}
-            {property && property.preCon && property.preCon.completion && property.preCon.completion.date && (
-              <div className="flex items-center gap-3 hover:shadow-sm transition-shadow">
-                <div className="w-10 h-10 rounded-lg bg-brand-celestial/20 flex items-center justify-center flex-shrink-0">
-                  <Calendar className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div className="flex-1 min-w-0 space-y-1">
-                  <p className="text-sm text-muted-foreground">Occupancy / Completion Year</p>
-                  <p className="font-semibold text-foreground">
-                    {(() => {
-                      const completionDate = property.preCon.completion.date;
-                      // Extract year from completion.date (e.g., "Q4 2025" -> "2025", "2025" -> "2025")
-                      const yearMatch = completionDate.match(/\d{4}/);
-                      if (yearMatch) {
-                        return yearMatch[0];
-                      }
-                      // If no year found, try to parse as date string
-                      try {
-                        const parsedDate = new Date(completionDate);
-                        if (!isNaN(parsedDate.getTime())) {
-                          return parsedDate.getFullYear().toString();
-                        }
-                      } catch {
-                        // If parsing fails, return the original string
-                      }
-                      return completionDate;
-                    })()}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Price Prediction */}
-      <Card className="bg-white border-primary/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            Price Prediction
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex flex-col items-center justify-center text-center p-4 bg-purple-50 rounded-lg">
-              <p className="text-sm text-purple-500 mb-2">Lower Range</p>
-              <p className="text-2xl font-bold text-purple-600">
-                {formatPrice(data.pricePrediction.lower)}
-              </p>
+      {hasPricePrediction && (
+        <Card variant="transparent">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Price Prediction
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex flex-col items-center justify-center text-center p-4 bg-purple-50 rounded-lg">
+                <p className="text-sm text-purple-500 mb-2">Lower Range</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {formatPrice(data.pricePrediction.lower)}
+                </p>
+              </div>
+              <div className="flex flex-col items-center justify-center text-center p-4 bg-green-50 rounded-lg">
+                <p className="text-sm text-green-600 font-medium mb-2">Mid Range</p>
+                <p className="text-3xl font-bold text-green-600">
+                  {formatPrice(data.pricePrediction.mid)}
+                </p>
+                <Badge variant="secondary" className="mt-2">
+                  Confidence: {data.pricePrediction.confidence}%
+                </Badge>
+              </div>
+              <div className="flex flex-col items-center justify-center text-center p-4 bg-red-50 rounded-lg">
+                <p className="text-sm text-red-600 font-medium mb-2">Higher Range</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {formatPrice(data.pricePrediction.higher)}
+                </p>
+              </div>
             </div>
-            <div className="flex flex-col items-center justify-center text-center p-4 bg-green-50 rounded-lg">
-              <p className="text-sm text-green-600 font-medium mb-2">Mid Range</p>
-              <p className="text-3xl font-bold text-green-600">
-                {formatPrice(data.pricePrediction.mid)}
-              </p>
-              <Badge variant="secondary" className="mt-2">
-                Confidence: {data.pricePrediction.confidence}%
-              </Badge>
-            </div>
-            <div className="flex flex-col items-center justify-center text-center p-4 bg-red-50 rounded-lg">
-              <p className="text-sm text-red-600 font-medium mb-2">Higher Range</p>
-              <p className="text-2xl font-bold text-red-600">
-                {formatPrice(data.pricePrediction.higher)}
-              </p>
-            </div>
-          </div>
 
-          <div className="flex flex-wrap gap-4 justify-center">
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">Appreciation Since Last Sold</p>
-              <p className="text-xl font-bold text-success">
-                +{data.pricePrediction.appreciation}%
-              </p>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">Appreciation Since Last Sold</p>
+                <p className="text-xl font-bold text-success">
+                  +{data.pricePrediction.appreciation}%
+                </p>
+              </div>
+              <Separator orientation="vertical" className="h-12" />
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">Est. Monthly Rental Income</p>
+                <p className="text-xl font-bold">{formatPrice(data.pricePrediction.rentalIncome)}</p>
+              </div>
             </div>
-            <Separator orientation="vertical" className="h-12" />
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">Est. Monthly Rental Income</p>
-              <p className="text-xl font-bold">{formatPrice(data.pricePrediction.rentalIncome)}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Tabbed Content */}
-      <Tabs defaultValue="details" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3">
-          <TabsTrigger value="details">Property Details</TabsTrigger>
-          <TabsTrigger value="rooms">Rooms</TabsTrigger>
-          <TabsTrigger value="comparable" className="hidden lg:block">
-            Comparable Sales
-          </TabsTrigger>
-        </TabsList>
+      {(hasPropertyDetails || hasBuildingDetails || hasInsideDetails || hasUtilitiesDetails || hasParkingDetails || hasLandDetails || hasHighlights || hasRooms || hasComparableSales) && (
+        <Tabs defaultValue={defaultTab} className="w-full">
+          <TabsList>
+            {(hasPropertyDetails || hasBuildingDetails || hasInsideDetails || hasUtilitiesDetails || hasParkingDetails || hasLandDetails || hasHighlights) && (
+              <TabsTrigger value="details">Property Details</TabsTrigger>
+            )}
+            {hasRooms && (
+              <TabsTrigger value="rooms">Rooms</TabsTrigger>
+            )}
+            {hasComparableSales && (
+              <TabsTrigger value="comparable" className="hidden lg:block">
+                Comparable Sales
+              </TabsTrigger>
+            )}
+          </TabsList>
 
-        {/* Property Details Tab */}
-        <TabsContent value="details" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Property */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Home className="h-4 w-4" />
-                  Property
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {Object.entries(data.propertyDetails.property).map(([key, value]) => (
-                  <div key={key} className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">{key}:</span>
-                    <span className="text-sm font-medium">{value}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Building */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Building2 className="h-4 w-4" />
-                  Building
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {Object.entries(data.propertyDetails.building).map(([key, value]) => (
-                  <div key={key} className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">{key}:</span>
-                    <span className="text-sm font-medium">{value}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Inside */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Ruler className="h-4 w-4" />
-                  Inside
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {Object.entries(data.propertyDetails.inside).map(([key, value]) => (
-                  <div key={key} className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">{key}:</span>
-                    <span className="text-sm font-medium">{value}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Utilities */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Zap className="h-4 w-4" />
-                  Utilities
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {Object.entries(data.propertyDetails.utilities).map(([key, value]) => (
-                  <div key={key} className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">{key}:</span>
-                    <span className="text-sm font-medium">{value}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Parking */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Car className="h-4 w-4" />
-                  Parking
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {Object.entries(data.propertyDetails.parking).map(([key, value]) => (
-                  <div key={key} className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">{key}:</span>
-                    <span className="text-sm font-medium">{value}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Land */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <MapPin className="h-4 w-4" />
-                  Land
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {Object.entries(data.propertyDetails.land).map(([key, value]) => (
-                  <div key={key} className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">{key}:</span>
-                    <span className="text-sm font-medium">{value}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Highlights */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Highlights</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(data.propertyDetails.highlights).map(([key, value]) => {
-                  const Icon = getHighlightIcon(key);
-                  return (
-                    <Badge key={key} variant="secondary" className="px-3 py-2 flex items-center gap-1.5">
-                      <Icon className="h-3.5 w-3.5" />
-                      {key}: {value}
-                    </Badge>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Rooms Tab */}
-        <TabsContent value="rooms">
-          <Card>
-            <CardHeader>
-              <CardTitle>Room Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {data.rooms.map((room, index) => (
-                  <div
-                    key={index}
-                    className="p-4 bg-brand-celestial/10 rounded-lg transition-colors"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h4 className="font-semibold text-lg">{room.name}</h4>
-                        <p className="text-sm text-muted-foreground">{room.dimensions}</p>
-                      </div>
-                      <Badge variant="default" className="bg-brand-celestial text-white">{room.level}</Badge>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {room.features.map((feature, idx) => (
-                        <span
-                          key={idx}
-                          className="text-xs bg-brand-mist px-2 py-1 rounded border"
-                        >
-                          {feature}
-                        </span>
+          {/* Property Details Tab */}
+          {(hasPropertyDetails || hasBuildingDetails || hasInsideDetails || hasUtilitiesDetails || hasParkingDetails || hasLandDetails || hasHighlights) && (
+            <TabsContent value="details" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Property */}
+                {hasPropertyDetails && (
+                  <Card variant="light">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Home className="h-4 w-4" />
+                        Property
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {Object.entries(data.propertyDetails.property).map(([key, value]) => (
+                        <div key={key} className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">{key}:</span>
+                          <span className="text-sm font-medium">{value}</span>
+                        </div>
                       ))}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Building */}
+                {hasBuildingDetails && (
+                  <Card variant="light">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Building2 className="h-4 w-4" />
+                        Building
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {Object.entries(data.propertyDetails.building).map(([key, value]) => (
+                        <div key={key} className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">{key}:</span>
+                          <span className="text-sm font-medium">{value}</span>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Inside */}
+                {hasInsideDetails && (
+                  <Card variant="light">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Ruler className="h-4 w-4" />
+                        Inside
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {Object.entries(data.propertyDetails.inside).map(([key, value]) => (
+                        <div key={key} className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">{key}:</span>
+                          <span className="text-sm font-medium">{value}</span>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Utilities */}
+                {hasUtilitiesDetails && (
+                  <Card variant="light">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Zap className="h-4 w-4" />
+                        Utilities
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {Object.entries(data.propertyDetails.utilities).map(([key, value]) => (
+                        <div key={key} className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">{key}:</span>
+                          <span className="text-sm font-medium">{value}</span>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Parking */}
+                {hasParkingDetails && (
+                  <Card variant="light">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Car className="h-4 w-4" />
+                        Parking
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {Object.entries(data.propertyDetails.parking).map(([key, value]) => (
+                        <div key={key} className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">{key}:</span>
+                          <span className="text-sm font-medium">{value}</span>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Land */}
+                {hasLandDetails && (
+                  <Card variant="light">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <MapPin className="h-4 w-4" />
+                        Land
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {Object.entries(data.propertyDetails.land).map(([key, value]) => (
+                        <div key={key} className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">{key}:</span>
+                          <span className="text-sm font-medium">{value}</span>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+
+              {/* Highlights */}
+              {hasHighlights && (
+                <Card variant="light">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Highlights</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(data.propertyDetails.highlights).map(([key, value]) => {
+                        const Icon = getHighlightIcon(key);
+                        return (
+                          <Badge key={key} variant="secondary" className="px-3 py-2 flex items-center gap-1.5">
+                            <Icon className="h-3.5 w-3.5" />
+                            {key}: {value}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          )}
+
+          {/* Rooms Tab */}
+          {hasRooms && (
+            <TabsContent value="rooms">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Room Details</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {data.rooms.map((room, index) => (
+                      <div
+                        key={index}
+                        className="p-4 bg-brand-celestial/10 rounded-lg transition-colors"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h4 className="font-semibold text-lg">{room.name}</h4>
+                            <p className="text-sm text-muted-foreground">{room.dimensions}</p>
+                          </div>
+                          <Badge variant="default" className="bg-brand-celestial text-white">{room.level}</Badge>
+                        </div>
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          {room.features.map((feature, idx) => (
+                            <span
+                              key={idx}
+                              className="text-xs bg-brand-mist px-2 py-1 rounded border"
+                            >
+                              {feature}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          {/* Comparable Sales Tab */}
+          {hasComparableSales && (
+            <TabsContent value="comparable">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Comparable Sales</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="text-center p-6 bg-muted/30 rounded-lg">
+                      <p className="text-sm text-muted-foreground mb-2">Comparable Sales</p>
+                      <p className="text-3xl font-bold">{data.comparableSales.count}</p>
+                    </div>
+                    <div className="text-center p-6 bg-primary/10 rounded-lg border border-primary/30">
+                      <p className="text-sm text-muted-foreground mb-2">Median Sale Price</p>
+                      <p className="text-3xl font-bold text-primary">
+                        {formatPrice(data.comparableSales.medianPrice)}
+                      </p>
+                    </div>
+                    <div className="text-center p-6 bg-muted/30 rounded-lg">
+                      <p className="text-sm text-muted-foreground mb-2">Avg. Days On Market</p>
+                      <p className="text-3xl font-bold">{data.comparableSales.avgDaysOnMarket}</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Comparable Sales Tab */}
-        <TabsContent value="comparable">
-          <Card>
-            <CardHeader>
-              <CardTitle>Comparable Sales</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center p-6 bg-muted/30 rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-2">Comparable Sales</p>
-                  <p className="text-3xl font-bold">{data.comparableSales.count}</p>
-                </div>
-                <div className="text-center p-6 bg-primary/10 rounded-lg border border-primary/30">
-                  <p className="text-sm text-muted-foreground mb-2">Median Sale Price</p>
-                  <p className="text-3xl font-bold text-primary">
-                    {formatPrice(data.comparableSales.medianPrice)}
-                  </p>
-                </div>
-                <div className="text-center p-6 bg-muted/30 rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-2">Avg. Days On Market</p>
-                  <p className="text-3xl font-bold">{data.comparableSales.avgDaysOnMarket}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+        </Tabs>
+      )}
 
       {/* Call to Action */}
       <div className="flex justify-center pt-6">
         <Button 
           variant="default" 
           className="bg-gradient-to-r from-brand-celestial to-brand-cb-blue hover:bg-brand-midnight text-white px-8 py-6 text-base rounded-lg gap-2"
-          onClick={() => {
-            // Add handler for CTA click
-            console.log('I want more info about this home');
-          }}
+          onClick={() => setIsRequestInfoModalOpen(true)}
         >
           <MessageCircle className="h-5 w-5" />
           I want more info about this home
         </Button>
       </div>
+      
+      <RequestInfoModal 
+        open={isRequestInfoModalOpen} 
+        onOpenChange={setIsRequestInfoModalOpen} 
+      />
     </div>
   );
 }

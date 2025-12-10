@@ -11,44 +11,28 @@ export const runtime = 'nodejs'
 
 // GET - List all users (with pagination and filters)
 export async function GET(request: NextRequest) {
-  const startTime = Date.now()
-  console.log('🔍 [USERS API] GET request started')
-  
   try {
-    console.log('🔍 [USERS API] Getting session...')
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.id) {
-      console.warn('⚠️ [USERS API] No session or user ID')
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    console.log('🔍 [USERS API] Session found:', {
-      userId: session.user.id,
-      email: session.user.email,
-      role: session.user.role,
-    })
-
     if (!isSuperAdmin(session.user.role)) {
-      console.warn('⚠️ [USERS API] User is not super admin:', session.user.role)
       return NextResponse.json(
         { error: 'Forbidden - Super Admin access required' },
         { status: 403 }
       )
     }
 
-    console.log('✅ [USERS API] Authorization passed')
-
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const search = searchParams.get('search') || ''
     const role = searchParams.get('role') || ''
-
-    console.log('🔍 [USERS API] Query params:', { page, limit, search, role })
 
     const skip = (page - 1) * limit
 
@@ -63,9 +47,6 @@ export async function GET(request: NextRequest) {
     if (role && (role === 'SUBSCRIBER' || role === 'ADMIN' || role === 'SUPER_ADMIN')) {
       where.role = role as UserRole
     }
-
-    console.log('🔍 [USERS API] Where clause:', JSON.stringify(where, null, 2))
-    console.log('🔍 [USERS API] Executing Prisma query...')
 
     // Get users and total count (sequential to avoid prepared statement errors)
     const users = await prisma.user.findMany({
@@ -84,13 +65,7 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    console.log('✅ [USERS API] Users fetched:', users.length)
-
     const total = await prisma.user.count({ where })
-    console.log('✅ [USERS API] Total count:', total)
-
-    const duration = Date.now() - startTime
-    console.log(`✅ [USERS API] Request completed in ${duration}ms`)
 
     return NextResponse.json({
       users,
@@ -102,13 +77,7 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    const duration = Date.now() - startTime
-    console.error('❌ [USERS API] Error fetching users:', {
-      error,
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      duration: `${duration}ms`,
-    })
+    console.error('Error fetching users:', error)
     return NextResponse.json(
       { 
         error: 'Failed to fetch users',

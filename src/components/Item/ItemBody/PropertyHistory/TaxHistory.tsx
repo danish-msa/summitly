@@ -60,7 +60,7 @@ export default function TaxHistory({ property, propertyAddress }: TaxHistoryProp
     : 0;
 
   return (
-    <div className="bg-white p-8">
+    <div className="bg-white py-4">
       <p className="text-sm text-gray-600 mt-1 mb-6">Property tax history for {propertyAddress}</p>
       
       {/* Summary Card */}

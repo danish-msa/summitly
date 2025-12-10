@@ -38,7 +38,7 @@ export const HeaderSection = ({
           {getLocationName(locationData, propertyAddress)} • {getPropertyClassLabel(propertyClass)}
         </p>
         <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-          Median Sold Price & Average Days On Market
+          Median Sold Price & Average Sold Price last 12 months
         </h2>
         <div className="mt-2 flex items-center gap-4">
           {locationData && (

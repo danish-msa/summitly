@@ -9,10 +9,11 @@ interface DescriptionProps {
 
 const Description: React.FC<DescriptionProps> = ({ property, isPreCon = false }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [feedback, setFeedback] = useState<'yes' | 'no' | null>(null);
   const description = isPreCon && property.preCon?.description 
     ? property.preCon.description 
-    : property.lot.legalDescription;
+    : property.details?.description || property.lot.legalDescription;
 
   const allBulletPoints = [
     { text: `${property.details.numBedrooms || 0}-bedroom ${property.details.propertyType?.toLowerCase() || 'property'}.` },
@@ -44,9 +45,24 @@ const Description: React.FC<DescriptionProps> = ({ property, isPreCon = false })
         <h3 className="text-lg font-semibold text-gray-900 mb-3">
           {isPreCon ? 'About this project' : 'About this property'}
         </h3>
-        <p className="text-gray-500 font-light leading-relaxed whitespace-pre-line">
-          {description || 'No description available for this property.'}
-        </p>
+        <div>
+          <p 
+            className={`text-gray-500 font-light leading-relaxed whitespace-pre-line ${
+              !isDescriptionExpanded ? 'line-clamp-4' : ''
+            }`}
+          >
+            {description || 'No description available for this property.'}
+          </p>
+          {description && description.length > 200 && (
+            <button
+              onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+              className="mt-2 flex items-center gap-1 text-primary hover:underline font-medium text-sm transition-colors"
+            >
+              {isDescriptionExpanded ? 'Read less' : 'Read more'}
+              <ChevronDown className={`h-4 w-4 transition-transform ${isDescriptionExpanded ? 'rotate-180' : ''}`} />
+            </button>
+          )}
+        </div>
       </div>
       <div className="flex flex-col bg-[linear-gradient(112deg,#7e3af2_1.66%,#eb7161)] rounded-lg p-8 md:w-[45%]">
         <div className="flex items-center gap-2 mb-3">

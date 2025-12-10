@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import SectionHeading from '@/components/Helper/SectionHeading'
 import { fetchTopCities } from '@/data/data';
-import CitySlider2 from './CitySlider2';
+import CitySlider from './CitySlider';
 
 interface City {
   id: number;
@@ -76,7 +76,7 @@ const CityProperties = () => {
           ) : error ? (
             <div className="text-center py-10 text-red-500">{error}</div>
           ) : (
-            <CitySlider2 cities={cities} />
+            <CitySlider cities={cities} />
           )}
         </div>
       </div>   

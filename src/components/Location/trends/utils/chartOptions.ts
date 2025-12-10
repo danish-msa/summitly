@@ -4,7 +4,9 @@ import { formatPrice } from './helpers';
 // Chart data types
 export interface AverageSoldPriceData {
   months: string[];
-  prices: number[];
+  prices: number[]; // Average prices
+  medianPrices?: number[]; // Median prices (optional for backward compatibility)
+  counts: number[];
 }
 
 export interface SalesVolumeGraphData {
@@ -18,6 +20,12 @@ export interface SalesAndInventoryData {
   months: string[];
   sales: number[];
   inventory: number[];
+}
+
+export interface NewClosedAvailableData {
+  months: string[];
+  new: number[];
+  closed: number[];
 }
 
 export interface DaysOnMarketData {
@@ -38,25 +46,41 @@ export const getProRatedMonthIndex = (months: string[]): number => {
   return months.length - 2;
 };
 
-// Chart option for Average Sold Price
+// Chart option for Average & Median Sold Price
 export const getAverageSoldPriceChartOption = (data: AverageSoldPriceData) => {
   return {
     tooltip: {
       trigger: 'axis' as const,
       formatter: (params: echarts.TooltipComponentFormatterCallbackParams) => {
         const paramsArray = Array.isArray(params) ? params : [params];
-        const param = paramsArray[0] as { name?: string; seriesName?: string; value?: number };
-        return `${param.name || ''}<br/>${param.seriesName || ''}: ${formatPrice(param.value || 0)}`;
+        const firstParam = paramsArray[0] as { name?: string; dataIndex?: number };
+        const dataIndex = firstParam.dataIndex !== undefined ? firstParam.dataIndex : 0;
+        const count = data.counts && data.counts.length > dataIndex ? data.counts[dataIndex] : 0;
+        const countText = count > 0 ? `<br/>Properties Sold: ${count.toLocaleString()}` : '';
+        
+        let result = `${firstParam.name || ''}<br/>`;
+        paramsArray.forEach((param) => {
+          const p = param as { marker?: string; seriesName?: string; value?: number };
+          result += `${p.marker || ''}${p.seriesName || ''}: ${formatPrice(p.value || 0)}<br/>`;
+        });
+        return result + countText;
       },
       backgroundColor: 'rgba(255, 255, 255, 0.95)',
       borderColor: '#e5e7eb',
       textStyle: { color: '#1f2937' }
     },
+    legend: {
+      data: ['Average Sold Price', 'Median Sold Price'],
+      top: '5%',
+      textStyle: {
+        color: '#1f2937'
+      }
+    },
     grid: {
       left: '3%',
       right: '4%',
       bottom: '3%',
-      top: '10%',
+      top: '15%',
       containLabel: true
     },
     xAxis: {
@@ -99,13 +123,39 @@ export const getAverageSoldPriceChartOption = (data: AverageSoldPriceData) => {
             ]
           }
         }
+      },
+      {
+        name: 'Median Sold Price',
+        type: 'line' as const,
+        data: data.medianPrices || [],
+        smooth: true,
+        lineStyle: {
+          color: '#10b981',
+          width: 3
+        },
+        itemStyle: {
+          color: '#10b981'
+        },
+        areaStyle: {
+          color: {
+            type: 'linear' as const,
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(16, 185, 129, 0.3)' },
+              { offset: 1, color: 'rgba(16, 185, 129, 0.05)' }
+            ]
+          }
+        }
       }
     ]
   };
 };
 
 // Chart option for Sales Volume by Property Type
-export const getSalesVolumeChartOption = (data: SalesVolumeGraphData, proRatedIndex: number) => {
+export const getSalesVolumeChartOption = (data: SalesVolumeGraphData) => {
   const detachedPercentages = data.detached.map((detached, index) => {
     const total = detached + data.townhouse[index] + data.condo[index];
     return total > 0 ? Math.round((detached / total) * 100) : 0;
@@ -199,30 +249,7 @@ export const getSalesVolumeChartOption = (data: SalesVolumeGraphData, proRatedIn
         emphasis: {
           focus: 'series' as const
         },
-        data: detachedPercentages,
-        markLine: {
-          silent: true,
-          symbol: 'none',
-          lineStyle: {
-            color: '#ef4444',
-            type: 'dashed' as const,
-            width: 2
-          },
-          label: {
-            show: true,
-            position: 'insideEndTop' as const,
-            formatter: 'Pro-Rated',
-            color: '#ef4444',
-            fontSize: 12,
-            fontWeight: 'bold' as const,
-            rotate: 90
-          },
-          data: [
-            {
-              xAxis: proRatedIndex
-            }
-          ]
-        }
+        data: detachedPercentages
       },
       {
         name: 'Townhouse',
@@ -355,6 +382,110 @@ export const getSalesAndInventoryChartOption = (data: SalesAndInventoryData) => 
         name: 'Inventory',
         type: 'line' as const,
         data: data.inventory,
+        smooth: true,
+        lineStyle: {
+          color: '#10b981',
+          width: 3
+        },
+        itemStyle: {
+          color: '#10b981'
+        },
+        areaStyle: {
+          color: {
+            type: 'linear' as const,
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(16, 185, 129, 0.3)' },
+              { offset: 1, color: 'rgba(16, 185, 129, 0.05)' }
+            ]
+          }
+        }
+      }
+    ]
+  };
+};
+
+// Chart option for New and Closed Properties
+export const getNewClosedAvailableChartOption = (data: NewClosedAvailableData) => {
+  return {
+    tooltip: {
+      trigger: 'axis' as const,
+      formatter: (params: echarts.TooltipComponentFormatterCallbackParams) => {
+        const paramsArray = Array.isArray(params) ? params : [params];
+        const firstParam = paramsArray[0] as { name?: string };
+        let result = `${firstParam.name || ''}<br/>`;
+        paramsArray.forEach((param) => {
+          const p = param as { marker?: string; seriesName?: string; value?: number };
+          result += `${p.marker || ''}${p.seriesName || ''}: ${(p.value || 0).toLocaleString()}<br/>`;
+        });
+        return result;
+      },
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#e5e7eb',
+      textStyle: { color: '#1f2937' }
+    },
+    legend: {
+      data: ['New', 'Closed'],
+      top: '5%',
+      textStyle: {
+        color: '#1f2937'
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: '15%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category' as const,
+      data: data.months,
+      axisLabel: {
+        color: '#6b7280'
+      }
+    },
+    yAxis: {
+      type: 'value' as const,
+      axisLabel: {
+        formatter: (value: number) => value.toLocaleString(),
+        color: '#6b7280'
+      }
+    },
+    series: [
+      {
+        name: 'New',
+        type: 'line' as const,
+        data: data.new,
+        smooth: true,
+        lineStyle: {
+          color: '#3b82f6',
+          width: 3
+        },
+        itemStyle: {
+          color: '#3b82f6'
+        },
+        areaStyle: {
+          color: {
+            type: 'linear' as const,
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(59, 130, 246, 0.3)' },
+              { offset: 1, color: 'rgba(59, 130, 246, 0.05)' }
+            ]
+          }
+        }
+      },
+      {
+        name: 'Closed',
+        type: 'line' as const,
+        data: data.closed,
         smooth: true,
         lineStyle: {
           color: '#10b981',

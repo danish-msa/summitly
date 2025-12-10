@@ -88,21 +88,106 @@ function getImages(listing: ApiListing): string[] {
 }
 
 /**
- * Format location string
+ * Format location string according to Canadian address standards
+ * Returns a two-line format: "Street Address\nArea, City, Province Postal Code"
  */
 function formatLocation(listing: ApiListing): string {
-  const parts = [
-    listing.address?.unitNumber,
-    listing.address?.streetNumber,
-    listing.address?.streetName,
-    listing.address?.streetSuffix,
-    listing.address?.streetDirection,
-    listing.address?.neighborhood,
-    listing.address?.city,
-    listing.address?.zip,
+  const addr = listing.address;
+  if (!addr) return 'Location not available';
+
+  // Build street address (Line 1): Unit Number (if exists), Street Number + Street Name + Street Suffix
+  const streetParts = [];
+  if (addr.unitNumber) streetParts.push(addr.unitNumber);
+  if (addr.streetNumber) streetParts.push(addr.streetNumber);
+  if (addr.streetName) streetParts.push(addr.streetName);
+  if (addr.streetSuffix) streetParts.push(addr.streetSuffix);
+  if (addr.streetDirection) streetParts.push(addr.streetDirection);
+  
+  const streetAddress = streetParts.length > 0 ? streetParts.join(' ') : '';
+
+  // Build city line (Line 2) - Canadian format: "Area, City, Province Postal Code"
+  // Include area if available (e.g., "Parry Sound, The Archipelago, ON P0G 1K0")
+  const cityParts = [];
+  if (addr.area) cityParts.push(addr.area);
+  if (addr.city) cityParts.push(addr.city);
+  if (addr.state) cityParts.push(addr.state);
+  if (addr.zip) cityParts.push(addr.zip);
+
+  const cityLine = cityParts.length > 0 ? cityParts.join(' ') : '';
+
+  // Combine with newline for two-line format
+  if (streetAddress && cityLine) {
+    return `${streetAddress}\n${cityLine}`;
+  } else if (streetAddress) {
+    return streetAddress;
+  } else if (cityLine) {
+    return cityLine;
+  }
+
+  // Fallback: include neighborhood if available
+  const fallbackParts = [
+    addr.neighborhood,
+    addr.area,
+    addr.city,
+    addr.state,
+    addr.zip,
   ].filter(Boolean);
   
-  return parts.length > 0 ? parts.join(' ') : 'Location not available';
+  return fallbackParts.length > 0 ? fallbackParts.join(' ') : 'Location not available';
+}
+
+/**
+ * Convert status code to readable status text
+ * Uses standardStatus (RESO-compliant) if available, otherwise maps A/U to readable terms
+ */
+function getReadableStatus(listing: ApiListing): string {
+  // Prefer standardStatus (RESO-compliant) if available
+  if (listing.standardStatus) {
+    return listing.standardStatus;
+  }
+  
+  // Map legacy status codes to readable terms
+  const status = listing.status?.toUpperCase();
+  const lastStatus = listing.lastStatus?.toLowerCase();
+  
+  if (status === 'A') {
+    // Available (On-Market) - map lastStatus to more specific terms
+    if (lastStatus) {
+      const lastStatusMap: Record<string, string> = {
+        'new': 'Active',
+        'sc': 'Active Under Contract',
+        'pc': 'Active Under Contract',
+        'sld': 'Closed',
+        'exp': 'Expired',
+        'wth': 'Withdrawn',
+        'can': 'Canceled',
+        'hold': 'Hold',
+        'inc': 'Incomplete',
+      };
+      return lastStatusMap[lastStatus] || 'Active';
+    }
+    return 'Active';
+  }
+  
+  if (status === 'U') {
+    // Unavailable (Off-Market) - map lastStatus to more specific terms
+    if (lastStatus) {
+      const lastStatusMap: Record<string, string> = {
+        'sld': 'Closed',
+        'exp': 'Expired',
+        'wth': 'Withdrawn',
+        'can': 'Canceled',
+        'hold': 'Hold',
+        'pc': 'Pending',
+        'sc': 'Pending',
+      };
+      return lastStatusMap[lastStatus] || 'Unavailable';
+    }
+    return 'Unavailable';
+  }
+  
+  // Fallback
+  return listing.status || 'Active';
 }
 
 /**
@@ -111,10 +196,11 @@ function formatLocation(listing: ApiListing): string {
 export function transformListing(listing: ApiListing): PropertyListing {
   const images = getImages(listing);
   const location = formatLocation(listing);
+  const readableStatus = getReadableStatus(listing);
   
   return {
     mlsNumber: listing.mlsNumber || '',
-    status: listing.status || 'Active',
+    status: readableStatus,
     class: listing.class || 'residential',
     type: typeof listing.type === 'string' ? listing.type : 'Sale',
     listPrice: listing.listPrice || 0,
@@ -122,6 +208,7 @@ export function transformListing(listing: ApiListing): PropertyListing {
     lastStatus: listing.lastStatus || '',
     soldPrice: typeof listing.soldPrice === 'string' ? listing.soldPrice : (listing.soldPrice ? String(listing.soldPrice) : ''),
     soldDate: listing.soldDate || '',
+    daysOnMarket: listing.daysOnMarket ?? listing.simpleDaysOnMarket ?? undefined,
     
     address: {
       area: listing.address?.area || null,
@@ -156,6 +243,7 @@ export function transformListing(listing: ApiListing): PropertyListing {
       numBedroomsPlus: listing.details?.numBedroomsPlus || 0,
       propertyType: listing.details?.propertyType || 'Unknown',
       sqft: listing.details?.sqft || 0,
+      description: listing.details?.description || null,
     },
     
     updatedOn: listing.updatedOn || new Date().toISOString(),
@@ -281,44 +369,227 @@ export async function getSimilarListings(params: {
 }
 
 /**
- * Fetch listing details by MLS number
- * Returns the full API response structure for a single property listing
+ * Helper function to get boardId for a listing by searching for it first
  */
-export async function getListingDetails(mlsNumber: string): Promise<PropertyListing | null> {
-  const response = await repliersClient.request<SinglePropertyListingResponse | ApiListing>({
-    endpoint: `/listings/${mlsNumber}`,
-    authMethod: 'header',
-    cache: true,
-    cacheDuration: 10 * 60 * 1000, // 10 minutes
-    priority: 'high',
-  });
+async function getBoardIdForListing(mlsNumber: string): Promise<number | null> {
+  try {
+    console.log('[Repliers API] Searching for listing to get boardId:', mlsNumber);
+    
+    // Search for the listing to get its boardId
+    // Try searching with mlsNumber as a filter
+    const searchResult = await repliersClient.request<ListingsResponse>({
+      endpoint: '/listings',
+      params: {
+        mlsNumber: mlsNumber,
+        resultsPerPage: 10,
+      },
+      authMethod: 'header',
+      cache: true,
+      cacheDuration: 5 * 60 * 1000, // 5 minutes
+      priority: 'high',
+    });
 
-  if (response.error || !response.data) {
-    console.error('Failed to fetch listing details:', response.error?.message);
+    if (searchResult.error) {
+      console.error('[Repliers API] Error searching for boardId:', searchResult.error);
+      return null;
+    }
+
+    if (searchResult.data?.listings && searchResult.data.listings.length > 0) {
+      // Find the exact match by mlsNumber
+      const listing = searchResult.data.listings.find(l => l.mlsNumber === mlsNumber);
+      if (listing && listing.boardId) {
+        console.log('[Repliers API] Found boardId:', listing.boardId, 'for listing:', mlsNumber);
+        return listing.boardId;
+      }
+    }
+    
+    console.warn('[Repliers API] Could not find boardId for listing:', mlsNumber);
+    return null;
+  } catch (error) {
+    console.error('[Repliers API] Exception getting boardId for listing:', mlsNumber, error);
     return null;
   }
-
-  return transformListing(response.data as ApiListing);
 }
 
 /**
- * Fetch raw listing details by MLS number
- * Returns the complete API response without transformation
+ * Fetch listing details by MLS number and boardId
+ * Returns the full API response structure for a single property listing
+ * If boardId is not provided, it will be fetched automatically
  */
-export async function getRawListingDetails(mlsNumber: string): Promise<SinglePropertyListingResponse | null> {
-  const response = await repliersClient.request<SinglePropertyListingResponse>({
-    endpoint: `/listings/${mlsNumber}`,
-    authMethod: 'header',
-    cache: true,
-    cacheDuration: 10 * 60 * 1000, // 10 minutes
-    priority: 'high',
-  });
+export async function getListingDetails(mlsNumber: string, boardId?: number): Promise<PropertyListing | null> {
+  let finalBoardId: number | undefined = boardId;
+  try {
+    
+    // If boardId is not provided, try to get it by searching for the listing
+    if (finalBoardId === undefined) {
+      console.log('[Repliers API] BoardId not provided, searching for listing to get boardId...');
+      const foundBoardId = await getBoardIdForListing(mlsNumber);
+      finalBoardId = foundBoardId ?? undefined;
+      
+      if (finalBoardId === undefined) {
+        console.error('[Repliers API] Could not determine boardId for listing:', mlsNumber);
+        // Try without boardId as fallback
+        console.log('[Repliers API] Attempting to fetch without boardId as fallback...');
+      } else {
+        console.log('[Repliers API] Found boardId:', finalBoardId, 'for listing:', mlsNumber);
+      }
+    }
+    
+    console.log('[Repliers API] Requesting listing:', { mlsNumber, boardId: finalBoardId });
+    
+    const params: Record<string, string | number> = {};
+    if (finalBoardId !== undefined && finalBoardId !== null) {
+      params.boardId = finalBoardId;
+    }
+    
+    const response = await repliersClient.request<SinglePropertyListingResponse | ApiListing>({
+      endpoint: `/listings/${mlsNumber}`,
+      params,
+      authMethod: 'header',
+      cache: true,
+      cacheDuration: 10 * 60 * 1000, // 10 minutes
+      priority: 'high',
+    });
 
-  if (response.error || !response.data) {
-    console.error('Failed to fetch raw listing details:', response.error?.message);
+    console.log('[Repliers API] Response received:', {
+      mlsNumber,
+      boardId: finalBoardId,
+      hasError: !!response.error,
+      hasData: !!response.data,
+      cached: response.cached,
+      error: response.error,
+    });
+
+    if (response.error) {
+      console.error('[Repliers API] API returned error:', {
+        mlsNumber,
+        boardId: finalBoardId,
+        errorCode: response.error.code,
+        errorMessage: response.error.message,
+        retryable: response.error.retryable,
+      });
+      return null;
+    }
+
+    if (!response.data) {
+      console.error('[Repliers API] No data in response:', {
+        mlsNumber,
+        boardId: finalBoardId,
+        response,
+      });
+      return null;
+    }
+
+    console.log('[Repliers API] Transforming listing data for:', {
+      mlsNumber,
+      boardId: finalBoardId,
+    });
+    const transformed = transformListing(response.data as ApiListing);
+    console.log('[Repliers API] Listing transformed successfully:', {
+      mlsNumber: transformed.mlsNumber,
+      boardId: transformed.boardId,
+      address: transformed.address?.location,
+    });
+    
+    return transformed;
+    } catch (error) {
+      // Handle both Error objects and ApiResponse objects that might be thrown
+      let errorDetails: any;
+      
+      if (error && typeof error === 'object' && 'error' in error && 'data' in error) {
+        // This is an ApiResponse object that was thrown
+        const apiResponse = error as { error: { code: string; message: string } | null; data: unknown };
+        errorDetails = {
+          type: 'ApiResponse',
+          errorCode: apiResponse.error?.code,
+          errorMessage: apiResponse.error?.message,
+          hasData: !!apiResponse.data,
+        };
+      } else if (error instanceof Error) {
+        errorDetails = {
+          type: 'Error',
+          message: error.message,
+          name: error.name,
+          stack: error.stack,
+        };
+      } else {
+        errorDetails = {
+          type: typeof error,
+          value: error,
+        };
+      }
+      
+      console.error('[Repliers API] Exception fetching listing details:', {
+        mlsNumber,
+        boardId: finalBoardId,
+        error: errorDetails,
+      });
+      
+      // Return null instead of throwing to prevent unhandled promise rejection
+      return null;
+    }
+}
+
+/**
+ * Fetch raw listing details by MLS number and boardId
+ * Returns the complete API response without transformation
+ * If boardId is not provided, it will be fetched automatically
+ */
+export async function getRawListingDetails(mlsNumber: string, boardId?: number): Promise<SinglePropertyListingResponse | null> {
+  let finalBoardId: number | undefined = boardId;
+  try {
+    
+    // If boardId is not provided, try to get it by searching for the listing
+    if (finalBoardId === undefined) {
+      const foundBoardId = await getBoardIdForListing(mlsNumber);
+      finalBoardId = foundBoardId ?? undefined;
+    }
+    
+    const params: Record<string, string | number> = {};
+    if (finalBoardId !== undefined && finalBoardId !== null) {
+      params.boardId = finalBoardId;
+    }
+    
+    const response = await repliersClient.request<SinglePropertyListingResponse>({
+      endpoint: `/listings/${mlsNumber}`,
+      params,
+      authMethod: 'header',
+      cache: true,
+      cacheDuration: 10 * 60 * 1000, // 10 minutes
+      priority: 'high',
+    });
+
+    if (response.error || !response.data) {
+      console.error('[Repliers API] Failed to fetch raw listing details:', {
+        mlsNumber,
+        boardId: finalBoardId,
+        error: response.error,
+        hasData: !!response.data,
+      });
+      return null;
+    }
+
+    console.log('[Repliers API] Raw listing fetched successfully:', {
+      mlsNumber,
+      boardId: finalBoardId,
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('[Repliers API] Exception fetching raw listing details:', {
+      mlsNumber,
+      boardId: finalBoardId,
+      error: error instanceof Error ? {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+      } : {
+        type: typeof error,
+        value: error,
+      },
+    });
+    // Return null instead of throwing to prevent unhandled promise rejection
     return null;
   }
-
-  return response.data;
 }
 

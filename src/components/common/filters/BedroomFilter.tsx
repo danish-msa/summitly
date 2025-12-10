@@ -49,26 +49,35 @@ const BedroomFilter: React.FC<IndividualFilterProps> = ({
         <FaBed className="text-secondary" />
         <span className="text-sm">{getBedroomText()}</span>
         {filters.bedrooms !== 0 && (
-          <button
+          <span
             onClick={(e) => {
               e.stopPropagation();
               handleIndividualReset();
             }}
-            className="ml-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full p-0.5 transition-all"
+            className="ml-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full p-0.5 transition-all cursor-pointer"
             title="Clear bedroom filter"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                handleIndividualReset();
+              }
+            }}
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
+          </span>
         )}
         <FaChevronDown className={`ml-1 transition-transform ${activeDropdown ? 'rotate-180' : ''}`} />
       </button>
       
       {activeDropdown && (
-        <div className="absolute z-10 mt-2 w-full sm:w-64 bg-white rounded-lg shadow-lg p-4">
+        <div className="absolute z-10 mt-2 left-0 w-auto min-w-fit bg-white rounded-lg shadow-lg p-4">
           <p className="font-semibold mb-3">Bedrooms</p>
-          <div className="flex flex-wrap border-collapse">
+          <div className="flex gap-0">
             {['Any', '1', '2', '3', '4', '5+'].map((value, index) => {
               const numValue = value === 'Any' ? 0 : value === '5+' ? 5 : parseInt(value);
               const isSelected = 
@@ -84,7 +93,7 @@ const BedroomFilter: React.FC<IndividualFilterProps> = ({
                   key={`bed-${value}`}
                   className={`
                     border cursor-pointer capitalize text-center hover:bg-gray-100
-                    py-2 px-3 text-sm flex-1 transition-all
+                    py-2 px-3 text-xs whitespace-nowrap transition-all
                     ${isFirst ? 'rounded-l-lg' : 'border-l-transparent'}
                     ${isLast ? 'rounded-r-lg' : ''}
                     ${isSelected 

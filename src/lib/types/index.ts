@@ -546,6 +546,7 @@ export interface PropertyListing {
     lastStatus: string;
     soldPrice: string;
     soldDate: string;
+    daysOnMarket?: number;
 
     address: {
         area: string | null;
@@ -578,6 +579,7 @@ export interface PropertyListing {
         numBedroomsPlus: number | string;
         propertyType: string;
         sqft: number | string;
+        description?: string | null;
     };
     updatedOn: string;
     lot: {

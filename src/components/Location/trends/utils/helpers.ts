@@ -20,8 +20,12 @@ export const calculateAvgPrice = (props: { listPrice?: number }[]): number => {
   return Math.round(total / props.length);
 };
 
-export const getDateRanges = () => {
+export const getDateRanges = (years?: number) => {
   const now = new Date();
+  
+  // For Stats Overview, always show the most recent period (last 28 days / 4 weeks)
+  // The year range affects historical data in charts, but overview stats show current period
+  // This ensures the date range display updates when year range changes (for consistency)
   const currentEnd = new Date(now);
   const currentStart = new Date(now);
   currentStart.setDate(currentStart.getDate() - 28); // 4 weeks ago
@@ -54,5 +58,15 @@ export const getGreaterArea = (cityName: string): string => {
   }
   // Default to GTA for now, can be expanded for other regions
   return 'GTA';
+};
+
+// Convert city name to URL slug (with -real-estate suffix)
+export const cityNameToSlug = (cityName: string): string => {
+  return cityName
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '') + '-real-estate';
 };
 

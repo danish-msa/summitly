@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { DataTable, Column } from "@/components/Dashboard/DataTable"
+import { DataTable, Column } from "@/components/ui/data-table"
 import { ActionButton } from "@/components/Dashboard/ActionButton"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

@@ -185,9 +185,13 @@ const CityPage: React.FC = () => {
     if (filters.listingType !== 'all') {
       filtered = filtered.filter(property => {
         if (filters.listingType === 'sell') {
-          return property.type === 'Sale' || property.status === 'A';
+          // Check for active statuses (Active, Active Under Contract, Coming Soon)
+          const activeStatuses = ['Active', 'Active Under Contract', 'Coming Soon'];
+          return property.type === 'Sale' || activeStatuses.includes(property.status);
         } else if (filters.listingType === 'rent') {
-          return property.type === 'Lease' || property.status === 'R';
+          // Check for active statuses for rentals
+          const activeStatuses = ['Active', 'Active Under Contract', 'Coming Soon'];
+          return property.type === 'Lease' || activeStatuses.includes(property.status);
         }
         return true;
       });

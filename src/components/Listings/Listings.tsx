@@ -9,6 +9,7 @@ import ListingFilters from './ListingFilters';
 import { LOCATIONS } from '@/lib/types/filters';
 import SellRentToggle from '@/components/common/filters/SellRentToggle';
 import { useHiddenProperties } from '@/hooks/useHiddenProperties';
+import GlobalFilters from '../common/filters/GlobalFilters';
 
 const Listings = () => {
   const [properties, setProperties] = useState<PropertyListing[]>([]);
@@ -248,16 +249,24 @@ const Listings = () => {
   }
 
   return (
-    <div className="container mx-auto py-16 px-4">
+    <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 mt-20">
       
       {/* Use the separated filter component */}
-      <ListingFilters 
-        filters={filters}
-        handleFilterChange={handleFilterChange}
-        resetFilters={resetFilters}
-        communities={communities}
-        locations={LOCATIONS}
-      />
+      <GlobalFilters
+          filters={filters}
+          handleFilterChange={handleFilterChange}
+          resetFilters={resetFilters}
+          communities={communities}
+          locations={LOCATIONS}
+          showLocation={true}
+          showPropertyType={true}
+          showCommunity={true}
+          showPrice={false}
+          showBedrooms={false}
+          showBathrooms={false}
+          layout="horizontal"
+          className="w-full md:w-auto"
+        />
       
       {/* Results Header */}
       <div className="container mx-auto px-4 flex flex-col sm:flex-row justify-between items-center mb-4">
@@ -299,9 +308,9 @@ const Listings = () => {
       {/* Property Listings */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-10">
         {visibleProperties.length > 0 ? (
-          visibleProperties.map((property) => (
+          visibleProperties.map((property, index) => (
             <div 
-              key={property.mlsNumber}
+              key={`${property.mlsNumber}-${index}`}
               className={`cursor-pointer transition-all ${selectedProperty?.mlsNumber === property.mlsNumber ? 'ring-2 ring-secondary' : ''}`}
               onClick={() => handlePropertyClick(property)}
             >

@@ -1,6 +1,9 @@
 export interface MarketAnalyticsProps {
   propertyAddress: string;
   propertyClass: string;
+  latitude?: number;
+  longitude?: number;
+  city?: string; // Optional city name (preferred over parsing address)
 }
 
 export interface ChartParam {

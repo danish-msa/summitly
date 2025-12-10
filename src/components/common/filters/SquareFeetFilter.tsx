@@ -72,9 +72,9 @@ const SquareFeetFilter: React.FC<IndividualFilterProps> = ({
       </button>
       
       {activeDropdown && (
-        <div className="absolute z-10 mt-2 w-full sm:w-64 bg-white rounded-lg shadow-lg p-4">
+        <div className="absolute z-10 mt-2 left-0 w-auto min-w-fit bg-white rounded-lg shadow-lg p-4">
           <p className="font-semibold mb-3">Square Feet</p>
-          <div className="flex flex-wrap border-collapse">
+          <div className="flex gap-0">
             {[
               { label: 'All', value: 'all', min: undefined, max: undefined },
               { label: 'Under 1,000', value: 'under-1000', min: undefined, max: 999 },
@@ -95,7 +95,7 @@ const SquareFeetFilter: React.FC<IndividualFilterProps> = ({
                   key={`sqft-${option.value}`}
                   className={`
                     border cursor-pointer capitalize text-center hover:bg-gray-100
-                    py-2 px-3 text-sm flex-1 transition-all
+                    py-2 px-3 text-xs whitespace-nowrap transition-all
                     ${isFirst ? 'rounded-l-lg' : 'border-l-transparent'}
                     ${isLast ? 'rounded-r-lg' : ''}
                     ${isSelected 

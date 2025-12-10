@@ -33,7 +33,7 @@ const API_CONFIG = {
     propertyTypes: 24 * 60 * 60 * 1000, // 24 hours
     listings: 2 * 60 * 1000, // 2 minutes
     cities: 10 * 60 * 1000, // 10 minutes
-    analytics: 5 * 60 * 1000, // 5 minutes
+    analytics: 15 * 60 * 1000, // 15 minutes (increased for market trends - data doesn't change frequently)
     locations: 60 * 60 * 1000, // 1 hour
   },
 };
@@ -216,6 +216,18 @@ class RepliersAPIClient {
       const url = this.buildUrl(config);
       const headers = this.buildHeaders(config);
       
+      // Debug logging for analytics requests
+      if (config.endpoint === '/listings' && config.params?.statistics) {
+        console.log('[Repliers Client] Analytics Request:', {
+          url,
+          authMethod: config.authMethod,
+          hasApiKeyInHeader: !!headers['REPLIERS-API-KEY'],
+          apiKeyLength: headers['REPLIERS-API-KEY']?.toString().length || 0,
+          apiKeyPreview: headers['REPLIERS-API-KEY']?.toString().substring(0, 10) + '...' || 'none',
+          params: config.params,
+        });
+      }
+      
       this.requestTimestamps.push(Date.now());
       
       const controller = new AbortController();
@@ -234,6 +246,17 @@ class RepliersAPIClient {
       clearTimeout(timeout);
 
       if (!response.ok) {
+        // Log detailed error for analytics requests
+        if (config.endpoint === '/listings' && config.params?.statistics) {
+          const errorText = await response.text();
+          console.error('[Repliers Client] Analytics Request Failed:', {
+            status: response.status,
+            statusText: response.statusText,
+            url,
+            errorBody: errorText,
+            headers: Object.fromEntries(response.headers.entries()),
+          });
+        }
         throw this.createHttpError(response.status, response.statusText);
       }
 

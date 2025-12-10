@@ -21,6 +21,7 @@ import { usePropertyAlerts } from '@/hooks/usePropertyAlerts';
 import { useSession } from 'next-auth/react';
 import { toast } from '@/hooks/use-toast';
 import { parseCityUrl } from '@/lib/utils/cityUrl';
+import Pagination from '@/components/ui/pagination';
 
 // Dynamically import the Google Maps component with no SSR
 const GooglePropertyMap = dynamic(() => import('@/components/MapSearch/GooglePropertyMap'), { ssr: false });
@@ -58,8 +59,9 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
     soldListings: false,
     expiredListings: false,
   });
-  const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20; // Number of properties per page
   
   // Use global filters hook
   const { filters, handleFilterChange, resetFilters } = useGlobalFilters();
@@ -178,29 +180,62 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
         // Fetch city info from top cities (only for city type)
         let foundCity = null;
         if (locationType === 'city') {
-          const topCities = await fetchTopCities();
-          foundCity = topCities.find(city => 
-            city.cityName.toLowerCase() === cityName.toLowerCase()
+          try {
+            const topCities = await fetchTopCities();
+            foundCity = topCities.find(city => 
+              city.cityName.toLowerCase() === cityName.toLowerCase()
+            );
+          } catch (error) {
+            console.error('Error fetching top cities:', error);
+            // Continue without city info if fetch fails
+          }
+        }
+
+        // Fetch properties - fetch multiple pages to get all areas and neighborhoods
+        let allListings: PropertyListing[] = [];
+        let page = 1;
+        const resultsPerPage = 100; // Maximum allowed by API
+        let hasMorePages = true;
+        
+        try {
+          // Fetch multiple pages to get comprehensive area and neighborhood data
+          while (hasMorePages && page <= 10) { // Limit to 10 pages to avoid infinite loops
+            const listingsData = await getListings({
+              status: 'A',
+              resultsPerPage,
+              pageNum: page,
+            });
+            
+            if (!listingsData || !listingsData.listings || listingsData.listings.length === 0) {
+              hasMorePages = false;
+              break;
+            }
+            
+            allListings = [...allListings, ...listingsData.listings];
+            
+            // Check if there are more pages
+            const totalPages = listingsData.numPages || Math.ceil((listingsData.count || 0) / resultsPerPage);
+            hasMorePages = page < totalPages;
+            page++;
+          }
+        } catch (error) {
+          console.error('Error fetching listings:', error);
+          // Set empty data if fetch fails
+          allListings = [];
+        }
+
+        // Filter properties by location
+        let filtered = allListings;
+
+        // Always filter by city if cityName is available
+        if (cityName) {
+          filtered = filtered.filter(property =>
+            property.address?.city?.toLowerCase() === cityName.toLowerCase()
           );
         }
 
-        // Fetch properties
-        const listingsData = await getListings({
-          status: 'A',
-          resultsPerPage: 50,
-          pageNum: 1,
-        });
-
-        // Filter properties by location
-        let filtered = listingsData.listings;
-
-        // Always filter by city
-        filtered = filtered.filter(property =>
-          property.address?.city?.toLowerCase() === cityName.toLowerCase()
-        );
-
         // Filter by area if applicable
-        if (locationType === 'area' || locationType === 'neighbourhood') {
+        if ((locationType === 'area' || locationType === 'neighbourhood') && areaName) {
           filtered = filtered.filter(property => {
             const propArea = property.address?.area?.toLowerCase() || '';
             const searchArea = areaName.toLowerCase();
@@ -212,7 +247,7 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
         }
 
         // Filter by neighbourhood if applicable
-        if (locationType === 'neighbourhood') {
+        if (locationType === 'neighbourhood' && neighbourhoodName) {
           filtered = filtered.filter(property => {
             const propNeighbourhood = property.address?.neighborhood?.toLowerCase() || '';
             const searchNeighbourhood = neighbourhoodName.toLowerCase();
@@ -233,7 +268,7 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
           });
         } else {
           setLocationInfo({
-            name: displayName,
+            name: displayName || cityName || 'Location',
             numberOfProperties: locationProperties.length,
           });
         }
@@ -252,18 +287,42 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
         setCommunities(uniqueCommunities);
       } catch (error) {
         console.error('Error loading location data:', error);
+        // Set default location info on error
+        setLocationInfo({
+          name: displayName || cityName || 'Location',
+          numberOfProperties: 0,
+        });
+        setProperties([]);
+        setAllProperties([]);
+        setCommunities([]);
       } finally {
         setLoading(false);
       }
     };
 
-    if (citySlug && (locationType === 'city' || areaSlug)) {
+    // Check if we have the minimum required data to load
+    if (cityName || citySlug) {
       if (locationType === 'neighbourhood' && !neighbourhoodSlug) {
+        // For neighbourhood, we need the slug
+        setLoading(false);
         return;
       }
       loadLocationData();
+    } else {
+      // If no city data available, stop loading
+      setLoading(false);
     }
   }, [citySlug, areaSlug, neighbourhoodSlug, locationType, cityName, areaName, neighbourhoodName, displayName]);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, selectedNeighborhood]);
+
+  // Scroll to top when page changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
 
   // Filter properties based on filter state
   useEffect(() => {
@@ -294,9 +353,13 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
     if (filters.listingType !== 'all') {
       filtered = filtered.filter(property => {
         if (filters.listingType === 'sell') {
-          return property.type === 'Sale' || property.status === 'A';
+          // Check for active statuses (Active, Active Under Contract, Coming Soon)
+          const activeStatuses = ['Active', 'Active Under Contract', 'Coming Soon'];
+          return property.type === 'Sale' || activeStatuses.includes(property.status);
         } else if (filters.listingType === 'rent') {
-          return property.type === 'Lease' || property.status === 'R';
+          // Check for active statuses for rentals
+          const activeStatuses = ['Active', 'Active Under Contract', 'Coming Soon'];
+          return property.type === 'Lease' || activeStatuses.includes(property.status);
         }
         return true;
       });
@@ -310,13 +373,6 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
       );
     }
 
-    // Filter by selected area from AreaSelector
-    if (selectedArea) {
-      filtered = filtered.filter(property =>
-        property.address?.area?.toLowerCase() === selectedArea.toLowerCase()
-      );
-    }
-
     // Filter by selected neighborhood from AreaSelector
     if (selectedNeighborhood) {
       filtered = filtered.filter(property =>
@@ -325,7 +381,13 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
     }
 
     setProperties(filtered);
-  }, [filters, allProperties, selectedArea, selectedNeighborhood]);
+  }, [filters, allProperties, selectedNeighborhood]);
+
+  // Calculate paginated properties
+  const totalPages = Math.ceil(properties.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedProperties = properties.slice(startIndex, endIndex);
 
   if (loading) {
     return (
@@ -446,15 +508,13 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
           </div>
         </section>
         
-         {/* Area Selector - Only show for city and area */}
-         {(locationType === 'city' || locationType === 'area') && (
+         {/* Neighborhood Selector - Only show for city */}
+         {locationType === 'city' && (
            <section>
              <AreaSelector 
                properties={allProperties} 
                cityName={displayLocationName}
-               onAreaSelect={setSelectedArea}
                onNeighborhoodSelect={setSelectedNeighborhood}
-               selectedArea={selectedArea}
                selectedNeighborhood={selectedNeighborhood}
              />
            </section>
@@ -500,13 +560,18 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
         {/* Property Listings */}
         <section className="pb-8">
           <div className="flex items-center justify-between mb-6">
-            <div className="flex gap-4">
+            <div className="flex gap-4 items-center">
               <button className="text-sm font-medium text-primary border-b-2 border-primary pb-2">
                 Listings {properties.length}
               </button>
               <button className="text-sm font-medium text-muted-foreground hover:text-foreground pb-2">
                 Buildings
               </button>
+              {properties.length > 0 && totalPages > 1 && (
+                <span className="text-sm text-muted-foreground">
+                  Showing {startIndex + 1}-{Math.min(endIndex, properties.length)} of {properties.length}
+                </span>
+              )}
             </div>
             
             {/* View Mode Toggle */}
@@ -562,28 +627,40 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
           <div className={`flex ${viewMode === 'map' ? 'flex-col' : viewMode === 'list' ? 'flex-col' : 'flex-col md:flex-row'} gap-6`}>
             {/* Property Listings */}
             {(viewMode === 'list' || viewMode === 'mixed') && (
-              <div className={`${viewMode === 'mixed' ? 'md:w-1/2' : 'w-full'} overflow-y-auto`} style={{ maxHeight: viewMode === 'mixed' ? 'calc(100vh - 200px)' : 'auto' }}>
-                {properties.length > 0 ? (
-                  <div className={`grid gap-6 ${
-                    viewMode === 'mixed' 
-                      ? 'grid-cols-1 sm:grid-cols-2' 
-                      : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-                  }`}>
-                    {properties.map((property) => (
-                      <div
-                        key={property.mlsNumber}
-                        className={`cursor-pointer transition-all ${
-                          selectedProperty?.mlsNumber === property.mlsNumber ? 'ring-2 ring-primary' : ''
-                        }`}
-                        onClick={() => setSelectedProperty(property)}
-                      >
-                        <PropertyCard
-                          property={property}
-                          onHide={() => {}}
+              <div className={`${viewMode === 'mixed' ? 'md:w-1/2' : 'w-full'}`}>
+                {paginatedProperties.length > 0 ? (
+                  <>
+                    <div className={`grid gap-6 mb-6 ${
+                      viewMode === 'mixed' 
+                        ? 'grid-cols-1 sm:grid-cols-2' 
+                        : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+                    }`}>
+                      {paginatedProperties.map((property, index) => (
+                        <div
+                          key={`${property.mlsNumber}-${index}-${property.address?.streetNumber || ''}-${property.address?.streetName || ''}`}
+                          className={`cursor-pointer transition-all ${
+                            selectedProperty?.mlsNumber === property.mlsNumber ? 'ring-2 ring-primary' : ''
+                          }`}
+                          onClick={() => setSelectedProperty(property)}
+                        >
+                          <PropertyCard
+                            property={property}
+                            onHide={() => {}}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="flex justify-center mt-8">
+                        <Pagination
+                          currentPage={currentPage}
+                          totalPages={totalPages}
+                          onPageChange={setCurrentPage}
                         />
                       </div>
-                    ))}
-                  </div>
+                    )}
+                  </>
                 ) : (
                   <div className="bg-secondary/30 rounded-lg p-12 text-center">
                     <p className="text-lg text-muted-foreground">
@@ -598,7 +675,7 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
             {(viewMode === 'map' || viewMode === 'mixed') && (
               <div className={`${viewMode === 'mixed' ? 'md:w-1/2' : 'w-full'} bg-gray-100 rounded-lg overflow-hidden`} style={{ height: viewMode === 'mixed' ? 'calc(100vh - 200px)' : '70vh' }}>
                 <GooglePropertyMap
-                  properties={properties}
+                  properties={properties} // Show all properties on map
                   selectedProperty={selectedProperty}
                   onPropertySelect={setSelectedProperty}
                   onBoundsChange={() => {}}
