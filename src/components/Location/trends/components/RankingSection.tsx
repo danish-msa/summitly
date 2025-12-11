@@ -54,11 +54,7 @@ type TurnoverRankingRow = {
 };
 
 export const RankingSection: React.FC<RankingSectionProps> = ({ locationType, locationName }) => {
-  // Rankings are only available for cities
-  if (locationType !== 'city') {
-    return null;
-  }
-  
+  // All hooks must be called before any early returns
   const greaterArea = getGreaterArea(locationName);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -73,6 +69,11 @@ export const RankingSection: React.FC<RankingSectionProps> = ({ locationType, lo
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<string>('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  // Rankings are only available for cities - check after hooks
+  if (locationType !== 'city') {
+    return null;
+  }
 
   // Fetch live ranking data from optimized API route (with ISR caching and database storage)
   const fetchRankingData = async (forceRefresh = false) => {

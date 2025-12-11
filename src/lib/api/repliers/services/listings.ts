@@ -494,7 +494,7 @@ export async function getListingDetails(mlsNumber: string, boardId?: number): Pr
     return transformed;
     } catch (error) {
       // Handle both Error objects and ApiResponse objects that might be thrown
-      let errorDetails: any;
+      let errorDetails: { error?: string; data?: unknown } | Error | unknown;
       
       if (error && typeof error === 'object' && 'error' in error && 'data' in error) {
         // This is an ApiResponse object that was thrown

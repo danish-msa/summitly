@@ -157,7 +157,7 @@ export function generatePropertyDetailsData(
   };
 
   // Determine if a history record is currently active
-  const isHistoryActive = (history: any, isCurrentListing: boolean): boolean => {
+  const isHistoryActive = (history: { lastStatus?: string; timestamps?: { closedDate?: string; terminatedDate?: string; expiryDate?: string } }, isCurrentListing: boolean): boolean => {
     if (!isCurrentListing) return false;
     
     const lastStatus = history.lastStatus?.toLowerCase();
@@ -174,7 +174,7 @@ export function generatePropertyDetailsData(
   };
 
   // Get end date from timestamps with better logic
-  const getEndDate = (history: any, isCurrentListing: boolean): string => {
+  const getEndDate = (history: { timestamps?: { closedDate?: string; terminatedDate?: string; expiryDate?: string; soldDate?: string } }, isCurrentListing: boolean): string => {
     const timestamps = history.timestamps;
     if (!timestamps) {
       // If no timestamps and it's the current listing, use current date

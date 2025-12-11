@@ -202,7 +202,7 @@ export interface StatisticsResponse {
       daysOnMarket?: { avg?: number };
       available?: { count?: number };
       closed?: { count?: number };
-      [key: string]: any;
+      [key: string]: unknown;
     };
     [key: string]: unknown;
   }>;
@@ -1829,16 +1829,16 @@ export interface RankingOverviewData {
 }
 
 // Helper function to batch promises with concurrency limit
-async function batchPromises<T>(
+async function batchPromises<T, R>(
   items: T[],
   batchSize: number,
-  fn: (item: T) => Promise<any>
-): Promise<any[]> {
-  const results: any[] = [];
+  fn: (item: T) => Promise<R>
+): Promise<(R | null)[]> {
+  const results: (R | null)[] = [];
   for (let i = 0; i < items.length; i += batchSize) {
     const batch = items.slice(i, i + batchSize);
     const batchResults = await Promise.allSettled(batch.map(fn));
-    results.push(...batchResults.map((result, idx) => 
+    results.push(...batchResults.map((result) => 
       result.status === 'fulfilled' ? result.value : null
     ));
   }

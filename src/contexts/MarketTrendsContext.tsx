@@ -3,23 +3,33 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { RepliersAPI } from '@/lib/api/repliers';
 import { getDateRanges } from '@/components/Location/trends/utils/helpers';
+import type {
+  PriceOverviewData,
+  AverageSoldPriceData,
+  SalesVolumeByTypeData,
+  InventoryOverviewData,
+  NewClosedAvailableData,
+  DaysOnMarketData,
+  RankingData,
+  RankingOverviewData,
+} from '@/lib/api/repliers/services/analytics';
 
 interface MarketTrendsData {
   // Price data
-  priceOverview: any | null;
-  averageSoldPrice: any | null;
-  salesVolumeByType: any | null;
-  priceByBedrooms: any | null;
+  priceOverview: PriceOverviewData | null;
+  averageSoldPrice: AverageSoldPriceData | null;
+  salesVolumeByType: SalesVolumeByTypeData | null;
+  priceByBedrooms: unknown | null;
   
   // Inventory data
-  inventoryOverview: any | null;
-  newClosedAvailable: any | null;
-  daysOnMarket: any | null;
+  inventoryOverview: InventoryOverviewData | null;
+  newClosedAvailable: NewClosedAvailableData | null;
+  daysOnMarket: DaysOnMarketData | null;
   
   // Ranking data (stored in separate MarketRankings table - one record per month, shared by all cities)
   // Fetch via /api/market-trends/[locationType]/[locationName]/rankings
-  rankings: any | null;
-  rankingOverview: any | null;
+  rankings: RankingData | null;
+  rankingOverview: RankingOverviewData | null;
   
   // Metadata
   loading: boolean;

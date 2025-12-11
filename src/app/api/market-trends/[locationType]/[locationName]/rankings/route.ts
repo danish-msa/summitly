@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { RepliersAPI } from '@/lib/api/repliers';
+import type { RankingData, RankingOverviewData } from '@/lib/api/repliers/services/analytics';
 
 // ISR: Revalidate every 30 days (monthly market data)
 export const revalidate = 2592000; // 30 days in seconds
@@ -39,7 +40,7 @@ function cleanLocationName(name: string): string {
 }
 
 // Helper to calculate ranking overview for a specific city from rankings data
-function calculateRankingOverview(rankings: any, cityName: string): any {
+function calculateRankingOverview(rankings: RankingData | null, cityName: string): RankingOverviewData {
   if (!rankings || !cityName) {
     return {
       mostExpensive: 0,
@@ -58,10 +59,10 @@ function calculateRankingOverview(rankings: any, cityName: string): any {
   };
 
   // Find current city's ranks in each category
-  const priceRank = rankings.price?.find((r: any) => isCurrentCity(r.city))?.rank || 0;
-  const growthRank = rankings.growth?.find((r: any) => isCurrentCity(r.city))?.rank || 0;
-  const daysRank = rankings.daysOnMarket?.find((r: any) => isCurrentCity(r.city))?.rank || 0;
-  const turnoverRank = rankings.turnover?.find((r: any) => isCurrentCity(r.city))?.rank || 0;
+  const priceRank = rankings.price?.find((r) => isCurrentCity(r.city))?.rank || 0;
+  const growthRank = rankings.growth?.find((r) => isCurrentCity(r.city))?.rank || 0;
+  const daysRank = rankings.daysOnMarket?.find((r) => isCurrentCity(r.city))?.rank || 0;
+  const turnoverRank = rankings.turnover?.find((r) => isCurrentCity(r.city))?.rank || 0;
 
   return {
     mostExpensive: priceRank,
@@ -115,10 +116,11 @@ export async function GET(
           month: currentMonth,
         },
       });
-    } catch (dbError: any) {
+    } catch (dbError: unknown) {
+      const error = dbError as { message?: string; code?: string };
       console.error(`[MarketRankings API] Error reading from MarketRankings table:`, {
-        error: dbError.message,
-        code: dbError.code,
+        error: error.message,
+        code: error.code,
         month: currentMonth,
         hint: 'Make sure the MarketRankings table exists in the database. Run supabase_market_rankings_setup.sql',
       });
@@ -160,8 +162,8 @@ export async function GET(
     // Fetch rankings from API (this can take 60+ seconds due to many API calls)
     // Use a longer timeout (120 seconds) to allow the request to complete
     // Note: getCityRankings now returns null for overview - we calculate it dynamically
-    let rankingsResult: { rankings: any; overview: any } | null = null;
-    let fetchError: Error | null = null;
+    let rankingsResult: { rankings: RankingData; overview: RankingOverviewData } | null = null;
+    let _fetchError: Error | null = null;
     
     try {
       const rankingsPromise = RepliersAPI.analytics.getCityRankings(
@@ -182,10 +184,11 @@ export async function GET(
       if (rankingsResult?.rankings) {
         rankingsResult.overview = calculateRankingOverview(rankingsResult.rankings, cleanName);
       }
-    } catch (error: any) {
-      fetchError = error;
+    } catch (error: unknown) {
+      _fetchError = error instanceof Error ? error : new Error(String(error));
+      const errorMessage = error instanceof Error ? error.message : String(error);
       console.error(`[MarketRankings API] Error fetching rankings:`, {
-        error: error.message,
+        error: errorMessage,
         month: currentMonth,
       });
       
@@ -268,12 +271,12 @@ export async function GET(
           month: currentMonth,
         },
         update: {
-          rankings: rankingsResult.rankings as any,
+          rankings: rankingsResult.rankings as unknown as Record<string, unknown>,
           lastFetchedAt: new Date(),
         },
         create: {
           month: currentMonth,
-          rankings: rankingsResult.rankings as any,
+          rankings: rankingsResult.rankings as unknown as Record<string, unknown>,
           lastFetchedAt: new Date(),
         },
       });
@@ -281,14 +284,17 @@ export async function GET(
         id: savedRankings.id,
         month: savedRankings.month,
         hasRankings: !!savedRankings.rankings,
-        priceDataCount: (savedRankings.rankings as any)?.price?.length || 0,
+        priceDataCount: Array.isArray((savedRankings.rankings as { price?: unknown[] })?.price) 
+          ? (savedRankings.rankings as { price: unknown[] }).price.length 
+          : 0,
       });
-    } catch (dbError: any) {
+    } catch (dbError: unknown) {
+      const error = dbError as { message?: string; code?: string; stack?: string };
       console.error(`[MarketRankings API] Error saving rankings to database:`, {
-        error: dbError.message,
-        code: dbError.code,
+        error: error.message,
+        code: error.code,
         month: currentMonth,
-        stack: dbError.stack,
+        stack: error.stack,
       });
       // Continue to return the data even if save fails
     }
@@ -307,7 +313,7 @@ export async function GET(
     
     // Try to return stale data from database
     try {
-      const resolvedParams = await params;
+      const _resolvedParams = await params;
       const currentMonth = getCurrentMonth();
 
       const staleData = await prisma.marketRankings.findUnique({
