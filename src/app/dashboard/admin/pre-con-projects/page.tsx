@@ -37,6 +37,7 @@ interface PreConProject {
   isPublished: boolean
   featured?: boolean
   createdAt: string
+  updatedAt: string
   creatorName?: string
   creatorId?: string | null
   units?: Array<{ id: string; status: string }>
@@ -72,6 +73,45 @@ export default function PreConProjectsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [projectToDelete, setProjectToDelete] = useState<PreConProject | null>(null)
   const [togglingFeatured, setTogglingFeatured] = useState<string | null>(null)
+
+  // Helper function to format relative time
+  const formatRelativeTime = (dateString: string): string => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+    
+    if (diffInSeconds < 60) {
+      return `${diffInSeconds}sec ago`
+    }
+    
+    const diffInMinutes = Math.floor(diffInSeconds / 60)
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes}min ago`
+    }
+    
+    const diffInHours = Math.floor(diffInMinutes / 60)
+    if (diffInHours < 24) {
+      return `${diffInHours}hr ago`
+    }
+    
+    const diffInDays = Math.floor(diffInHours / 24)
+    if (diffInDays < 7) {
+      return `${diffInDays}day${diffInDays > 1 ? 's' : ''} ago`
+    }
+    
+    const diffInWeeks = Math.floor(diffInDays / 7)
+    if (diffInWeeks < 4) {
+      return `${diffInWeeks}week${diffInWeeks > 1 ? 's' : ''} ago`
+    }
+    
+    const diffInMonths = Math.floor(diffInDays / 30)
+    if (diffInMonths < 12) {
+      return `${diffInMonths}month${diffInMonths > 1 ? 's' : ''} ago`
+    }
+    
+    const diffInYears = Math.floor(diffInDays / 365)
+    return `${diffInYears}year${diffInYears > 1 ? 's' : ''} ago`
+  }
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -312,17 +352,6 @@ export default function PreConProjectsPage() {
       ),
     },
     {
-      key: "developer",
-      header: "Developer",
-      sortable: true,
-      sortKey: "developer",
-      render: (project) => (
-        <div className="text-sm">
-          {project.developerName || project.developer || "N/A"}
-        </div>
-      ),
-    },
-    {
       key: "location",
       header: "Location",
       sortable: true,
@@ -355,6 +384,17 @@ export default function PreConProjectsPage() {
       render: (project) => (
         <div className="text-sm font-medium text-foreground">
           {project.creatorName || "Unknown"}
+        </div>
+      ),
+    },
+    {
+      key: "updatedAt",
+      header: "Updated",
+      sortable: true,
+      sortKey: "updatedAt",
+      render: (project) => (
+        <div className="text-sm text-muted-foreground">
+          {project.updatedAt ? formatRelativeTime(project.updatedAt) : "N/A"}
         </div>
       ),
     },

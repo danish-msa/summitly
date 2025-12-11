@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Plus, X, MapPin, Upload, Loader2, Waves, Dumbbell, Square, Shield, Sparkles, UtensilsCrossed, Coffee, Car, Lock, Wifi, Tv, Gamepad2, ShoppingBag, TreePine, Mountain, Eye, ArrowUpDown, Flame, Users, Palette, Hammer, Sprout, Megaphone, Building2, Home, Ruler, Bed, Bath, Calendar, DollarSign, Construction, ChevronDown, Search } from "lucide-react"
+import { Plus, X, MapPin, Upload, Loader2, Waves, Dumbbell, Square, Shield, Sparkles, UtensilsCrossed, Coffee, Car, Lock, Wifi, Tv, Gamepad2, ShoppingBag, TreePine, Mountain, Eye, ArrowUpDown, Flame, Users, Palette, Hammer, Sprout, Megaphone, Building2, Home, Ruler, Bed, Bath, Calendar, DollarSign, Construction, ChevronDown, Search, Check } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import GlobalLocationSearch from "@/components/common/GlobalLocationSearch"
 import { getGeocode, getLatLng } from "use-places-autocomplete"
@@ -232,6 +232,95 @@ export function PreConProjectForm({
   // Helper to get developers by type
   const getDevelopersByType = (type: string) => {
     return developers.filter(d => d.type === type)
+  }
+
+  // Searchable Select Component for Development Team
+  const SearchableDeveloperSelect = ({ 
+    value, 
+    onValueChange, 
+    placeholder, 
+    developers: devs,
+    allowNone = false 
+  }: { 
+    value: string
+    onValueChange: (value: string) => void
+    placeholder: string
+    developers: Developer[]
+    allowNone?: boolean
+  }) => {
+    const [open, setOpen] = useState(false)
+    const [searchQuery, setSearchQuery] = useState("")
+    
+    const filteredDevelopers = devs.filter(dev =>
+      dev.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    
+    const selectedDeveloper = devs.find(d => d.id === value)
+    
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between rounded-lg h-9"
+          >
+            <span className="truncate">
+              {selectedDeveloper ? selectedDeveloper.name : placeholder}
+            </span>
+            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-full p-0" align="start">
+          <div className="p-2">
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+          </div>
+          <div className="max-h-[300px] overflow-y-auto">
+            {allowNone && (
+              <div
+                className="px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground"
+                onClick={() => {
+                  onValueChange("")
+                  setOpen(false)
+                  setSearchQuery("")
+                }}
+              >
+                None
+              </div>
+            )}
+            {filteredDevelopers.length > 0 ? (
+              filteredDevelopers.map((dev) => (
+                <div
+                  key={dev.id}
+                  className="px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground flex items-center justify-between"
+                  onClick={() => {
+                    onValueChange(dev.id)
+                    setOpen(false)
+                    setSearchQuery("")
+                  }}
+                >
+                  <span>{dev.name}</span>
+                  {value === dev.id && <Check className="h-4 w-4" />}
+                </div>
+              ))
+            ) : (
+              <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                No developers found.
+              </div>
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
+    )
   }
 
   // Load Google Maps API
@@ -934,21 +1023,12 @@ export function PreConProjectForm({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="developer">Developer</Label>
-                  <Select
+                  <SearchableDeveloperSelect
                     value={formData.developer}
                     onValueChange={(value) => setFormData({ ...formData, developer: value })}
-                  >
-                    <SelectTrigger className="rounded-lg">
-                      <SelectValue placeholder="Select developer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getDevelopersByType("DEVELOPER").map((dev) => (
-                        <SelectItem key={dev.id} value={dev.id}>
-                          {dev.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder="Select developer"
+                    developers={getDevelopersByType("DEVELOPER")}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="status">Selling Status</Label>
@@ -2266,27 +2346,18 @@ export function PreConProjectForm({
                   return (
                     <div key={key} className="space-y-2">
                       <Label>{label}</Label>
-                      <Select
-                        value={selectedId || "none"}
+                      <SearchableDeveloperSelect
+                        value={selectedId || ""}
                         onValueChange={(value) =>
                           setFormData({
                             ...formData,
-                            [key]: value === "none" ? "" : value,
+                            [key]: value,
                           })
                         }
-                      >
-                        <SelectTrigger className="rounded-lg">
-                          <SelectValue placeholder={`Select ${label.toLowerCase()}`} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">None</SelectItem>
-                          {availableDevelopers.map((dev) => (
-                            <SelectItem key={dev.id} value={dev.id}>
-                              {dev.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        placeholder={`Select ${label.toLowerCase()}`}
+                        developers={availableDevelopers}
+                        allowNone={true}
+                      />
                       {selectedDeveloper && (
                         <div className="p-3 border rounded-lg bg-muted/50">
                           <p className="text-sm font-medium">{selectedDeveloper.name}</p>
@@ -2312,27 +2383,18 @@ export function PreConProjectForm({
                 {/* Sales & Marketing Company */}
                 <div className="space-y-2">
                   <Label htmlFor="salesMarketingCompany">Sales & Marketing Company</Label>
-                  <Select
-                    value={formData.salesMarketingCompany || "none"}
+                  <SearchableDeveloperSelect
+                    value={formData.salesMarketingCompany || ""}
                     onValueChange={(value) =>
                       setFormData({
                         ...formData,
-                        salesMarketingCompany: value === "none" ? "" : value,
+                        salesMarketingCompany: value,
                       })
                     }
-                  >
-                    <SelectTrigger className="rounded-lg">
-                      <SelectValue placeholder="Select sales & marketing company" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      {getDevelopersByType("MARKETING").map((dev) => (
-                        <SelectItem key={dev.id} value={dev.id}>
-                          {dev.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder="Select sales & marketing company"
+                    developers={getDevelopersByType("MARKETING")}
+                    allowNone={true}
+                  />
                   {formData.salesMarketingCompany && (
                     (() => {
                       const selectedCompany = developers.find(d => d.id === formData.salesMarketingCompany)

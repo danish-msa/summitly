@@ -100,6 +100,7 @@ export async function GET(request: NextRequest) {
       city: 'city',
       isPublished: 'isPublished',
       createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
     }
     
     const sortField = sortFieldMap[sortBy] || 'createdAt'
