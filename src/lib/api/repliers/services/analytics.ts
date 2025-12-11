@@ -2034,7 +2034,8 @@ export async function getCityRankings(
 
     // Process historical stats (avg-soldPrice)
     // Based on API response structure: statistics.soldPrice.aggregates.address.city
-    const historicalSoldPriceAggregates = historicalStatsResponse?.statistics?.soldPrice?.aggregates?.address?.city;
+    // Type assertion needed because aggregates is Record<string, unknown>
+    const historicalSoldPriceAggregates = (historicalStatsResponse?.statistics?.soldPrice?.aggregates as { address?: { city?: Record<string, { avg?: number; med?: number }> } })?.address?.city;
 
     if (historicalSoldPriceAggregates && typeof historicalSoldPriceAggregates === 'object') {
       console.log('[getCityRankings] Processing historical soldPrice aggregates, found cities:', Object.keys(historicalSoldPriceAggregates).length);
