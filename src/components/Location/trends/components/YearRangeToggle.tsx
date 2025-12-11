@@ -23,7 +23,7 @@ export const YearRangeToggle: React.FC<YearRangeToggleProps> = ({
             px-4 py-2 rounded-md text-sm font-medium transition-all
             ${
               selectedYears === years
-                ? 'bg-white text-foreground shadow-sm'
+                ? 'bg-secondary text-white shadow-sm'
                 : 'text-gray-600 hover:text-foreground'
             }
           `}

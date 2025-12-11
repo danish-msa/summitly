@@ -35,9 +35,7 @@ export interface MarketTrendsData {
   } | null;
   salesVolumeByType: {
     months: string[];
-    detached: number[];
-    townhouse: number[];
-    condo: number[];
+    [propertyType: string]: string[] | number[];
   } | null;
   inventoryOverview: {
     newListings: number;

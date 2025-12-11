@@ -11,9 +11,7 @@ export interface AverageSoldPriceData {
 
 export interface SalesVolumeGraphData {
   months: string[];
-  detached: number[];
-  townhouse: number[];
-  condo: number[];
+  [propertyType: string]: string[] | number[]; // Dynamic property types
 }
 
 export interface SalesAndInventoryData {
@@ -154,23 +152,93 @@ export const getAverageSoldPriceChartOption = (data: AverageSoldPriceData) => {
   };
 };
 
+// Color palette for property types
+const PROPERTY_TYPE_COLORS = [
+  { light: 'rgba(239, 68, 68, 0.6)', dark: 'rgba(239, 68, 68, 0.1)', solid: '#ef4444' }, // Red
+  { light: 'rgba(20, 184, 166, 0.6)', dark: 'rgba(20, 184, 166, 0.1)', solid: '#14b8a6' }, // Teal
+  { light: 'rgba(59, 130, 246, 0.6)', dark: 'rgba(59, 130, 246, 0.1)', solid: '#3b82f6' }, // Blue
+  { light: 'rgba(168, 85, 247, 0.6)', dark: 'rgba(168, 85, 247, 0.1)', solid: '#a855f7' }, // Purple
+  { light: 'rgba(236, 72, 153, 0.6)', dark: 'rgba(236, 72, 153, 0.1)', solid: '#ec4899' }, // Pink
+  { light: 'rgba(251, 146, 60, 0.6)', dark: 'rgba(251, 146, 60, 0.1)', solid: '#fb923c' }, // Orange
+  { light: 'rgba(34, 197, 94, 0.6)', dark: 'rgba(34, 197, 94, 0.1)', solid: '#22c55e' }, // Green
+  { light: 'rgba(234, 179, 8, 0.6)', dark: 'rgba(234, 179, 8, 0.1)', solid: '#eab308' }, // Yellow
+  { light: 'rgba(99, 102, 241, 0.6)', dark: 'rgba(99, 102, 241, 0.1)', solid: '#6366f1' }, // Indigo
+  { light: 'rgba(14, 165, 233, 0.6)', dark: 'rgba(14, 165, 233, 0.1)', solid: '#0ea5e9' }, // Sky
+];
+
+// Get color for property type (cycles through palette)
+export const getColorForPropertyType = (index: number) => {
+  return PROPERTY_TYPE_COLORS[index % PROPERTY_TYPE_COLORS.length];
+};
+
 // Chart option for Sales Volume by Property Type
 export const getSalesVolumeChartOption = (data: SalesVolumeGraphData) => {
-  const detachedPercentages = data.detached.map((detached, index) => {
-    const total = detached + data.townhouse[index] + data.condo[index];
-    return total > 0 ? Math.round((detached / total) * 100) : 0;
+  // Extract all property types (exclude 'months')
+  const allPropertyTypes = Object.keys(data).filter(key => key !== 'months');
+  
+  // Filter out property types that have no data (all zeros)
+  const propertyTypes = allPropertyTypes.filter((propertyType) => {
+    const counts = data[propertyType] as number[];
+    if (!counts || counts.length === 0) return false;
+    // Check if there's at least one non-zero value
+    return counts.some(count => count > 0);
   });
   
-  const townhousePercentages = data.townhouse.map((townhouse, index) => {
-    const total = data.detached[index] + townhouse + data.condo[index];
-    return total > 0 ? Math.round((townhouse / total) * 100) : 0;
-  });
+  if (propertyTypes.length === 0) {
+    return {
+      tooltip: { trigger: 'axis' as const },
+      xAxis: { type: 'category' as const, data: [] },
+      yAxis: { type: 'value' as const },
+      series: []
+    };
+  }
+
+  // Calculate percentages for each property type (only for property types with data)
+  const percentagesByType: Record<string, number[]> = {};
+  const monthCount = data.months.length;
   
-  const condoPercentages = data.condo.map((condo, index) => {
-    const total = data.detached[index] + data.townhouse[index] + condo;
-    return total > 0 ? Math.round((condo / total) * 100) : 0;
+  propertyTypes.forEach((propertyType) => {
+    const counts = data[propertyType] as number[];
+    percentagesByType[propertyType] = counts.map((count, index) => {
+      // Calculate total for this month across property types with data only
+      const total = propertyTypes.reduce((sum, pt) => {
+        const ptCounts = data[pt] as number[];
+        return sum + (ptCounts[index] || 0);
+      }, 0);
+      return total > 0 ? Math.round((count / total) * 100) : 0;
+    });
   });
-  
+
+  // Generate series dynamically
+  const series = propertyTypes.map((propertyType, index) => {
+    const colors = getColorForPropertyType(index);
+    return {
+      name: propertyType,
+      type: 'line' as const,
+      stack: 'Total',
+      areaStyle: {
+        color: {
+          type: 'linear' as const,
+          x: 0,
+          y: 0,
+          x2: 0,
+          y2: 1,
+          colorStops: [
+            { offset: 0, color: colors.light },
+            { offset: 1, color: colors.dark }
+          ]
+        }
+      },
+      lineStyle: {
+        width: 0
+      },
+      emphasis: {
+        focus: 'series' as const
+      },
+      data: percentagesByType[propertyType]
+    };
+  });
+
   return {
     tooltip: {
       trigger: 'axis' as const,
@@ -189,7 +257,7 @@ export const getSalesVolumeChartOption = (data: SalesVolumeGraphData) => {
       textStyle: { color: '#1f2937' }
     },
     legend: {
-      data: ['Detached', 'Townhouse', 'Condo'],
+      data: propertyTypes,
       top: '5%',
       textStyle: {
         color: '#1f2937'
@@ -225,83 +293,7 @@ export const getSalesVolumeChartOption = (data: SalesVolumeGraphData) => {
         }
       }
     },
-    series: [
-      {
-        name: 'Detached',
-        type: 'line' as const,
-        stack: 'Total',
-        areaStyle: {
-          color: {
-            type: 'linear' as const,
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: [
-              { offset: 0, color: 'rgba(239, 68, 68, 0.6)' },
-              { offset: 1, color: 'rgba(239, 68, 68, 0.1)' }
-            ]
-          }
-        },
-        lineStyle: {
-          width: 0
-        },
-        emphasis: {
-          focus: 'series' as const
-        },
-        data: detachedPercentages
-      },
-      {
-        name: 'Townhouse',
-        type: 'line' as const,
-        stack: 'Total',
-        areaStyle: {
-          color: {
-            type: 'linear' as const,
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: [
-              { offset: 0, color: 'rgba(20, 184, 166, 0.6)' },
-              { offset: 1, color: 'rgba(20, 184, 166, 0.1)' }
-            ]
-          }
-        },
-        lineStyle: {
-          width: 0
-        },
-        emphasis: {
-          focus: 'series' as const
-        },
-        data: townhousePercentages
-      },
-      {
-        name: 'Condo',
-        type: 'line' as const,
-        stack: 'Total',
-        areaStyle: {
-          color: {
-            type: 'linear' as const,
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: [
-              { offset: 0, color: 'rgba(59, 130, 246, 0.6)' },
-              { offset: 1, color: 'rgba(59, 130, 246, 0.1)' }
-            ]
-          }
-        },
-        lineStyle: {
-          width: 0
-        },
-        emphasis: {
-          focus: 'series' as const
-        },
-        data: condoPercentages
-      }
-    ]
+    series
   };
 };
 

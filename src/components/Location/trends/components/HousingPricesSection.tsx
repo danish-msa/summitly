@@ -18,7 +18,8 @@ import { toast } from "sonner";
 import { formatPrice } from '../utils/helpers';
 import { 
   getAverageSoldPriceChartOption, 
-  getSalesVolumeChartOption
+  getSalesVolumeChartOption,
+  getColorForPropertyType
 } from '../utils/chartOptions';
 import { 
   generateSalesVolumeMockData,
@@ -49,12 +50,13 @@ interface HousingPricesSectionProps {
   onRefresh?: () => Promise<void>;
 }
 
-const PriceCard = ({ label, value, change, showChange = false, subtitle }: { 
+const PriceCard = ({ label, value, change, showChange = false, subtitle, dollarChange }: { 
   label: string; 
   value: string | number; 
   change?: number; 
   showChange?: boolean;
   subtitle?: string;
+  dollarChange?: number;
 }) => {
   const isPositive = change !== undefined && change > 0;
   const isNegative = change !== undefined && change < 0;
@@ -76,12 +78,18 @@ const PriceCard = ({ label, value, change, showChange = false, subtitle }: {
         )}
         {subtitle && (
           <div className="text-sm text-muted-foreground mb-1">
-            ({subtitle})
+          {subtitle}
           </div>
         )}
+
+      {showChange && dollarChange !== undefined && dollarChange !== 0 && (
+        <div className={`text-sm font-medium mb-2 ${isPositive ? 'text-green-600' : isNegative ? 'text-red-600' : 'text-gray-600'}`}>
+          {isPositive ? '+' : ''}{formatPrice(dollarChange)}
+        </div>
+      )}
       </div>
       
-      <div className="text-sm text-muted-foreground mt-auto pt-2">
+      <div className="text-sm text-muted-foreground mt-auto">
         {label}
       </div>
     </Card>
@@ -107,7 +115,7 @@ export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({
   const [averageSoldPriceViewMode, setAverageSoldPriceViewMode] = useState<"chart" | "table">("chart");
   const [salesVolumeViewMode, setSalesVolumeViewMode] = useState<"chart" | "table">("chart");
   const [averageSoldPriceData, setAverageSoldPriceData] = useState<{ months: string[]; prices: number[]; medianPrices?: number[]; counts: number[] }>({ months: [], prices: [], medianPrices: [], counts: [] });
-  const [salesVolumeGraphData, setSalesVolumeGraphData] = useState<{ months: string[]; detached: number[]; townhouse: number[]; condo: number[] }>({ months: [], detached: [], townhouse: [], condo: [] });
+  const [salesVolumeGraphData, setSalesVolumeGraphData] = useState<{ months: string[]; [propertyType: string]: string[] | number[] }>({ months: [] });
   const [salesVolumeTableData, setSalesVolumeTableData] = useState(generateSalesVolumeMockData());
   const [priceOverviewData, setPriceOverviewData] = useState({
     current: {
@@ -257,18 +265,27 @@ export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({
                   value={`${priceOverviewData.current.monthlyChange > 0 ? '+' : ''}${priceOverviewData.current.monthlyChange}%`}
                   change={priceOverviewData.current.monthlyChange}
                   showChange={true}
+                  dollarChange={priceOverviewData.current.avgPrice && priceOverviewData.current.monthlyChange !== 0 
+                    ? (priceOverviewData.current.avgPrice * (priceOverviewData.current.monthlyChange / 100)) / (1 + priceOverviewData.current.monthlyChange / 100)
+                    : undefined}
                 />
                 <PriceCard 
                   label="Quarterly change" 
                   value={`${priceOverviewData.current.quarterlyChange > 0 ? '+' : ''}${priceOverviewData.current.quarterlyChange}%`}
                   change={priceOverviewData.current.quarterlyChange}
                   showChange={true}
+                  dollarChange={priceOverviewData.current.avgPrice && priceOverviewData.current.quarterlyChange !== 0 
+                    ? (priceOverviewData.current.avgPrice * (priceOverviewData.current.quarterlyChange / 100)) / (1 + priceOverviewData.current.quarterlyChange / 100)
+                    : undefined}
                 />
                 <PriceCard 
                   label="Yearly change" 
                   value={`${priceOverviewData.current.yearlyChange > 0 ? '+' : ''}${priceOverviewData.current.yearlyChange}%`}
                   change={priceOverviewData.current.yearlyChange}
                   showChange={true}
+                  dollarChange={priceOverviewData.current.avgPrice && priceOverviewData.current.yearlyChange !== 0 
+                    ? (priceOverviewData.current.avgPrice * (priceOverviewData.current.yearlyChange / 100)) / (1 + priceOverviewData.current.yearlyChange / 100)
+                    : undefined}
                 />
               </div>
             </TabsContent>
@@ -285,18 +302,27 @@ export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({
                   value={`${priceOverviewData.past.monthlyChange > 0 ? '+' : ''}${priceOverviewData.past.monthlyChange}%`}
                   change={priceOverviewData.past.monthlyChange}
                   showChange={true}
+                  dollarChange={priceOverviewData.past.avgPrice && priceOverviewData.past.monthlyChange !== 0 
+                    ? (priceOverviewData.past.avgPrice * (priceOverviewData.past.monthlyChange / 100)) / (1 + priceOverviewData.past.monthlyChange / 100)
+                    : undefined}
                 />
                 <PriceCard 
                   label="Quarterly change" 
                   value={`${priceOverviewData.past.quarterlyChange > 0 ? '+' : ''}${priceOverviewData.past.quarterlyChange}%`}
                   change={priceOverviewData.past.quarterlyChange}
                   showChange={true}
+                  dollarChange={priceOverviewData.past.avgPrice && priceOverviewData.past.quarterlyChange !== 0 
+                    ? (priceOverviewData.past.avgPrice * (priceOverviewData.past.quarterlyChange / 100)) / (1 + priceOverviewData.past.quarterlyChange / 100)
+                    : undefined}
                 />
                 <PriceCard 
                   label="Yearly change" 
                   value={`${priceOverviewData.past.yearlyChange > 0 ? '+' : ''}${priceOverviewData.past.yearlyChange}%`}
                   change={priceOverviewData.past.yearlyChange}
                   showChange={true}
+                  dollarChange={priceOverviewData.past.avgPrice && priceOverviewData.past.yearlyChange !== 0 
+                    ? (priceOverviewData.past.avgPrice * (priceOverviewData.past.yearlyChange / 100)) / (1 + priceOverviewData.past.yearlyChange / 100)
+                    : undefined}
                 />
               </div>
             </TabsContent>
@@ -462,48 +488,55 @@ export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({
                     <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
                       <TableRow>
                         <TableHead className="font-semibold">Month</TableHead>
-                        <TableHead className="text-right font-semibold">
-                          <span className="inline-flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                            Detached
-                          </span>
-                        </TableHead>
-                        <TableHead className="text-right font-semibold">
-                          <span className="inline-flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-teal-500"></span>
-                            Condos
-                          </span>
-                        </TableHead>
-                        <TableHead className="text-right font-semibold">
-                          <span className="inline-flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                            Townhouse
-                          </span>
-                        </TableHead>
+                        {Object.keys(salesVolumeGraphData)
+                          .filter(key => key !== 'months')
+                          .filter((propertyType) => {
+                            // Only show property types with data
+                            const counts = salesVolumeGraphData[propertyType] as number[];
+                            return counts && counts.length > 0 && counts.some(count => count > 0);
+                          })
+                          .map((propertyType, index) => {
+                            const colors = getColorForPropertyType(index);
+                            return (
+                              <TableHead key={propertyType} className="text-right font-semibold">
+                                <span className="inline-flex items-center gap-2">
+                                  <span 
+                                    className="w-2 h-2 rounded-full" 
+                                    style={{ backgroundColor: colors.solid }}
+                                  ></span>
+                                  {propertyType}
+                                </span>
+                              </TableHead>
+                            );
+                          })}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {salesVolumeGraphData.months.map((month, index) => (
                         <TableRow key={month} className="hover:bg-muted/50 transition-colors">
                           <TableCell className="font-medium">{month}</TableCell>
-                          <TableCell className="text-right">
-                            <span className="inline-flex items-center gap-2">
-                              <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                              {salesVolumeGraphData.detached[index] || 0}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <span className="inline-flex items-center gap-2">
-                              <span className="w-2 h-2 rounded-full bg-teal-500"></span>
-                              {salesVolumeGraphData.condo[index] || 0}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <span className="inline-flex items-center gap-2">
-                              <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                              {salesVolumeGraphData.townhouse[index] || 0}
-                            </span>
-                          </TableCell>
+                          {Object.keys(salesVolumeGraphData)
+                            .filter(key => key !== 'months')
+                            .filter((propertyType) => {
+                              // Only show property types with data
+                              const counts = salesVolumeGraphData[propertyType] as number[];
+                              return counts && counts.length > 0 && counts.some(count => count > 0);
+                            })
+                            .map((propertyType, propIndex) => {
+                              const colors = getColorForPropertyType(propIndex);
+                              const counts = salesVolumeGraphData[propertyType] as number[];
+                              return (
+                                <TableCell key={propertyType} className="text-right">
+                                  <span className="inline-flex items-center gap-2">
+                                    <span 
+                                      className="w-2 h-2 rounded-full" 
+                                      style={{ backgroundColor: colors.solid }}
+                                    ></span>
+                                    {counts[index] || 0}
+                                  </span>
+                                </TableCell>
+                              );
+                            })}
                         </TableRow>
                       ))}
                     </TableBody>

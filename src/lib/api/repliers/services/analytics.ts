@@ -776,9 +776,7 @@ export async function getAverageSoldPriceData(params: AnalyticsParams): Promise<
 
 export interface SalesVolumeByTypeData {
   months: string[];
-  detached: number[];
-  townhouse: number[];
-  condo: number[];
+  [propertyType: string]: string[] | number[]; // Dynamic property types
 }
 
 export async function getSalesVolumeByType(params: AnalyticsParams): Promise<SalesVolumeByTypeData | null> {
@@ -814,13 +812,31 @@ export async function getSalesVolumeByType(params: AnalyticsParams): Promise<Sal
   }
 
   const months: string[] = [];
-  const detached: number[] = [];
-  const townhouse: number[] = [];
-  const condo: number[] = [];
+  const propertyTypeData: Record<string, number[]> = {};
 
   const soldPriceMth = response.statistics.soldPrice.mth;
   const sortedMonths = Object.keys(soldPriceMth).sort();
 
+  // First pass: collect all unique property types
+  const allPropertyTypes = new Set<string>();
+  sortedMonths.forEach((month) => {
+    const monthData = soldPriceMth[month];
+    const aggregates = monthData?.aggregates as Record<string, unknown> | undefined;
+    const propertyTypeAggregates = (aggregates?.details as Record<string, unknown> | undefined)?.propertyType as Record<string, { count?: number }> | undefined || {};
+    
+    Object.keys(propertyTypeAggregates).forEach((propertyType) => {
+      if (propertyTypeAggregates[propertyType]?.count && propertyTypeAggregates[propertyType].count! > 0) {
+        allPropertyTypes.add(propertyType);
+      }
+    });
+  });
+
+  // Initialize arrays for each property type
+  allPropertyTypes.forEach((propertyType) => {
+    propertyTypeData[propertyType] = [];
+  });
+
+  // Second pass: populate data for each month
   sortedMonths.forEach((month) => {
     const date = new Date(month + '-01');
     months.push(date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
@@ -829,16 +845,13 @@ export async function getSalesVolumeByType(params: AnalyticsParams): Promise<Sal
     const aggregates = monthData?.aggregates as Record<string, unknown> | undefined;
     const propertyTypeAggregates = (aggregates?.details as Record<string, unknown> | undefined)?.propertyType as Record<string, { count?: number }> | undefined || {};
     
-    // Map API property types to our chart categories:
-    // "Detached" -> detached
-    // "Condo Apartment" -> condo
-    // "Condo Townhouse" -> townhouse
-    detached.push(propertyTypeAggregates['Detached']?.count || 0);
-    townhouse.push(propertyTypeAggregates['Condo Townhouse']?.count || 0);
-    condo.push(propertyTypeAggregates['Condo Apartment']?.count || 0);
+    // Populate data for each property type
+    allPropertyTypes.forEach((propertyType) => {
+      propertyTypeData[propertyType].push(propertyTypeAggregates[propertyType]?.count || 0);
+    });
   });
 
-  return { months, detached, townhouse, condo };
+  return { months, ...propertyTypeData };
 }
 
 export interface AverageSoldPriceByTypeData {

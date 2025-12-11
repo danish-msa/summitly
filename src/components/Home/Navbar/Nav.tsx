@@ -208,7 +208,7 @@ const Nav = ({ openNav }: Props) => {
                       alt="Summitly Logo"
                       width={200}
                       height={60}
-                      className="h-8 lg:h-14 w-auto transition-all duration-300"
+                      className="h-8 lg:h-12 w-auto transition-all duration-300"
                       priority
                       quality={75}
                     />
@@ -333,7 +333,7 @@ const Nav = ({ openNav }: Props) => {
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
                     placeholder="Search ..."
-                    className="pl-3 pr-12 h-10 text-base bg-white/50 z-10"
+                    className="pl-3 rounded-full pr-12 h-10 text-base bg-white/50 z-10"
                   />
                   {/* Clear and Search buttons */}
                   <div className="absolute inset-y-0 right-0 flex items-center pr-1 space-x-1">
