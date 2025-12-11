@@ -34,8 +34,8 @@ export function generateKeyFacts(property: PropertyListing): Record<string, stri
   }
 
   // Year Built
-  if (property.details?.yearBuilt) {
-    keyFacts['Year Built'] = property.details.yearBuilt;
+  if ('yearBuilt' in (property.details || {}) && property.details?.yearBuilt) {
+    keyFacts['Year Built'] = (property.details as { yearBuilt?: string | number | null }).yearBuilt as string | number;
   }
 
   // Lot Size
