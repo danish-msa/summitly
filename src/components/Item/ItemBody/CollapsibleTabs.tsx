@@ -143,8 +143,8 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property, rawProperty
         <MarketAnalytics 
           propertyAddress={property.address.location || `${property.address.streetNumber || ''} ${property.address.streetName || ''} ${property.address.streetSuffix || ''}, ${property.address.city || ''}, ${property.address.state || ''} ${property.address.zip || ''}`.trim()}
           propertyClass={property.class || 'residential'}
-          latitude={property.map?.latitude}
-          longitude={property.map?.longitude}
+          latitude={property.map?.latitude ?? undefined}
+          longitude={property.map?.longitude ?? undefined}
           city={property.address.city || undefined} // Pass city directly from property
         />
       )
