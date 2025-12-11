@@ -133,10 +133,12 @@ export async function GET(
       // If rankings exist in database, calculate overview dynamically for current city
       if (marketRankings?.rankings) {
         const isDataStale = isStale(marketRankings.lastFetchedAt);
-        const overview = calculateRankingOverview(marketRankings.rankings, cleanName);
+        // Prisma returns JsonValue, so we need to validate and cast it
+        const rankingsData = marketRankings.rankings as unknown as RankingData;
+        const overview = calculateRankingOverview(rankingsData, cleanName);
         console.log(`[MarketRankings API] Serving database rankings for month ${currentMonth}${isDataStale ? ' (stale, but using cached)' : ''}`);
         return NextResponse.json({
-          rankings: marketRankings.rankings,
+          rankings: rankingsData,
           overview: overview,
           cached: true,
           stale: isDataStale,
@@ -323,9 +325,11 @@ export async function GET(
       });
 
       if (staleData?.rankings) {
-        const overview = calculateRankingOverview(staleData.rankings, cleanName);
+        // Prisma returns JsonValue, so we need to validate and cast it
+        const rankingsData = staleData.rankings as unknown as RankingData;
+        const overview = calculateRankingOverview(rankingsData, cleanName);
         return NextResponse.json({
-          rankings: staleData.rankings,
+          rankings: rankingsData,
           overview: overview,
           cached: true,
           stale: true,
