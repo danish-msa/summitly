@@ -79,14 +79,15 @@ export function SearchableSelect({
   
   React.Children.forEach(children, (child) => {
     if (React.isValidElement(child) && child.type === SelectItem) {
-      const childValue = child.props.value
-      const childLabel = typeof child.props.children === 'string' 
-        ? child.props.children 
+      const childProps = child.props as { value: string; children?: React.ReactNode }
+      const childValue = childProps.value
+      const childLabel = typeof childProps.children === 'string' 
+        ? childProps.children 
         : childValue
       items.push({
         value: childValue,
         label: childLabel,
-        children: child.props.children,
+        children: childProps.children,
       })
     }
   })
