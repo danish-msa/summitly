@@ -1978,7 +1978,7 @@ export async function getCityRankings(
         const data = cityDataMap.get(city)!;
         data.averagePrice = Math.round(cityData?.avg || 0);
         data.medianPrice = Math.round(cityData?.med || 0);
-        data.closedCount = cityData?.count || 0;
+        // closedCount comes from closedAggregates, not soldPriceAggregates
       });
     } else {
       console.warn('[getCityRankings] No soldPrice aggregates found in current stats response');
