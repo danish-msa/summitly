@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { RepliersAPI } from '@/lib/api/repliers';
 import type { RankingData, RankingOverviewData } from '@/lib/api/repliers/services/analytics';
+import { Prisma } from '@prisma/client';
 
 // ISR: Revalidate every 30 days (monthly market data)
 export const revalidate = 2592000; // 30 days in seconds
@@ -281,12 +282,12 @@ export async function GET(
           month: currentMonth,
         },
         update: {
-          rankings: rankingsResult.rankings as unknown as Record<string, unknown>,
+          rankings: rankingsResult.rankings as unknown as Prisma.InputJsonValue,
           lastFetchedAt: new Date(),
         },
         create: {
           month: currentMonth,
-          rankings: rankingsResult.rankings as unknown as Record<string, unknown>,
+          rankings: rankingsResult.rankings as unknown as Prisma.InputJsonValue,
           lastFetchedAt: new Date(),
         },
       });
