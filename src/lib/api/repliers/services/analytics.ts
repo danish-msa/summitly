@@ -1932,16 +1932,19 @@ export async function getCityRankings(
     const turnoverDataArray = await batchPromises(cities, 10, fetchTurnoverData);
     const newListingsCountsMap = new Map<string, number>();
     const closedCounts28DaysMap = new Map<string, number>();
-    turnoverDataArray.forEach(({ city, newCount, closedCount }) => {
-      if (city) {
-        if (newCount) {
-          newListingsCountsMap.set(city, newCount);
+    // Filter out null values before iterating
+    turnoverDataArray
+      .filter((item): item is { city: string; newCount: number; closedCount: number } => item !== null)
+      .forEach(({ city, newCount, closedCount }) => {
+        if (city) {
+          if (newCount) {
+            newListingsCountsMap.set(city, newCount);
+          }
+          if (closedCount !== undefined) {
+            closedCounts28DaysMap.set(city, closedCount);
+          }
         }
-        if (closedCount !== undefined) {
-          closedCounts28DaysMap.set(city, closedCount);
-        }
-      }
-    });
+      });
 
     // Debug: Log the response structure to understand the format
     console.log('[getCityRankings] Current stats response structure:', {
