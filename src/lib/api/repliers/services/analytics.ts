@@ -1962,9 +1962,10 @@ export async function getCityRankings(
     // Process current stats (avg-soldPrice, med-soldPrice, avg-daysOnMarket, cnt-closed)
     // Based on API response structure: statistics.soldPrice.aggregates.address.city
     const currentYear = new Date().getFullYear().toString();
-    const soldPriceAggregates = currentStatsResponse?.statistics?.soldPrice?.aggregates?.address?.city;
-    const daysOnMarketAggregates = currentStatsResponse?.statistics?.daysOnMarket?.aggregates?.address?.city;
-    const closedAggregates = currentStatsResponse?.statistics?.closed?.yr?.[currentYear]?.aggregates?.address?.city;
+    // Type assertion needed because aggregates is Record<string, unknown>
+    const soldPriceAggregates = (currentStatsResponse?.statistics?.soldPrice?.aggregates as { address?: { city?: Record<string, { avg?: number; med?: number }> } })?.address?.city;
+    const daysOnMarketAggregates = (currentStatsResponse?.statistics?.daysOnMarket?.aggregates as { address?: { city?: Record<string, { avg?: number }> } })?.address?.city;
+    const closedAggregates = (currentStatsResponse?.statistics?.closed?.yr?.[currentYear]?.aggregates as { address?: { city?: Record<string, { count?: number }> } })?.address?.city;
 
     // Process sold price aggregates (avg, med)
     if (soldPriceAggregates && typeof soldPriceAggregates === 'object') {
