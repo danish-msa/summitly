@@ -74,12 +74,13 @@ const PriceCard = ({ label, value, change, showChange = false, subtitle }: {
             ) : null}
           </div>
         )}
+        {subtitle && (
+          <div className="text-sm text-muted-foreground mb-1">
+            ({subtitle})
+          </div>
+        )}
       </div>
-      {subtitle && (
-        <div className="text-sm text-muted-foreground mb-1">
-          {subtitle}
-        </div>
-      )}
+      
       <div className="text-sm text-muted-foreground mt-auto pt-2">
         {label}
       </div>

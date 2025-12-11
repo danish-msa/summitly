@@ -283,37 +283,17 @@ export async function GET(
       const yearsParam = searchParams.get('years');
       const years = yearsParam ? parseInt(yearsParam, 10) : 2;
 
-      // Try new constraint first (with years), fallback to old constraint if migration not run yet
-      let staleData = null;
-      try {
-        staleData = await prisma.marketTrends.findUnique({
-          where: {
-            locationType_locationName_month_years: {
-              locationType: locationType,
-              locationName: cleanName,
-              month: currentMonth,
-              years: years,
-            },
+      // Use the new constraint with years
+      const staleData = await prisma.marketTrends.findUnique({
+        where: {
+          locationType_locationName_month_years: {
+            locationType: locationType,
+            locationName: cleanName,
+            month: currentMonth,
+            years: years,
           },
-        });
-      } catch (constraintError: unknown) {
-        // If new constraint doesn't exist yet (migration not run), try old constraint
-        const error = constraintError as { code?: string; message?: string };
-        if (error.code === 'P2025' || error.message?.includes('Unique constraint')) {
-          console.log('[MarketTrends API] New constraint not found, trying old constraint format');
-          staleData = await prisma.marketTrends.findUnique({
-            where: {
-              locationType_locationName_month: {
-                locationType: locationType,
-                locationName: cleanName,
-                month: currentMonth,
-              },
-            },
-          });
-        } else {
-          throw constraintError;
-        }
-      }
+        },
+      });
 
       if (staleData) {
         console.log(`[MarketTrends API] Returning stale data as fallback for ${locationType}:${cleanName}`);
