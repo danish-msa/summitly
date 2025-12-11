@@ -209,7 +209,7 @@ export function generatePropertyDetailsData(
     
     // Active statuses
     const activeStatuses = ['new', 'sc', 'pc', 'hold'];
-    return activeStatuses.includes(lastStatus);
+    return lastStatus ? activeStatuses.includes(lastStatus) : false;
   };
 
   // Get end date from timestamps with better logic
@@ -231,7 +231,7 @@ export function generatePropertyDetailsData(
     // If listing is still active (current listing with active status), use current date
     const lastStatus = history.lastStatus?.toLowerCase();
     const activeStatuses = ['new', 'sc', 'pc', 'hold'];
-    if (isCurrentListing && activeStatuses.includes(lastStatus)) {
+    if (isCurrentListing && lastStatus && activeStatuses.includes(lastStatus)) {
       return new Date().toISOString();
     }
     
