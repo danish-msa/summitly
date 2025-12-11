@@ -2214,7 +2214,12 @@ export async function getCityRankings(
         daysOnMarket: daysOnMarketData,
         turnover: turnoverData,
       },
-      overview: null, // Overview is calculated dynamically per city
+      overview: {
+        mostExpensive: 0,
+        fastestGrowing: 0,
+        fastestSelling: 0,
+        highestTurnover: 0,
+      }, // Overview is calculated dynamically per city, but we need to return a valid object
     };
   } catch (error) {
     console.error('[getCityRankings] Exception:', error);
