@@ -1994,10 +1994,7 @@ export async function getCityRankings(
         }
         const data = cityDataMap.get(city)!;
         data.daysOnMarket = Math.round(cityData?.avg || 0);
-        // Also update closed count if available from daysOnMarket response
-        if (cityData?.count && !data.closedCount) {
-          data.closedCount = cityData.count;
-        }
+        // closedCount is set from closedAggregates, not from daysOnMarket
       });
     } else {
       console.warn('[getCityRankings] No daysOnMarket aggregates found in current stats response');
