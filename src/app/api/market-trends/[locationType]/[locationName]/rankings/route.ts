@@ -180,10 +180,12 @@ export async function GET(
         }, 120000); // 120 second timeout
       });
 
-      rankingsResult = await Promise.race([rankingsPromise, timeoutPromise]);
+      const raceResult = await Promise.race([rankingsPromise, timeoutPromise]);
+      rankingsResult = raceResult as { rankings: RankingData; overview: RankingOverviewData };
       
       // Calculate overview dynamically for current city (overview from API is null)
       if (rankingsResult?.rankings) {
+        // rankingsResult.rankings is already RankingData from the type definition
         rankingsResult.overview = calculateRankingOverview(rankingsResult.rankings, cleanName);
       }
     } catch (error: unknown) {
@@ -196,10 +198,12 @@ export async function GET(
       
       // If timeout or error, try to return stale data if available
       if (marketRankings?.rankings) {
-        const overview = calculateRankingOverview(marketRankings.rankings, cleanName);
+        // Prisma returns JsonValue, so we need to validate and cast it
+        const rankingsData = marketRankings.rankings as unknown as RankingData;
+        const overview = calculateRankingOverview(rankingsData, cleanName);
         console.log(`[MarketRankings API] API fetch failed/timeout, returning stale database data for month ${currentMonth}`);
         return NextResponse.json({
-          rankings: marketRankings.rankings,
+          rankings: rankingsData,
           overview: overview,
           cached: true,
           stale: true,
@@ -216,10 +220,12 @@ export async function GET(
     if (!rankingsResult) {
       // Try to return stale data if available
       if (marketRankings?.rankings) {
-        const overview = calculateRankingOverview(marketRankings.rankings, cleanName);
+        // Prisma returns JsonValue, so we need to validate and cast it
+        const rankingsData = marketRankings.rankings as unknown as RankingData;
+        const overview = calculateRankingOverview(rankingsData, cleanName);
         console.log(`[MarketRankings API] No rankings result, returning stale database data for month ${currentMonth}`);
         return NextResponse.json({
-          rankings: marketRankings.rankings,
+          rankings: rankingsData,
           overview: overview,
           cached: true,
           stale: true,
@@ -247,10 +253,12 @@ export async function GET(
       
       // Try to return stale data if available instead of storing empty data
       if (marketRankings?.rankings) {
-        const overview = calculateRankingOverview(marketRankings.rankings, cleanName);
+        // Prisma returns JsonValue, so we need to validate and cast it
+        const rankingsData = marketRankings.rankings as unknown as RankingData;
+        const overview = calculateRankingOverview(rankingsData, cleanName);
         console.log(`[MarketRankings API] Returning stale database data instead of storing empty data for month ${currentMonth}`);
         return NextResponse.json({
-          rankings: marketRankings.rankings,
+          rankings: rankingsData,
           overview: overview,
           cached: true,
           stale: true,
@@ -302,6 +310,7 @@ export async function GET(
     }
 
     // Calculate overview for current city dynamically
+    // rankingsResult.rankings is already RankingData from the type definition (line 167)
     const overview = calculateRankingOverview(rankingsResult.rankings, cleanName);
 
     return NextResponse.json({
