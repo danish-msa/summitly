@@ -213,15 +213,33 @@ export function generatePropertyDetailsData(
   };
 
   // Get end date from timestamps with better logic
-  const getEndDate = (history: { timestamps?: { closedDate?: string; terminatedDate?: string; expiryDate?: string; soldDate?: string; unavailableDate?: string } }, isCurrentListing: boolean): string => {
+  const getEndDate = (history: { 
+    lastStatus?: string | null; 
+    soldDate?: string | null; 
+    soldPrice?: number | null;
+    listPrice?: number;
+    mlsNumber?: string;
+    images?: string[];
+    photoCount?: number;
+    office?: { brokerageName?: string };
+    timestamps?: { 
+      closedDate?: string; 
+      terminatedDate?: string; 
+      expiryDate?: string; 
+      soldDate?: string; 
+      unavailableDate?: string;
+      listingEntryDate?: string;
+    } 
+  }, isCurrentListing: boolean): string => {
     const timestamps = history.timestamps;
     if (!timestamps) {
       // If no timestamps and it's the current listing, use current date
       return isCurrentListing ? new Date().toISOString() : '';
     }
     
-    // Priority: soldDate > closedDate > terminatedDate > unavailableDate > expiryDate
-    // For sold listings, use soldDate if available
+    // Priority: soldDate (from history) > soldDate (from timestamps) > closedDate > terminatedDate > unavailableDate > expiryDate
+    // For sold listings, use soldDate if available (check history first, then timestamps)
+    if (history.soldDate) return history.soldDate;
     if (timestamps.soldDate) return timestamps.soldDate;
     if (timestamps.closedDate) return timestamps.closedDate;
     if (timestamps.terminatedDate) return timestamps.terminatedDate;
