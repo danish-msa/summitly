@@ -218,12 +218,19 @@ class RepliersAPIClient {
       
       // Debug logging for analytics requests
       if (config.endpoint === '/listings' && config.params?.statistics) {
+        // Convert headers to a record for safe access
+        const headersRecord = headers instanceof Headers 
+          ? Object.fromEntries(headers.entries())
+          : Array.isArray(headers)
+          ? Object.fromEntries(headers)
+          : headers;
+        const apiKey = headersRecord['REPLIERS-API-KEY'] as string | undefined;
         console.log('[Repliers Client] Analytics Request:', {
           url,
           authMethod: config.authMethod,
-          hasApiKeyInHeader: !!headers['REPLIERS-API-KEY'],
-          apiKeyLength: headers['REPLIERS-API-KEY']?.toString().length || 0,
-          apiKeyPreview: headers['REPLIERS-API-KEY']?.toString().substring(0, 10) + '...' || 'none',
+          hasApiKeyInHeader: !!apiKey,
+          apiKeyLength: apiKey?.length || 0,
+          apiKeyPreview: apiKey ? apiKey.substring(0, 10) + '...' : 'none',
           params: config.params,
         });
       }
