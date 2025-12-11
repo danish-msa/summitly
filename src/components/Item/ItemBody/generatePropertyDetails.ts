@@ -17,6 +17,44 @@ function transformImageUrl(imagePath: string): string {
   return `${API_CONFIG.cdnUrl}/${cleanPath}`;
 }
 
+// Extended details type that includes all possible properties from the API
+type ExtendedPropertyDetails = {
+  numBathrooms: number;
+  numBathroomsPlus: number;
+  numBedrooms: number;
+  numBedroomsPlus: number | string;
+  propertyType: string;
+  sqft: number | string;
+  description?: string | null;
+} & {
+  style?: string | null;
+  yearBuilt?: string | number | null;
+  numRooms?: number | null;
+  numFireplaces?: number | null;
+  heating?: string | null;
+  airConditioning?: string | null;
+  centralAirConditioning?: string | null;
+  waterSource?: string | null;
+  sewer?: string | null;
+  exteriorConstruction1?: string | null;
+  exteriorConstruction2?: string | null;
+  foundationType?: string | null;
+  roofMaterial?: string | null;
+  flooringType?: string | null;
+  numGarageSpaces?: number | null;
+  numParkingSpaces?: number | null;
+  garage?: string | null;
+  zoning?: string | null;
+  zoningDescription?: string | null;
+  swimmingPool?: string | null;
+  fireplace?: string | null;
+  balcony?: string | null;
+  patio?: string | null;
+  elevator?: string | null;
+  viewType?: string | null;
+  waterfront?: string | null;
+};
+
 /**
  * Generate property details data structure from real property data
  */
@@ -26,64 +64,65 @@ export function generatePropertyDetailsData(
 ) {
   // Generate Key Facts from real data
   const keyFacts = generateKeyFacts(property);
+  const details = property.details as ExtendedPropertyDetails | undefined;
 
   // Property Details
   const propertyDetails: Record<string, string> = {};
-  if (property.details?.propertyType) propertyDetails['Property Type'] = property.details.propertyType;
+  if (details?.propertyType) propertyDetails['Property Type'] = details.propertyType;
   if (property.class) propertyDetails['Class'] = property.class;
   if (property.type) propertyDetails['Type'] = property.type;
-  if (property.details?.style) propertyDetails['Style'] = property.details.style;
-  if (property.details?.yearBuilt) propertyDetails['Year Built'] = property.details.yearBuilt;
+  if (details?.style) propertyDetails['Style'] = details.style;
+  if (details?.yearBuilt) propertyDetails['Year Built'] = String(details.yearBuilt);
 
   // Inside Details
   const inside: Record<string, string | number> = {};
-  if (property.details?.numBedrooms !== undefined && property.details.numBedrooms !== null) {
-    inside['Bedrooms'] = property.details.numBedrooms;
+  if (details?.numBedrooms !== undefined && details.numBedrooms !== null) {
+    inside['Bedrooms'] = details.numBedrooms;
   }
-  if (property.details?.numBathrooms !== undefined && property.details.numBathrooms !== null) {
-    inside['Bathrooms'] = property.details.numBathrooms;
+  if (details?.numBathrooms !== undefined && details.numBathrooms !== null) {
+    inside['Bathrooms'] = details.numBathrooms;
   }
-  if (property.details?.sqft) {
-    const sqft = typeof property.details.sqft === 'number' 
-      ? property.details.sqft 
-      : parseFloat(String(property.details.sqft).replace(/,/g, '')) || 0;
+  if (details?.sqft) {
+    const sqft = typeof details.sqft === 'number' 
+      ? details.sqft 
+      : parseFloat(String(details.sqft).replace(/,/g, '')) || 0;
     if (sqft > 0) {
       inside['Square Feet'] = sqft;
     }
   }
-  if (property.details?.numRooms !== undefined && property.details.numRooms !== null) {
-    inside['Total Rooms'] = property.details.numRooms;
+  if (details?.numRooms !== undefined && details.numRooms !== null) {
+    inside['Total Rooms'] = details.numRooms;
   }
-  if (property.details?.numFireplaces !== undefined && property.details.numFireplaces !== null && property.details.numFireplaces > 0) {
-    inside['Fireplaces'] = property.details.numFireplaces;
+  if (details?.numFireplaces !== undefined && details.numFireplaces !== null && details.numFireplaces > 0) {
+    inside['Fireplaces'] = details.numFireplaces;
   }
 
   // Utilities
   const utilities: Record<string, string> = {};
-  if (property.details?.heating) utilities['Heating'] = property.details.heating;
-  if (property.details?.airConditioning) utilities['Cooling'] = property.details.airConditioning;
-  else if (property.details?.centralAirConditioning) utilities['Cooling'] = property.details.centralAirConditioning;
-  if (property.details?.waterSource) utilities['Water Source'] = property.details.waterSource;
-  if (property.details?.sewer) utilities['Sewer'] = property.details.sewer;
+  if (details?.heating) utilities['Heating'] = details.heating;
+  if (details?.airConditioning) utilities['Cooling'] = details.airConditioning;
+  else if (details?.centralAirConditioning) utilities['Cooling'] = details.centralAirConditioning;
+  if (details?.waterSource) utilities['Water Source'] = details.waterSource;
+  if (details?.sewer) utilities['Sewer'] = details.sewer;
 
   // Building Details
   const building: Record<string, string> = {};
-  if (property.details?.exteriorConstruction1) building['Exterior'] = property.details.exteriorConstruction1;
-  if (property.details?.exteriorConstruction2) building['Exterior 2'] = property.details.exteriorConstruction2;
-  if (property.details?.foundationType) building['Foundation'] = property.details.foundationType;
-  if (property.details?.roofMaterial) building['Roof'] = property.details.roofMaterial;
-  if (property.details?.flooringType) building['Flooring'] = property.details.flooringType;
+  if (details?.exteriorConstruction1) building['Exterior'] = details.exteriorConstruction1;
+  if (details?.exteriorConstruction2) building['Exterior 2'] = details.exteriorConstruction2;
+  if (details?.foundationType) building['Foundation'] = details.foundationType;
+  if (details?.roofMaterial) building['Roof'] = details.roofMaterial;
+  if (details?.flooringType) building['Flooring'] = details.flooringType;
   if (rawProperty?.condominium?.stories) building['Stories'] = rawProperty.condominium.stories;
 
   // Parking Details
   const parking: Record<string, string | number> = {};
-  if (property.details?.numGarageSpaces !== undefined && property.details.numGarageSpaces !== null && property.details.numGarageSpaces > 0) {
-    parking['Garage Spaces'] = property.details.numGarageSpaces;
+  if (details?.numGarageSpaces !== undefined && details.numGarageSpaces !== null && details.numGarageSpaces > 0) {
+    parking['Garage Spaces'] = details.numGarageSpaces;
   }
-  if (property.details?.numParkingSpaces !== undefined && property.details.numParkingSpaces !== null && property.details.numParkingSpaces > 0) {
-    parking['Parking Spaces'] = property.details.numParkingSpaces;
+  if (details?.numParkingSpaces !== undefined && details.numParkingSpaces !== null && details.numParkingSpaces > 0) {
+    parking['Parking Spaces'] = details.numParkingSpaces;
   }
-  if (property.details?.garage) parking['Garage Type'] = property.details.garage;
+  if (details?.garage) parking['Garage Type'] = details.garage;
   if (rawProperty?.condominium?.parkingType) parking['Parking Type'] = rawProperty.condominium.parkingType;
 
   // Land Details
@@ -95,20 +134,20 @@ export function generatePropertyDetailsData(
   }
   if (property.lot?.dimensions) land['Dimensions'] = property.lot.dimensions;
   if (property.lot?.features) land['Features'] = property.lot.features;
-  if (property.details?.zoning) land['Zoning'] = property.details.zoning;
-  if (property.details?.zoningDescription) land['Zoning Description'] = property.details.zoningDescription;
+  if (details?.zoning) land['Zoning'] = details.zoning;
+  if (details?.zoningDescription) land['Zoning Description'] = details.zoningDescription;
 
   // Highlights
   const highlights: Record<string, string> = {};
-  if (property.details?.swimmingPool) highlights['Swimming Pool'] = property.details.swimmingPool;
-  if (property.details?.fireplace || (property.details?.numFireplaces && property.details.numFireplaces > 0)) {
-    highlights['Fireplace'] = property.details.numFireplaces ? `${property.details.numFireplaces} fireplace${property.details.numFireplaces > 1 ? 's' : ''}` : 'Yes';
+  if (details?.swimmingPool) highlights['Swimming Pool'] = details.swimmingPool;
+  if (details?.fireplace || (details?.numFireplaces && details.numFireplaces > 0)) {
+    highlights['Fireplace'] = details.numFireplaces ? `${details.numFireplaces} fireplace${details.numFireplaces > 1 ? 's' : ''}` : 'Yes';
   }
-  if (property.details?.balcony) highlights['Balcony'] = property.details.balcony;
-  if (property.details?.patio) highlights['Patio'] = property.details.patio;
-  if (property.details?.elevator) highlights['Elevator'] = property.details.elevator;
-  if (property.details?.viewType) highlights['View'] = property.details.viewType;
-  if (property.details?.waterfront) highlights['Waterfront'] = property.details.waterfront;
+  if (details?.balcony) highlights['Balcony'] = details.balcony;
+  if (details?.patio) highlights['Patio'] = details.patio;
+  if (details?.elevator) highlights['Elevator'] = details.elevator;
+  if (details?.viewType) highlights['View'] = details.viewType;
+  if (details?.waterfront) highlights['Waterfront'] = details.waterfront;
   if (rawProperty?.condominium?.amenities && rawProperty.condominium.amenities.length > 0) {
     rawProperty.condominium.amenities.forEach((amenity, index) => {
       highlights[`Amenity ${index + 1}`] = amenity;
