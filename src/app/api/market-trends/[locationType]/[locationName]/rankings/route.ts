@@ -325,7 +325,10 @@ export async function GET(
     
     // Try to return stale data from database
     try {
-      const _resolvedParams = await params;
+      const resolvedParams = await params;
+      const locationType = resolvedParams.locationType as LocationType;
+      const locationName = decodeURIComponent(resolvedParams.locationName);
+      const cleanName = cleanLocationName(locationName);
       const currentMonth = getCurrentMonth();
 
       const staleData = await prisma.marketRankings.findUnique({
