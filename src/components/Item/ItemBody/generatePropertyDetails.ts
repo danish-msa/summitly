@@ -223,12 +223,12 @@ export function generatePropertyDetailsData(
     photoCount?: number;
     office?: { brokerageName?: string };
     timestamps?: { 
-      closedDate?: string; 
-      terminatedDate?: string; 
-      expiryDate?: string; 
-      soldDate?: string; 
-      unavailableDate?: string;
-      listingEntryDate?: string;
+      closedDate?: string | null; 
+      terminatedDate?: string | null; 
+      expiryDate?: string | null; 
+      soldDate?: string | null; 
+      unavailableDate?: string | null;
+      listingEntryDate?: string | null;
     } 
   }, isCurrentListing: boolean): string => {
     const timestamps = history.timestamps;
