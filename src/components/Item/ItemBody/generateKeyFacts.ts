@@ -4,12 +4,62 @@ import { PropertyListing } from '@/lib/types';
  * Generate Key Facts from real property data
  * Only includes non-null values
  */
+// Extended details type that includes all possible properties from the API
+type ExtendedPropertyDetails = {
+  numBathrooms: number;
+  numBathroomsPlus: number;
+  numBedrooms: number;
+  numBedroomsPlus: number | string;
+  propertyType: string;
+  sqft: number | string;
+  description?: string | null;
+} & {
+  yearBuilt?: string | number | null;
+  numGarageSpaces?: number | null;
+  numParkingSpaces?: number | null;
+  garage?: string | null;
+  style?: string | null;
+  heating?: string | null;
+  airConditioning?: string | null;
+  centralAirConditioning?: string | null;
+  waterSource?: string | null;
+  sewer?: string | null;
+  landSewer?: string | null;
+  zoning?: string | null;
+  zoningType?: string | null;
+  zoningDescription?: string | null;
+  numFireplaces?: number | null;
+  swimmingPool?: string | null;
+  elevator?: string | null;
+  patio?: string | null;
+  basement1?: string | null;
+  basement2?: string | null;
+  den?: string | null;
+  familyRoom?: string | null;
+  exteriorConstruction1?: string | null;
+  exteriorConstruction2?: string | null;
+  foundationType?: string | null;
+  roofMaterial?: string | null;
+  flooringType?: string | null;
+  viewType?: string | null;
+  waterfront?: string | null;
+  furnished?: string | null;
+  centralVac?: string | null;
+  driveway?: string | null;
+  laundryLevel?: string | null;
+  HOAFee?: string | null;
+  constructionStatus?: string | null;
+  energyCertification?: string | null;
+  energuideRating?: string | null;
+};
+
 export function generateKeyFacts(property: PropertyListing): Record<string, string | number> {
   const keyFacts: Record<string, string | number> = {};
+  const details = property.details as ExtendedPropertyDetails | undefined;
 
   // Property Type
-  if (property.details?.propertyType) {
-    keyFacts['Property Type'] = property.details.propertyType;
+  if (details?.propertyType) {
+    keyFacts['Property Type'] = details.propertyType;
   }
 
   // Class
@@ -23,10 +73,10 @@ export function generateKeyFacts(property: PropertyListing): Record<string, stri
   }
 
   // Price per Sq Ft
-  if (property.listPrice && property.details?.sqft) {
-    const sqft = typeof property.details.sqft === 'number' 
-      ? property.details.sqft 
-      : parseFloat(String(property.details.sqft).replace(/,/g, '')) || 0;
+  if (property.listPrice && details?.sqft) {
+    const sqft = typeof details.sqft === 'number' 
+      ? details.sqft 
+      : parseFloat(String(details.sqft).replace(/,/g, '')) || 0;
     if (sqft > 0) {
       const pricePerSqft = Math.round(property.listPrice / sqft);
       keyFacts['Price per Sq Ft'] = `$${pricePerSqft.toLocaleString()}`;
@@ -34,9 +84,8 @@ export function generateKeyFacts(property: PropertyListing): Record<string, stri
   }
 
   // Year Built
-  const detailsWithYearBuilt = property.details as { yearBuilt?: string | number | null } & typeof property.details;
-  if (detailsWithYearBuilt?.yearBuilt) {
-    keyFacts['Year Built'] = detailsWithYearBuilt.yearBuilt;
+  if (details?.yearBuilt) {
+    keyFacts['Year Built'] = details.yearBuilt;
   }
 
   // Lot Size
@@ -47,24 +96,24 @@ export function generateKeyFacts(property: PropertyListing): Record<string, stri
   }
 
   // Square Feet
-  if (property.details?.sqft) {
-    const sqft = typeof property.details.sqft === 'number' 
-      ? property.details.sqft 
-      : parseFloat(String(property.details.sqft).replace(/,/g, '')) || 0;
+  if (details?.sqft) {
+    const sqft = typeof details.sqft === 'number' 
+      ? details.sqft 
+      : parseFloat(String(details.sqft).replace(/,/g, '')) || 0;
     if (sqft > 0) {
       keyFacts['Square Feet'] = sqft.toLocaleString();
     }
   }
 
   // Bedrooms
-  if (property.details?.numBedrooms !== undefined && property.details.numBedrooms !== null) {
-    keyFacts['Bedrooms'] = property.details.numBedrooms;
+  if (details?.numBedrooms !== undefined && details.numBedrooms !== null) {
+    keyFacts['Bedrooms'] = details.numBedrooms;
   }
 
   // Bathrooms
-  if (property.details?.numBathrooms !== undefined && property.details.numBathrooms !== null) {
-    const bathrooms = property.details.numBathrooms;
-    const bathroomsPlus = property.details.numBathroomsPlus;
+  if (details?.numBathrooms !== undefined && details.numBathrooms !== null) {
+    const bathrooms = details.numBathrooms;
+    const bathroomsPlus = details.numBathroomsPlus;
     if (bathroomsPlus && Number(bathroomsPlus) > 0) {
       keyFacts['Bathrooms'] = `${bathrooms} + ${bathroomsPlus}`;
     } else {
@@ -73,13 +122,13 @@ export function generateKeyFacts(property: PropertyListing): Record<string, stri
   }
 
   // Garage/Parking
-  if (property.details?.numGarageSpaces !== undefined && property.details.numGarageSpaces !== null && property.details.numGarageSpaces > 0) {
-    const garageType = property.details.garage ? ` ${property.details.garage}` : '';
-    keyFacts['Garage'] = `${property.details.numGarageSpaces}-car${property.details.numGarageSpaces > 1 ? 's' : ''}${garageType}`;
-  } else if (property.details?.numParkingSpaces !== undefined && property.details.numParkingSpaces !== null && property.details.numParkingSpaces > 0) {
-    keyFacts['Parking'] = `${property.details.numParkingSpaces} space${property.details.numParkingSpaces > 1 ? 's' : ''}`;
-  } else if (property.details?.garage) {
-    keyFacts['Garage'] = property.details.garage;
+  if (details?.numGarageSpaces !== undefined && details.numGarageSpaces !== null && details.numGarageSpaces > 0) {
+    const garageType = details.garage ? ` ${details.garage}` : '';
+    keyFacts['Garage'] = `${details.numGarageSpaces}-car${details.numGarageSpaces > 1 ? 's' : ''}${garageType}`;
+  } else if (details?.numParkingSpaces !== undefined && details.numParkingSpaces !== null && details.numParkingSpaces > 0) {
+    keyFacts['Parking'] = `${details.numParkingSpaces} space${details.numParkingSpaces > 1 ? 's' : ''}`;
+  } else if (details?.garage) {
+    keyFacts['Garage'] = details.garage;
   }
 
   // Days on Market
@@ -88,151 +137,151 @@ export function generateKeyFacts(property: PropertyListing): Record<string, stri
   }
 
   // Style
-  if (property.details?.style) {
-    keyFacts['Style'] = property.details.style;
+  if (details?.style) {
+    keyFacts['Style'] = details.style;
   }
 
   // Heating
-  if (property.details?.heating) {
-    keyFacts['Heating'] = property.details.heating;
+  if (details?.heating) {
+    keyFacts['Heating'] = details.heating;
   }
 
   // Air Conditioning / Cooling
-  if (property.details?.airConditioning) {
-    keyFacts['Air Conditioning'] = property.details.airConditioning;
-  } else if (property.details?.centralAirConditioning) {
-    keyFacts['Air Conditioning'] = property.details.centralAirConditioning;
+  if (details?.airConditioning) {
+    keyFacts['Air Conditioning'] = details.airConditioning;
+  } else if (details?.centralAirConditioning) {
+    keyFacts['Air Conditioning'] = details.centralAirConditioning;
   }
 
   // Water Source
-  if (property.details?.waterSource) {
-    keyFacts['Water Source'] = property.details.waterSource;
+  if (details?.waterSource) {
+    keyFacts['Water Source'] = details.waterSource;
   }
 
   // Sewer
-  if (property.details?.sewer) {
-    keyFacts['Sewer'] = property.details.sewer;
-  } else if (property.details?.landSewer) {
-    keyFacts['Sewer'] = property.details.landSewer;
+  if (details?.sewer) {
+    keyFacts['Sewer'] = details.sewer;
+  } else if (details?.landSewer) {
+    keyFacts['Sewer'] = details.landSewer;
   }
 
   // Zoning
-  if (property.details?.zoning) {
-    keyFacts['Zoning'] = property.details.zoning;
-  } else if (property.details?.zoningType) {
-    keyFacts['Zoning'] = property.details.zoningType;
-  } else if (property.details?.zoningDescription) {
-    keyFacts['Zoning'] = property.details.zoningDescription;
+  if (details?.zoning) {
+    keyFacts['Zoning'] = details.zoning;
+  } else if (details?.zoningType) {
+    keyFacts['Zoning'] = details.zoningType;
+  } else if (details?.zoningDescription) {
+    keyFacts['Zoning'] = details.zoningDescription;
   }
 
   // Fireplaces
-  if (property.details?.numFireplaces !== undefined && property.details.numFireplaces !== null && property.details.numFireplaces > 0) {
-    keyFacts['Fireplaces'] = property.details.numFireplaces;
+  if (details?.numFireplaces !== undefined && details.numFireplaces !== null && details.numFireplaces > 0) {
+    keyFacts['Fireplaces'] = details.numFireplaces;
   }
 
   // Swimming Pool
-  if (property.details?.swimmingPool) {
-    keyFacts['Swimming Pool'] = property.details.swimmingPool;
+  if (details?.swimmingPool) {
+    keyFacts['Swimming Pool'] = details.swimmingPool;
   }
 
   // Elevator
-  if (property.details?.elevator) {
-    keyFacts['Elevator'] = property.details.elevator;
+  if (details?.elevator) {
+    keyFacts['Elevator'] = details.elevator;
   }
 
   // Patio
-  if (property.details?.patio) {
-    keyFacts['Patio'] = property.details.patio;
+  if (details?.patio) {
+    keyFacts['Patio'] = details.patio;
   }
 
   // Basement
-  if (property.details?.basement1) {
-    keyFacts['Basement'] = property.details.basement1;
-  } else if (property.details?.basement2) {
-    keyFacts['Basement'] = property.details.basement2;
+  if (details?.basement1) {
+    keyFacts['Basement'] = details.basement1;
+  } else if (details?.basement2) {
+    keyFacts['Basement'] = details.basement2;
   }
 
   // Den
-  if (property.details?.den) {
-    keyFacts['Den'] = property.details.den;
+  if (details?.den) {
+    keyFacts['Den'] = details.den;
   }
 
   // Family Room
-  if (property.details?.familyRoom) {
-    keyFacts['Family Room'] = property.details.familyRoom;
+  if (details?.familyRoom) {
+    keyFacts['Family Room'] = details.familyRoom;
   }
 
   // Exterior Construction
-  if (property.details?.exteriorConstruction1) {
-    keyFacts['Exterior'] = property.details.exteriorConstruction1;
-    if (property.details.exteriorConstruction2) {
-      keyFacts['Exterior'] = `${property.details.exteriorConstruction1}, ${property.details.exteriorConstruction2}`;
+  if (details?.exteriorConstruction1) {
+    keyFacts['Exterior'] = details.exteriorConstruction1;
+    if (details.exteriorConstruction2) {
+      keyFacts['Exterior'] = `${details.exteriorConstruction1}, ${details.exteriorConstruction2}`;
     }
   }
 
   // Foundation Type
-  if (property.details?.foundationType) {
-    keyFacts['Foundation'] = property.details.foundationType;
+  if (details?.foundationType) {
+    keyFacts['Foundation'] = details.foundationType;
   }
 
   // Roof Material
-  if (property.details?.roofMaterial) {
-    keyFacts['Roof'] = property.details.roofMaterial;
+  if (details?.roofMaterial) {
+    keyFacts['Roof'] = details.roofMaterial;
   }
 
   // Flooring Type
-  if (property.details?.flooringType) {
-    keyFacts['Flooring'] = property.details.flooringType;
+  if (details?.flooringType) {
+    keyFacts['Flooring'] = details.flooringType;
   }
 
   // View Type
-  if (property.details?.viewType) {
-    keyFacts['View'] = property.details.viewType;
+  if (details?.viewType) {
+    keyFacts['View'] = details.viewType;
   }
 
   // Waterfront
-  if (property.details?.waterfront) {
-    keyFacts['Waterfront'] = property.details.waterfront;
+  if (details?.waterfront) {
+    keyFacts['Waterfront'] = details.waterfront;
   }
 
   // Furnished
-  if (property.details?.furnished) {
-    keyFacts['Furnished'] = property.details.furnished;
+  if (details?.furnished) {
+    keyFacts['Furnished'] = details.furnished;
   }
 
   // Central Vacuum
-  if (property.details?.centralVac) {
-    keyFacts['Central Vacuum'] = property.details.centralVac;
+  if (details?.centralVac) {
+    keyFacts['Central Vacuum'] = details.centralVac;
   }
 
   // Driveway
-  if (property.details?.driveway) {
-    keyFacts['Driveway'] = property.details.driveway;
+  if (details?.driveway) {
+    keyFacts['Driveway'] = details.driveway;
   }
 
   // Laundry Level
-  if (property.details?.laundryLevel) {
-    keyFacts['Laundry'] = property.details.laundryLevel;
+  if (details?.laundryLevel) {
+    keyFacts['Laundry'] = details.laundryLevel;
   }
 
   // HOA Fee
-  if (property.details?.HOAFee) {
-    keyFacts['HOA Fee'] = property.details.HOAFee;
+  if (details?.HOAFee) {
+    keyFacts['HOA Fee'] = details.HOAFee;
   }
 
   // Construction Status
-  if (property.details?.constructionStatus) {
-    keyFacts['Construction Status'] = property.details.constructionStatus;
+  if (details?.constructionStatus) {
+    keyFacts['Construction Status'] = details.constructionStatus;
   }
 
   // Energy Certification
-  if (property.details?.energyCertification) {
-    keyFacts['Energy Certification'] = property.details.energyCertification;
+  if (details?.energyCertification) {
+    keyFacts['Energy Certification'] = details.energyCertification;
   }
 
   // EnerGuide Rating
-  if (property.details?.energuideRating) {
-    keyFacts['EnerGuide Rating'] = property.details.energuideRating;
+  if (details?.energuideRating) {
+    keyFacts['EnerGuide Rating'] = details.energuideRating;
   }
 
   return keyFacts;
