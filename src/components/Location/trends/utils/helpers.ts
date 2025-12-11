@@ -14,6 +14,10 @@ export const formatPrice = (price: number): string => {
   return `$${(price / 1000).toFixed(0)}K`;
 };
 
+export const formatFullPrice = (price: number): string => {
+  return `$${price.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+};
+
 export const calculateAvgPrice = (props: { listPrice?: number }[]): number => {
   if (props.length === 0) return 0;
   const total = props.reduce((sum, p) => sum + (p.listPrice || 0), 0);

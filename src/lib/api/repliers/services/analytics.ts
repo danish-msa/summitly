@@ -851,7 +851,24 @@ export async function getSalesVolumeByType(params: AnalyticsParams): Promise<Sal
     });
   });
 
-  return { months, ...propertyTypeData };
+  // Filter out property types that have all zeros (no data across all months)
+  const filteredPropertyTypeData: Record<string, number[]> = {};
+  allPropertyTypes.forEach((propertyType) => {
+    const counts = propertyTypeData[propertyType];
+    // Only include property types that have at least one non-zero value
+    // Also check that the array exists and has values
+    if (counts && counts.length > 0 && counts.some(count => count > 0)) {
+      filteredPropertyTypeData[propertyType] = counts;
+    }
+  });
+
+  // Log filtered results for debugging
+  const filteredTypes = Object.keys(filteredPropertyTypeData);
+  if (filteredTypes.length !== allPropertyTypes.size) {
+    console.log(`[getSalesVolumeByType] Filtered out ${allPropertyTypes.size - filteredTypes.length} property types with no data. Showing ${filteredTypes.length} property types with data.`);
+  }
+
+  return { months, ...filteredPropertyTypeData };
 }
 
 export interface AverageSoldPriceByTypeData {

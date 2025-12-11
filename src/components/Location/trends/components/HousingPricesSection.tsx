@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import ReactECharts from "echarts-for-react";
 import { toast } from "sonner";
-import { formatPrice } from '../utils/helpers';
+import { formatFullPrice } from '../utils/helpers';
 import { 
   getAverageSoldPriceChartOption, 
   getSalesVolumeChartOption,
@@ -65,7 +65,7 @@ const PriceCard = ({ label, value, change, showChange = false, subtitle, dollarC
     <Card className="p-6 flex flex-col" variant="white">
       <div className="flex items-baseline gap-2 mb-2">
         <div className={`text-2xl font-bold ${showChange && change !== undefined ? (isPositive ? 'text-green-600' : isNegative ? 'text-red-600' : 'text-foreground') : 'text-foreground'}`}>
-          {typeof value === 'number' ? formatPrice(value) : value}
+          {typeof value === 'number' ? formatFullPrice(value) : value}
         </div>
         {showChange && change !== undefined && (
           <div className={`flex items-center gap-1 ${isPositive ? 'text-green-600' : isNegative ? 'text-red-600' : 'text-gray-600'}`}>
@@ -84,7 +84,7 @@ const PriceCard = ({ label, value, change, showChange = false, subtitle, dollarC
 
       {showChange && dollarChange !== undefined && dollarChange !== 0 && (
         <div className={`text-sm font-medium mb-2 ${isPositive ? 'text-green-600' : isNegative ? 'text-red-600' : 'text-gray-600'}`}>
-          {isPositive ? '+' : ''}{formatPrice(dollarChange)}
+          {isPositive ? '+' : ''}{formatFullPrice(dollarChange)}
         </div>
       )}
       </div>
@@ -432,10 +432,10 @@ export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({
                         <TableRow key={month} className="hover:bg-muted/50 transition-colors">
                           <TableCell className="font-medium">{month}</TableCell>
                           <TableCell className="text-right">
-                            {averageSoldPriceData.prices[index] ? formatPrice(averageSoldPriceData.prices[index]) : '-'}
+                            {averageSoldPriceData.prices[index] ? formatFullPrice(averageSoldPriceData.prices[index]) : '-'}
                           </TableCell>
                           <TableCell className="text-right">
-                            {averageSoldPriceData.medianPrices?.[index] ? formatPrice(averageSoldPriceData.medianPrices[index]) : '-'}
+                            {averageSoldPriceData.medianPrices?.[index] ? formatFullPrice(averageSoldPriceData.medianPrices[index]) : '-'}
                           </TableCell>
                           <TableCell className="text-right">
                             {averageSoldPriceData.counts[index] || '-'}

@@ -1,5 +1,5 @@
 import * as echarts from 'echarts';
-import { formatPrice } from './helpers';
+import { formatFullPrice } from './helpers';
 
 // Chart data types
 export interface AverageSoldPriceData {
@@ -59,7 +59,7 @@ export const getAverageSoldPriceChartOption = (data: AverageSoldPriceData) => {
         let result = `${firstParam.name || ''}<br/>`;
         paramsArray.forEach((param) => {
           const p = param as { marker?: string; seriesName?: string; value?: number };
-          result += `${p.marker || ''}${p.seriesName || ''}: ${formatPrice(p.value || 0)}<br/>`;
+          result += `${p.marker || ''}${p.seriesName || ''}: ${formatFullPrice(p.value || 0)}<br/>`;
         });
         return result + countText;
       },
@@ -91,7 +91,7 @@ export const getAverageSoldPriceChartOption = (data: AverageSoldPriceData) => {
     yAxis: {
       type: 'value' as const,
       axisLabel: {
-        formatter: (value: number) => formatPrice(value),
+        formatter: (value: number) => formatFullPrice(value),
         color: '#6b7280'
       }
     },
@@ -171,7 +171,7 @@ export const getColorForPropertyType = (index: number) => {
   return PROPERTY_TYPE_COLORS[index % PROPERTY_TYPE_COLORS.length];
 };
 
-// Chart option for Sales Volume by Property Type
+// Chart option for Sales Volume by Property Type (Pie Chart)
 export const getSalesVolumeChartOption = (data: SalesVolumeGraphData) => {
   // Extract all property types (exclude 'months')
   const allPropertyTypes = Object.keys(data).filter(key => key !== 'months');
@@ -186,114 +186,140 @@ export const getSalesVolumeChartOption = (data: SalesVolumeGraphData) => {
   
   if (propertyTypes.length === 0) {
     return {
-      tooltip: { trigger: 'axis' as const },
-      xAxis: { type: 'category' as const, data: [] },
-      yAxis: { type: 'value' as const },
+      tooltip: { trigger: 'item' as const },
       series: []
     };
   }
 
-  // Calculate percentages for each property type (only for property types with data)
-  const percentagesByType: Record<string, number[]> = {};
-  const monthCount = data.months.length;
+  // Aggregate total counts across all months for each property type
+  const totalCountsByType: Array<{ name: string; value: number }> = [];
   
   propertyTypes.forEach((propertyType) => {
     const counts = data[propertyType] as number[];
-    percentagesByType[propertyType] = counts.map((count, index) => {
-      // Calculate total for this month across property types with data only
-      const total = propertyTypes.reduce((sum, pt) => {
-        const ptCounts = data[pt] as number[];
-        return sum + (ptCounts[index] || 0);
-      }, 0);
-      return total > 0 ? Math.round((count / total) * 100) : 0;
-    });
+    const total = counts.reduce((sum, count) => sum + (count || 0), 0);
+    // Only include property types with total > 0 (strict check)
+    if (total > 0) {
+      totalCountsByType.push({
+        name: propertyType,
+        value: total
+      });
+    }
   });
 
-  // Generate series dynamically
-  const series = propertyTypes.map((propertyType, index) => {
+  // Calculate grand total first to filter by percentage
+  const grandTotal = totalCountsByType.reduce((sum, item) => sum + item.value, 0);
+  
+  // Filter out any items with value 0 or percentage < 0.1% (double check)
+  const filteredCountsByType = totalCountsByType.filter(item => {
+    if (item.value <= 0) return false;
+    // Calculate percentage and only include if >= 0.1%
+    const percent = grandTotal > 0 ? (item.value / grandTotal) * 100 : 0;
+    return percent >= 0.1; // Only show if percentage is at least 0.1%
+  });
+
+  if (filteredCountsByType.length === 0) {
+    return {
+      tooltip: { trigger: 'item' as const },
+      series: []
+    };
+  }
+
+  // Sort by value (descending) for better visualization
+  filteredCountsByType.sort((a, b) => b.value - a.value);
+  
+  // Recalculate grand total with filtered data for accurate percentages
+  const filteredGrandTotal = filteredCountsByType.reduce((sum, item) => sum + item.value, 0);
+
+  // Generate pie chart data with colors (only for filtered items)
+  const pieData = filteredCountsByType.map((item, index) => {
     const colors = getColorForPropertyType(index);
     return {
-      name: propertyType,
-      type: 'line' as const,
-      stack: 'Total',
-      areaStyle: {
-        color: {
-          type: 'linear' as const,
-          x: 0,
-          y: 0,
-          x2: 0,
-          y2: 1,
-          colorStops: [
-            { offset: 0, color: colors.light },
-            { offset: 1, color: colors.dark }
-          ]
-        }
-      },
-      lineStyle: {
-        width: 0
-      },
-      emphasis: {
-        focus: 'series' as const
-      },
-      data: percentagesByType[propertyType]
+      name: item.name,
+      value: item.value,
+      itemStyle: {
+        color: colors.solid
+      }
     };
   });
 
+  // Use filteredGrandTotal for percentage calculations
+
   return {
     tooltip: {
-      trigger: 'axis' as const,
+      trigger: 'item' as const,
       formatter: (params: echarts.TooltipComponentFormatterCallbackParams) => {
-        const paramsArray = Array.isArray(params) ? params : [params];
-        const firstParam = paramsArray[0] as { name?: string };
-        let result = `${firstParam.name || ''}<br/>`;
-        paramsArray.forEach((param) => {
-          const p = param as { marker?: string; seriesName?: string; value?: number };
-          result += `${p.marker || ''}${p.seriesName || ''}: ${p.value || 0}%<br/>`;
-        });
-        return result;
+        const param = Array.isArray(params) ? params[0] : params;
+        const p = param as { name?: string; value?: number; percent?: number };
+        const value = p.value || 0;
+        const percent = p.percent || 0;
+        return `${p.name || ''}<br/>Sales: ${value.toLocaleString()}<br/>Percentage: ${percent.toFixed(1)}%`;
       },
       backgroundColor: 'rgba(255, 255, 255, 0.95)',
       borderColor: '#e5e7eb',
       textStyle: { color: '#1f2937' }
     },
     legend: {
-      data: propertyTypes,
+      type: 'scroll' as const,
+      orient: 'horizontal' as const,
       top: '5%',
+      left: 'center',
       textStyle: {
         color: '#1f2937'
-      }
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      top: '15%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category' as const,
-      boundaryGap: false,
-      data: data.months,
-      axisLabel: {
-        color: '#6b7280',
-        rotate: 0
-      }
-    },
-    yAxis: {
-      type: 'value' as const,
-      max: 100,
-      axisLabel: {
-        formatter: '{value}%',
-        color: '#6b7280'
       },
-      splitLine: {
-        lineStyle: {
-          color: '#e5e7eb',
-          type: 'dashed' as const
+      formatter: (name: string) => {
+        const item = filteredCountsByType.find(d => d.name === name);
+        if (item && item.value > 0) {
+          const percent = filteredGrandTotal > 0 ? ((item.value / filteredGrandTotal) * 100).toFixed(1) : '0';
+          // Only show if percentage is meaningful (>= 0.1%)
+          if (parseFloat(percent) >= 0.1) {
+            return `${name} (${percent}%)`;
+          }
         }
-      }
+        return '';
+      },
+      data: filteredCountsByType.map(item => item.name)
     },
-    series
+    series: [
+      {
+        name: 'Sales Volume',
+        type: 'pie' as const,
+        radius: ['40%', '70%'],
+        center: ['50%', '55%'],
+        avoidLabelOverlap: true,
+        itemStyle: {
+          borderRadius: 8,
+          borderColor: '#fff',
+          borderWidth: 2
+        },
+        label: {
+          show: true,
+          formatter: (params: any) => {
+            const p = params as { name?: string; percent?: number };
+            return `${p.name || ''}\n${p.percent?.toFixed(1) || 0}%`;
+          },
+          fontSize: 12,
+          fontWeight: 500
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: 14,
+            fontWeight: 'bold' as const
+          },
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        },
+        labelLine: {
+          show: true,
+          length: 15,
+          length2: 10
+        },
+        data: pieData
+      }
+    ]
   };
 };
 

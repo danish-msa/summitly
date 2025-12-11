@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { DataTable, Column } from '@/components/ui/data-table';
 import Pagination from '@/components/ui/pagination';
-import { formatPrice, getGreaterArea, cityNameToSlug } from '../utils/helpers';
+import { formatFullPrice, getGreaterArea, cityNameToSlug } from '../utils/helpers';
 import { 
   generateRankingOverviewData,
   generateRankingTableData
@@ -286,14 +286,14 @@ export const RankingSection: React.FC<RankingSectionProps> = ({ locationType, lo
       header: 'Average Price',
       className: 'text-right',
       sortable: true,
-      render: (row) => formatPrice(row.averagePrice),
+      render: (row) => formatFullPrice(row.averagePrice),
     },
     {
       key: 'medianPrice',
       header: 'Median Price',
       className: 'text-right',
       sortable: true,
-      render: (row) => formatPrice(row.medianPrice),
+      render: (row) => formatFullPrice(row.medianPrice),
     },
   ];
 
