@@ -32,7 +32,6 @@ export type {
   AnalyticsParams,
   MarketData,
   ListingsActivity,
-  MarketDataResponse,
 } from './services/analytics';
 
 // Single property listing types
