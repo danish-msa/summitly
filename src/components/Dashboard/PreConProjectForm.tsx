@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SearchableSelect, SearchableSelectItem } from "@/components/ui/searchable-select"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
@@ -232,95 +233,6 @@ export function PreConProjectForm({
   // Helper to get developers by type
   const getDevelopersByType = (type: string) => {
     return developers.filter(d => d.type === type)
-  }
-
-  // Searchable Select Component for Development Team
-  const SearchableDeveloperSelect = ({ 
-    value, 
-    onValueChange, 
-    placeholder, 
-    developers: devs,
-    allowNone = false 
-  }: { 
-    value: string
-    onValueChange: (value: string) => void
-    placeholder: string
-    developers: Developer[]
-    allowNone?: boolean
-  }) => {
-    const [open, setOpen] = useState(false)
-    const [searchQuery, setSearchQuery] = useState("")
-    
-    const filteredDevelopers = devs.filter(dev =>
-      dev.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    
-    const selectedDeveloper = devs.find(d => d.id === value)
-    
-    return (
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className="w-full justify-between rounded-lg h-9"
-          >
-            <span className="truncate">
-              {selectedDeveloper ? selectedDeveloper.name : placeholder}
-            </span>
-            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start">
-          <div className="p-2">
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8"
-              />
-            </div>
-          </div>
-          <div className="max-h-[300px] overflow-y-auto">
-            {allowNone && (
-              <div
-                className="px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground"
-                onClick={() => {
-                  onValueChange("")
-                  setOpen(false)
-                  setSearchQuery("")
-                }}
-              >
-                None
-              </div>
-            )}
-            {filteredDevelopers.length > 0 ? (
-              filteredDevelopers.map((dev) => (
-                <div
-                  key={dev.id}
-                  className="px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground flex items-center justify-between"
-                  onClick={() => {
-                    onValueChange(dev.id)
-                    setOpen(false)
-                    setSearchQuery("")
-                  }}
-                >
-                  <span>{dev.name}</span>
-                  {value === dev.id && <Check className="h-4 w-4" />}
-                </div>
-              ))
-            ) : (
-              <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                No developers found.
-              </div>
-            )}
-          </div>
-        </PopoverContent>
-      </Popover>
-    )
   }
 
   // Load Google Maps API
@@ -1023,12 +935,19 @@ export function PreConProjectForm({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="developer">Developer</Label>
-                  <SearchableDeveloperSelect
+                  <SearchableSelect
                     value={formData.developer}
                     onValueChange={(value) => setFormData({ ...formData, developer: value })}
                     placeholder="Select developer"
-                    developers={getDevelopersByType("DEVELOPER")}
-                  />
+                    searchable={true}
+                    searchPlaceholder="Search developers..."
+                  >
+                    {getDevelopersByType("DEVELOPER").map((dev) => (
+                      <SearchableSelectItem key={dev.id} value={dev.id}>
+                        {dev.name}
+                      </SearchableSelectItem>
+                    ))}
+                  </SearchableSelect>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="status">Selling Status</Label>
@@ -2346,7 +2265,7 @@ export function PreConProjectForm({
                   return (
                     <div key={key} className="space-y-2">
                       <Label>{label}</Label>
-                      <SearchableDeveloperSelect
+                      <SearchableSelect
                         value={selectedId || ""}
                         onValueChange={(value) =>
                           setFormData({
@@ -2355,9 +2274,16 @@ export function PreConProjectForm({
                           })
                         }
                         placeholder={`Select ${label.toLowerCase()}`}
-                        developers={availableDevelopers}
+                        searchable={true}
+                        searchPlaceholder={`Search ${label.toLowerCase()}...`}
                         allowNone={true}
-                      />
+                      >
+                        {availableDevelopers.map((dev) => (
+                          <SearchableSelectItem key={dev.id} value={dev.id}>
+                            {dev.name}
+                          </SearchableSelectItem>
+                        ))}
+                      </SearchableSelect>
                       {selectedDeveloper && (
                         <div className="p-3 border rounded-lg bg-muted/50">
                           <p className="text-sm font-medium">{selectedDeveloper.name}</p>
@@ -2383,7 +2309,7 @@ export function PreConProjectForm({
                 {/* Sales & Marketing Company */}
                 <div className="space-y-2">
                   <Label htmlFor="salesMarketingCompany">Sales & Marketing Company</Label>
-                  <SearchableDeveloperSelect
+                  <SearchableSelect
                     value={formData.salesMarketingCompany || ""}
                     onValueChange={(value) =>
                       setFormData({
@@ -2392,9 +2318,16 @@ export function PreConProjectForm({
                       })
                     }
                     placeholder="Select sales & marketing company"
-                    developers={getDevelopersByType("MARKETING")}
+                    searchable={true}
+                    searchPlaceholder="Search companies..."
                     allowNone={true}
-                  />
+                  >
+                    {getDevelopersByType("MARKETING").map((dev) => (
+                      <SearchableSelectItem key={dev.id} value={dev.id}>
+                        {dev.name}
+                      </SearchableSelectItem>
+                    ))}
+                  </SearchableSelect>
                   {formData.salesMarketingCompany && (
                     (() => {
                       const selectedCompany = developers.find(d => d.id === formData.salesMarketingCompany)
