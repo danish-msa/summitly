@@ -70,13 +70,68 @@ export const RankingSection: React.FC<RankingSectionProps> = ({ locationType, lo
   const [sortBy, setSortBy] = useState<string>('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-  // Rankings are only available for cities - check after hooks
-  if (locationType !== 'city') {
-    return null;
-  }
+  // Filter and sort data based on search term and sort settings
+  const getFilteredAndSortedData = React.useCallback(<T extends { city: string }>(
+    data: T[]
+  ): T[] => {
+    let filtered = data;
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter((item) =>
+        item.city.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Apply sorting
+    if (sortBy) {
+      filtered = [...filtered].sort((a, b) => {
+        const aVal = a[sortBy as keyof T];
+        const bVal = b[sortBy as keyof T];
+        
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+        }
+        
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+          return sortOrder === 'asc' 
+            ? aVal.localeCompare(bVal)
+            : bVal.localeCompare(aVal);
+        }
+        
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [searchTerm, sortBy, sortOrder]);
+
+  // Filtered and sorted data for each table
+  const filteredPriceData = useMemo(() => 
+    getFilteredAndSortedData(rankingTableData.price),
+    [rankingTableData.price, getFilteredAndSortedData]
+  );
+  
+  const filteredGrowthData = useMemo(() => 
+    getFilteredAndSortedData(rankingTableData.growth),
+    [rankingTableData.growth, getFilteredAndSortedData]
+  );
+  
+  const filteredDaysOnMarketData = useMemo(() => 
+    getFilteredAndSortedData(rankingTableData.daysOnMarket),
+    [rankingTableData.daysOnMarket, getFilteredAndSortedData]
+  );
+  
+  const filteredTurnoverData = useMemo(() => 
+    getFilteredAndSortedData(rankingTableData.turnover),
+    [rankingTableData.turnover, getFilteredAndSortedData]
+  );
 
   // Fetch live ranking data from optimized API route (with ISR caching and database storage)
-  const fetchRankingData = async (forceRefresh = false) => {
+  const fetchRankingData = React.useCallback(async (forceRefresh = false) => {
+    // Only fetch for cities
+    if (locationType !== 'city') return;
+    
     // Clean location name and ensure it's in the cities list
     const cleanLocationName = locationName
       .replace(/\s+Real\s+Estate$/i, '')
@@ -124,8 +179,8 @@ export const RankingSection: React.FC<RankingSectionProps> = ({ locationType, lo
       if (rankingsResult.rankings && rankingsResult.overview) {
         console.log(`[RankingSection] ${cleanLocationName} - Ranking Overview (cached: ${rankingsResult.cached}):`, rankingsResult.overview);
         console.log(`[RankingSection] ${cleanLocationName} - Sample ranking data:`, {
-          priceRank: rankingsResult.rankings.price.find((r: any) => r.isCurrentCity)?.rank,
-          growthRank: rankingsResult.rankings.growth.find((r: any) => r.isCurrentCity)?.rank,
+          priceRank: rankingsResult.rankings.price.find((r: { isCurrentCity: boolean }) => r.isCurrentCity)?.rank,
+          growthRank: rankingsResult.rankings.growth.find((r: { isCurrentCity: boolean }) => r.isCurrentCity)?.rank,
         });
         setRankingOverview(rankingsResult.overview);
         setRankingTableData(rankingsResult.rankings);
@@ -135,14 +190,19 @@ export const RankingSection: React.FC<RankingSectionProps> = ({ locationType, lo
         setRankingOverview(generateRankingOverviewData(cleanLocationName));
         setRankingTableData(generateRankingTableData(locationName));
       }
-      } catch (fetchError: any) {
+      } catch (fetchError: unknown) {
         clearTimeout(timeoutId);
-        if (fetchError.name === 'AbortError') {
+        const error = fetchError as { name?: string };
+        if (error.name === 'AbortError') {
           throw new Error('Request timeout - rankings fetch took too long');
         }
         throw fetchError;
       }
     } catch (error) {
+      const cleanLocationName = locationName
+        .replace(/\s+Real\s+Estate$/i, '')
+        .replace(/\s+RE$/i, '')
+        .trim();
       console.error(`[RankingSection] ${cleanLocationName} - Error fetching ranking data:`, error);
       // Fallback to mock data on error with city-specific ranks
       setRankingOverview(generateRankingOverviewData(cleanLocationName));
@@ -154,13 +214,23 @@ export const RankingSection: React.FC<RankingSectionProps> = ({ locationType, lo
         setLoading(false);
       }
     }
-  };
+  }, [locationType, locationName]);
 
   useEffect(() => {
     if (locationName && locationType === 'city') {
       fetchRankingData(false);
     }
-  }, [locationType, locationName]);
+  }, [locationType, locationName, fetchRankingData]);
+
+  // Reset page when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  // Rankings are only available for cities - check after all hooks
+  if (locationType !== 'city') {
+    return null;
+  }
 
   // Handle manual refresh
   const handleRefresh = () => {
@@ -179,74 +249,12 @@ export const RankingSection: React.FC<RankingSectionProps> = ({ locationType, lo
     }
   };
 
-  // Filter and sort data based on search term and sort settings
-  const getFilteredAndSortedData = <T extends { city: string }>(
-    data: T[]
-  ): T[] => {
-    let filtered = data;
-
-    // Apply search filter
-    if (searchTerm) {
-      filtered = filtered.filter((item) =>
-        item.city.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Apply sorting
-    if (sortBy) {
-      filtered = [...filtered].sort((a, b) => {
-        const aVal = a[sortBy as keyof T];
-        const bVal = b[sortBy as keyof T];
-        
-        if (typeof aVal === 'number' && typeof bVal === 'number') {
-          return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
-        }
-        
-        if (typeof aVal === 'string' && typeof bVal === 'string') {
-          return sortOrder === 'asc' 
-            ? aVal.localeCompare(bVal)
-            : bVal.localeCompare(aVal);
-        }
-        
-        return 0;
-      });
-    }
-
-    return filtered;
-  };
-
   // Get paginated data
   const getPaginatedData = <T,>(data: T[]): T[] => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
     return data.slice(startIndex, endIndex);
   };
-
-  // Filtered and sorted data for each table
-  const filteredPriceData = useMemo(() => 
-    getFilteredAndSortedData(rankingTableData.price),
-    [rankingTableData.price, searchTerm, sortBy, sortOrder]
-  );
-  
-  const filteredGrowthData = useMemo(() => 
-    getFilteredAndSortedData(rankingTableData.growth),
-    [rankingTableData.growth, searchTerm, sortBy, sortOrder]
-  );
-  
-  const filteredDaysOnMarketData = useMemo(() => 
-    getFilteredAndSortedData(rankingTableData.daysOnMarket),
-    [rankingTableData.daysOnMarket, searchTerm, sortBy, sortOrder]
-  );
-  
-  const filteredTurnoverData = useMemo(() => 
-    getFilteredAndSortedData(rankingTableData.turnover),
-    [rankingTableData.turnover, searchTerm, sortBy, sortOrder]
-  );
-
-  // Reset page when search term changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm]);
 
   // Column definitions for Price table
   const priceColumns: Column<PriceRankingRow>[] = [
