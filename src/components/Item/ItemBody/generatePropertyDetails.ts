@@ -311,7 +311,7 @@ export function generatePropertyDetailsData(
   }
 
   const daysOnMarketValues = rawProperty?.comparables
-    ?.map(c => c.daysOnMarket || 0)
+    ?.map(c => (c as { daysOnMarket?: number }).daysOnMarket || 0)
     .filter(d => d > 0) || [];
   
   const avgDaysOnMarket = daysOnMarketValues.length > 0
