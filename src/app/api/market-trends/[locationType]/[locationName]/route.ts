@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { RepliersAPI } from '@/lib/api/repliers';
 import { getDateRanges } from '@/components/Location/trends/utils/helpers';
 import type { AnalyticsParams } from '@/lib/api/repliers/services/analytics';
+import { Prisma } from '@prisma/client';
 
 // ISR: Revalidate every 30 days (monthly market data)
 export const revalidate = 2592000; // 30 days in seconds
@@ -214,7 +215,14 @@ export async function GET(
             },
           },
           update: {
-            ...marketTrendsData,
+            priceOverview: marketTrendsData.priceOverview as unknown as Prisma.InputJsonValue,
+            averageSoldPrice: marketTrendsData.averageSoldPrice as unknown as Prisma.InputJsonValue,
+            averageSoldPriceByType: marketTrendsData.averageSoldPriceByType as unknown as Prisma.InputJsonValue,
+            salesVolumeByType: marketTrendsData.salesVolumeByType as unknown as Prisma.InputJsonValue,
+            priceByBedrooms: marketTrendsData.priceByBedrooms as unknown as Prisma.InputJsonValue,
+            inventoryOverview: marketTrendsData.inventoryOverview as unknown as Prisma.InputJsonValue,
+            newClosedAvailable: marketTrendsData.newClosedAvailable as unknown as Prisma.InputJsonValue,
+            daysOnMarket: marketTrendsData.daysOnMarket as unknown as Prisma.InputJsonValue,
             parentCity: parentCity || null,
             parentArea: parentArea || null,
             parentNeighbourhood: parentNeighbourhood || null,
@@ -229,7 +237,14 @@ export async function GET(
             parentCity: parentCity || null,
             parentArea: parentArea || null,
             parentNeighbourhood: parentNeighbourhood || null,
-            ...marketTrendsData,
+            priceOverview: marketTrendsData.priceOverview as unknown as Prisma.InputJsonValue,
+            averageSoldPrice: marketTrendsData.averageSoldPrice as unknown as Prisma.InputJsonValue,
+            averageSoldPriceByType: marketTrendsData.averageSoldPriceByType as unknown as Prisma.InputJsonValue,
+            salesVolumeByType: marketTrendsData.salesVolumeByType as unknown as Prisma.InputJsonValue,
+            priceByBedrooms: marketTrendsData.priceByBedrooms as unknown as Prisma.InputJsonValue,
+            inventoryOverview: marketTrendsData.inventoryOverview as unknown as Prisma.InputJsonValue,
+            newClosedAvailable: marketTrendsData.newClosedAvailable as unknown as Prisma.InputJsonValue,
+            daysOnMarket: marketTrendsData.daysOnMarket as unknown as Prisma.InputJsonValue,
             lastFetchedAt: new Date(),
           },
         });
