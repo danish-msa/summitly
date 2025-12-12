@@ -32,6 +32,12 @@ export interface DaysOnMarketData {
   currentYear: number[];
 }
 
+export interface MedianListingVsSoldPriceData {
+  months: string[];
+  medianListingPrice: number[];
+  medianSoldPrice: number[];
+}
+
 // Get Pro-Rated Month Index
 export const getProRatedMonthIndex = (months: string[]): number => {
   const currentDate = new Date();
@@ -172,7 +178,7 @@ export const getColorForPropertyType = (index: number) => {
 };
 
 // Chart option for Sales Volume by Property Type (Pie Chart)
-export const getSalesVolumeChartOption = (data: SalesVolumeGraphData) => {
+export const getSalesVolumeChartOption = (data: SalesVolumeGraphData, hideLegend: boolean = false) => {
   // Extract all property types (exclude 'months')
   const allPropertyTypes = Object.keys(data).filter(key => key !== 'months');
   
@@ -258,7 +264,9 @@ export const getSalesVolumeChartOption = (data: SalesVolumeGraphData) => {
       borderColor: '#e5e7eb',
       textStyle: { color: '#1f2937' }
     },
-    legend: {
+    legend: hideLegend ? {
+      show: false
+    } : {
       type: 'scroll' as const,
       orient: 'horizontal' as const,
       top: '5%',
@@ -596,6 +604,110 @@ export const getDaysOnMarketChartOption = (data: DaysOnMarketData) => {
           color: '#3b82f6'
         },
         barWidth: '40%'
+      }
+    ]
+  };
+};
+
+// Chart option for Median Listing Price vs Median Sold Price
+export const getMedianListingVsSoldPriceChartOption = (data: MedianListingVsSoldPriceData) => {
+  return {
+    tooltip: {
+      trigger: 'axis' as const,
+      formatter: (params: echarts.TooltipComponentFormatterCallbackParams) => {
+        const paramsArray = Array.isArray(params) ? params : [params];
+        const firstParam = paramsArray[0] as { name?: string };
+        let result = `${firstParam.name || ''}<br/>`;
+        paramsArray.forEach((param) => {
+          const p = param as { marker?: string; seriesName?: string; value?: number };
+          result += `${p.marker || ''}${p.seriesName || ''}: ${formatFullPrice(p.value || 0)}<br/>`;
+        });
+        return result;
+      },
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#e5e7eb',
+      textStyle: { color: '#1f2937' }
+    },
+    legend: {
+      data: ['Median Listing Price', 'Median Sold Price'],
+      top: '5%',
+      textStyle: {
+        color: '#1f2937'
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: '15%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category' as const,
+      data: data.months,
+      axisLabel: {
+        color: '#6b7280'
+      }
+    },
+    yAxis: {
+      type: 'value' as const,
+      axisLabel: {
+        formatter: (value: number) => formatFullPrice(value),
+        color: '#6b7280'
+      }
+    },
+    series: [
+      {
+        name: 'Median Listing Price',
+        type: 'line' as const,
+        data: data.medianListingPrice,
+        smooth: true,
+        lineStyle: {
+          color: '#3b82f6',
+          width: 3
+        },
+        itemStyle: {
+          color: '#3b82f6'
+        },
+        areaStyle: {
+          color: {
+            type: 'linear' as const,
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(59, 130, 246, 0.3)' },
+              { offset: 1, color: 'rgba(59, 130, 246, 0.05)' }
+            ]
+          }
+        }
+      },
+      {
+        name: 'Median Sold Price',
+        type: 'line' as const,
+        data: data.medianSoldPrice,
+        smooth: true,
+        lineStyle: {
+          color: '#10b981',
+          width: 3
+        },
+        itemStyle: {
+          color: '#10b981'
+        },
+        areaStyle: {
+          color: {
+            type: 'linear' as const,
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(16, 185, 129, 0.3)' },
+              { offset: 1, color: 'rgba(16, 185, 129, 0.05)' }
+            ]
+          }
+        }
       }
     ]
   };

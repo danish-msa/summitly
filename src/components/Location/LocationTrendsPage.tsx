@@ -12,6 +12,7 @@ import { HousingPricesSection } from '@/components/Location/trends/components/Ho
 import { HousingInventorySection } from '@/components/Location/trends/components/HousingInventorySection';
 import { RankingSection } from '@/components/Location/trends/components/RankingSection';
 import { CityBreakdownSection } from '@/components/Location/trends/components/CityBreakdownSection';
+import { PropertyTypeBreakdownSection } from '@/components/Location/trends/components/PropertyTypeBreakdownSection';
 import { AboutReportSection } from '@/components/Location/trends/components/AboutReportSection';
 import { CTABar } from '@/components/Location/trends/components/CTABar';
 import { TrendsFilters } from '@/components/Location/trends/components/TrendsFilters';
@@ -309,6 +310,17 @@ const LocationTrendsPage: React.FC<LocationTrendsPageProps> = ({ locationType })
       {locationType === 'city' && (
         <>
           <CityBreakdownSection 
+            locationType={locationType}
+            locationName={displayLocationName}
+          />
+          <Separator />
+        </>
+      )}
+
+      {/* Property Type Breakdown Section - Only show for cities */}
+      {locationType === 'city' && (
+        <>
+          <PropertyTypeBreakdownSection 
             locationType={locationType}
             locationName={displayLocationName}
           />

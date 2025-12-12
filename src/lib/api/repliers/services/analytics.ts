@@ -1472,6 +1472,86 @@ export async function getSoldPriceTrends(params: AnalyticsParams): Promise<SoldP
   return { months, medianPrices, averagePrices };
 }
 
+export interface MedianListingVsSoldPriceData {
+  months: string[];
+  medianListingPrice: number[];
+  medianSoldPrice: number[];
+}
+
+export async function getMedianListingVsSoldPriceData(params: AnalyticsParams): Promise<MedianListingVsSoldPriceData | null> {
+  const now = new Date();
+  const twoYearsAgo = new Date(now.getFullYear() - 2, now.getMonth(), 1);
+  
+  // Fetch median listing price (active listings)
+  const listingPriceRequest = AnalyticsBuilders.listPrice.median({
+    location: {
+      city: params.city,
+      neighborhood: params.neighborhood,
+      area: params.area,
+      latitude: params.latitude,
+      longitude: params.longitude,
+      radiusKm: params.radiusKm,
+    },
+    dateRange: {
+      start: params.minSoldDate || twoYearsAgo.toISOString().split('T')[0],
+      end: params.maxSoldDate || now.toISOString().split('T')[0],
+    },
+    grouping: 'grp-mth',
+    additionalFilters: {
+      ...(params.propertyClass ? { class: params.propertyClass } : {}),
+      ...(params.propertyType ? { propertyType: params.propertyType } : {}),
+    },
+  });
+
+  // Fetch median sold price
+  const soldPriceRequest = AnalyticsBuilders.soldPrice.median({
+    location: {
+      city: params.city,
+      neighborhood: params.neighborhood,
+      area: params.area,
+      latitude: params.latitude,
+      longitude: params.longitude,
+      radiusKm: params.radiusKm,
+    },
+    dateRange: {
+      start: params.minSoldDate || twoYearsAgo.toISOString().split('T')[0],
+      end: params.maxSoldDate || now.toISOString().split('T')[0],
+    },
+    grouping: 'grp-mth',
+    additionalFilters: {
+      ...(params.propertyClass ? { class: params.propertyClass } : {}),
+      ...(params.propertyType ? { propertyType: params.propertyType } : {}),
+    },
+  });
+
+  const [listingResponse, soldResponse] = await Promise.all([
+    getStatistics(listingPriceRequest),
+    getStatistics(soldPriceRequest),
+  ]);
+
+  if (!listingResponse?.statistics?.listPrice?.mth || !soldResponse?.statistics?.soldPrice?.mth) {
+    return null;
+  }
+
+  const months: string[] = [];
+  const medianListingPrice: number[] = [];
+  const medianSoldPrice: number[] = [];
+
+  // Get all unique months from both responses
+  const listingMonths = Object.keys(listingResponse.statistics.listPrice.mth).sort();
+  const soldMonths = Object.keys(soldResponse.statistics.soldPrice.mth).sort();
+  const allMonths = Array.from(new Set([...listingMonths, ...soldMonths])).sort();
+
+  allMonths.forEach((month) => {
+    const date = new Date(month + '-01');
+    months.push(date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+    medianListingPrice.push(listingResponse.statistics.listPrice?.mth?.[month]?.med || 0);
+    medianSoldPrice.push(soldResponse.statistics.soldPrice?.mth?.[month]?.med || 0);
+  });
+
+  return { months, medianListingPrice, medianSoldPrice };
+}
+
 export interface MarketSummaryStats {
   activeListings: number;
   newListings: number;

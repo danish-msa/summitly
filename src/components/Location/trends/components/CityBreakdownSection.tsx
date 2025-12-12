@@ -93,14 +93,13 @@ export const CityBreakdownSection: React.FC<CityBreakdownSectionProps> = ({
       // Normalize city names for matching (remove spaces, special chars, convert to lowercase)
       const normalizeCityName = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, '');
       
+      // Create a Set of normalized GTA city names for faster lookup
+      const normalizedGtaCitiesSet = new Set(GTA_CITIES.map(city => normalizeCityName(city)));
+      
       const gtaBreakdownData = breakdownData.filter(item => {
         const normalizedItemCity = normalizeCityName(item.city);
-        return GTA_CITIES.some(gtaCity => {
-          const normalizedGtaCity = normalizeCityName(gtaCity);
-          return normalizedItemCity === normalizedGtaCity || 
-                 normalizedItemCity.includes(normalizedGtaCity) ||
-                 normalizedGtaCity.includes(normalizedItemCity);
-        });
+        // Only match if the normalized city name exactly matches a GTA city
+        return normalizedGtaCitiesSet.has(normalizedItemCity);
       });
 
       // Create separate arrays for average and median tables
@@ -301,26 +300,26 @@ export const CityBreakdownSection: React.FC<CityBreakdownSectionProps> = ({
     {
       key: 'rank',
       header: 'Rank',
-      className: 'text-center font-medium w-16',
+      className: 'text-center font-medium w-12 px-1 py-1 text-xs',
       render: (row) => row.rank || '-',
     },
     {
       key: 'city',
       header: 'City',
-      className: 'font-medium',
+      className: 'font-medium px-2 py-1 text-xs',
       sortable: true,
     },
     {
       key: 'averagePrice',
       header: 'Average Sold Price',
-      className: 'text-right',
+      className: 'text-right px-2 py-1 text-xs',
       sortable: true,
       render: (row) => formatFullPrice(row.averagePrice),
     },
     {
       key: 'oneYearChange',
       header: '1-Year Change',
-      className: 'text-right',
+      className: 'text-right px-2 py-1 text-xs',
       sortable: true,
       render: (row) => {
         const change = row.oneYearChange;
@@ -336,7 +335,7 @@ export const CityBreakdownSection: React.FC<CityBreakdownSectionProps> = ({
     {
       key: 'totalTransactions',
       header: 'Total Transactions',
-      className: 'text-right',
+      className: 'text-right px-2 py-1 text-xs',
       sortable: true,
       render: (row) => row.totalTransactions.toLocaleString(),
     },
@@ -347,26 +346,26 @@ export const CityBreakdownSection: React.FC<CityBreakdownSectionProps> = ({
     {
       key: 'rank',
       header: 'Rank',
-      className: 'text-center font-medium w-16',
+      className: 'text-center font-medium w-12 px-1 py-1 text-xs',
       render: (row) => row.rank || '-',
     },
     {
       key: 'city',
       header: 'City',
-      className: 'font-medium',
+      className: 'font-medium px-2 py-1 text-xs',
       sortable: true,
     },
     {
       key: 'medianPrice',
       header: 'Median Sold Price',
-      className: 'text-right',
+      className: 'text-right px-2 py-1 text-xs',
       sortable: true,
       render: (row) => formatFullPrice(row.medianPrice),
     },
     {
       key: 'oneYearChange',
       header: '1-Year Change',
-      className: 'text-right',
+      className: 'text-right px-2 py-1 text-xs',
       sortable: true,
       render: (row) => {
         const change = row.oneYearChange;
@@ -382,7 +381,7 @@ export const CityBreakdownSection: React.FC<CityBreakdownSectionProps> = ({
     {
       key: 'totalTransactions',
       header: 'Total Transactions',
-      className: 'text-right',
+      className: 'text-right px-2 py-1 text-xs',
       sortable: true,
       render: (row) => row.totalTransactions.toLocaleString(),
     },
@@ -419,15 +418,17 @@ export const CityBreakdownSection: React.FC<CityBreakdownSectionProps> = ({
               Average Prices by City
             </h3>
             <div className="overflow-auto">
-              <DataTable
-                data={paginatedAvgData}
-                columns={averagePriceColumns}
-                keyExtractor={(row) => row.city}
-                className="p-6"
-                sortBy={sortByAvg}
-                sortOrder={sortOrderAvg}
-                onSort={handleSortAvg}
-              />
+              <div className="[&_th]:h-8 [&_th]:py-2 [&_td]:py-1.5">
+                <DataTable
+                  data={paginatedAvgData}
+                  columns={averagePriceColumns}
+                  keyExtractor={(row) => row.city}
+                  className="p-2"
+                  sortBy={sortByAvg}
+                  sortOrder={sortOrderAvg}
+                  onSort={handleSortAvg}
+                />
+              </div>
             </div>
             {totalPagesAvg > 1 && (
               <div className="mt-4">
@@ -446,15 +447,17 @@ export const CityBreakdownSection: React.FC<CityBreakdownSectionProps> = ({
               Median Prices by City
             </h3>
             <div className="overflow-auto">
-              <DataTable
-                data={paginatedMedData}
-                columns={medianPriceColumns}
-                keyExtractor={(row) => row.city}
-                className="p-6"
-                sortBy={sortByMed}
-                sortOrder={sortOrderMed}
-                onSort={handleSortMed}
-              />
+              <div className="[&_th]:h-8 [&_th]:py-2 [&_td]:py-1.5">
+                <DataTable
+                  data={paginatedMedData}
+                  columns={medianPriceColumns}
+                  keyExtractor={(row) => row.city}
+                  className="p-2"
+                  sortBy={sortByMed}
+                  sortOrder={sortOrderMed}
+                  onSort={handleSortMed}
+                />
+              </div>
             </div>
             {totalPagesMed > 1 && (
               <div className="mt-4">

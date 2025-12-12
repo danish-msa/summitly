@@ -98,6 +98,7 @@ export async function GET(
           inventoryOverview: marketTrends.inventoryOverview,
           newClosedAvailable: marketTrends.newClosedAvailable,
           daysOnMarket: marketTrends.daysOnMarket,
+          medianListingVsSoldPrice: marketTrends.medianListingVsSoldPrice,
           // Note: Rankings are stored in separate MarketRankings table (one record per month, shared by all cities)
           // Fetch via /api/market-trends/[locationType]/[locationName]/rankings
           cached: true,
@@ -176,6 +177,7 @@ export async function GET(
       inventoryOverview,
       newClosedAvailable,
       daysOnMarket,
+      medianListingVsSoldPrice,
     ] = await Promise.all([
       RepliersAPI.analytics.getPriceOverview(analyticsParams, dateRanges),
       RepliersAPI.analytics.getAverageSoldPriceData(analyticsParams),
@@ -184,6 +186,7 @@ export async function GET(
       RepliersAPI.analytics.getInventoryOverview(analyticsParams, dateRanges),
       RepliersAPI.analytics.getNewClosedAvailableData(analyticsParams, dateRanges),
       RepliersAPI.analytics.getDaysOnMarketData(analyticsParams),
+      RepliersAPI.analytics.getMedianListingVsSoldPriceData(analyticsParams),
     ]);
 
     // Note: Rankings are stored in separate MarketRankings table (one record per month, shared by all cities)
@@ -198,6 +201,7 @@ export async function GET(
       inventoryOverview,
       newClosedAvailable,
       daysOnMarket,
+      medianListingVsSoldPrice,
       // Rankings are not included here - they're in MarketRankings table
     };
 
@@ -223,6 +227,7 @@ export async function GET(
             inventoryOverview: marketTrendsData.inventoryOverview as unknown as Prisma.InputJsonValue,
             newClosedAvailable: marketTrendsData.newClosedAvailable as unknown as Prisma.InputJsonValue,
             daysOnMarket: marketTrendsData.daysOnMarket as unknown as Prisma.InputJsonValue,
+            medianListingVsSoldPrice: marketTrendsData.medianListingVsSoldPrice as unknown as Prisma.InputJsonValue,
             parentCity: parentCity || null,
             parentArea: parentArea || null,
             parentNeighbourhood: parentNeighbourhood || null,
@@ -245,6 +250,7 @@ export async function GET(
             inventoryOverview: marketTrendsData.inventoryOverview as unknown as Prisma.InputJsonValue,
             newClosedAvailable: marketTrendsData.newClosedAvailable as unknown as Prisma.InputJsonValue,
             daysOnMarket: marketTrendsData.daysOnMarket as unknown as Prisma.InputJsonValue,
+            medianListingVsSoldPrice: marketTrendsData.medianListingVsSoldPrice as unknown as Prisma.InputJsonValue,
             lastFetchedAt: new Date(),
           },
         });

@@ -19,7 +19,8 @@ import { formatFullPrice } from '../utils/helpers';
 import { 
   getAverageSoldPriceChartOption, 
   getSalesVolumeChartOption,
-  getColorForPropertyType
+  getColorForPropertyType,
+  getMedianListingVsSoldPriceChartOption
 } from '../utils/chartOptions';
 import { 
   generateSalesVolumeMockData,
@@ -113,9 +114,9 @@ export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({
   const [isExplanationExpanded, setIsExplanationExpanded] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [averageSoldPriceViewMode, setAverageSoldPriceViewMode] = useState<"chart" | "table">("chart");
-  const [salesVolumeViewMode, setSalesVolumeViewMode] = useState<"chart" | "table">("chart");
+  const [medianListingVsSoldViewMode, setMedianListingVsSoldViewMode] = useState<"chart" | "table">("chart");
   const [averageSoldPriceData, setAverageSoldPriceData] = useState<{ months: string[]; prices: number[]; medianPrices?: number[]; counts: number[] }>({ months: [], prices: [], medianPrices: [], counts: [] });
-  const [salesVolumeGraphData, setSalesVolumeGraphData] = useState<{ months: string[]; [propertyType: string]: string[] | number[] }>({ months: [] });
+  const [medianListingVsSoldData, setMedianListingVsSoldData] = useState<{ months: string[]; medianListingPrice: number[]; medianSoldPrice: number[] }>({ months: [], medianListingPrice: [], medianSoldPrice: [] });
   const [salesVolumeTableData, setSalesVolumeTableData] = useState(generateSalesVolumeMockData());
   const [priceOverviewData, setPriceOverviewData] = useState({
     current: {
@@ -146,11 +147,32 @@ export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({
     }
   };
 
+  // Fetch median listing vs sold price data
+  useEffect(() => {
+    const fetchMedianListingVsSoldPrice = async () => {
+      try {
+        const url = new URL(`/api/market-trends/${locationType}/${encodeURIComponent(locationName)}`, window.location.origin);
+        url.searchParams.set('years', years.toString());
+        
+        const response = await fetch(url.toString());
+        if (response.ok) {
+          const data = await response.json();
+          if (data.medianListingVsSoldPrice) {
+            setMedianListingVsSoldData(data.medianListingVsSoldPrice);
+          }
+        }
+      } catch (error) {
+        console.error('[HousingPricesSection] Error fetching median listing vs sold price:', error);
+      }
+    };
+
+    fetchMedianListingVsSoldPrice();
+  }, [locationType, locationName, years]);
+
   // Process market trends data when it changes
   useEffect(() => {
     // Extract data from marketTrendsData prop
     const avgPriceData = marketTrendsData.averageSoldPrice;
-    const salesVolumeData = marketTrendsData.salesVolumeByType;
     const priceOverview = marketTrendsData.priceOverview;
 
     // Update state with fetched data or fallback to mock data
@@ -164,19 +186,6 @@ export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({
       setAverageSoldPriceData(generateAverageSoldPriceData(properties));
     }
 
-    if (salesVolumeData) {
-      setSalesVolumeGraphData(salesVolumeData);
-      // Generate table data from graph data
-      const tableData = generateSalesVolumeMockData(); // Keep mock for now, can enhance later
-      setSalesVolumeTableData(tableData);
-    } else {
-      const mockTableData = generateSalesVolumeMockData();
-      setSalesVolumeTableData(mockTableData);
-      setSalesVolumeGraphData(generateSalesVolumeData(mockTableData));
-    }
-
-    // Keep mock data for table (price by bedrooms aggregation not yet implemented)
-    setSalesVolumeTableData(generateSalesVolumeMockData());
 
     // Only use API data for price overview - no mock fallback
     if (priceOverview) {
@@ -209,13 +218,13 @@ export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({
     toast.success(`Switched to ${averageSoldPriceViewMode === "chart" ? "table" : "chart"} view`);
   };
 
-  const handleToggleSalesVolumeView = () => {
-    setSalesVolumeViewMode(prev => prev === "chart" ? "table" : "chart");
-    toast.success(`Switched to ${salesVolumeViewMode === "chart" ? "table" : "chart"} view`);
+  const handleToggleMedianListingVsSoldView = () => {
+    setMedianListingVsSoldViewMode(prev => prev === "chart" ? "table" : "chart");
+    toast.success(`Switched to ${medianListingVsSoldViewMode === "chart" ? "table" : "chart"} view`);
   };
 
-  const handleDownload = (type: "averagePrice" | "salesVolume") => {
-    toast.success(`${type === "averagePrice" ? "Average price" : "Sales volume"} data downloaded!`);
+  const handleDownload = (type: "averagePrice" | "medianListingVsSold") => {
+    toast.success(`${type === "averagePrice" ? "Average price" : "Median listing vs sold price"} data downloaded!`);
   };
 
 
@@ -449,17 +458,17 @@ export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({
             </Card>
           </div>
 
-          {/* Sales Volume by Property Type Graph */}
+          {/* Median Listing Price vs Median Sold Price Graph */}
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold text-foreground">
-                Sales Volume by Property Type in {locationName}
+                Median Listing Price vs. Median Sold Price in {locationName}
               </h3>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={handleToggleSalesVolumeView}
+                  onClick={handleToggleMedianListingVsSoldView}
                   className="h-8 w-8 rounded-lg transition-all duration-300"
                   title="Switch to table view"
                 >
@@ -468,7 +477,7 @@ export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => handleDownload("salesVolume")}
+                  onClick={() => handleDownload("medianListingVsSold")}
                   className="h-8 w-8 rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-300"
                   title="Download data"
                 >
@@ -477,9 +486,9 @@ export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({
               </div>
             </div>
             <Card className="p-6" variant='white'>
-              {salesVolumeViewMode === "chart" ? (
+              {medianListingVsSoldViewMode === "chart" ? (
                 <ReactECharts
-                  option={getSalesVolumeChartOption(salesVolumeGraphData)}
+                  option={getMedianListingVsSoldPriceChartOption(medianListingVsSoldData)}
                   style={{ height: '400px' }}
                 />
               ) : (
@@ -488,55 +497,20 @@ export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({
                     <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
                       <TableRow>
                         <TableHead className="font-semibold">Month</TableHead>
-                        {Object.keys(salesVolumeGraphData)
-                          .filter(key => key !== 'months')
-                          .filter((propertyType) => {
-                            // Only show property types with data
-                            const counts = salesVolumeGraphData[propertyType] as number[];
-                            return counts && counts.length > 0 && counts.some(count => count > 0);
-                          })
-                          .map((propertyType, index) => {
-                            const colors = getColorForPropertyType(index);
-                            return (
-                              <TableHead key={propertyType} className="text-right font-semibold">
-                                <span className="inline-flex items-center gap-2">
-                                  <span 
-                                    className="w-2 h-2 rounded-full" 
-                                    style={{ backgroundColor: colors.solid }}
-                                  ></span>
-                                  {propertyType}
-                                </span>
-                              </TableHead>
-                            );
-                          })}
+                        <TableHead className="text-right font-semibold">Median Listing Price</TableHead>
+                        <TableHead className="text-right font-semibold">Median Sold Price</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {salesVolumeGraphData.months.map((month, index) => (
+                      {medianListingVsSoldData.months.map((month, index) => (
                         <TableRow key={month} className="hover:bg-muted/50 transition-colors">
                           <TableCell className="font-medium">{month}</TableCell>
-                          {Object.keys(salesVolumeGraphData)
-                            .filter(key => key !== 'months')
-                            .filter((propertyType) => {
-                              // Only show property types with data
-                              const counts = salesVolumeGraphData[propertyType] as number[];
-                              return counts && counts.length > 0 && counts.some(count => count > 0);
-                            })
-                            .map((propertyType, propIndex) => {
-                              const colors = getColorForPropertyType(propIndex);
-                              const counts = salesVolumeGraphData[propertyType] as number[];
-                              return (
-                                <TableCell key={propertyType} className="text-right">
-                                  <span className="inline-flex items-center gap-2">
-                                    <span 
-                                      className="w-2 h-2 rounded-full" 
-                                      style={{ backgroundColor: colors.solid }}
-                                    ></span>
-                                    {counts[index] || 0}
-                                  </span>
-                                </TableCell>
-                              );
-                            })}
+                          <TableCell className="text-right">
+                            {medianListingVsSoldData.medianListingPrice[index] ? formatFullPrice(medianListingVsSoldData.medianListingPrice[index]) : '-'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {medianListingVsSoldData.medianSoldPrice[index] ? formatFullPrice(medianListingVsSoldData.medianSoldPrice[index]) : '-'}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

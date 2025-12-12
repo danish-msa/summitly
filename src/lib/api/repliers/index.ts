@@ -91,6 +91,7 @@ export const RepliersAPI = {
     getDaysOnMarketData: AnalyticsService.getDaysOnMarketData,
     getNewClosedAvailableData: AnalyticsService.getNewClosedAvailableData,
     getCityRankings: AnalyticsService.getCityRankings,
+    getMedianListingVsSoldPriceData: AnalyticsService.getMedianListingVsSoldPriceData,
   },
 
   // Client utilities

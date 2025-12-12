@@ -586,6 +586,9 @@ model MarketTrends {
   newClosedAvailable Json? // NewClosedAvailableData
   daysOnMarket       Json? // DaysOnMarketData
 
+  // Price comparison data (stored as JSON)
+  medianListingVsSoldPrice Json? // MedianListingVsSoldPriceData
+
   // Metadata
   lastFetchedAt DateTime @default(now())
   createdAt     DateTime @default(now())
@@ -632,6 +635,25 @@ model CityBreakdown {
   // City breakdown data (stored as JSON)
   // Array of { city: string, averagePrice: number, medianPrice: number, averageOneYearChange: number, medianOneYearChange: number, totalTransactions: number }
   breakdownData Json // CityBreakdownData[] - contains breakdown for all cities
+
+  // Metadata
+  lastFetchedAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([month])
+  @@index([lastFetchedAt])
+}
+
+// Property Type Breakdown - stores property type breakdown data (average prices, price changes, transactions)
+// One record per month per city (format: "2025-11" or "2025-11-Toronto")
+model PropertyTypeBreakdown {
+  id    String @id @default(cuid())
+  month String @unique // Format: "2025-11" (all cities) or "2025-11-Toronto" (city-specific)
+
+  // Property type breakdown data (stored as JSON)
+  // Array of { propertyType: string, avgPrice: number, medianPrice: number, avgPriceOneMonthChange: number, avgPriceOneYearChange: number, transactions: number, transactionsOneMonthChange: number, transactionsOneYearChange: number }
+  breakdownData Json // PropertyTypeBreakdownData[] - contains breakdown by property type
 
   // Metadata
   lastFetchedAt DateTime @default(now())
