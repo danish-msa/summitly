@@ -168,12 +168,12 @@ export async function GET(request: NextRequest) {
       await prisma.cityBreakdown.upsert({
         where: { month: currentMonth },
         update: {
-          breakdownData: breakdownData as Prisma.InputJsonValue,
+          breakdownData: breakdownData as unknown as Prisma.InputJsonValue,
           lastFetchedAt: new Date(),
         },
         create: {
           month: currentMonth,
-          breakdownData: breakdownData as Prisma.InputJsonValue,
+          breakdownData: breakdownData as unknown as Prisma.InputJsonValue,
           lastFetchedAt: new Date(),
         },
       });
