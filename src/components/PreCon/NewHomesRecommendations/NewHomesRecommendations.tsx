@@ -71,14 +71,14 @@ export const NewHomesRecommendations = () => {
           <TabsList className="grid grid-cols-2 h-auto gap-2 bg-brand-glacier/30 p-2 rounded-xl">
             <TabsTrigger
               value="homes"
-              className="data-[state=active]:bg-white data-[state=active]:text-primary text-base flex items-center gap-2 py-3 rounded-lg transition-all duration-300"
+              className="data-[state=active]:bg-secondary data-[state=active]:text-white text-base flex items-center gap-2 py-3 rounded-lg transition-all duration-300"
             >
               <Home className="w-4 h-4" />
               <span>New Homes</span>
             </TabsTrigger>
             <TabsTrigger
               value="condos"
-              className="data-[state=active]:bg-white data-[state=active]:text-primary text-base flex items-center gap-2 py-3 rounded-lg transition-all duration-300"
+              className="data-[state=active]:bg-secondary data-[state=active]:text-white text-base flex items-center gap-2 py-3 rounded-lg transition-all duration-300"
             >
               <Building2 className="w-4 h-4" />
               <span>New Condos</span>

@@ -123,7 +123,7 @@ const PropertyCategories = () => {
           className=" mb-12"
         >
           <h2 className="text-3xl sm:text-3xl lg:text-3xl font-bold text-foreground mb-4">
-            Browse homes in <span className="text-primary">{displayLocation}</span>
+            Browse homes in <span className="text-gradient-brand">{displayLocation}</span>
           </h2>
         </motion.div>
 

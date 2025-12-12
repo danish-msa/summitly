@@ -293,7 +293,7 @@ const PreConSearchBar: React.FC<PreConSearchBarProps> = ({
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           placeholder={placeholder}
-          className={cn("pl-12 pr-12 h-12 text-base", inputClassName)}
+          className={cn("pl-12 pr-12 h-12 rounded-full text-base", inputClassName)}
         />
         
         {/* Search icon */}

@@ -62,9 +62,9 @@ const ChangeIndicator = ({ change }: { change: StatChange }) => {
   return (
     <div className="flex items-center gap-1.5">
       {isPositive ? (
-        <ArrowUp className="w-10 h-10 text-green-600" />
+        <ArrowUp className="w-6 h-6 text-green-600" />
       ) : (
-        <ArrowDown className="w-10 h-10 text-red-600" />
+        <ArrowDown className="w-6 h-6 text-red-600" />
       )}
       <div className="flex flex-col">
         <span className={`text-sm font-medium ${isPositive ? "text-green-600" : "text-red-600"}`}>
@@ -103,13 +103,13 @@ const PropertyCard = ({ data, isFirst }: { data: PropertyData; isFirst?: boolean
       
       {/* Transactions Section */}
       <div className="p-3">
-        <div className="flex items-start gap-2 mb-4">
-          <div className="w-1 h-12 bg-blue-500 rounded-full" />
-          <div>
-            <p className="text-lg font-bold text-foreground tracking-tight">
+        <div className="flex items-start gap-2 mb-2">
+          <div className="flex flex-row justify-between items-center">
+            <p className="text-md font-bold text-foreground tracking-tight mr-2">
               {formatNumber(data.transactions)}
             </p>
-            <p className="text-sm text-muted-foreground font-medium">Properties Sold</p>
+            <p className="text-xs text-muted-foreground font-medium">Properties Sold</p>
+  
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -252,12 +252,12 @@ export const PropertyTypeBreakdownSection: React.FC<PropertyTypeBreakdownSection
         priceChanges: [
           { 
             value: item.avgPriceOneMonthChange, 
-            label: "1-month change", 
+            label: "MoM", 
             isPositive: item.avgPriceOneMonthChange > 0 
           },
           { 
             value: item.avgPriceOneYearChange, 
-            label: "12-month change", 
+            label: "YoY", 
             isPositive: item.avgPriceOneYearChange > 0 
           },
         ],
@@ -265,12 +265,12 @@ export const PropertyTypeBreakdownSection: React.FC<PropertyTypeBreakdownSection
         transactionChanges: [
           { 
             value: item.transactionsOneMonthChange, 
-            label: "1-month change", 
+            label: "MoM", 
             isPositive: item.transactionsOneMonthChange > 0 
           },
           { 
             value: item.transactionsOneYearChange, 
-            label: "12-month change", 
+            label: "YoY", 
             isPositive: item.transactionsOneYearChange > 0 
           },
         ],
@@ -295,7 +295,7 @@ export const PropertyTypeBreakdownSection: React.FC<PropertyTypeBreakdownSection
                     return sum + (monthChange * item.transactions);
                   }, 0) / totalTransactions
                 : 0,
-              label: "1-month change",
+              label: "MoM",
               isPositive: totalTransactions > 0
                 ? transformedData.reduce((sum, item) => {
                     const monthChange = item.priceChanges[0]?.value || 0;
@@ -310,7 +310,7 @@ export const PropertyTypeBreakdownSection: React.FC<PropertyTypeBreakdownSection
                     return sum + (yearChange * item.transactions);
                   }, 0) / totalTransactions
                 : 0,
-              label: "12-month change",
+              label: "YoY",
               isPositive: totalTransactions > 0
                 ? transformedData.reduce((sum, item) => {
                     const yearChange = item.priceChanges[1]?.value || 0;
@@ -328,7 +328,7 @@ export const PropertyTypeBreakdownSection: React.FC<PropertyTypeBreakdownSection
                     return sum + (monthChange * item.transactions);
                   }, 0) / totalTransactions
                 : 0,
-              label: "1-month change",
+              label: "MoM",
               isPositive: totalTransactions > 0
                 ? transformedData.reduce((sum, item) => {
                     const monthChange = item.transactionChanges[0]?.value || 0;
@@ -343,7 +343,7 @@ export const PropertyTypeBreakdownSection: React.FC<PropertyTypeBreakdownSection
                     return sum + (yearChange * item.transactions);
                   }, 0) / totalTransactions
                 : 0,
-              label: "12-month change",
+              label: "YoY",
               isPositive: totalTransactions > 0
                 ? transformedData.reduce((sum, item) => {
                     const yearChange = item.transactionChanges[1]?.value || 0;

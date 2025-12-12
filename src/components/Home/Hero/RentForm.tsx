@@ -20,7 +20,7 @@ const RentForm = () => {
           <LocationInput onSelect={handleLocationSelect} placeholder="Where do you want to rent?" />
         </div>
       </form>
-      <div className='flex flex-col md:flex-row gap-2 justify-between bg-gradient-to-r from-brand-celestial to-brand-slate text-white text-white p-6 rounded-2xl mt-4'>
+      <div className='flex flex-col md:flex-row gap-2 justify-between bg-gradient-brand text-white text-white p-6 rounded-2xl mt-4'>
         <div className='flex flex-col gap-2'>
           <div className='flex gap-2 items-center'>
             <BiCalculator className='h-7 w-7' /><span className='text-white text-base md:text-xl font-bold'>Find the rental cost of a property, instantly</span>

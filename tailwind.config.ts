@@ -43,18 +43,27 @@ export default {
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',
-  			brand: {
-  				'cb-blue': '#012169',
-  				celestial: '#418FDE',
-  				'bright-blue': '#1F69FF',
-  				midnight: '#0A1730',
-  				slate: '#1B3C55',
-  				'smoky-gray': '#58718D',
-  				mist: '#BECAD7',
-  				glacier: '#DAE1E8',
-  				'icy-blue': '#F0F5FB',
-  				tide: '#BBCFEA'
-  			},
+			brand: {
+				'cb-blue': '#012169',
+				celestial: '#418FDE',
+				'bright-blue': '#1F69FF',
+				midnight: '#0A1730',
+				slate: '#1B3C55',
+				'smoky-gray': '#58718D',
+				mist: '#BECAD7',
+				glacier: '#DAE1E8',
+				'icy-blue': '#F0F5FB',
+				tide: '#BBCFEA'
+			},
+			cyan: {
+				DEFAULT: 'hsl(var(--cyan))',
+			},
+			magenta: {
+				DEFAULT: 'hsl(var(--magenta))',
+			},
+			'brand-red': {
+				DEFAULT: 'hsl(var(--brand-red))',
+			},
   			sidebar: {
   				DEFAULT: 'hsl(var(--sidebar-background))',
   				foreground: 'hsl(var(--sidebar-foreground))',

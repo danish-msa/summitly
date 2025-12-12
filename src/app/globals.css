@@ -43,6 +43,48 @@
   --font-garamond-pro: var(--font-garamond-pro);
   --font-rubik: var(--font-rubik);
   --font-outfit: var(--font-outfit);
+
+  /* Brand colors */
+  --cyan: 187 100% 42%;
+  --magenta: 326 72% 52%;
+  --brand-red: 351 65% 49%; /* #CE2C45 */
+  
+  /* Gradient used by text-gradient-brand */
+  --gradient-accent: linear-gradient(135deg, hsl(187 100% 42%), hsl(326 72% 52%));
+  
+  /* Full brand gradient (3 colors) */
+  --gradient-brand: linear-gradient(135deg, hsl(187 100% 42%), hsl(280 60% 50%), hsl(326 72% 52%));
+}
+
+@layer utilities {
+  /* Background Effects Animations */
+  @keyframes pulse-slow {
+    0%, 100% {
+      opacity: 0.4;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+      opacity: 0.4;
+    }
+    50% {
+      transform: translateY(-20px);
+      opacity: 0.8;
+    }
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 4s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
 }
 
 @layer components {
@@ -630,4 +672,20 @@
 
   .bg-ai-shimmer {
     background-color: rgba(255, 255, 255, 0.8);
+  }
+
+  /* Brand gradient utilities */
+  .text-gradient-brand {
+    background: var(--gradient-accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-gradient-brand {
+    background: var(--gradient-accent);
+  }
+
+  .border-gradient-brand {
+    border-image: var(--gradient-brand) 1;
   }
