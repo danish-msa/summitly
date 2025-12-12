@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { RepliersAPI } from '@/lib/api/repliers';
 import { Prisma } from '@prisma/client';
+import type { StatisticsRequest } from '@/lib/api/repliers/services/analytics';
 
-// Revalidate every 30 days (monthly data)
-export const revalidate = 30 * 24 * 60 * 60; // 30 days in seconds
+// Revalidate every 30 days (monthly data) - 2592000 seconds
+export const revalidate = 2592000;
 
 interface CityBreakdownData {
   city: string;
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
         aggregateStatistics: true,
         aggregates: 'address.city',
         listings: false,
-      } as any),
+      } as StatisticsRequest),
       RepliersAPI.analytics.getStatistics({
         statistics: ['avg-soldPrice', 'med-soldPrice'],
         status: 'U',
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest) {
         aggregateStatistics: true,
         aggregates: 'address.city',
         listings: false,
-      } as any),
+      } as StatisticsRequest),
     ]);
 
     if (!currentStats || !historicalStats) {

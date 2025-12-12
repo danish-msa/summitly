@@ -326,7 +326,7 @@ export async function GET(
     // Try to return stale data from database
     try {
       const resolvedParams = await params;
-      const locationType = resolvedParams.locationType as LocationType;
+      const _locationType = resolvedParams.locationType as LocationType;
       const locationName = decodeURIComponent(resolvedParams.locationName);
       const cleanName = cleanLocationName(locationName);
       const currentMonth = getCurrentMonth();
