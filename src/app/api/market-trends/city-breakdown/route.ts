@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       console.log(`[CityBreakdown API] Serving cached breakdown for month ${currentMonth}`);
       return NextResponse.json({
         month: currentMonth,
-        breakdownData: cachedBreakdown.breakdownData as CityBreakdownData[],
+        breakdownData: cachedBreakdown.breakdownData as unknown as CityBreakdownData[],
         cached: true,
       });
     }
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
         console.log(`[CityBreakdown API] API fetch failed, returning stale cached data for month ${currentMonth}`);
         return NextResponse.json({
           month: currentMonth,
-          breakdownData: cachedBreakdown.breakdownData as CityBreakdownData[],
+          breakdownData: cachedBreakdown.breakdownData as unknown as CityBreakdownData[],
           cached: true,
           stale: true,
         });
@@ -205,7 +205,7 @@ export async function GET(request: NextRequest) {
         console.log(`[CityBreakdown API] Error occurred, returning stale cached data for month ${currentMonth}`);
         return NextResponse.json({
           month: currentMonth,
-          breakdownData: staleData.breakdownData as CityBreakdownData[],
+          breakdownData: staleData.breakdownData as unknown as CityBreakdownData[],
           cached: true,
           stale: true,
         });
