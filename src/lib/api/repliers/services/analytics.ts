@@ -1538,15 +1538,15 @@ export async function getMedianListingVsSoldPriceData(params: AnalyticsParams): 
   const medianSoldPrice: number[] = [];
 
   // Get all unique months from both responses
-  const listingMonths = Object.keys(listingResponse.statistics.listPrice.mth).sort();
-  const soldMonths = Object.keys(soldResponse.statistics.soldPrice.mth).sort();
+  const listingMonths = Object.keys(listingResponse.statistics?.listPrice?.mth || {}).sort();
+  const soldMonths = Object.keys(soldResponse.statistics?.soldPrice?.mth || {}).sort();
   const allMonths = Array.from(new Set([...listingMonths, ...soldMonths])).sort();
 
   allMonths.forEach((month) => {
     const date = new Date(month + '-01');
     months.push(date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
-    medianListingPrice.push(listingResponse.statistics.listPrice?.mth?.[month]?.med || 0);
-    medianSoldPrice.push(soldResponse.statistics.soldPrice?.mth?.[month]?.med || 0);
+    medianListingPrice.push(listingResponse.statistics?.listPrice?.mth?.[month]?.med || 0);
+    medianSoldPrice.push(soldResponse.statistics?.soldPrice?.mth?.[month]?.med || 0);
   });
 
   return { months, medianListingPrice, medianSoldPrice };
