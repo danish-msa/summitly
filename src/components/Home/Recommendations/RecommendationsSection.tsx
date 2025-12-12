@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Home, Building2, TrendingUp, Hammer, User } from "lucide-react";
+import { Home, Building2, TrendingUp, Hammer, User, ChevronRight } from "lucide-react";
 import SectionHeading from "@/components/Helper/SectionHeading";
 import { useLocationDetection } from "@/hooks/useLocationDetection";
 
@@ -176,7 +176,7 @@ export const RecommendationsSection = () => {
               <TabsTrigger
                 key={category.id}
                 value={category.id}
-                className="data-[state=active]:bg-white data-[state=active]:text-primary text-base flex items-center gap-2 py-3 rounded-lg transition-all duration-300"
+                className="data-[state=active]:bg-secondary data-[state=active]:text-white text-base flex items-center gap-2 py-3 rounded-lg transition-all duration-300"
               >
                 {category.icon}
                 <span className="hidden sm:inline">{category.label}</span>
@@ -195,9 +195,10 @@ export const RecommendationsSection = () => {
                 {category.recommendations.map((rec, index) => (
                    <Card
                      key={index}
-                     className="group flex items-center  p-3 hover:shadow-lg transition-all duration-300 cursor-pointer border-border bg-transparent hover:bg-gradient-to-r hover:from-brand-glacier hover:to-brand-ice-blue"
+                     variant="bordered"
+                     className="group flex items-center justify-between p-3 transition-all duration-300 cursor-pointer border-border bg-transparent hover:border-primary"
                    >
-                    <a href={rec.link} className="block">
+                    <a href={rec.link} className="flex-1 block">
                       <h3 className="text-xs font-medium text-muted-foreground group-hover:text-primary transition-colors">
                         {rec.title}
                       </h3>
@@ -205,6 +206,7 @@ export const RecommendationsSection = () => {
                         {rec.subtitle}
                       </p>
                     </a>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0 ml-2" />
                   </Card>
                 ))}
               </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LucideIcon, Home, DollarSign, Key, Calculator, Search } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SectionHeading from '@/components/Helper/SectionHeading';
 
 interface ServiceFeature {
@@ -164,8 +165,6 @@ const servicesData: ServiceData[] = [
 export default function ServiceFeatures() {
   const [activeService, setActiveService] = useState('buy');
 
-  const currentService = servicesData.find(service => service.id === activeService) || servicesData[0];
-
   return (
     <section className="w-full py-16 px-4 sm:px-6 lg:px-8 bg-white">
       <div className="max-w-[1300px] mx-auto">
@@ -185,76 +184,70 @@ export default function ServiceFeatures() {
         </motion.div>
 
         {/* Service Tabs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          viewport={{ once: true }}
-          className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-5"
-        >
-          {servicesData.map((service) => (
-            <motion.button
-              key={service.id}
-              onClick={() => setActiveService(service.id)}
-              className={`
-                flex items-center gap-2 px-4 sm:px-6 py-3 rounded-xl font-medium transition-all duration-300
-                ${activeService === service.id 
-                  ? 'bg-brand-celestial text-white shadow-lg' 
-                  : 'bg-brand-icy-blue text-muted-foreground hover:bg-muted/80 hover:text-foreground'
-                }
-              `}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <service.icon className="w-4 h-4" />
-              <span className="text-sm sm:text-base">{service.name}</span>
-            </motion.button>
-          ))}
-        </motion.div>
-
-        {/* Features Grid */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeService}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -30 }}
-            transition={{ duration: 0.5 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {currentService.features.map((feature, index) => (
-              <motion.div
-                key={`${activeService}-${index}`}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className={`${feature.colorClass} border rounded-2xl px-6 py-4 transition-all duration-300 hover:scale-105 hover:translate-y-1 hover:shadow-md group`}
+        <Tabs value={activeService} onValueChange={setActiveService} className="mt-8">
+          <TabsList className="grid grid-cols-2 md:grid-cols-5 h-auto gap-2 bg-brand-glacier/30 p-2 rounded-xl m-auto">
+            {servicesData.map((service) => (
+              <TabsTrigger
+                key={service.id}
+                value={service.id}
+                className="data-[state=active]:bg-secondary data-[state=active]:text-white text-base flex items-center gap-2 py-3 rounded-lg transition-all duration-300"
               >
-
-                <div className='flex items-center gap-2'>
-                    {/* Icon Container */}
-                    <motion.div 
-                      className="bg-white/80 backdrop-blur-sm rounded-xl p-2 w-fit mb-2 shadow-sm border border-white/50 transition-all duration-300"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <feature.icon className={`w-6 h-6 ${feature.iconColorClass}`} />
-                    </motion.div>
-                    
-                    {/* Content */}
-                    <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors duration-300">
-                      {feature.title}
-                    </h3>
-                    
-                </div>
-                
-                <p className="text-muted-foreground leading-relaxed">
-                  {feature.description}
-                </p>
-              </motion.div>
+                <service.icon className="w-4 h-4" />
+                <span className="hidden sm:inline">{service.name}</span>
+                <span className="sm:hidden text-xs">{service.name.split(" ")[0]}</span>
+              </TabsTrigger>
             ))}
-          </motion.div>
-        </AnimatePresence>
+          </TabsList>
+
+          {servicesData.map((service) => (
+            <TabsContent
+              key={service.id}
+              value={service.id}
+              className="mt-8 animate-fade-in"
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={service.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -30 }}
+                  transition={{ duration: 0.5 }}
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                >
+                  {service.features.map((feature, index) => (
+                    <motion.div
+                      key={`${service.id}-${index}`}
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6, delay: index * 0.1 }}
+                      className={`${feature.colorClass} border rounded-2xl px-6 py-4 transition-all duration-300 hover:scale-105 hover:translate-y-1 hover:shadow-md group`}
+                    >
+                      <div className='flex items-center gap-2'>
+                        {/* Icon Container */}
+                        <motion.div 
+                          className="bg-white/80 backdrop-blur-sm rounded-xl p-2 w-fit mb-2 shadow-sm border border-white/50 transition-all duration-300"
+                          whileHover={{ scale: 1.05 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <feature.icon className={`w-6 h-6 ${feature.iconColorClass}`} />
+                        </motion.div>
+                        
+                        {/* Content */}
+                        <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors duration-300">
+                          {feature.title}
+                        </h3>
+                      </div>
+                      
+                      <p className="text-muted-foreground leading-relaxed">
+                        {feature.description}
+                      </p>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </AnimatePresence>
+            </TabsContent>
+          ))}
+        </Tabs>
       </div>
     </section>
   );
