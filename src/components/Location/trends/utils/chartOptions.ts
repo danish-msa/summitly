@@ -293,9 +293,8 @@ export const getSalesVolumeChartOption = (data: SalesVolumeGraphData) => {
         },
         label: {
           show: true,
-          formatter: (params: any) => {
-            const p = params as { name?: string; percent?: number };
-            return `${p.name || ''}\n${p.percent?.toFixed(1) || 0}%`;
+          formatter: (params: { name?: string; percent?: number }) => {
+            return `${params.name || ''}\n${params.percent?.toFixed(1) || 0}%`;
           },
           fontSize: 12,
           fontWeight: 500

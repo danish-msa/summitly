@@ -622,3 +622,22 @@ model MarketRankings {
   @@index([month])
   @@index([lastFetchedAt])
 }
+
+// City Breakdown - stores city-level breakdown data (average/median prices, 1-year change, transactions)
+// One record per month for all cities (similar to MarketRankings)
+model CityBreakdown {
+  id    String @id @default(cuid())
+  month String @unique // Format: "2025-11" (YYYY-MM) - one breakdown per month for all cities
+
+  // City breakdown data (stored as JSON)
+  // Array of { city: string, averagePrice: number, medianPrice: number, averageOneYearChange: number, medianOneYearChange: number, totalTransactions: number }
+  breakdownData Json // CityBreakdownData[] - contains breakdown for all cities
+
+  // Metadata
+  lastFetchedAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([month])
+  @@index([lastFetchedAt])
+}

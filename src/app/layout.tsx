@@ -28,7 +28,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geometosNeue.variable} ${bauziet.variable} ${garamondPro.variable} ${rubik.variable} ${outfit.variable}`}>
+      <body 
+        className={`${geometosNeue.variable} ${bauziet.variable} ${garamondPro.variable} ${rubik.variable} ${outfit.variable}`}
+        suppressHydrationWarning
+      >
         <SessionProvider>
           <QueryProvider>
             <ResponsiveNav />
