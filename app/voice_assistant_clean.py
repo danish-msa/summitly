@@ -202,6 +202,14 @@ def standardize_property_data(property_data):
     if 'images' not in standardized or not isinstance(standardized['images'], list):
         standardized['images'] = []
     
+    # Add 'image' field for frontend compatibility (single image)
+    if standardized['images'] and len(standardized['images']) > 0:
+        standardized['image'] = standardized['images'][0]
+    elif 'image_url' in standardized:
+        standardized['image'] = standardized['image_url']
+    else:
+        standardized['image'] = None
+    
     # Standardize address field
     if 'full_address' in standardized and 'address' not in standardized:
         standardized['address'] = standardized['full_address']
@@ -234,6 +242,11 @@ def standardize_property_data(property_data):
         standardized['address'] = 'Address not available'
     if 'mls_number' not in standardized or not standardized['mls_number']:
         standardized['mls_number'] = f"ID_{standardized.get('id', 'unknown')}"
+    
+    # Add alternate field names for frontend compatibility
+    standardized['beds'] = standardized.get('bedrooms', 'N/A')
+    standardized['baths'] = standardized.get('bathrooms', 'N/A')
+    standardized['type'] = standardized.get('property_type', 'Residential')
     
     return standardized
 
