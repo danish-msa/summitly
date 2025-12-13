@@ -1148,11 +1148,17 @@ def search_repliers_properties(location: str = "", property_type: str = "", max_
                         'bathrooms': str(num_bathrooms),
                         'sqft': sqft_str,
                         'property_type': property_style or 'Residential',
-                        'image_url': image_url,
+                        'image_url': image_url,  # For backend compatibility
+                        'image': image_url,       # For frontend chatbox
+                        'images': [image_url] if image_url else [],  # For frontend carousel
                         'listing_url': f"https://summitly.ca/property/{mls_num}",
                         'description': description,
                         'mls_number': mls_num,
-                        'full_address': full_address
+                        'full_address': full_address,
+                        'address': full_address,  # Alternate field name
+                        'beds': str(num_bedrooms),  # Alternate field names for frontend
+                        'baths': str(num_bathrooms),
+                        'type': property_style or 'Residential'
                     }
                     properties.append(property_data)
                     
