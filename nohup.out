@@ -1,0 +1,85 @@
+2025-12-12 13:37:48,809 - services.openai_service - INFO - ✅ OpenAI client initialized successfully
+2025-12-12 13:37:50,450 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-12 13:37:50,453 - services.openai_service - INFO - ✅ OpenAI connection test successful
+2025-12-12 13:37:50,514 - services.conversation_context_manager - INFO - ConversationContextManager initialized (storage: Memory)
+2025-12-12 13:37:51,697 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-12 13:37:51,708 - services.openai_service - INFO - ✅ OpenAI connection test successful
+2025-12-12 13:37:51,716 - services.conversation_state - INFO - ConversationStateManager initialized
+2025-12-12 13:37:51,717 - services.nlp_parser - INFO - AdvancedNLPParser initialized
+2025-12-12 13:37:51,741 - services.chatgpt_service - INFO - ✅ OpenAI client initialized
+2025-12-12 13:37:51,742 - services.chatgpt_service - INFO - ChatGPTStyleService initialized
+2025-12-12 13:37:51,742 - services.enhanced_mls_service - INFO - EnhancedMLSQueryService initialized
+2025-12-12 13:37:51,742 - services.chatbot_orchestrator - INFO - ✅ ChatGPTChatbot initialized
+2025-12-12 13:37:51,743 - services.chatbot_api - INFO - ✅ Chatbot API blueprint registered
+2025-12-12 13:37:54,088 - qwen_omni_utils.v2_5.vision_process - INFO - set VIDEO_TOTAL_PIXELS: 90316800
+2025-12-12 13:37:54,244 - services.canadian_re_chatbot - INFO - Canadian Real Estate Chatbot initialized with Llama 3.2
+2025-12-12 13:37:54,248 - services.chatbot_api - INFO - ✅ Chatbot API blueprint registered
+✅ Environment variables loaded from /Users/shreyashdanke/Desktop/Main/Summitly Backend/config/.env
+✅ Repliers API services loaded successfully
+✅ OpenAI service loaded and configured successfully
+✅ OpenAI connection test passed
+⚠️ Audio libraries not available. Voice features disabled.
+✅ Environment variables loaded from /Users/shreyashdanke/Desktop/Main/Summitly Backend/config/.env
+✅ Repliers API services loaded successfully
+✅ OpenAI service loaded and configured successfully
+✅ OpenAI connection test passed
+⚠️ Audio libraries not available. Voice features disabled.
+⚠️ Could not register context chat API: cannot import name 'context_chat_api' from partially initialized module 'app.routes.context_chat_api' (most likely due to a circular import) (/Users/shreyashdanke/Desktop/Main/Summitly Backend/app/routes/context_chat_api.py)
+✅ ChatGPT-style chatbot API registered at /api/chat (HIGHEST PRIORITY)
+✅ Real Property Service loaded - Live data enabled
+🤖 Qwen2.5-Omni service imported successfully!
+🏠 Canadian Real Estate Chatbot service imported successfully!
+✅ Context-aware chat API registered (Feature 2)
+✅ ChatGPT-style chatbot API registered at /api/chat (HIGHEST PRIORITY)
+✅ Real Property Service loaded - Live data enabled
+🤖 Qwen2.5-Omni service imported successfully!
+🏠 Canadian Real Estate Chatbot service imported successfully!
+
+======================================================================
+🏠 SUMMITLY AI - PRODUCTION REAL ESTATE ASSISTANT
+✨ Features: OpenAI Enhanced, Live MLS Data, Investment Analysis,
+   Context-Aware Chat, ROI Calculations, Mortgage Tools, Property Alerts
+======================================================================
+📍 Server: http://0.0.0.0:5050
+📍 Frontend: http://localhost:5050
+📊 Manager Dashboard: http://localhost:5050/manager
+🔗 Repliers API: https://api.repliers.io
+======================================================================
+🚀 HuggingFace Endpoints:
+   • /api/huggingface-chat - Enhanced AI chat
+   • /api/huggingface-property-search - AI property search
+   • /api/huggingface-investment-analysis - AI investment analysis
+   • /api/huggingface-status - Service status
+🤖 NEW Qwen2.5-Omni Multimodal Endpoints:
+   • /api/multimodal-chat - Text + Audio + Image + Video chat
+   • /api/analyze-property-media - AI property image/video analysis
+   • /api/qwen-omni-status - Multimodal model status
+   • /api/initialize-qwen-omni - Initialize multimodal model
+🏠 NEW Canadian Real Estate Intelligent Chatbot:
+   • /api/intelligent-chat - Dynamic conversational chatbot (Llama 3.2)
+   • /api/intelligent-chat-sync - Synchronous intelligent chat
+   • /api/intelligent-search - Convert chat context to property search
+   • /api/intelligent-reset - Reset chat session
+   • /api/intelligent-status - Chatbot service status
+🔍 Exa AI Real-Time Data Integration:
+   • /api/exa-search - Real-time property & market data search
+   • Enhanced intelligent chat with live market information
+   • Real-time listings, trends, neighborhoods, and statistics
+🏢 Repliers MLS Integration (Production API):
+   • /api/repliers-nlp-search - Natural language property search
+   • /api/repliers-property-details/<id> - Detailed listing info
+   • /api/repliers-estimate - AI property valuations
+   • /api/repliers-saved-search - Save searches with alerts
+   • /api/repliers-similar-properties/<id> - Find similar listings
+======================================================================
+
+⚠️  HuggingFace FastAPI service not available - using fallback responses
+   Error: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x155ce34d0>: Failed to establish a new connection: [Errno 61] Connection refused'))
+
+ * Serving Flask app 'voice_assistant_clean'
+ * Debug mode: on
+2025-12-12 13:37:54,288 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5050
+ * Running on http://192.168.31.176:5050
+2025-12-12 13:37:54,288 - werkzeug - INFO - [33mPress CTRL+C to quit[0m

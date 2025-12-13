@@ -14,21 +14,36 @@ def extract_property_preferences_naturally(user_text: str, session: Session) -> 
         # Initialize extracted data
         extracted = {}
         
-        # Extract location
-        location_keywords = ['in ', 'at ', 'near ', 'around ', 'toronto', 'mississauga', 'markham', 'brampton', 'scarborough', 'north york', 'downtown', 'suburb']
-        for keyword in location_keywords:
+        # Extract location - consistent with main search logic with typo handling
+        location_keywords = {
+            'mississauga': 'Mississauga',
+            'missiauga': 'Mississauga',
+            'mississuaga': 'Mississauga',
+            'markham': 'Markham', 
+            'vaughan': 'Vaughan',
+            'vaughn': 'Vaughan',
+            'brampton': 'Brampton',
+            'toronto': 'Toronto',
+            'toranto': 'Toronto',
+            'scarborough': 'Scarborough',
+            'scarbrough': 'Scarborough',
+            'north york': 'North York',
+            'northyork': 'North York',
+            'etobicoke': 'Etobicoke',
+            'etobicok': 'Etobicoke',
+            'richmond hill': 'Richmond Hill',
+            'richmondhill': 'Richmond Hill',
+            'oakville': 'Oakville',
+            'oakvile': 'Oakville',
+            'burlington': 'Burlington',
+            'hamilton': 'Hamilton'
+        }
+        
+        # Find the most specific location match
+        for keyword, city_name in location_keywords.items():
             if keyword in user_lower:
-                # Simple location extraction logic
-                if 'toronto' in user_lower:
-                    extracted['location'] = 'Toronto'
-                elif 'mississauga' in user_lower:
-                    extracted['location'] = 'Mississauga'
-                elif 'markham' in user_lower:
-                    extracted['location'] = 'Markham'
-                elif 'brampton' in user_lower:
-                    extracted['location'] = 'Brampton'
-                elif 'downtown' in user_lower:
-                    extracted['location'] = 'Downtown Toronto'
+                extracted['location'] = city_name
+                print(f"🎯 [HANDLER LOCATION] Found '{keyword}' -> {city_name}")
                 break
         
         # Extract property type

@@ -47,6 +47,36 @@ def is_openai_available() -> bool:
     return get_openai_client() is not None
 
 
+def get_token_param_name() -> str:
+    """
+    Get the correct token limit parameter name based on model.
+    GPT-5-nano uses 'max_completion_tokens' instead of 'max_tokens'.
+    """
+    if 'gpt-5' in OPENAI_MODEL.lower():
+        return 'max_completion_tokens'
+    return 'max_tokens'
+
+
+def create_chat_completion(messages: List[Dict], **kwargs):
+    """
+    Wrapper for chat.completions.create that handles GPT-5-nano parameter differences.
+    Automatically uses correct parameter names based on model.
+    """
+    client = get_openai_client()
+    if not client:
+        return None
+    
+    # Convert max_tokens to max_completion_tokens for GPT-5-nano
+    if 'max_tokens' in kwargs and 'gpt-5' in OPENAI_MODEL.lower():
+        kwargs['max_completion_tokens'] = kwargs.pop('max_tokens')
+    
+    return client.chat.completions.create(
+        model=OPENAI_MODEL,
+        messages=messages,
+        **kwargs
+    )
+
+
 # =============================================================================
 # FUNCTION 1: Enhanced Conversational Intelligence
 # =============================================================================
@@ -114,9 +144,8 @@ Keep responses concise (2-3 paragraphs max) but informative."""
         # Add current user message
         messages.append({"role": "user", "content": user_message})
         
-        # Make API call
-        response = client.chat.completions.create(
-            model=OPENAI_MODEL,
+        # Make API call using wrapper that handles GPT-5-nano
+        response = create_chat_completion(
             messages=messages,
             temperature=0.7,
             max_tokens=500,
@@ -198,9 +227,7 @@ Requirements:
 
 Generate an enhanced description that will excite potential buyers:"""
 
-        response = client.chat.completions.create(
-            model=OPENAI_MODEL,
-            messages=[
+        response = create_chat_completion(messages=[
                 {"role": "system", "content": "You are an expert real estate copywriter specializing in Toronto luxury properties."},
                 {"role": "user", "content": prompt}
             ],
@@ -268,9 +295,7 @@ Extract and return JSON with:
 
 Analyze the query and return ONLY valid JSON:"""
 
-        response = client.chat.completions.create(
-            model=OPENAI_MODEL,
-            messages=[
+        response = create_chat_completion(messages=[
                 {"role": "system", "content": "You are a real estate query analysis expert. Return ONLY valid JSON."},
                 {"role": "user", "content": prompt}
             ],
@@ -361,9 +386,7 @@ Create a professional report covering:
 
 Keep it professional, data-driven, and actionable. Use Toronto/Canadian context."""
 
-        response = client.chat.completions.create(
-            model=OPENAI_MODEL,
-            messages=[
+        response = create_chat_completion(messages=[
                 {"role": "system", "content": "You are a senior Canadian real estate market analyst with expertise in Toronto and GTA markets."},
                 {"role": "user", "content": prompt}
             ],
@@ -477,9 +500,7 @@ Return as detailed JSON with:
 
 Return ONLY valid JSON:"""
 
-        response = client.chat.completions.create(
-            model=OPENAI_MODEL,
-            messages=[
+        response = create_chat_completion(messages=[
                 {"role": "system", "content": "You are a Canadian real estate investment analyst. Return ONLY valid JSON."},
                 {"role": "user", "content": prompt}
             ],
@@ -582,9 +603,7 @@ Generate a professional CMA report including:
 
 Format professionally with clear sections and data-driven insights."""
 
-        response = client.chat.completions.create(
-            model=OPENAI_MODEL,
-            messages=[
+        response = create_chat_completion(messages=[
                 {"role": "system", "content": "You are a professional Canadian real estate appraiser creating detailed CMA reports."},
                 {"role": "user", "content": prompt}
             ],
@@ -658,9 +677,7 @@ Return as JSON array of strings:
 
 Return ONLY valid JSON:"""
 
-        response = client.chat.completions.create(
-            model=OPENAI_MODEL,
-            messages=[
+        response = create_chat_completion(messages=[
                 {"role": "system", "content": "You are an expert at asking relevant follow-up questions in real estate conversations. Return ONLY valid JSON."},
                 {"role": "user", "content": prompt}
             ],
@@ -702,9 +719,7 @@ def test_openai_connection() -> bool:
         if not client:
             return False
         
-        response = client.chat.completions.create(
-            model=OPENAI_MODEL,
-            messages=[{"role": "user", "content": "Hello"}],
+        response = create_chat_completion(messages=[{"role": "user", "content": "Hello"}],
             max_tokens=10
         )
         

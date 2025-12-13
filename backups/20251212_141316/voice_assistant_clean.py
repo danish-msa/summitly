@@ -15,7 +15,7 @@ import base64
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 import re
-from flask import Flask, request, jsonify, send_from_directory, abort, redirect
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import tempfile
 import pandas as pd
@@ -400,26 +400,27 @@ class ConversationContext:
 # Global conversation context manager
 conversation_context = ConversationContext()
 
-# Initialize Flask app with proper static folder path
-import os
-app = Flask(__name__, static_folder=os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static'))
+# Initialize Flask app
+app = Flask(__name__)
 CORS(app, origins=["*"])
 
-# Register Feature 2: Context-Aware Chat Blueprint (Optional)
+# Register Feature 2: Context-Aware Chat Blueprint
 try:
     from app.routes.context_chat_api import context_chat_api
     app.register_blueprint(context_chat_api)
     print("✅ Context-aware chat API registered (Feature 2)")
 except Exception as e:
-    print(f"ℹ️ Context chat API disabled: {str(e).split('(')[0]}")
+    print(f"⚠️ Could not register context chat API: {e}")
 
-# Register ChatGPT-Style Chatbot (Optional but Preferred)
+# Register ChatGPT-Style Chatbot (HIGHEST PRIORITY)
 try:
     from services.chatbot_api import register_chatbot_blueprint
     register_chatbot_blueprint(app)
-    print("✅ ChatGPT-style chatbot API registered at /api/chat")
+    print("✅ ChatGPT-style chatbot API registered at /api/chat (HIGHEST PRIORITY)")
 except Exception as e:
-    print(f"ℹ️ Chatbot API disabled: {str(e).split('(')[0]}")
+    print(f"⚠️ Could not register chatbot API: {e}")
+    import traceback
+    traceback.print_exc()
 
 # Configuration
 SUMMITLY_BASE_URL = "https://api.summitly.ca"  # Legacy URL for display
@@ -1009,7 +1010,6 @@ def search_repliers_properties(location: str = "", property_type: str = "", max_
                         break
             
             # Call listings_service with proper parameters including bed/bath filters
-            # CRITICAL: Set transaction_type='sale' to exclude rentals
             result = listings_service.search_listings(
                 city=city,
                 property_style=property_style,
@@ -1017,7 +1017,6 @@ def search_repliers_properties(location: str = "", property_type: str = "", max_
                 min_bedrooms=bedrooms,
                 min_bathrooms=bathrooms,
                 status='active',
-                transaction_type='sale',  # ✅ CRITICAL: Only show properties for SALE, not RENT
                 page_size=limit,
                 page=1
             )
@@ -1121,11 +1120,12 @@ def search_repliers_properties(location: str = "", property_type: str = "", max_
                             image_url = images[0].get('href', images[0].get('url', ''))
                         else:
                             # Images are filenames like "IMG-E12626560_1.jpg"
-                            # Construct proper CDN URL
+                            # Need to construct full URL (check if Repliers provides a base URL)
                             image_filename = images[0]
                             if image_filename and not image_filename.startswith('http'):
-                                # Use the Repliers CDN URL directly
-                                image_url = f"https://cdn.repliers.io/{image_filename}"
+                                # For now, use the filename as-is
+                                # TODO: Get proper image URL base from Repliers API
+                                image_url = f"https://cdn.repliers.io/{image_filename}"  # Placeholder
                             else:
                                 image_url = image_filename
                     
@@ -5470,75 +5470,6 @@ def chat_with_context():
         }), 500
 
 
-# ==================== ENHANCED GPT-4 CHATBOT ENDPOINT ====================
-@app.route('/api/chat-gpt4', methods=['POST', 'OPTIONS'])
-def chat_gpt4():
-    """Enhanced GPT-4 chatbot with rental/sale detection fix"""
-    if request.method == 'OPTIONS':
-        response = jsonify({"status": "ok"})
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        return response, 200
-    
-    try:
-        import uuid
-        data = request.json
-        message = data.get('message', '').strip()
-        session_id = data.get('user_id', data.get('session_id', str(uuid.uuid4())))
-        
-        if not message:
-            return jsonify({"success": False, "error": "Message required"}), 400
-        
-        print(f"🤖 GPT-4 Chat: session={session_id}, msg='{message[:60]}...'")
-        
-        # Import enhanced orchestrator
-        from services.chatbot_orchestrator import process_user_message
-        
-        # Process through GPT-4 pipeline
-        result = process_user_message(message, session_id)
-        
-        # Return in format expected by Summitly_main.html
-        response_data = {
-            "success": result.get("success", True),
-            "message": result.get("response", ""),
-            "agent_response": result.get("response", ""),
-            "response": result.get("response", ""),
-            "suggestions": result.get("suggestions", []),
-            "properties": result.get("properties", []),
-            "property_count": result.get("property_count", 0),
-            "state_summary": result.get("state_summary", ""),
-            "filters": result.get("filters", {}),
-            "session_id": session_id,
-            "user_id": session_id
-        }
-        
-        # Pass through orchestrator fields for valuation and other enhanced features
-        if "intent" in result:
-            response_data["intent"] = result["intent"]
-        if "response_type" in result:
-            response_data["response_type"] = result["response_type"]  
-        if "structured_data" in result:
-            response_data["structured_data"] = result["structured_data"]
-        if "mls_number" in result:
-            response_data["mls_number"] = result["mls_number"]
-        if "predicted_questions" in result:
-            response_data["predicted_questions"] = result["predicted_questions"]
-            
-        return jsonify(response_data)
-        
-    except Exception as e:
-        print(f"❌ Error in /api/chat-gpt4: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({
-            "success": False,
-            "error": str(e),
-            "message": "I encountered an issue. Let me help you search!",
-            "agent_response": "I encountered an issue. Let me help you search!"
-        }), 500
-
-
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
@@ -5618,51 +5549,10 @@ def debug_amenities():
     })
 
 @app.route('/', defaults={'path': ''})
-@app.route('/static/<path:path>')
-def serve_static(path):
-    """Serve static files from the static directory"""
-    try:
-        # First try the static folder configured in Flask
-        return send_from_directory(app.static_folder, path)
-    except:
-        # If static file not found, try the frontend static directory
-        try:
-            frontend_static_dir = os.path.join(os.path.dirname(__file__), '..', 'Frontend', 'legacy', 'static')
-            return send_from_directory(frontend_static_dir, path)
-        except:
-            # Return a 404 instead of falling back to HTML to prevent infinite loops
-            abort(404)
-
-@app.route('/voice-assistant/<path:image_filename>')
-def serve_property_images(image_filename):
-    """Proxy property images from Repliers CDN"""
-    try:
-        # Check if this is a property image request (IMG-*.jpg pattern)
-        if image_filename.startswith('IMG-') and image_filename.endswith('.jpg'):
-            # Redirect to the actual CDN URL
-            from flask import redirect
-            cdn_url = f"https://cdn.repliers.io/{image_filename}"
-            return redirect(cdn_url, code=302)
-        else:
-            # For other requests under /voice-assistant/, try to serve from frontend
-            frontend_dir = os.path.join(os.path.dirname(__file__), '..', 'Frontend', 'legacy')
-            return send_from_directory(frontend_dir, image_filename)
-    except Exception as e:
-        print(f"⚠️ Error serving image {image_filename}: {e}")
-        # Return the no-property-image as fallback
-        try:
-            return send_from_directory(app.static_folder, 'images/no-property-image.svg')
-        except:
-            abort(404)
-
 @app.route('/<path:path>')
 def serve(path):
     """Serve frontend - prioritizing Summitly_main.html with valuation support"""
     frontend_dir = os.path.join(os.path.dirname(__file__), '..', 'Frontend', 'legacy')
-    
-    # Skip static file requests to prevent loops
-    if path.startswith('static/'):
-        abort(404)
     
     if path == '':
         # Serve the main frontend HTML file
@@ -8553,188 +8443,6 @@ def exa_amenities_summary():
         return jsonify({
             "success": False,
             "error": str(e)
-        }), 500
-
-# ==================== SCHOOLS API ENDPOINT (FEATURE 1) ====================
-
-@app.route('/api/schools/<mls_number>', methods=['GET'])
-def get_schools_for_property(mls_number):
-    """
-    CRITICAL API: Fetch schools for a specific MLS property.
-    
-    Query params:
-        - mls_number: Property MLS (required)
-        - city: Property city (optional, auto-extract if available)
-        - limit: Max schools (default: 5)
-    
-    Returns: Same structure as generate_quick_ai_insights schools data
-    """
-    try:
-        limit = request.args.get('limit', 5, type=int)
-        city = request.args.get('city', '')
-        
-        # Get property data first (CRITICAL: ensure it exists and is real)
-        if not mls_number or mls_number == 'N/A':
-            return jsonify({
-                'success': False,
-                'error': 'Invalid MLS number',
-                'mls_number': mls_number
-            }), 400
-        
-        print(f"🏫 [SCHOOLS API] Fetching schools for MLS: {mls_number}")
-        
-        # CRITICAL: Fetch property data to get exact coordinates from Repliers
-        property_data = {}
-        try:
-            from services.listings_service import listings_service
-            
-            # Get property details directly from Repliers (same as other endpoints)
-            prop_response = listings_service.get_listing_details(mls_number)
-            if prop_response:
-                property_data = prop_response if isinstance(prop_response, dict) else {}
-                print(f"✅ [SCHOOLS API] Got Repliers property data for {mls_number}")
-                print(f"📍 [SCHOOLS API] Property data keys: {list(property_data.keys())}")
-            else:
-                print(f"⚠️ [SCHOOLS API] No property data returned from Repliers for {mls_number}")
-        except Exception as e:
-            print(f"⚠️ [SCHOOLS API] Could not fetch property data from Repliers: {e}")
-            import traceback
-            traceback.print_exc()
-        
-        # Import and use schools service
-        try:
-            from services.schools_service import schools_service
-            
-            # Get schools data
-            schools_result = schools_service.get_nearby_schools_for_property(
-                mls_number=mls_number,
-                property_data=property_data,
-                limit=limit
-            )
-            
-            if schools_result.get('success'):
-                print(f"✅ [SCHOOLS API] Found {len(schools_result.get('schools', []))} schools for MLS {mls_number}")
-                return jsonify({
-                    'success': True,
-                    'mls_number': mls_number,
-                    'city': schools_result.get('city'),
-                    'schools': schools_result.get('schools', []),
-                    'count': len(schools_result.get('schools', [])),
-                    'fetch_timestamp': schools_result.get('fetch_timestamp')
-                })
-            else:
-                return jsonify({
-                    'success': False,
-                    'error': schools_result.get('error', 'Unknown error'),
-                    'mls_number': mls_number,
-                    'schools': []
-                }), 500
-        
-        except ImportError as e:
-            print(f"❌ [SCHOOLS API] Schools service not available: {e}")
-            return jsonify({
-                'success': False,
-                'error': 'Schools service not available',
-                'mls_number': mls_number
-            }), 503
-    
-    except Exception as e:
-        print(f"❌ [SCHOOLS API] Endpoint error: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({
-            'success': False,
-            'error': str(e),
-            'mls_number': mls_number
-        }), 500
-
-# ==================== MARKET ANALYSIS API ENDPOINT (FEATURE 2) ====================
-
-@app.route('/api/market-analysis/<city>', methods=['GET'])
-def get_market_analysis_for_city(city):
-    """
-    CRITICAL API: Fetch market analysis for a specific city/location.
-    
-    Query params:
-        - city: City name (required in URL)
-        - province: Province code (default: 'ON')
-        - mls_number: Related property MLS (optional)
-    
-    Returns: Market analysis with real statistics, trends, and graph data
-    """
-    try:
-        province = request.args.get('province', 'ON')
-        mls_number = request.args.get('mls_number', '')
-        
-        # Validate city parameter
-        if not city or city == 'N/A' or len(city.strip()) < 2:
-            return jsonify({
-                'success': False,
-                'error': 'Invalid city name',
-                'city': city
-            }), 400
-        
-        city = city.strip().title()  # Normalize city name
-        print(f"📊 [MARKET API] Fetching market analysis for: {city}, {province}")
-        if mls_number:
-            print(f"📊 [MARKET API] Related MLS: {mls_number}")
-        
-        # Import and use market analysis service
-        try:
-            from services.market_analysis_service import market_analysis_service
-            
-            # Get market analysis data
-            market_result = market_analysis_service.get_market_analysis_for_location(
-                city=city,
-                province=province,
-                mls_number=mls_number
-            )
-            
-            if market_result.get('success'):
-                num_graphs = len(market_result.get('graphs', []))
-                print(f"✅ [MARKET API] Generated {num_graphs} graphs for {city}")
-                
-                return jsonify({
-                    'success': True,
-                    'city': city,
-                    'province': province,
-                    'mls_number': mls_number,
-                    'statistics': market_result.get('statistics', {}),
-                    'ai_analysis': market_result.get('ai_analysis', ''),
-                    'graphs': market_result.get('graphs', []),
-                    'recent_reports': market_result.get('recent_reports', []),
-                    'analysis_timestamp': market_result.get('analysis_timestamp'),
-                    'data_sources': {
-                        'repliers_api': market_result.get('statistics', {}).get('active_listings', 0) > 0,
-                        'exa_reports': len(market_result.get('recent_reports', [])) > 0,
-                        'ai_analysis': bool(market_result.get('ai_analysis'))
-                    }
-                })
-            else:
-                return jsonify({
-                    'success': False,
-                    'error': market_result.get('error', 'Market analysis failed'),
-                    'city': city,
-                    'province': province,
-                    'mls_number': mls_number
-                }), 500
-        
-        except ImportError as e:
-            print(f"❌ [MARKET API] Market analysis service not available: {e}")
-            return jsonify({
-                'success': False,
-                'error': 'Market analysis service not available',
-                'city': city
-            }), 503
-    
-    except Exception as e:
-        print(f"❌ [MARKET API] Endpoint error: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({
-            'success': False,
-            'error': str(e),
-            'city': city
         }), 500
 
 @app.route('/api/details', methods=['GET'])

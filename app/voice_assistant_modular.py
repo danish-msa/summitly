@@ -118,11 +118,17 @@ from routes.main_api import main_api
 from routes.manager_api import manager_api
 from routes.openai_api import openai_api
 from routes.frontend_routes import frontend_routes
+from routes.resilient_api import resilient_api
+from routes.context_chat_api import context_chat_api
 
 app.register_blueprint(main_api)
 app.register_blueprint(manager_api)
 app.register_blueprint(openai_api)
 app.register_blueprint(frontend_routes)
+app.register_blueprint(resilient_api)
+app.register_blueprint(context_chat_api)
+print("✅ Resilient API routes registered")
+print("✅ Context-aware chat routes registered")
 
 # Additional route handlers for extended functionality
 def register_extended_routes():

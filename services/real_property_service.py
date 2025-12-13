@@ -64,27 +64,31 @@ class RealPropertyService:
             if not self.repliers_available:
                 return self._fallback_search(location, limit)
             
-            # Use Repliers NLP service for intelligent search
+            # Build search query description for logging
             search_query = self._build_search_query(
                 location, min_price, max_price, bedrooms, bathrooms, property_type
             )
             
             logger.info(f"Searching properties with query: {search_query}")
             
-            # Call Repliers NLP search
-            result = nlp_service.process_query(
-                prompt=search_query,
-                user_id="system",
-                execute_search=True
+            # Use direct Repliers Listings API with structured parameters
+            # Note: NLP endpoint (/nlp) requires paid upgrade and is not currently available
+            logger.info("Using direct listings API with real-time MLS data")
+            
+            # Parse parameters and call listings API
+            search_params = self._parse_search_parameters(
+                location, min_price, max_price, bedrooms, bathrooms, property_type
             )
             
-            if result.get('error'):
-                logger.error(f"NLP search error: {result.get('error')}")
+            result = listings_service.search_listings(**search_params)
+            
+            if not result.get('success'):
+                logger.error(f"Listings search error: {result.get('error', 'Unknown error')}")
                 return self._fallback_search(location, limit)
             
             # Transform Repliers response to our format
             properties = self._transform_repliers_properties(
-                result.get('results', [])
+                result.get('listings', [])
             )
             
             return {
@@ -98,6 +102,57 @@ class RealPropertyService:
         except Exception as e:
             logger.error(f"Property search error: {e}")
             return self._fallback_search(location, limit)
+    
+    def _parse_search_parameters(
+        self,
+        location: Optional[str],
+        min_price: Optional[int],
+        max_price: Optional[int],
+        bedrooms: Optional[int],
+        bathrooms: Optional[float],
+        property_type: Optional[str]
+    ) -> Dict[str, Any]:
+        """Parse search parameters into format expected by listings service"""
+        params = {
+            'status': 'active',  # Active listings
+            'transaction_type': 'sale',
+            'page': 1,
+            'page_size': 20
+        }
+        
+        # Map location to city
+        if location:
+            # Clean location - remove common terms
+            clean_location = location.replace(' in ', '').replace('near ', '').strip()
+            if clean_location:
+                params['city'] = clean_location.title()
+        
+        # Map property type
+        if property_type:
+            type_mapping = {
+                'condo': 'condo',
+                'house': 'detached',
+                'townhouse': 'townhouse',
+                'apartment': 'condo',
+                'detached': 'detached'
+            }
+            mapped_type = type_mapping.get(property_type.lower(), property_type.lower())
+            params['property_style'] = mapped_type
+        
+        # Map price ranges
+        if min_price:
+            params['min_price'] = min_price
+        if max_price:
+            params['max_price'] = max_price
+        
+        # Map bedrooms/bathrooms
+        if bedrooms:
+            params['min_bedrooms'] = bedrooms
+        if bathrooms:
+            params['min_bathrooms'] = bathrooms
+        
+        logger.info(f"Parsed search parameters: {params}")
+        return params
     
     def _build_search_query(
         self,
@@ -235,16 +290,20 @@ class RealPropertyService:
         return "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=250&fit=crop"
     
     def _fallback_search(self, location: Optional[str], limit: int) -> Dict[str, Any]:
-        """Fallback when APIs are unavailable"""
-        logger.warning("Using fallback search - no real API data available")
+        """
+        Emergency fallback when Repliers API services are completely unavailable
+        This should rarely be called - it means the listings_service module isn't loaded
+        """
+        logger.error("CRITICAL: Repliers services not available - listings_service module not loaded")
+        logger.error("Check that services/listings_service.py exists and REPLIERS_API_KEY is set")
         
         return {
             "success": False,
             "properties": [],
             "count": 0,
-            "source": "fallback",
-            "message": "Property search temporarily unavailable. Please try again later or contact support.",
-            "error": "API_UNAVAILABLE"
+            "source": "emergency_fallback",
+            "message": "Property search is currently unavailable due to configuration issues. Please contact support.",
+            "error": "REPLIERS_SERVICES_NOT_LOADED"
         }
     
     def get_property_details(self, mls_number: str) -> Dict[str, Any]:

@@ -25,7 +25,7 @@ class Config:
     # External API URLs
     SUMMITLY_BASE_URL = "https://api.summitly.ca"  # Legacy URL for display
     REPLIERS_BASE_URL = "https://api.repliers.io"
-    REPLIERS_API_KEY = "tVbura2ggfQb1yEdnz0lmP8cEAaL7n"
+    REPLIERS_API_KEY = os.getenv('REPLIERS_API_KEY', '')
     
     # File paths
     UPLOAD_FOLDER = 'temp_audio'
