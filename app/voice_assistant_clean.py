@@ -5605,30 +5605,6 @@ def chat_gpt4():
         }), 500
 
 
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    """Health check endpoint"""
-    return jsonify({
-        'status': 'healthy',
-        'timestamp': datetime.now().isoformat(),
-        'features': {
-            'summitly_integration': True,
-            'repliers_integration': True,
-            'openai_integration': OPENAI_AVAILABLE,
-            'lead_management': True,
-            'excel_tracking': OPENPYXL_AVAILABLE or True,  # Pandas fallback
-            'email_notifications': FLASK_MAIL_AVAILABLE,
-            'voice_chat': AUDIO_AVAILABLE,
-            'resilient_search': True  # New feature
-        },
-        'apis': {
-            'repliers_api_key': REPLIERS_API_KEY[:10] + "..." if REPLIERS_API_KEY else "Not configured",
-            'repliers_base_url': REPLIERS_BASE_URL,
-            'openai_configured': OPENAI_AVAILABLE,
-            'openai_model': os.getenv('OPENAI_MODEL', 'gpt-4o-mini') if OPENAI_AVAILABLE else 'Not configured'
-        }
-    })
-
 @app.route('/manager')
 def manager_dashboard():
     """Serve manager dashboard"""
