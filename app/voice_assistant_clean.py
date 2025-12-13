@@ -4344,6 +4344,72 @@ def process_conversation_stage(session, user_text):
 
 # ==================== API ROUTES ====================
 
+@app.route('/', methods=['GET'])
+def index():
+    """Root endpoint - API status and documentation"""
+    return jsonify({
+        'service': 'Summitly AI - Real Estate Assistant API',
+        'version': '2.0.0',
+        'status': 'running',
+        'timestamp': datetime.now().isoformat(),
+        'description': 'GPT-4 powered real estate chatbot with voice and text capabilities',
+        'features': [
+            'Voice Assistant (Speech-to-Text & Text-to-Speech)',
+            'GPT-4 Intelligent Property Search',
+            'Context-Aware Conversations',
+            'Market Analysis & Insights',
+            'Property Valuation',
+            'Lead Management System',
+            'Broker Assignment',
+            'Email Notifications'
+        ],
+        'endpoints': {
+            'health': '/health',
+            'chat': {
+                'context_aware': '/api/chat/context',
+                'gpt4': '/api/chat-gpt4',
+                'text': '/api/text-chat',
+                'voice': '/api/voice-chat'
+            },
+            'property': {
+                'search': '/api/search-properties',
+                'analysis': '/api/property-analysis',
+                'conversation': '/api/property-conversation',
+                'insights': '/api/location-insights'
+            },
+            'openai': {
+                'status': '/api/openai/status',
+                'enhance': '/api/openai/enhance-description',
+                'market_analysis': '/api/openai/market-analysis',
+                'investment': '/api/openai/investment-analysis',
+                'followup': '/api/openai/followup-questions'
+            },
+            'manager': {
+                'leads': '/api/manager/leads',
+                'brokers': '/api/manager/brokers',
+                'update_lead': '/api/manager/update-lead-status',
+                'assign_broker': '/api/manager/assign-broker',
+                'stats': '/api/manager/dashboard-stats'
+            }
+        },
+        'documentation': 'https://github.com/Shreyash-2301/Summitly-AI-',
+        'frontend': 'Connect your frontend to the API endpoints above'
+    }), 200
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint for monitoring"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat(),
+        'services': {
+            'openai': OPENAI_AVAILABLE,
+            'repliers_api': REPLIERS_INTEGRATION_AVAILABLE,
+            'email': FLASK_MAIL_AVAILABLE,
+            'excel': OPENPYXL_AVAILABLE
+        }
+    }), 200
+
 @app.route('/api/property-analysis', methods=['POST'])
 def property_analysis_endpoint():
     """
