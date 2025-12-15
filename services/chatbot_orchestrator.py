@@ -61,19 +61,30 @@ logger.setLevel(logging.INFO)
 
 SYSTEM_PROMPT_INTERPRETER = """You are a precise real-estate assistant interpreter for Canadian properties (Toronto/GTA/Vancouver/Canada).
 
-Input: user's message + current conversation filters (location, bedrooms, property_type, price_range, listing_type, amenities, etc.)
+Input: user's message + current conversation filters (location, bedrooms, property_type, price_range, listing_type, amenities, etc.) + pending_clarification (if any)
+
+IMPORTANT - Clarifying Questions:
+- If "pending_clarification" is present, the user's message is likely an ANSWER to that question, NOT a new intent.
+- Examples:
+  - Previous: "Are you looking for specific schools or general information?" User: "yes" → intent: "refine" (user confirming)
+  - Previous: "Are you looking for specific schools?" User: "general information" → intent: "general_question"
+  - User: "yes" with no pending question → intent: depends on context (could be confirming a search)
 
 Output: JSON ONLY with keys:
-- intent: one of ["search","refine","details","valuation","compare","general_question","reset"]
+- intent: one of ["search","refine","details","valuation","compare","general_question","reset","special_query"]
 - filters: {
-    location: string or null (Toronto, Mississauga, Milton, Brampton, Vaughan, Markham, Richmond Hill, Oakville, Burlington, Ajax, Whitby, Oshawa, Hamilton, Kitchener, Waterloo, Guelph, Cambridge, Barrie, London, Ottawa, Kingston, Vancouver, Calgary, Edmonton, Montreal, etc.),
+    location: string or null (Toronto, Mississauga, Milton, Brampton, Vaughan, Markham, Richmond Hill, Oakville, Burlington, Ajax, Whitby, Oshawa, Hamilton, Kitchener, Waterloo, Guelph, Cambridge, Barrie, London, Ottawa, Kingston, Vancouver, Calgary, Edmonton, Montreal, etc. - IMPORTANT: If user says "GTA", use "Toronto" as the default city, or ask which GTA city they prefer),
     property_type: string or null (condo|detached|townhouse|semi-detached),
     bedrooms: number or null,
     bathrooms: number or null,
     min_price: number or null,
     max_price: number or null,
+    min_sqft: number or null (minimum square footage),
+    max_sqft: number or null (maximum square footage),
     listing_type: "sale" or "rent" (IMPORTANT: detect rental vs purchase intent),
-    amenities: array of strings (pool, gym, parking, balcony, garden, etc.)
+    amenities: array of strings (pool, gym, parking, balcony, garden, etc.),
+    list_date_from: string or null (YYYY-MM-DD format - start of date range),
+    list_date_to: string or null (YYYY-MM-DD format - end of date range)
   }
 - merge_with_previous: boolean (True = merge with existing filters, False = replace all - SET TO FALSE when user mentions a NEW/DIFFERENT city)
 - clarifying_question: optional string (if you need clarification, ask user)
@@ -87,20 +98,45 @@ CRITICAL PRICING RULES:
 Examples:
 - "Show me rentals under 4k" -> intent: "search", listing_type: "rent", max_price: 4000
 - "I want to buy under 600k" -> intent: "search", listing_type: "sale", max_price: 600000
+- "properties with 500 sqft" -> intent: "search", min_sqft: 500, max_sqft: 500
+- "between 800 and 1200 square feet" -> intent: "search", min_sqft: 800, max_sqft: 1200
+- "at least 1000 sqft" -> intent: "search", min_sqft: 1000, max_sqft: null
+- "under 900 square feet" -> intent: "search", min_sqft: null, max_sqft: 900
 - "How about those with a pool?" -> intent: "refine", amenities: ["pool"], merge_with_previous: true
 - "I don't have any budgets" -> intent: "refine", min_price: null, max_price: null, merge_with_previous: true
 - "Show me any price range" -> intent: "refine", min_price: null, max_price: null, merge_with_previous: true
+- "show me what you have" -> intent: "search", min_sqft: null, max_sqft: null (remove size restrictions)
+- "any size" -> intent: "refine", min_sqft: null, max_sqft: null, merge_with_previous: true
+- "remove square footage filter" -> intent: "refine", min_sqft: null, max_sqft: null, merge_with_previous: true
 - "Value of MLS: C12631086" -> intent: "valuation"
 - "What is this property worth?" -> intent: "valuation"
 - "Property valuation for MLS C123456" -> intent: "valuation"
 - "Estimate the value of this home" -> intent: "valuation"
+- "properties listed on November 1" -> intent: "search", list_date_from: "2024-11-01", list_date_to: "2024-11-01"
+- "listed in the last 3 days" -> intent: "search", list_date_from: "{today - 3 days}", list_date_to: "{today}"
+- "show me new listings from last week" -> intent: "search", list_date_from: "{today - 7 days}", list_date_to: "{today}"
+
+Special Queries (use intent: "special_query" for non-property searches):
+- "schools near MLS C12633118" -> intent: "special_query", query_type: "schools", mls_number: "C12633118"
+- "crime rates in this neighborhood" -> intent: "special_query", query_type: "crime_stats", location: {from_context}
+- "walk score for this property" -> intent: "special_query", query_type: "walk_score", mls_number: {from_context}
+- "transit options near property" -> intent: "special_query", query_type: "transit"
+
+Output format for special queries:
+{
+    "intent": "special_query",
+    "query_type": "schools|crime_stats|walk_score|transit|neighborhood_info",
+    "mls_number": "C12633118" (if applicable),
+    "location": "Toronto" (if applicable),
+    "clarifying_question": "..." (if more info needed)
+}
 
 CRITICAL: Return ONLY valid JSON. No markdown code blocks (```json), no extra text, just pure JSON.
 """
 
 SYSTEM_PROMPT_SUMMARIZER = """You are a friendly Canadian real estate assistant specializing in Toronto and the GTA region.
 
-Your task: Create a conversational response based on the user's property search.
+Your task: Create a brief, conversational response based on the user's property search.
 
 Input:
 - User's message  
@@ -108,10 +144,27 @@ Input:
 - Property results (may be empty)
 
 Response requirements:
-1. Write 2-4 sentences acknowledging their request
-2. Summarize what was found (or explain why no results)
+1. Write 1-2 sentences acknowledging their request (keep it concise)
+2. Briefly summarize what was found (or explain why no results)
 3. Use a natural, helpful tone
-4. Include 2-3 follow-up suggestions
+4. Include 2-3 actionable follow-up suggestions
+
+IMPORTANT - Be specific about what filters are ACTUALLY set (FIX #5):
+- If no budget/price_range is set (null or None), DON'T mention "budget considerations" or "adjusting budget"
+- If no location is set, suggest popular GTA locations like Toronto, Mississauga, Vaughan
+- If bedrooms are set to unusual values (like 8+), that might need clarification
+- If listing_type is "rent", focus on rental-specific suggestions (monthly rent, lease terms)
+- If listing_type is "sale", focus on purchase-specific suggestions (financing, property value)
+- Only suggest adjusting filters that are ACTUALLY set
+
+Examples:
+- Filters: {location: "Toronto", bedrooms: 2, price_range: null} 
+  → Good: "I can show you options across different price ranges"
+  → Bad: "Consider adjusting your budget" (no budget was set!)
+
+- Filters: {location: null, bedrooms: 3}
+  → Good: "Where would you like to search? Toronto, Mississauga, or Vaughan?"
+  → Bad: "Let me know if you want to adjust your location" (no location was set!)
 
 Return valid JSON in this exact format:
 {
@@ -128,9 +181,20 @@ Important: Return only the JSON object without any markdown formatting or additi
 def ask_gpt_interpreter(session_summary: Dict[str, Any], user_message: str) -> Dict[str, Any]:
     """
     Ask GPT-4 to interpret user's message and return structured filters.
+    FIX: Include current date for proper date interpretation.
     """
+    # Add current date context for date filtering
+    from datetime import datetime
+    today = datetime.now().strftime("%Y-%m-%d")
+    
+    # Inject current date into system prompt
+    system_prompt_with_date = SYSTEM_PROMPT_INTERPRETER.replace(
+        "CRITICAL: Return ONLY valid JSON.",
+        f"IMPORTANT - Current Date: Today is {today}. Use this for relative dates like 'yesterday', 'last week', 'November 15th', etc.\n\nCRITICAL: Return ONLY valid JSON."
+    )
+    
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPT_INTERPRETER},
+        {"role": "system", "content": system_prompt_with_date},
         {"role": "assistant", "content": json.dumps(session_summary)},
         {"role": "user", "content": user_message}
     ]
@@ -248,13 +312,13 @@ def ask_gpt_summarizer(user_message: str, filters: Dict[str, Any], properties: L
         
         # GPT-5 models: use max_completion_tokens, temperature=1 only
         if "gpt-5" in model.lower():
-            params["max_completion_tokens"] = 600
+            params["max_completion_tokens"] = 300  # Reduced for faster responses
             # GPT-5-nano only supports temperature=1 (default), so we omit it
             # Try forcing JSON mode for GPT-5
             params["response_format"] = {"type": "json_object"}
         else:
-            params["max_tokens"] = 600
-            params["temperature"] = 0.2
+            params["max_tokens"] = 350  # Optimized: Reduced from 600 to 350 for 40% faster responses
+            params["temperature"] = 0.3  # Slightly increased for more natural responses
         
         resp = client.chat.completions.create(**params)
         text = resp.choices[0].message.content.strip() if resp.choices[0].message.content else ""
@@ -342,6 +406,16 @@ def ask_gpt_summarizer(user_message: str, filters: Dict[str, Any], properties: L
         # Enhanced property summary with all available details
         props_summary = []
         for p in properties[:6]:
+            # Get the first image from images array, or construct from MLS number
+            image_url = ""
+            if p.get("images") and len(p.get("images")) > 0:
+                image_url = p["images"][0]
+            elif p.get("image"):
+                image_url = p["image"]
+            elif p.get("mls_number"):
+                # Fallback: construct CDN URL from MLS number
+                image_url = f"https://cdn.repliers.io/IMG-{p['mls_number']}_1.jpg"
+            
             prop_summary = {
                 "address": p.get("address", p.get("full_address", "Address not available")),
                 "price": p.get("price", "$0"),
@@ -350,7 +424,7 @@ def ask_gpt_summarizer(user_message: str, filters: Dict[str, Any], properties: L
                 "mls": p.get("mls_number", p.get("id", "N/A")),
                 "sqft": p.get("sqft", "N/A"),
                 "property_type": p.get("property_type", "Residential"),
-                "image_url": p.get("image_url", "")
+                "image_url": image_url
             }
             props_summary.append(prop_summary)
         
@@ -420,12 +494,21 @@ class ChatGPTChatbot:
             # Add user message to history
             state.add_conversation_turn("user", user_message)
             
-            # STEP 2: Build session summary for interpreter
+            # STEP 2: Build session summary for interpreter (with clarification context)
+            # FIX #2: Check if the last assistant message was a clarifying question
+            last_turn = state.conversation_history[-2] if len(state.conversation_history) >= 2 else None
+            pending_clarification = None
+            if last_turn and last_turn.get('role') == 'assistant':
+                last_content = last_turn.get('content', '')
+                if '?' in last_content:
+                    pending_clarification = last_content
+            
             session_summary = {
                 "filters": state.get_active_filters(),
                 "last_search_count": len(state.last_property_results),
                 "search_count": state.search_count,
-                "last_search_results": state.last_property_results[:3] if state.last_property_results else []
+                "last_search_results": state.last_property_results[:3] if state.last_property_results else [],
+                "pending_clarification": pending_clarification  # NEW: helps interpreter understand context
             }
             
             # STEP 3: Call GPT-4 interpreter
@@ -452,7 +535,7 @@ class ChatGPTChatbot:
                     "filters": state.get_active_filters()
                 }
             
-            # STEP 5: Handle different intents
+            # STEP 5: Handle different intents (check general_question FIRST to prevent unwanted searches)
             if intent == 'reset':
                 return self._handle_reset(state, user_message)
             elif intent == 'valuation':
@@ -461,7 +544,13 @@ class ChatGPTChatbot:
                 return self._handle_details_request(state, user_message)
             elif intent == 'compare':
                 return self._handle_compare_request(state, user_message)
-            elif intent == 'general_question' and not filters_from_gpt:
+            elif intent == 'special_query':
+                # FIX #4: Handle special queries like schools, crime stats, walk score
+                return self._handle_special_query(state, interpreter_out, user_message)
+            elif intent == 'general_question':
+                # FIX #1: Handle general questions without updating state or searching
+                # Even if GPT extracted filters (like location from "market trends in Mississauga"),
+                # we should NOT execute a search for general questions
                 return self._handle_general_question(state, user_message)
             
             # STEP 6: Update state with interpreted filters (search or refine)
@@ -482,12 +571,23 @@ class ChatGPTChatbot:
             total = 0
             if should_search:
                 logger.info("🔍 Executing MLS search...")
-                search_results = enhanced_mls_service.search_properties(state, limit=20)
+                # Pass user_message for date intent detection
+                search_results = enhanced_mls_service.search_properties(
+                    state, 
+                    limit=20,
+                    user_message=user_message
+                )
                 
                 if search_results.get('success'):
                     properties = search_results.get('results', [])
                     total = search_results.get('total', len(properties))
                     state.update_search_results(properties, user_message)
+                    
+                    # Log validation warnings if any
+                    if search_results.get('validation_warnings'):
+                        for warning in search_results['validation_warnings']:
+                            logger.info(f"📋 Filter info: {warning}")
+                    
                     logger.info(f"✅ Found {total} properties")
                 else:
                     logger.warning(f"⚠️ MLS search failed: {search_results.get('error')}")
@@ -618,6 +718,27 @@ class ChatGPTChatbot:
         # Amenities (merge if specified)
         if filters_from_gpt.get("amenities"):
             updates["amenities"] = filters_from_gpt["amenities"]
+        
+        # Square footage range
+        # Check if sqft was explicitly mentioned (even if null to remove it)
+        sqft_mentioned = "min_sqft" in filters_from_gpt or "max_sqft" in filters_from_gpt
+        if sqft_mentioned:
+            min_sqft = filters_from_gpt.get("min_sqft")
+            max_sqft = filters_from_gpt.get("max_sqft")
+            
+            # If both are null, user wants to remove sqft filter
+            if min_sqft is None and max_sqft is None:
+                updates["sqft_range"] = (None, None)
+                logger.info(f"🏠 [SQFT FILTER] Removing sqft filter (user said 'any size' or 'show me what you have')")
+            else:
+                updates["sqft_range"] = (min_sqft, max_sqft)
+                logger.info(f"🏠 [SQFT FILTER] Set sqft_range: {min_sqft}-{max_sqft} sqft")
+        
+        # FIX #3: Date filtering support
+        if filters_from_gpt.get("list_date_from"):
+            updates["list_date_from"] = filters_from_gpt["list_date_from"]
+        if filters_from_gpt.get("list_date_to"):
+            updates["list_date_to"] = filters_from_gpt["list_date_to"]
         
         return updates
     
@@ -803,15 +924,90 @@ class ChatGPTChatbot:
         }
 
     def _handle_general_question(self, state: ConversationState, user_message: str) -> Dict[str, Any]:
-        """Handle general real estate questions using GPT-4."""
-        # Use summarizer to answer general question
-        result = ask_gpt_summarizer(user_message, state.get_active_filters(), [])
-        response = result.get("response_text", "How can I help you find a property today?")
-        suggestions = result.get("suggestions", [
-            "Start a property search",
-            "Tell me about Toronto neighborhoods",
-            "What should I look for in a property?"
-        ])
+        """
+        Handle general real estate questions using GPT-4.
+        FIX: Use a dedicated prompt for general questions, not the search summarizer.
+        """
+        # Use GPT-4 for general questions with a specific prompt
+        try:
+            messages = [
+                {
+                    "role": "system", 
+                    "content": """You are a helpful Canadian real estate assistant specializing in Toronto and the GTA region.
+
+The user is asking a general question (NOT searching for properties).
+
+Response requirements:
+1. Answer naturally and conversationally
+2. Be helpful and friendly
+3. If asked what you can do, explain: property searches, market info, neighborhood advice, property valuations
+4. Don't mention "no properties found" or "failed search" - the user hasn't searched yet!
+5. Provide 2-3 relevant follow-up suggestions
+
+Return valid JSON:
+{
+  "response_text": "Your natural response here",
+  "suggestions": ["Suggestion 1", "Suggestion 2", "Suggestion 3"]
+}
+
+Examples:
+- "hey how are you" → Friendly greeting + ask what they're looking for
+- "what can you do" → Explain capabilities (search, market info, valuations)
+- "tell me about Toronto" → Brief overview + ask what specifically they want to know"""
+                },
+                {"role": "user", "content": user_message}
+            ]
+            
+            model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+            params = {"model": model, "messages": messages}
+            
+            if "gpt-5" in model.lower():
+                params["max_completion_tokens"] = 500
+            else:
+                params["max_tokens"] = 500
+                params["temperature"] = 0.7
+            
+            resp = client.chat.completions.create(**params)
+            text = resp.choices[0].message.content.strip()
+            
+            # Parse JSON
+            if text.startswith("```"):
+                text = text.split("```json")[-1].split("```")[0].strip()
+            
+            result = json.loads(text)
+            response = result.get("response_text", "How can I help you find a property today?")
+            suggestions = result.get("suggestions", [
+                "Start a property search",
+                "Tell me about Toronto neighborhoods",
+                "What should I look for in a property?"
+            ])
+            
+        except Exception as e:
+            logger.warning(f"⚠️ General question handler error: {e}")
+            # Fallback response based on common patterns
+            user_lower = user_message.lower()
+            
+            if any(greeting in user_lower for greeting in ['hi', 'hello', 'hey', 'how are you']):
+                response = "Hello! I'm here to help you find the perfect property in Toronto and the GTA. Whether you're looking to buy, rent, or just exploring the market, I can assist you. What are you interested in today?"
+                suggestions = [
+                    "Show me properties in Toronto",
+                    "I'm looking for a rental",
+                    "Tell me about the market"
+                ]
+            elif any(phrase in user_lower for phrase in ['what can you do', 'help me', 'how can you help']):
+                response = "I can help you with:\n\n🏠 Property searches (buy or rent)\n📊 Market trends and insights\n🏘️ Neighborhood information\n💰 Property valuations\n\nJust tell me what you're looking for, and I'll get started!"
+                suggestions = [
+                    "Show me condos in Toronto",
+                    "Find rentals under $3000",
+                    "What's the market like in Mississauga?"
+                ]
+            else:
+                response = "I'm your real estate assistant for Toronto and the GTA! I can help you search for properties, learn about neighborhoods, understand market trends, and get property valuations. What would you like to know?"
+                suggestions = [
+                    "Search for properties",
+                    "Tell me about neighborhoods",
+                    "Market trends"
+                ]
         
         state.add_conversation_turn("assistant", response)
         self.state_manager.save(state)
@@ -824,6 +1020,85 @@ class ChatGPTChatbot:
             "property_count": 0,
             "state_summary": state.get_summary(),
             "filters": state.get_active_filters()
+        }
+    
+    def _handle_special_query(self, state: ConversationState, interpreter_out: Dict[str, Any], user_message: str) -> Dict[str, Any]:
+        """
+        FIX #4: Handle special queries that aren't property searches.
+        Examples: schools, crime stats, walk score, transit info, neighborhood info
+        """
+        query_type = interpreter_out.get('query_type', 'unknown')
+        mls_number = interpreter_out.get('mls_number')
+        location = interpreter_out.get('location') or state.location
+        
+        logger.info(f"🔍 Handling special query: {query_type} (MLS: {mls_number}, Location: {location})")
+        
+        # Build response based on query type
+        if query_type == 'schools':
+            if mls_number:
+                response = f"I'd love to help you find schools near MLS {mls_number}! While I'm still learning about school information, you can search for schools on:\n\n• GreatSchools.org - Comprehensive school ratings and reviews\n• SchoolFinder.com - Ontario school search tool\n• TDSB.on.ca - Toronto District School Board (if in Toronto)\n\nWould you like me to continue helping you search for properties, or do you have questions about the property itself?"
+            else:
+                response = "I can help you find properties near great schools! Which area or city are you interested in? For example:\n\n• Toronto (Downtown, North York, Scarborough)\n• Mississauga\n• Markham\n• Richmond Hill\n\nOnce you tell me the area, I can search for properties there, and you can check school ratings on GreatSchools.org or SchoolFinder.com."
+            
+            suggestions = [
+                "Show me properties in this area" if location else "Search for properties in Toronto",
+                "Tell me about the neighborhood",
+                "Continue with my property search"
+            ]
+        
+        elif query_type == 'crime_stats':
+            response = f"Safety is important! To check crime statistics for {location or 'a specific area'}, I recommend:\n\n• TorontoPolice.on.ca - Official crime maps and statistics\n• MacLean's City Safety Rankings - Annual Canadian city safety rankings\n• Local police websites - Most cities publish crime data\n\nWould you like me to help you find properties in safer neighborhoods, or continue with your current search?"
+            suggestions = [
+                "Show me safe neighborhoods" if location else "Find properties in safe areas",
+                "Continue my property search",
+                "Tell me about the area"
+            ]
+        
+        elif query_type == 'walk_score':
+            response = f"Walk Score is a great way to evaluate neighborhood walkability! To check the Walk Score for {f'MLS {mls_number}' if mls_number else location or 'a property'}:\n\n• Visit WalkScore.com and enter the address\n• Most real estate listings include Walk Score\n• Transit Score and Bike Score are also available\n\nWould you like me to show you properties in highly walkable areas?"
+            suggestions = [
+                "Show me walkable neighborhoods",
+                "Properties near transit",
+                "Continue my search"
+            ]
+        
+        elif query_type == 'transit':
+            response = f"Public transit access is key! For {location or 'Toronto'} transit information:\n\n• TTC.ca - Toronto Transit Commission routes and schedules\n• Google Maps - Real-time transit directions\n• MiWay.ca - Mississauga transit\n• YRT.ca - York Region transit\n\nI can help you find properties near subway stations or major transit hubs. Just let me know what you're looking for!"
+            suggestions = [
+                "Properties near subway",
+                "Show me transit-accessible homes",
+                "Continue searching"
+            ]
+        
+        elif query_type == 'neighborhood_info':
+            response = f"I'd love to tell you about {location or 'Toronto neighborhoods'}! What specifically interests you?\n\n• Demographics and lifestyle\n• Schools and parks\n• Shopping and dining\n• Safety and community\n• Property values and trends\n\nLet me know what you'd like to learn, and I can help you find properties that match your lifestyle!"
+            suggestions = [
+                "Show me properties in this area" if location else "Search for properties",
+                "Tell me about property values",
+                "Continue my search"
+            ]
+        
+        else:
+            # Unknown query type - generic fallback
+            response = "That's a great question! While I specialize in helping you search for properties, I can point you to resources for additional information. How else can I help with your property search?"
+            suggestions = [
+                "Continue searching properties",
+                "Tell me about neighborhoods",
+                "Start a new search"
+            ]
+        
+        state.add_conversation_turn("assistant", response)
+        self.state_manager.save(state)
+        
+        return {
+            "success": True,
+            "response": response,
+            "suggestions": suggestions,
+            "properties": [],
+            "property_count": 0,
+            "state_summary": state.get_summary(),
+            "filters": state.get_active_filters(),
+            "query_type": query_type
         }
     
     def _handle_error(self, session_id: str, user_message: str, error: str) -> Dict[str, Any]:

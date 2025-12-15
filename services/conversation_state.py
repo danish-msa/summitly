@@ -45,10 +45,48 @@ class ConversationState:
     price_range: Optional[Tuple[Optional[int], Optional[int]]] = None  # (min, max)
     listing_type: str = "sale"  # "sale" or "rent"
     
+    # Extended Location Filters
+    community: Optional[str] = None
+    neighborhood: Optional[str] = None
+    postal_code: Optional[str] = None
+    street_name: Optional[str] = None
+    
+    # Extended Property Filters
+    ownership_type: Optional[str] = None  # freehold, condo, co-op
+    property_style: Optional[str] = None  # 2-storey, bungalow, etc.
+    min_bedrooms: Optional[int] = None
+    max_bedrooms: Optional[int] = None
+    bedrooms_plus: Optional[str] = None  # e.g., "2+1"
+    min_bathrooms: Optional[float] = None
+    max_bathrooms: Optional[float] = None
+    
     # Advanced Filters
     amenities: List[str] = field(default_factory=list)  # pool, gym, parking, balcony, garden
     sqft_range: Optional[Tuple[Optional[int], Optional[int]]] = None  # (min, max)
     parking_spots: Optional[int] = None
+    garage_type: Optional[str] = None  # attached, detached, none
+    lot_size: Optional[int] = None
+    
+    # Condo-Specific Features
+    exposure: Optional[str] = None  # north, south, east, west
+    balcony: Optional[str] = None  # yes, no, open, enclosed
+    locker: Optional[str] = None  # yes, no
+    
+    # Date Filters
+    list_date_from: Optional[str] = None  # YYYY-MM-DD format
+    list_date_to: Optional[str] = None    # YYYY-MM-DD format
+    
+    # MLS & Status
+    mls_number: Optional[str] = None
+    status: Optional[str] = None  # Active, Sold, etc.
+    
+    # Year Built
+    year_built_min: Optional[int] = None
+    year_built_max: Optional[int] = None
+    
+    # Media & Extras
+    has_images: Optional[bool] = None
+    has_virtual_tour: Optional[bool] = None
     
     # Search Results & History
     last_property_results: List[Dict] = field(default_factory=list)
@@ -175,21 +213,52 @@ class ConversationState:
         """
         filters = {}
         
+        # Core location
         if self.location:
             filters['location'] = self.location
+        if self.community:
+            filters['community'] = self.community
+        if self.neighborhood:
+            filters['neighborhood'] = self.neighborhood
+        if self.postal_code:
+            filters['postal_code'] = self.postal_code
+        if self.street_name:
+            filters['street_name'] = self.street_name
+        
+        # Property basics
         if self.bedrooms:
             filters['bedrooms'] = self.bedrooms
+        if self.min_bedrooms:
+            filters['min_bedrooms'] = self.min_bedrooms
+        if self.max_bedrooms:
+            filters['max_bedrooms'] = self.max_bedrooms
+        if self.bedrooms_plus:
+            filters['bedrooms_plus'] = self.bedrooms_plus
         if self.bathrooms:
             filters['bathrooms'] = self.bathrooms
+        if self.min_bathrooms:
+            filters['min_bathrooms'] = self.min_bathrooms
+        if self.max_bathrooms:
+            filters['max_bathrooms'] = self.max_bathrooms
         if self.property_type:
             filters['property_type'] = self.property_type
+        if self.ownership_type:
+            filters['ownership_type'] = self.ownership_type
+        if self.property_style:
+            filters['property_style'] = self.property_style
+        
+        # Price
         if self.price_range:
             if self.price_range[0]:
                 filters['min_price'] = self.price_range[0]
             if self.price_range[1]:
                 filters['max_price'] = self.price_range[1]
+        
+        # Transaction type
         if self.listing_type:
             filters['listing_type'] = self.listing_type
+        
+        # Size & lot
         if self.amenities:
             filters['amenities'] = self.amenities
         if self.sqft_range:
@@ -199,6 +268,42 @@ class ConversationState:
                 filters['max_sqft'] = self.sqft_range[1]
         if self.parking_spots:
             filters['parking_spots'] = self.parking_spots
+        if self.garage_type:
+            filters['garage_type'] = self.garage_type
+        if self.lot_size:
+            filters['lot_size'] = self.lot_size
+        
+        # Condo features
+        if self.exposure:
+            filters['exposure'] = self.exposure
+        if self.balcony:
+            filters['balcony'] = self.balcony
+        if self.locker:
+            filters['locker'] = self.locker
+        
+        # Dates
+        if self.list_date_from:
+            filters['list_date_from'] = self.list_date_from
+        if self.list_date_to:
+            filters['list_date_to'] = self.list_date_to
+        
+        # MLS & status
+        if self.mls_number:
+            filters['mls_number'] = self.mls_number
+        if self.status:
+            filters['status'] = self.status
+        
+        # Year built
+        if self.year_built_min:
+            filters['year_built_min'] = self.year_built_min
+        if self.year_built_max:
+            filters['year_built_max'] = self.year_built_max
+        
+        # Media
+        if self.has_images is not None:
+            filters['has_images'] = self.has_images
+        if self.has_virtual_tour is not None:
+            filters['has_virtual_tour'] = self.has_virtual_tour
         
         return filters
     
@@ -253,15 +358,54 @@ class ConversationState:
         Returns:
             Self for chaining
         """
+        # Core filters
         self.location = None
+        self.community = None
+        self.neighborhood = None
+        self.postal_code = None
+        self.street_name = None
         self.bedrooms = None
+        self.min_bedrooms = None
+        self.max_bedrooms = None
+        self.bedrooms_plus = None
         self.bathrooms = None
+        self.min_bathrooms = None
+        self.max_bathrooms = None
         self.property_type = None
+        self.ownership_type = None
+        self.property_style = None
         self.price_range = None
         self.listing_type = "sale"
+        
+        # Advanced filters
         self.amenities = []
         self.sqft_range = None
         self.parking_spots = None
+        self.garage_type = None
+        self.lot_size = None
+        
+        # Condo features
+        self.exposure = None
+        self.balcony = None
+        self.locker = None
+        
+        # Dates
+        self.list_date_from = None
+        self.list_date_to = None
+        
+        # MLS & status
+        self.mls_number = None
+        self.status = None
+        
+        # Year built
+        self.year_built_min = None
+        self.year_built_max = None
+        
+        # Media
+        self.has_images = None
+        self.has_virtual_tour = None
+        
+        # Results
         self.last_property_results = []
         self.last_query = None
         self.last_intent = None

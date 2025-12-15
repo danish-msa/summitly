@@ -169,46 +169,89 @@ def standardize_property_data(property_data):
         standardized['mls_number'] = standardized['mlsId']
     
     # Standardize image fields
-    if 'photos' in standardized and 'images' not in standardized:
+    standardized['images'] = []  # Always initialize
+    
+    if 'photos' in standardized and standardized['photos']:
         # Convert photos array to images array with proper URLs
         photos = standardized['photos']
         if isinstance(photos, list):
-            standardized['images'] = []
             for photo in photos:
                 if isinstance(photo, dict) and 'url' in photo:
-                    standardized['images'].append(photo['url'])
+                    url = photo['url']
+                    # Ensure URL is complete
+                    if url.startswith('IMG-') or (url.startswith('/') and not url.startswith('//')):
+                        standardized['images'].append(f'https://cdn.repliers.io/{url.lstrip("/")}')
+                    elif url.startswith('http'):
+                        standardized['images'].append(url)
+                    else:
+                        standardized['images'].append(f'https://cdn.repliers.io/{url}')
                 elif isinstance(photo, str):
                     # Handle case where it's just a URL string
-                    if photo.startswith('IMG-') or not photo.startswith('http'):
-                        standardized['images'].append(f'https://cdn.repliers.io/{photo}')
-                    else:
+                    if photo.startswith('IMG-') or (photo.startswith('/') and not photo.startswith('//')):
+                        standardized['images'].append(f'https://cdn.repliers.io/{photo.lstrip("/")}')
+                    elif photo.startswith('http'):
                         standardized['images'].append(photo)
-        else:
-            standardized['images'] = []
+                    else:
+                        standardized['images'].append(f'https://cdn.repliers.io/{photo}')
+    
+    elif 'images' in standardized and isinstance(standardized['images'], list):
+        # Images array exists - ensure all URLs are complete
+        fixed_images = []
+        for img_url in standardized['images']:
+            if isinstance(img_url, str):
+                if img_url.startswith('IMG-') or (img_url.startswith('/') and not img_url.startswith('//')):
+                    fixed_images.append(f'https://cdn.repliers.io/{img_url.lstrip("/")}')
+                elif img_url.startswith('http'):
+                    fixed_images.append(img_url)
+                else:
+                    fixed_images.append(f'https://cdn.repliers.io/{img_url}')
+        standardized['images'] = fixed_images if fixed_images else []
+    
     elif isinstance(standardized.get('media'), dict) and standardized['media'].get('photos'):
         photos = standardized['media']['photos']
         if isinstance(photos, list):
-            standardized['images'] = []
             for photo in photos:
                 if isinstance(photo, dict) and 'url' in photo:
-                    standardized['images'].append(photo['url'])
-                elif isinstance(photo, str):
-                    if photo.startswith('IMG-') or not photo.startswith('http'):
-                        standardized['images'].append(f'https://cdn.repliers.io/{photo}')
+                    url = photo['url']
+                    if url.startswith('IMG-') or (url.startswith('/') and not url.startswith('//')):
+                        standardized['images'].append(f'https://cdn.repliers.io/{url.lstrip("/")}')
+                    elif url.startswith('http'):
+                        standardized['images'].append(url)
                     else:
+                        standardized['images'].append(f'https://cdn.repliers.io/{url}')
+                elif isinstance(photo, str):
+                    if photo.startswith('IMG-') or (photo.startswith('/') and not photo.startswith('//')):
+                        standardized['images'].append(f'https://cdn.repliers.io/{photo.lstrip("/")}')
+                    elif photo.startswith('http'):
                         standardized['images'].append(photo)
+                    else:
+                        standardized['images'].append(f'https://cdn.repliers.io/{photo}')
     
-    # Ensure images is always an array
-    if 'images' not in standardized or not isinstance(standardized['images'], list):
-        standardized['images'] = []
+    # If still no images but we have MLS number and photoCount, construct CDN URLs
+    if (not standardized['images'] or len(standardized['images']) == 0) and standardized.get('mls_number'):
+        mls_num = standardized['mls_number']
+        photo_count = standardized.get('photoCount', 1)
+        if photo_count > 0:
+            # Limit to 10 images max
+            for i in range(1, min(photo_count + 1, 11)):
+                standardized['images'].append(f'https://cdn.repliers.io/IMG-{mls_num}_{i}.jpg')
+    
+    # Ensure at least one fallback image exists (data URI works everywhere)
+    if not standardized['images'] or len(standardized['images']) == 0:
+        fallback_img = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='18' fill='%236b7280'%3ENo Image Available%3C/text%3E%3C/svg%3E"
+        standardized['images'].append(fallback_img)
     
     # Add 'image' field for frontend compatibility (single image)
     if standardized['images'] and len(standardized['images']) > 0:
         standardized['image'] = standardized['images'][0]
-    elif 'image_url' in standardized:
+    elif 'image_url' in standardized and standardized['image_url']:
         standardized['image'] = standardized['image_url']
+    elif standardized.get('mls_number'):
+        # Final fallback: construct first image from MLS number
+        standardized['image'] = f"https://cdn.repliers.io/IMG-{standardized['mls_number']}_1.jpg"
     else:
-        standardized['image'] = None
+        # Use data URI fallback (works everywhere - local, Render, etc.)
+        standardized['image'] = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='18' fill='%236b7280'%3ENo Image Available%3C/text%3E%3C/svg%3E"
     
     # Standardize address field
     if 'full_address' in standardized and 'address' not in standardized:
@@ -990,13 +1033,15 @@ def send_lead_confirmation_to_user(user_data: Dict, broker_info: Dict, lead_id: 
 
 # ==================== REPLIERS API INTEGRATION ====================
 
-def search_repliers_properties(location: str = "", property_type: str = "", max_price: int = None, bedrooms: int = None, bathrooms: float = None, limit: int = 6) -> Dict:
+def search_repliers_properties(location: str = "", property_type: str = "", max_price: int = None, bedrooms: int = None, bathrooms: float = None, limit: int = 6, listing_type: str = "sale") -> Dict:
     """
     Search real properties using Repliers API with professional integration
     Now uses the listings_service module for robust API calls
+    
+    FIX #6: Added listing_type parameter to support rental searches
     """
     try:
-        print(f"🔍 [REPLIERS API] Searching properties: location='{location}', type='{property_type}', max_price={max_price}, bedrooms={bedrooms}, bathrooms={bathrooms}")
+        print(f"🔍 [REPLIERS API] Searching properties: location='{location}', type='{property_type}', max_price={max_price}, bedrooms={bedrooms}, bathrooms={bathrooms}, listing_type='{listing_type}'")
         
         # Use the professional Repliers integration if available
         if REPLIERS_INTEGRATION_AVAILABLE:
@@ -1022,7 +1067,10 @@ def search_repliers_properties(location: str = "", property_type: str = "", max_
                         break
             
             # Call listings_service with proper parameters including bed/bath filters
-            # CRITICAL: Set transaction_type='sale' to exclude rentals
+            # FIX #6: Use user's listing_type preference instead of hardcoding 'sale'
+            # Map 'rent' to 'lease' for API compatibility
+            api_transaction_type = 'lease' if listing_type == 'rent' else 'sale'
+            
             result = listings_service.search_listings(
                 city=city,
                 property_style=property_style,
@@ -1030,7 +1078,7 @@ def search_repliers_properties(location: str = "", property_type: str = "", max_
                 min_bedrooms=bedrooms,
                 min_bathrooms=bathrooms,
                 status='active',
-                transaction_type='sale',  # ✅ CRITICAL: Only show properties for SALE, not RENT
+                transaction_type=api_transaction_type,  # ✅ FIX #6: Respect user's listing_type preference
                 page_size=limit,
                 page=1
             )
@@ -1045,15 +1093,21 @@ def search_repliers_properties(location: str = "", property_type: str = "", max_
             properties = []
             for listing in listings:
                 try:
-                    # FILTER 1: Skip rental listings (listingType = 'lease')
-                    listing_type = listing.get('listingType', '').lower()
-                    if listing_type in ['lease', 'rental', 'rent']:
-                        continue  # Skip rentals, only show sales
+                    # FIX #6: FILTER 1 - Respect user's listing_type preference
+                    # Only filter out mismatched listing types
+                    property_listing_type = listing.get('listingType', '').lower()
                     
-                    # FILTER 2: Skip if price is too low (likely monthly rent slipped through)
+                    # If user wants rentals, skip sales; if user wants sales, skip rentals
+                    if listing_type == 'rent' and property_listing_type not in ['lease', 'rental', 'rent']:
+                        continue  # User wants rentals, skip sales
+                    elif listing_type == 'sale' and property_listing_type in ['lease', 'rental', 'rent']:
+                        continue  # User wants sales, skip rentals
+                    
+                    # FIX #6: FILTER 2 - Only apply low-price filter for SALES (not rentals)
+                    # Rentals have legitimate monthly prices under $50k
                     list_price_check = listing.get('listPrice', listing.get('price', 0))
-                    if list_price_check and list_price_check < 50000:  # Less than $50k = likely monthly rent
-                        continue
+                    if listing_type == 'sale' and list_price_check and list_price_check < 50000:
+                        continue  # Less than $50k for sale properties = likely data error
                     
                     # FILTER 3: Apply max_price filter (API doesn't always respect it)
                     if max_price and list_price_check and list_price_check > max_price:

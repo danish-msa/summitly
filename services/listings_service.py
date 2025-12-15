@@ -177,10 +177,11 @@ class ListingsService:
             params['parkingSpots'] = parking_spots
         
         # Date filters
+        # ✅ FIX: Use correct Repliers API parameter names (minListDate/maxListDate, not listedAfter/listedBefore)
         if listed_after:
-            params['listedAfter'] = listed_after
+            params['minListDate'] = listed_after  # Format: YYYY-MM-DD
         if listed_before:
-            params['listedBefore'] = listed_before
+            params['maxListDate'] = listed_before  # Format: YYYY-MM-DD
         if open_house_date:
             params['openHouseDate'] = open_house_date
         

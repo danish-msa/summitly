@@ -755,24 +755,35 @@
         .quick-replies {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 12px;
+            gap: 10px;
+            margin-top: 16px;
+            margin-bottom: 8px;
         }
 
         .quick-reply-btn {
-            padding: 8px 16px;
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-full);
-            font-size: 13px;
+            padding: 10px 18px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1.5px solid #dee2e6;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #495057;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
 
         .quick-reply-btn:hover {
-            background: var(--color-primary);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border-color: var(--color-primary);
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .quick-reply-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
         }
 
         .source-links {
@@ -6716,19 +6727,46 @@
                     // Check if this response includes property results
                     else if (data.properties && Array.isArray(data.properties) && data.properties.length > 0) {
                         console.log('🏠 Context-aware property search - showing results');
-                        addPropertySearchMessage(data.properties, data.response, data.predicted_questions || []);
+                        console.log('🔍 [CITY DEBUG] API response data keys:', Object.keys(data));
+                        console.log('🔍 [CITY DEBUG] data.city:', data.city);
+                        console.log('🔍 [CITY DEBUG] data.location:', data.location);
+                        console.log('🔍 [CITY DEBUG] data.filters:', data.filters);
+                        console.log('🔍 [CITY DEBUG] data.filters?.city:', data.filters?.city);
+                        console.log('🔍 [CITY DEBUG] data.state_summary:', data.state_summary);
+                        
+                        // Extract city from filters or state_summary
+                        let searchCity = data.city || data.location || data.filters?.city || data.filters?.location;
+                        
+                        // If still not found, try to extract from state_summary or message
+                        if (!searchCity && data.state_summary && typeof data.state_summary === 'string') {
+                            const cityMatch = data.state_summary.match(/in ([A-Z][a-z]+(?:\s[A-Z][a-z]+)?)/i);
+                            if (cityMatch) {
+                                searchCity = cityMatch[1];
+                                console.log('🔍 [CITY DEBUG] Extracted from state_summary:', searchCity);
+                            }
+                        }
+                        
+                        console.log('🔍 [CITY DEBUG] FINAL searchCity:', searchCity);
+                        
+                        // Use suggestions from backend (supports both field names for backward compatibility)
+                        const suggestions = data.suggestions || data.predicted_questions || data.quick_replies || [];
+                        addPropertySearchMessage(data.properties, data.response, suggestions, searchCity);
                     } else {
                         // Display AI response (text only)
+                        // Use suggestions from backend (supports both field names)
+                        const suggestions = data.suggestions || data.predicted_questions || data.quick_replies || [];
                         addMessage('ai', data.response, {
-                            quickReplies: data.predicted_questions || [],
+                            quickReplies: suggestions,
                             openai: true
                         });
                     }
                     
-                    // Display predicted questions as quick-reply buttons
-                    if (data.predicted_questions && data.predicted_questions.length > 0) {
-                        console.log('🎯 Predicted questions:', data.predicted_questions);
-                        displayQuickReplies(data.predicted_questions);
+                    // Display suggestions/predicted questions as quick-reply buttons
+                    // Backend sends 'suggestions', but also support legacy field names
+                    const suggestions = data.suggestions || data.predicted_questions || data.quick_replies || [];
+                    if (suggestions && suggestions.length > 0) {
+                        console.log('💡 Suggestions from GPT-4:', suggestions);
+                        displayQuickReplies(suggestions);
                     }
                     
                     // Update engagement indicator
@@ -6781,7 +6819,8 @@
                     // Check if this is a property search response with properties array
                     else if (data.properties && Array.isArray(data.properties) && data.properties.length > 0) {
                         console.log('🏠 Rendering property search results');
-                        addPropertySearchMessage(data.properties, data.response, data.quick_replies || []);
+                        const suggestions = data.suggestions || data.quick_replies || data.predicted_questions || [];
+                        addPropertySearchMessage(data.properties, data.response, suggestions);
                     }
                     // Check if response contains EXA results (market analysis, etc.)
                     else if (data.exa_results && data.exa_results.length > 0) {
@@ -8960,16 +8999,64 @@
         /**
          * Display property search results
          */
-        function addPropertySearchMessage(properties, responseText, quickReplies = []) {
+        function addPropertySearchMessage(properties, responseText, quickReplies = [], searchCity = null) {
             const container = document.getElementById('chatContainer');
             const message = document.createElement('div');
             message.className = 'message';
             
             const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             
+            console.log('🏙️ [PROPERTY CARDS] Search city parameter:', searchCity);
+            
             // Build property cards grid
-            const propertyCards = properties.map((prop, index) => `
-                <div class="property-search-card" data-mls="${prop.mls_number || prop.mls_id}" data-index="${index}">
+            const propertyCards = properties.map((prop, index) => {
+                // Extract city from search context first, then fallback to property data
+                let city = searchCity || 'Toronto'; // Use search city if available
+                
+                // Debug: Log the entire property object for first property
+                if (index === 0) {
+                    console.log('🔍 [DEBUG] First property object:', prop);
+                    console.log('🔍 [DEBUG] All property keys:', Object.keys(prop));
+                    console.log('🔍 [DEBUG] prop.location:', prop.location);
+                    console.log('🔍 [DEBUG] prop.full_address:', prop.full_address);
+                    console.log('🔍 [DEBUG] prop.address:', prop.address);
+                    console.log('🔍 [DEBUG] prop.city:', prop.city);
+                    console.log('🔍 [DEBUG] prop.neighborhood:', prop.neighborhood);
+                    console.log('🔍 [DEBUG] prop.title:', prop.title);
+                }
+                
+                // Only try to extract from property data if search city wasn't provided
+                if (!searchCity) {
+                    if (prop.location) {
+                        // location format: "City, Province"
+                        city = prop.location.split(',')[0].trim();
+                        console.log(`🏙️ [Property ${index}] City from location: ${city}`);
+                    } else if (prop.full_address) {
+                        // Try to extract from full address
+                        const parts = prop.full_address.split(',');
+                        if (parts.length >= 2) {
+                            city = parts[parts.length - 2].trim(); // Second to last is usually city
+                            console.log(`🏙️ [Property ${index}] City from full_address: ${city}`);
+                        }
+                    } else if (prop.address) {
+                        // Check if there's a nested address string
+                        const addressStr = typeof prop.address === 'string' ? prop.address : prop.address?.full_address;
+                        if (addressStr && addressStr.includes(',')) {
+                            const parts = addressStr.split(',');
+                            if (parts.length >= 2) {
+                                city = parts[parts.length - 2].trim();
+                                console.log(`🏙️ [Property ${index}] City from address string: ${city}`);
+                            }
+                        }
+                    } else {
+                        console.warn(`⚠️ [Property ${index}] No location data found, using default: Toronto`);
+                    }
+                } else {
+                    console.log(`🏙️ [Property ${index}] Using search city: ${city}`);
+                }
+                
+                return `
+                <div class="property-search-card" data-mls="${prop.mls_number || prop.mls_id}" data-city="${city}" data-index="${index}">
                     <div class="property-image-container">
                         ${(prop.image_url || (prop.images && prop.images.length > 0)) ? `
                             <img src="${prop.image_url || prop.images[0]}" alt="${prop.full_address || prop.address}" class="property-image" 
@@ -8999,12 +9086,13 @@
                                 🤖 AI Analysis
                             </button>
                             <button class="btn-small btn-primary" onclick="openMarketAnalysisClickHandler('${prop.mls_number || prop.mls_id}', this)">
-                                � Market Analysis
+                                📊 Market Analysis
                             </button>
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
 
             message.innerHTML = `
                 <div class="message-avatar ai-avatar">🤖</div>
@@ -10025,6 +10113,7 @@
         
         /**
          * Safe click handler that doesn't rely on JSON.stringify in onclick
+         * FIXED: Now reads city directly from data-city attribute instead of parsing address
          */
         function openMarketAnalysisClickHandler(mlsId, buttonElement) {
             window.marketAnalysisClickCount = (window.marketAnalysisClickCount || 0) + 1;
@@ -10032,50 +10121,50 @@
             console.log('MLS ID:', mlsId);
             console.log('Button Element:', buttonElement);
             
-            // Extract city from the property card
+            // Extract city from data-city attribute on property card
             let city = 'Toronto'; // default
             try {
                 console.log('🔍 [City Extraction] Starting city extraction...');
                 
                 // Find the property card container
-                const propertyCard = buttonElement.closest('.property-card') || buttonElement.closest('.property');
+                const propertyCard = buttonElement.closest('.property-search-card') || buttonElement.closest('.property-card') || buttonElement.closest('.property');
                 console.log('🔍 [City Extraction] Property card found:', propertyCard ? 'YES' : 'NO');
                 
                 if (propertyCard) {
-                    // Look for address element in the property card
-                    const addressElement = propertyCard.querySelector('.property-address');
-                    console.log('🔍 [City Extraction] Address element found:', addressElement ? 'YES' : 'NO');
+                    // Read city directly from data-city attribute
+                    const dataCity = propertyCard.getAttribute('data-city');
+                    console.log('🏙️ [City Extraction] data-city attribute:', dataCity);
                     
-                    if (addressElement) {
-                        const fullAddress = addressElement.textContent || addressElement.innerText || '';
-                        console.log('🏠 [City Extraction] Full address found:', fullAddress);
-                        
-                        // Extract city from address (usually format: "123 Street, City, Province")
-                        const addressParts = fullAddress.split(',');
-                        console.log('🏠 [City Extraction] Address parts:', addressParts);
-                        
-                        if (addressParts.length >= 2) {
-                            const rawCity = addressParts[addressParts.length - 2].trim(); // Get second to last part (city)
-                            console.log('🏠 [City Extraction] Raw city (before cleanup):', rawCity);
-                            
-                            // Remove common suffixes like "ON" or postal codes
-                            city = rawCity.replace(/\s+(ON|Ontario|BC|AB|MB|SK|QC|Quebec|NB|NS|PE|NL|NT|YT|NU)\s*.*$/i, '').trim();
-                            console.log('🏙️ [City Extraction] Final extracted city:', city);
-                        } else {
-                            console.log('� [City Extraction] Address parts insufficient, using default');
-                        }
+                    if (dataCity && dataCity.trim() !== '') {
+                        city = dataCity.trim();
+                        console.log('✅ [City Extraction] Successfully extracted city from data-city:', city);
                     } else {
-                        console.log('🏠 [City Extraction] No address element found, using default');
+                        // Fallback: try to extract from address element
+                        const addressElement = propertyCard.querySelector('.property-address');
+                        console.log('🔍 [City Extraction] data-city not found, trying address element...');
+                        
+                        if (addressElement) {
+                            const fullAddress = addressElement.textContent || addressElement.innerText || '';
+                            console.log('🏠 [City Extraction] Full address found:', fullAddress);
+                            
+                            // Extract city from address (usually format: "123 Street, City, Province")
+                            const addressParts = fullAddress.split(',');
+                            if (addressParts.length >= 2) {
+                                const rawCity = addressParts[addressParts.length - 2].trim();
+                                city = rawCity.replace(/\s+(ON|Ontario|BC|AB|MB|SK|QC|Quebec|NB|NS|PE|NL|NT|YT|NU)\s*.*$/i, '').trim();
+                                console.log('🏙️ [City Extraction] Extracted from address:', city);
+                            }
+                        }
                     }
                 } else {
-                    console.log('🏠 [City Extraction] No property card found, using default');
+                    console.log('⚠️ [City Extraction] No property card found, using default Toronto');
                 }
             } catch (error) {
                 console.warn('⚠️ [City Extraction] Error:', error);
                 city = 'Toronto'; // fallback
             }
             
-            // Log success (remove alert for better UX)
+            // Log success
             console.log(`🔥 MARKET ANALYSIS CLICKED! 🔥\nClick #${window.marketAnalysisClickCount}\nMLS: ${mlsId}\nCity: ${city}\n\nOpening ${city} market data...`);
             
             // Create property data object with extracted city
@@ -10085,7 +10174,7 @@
                 city: city
             };
             
-            console.log('Calling openMarketAnalysisCenterPanel with city:', city);
+            console.log('✅ Calling openMarketAnalysisCenterPanel with city:', city);
             return openMarketAnalysisCenterPanel(mlsId, propertyData);
         }
         
@@ -10126,28 +10215,56 @@
             
             console.log('🚨 [DEBUG] Final property data:', propertyData);
             
-            // Extract city from property data (prioritize city passed from click handler)
+            // Extract city from property data (CRITICAL FIX: Check all possible city sources)
             let city = 'Toronto'; // default
             console.log('🏙️ [City] Extracting city from property data:', propertyData);
+            console.log('🏙️ [City] propertyData.city:', propertyData?.city);
+            console.log('🏙️ [City] propertyData.location:', propertyData?.location);
+            console.log('🏙️ [City] propertyData.address?.city:', propertyData?.address?.city);
+            console.log('🏙️ [City] propertyData.full_address:', propertyData?.full_address);
             
-            if (propertyData?.city && propertyData.city !== 'Toronto') {
-                // Use city from click handler (most accurate)
-                city = propertyData.city;
-                console.log('🏙️ [City] Using city from click handler:', city);
-            } else if (propertyData?.city) {
-                city = propertyData.city;
-                console.log('🏙️ [City] Using city from propertyData.city:', city);
-            } else if (propertyData?.location) {
+            // Priority 1: Direct city field from click handler
+            if (propertyData?.city && propertyData.city.trim() !== '' && propertyData.city !== 'Toronto') {
+                city = propertyData.city.trim();
+                console.log('✅ [City] Using city from propertyData.city:', city);
+            }
+            // Priority 2: City from address object
+            else if (propertyData?.address?.city && propertyData.address.city.trim() !== '' && propertyData.address.city !== 'Toronto') {
+                city = propertyData.address.city.trim();
+                console.log('✅ [City] Using city from propertyData.address.city:', city);
+            }
+            // Priority 3: Extract from location string
+            else if (propertyData?.location && propertyData.location.includes(',')) {
                 city = propertyData.location.split(',')[0]?.trim();
-                console.log('🏙️ [City] Extracted from propertyData.location:', city);
-            } else if (propertyData?.address?.city) {
-                city = propertyData.address.city;
-                console.log('🏙️ [City] Using propertyData.address.city:', city);
+                if (city && city !== 'Toronto') {
+                    console.log('✅ [City] Extracted from propertyData.location:', city);
+                } else {
+                    city = 'Toronto';
+                }
+            }
+            // Priority 4: Extract from full_address
+            else if (propertyData?.full_address && propertyData.full_address.includes(',')) {
+                const addressParts = propertyData.full_address.split(',');
+                if (addressParts.length >= 2) {
+                    const extractedCity = addressParts[addressParts.length - 2].trim();
+                    // Remove province codes
+                    city = extractedCity.replace(/\s+(ON|Ontario|BC|AB|MB|SK|QC|Quebec|NB|NS|PE|NL|NT|YT|NU)\s*.*$/i, '').trim();
+                    if (city && city !== 'Toronto' && city.length > 2) {
+                        console.log('✅ [City] Extracted from full_address:', city);
+                    } else {
+                        city = 'Toronto';
+                    }
+                }
+            }
+            // Fallback: Check if any field has Toronto value
+            else if (propertyData?.city === 'Toronto' || propertyData?.address?.city === 'Toronto') {
+                city = 'Toronto';
+                console.log('✅ [City] Confirmed Toronto from data');
             } else {
-                console.log('🏙️ [City] Using default city:', city);
+                console.log('⚠️ [City] No city found, using default Toronto');
             }
             
-            console.log(`🏙️ [City] Final city for market analysis: ${city}`);
+            console.log(`🏙️ [City] FINAL city for market analysis: ${city}`);
             
             // Open panel
             console.log('🚨 [DEBUG] Opening panel...');
@@ -11293,7 +11410,7 @@
                                 <button class="btn-primary" onclick="openAIAnalysisPanel('${mlsNumber}', 'property');">
                                     🤖 AI Analysis
                                 </button>
-                                <button class="btn-primary" onclick="openMarketAnalysisCenterPanel('${mlsNumber}', ${JSON.stringify(prop).replace(/'/g, '&apos;')});">
+                                <button class="btn-primary" onclick="openMarketAnalysisCenterPanel('${mlsNumber}', { city: '${address.city || 'Toronto'}', mls_number: '${mlsNumber}', address: ${JSON.stringify(address).replace(/'/g, '&apos;')} });">
                                     📊 Market Analysis
                                 </button>
                             </div>

@@ -12,11 +12,17 @@ Handles:
 
 Author: Summitly Team
 Date: December 12, 2025
+Updated: December 15, 2025 - Integrated comprehensive Repliers filter mapper
 """
 
 import logging
 from typing import Dict, List, Optional, Any
 from services.conversation_state import ConversationState
+from services.repliers_filter_mapper import (
+    buildRepliersSearchParams,
+    validate_params,
+    log_filter_summary
+)
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +46,8 @@ class EnhancedMLSQueryService:
     def search_properties(
         self,
         state: ConversationState,
-        limit: int = 20
+        limit: int = 20,
+        user_message: str = ""
     ) -> Dict[str, Any]:
         """
         Search properties using conversation state.
@@ -48,6 +55,7 @@ class EnhancedMLSQueryService:
         Args:
             state: ConversationState with all search criteria
             limit: Maximum number of results
+            user_message: Original user message (for date intent detection)
             
         Returns:
             Dictionary with:
@@ -58,8 +66,15 @@ class EnhancedMLSQueryService:
         """
         logger.info(f"🔍 Searching properties with state: {state.get_summary()}")
         
-        # Build query parameters from state
-        query_params = self._build_query_params(state, limit)
+        # Build query parameters from state using comprehensive mapper
+        query_params = buildRepliersSearchParams(state, user_message, limit)
+        
+        # Validate parameters
+        validated_params, warnings = validate_params(query_params)
+        
+        # Log warnings
+        for warning in warnings:
+            logger.warning(f"⚠️ Parameter validation: {warning}")
         
         try:
             # Import listings service if not provided
@@ -68,12 +83,17 @@ class EnhancedMLSQueryService:
                 self.listings_service = listings_service
             
             # Execute search
-            logger.info(f"Executing MLS query with params: {query_params}")
-            results = self.listings_service.search_listings(**query_params)
+            logger.info(f"Executing MLS query with {len(validated_params)} parameters")
+            logger.debug(f"Parameters: {validated_params}")
+            
+            results = self.listings_service.search_listings(**validated_params)
             
             # Extract results - API returns 'listings' and 'count', not 'results' and 'total'
             properties = results.get('listings', results.get('results', []))
             total = results.get('count', results.get('total', len(properties)))
+            
+            # Log filter summary for debugging
+            log_filter_summary(validated_params, total)
             
             logger.info(f"✅ Found {total} properties")
             
@@ -83,11 +103,13 @@ class EnhancedMLSQueryService:
                 'total': total,
                 'filters_used': state.get_active_filters(),
                 'query_summary': state.get_summary(),
-                'query_params': query_params
+                'query_params': validated_params,
+                'validation_warnings': warnings
             }
         
         except Exception as e:
             logger.error(f"❌ MLS query error: {e}")
+            logger.exception("Full error details:")
             return {
                 'success': False,
                 'error': str(e),
@@ -175,6 +197,13 @@ class EnhancedMLSQueryService:
         if state.amenities:
             amenity_params = self._map_amenities_to_params(state.amenities)
             params.update(amenity_params)
+        
+        # FIX #3: Date filtering support - using correct API parameter names
+        # API uses 'listed_after' and 'listed_before', not 'list_date_from'/'list_date_to'
+        if state.list_date_from:
+            params['listed_after'] = state.list_date_from
+        if state.list_date_to:
+            params['listed_before'] = state.list_date_to
         
         # Result limit - FIXED: use page_size not limit
         params['page_size'] = limit
