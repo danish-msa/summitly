@@ -17,6 +17,41 @@ from copy import deepcopy
 
 logger = logging.getLogger(__name__)
 
+# Import LocationState for structured location handling
+try:
+    from services.location_extractor import LocationState
+except ImportError:
+    # Fallback if location_extractor not available
+    @dataclass
+    class LocationState:
+        city: Optional[str] = None
+        community: Optional[str] = None
+        neighborhood: Optional[str] = None
+        postalCode: Optional[str] = None
+        streetName: Optional[str] = None
+        streetNumber: Optional[str] = None
+        
+        def to_dict(self):
+            return {k: v for k, v in asdict(self).items() if v is not None}
+        
+        def is_empty(self):
+            return all(v is None for v in [self.city, self.community, self.neighborhood,
+                                          self.postalCode, self.streetName, self.streetNumber])
+        
+        def get_summary(self):
+            parts = []
+            if self.streetNumber and self.streetName:
+                parts.append(f"{self.streetNumber} {self.streetName}")
+            if self.neighborhood:
+                parts.append(self.neighborhood)
+            if self.community:
+                parts.append(self.community)
+            if self.city:
+                parts.append(self.city)
+            if self.postalCode:
+                parts.append(self.postalCode)
+            return ", ".join(parts) if parts else "No location specified"
+
 
 @dataclass
 class ConversationState:
@@ -45,7 +80,10 @@ class ConversationState:
     price_range: Optional[Tuple[Optional[int], Optional[int]]] = None  # (min, max)
     listing_type: str = "sale"  # "sale" or "rent"
     
-    # Extended Location Filters
+    # NEW: Structured Location State (for robust location filtering)
+    location_state: LocationState = field(default_factory=LocationState)
+    
+    # Extended Location Filters (DEPRECATED - use location_state instead)
     community: Optional[str] = None
     neighborhood: Optional[str] = None
     postal_code: Optional[str] = None
@@ -108,6 +146,126 @@ class ConversationState:
     is_investor: bool = False
     is_first_time_buyer: Optional[bool] = None
     
+    def update_location_state(
+        self, 
+        new_location: LocationState, 
+        merge: bool = True,
+        user_explicitly_changed: bool = False
+    ) -> 'ConversationState':
+        """
+        Update location_state with intelligent merging.
+        
+        Args:
+            new_location: New LocationState to merge
+            merge: If True, merge with existing. If False, replace completely
+            user_explicitly_changed: If True, new location overrides current
+            
+        Returns:
+            Self for chaining
+        """
+        if not merge or user_explicitly_changed:
+            # Replace completely
+            self.location_state = new_location
+            logger.info(f"🔄 Location state replaced: {new_location.get_summary()}")
+        else:
+            # CRITICAL: Intelligent merge with hierarchy awareness
+            # Location hierarchy: streetNumber+streetName > postalCode > neighborhood > community > city
+            # If user specifies a LESS specific location, CLEAR more specific ones
+            
+            current = self.location_state
+            
+            # Determine what level of specificity the new location has
+            has_street_address = (new_location.streetNumber is not None and new_location.streetName is not None)
+            has_street_name_only = (new_location.streetName is not None and new_location.streetNumber is None)
+            has_postal_code = new_location.postalCode is not None
+            has_neighborhood = new_location.neighborhood is not None
+            has_community = new_location.community is not None
+            has_city_only = (new_location.city is not None and 
+                            not has_street_address and not has_street_name_only and 
+                            not has_postal_code and not has_neighborhood and not has_community)
+            
+            # Smart merging logic
+            if has_street_address:
+                # Most specific - use new street address, keep city
+                self.location_state = LocationState(
+                    city=new_location.city if new_location.city is not None else current.city,
+                    streetName=new_location.streetName,
+                    streetNumber=new_location.streetNumber,
+                    # Clear less relevant fields
+                    community=None,
+                    neighborhood=None,
+                    postalCode=None
+                )
+                logger.info(f"🏠 [FRESH SEARCH] New street address specified, cleared old neighborhood/community")
+            elif has_street_name_only:
+                # Street name without number - keep street name, keep city
+                self.location_state = LocationState(
+                    city=new_location.city if new_location.city is not None else current.city,
+                    streetName=new_location.streetName,
+                    streetNumber=None,  # Clear street number
+                    community=None,
+                    neighborhood=None,
+                    postalCode=None
+                )
+                logger.info(f"🛣️ [FRESH SEARCH] New street name specified, cleared old address details")
+            elif has_postal_code:
+                # Postal code - clear street address, keep city
+                self.location_state = LocationState(
+                    city=new_location.city if new_location.city is not None else current.city,
+                    postalCode=new_location.postalCode,
+                    streetName=None,
+                    streetNumber=None,
+                    community=None,
+                    neighborhood=None
+                )
+                logger.info(f"📮 [FRESH SEARCH] New postal code specified, cleared old street address")
+            elif has_neighborhood:
+                # Neighborhood - clear street address and postal code, keep city
+                self.location_state = LocationState(
+                    city=new_location.city if new_location.city is not None else current.city,
+                    neighborhood=new_location.neighborhood,
+                    streetName=None,
+                    streetNumber=None,
+                    postalCode=None,
+                    community=None
+                )
+                logger.info(f"🏘️ [FRESH SEARCH] New neighborhood specified, cleared old street address")
+            elif has_community:
+                # Community - clear street address, postal code, and neighborhood, keep city
+                self.location_state = LocationState(
+                    city=new_location.city if new_location.city is not None else current.city,
+                    community=new_location.community,
+                    streetName=None,
+                    streetNumber=None,
+                    postalCode=None,
+                    neighborhood=None
+                )
+                logger.info(f"🏙️ [FRESH SEARCH] New community specified, cleared old address details")
+            elif has_city_only:
+                # City only - clear everything except city
+                self.location_state = LocationState(
+                    city=new_location.city,
+                    community=None,
+                    neighborhood=None,
+                    postalCode=None,
+                    streetName=None,
+                    streetNumber=None
+                )
+                logger.info(f"🌆 [FRESH SEARCH] New city specified, cleared all address details")
+            else:
+                # No new location specified, keep current
+                self.location_state = current
+                logger.info(f"🔄 [NO CHANGE] No new location specified, keeping current location")
+            
+            logger.info(f"🔀 Location state merged: {self.location_state.get_summary()}")
+        
+        # Also update legacy location field for backwards compatibility
+        if self.location_state.city:
+            self.location = self.location_state.city
+        
+        self.last_updated = datetime.now().isoformat()
+        return self
+    
     def update_from_dict(self, updates: Dict[str, Any]) -> 'ConversationState':
         """
         Update state with new values, preserving existing ones.
@@ -140,6 +298,26 @@ class ConversationState:
                     for pt in value if isinstance(value, list) else [value]:
                         if pt not in self.preferred_property_types:
                             self.preferred_property_types.append(pt)
+                elif key == "location_state":
+                    # Handle location_state updates
+                    if value is None:
+                        continue  # Skip None values
+                    elif isinstance(value, dict):
+                        # Create LocationState from dict
+                        try:
+                            new_loc = LocationState(**{k: v for k, v in value.items() if k in [
+                                'city', 'community', 'neighborhood', 'postalCode', 'streetName', 'streetNumber'
+                            ]})
+                            logger.debug(f"Created LocationState from dict: {new_loc.get_summary()}")
+                            self.update_location_state(new_loc, merge=True)
+                        except Exception as e:
+                            logger.error(f"Failed to create LocationState from dict: {e}")
+                    elif isinstance(value, LocationState):
+                        # Already a LocationState object
+                        logger.debug(f"Updating with LocationState object: {value.get_summary()}")
+                        self.update_location_state(value, merge=True)
+                    else:
+                        logger.warning(f"Invalid location_state type: {type(value)}")
                 elif hasattr(self, key):
                     setattr(self, key, value)
         

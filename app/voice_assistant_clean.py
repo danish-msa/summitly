@@ -253,13 +253,22 @@ def standardize_property_data(property_data):
         # Use data URI fallback (works everywhere - local, Render, etc.)
         standardized['image'] = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='18' fill='%236b7280'%3ENo Image Available%3C/text%3E%3C/svg%3E"
     
-    # Standardize address field
+    # Standardize address field - PRODUCTION FIX: Return BOTH string and components
+    # Frontend/GPT needs string for display: standardized['address']
+    # Tests/logic need dict for parsing: standardized['address_components']
+    address_components = None
+    address_string = None
+    
     if 'full_address' in standardized and 'address' not in standardized:
-        standardized['address'] = standardized['full_address']
+        address_string = standardized['full_address']
     elif hasattr(standardized.get('address', {}), 'get'):
         # Build address from address object
         addr_obj = standardized['address']
         if isinstance(addr_obj, dict):
+            # Preserve original dict as address_components
+            address_components = dict(addr_obj)
+            
+            # Build formatted string
             parts = []
             if addr_obj.get('streetNumber'):
                 parts.append(str(addr_obj['streetNumber']))
@@ -270,7 +279,19 @@ def standardize_property_data(property_data):
             if addr_obj.get('unitNumber'):
                 parts.append(f"Unit {addr_obj['unitNumber']}")
             if parts:
-                standardized['address'] = ' '.join(parts)
+                address_string = ' '.join(parts)
+        else:
+            # Already a string (legacy data or processed)
+            address_string = addr_obj
+    elif isinstance(standardized.get('address'), str):
+        # Already a string
+        address_string = standardized['address']
+    
+    # Set both representations
+    if address_string:
+        standardized['address'] = address_string
+    if address_components:
+        standardized['address_components'] = address_components
     
     # Add fallback values for missing required fields
     if 'bedrooms' not in standardized or standardized['bedrooms'] is None:

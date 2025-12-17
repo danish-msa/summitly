@@ -10,6 +10,7 @@ This module ensures:
 - Property type normalization
 - Date filter application based on user intent
 - Complete support for all Repliers API parameters
+- Neighborhood alias expansion (King West -> Niagara, etc.)
 
 Author: Summitly Team
 Date: December 15, 2025
@@ -19,6 +20,7 @@ import logging
 import re
 from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime, timedelta
+from services.neighborhood_normalizer import normalize_neighborhood, should_expand_neighborhood
 
 logger = logging.getLogger(__name__)
 
@@ -354,39 +356,116 @@ def buildRepliersSearchParams(
     
     logger.info(f"🔨 Building Repliers params from state: {state.get_summary()}")
     
-    # ===== LOCATION =====
-    # Validate location hierarchy
-    city, community, neighborhood, location_warnings = validate_location_hierarchy(
-        getattr(state, 'location', None),
-        getattr(state, 'community', None),
-        getattr(state, 'neighborhood', None)
-    )
+    # ===== LOCATION (NEW: Use location_state for structured location handling) =====
+    location_state = getattr(state, 'location_state', None)
     
-    for warning in location_warnings:
-        logger.warning(f"⚠️ Location: {warning}")
-    
-    # ===== FIX: Handle "GTA" as a location =====
-    # "GTA" is not a valid city - default to Toronto for GTA searches
-    if city and city.upper() == 'GTA':
-        logger.info(f"🏙️ [GTA SEARCH] User requested 'GTA' - defaulting to Toronto")
-        logger.info(f"💡 Note: For multi-city GTA searches, specify: Toronto, Mississauga, Vaughan, Markham, Brampton")
-        city = 'Toronto'  # Default GTA searches to Toronto
-        location_warnings.append("Searching Toronto (GTA's largest city). For other GTA cities, please specify: Mississauga, Vaughan, Markham, or Brampton.")
-    
-    if city:
-        params['city'] = city
-    if community:
-        params['community'] = community
-    if neighborhood:
-        params['neighborhood'] = neighborhood
-    
-    # Postal code
-    if hasattr(state, 'postal_code') and state.postal_code:
-        params['postalCode'] = state.postal_code
-    
-    # Street name
-    if hasattr(state, 'street_name') and state.street_name:
-        params['streetName'] = state.street_name
+    if location_state and not location_state.is_empty():
+        # Use structured location_state
+        logger.info(f"📍 Using location_state: {location_state.get_summary()}")
+        
+        # Extract location fields from location_state
+        city = location_state.city
+        community = location_state.community
+        neighborhood = location_state.neighborhood
+        postal_code = location_state.postalCode
+        street_name = location_state.streetName
+        street_number = location_state.streetNumber
+        
+        # Validate location hierarchy
+        city, community, neighborhood, location_warnings = validate_location_hierarchy(
+            city, community, neighborhood
+        )
+        
+        for warning in location_warnings:
+            logger.warning(f"⚠️ Location: {warning}")
+        
+        # Handle "GTA" as a location
+        if city and city.upper() == 'GTA':
+            logger.info(f"🏙️ [GTA SEARCH] User requested 'GTA' - defaulting to Toronto")
+            city = 'Toronto'
+            location_warnings.append("Searching Toronto (GTA's largest city). For other GTA cities, please specify.")
+        
+        # Apply location fields to params (respecting hierarchy)
+        # streetNumber > streetName > postalCode > neighborhood > community > city
+        if street_number and street_name:
+            params['streetName'] = street_name
+            params['streetNumber'] = street_number
+            if city:  # Always include city with street address for better results
+                params['city'] = city
+            logger.info(f"🏠 Searching specific address: {street_number} {street_name}, {city or 'Toronto'}")
+        elif street_name:
+            params['streetName'] = street_name
+            if city:  # CRITICAL: Include city with street name to narrow down results
+                params['city'] = city
+            logger.info(f"🛣️ Searching street: {street_name}, {city or 'Toronto'}")
+        elif postal_code:
+            params['postalCode'] = postal_code
+            logger.info(f"📮 Searching postal code: {postal_code}")
+        elif neighborhood:
+            # PRODUCTION FIX: Expand neighborhood aliases (e.g., "King West" -> ["Niagara", ...])
+            if should_expand_neighborhood(neighborhood):
+                mls_neighborhoods = normalize_neighborhood(neighborhood)
+                logger.info(
+                    f"🏘️ [NEIGHBORHOOD ALIAS] '{neighborhood}' expanded to {len(mls_neighborhoods)} MLS neighborhoods: {mls_neighborhoods}"
+                )
+                # Use first neighborhood as primary, but log that we're querying a broader area
+                params['neighborhood'] = mls_neighborhoods[0]
+                if city:
+                    params['city'] = city
+                logger.info(f"🏘️ Searching MLS neighborhood: {params['neighborhood']}, {city}")
+                # TODO: Future enhancement - query all neighborhoods and merge results
+            else:
+                params['neighborhood'] = neighborhood
+                if city:
+                    params['city'] = city
+                logger.info(f"🏘️ Searching neighborhood: {neighborhood}, {city}")
+        elif community:
+            params['community'] = community
+            if city:
+                params['city'] = city
+            logger.info(f"🏙️ Searching community: {community}, {city}")
+        elif city:
+            params['city'] = city
+            logger.info(f"🌆 Searching city: {city}")
+    else:
+        # Fallback to legacy location fields
+        logger.debug("📍 Using legacy location fields (location, community, neighborhood)")
+        city, community, neighborhood, location_warnings = validate_location_hierarchy(
+            getattr(state, 'location', None),
+            getattr(state, 'community', None),
+            getattr(state, 'neighborhood', None)
+        )
+        
+        for warning in location_warnings:
+            logger.warning(f"⚠️ Location: {warning}")
+        
+        # Handle "GTA" as a location
+        if city and city.upper() == 'GTA':
+            logger.info(f"🏙️ [GTA SEARCH] User requested 'GTA' - defaulting to Toronto")
+            city = 'Toronto'
+        
+        if city:
+            params['city'] = city
+        if community:
+            params['community'] = community
+        if neighborhood:
+            # PRODUCTION FIX: Expand neighborhood aliases (legacy path)
+            if should_expand_neighborhood(neighborhood):
+                mls_neighborhoods = normalize_neighborhood(neighborhood)
+                logger.info(
+                    f"🏘️ [NEIGHBORHOOD ALIAS - LEGACY] '{neighborhood}' expanded to {mls_neighborhoods}"
+                )
+                params['neighborhood'] = mls_neighborhoods[0]
+            else:
+                params['neighborhood'] = neighborhood
+        
+        # Postal code
+        if hasattr(state, 'postal_code') and state.postal_code:
+            params['postalCode'] = state.postal_code
+        
+        # Street name
+        if hasattr(state, 'street_name') and state.street_name:
+            params['streetName'] = state.street_name
     
     # ===== PROPERTY BASICS =====
     # Property type
@@ -538,7 +617,34 @@ def buildRepliersSearchParams(
     # Convert to snake_case for listings_service compatibility
     params = convert_to_snake_case(params)
     
+    # Filter out unsupported parameters (streetName, streetNumber not supported by ListingsService)
+    params = filter_supported_params(params)
+    
     return params
+
+
+def filter_supported_params(params: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Filter out parameters not supported by ListingsService.
+    
+    ListingsService.search_listings() does NOT support:
+    - community (some APIs use this, but not supported in our wrapper)
+    
+    Args:
+        params: Dictionary of parameters
+        
+    Returns:
+        Dictionary with only supported parameters
+    """
+    unsupported = ['community']  # street_name and street_number are NOW supported
+    
+    filtered = {k: v for k, v in params.items() if k not in unsupported}
+    
+    removed = [k for k in params.keys() if k in unsupported]
+    if removed:
+        logger.warning(f"⚠️ Removed unsupported ListingsService parameters: {removed}")
+    
+    return filtered
 
 
 def convert_to_snake_case(params: Dict[str, Any]) -> Dict[str, Any]:
@@ -580,6 +686,7 @@ def convert_to_snake_case(params: Dict[str, Any]) -> Dict[str, Any]:
         # Location
         'postalCode': 'postal_code',
         'streetName': 'street_name',
+        'streetNumber': 'street_number',
         
         # Parking & Features
         'parkingSpaces': 'parking_spots',

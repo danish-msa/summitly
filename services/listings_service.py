@@ -30,6 +30,8 @@ class ListingsService:
         city: Optional[str] = None,
         neighborhood: Optional[str] = None,
         postal_code: Optional[str] = None,
+        street_name: Optional[str] = None,  # NEW: Street address search
+        street_number: Optional[str] = None,  # NEW: Street number search
         latitude: Optional[float] = None,
         longitude: Optional[float] = None,
         radius_km: Optional[float] = None,
@@ -114,6 +116,10 @@ class ListingsService:
             params['neighborhood'] = neighborhood
         if postal_code:
             params['postalCode'] = postal_code
+        if street_name:
+            params['streetName'] = street_name
+        if street_number:
+            params['streetNumber'] = street_number
         if latitude is not None and longitude is not None:
             params['latitude'] = latitude
             params['longitude'] = longitude
