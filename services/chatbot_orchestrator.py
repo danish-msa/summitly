@@ -40,6 +40,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 from services.conversation_state import ConversationState, conversation_state_manager
 from services.nlp_parser import nlp_parser
 from services.enhanced_mls_service import enhanced_mls_service
+from services.location_extractor import location_extractor, LocationState
 
 logger = logging.getLogger(__name__)
 
@@ -63,8 +64,22 @@ SYSTEM_PROMPT_INTERPRETER = """You are a precise real-estate assistant interpret
 
 Input: user's message + current conversation filters (location, bedrooms, property_type, price_range, listing_type, amenities, etc.) + pending_clarification (if any)
 
+CRITICAL - Street Address Detection:
+When user provides a STREET ADDRESS with a number (e.g., "123 King Street West", "50 Yorkville Avenue", "825 Church Street"):
+1. This is ALWAYS a property search intent - DO NOT ask clarifying questions
+2. Treat it as intent: "search" 
+3. Location will be extracted by location_extractor (streetNumber, streetName)
+4. If city not mentioned, assume Toronto for GTA addresses
+
+Examples:
+- "123 King Street West" → intent: "search" (location extracted separately)
+- "50 Yorkville Avenue Unit 2503" → intent: "search" (unit numbers are ignored in search)
+- "Show me properties at 825 Church" → intent: "search"
+- "What's at 100 Queen Street" → intent: "search"
+
 IMPORTANT - Clarifying Questions:
 - If "pending_clarification" is present, the user's message is likely an ANSWER to that question, NOT a new intent.
+- DO NOT ask clarifying questions for obvious street addresses (number + street name)
 - Examples:
   - Previous: "Are you looking for specific schools or general information?" User: "yes" → intent: "refine" (user confirming)
   - Previous: "Are you looking for specific schools?" User: "general information" → intent: "general_question"
@@ -95,7 +110,20 @@ CRITICAL PRICING RULES:
 - "under 5k" for rental = max_price: 5000 (monthly)
 - "under 600k" for sale = max_price: 600000 (total)
 
+CRITICAL - Broad Search Detection:
+When the user says phrases like "any properties", "anything works", "show me what you have", "whatever you have", etc., this signals they want to:
+1. CLEAR restrictive filters (bedrooms, bathrooms, price) to see broader results
+2. KEEP the location they just specified (e.g., if they said "Show me properties in Mississauga instead", keep Mississauga)
+3. DO NOT extract locations from previous messages in conversation history
+
 Examples:
+- User: "Show me properties in Mississauga instead" → User: "any properties work for me"
+  → intent: "search", location: "Mississauga", bedrooms: null, bathrooms: null, min_price: null, max_price: null, merge_with_previous: false
+  
+- User: "2 bedroom condos in Toronto" → User: "any properties in Yorkville"
+  → intent: "search", location: "Toronto", neighborhood: "Yorkville", bedrooms: null, bathrooms: null, merge_with_previous: false
+
+Standard Examples:
 - "Show me rentals under 4k" -> intent: "search", listing_type: "rent", max_price: 4000
 - "I want to buy under 600k" -> intent: "search", listing_type: "sale", max_price: 600000
 - "properties with 500 sqft" -> intent: "search", min_sqft: 500, max_sqft: 500
@@ -105,8 +133,11 @@ Examples:
 - "How about those with a pool?" -> intent: "refine", amenities: ["pool"], merge_with_previous: true
 - "I don't have any budgets" -> intent: "refine", min_price: null, max_price: null, merge_with_previous: true
 - "Show me any price range" -> intent: "refine", min_price: null, max_price: null, merge_with_previous: true
-- "show me what you have" -> intent: "search", min_sqft: null, max_sqft: null (remove size restrictions)
+- "show me what you have" -> intent: "search", min_sqft: null, max_sqft: null, bedrooms: null, bathrooms: null (clear restrictions)
 - "any size" -> intent: "refine", min_sqft: null, max_sqft: null, merge_with_previous: true
+- "any properties" -> intent: "search", bedrooms: null, bathrooms: null, min_price: null, max_price: null, min_sqft: null, max_sqft: null (CLEAR ALL RESTRICTIONS)
+- "whatever you have" -> intent: "search", bedrooms: null, bathrooms: null, min_price: null, max_price: null, merge_with_previous: false
+- "anything works for me" -> intent: "search", bedrooms: null, bathrooms: null, min_price: null, max_price: null, merge_with_previous: false
 - "remove square footage filter" -> intent: "refine", min_sqft: null, max_sqft: null, merge_with_previous: true
 - "Value of MLS: C12631086" -> intent: "valuation"
 - "What is this property worth?" -> intent: "valuation"
@@ -115,6 +146,13 @@ Examples:
 - "properties listed on November 1" -> intent: "search", list_date_from: "2024-11-01", list_date_to: "2024-11-01"
 - "listed in the last 3 days" -> intent: "search", list_date_from: "{today - 3 days}", list_date_to: "{today}"
 - "show me new listings from last week" -> intent: "search", list_date_from: "{today - 7 days}", list_date_to: "{today}"
+
+CRITICAL - Follow-up Questions:
+When the search returns 0 results AND the user has multiple restrictive filters (e.g., 4 beds + 2 baths + specific neighborhood), ask a clarifying question:
+- clarifying_question: "I couldn't find any properties matching those exact criteria in [location]. Would you like me to show you properties with different bedroom/bathroom counts, or expand the search to nearby areas?"
+
+When the user changes location significantly (e.g., Toronto → Mississauga) after no results:
+- clarifying_question: "Would you like me to search for the same criteria (4 beds, 2 baths, condos for rent) in Mississauga, or would you prefer to see any available properties there?"
 
 Special Queries (use intent: "special_query" for non-property searches):
 - "schools near MLS C12633118" -> intent: "special_query", query_type: "schools", mls_number: "C12633118"
@@ -149,7 +187,29 @@ Response requirements:
 3. Use a natural, helpful tone
 4. Include 2-3 actionable follow-up suggestions
 
-IMPORTANT - Be specific about what filters are ACTUALLY set (FIX #5):
+CRITICAL - When NO RESULTS Found:
+If properties_found = 0 and multiple restrictive filters are set (bedrooms, bathrooms, price, specific neighborhood):
+1. Ask a clarifying follow-up question to help user decide next steps
+2. Offer SPECIFIC alternatives based on what filters are set
+
+Examples for 0 results:
+- Filters: {location: "Mississauga", bedrooms: 4, bathrooms: 2, listing_type: "rent"}
+  → response_text: "I couldn't find any 4-bedroom, 2-bathroom condos for rent in Mississauga at the moment."
+  → suggestions: [
+      "Would you like to see properties with different bedroom/bathroom counts?",
+      "Should I search nearby areas like Toronto or Brampton?",
+      "Would you prefer to see what's available for sale instead?"
+    ]
+
+- Filters: {location: "Mississauga", bedrooms: 4, bathrooms: 2} AND user just said "any properties work for me"
+  → response_text: "I'm still searching for 4-bedroom, 2-bathroom properties. Did you want me to show you ANY properties in Mississauga (removing the bedroom/bathroom filters), or keep those requirements?"
+  → suggestions: [
+      "Show me any properties in Mississauga",
+      "Keep the 4 bed/2 bath requirement but try other cities",
+      "Let me know what matters most to you"
+    ]
+
+IMPORTANT - Be specific about what filters are ACTUALLY set:
 - If no budget/price_range is set (null or None), DON'T mention "budget considerations" or "adjusting budget"
 - If no location is set, suggest popular GTA locations like Toronto, Mississauga, Vaughan
 - If bedrooms are set to unusual values (like 8+), that might need clarification
@@ -157,7 +217,7 @@ IMPORTANT - Be specific about what filters are ACTUALLY set (FIX #5):
 - If listing_type is "sale", focus on purchase-specific suggestions (financing, property value)
 - Only suggest adjusting filters that are ACTUALLY set
 
-Examples:
+Examples for successful searches:
 - Filters: {location: "Toronto", bedrooms: 2, price_range: null} 
   → Good: "I can show you options across different price ranges"
   → Bad: "Consider adjusting your budget" (no budget was set!)
@@ -511,7 +571,16 @@ class ChatGPTChatbot:
                 "pending_clarification": pending_clarification  # NEW: helps interpreter understand context
             }
             
-            # STEP 3: Call GPT-4 interpreter
+            # STEP 3: Extract location entities FIRST (before GPT interpreter)
+            logger.info("📍 Extracting location entities...")
+            previous_location = state.location_state if hasattr(state, 'location_state') else LocationState()
+            extracted_location = location_extractor.extract_location_entities(
+                user_message,
+                previous_location=previous_location
+            )
+            logger.info(f"📍 Extracted location: {extracted_location.get_summary()}")
+            
+            # STEP 4: Call GPT-4 interpreter
             interpreter_out = ask_gpt_interpreter(session_summary, user_message)
             intent = interpreter_out.get("intent", "general_question")
             filters_from_gpt = interpreter_out.get("filters", {})
@@ -521,7 +590,17 @@ class ChatGPTChatbot:
             logger.info(f"🎯 Intent: {intent}")
             logger.debug(f"Filters from GPT: {filters_from_gpt}")
             
-            # STEP 4: If clarifying question, return immediately
+            # STEP 5: Merge extracted location into filters
+            if not extracted_location.is_empty():
+                # Add location entities to filters
+                if extracted_location.city:
+                    filters_from_gpt['location'] = extracted_location.city
+                
+                # Store full location_state for later use
+                filters_from_gpt['location_state'] = extracted_location
+                logger.info(f"✅ Added location_state to filters: {extracted_location.get_summary()}")
+            
+            # STEP 6: If clarifying question, return immediately
             if clarifying:
                 state.add_conversation_turn("assistant", clarifying)
                 self.state_manager.save(state)
@@ -535,7 +614,7 @@ class ChatGPTChatbot:
                     "filters": state.get_active_filters()
                 }
             
-            # STEP 5: Handle different intents (check general_question FIRST to prevent unwanted searches)
+            # STEP 7: Handle different intents (check general_question FIRST to prevent unwanted searches)
             if intent == 'reset':
                 return self._handle_reset(state, user_message)
             elif intent == 'valuation':
@@ -553,13 +632,47 @@ class ChatGPTChatbot:
                 # we should NOT execute a search for general questions
                 return self._handle_general_question(state, user_message)
             
-            # STEP 6: Update state with interpreted filters (search or refine)
+            # STEP 8: Update state with interpreted filters (search or refine)
             updates = self._normalize_filters_for_state(filters_from_gpt, merge, user_message, state)
+            logger.info(f"📝 Updates to apply: {list(updates.keys())}")
+            if 'location_state' in updates:
+                loc_state = updates['location_state']
+                logger.info(f"📍 location_state in updates: {loc_state.get_summary() if hasattr(loc_state, 'get_summary') else loc_state}")
+            
             if updates:
                 state.update_from_dict(updates)
                 logger.info(f"✅ State updated: {state.get_summary()}")
             
-            # STEP 7: Execute MLS search
+            # STEP 9: Log merged location state for debugging
+            if hasattr(state, 'location_state') and state.location_state:
+                logger.info(f"📍 Final location state: {state.location_state.get_summary()}")
+                logger.debug(f"📍 Location hierarchy: city={state.location_state.city}, "
+                           f"community={state.location_state.community}, "
+                           f"neighborhood={state.location_state.neighborhood}, "
+                           f"postalCode={state.location_state.postalCode}, "
+                           f"streetName={state.location_state.streetName}, "
+                           f"streetNumber={state.location_state.streetNumber}")
+            
+            # STEP 10: Check for street-only search (requires special handling)
+            is_street_only_search = False
+            needs_city_clarification = False
+            
+            if (state.location_state and 
+                state.location_state.streetName and 
+                not state.location_state.streetNumber):
+                
+                # User specified street but no street number
+                is_street_only_search = True
+                
+                if not state.location_state.city:
+                    # CRITICAL: Street-only without city → ask for clarification
+                    needs_city_clarification = True
+                    logger.warning(
+                        f"🛣️ [STREET SEARCH] Street specified without city: "
+                        f"'{state.location_state.streetName}' - asking for clarification"
+                    )
+            
+            # STEP 11: Execute MLS search
             should_search = intent in ("search", "refine") or any([
                 state.location,
                 state.bedrooms,
@@ -569,34 +682,165 @@ class ChatGPTChatbot:
             
             properties = []
             total = 0
+            fallback_message = None
+            
+            # Handle city clarification for street-only searches
+            if needs_city_clarification:
+                logger.info("🏙️ [STREET SEARCH] Requesting city clarification")
+                return {
+                    "success": True,
+                    "response": (
+                        f"I'd be happy to search for properties on {state.location_state.streetName}! "
+                        f"Which city should I search in? (e.g., Toronto, Mississauga, Markham)"
+                    ),
+                    "suggestions": [
+                        "Toronto",
+                        "Mississauga", 
+                        "Markham",
+                        "Show me all available cities"
+                    ],
+                    "properties": [],
+                    "property_count": 0,
+                    "requires_clarification": True,
+                    "clarification_type": "city_for_street"
+                }
+            
             if should_search:
-                logger.info("🔍 Executing MLS search...")
-                # Pass user_message for date intent detection
-                search_results = enhanced_mls_service.search_properties(
-                    state, 
-                    limit=20,
-                    user_message=user_message
-                )
-                
-                if search_results.get('success'):
-                    properties = search_results.get('results', [])
-                    total = search_results.get('total', len(properties))
+                # STEP 11a: Handle street-only search with specialized service
+                if is_street_only_search and state.location_state.city:
+                    logger.info(
+                        f"🛣️ [STREET SEARCH] Using street search service: "
+                        f"street='{state.location_state.streetName}' city='{state.location_state.city}'"
+                    )
+                    
+                    # Import street search service
+                    from services.street_search_service import street_search_service
+                    
+                    # Execute street-specific search
+                    street_results = street_search_service.search_properties_by_street(
+                        street_name=state.location_state.streetName,
+                        city=state.location_state.city,
+                        property_type=state.property_type,
+                        min_bedrooms=state.bedrooms,
+                        max_price=state.price_range[1] if state.price_range else None,
+                        listing_type=state.listing_type or 'sale'
+                    )
+                    
+                    if street_results['success']:
+                        properties = street_results['properties']
+                        total = street_results['total_matched']
+                        
+                        logger.info(
+                            f"✅ [STREET SEARCH] Found {total} properties on "
+                            f"{state.location_state.streetName} "
+                            f"(fetched {street_results['total_fetched']} from {street_results['pages_fetched']} pages)"
+                        )
+                        
+                        # Add note if we found results via street filtering
+                        if total > 0:
+                            fallback_message = (
+                                f"Found {total} active listings on {state.location_state.streetName} "
+                                f"in {state.location_state.city}."
+                            )
+                    else:
+                        # Street search validation failed
+                        logger.warning(f"⚠️ [STREET SEARCH] Search failed: {street_results.get('error')}")
+                        return {
+                            "success": False,
+                            "response": street_results.get('error', 'Street search failed'),
+                            "suggestions": [],
+                            "properties": [],
+                            "property_count": 0
+                        }
+                    
+                    # Store results and continue to summarizer
                     state.update_search_results(properties, user_message)
                     
-                    # Log validation warnings if any
-                    if search_results.get('validation_warnings'):
-                        for warning in search_results['validation_warnings']:
-                            logger.info(f"📋 Filter info: {warning}")
-                    
-                    logger.info(f"✅ Found {total} properties")
                 else:
-                    logger.warning(f"⚠️ MLS search failed: {search_results.get('error')}")
+                    # STEP 11b: Standard search using enhanced_mls_service
+                    logger.info("🔍 Executing standard MLS search...")
+                    # Pass user_message for date intent detection
+                    search_results = enhanced_mls_service.search_properties(
+                        state, 
+                        limit=20,
+                        user_message=user_message
+                    )
+                    
+                    if search_results.get('success'):
+                        properties = search_results.get('results', [])
+                        total = search_results.get('total', len(properties))
+                        
+                        # PRODUCTION FIX: Exact Address Fallback
+                        # If exact address (streetNumber + streetName) returns 0 results, retry with just streetName
+                        if (total == 0 and 
+                            state.location_state and 
+                            state.location_state.streetNumber and 
+                            state.location_state.streetName):
+                            
+                            street_number = state.location_state.streetNumber
+                            street_name = state.location_state.streetName
+                            city = state.location_state.city or "Toronto"
+                            
+                            logger.info(f"🔄 [EXACT ADDRESS FALLBACK] No results for {street_number} {street_name}, retrying with street name only...")
+                            
+                            # Create temporary state with just street name (no number)
+                            from services.conversation_state import ConversationState, LocationState
+                            temp_state = ConversationState(session_id=state.session_id)
+                            temp_state.location_state = LocationState(
+                                streetName=street_name,
+                                city=city
+                            )
+                            temp_state.property_type = state.property_type
+                            temp_state.bedrooms = state.bedrooms
+                            temp_state.price_range = state.price_range
+                            temp_state.listing_type = state.listing_type
+                            
+                            # Retry search with broader criteria
+                            fallback_results = enhanced_mls_service.search_properties(
+                                temp_state,
+                                limit=20,
+                                user_message=user_message
+                            )
+                            
+                            if fallback_results.get('success'):
+                                properties = fallback_results.get('results', [])
+                                total = fallback_results.get('total', len(properties))
+                                
+                                if total > 0:
+                                    fallback_message = (
+                                        f"No exact match found for {street_number} {street_name}. "
+                                        f"Showing {total} properties on {street_name} in {city}."
+                                    )
+                                    logger.info(f"✅ [FALLBACK SUCCESS] Found {total} properties on {street_name}")
+                        
+                        state.update_search_results(properties, user_message)
+                        
+                        # Log validation warnings if any
+                        if search_results.get('validation_warnings'):
+                            for warning in search_results['validation_warnings']:
+                                logger.info(f"📋 Filter info: {warning}")
+                        
+                        logger.info(f"✅ Found {total} properties")
+                    else:
+                        logger.warning(f"⚠️ MLS search failed: {search_results.get('error')}")
             
-            # STEP 8: Call GPT-4 summarizer for final response
+            # STEP 11: Log final Repliers API payload for debugging
+            logger.info("📤 Final Repliers API payload would include:")
+            if hasattr(state, 'location_state') and state.location_state:
+                location_dict = state.location_state.to_dict()
+                logger.info(f"   Location fields: {json.dumps(location_dict, indent=2)}")
+            logger.info(f"   Other filters: bedrooms={state.bedrooms}, property_type={state.property_type}, "
+                       f"price_range={state.price_range}, listing_type={state.listing_type}")
+            
+            # STEP 12: Call GPT-4 summarizer for final response
             summarizer_result = ask_gpt_summarizer(user_message, state.get_active_filters(), properties)
             
             assistant_text = summarizer_result.get("response_text") or "I'm here to help you find properties."
             suggestions = summarizer_result.get("suggestions", [])
+            
+            # Prepend fallback message if we did an address fallback
+            if fallback_message:
+                assistant_text = f"{fallback_message}\n\n{assistant_text}"
             
             # Add assistant response to history
             state.add_conversation_turn("assistant", assistant_text)
@@ -643,6 +887,12 @@ class ChatGPTChatbot:
         """
         updates = {}
         
+        # CRITICAL FIX: Handle location_state FIRST before other filters
+        if filters_from_gpt.get("location_state"):
+            location_state = filters_from_gpt["location_state"]
+            logger.info(f"🔧 [FIX] Adding location_state to updates: {location_state.get_summary() if hasattr(location_state, 'get_summary') else location_state}")
+            updates["location_state"] = location_state
+        
         # Only add filters that were explicitly set
         if filters_from_gpt.get("location"):
             updates["location"] = filters_from_gpt["location"]
@@ -683,7 +933,28 @@ class ChatGPTChatbot:
         
         should_remove_budget = any(re.search(pattern, user_message, re.I) for pattern in budget_removal_patterns)
         
-        if should_remove_budget:
+        # Check for "any properties" broad search patterns - clears ALL restrictive filters
+        broad_search_patterns = [
+            r'any properties',
+            r'anything (?:works|is fine)',
+            r'whatever you have',
+            r'show me (?:any|anything)',
+            r'any (?:property|listing)s? work',
+            r'don\'?t (?:care|mind)(?: about)?'
+        ]
+        
+        is_broad_search = any(re.search(pattern, user_message, re.I) for pattern in broad_search_patterns)
+        
+        if is_broad_search:
+            logger.info(f"🔍 [BROAD SEARCH] User wants any properties - clearing restrictive filters: '{user_message}'")
+            # Clear ALL restrictive filters to show broader results
+            updates["bedrooms"] = None
+            updates["bathrooms"] = None
+            updates["price_range"] = (None, None)
+            updates["sqft_range"] = (None, None)
+            updates["property_type"] = None  # Also clear property type for maximum flexibility
+            # Keep location and listing_type from current state
+        elif should_remove_budget:
             logger.info(f"🏠 [BUDGET REMOVAL] User requested to remove budget constraints: '{user_message}'")
             updates["price_range"] = (None, None)  # Clear budget
         else:
