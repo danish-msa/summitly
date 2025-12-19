@@ -8,8 +8,8 @@ import hashlib
 from typing import Dict, Any, Optional, List, Callable
 from flask import Flask, request, jsonify
 
-from repliers_client import client, RepliersAPIError
-from repliers_config import config
+from services.repliers_client import client, RepliersAPIError
+from services.repliers_config import config
 
 logger = logging.getLogger(__name__)
 

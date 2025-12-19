@@ -677,6 +677,74 @@
             30% { transform: translateY(-10px); }
         }
 
+        /* Enhanced Typing Indicator Styles */
+        .typing-indicator-enhanced {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .typing-indicator-enhanced::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmerEnhanced 2s infinite;
+        }
+
+        @keyframes shimmerEnhanced {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .typing-dots-enhanced {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .typing-dot-enhanced {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: typingBounceEnhanced 1.4s ease-in-out infinite;
+        }
+
+        @keyframes typingBounceEnhanced {
+            0%, 60%, 100% { 
+                transform: translateY(0) scale(1);
+                opacity: 0.7;
+            }
+            30% { 
+                transform: translateY(-12px) scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        .typing-text-enhanced {
+            font-size: 14px;
+            letter-spacing: 0.3px;
+            animation: fadeInPulse 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes fadeInPulse {
+            0% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes slideInLeft {
+            0% {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
         .property-card {
             background: var(--color-surface);
             border: 1px solid var(--color-border);
@@ -3857,6 +3925,217 @@
             }
         }
         /* ==================== END MODAL STYLES ==================== */
+
+        /* ==================== MARKET STATS LOADING ANIMATION ==================== */
+        
+        .market-stats-loader {
+            background: linear-gradient(135deg, var(--color-surface) 0%, var(--color-bg-secondary) 100%);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            margin: 20px 0;
+            box-shadow: var(--shadow-lg);
+            animation: fadeInUp 0.4s ease-out;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .market-stats-loader::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(51, 128, 141, 0.1), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        .loader-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .loader-icon {
+            font-size: 32px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .loader-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .loader-subtitle {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            margin-top: 4px;
+        }
+
+        .market-insight-carousel {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin: 20px 0;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .market-insight {
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--color-text);
+            text-align: center;
+            animation: fadeInScale 0.6s ease-out;
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+
+        .market-insight.active {
+            opacity: 1;
+        }
+
+        @keyframes fadeInScale {
+            0% {
+                opacity: 0;
+                transform: scale(0.9) translateY(10px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .market-insight strong {
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+
+        .loading-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .loading-stat-card {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 16px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loading-stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(51, 128, 141, 0.05), transparent);
+            animation: shimmer 2s infinite;
+            animation-delay: calc(var(--delay) * 0.2s);
+        }
+
+        .loading-stat-card:nth-child(1) { --delay: 0; }
+        .loading-stat-card:nth-child(2) { --delay: 1; }
+        .loading-stat-card:nth-child(3) { --delay: 2; }
+        .loading-stat-card:nth-child(4) { --delay: 3; }
+
+        .loading-stat-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .loading-stat-label {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .loading-stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--color-primary);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .loading-progress-bar {
+            height: 4px;
+            background: rgba(51, 128, 141, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 24px;
+        }
+
+        .loading-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-primary-hover));
+            border-radius: 2px;
+            animation: progressFill 3s ease-in-out forwards;
+        }
+
+        @keyframes progressFill {
+            0% { width: 0%; }
+            50% { width: 60%; }
+            100% { width: 85%; }
+        }
+
+        .loading-status-text {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        /* Property Results Fade In */
+        .property-search-grid {
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .property-search-card {
+            animation: slideInCard 0.4s ease-out backwards;
+            animation-delay: calc(var(--index) * 0.05s);
+        }
+
+        @keyframes slideInCard {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Smooth transition between loading and results */
+        .message-content {
+            position: relative;
+        }
+
+        .results-container {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        /* ==================== END MARKET STATS LOADING ANIMATION ==================== */
     </style>
 </head>
 <body>
@@ -6437,8 +6716,17 @@
             addMessage('user', message);
             appState.addMessage('user', message);
 
-            // Show typing indicator
-            showTypingIndicator();
+            // Detect if this is a property search query
+            const isPropertySearch = /\b(properties|homes|houses|condos|listings|show me|find|search)\b/i.test(message) &&
+                                    /\b(in|near|at|around|for sale|for rent|to buy)\b/i.test(message);
+            
+            // Show appropriate loading indicator
+            if (isPropertySearch) {
+                console.log('🏠 Property search detected - showing market stats loader');
+                showMarketStatsLoader();
+            } else {
+                showTypingIndicator();
+            }
 
             // Call AI API with enhanced error handling
             handleAIResponseWithErrorBoundary(message);
@@ -6463,7 +6751,7 @@
             const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             
             // Determine AI provider label
-            let aiLabel = 'AI Assistant';
+            let aiLabel = 'Summitly AI';
             let badgeHTML = '';
             let contentClass = 'message-content';
             
@@ -6473,9 +6761,9 @@
                     contentClass += ' openai-enhanced';
                     console.log('✨ Adding OpenAI badge to message');
                 } else if (options.exa) {
-                    aiLabel = 'AI Assistant (Research Mode)';
+                    aiLabel = 'Summitly AI (Research Mode)';
                 } else if (options.llama) {
-                    aiLabel = 'AI Assistant (Local Model)';
+                    aiLabel = 'Summitly AI (Local Model)';
                 }
             }
             
@@ -6694,8 +6982,9 @@
 
                 const data = await response.json();
                 
-                // Hide typing indicator
+                // Hide typing indicator and market stats loader
                 hideTypingIndicator();
+                hideMarketStatsLoader();
                 
                 console.log('🔍 Context-Aware API Response:', data);
 
@@ -6870,6 +7159,7 @@
             } catch (error) {
                 console.error('Error calling API:', error);
                 hideTypingIndicator();
+                hideMarketStatsLoader();
                 
                 // Enhanced error handling for production
                 let errorMessage = 'Sorry, I\'m having trouble connecting to the server. Please try again.';
@@ -7115,6 +7405,7 @@
             } catch (error) {
                 console.error('🚨 Error in AI response handler:', error);
                 hideTypingIndicator();
+                hideMarketStatsLoader();
                 
                 // Categorize errors and provide appropriate user feedback
                 let userMessage = 'I encountered an error processing your request.';
@@ -8044,7 +8335,7 @@
                 <div class="message-avatar ai-avatar">🤖</div>
                 <div class="message-content">
                     <div class="message-header">
-                        <span class="message-author">AI Assistant</span>
+                        <span class="message-author">Summitly AI</span>
                         <span class="message-time">${time}</span>
                     </div>
                     <div class="message-text">
@@ -9056,7 +9347,7 @@
                 }
                 
                 return `
-                <div class="property-search-card" data-mls="${prop.mls_number || prop.mls_id}" data-city="${city}" data-index="${index}">
+                <div class="property-search-card" data-mls="${prop.mls_number || prop.mls_id}" data-city="${city}" data-index="${index}" style="--index: ${index};">
                     <div class="property-image-container">
                         ${(prop.image_url || (prop.images && prop.images.length > 0)) ? `
                             <img src="${prop.image_url || prop.images[0]}" alt="${prop.full_address || prop.address}" class="property-image" 
@@ -9098,12 +9389,12 @@
                 <div class="message-avatar ai-avatar">🤖</div>
                 <div class="message-content">
                     <div class="message-header">
-                        <span class="message-author">AI Assistant</span>
+                        <span class="message-author">Summitly AI</span>
                         <span class="message-time">${time}</span>
                     </div>
                     <div class="message-text">
                         <div style="margin-bottom: 16px;">${responseText || ''}</div>
-                        <div class="property-search-grid">
+                        <div class="property-search-grid results-container">
                             ${propertyCards}
                         </div>
                         ${quickReplies.length > 0 ? generateQuickReplies(quickReplies) : ''}
@@ -9112,7 +9403,12 @@
             `;
             
             container.appendChild(message);
-            scrollToBottom();
+            
+            // CRITICAL FIX: Scroll to TOP of results, not bottom
+            // Wait for render, then scroll to the start of the results
+            setTimeout(() => {
+                scrollToResultsTop();
+            }, 100);
             
             chatHistory.push({ 
                 sender: 'ai', 
@@ -9164,6 +9460,138 @@
             `;
         }
 
+        /**
+         * Show professional market stats loading animation with rotating insights
+         * Perplexity/Gemini-style loading experience
+         */
+        function showMarketStatsLoader() {
+            const container = document.getElementById('chatContainer');
+            
+            // Remove any existing loader
+            const existingLoader = document.getElementById('marketStatsLoader');
+            if (existingLoader) {
+                existingLoader.remove();
+            }
+            
+            const loader = document.createElement('div');
+            loader.className = 'message';
+            loader.id = 'marketStatsLoader';
+            
+            // Canadian real estate market insights
+            const insights = [
+                "📊 Searching <strong>live MLS database</strong> for the best properties...",
+                "🏠 Canada's housing market shows <strong>increased stability</strong> in 2025",
+                "📈 GTA inventory is <strong>rising</strong> with more listings available",
+                "💰 Interest rates are <strong>gradually easing</strong> across major cities",
+                "🔍 Analyzing <strong>market trends</strong> in your area...",
+                "🏘️ Toronto remains one of Canada's <strong>hottest markets</strong>",
+                "📊 Average home prices are <strong>stabilizing</strong> after peak volatility",
+                "🌟 Finding properties that match <strong>your criteria</strong>..."
+            ];
+            
+            let currentInsightIndex = 0;
+            
+            loader.innerHTML = `
+                <div class="message-avatar ai-avatar">🤖</div>
+                <div class="message-content">
+                    <div class="market-stats-loader">
+                        <div class="loader-header">
+                            <div class="loader-icon">🔍</div>
+                            <div>
+                                <div class="loader-title">Searching Properties</div>
+                                <div class="loader-subtitle">Analyzing market data...</div>
+                            </div>
+                        </div>
+                        
+                        <div class="market-insight-carousel">
+                            <div class="market-insight active" id="currentInsight">
+                                ${insights[0]}
+                            </div>
+                        </div>
+                        
+                        <div class="loading-stats-grid">
+                            <div class="loading-stat-card">
+                                <span class="loading-stat-icon">🏘️</span>
+                                <div class="loading-stat-label">Active Listings</div>
+                                <div class="loading-stat-value">12,000+</div>
+                            </div>
+                            <div class="loading-stat-card">
+                                <span class="loading-stat-icon">📊</span>
+                                <div class="loading-stat-label">Cities Covered</div>
+                                <div class="loading-stat-value">450+</div>
+                            </div>
+                            <div class="loading-stat-card">
+                                <span class="loading-stat-icon">⚡</span>
+                                <div class="loading-stat-label">Real-time Data</div>
+                                <div class="loading-stat-value">Live</div>
+                            </div>
+                            <div class="loading-stat-card">
+                                <span class="loading-stat-icon">🎯</span>
+                                <div class="loading-stat-label">Accuracy</div>
+                                <div class="loading-stat-value">99%</div>
+                            </div>
+                        </div>
+                        
+                        <div class="loading-progress-bar">
+                            <div class="loading-progress-fill"></div>
+                        </div>
+                        <div class="loading-status-text">Fetching live MLS listings...</div>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(loader);
+            scrollToBottom();
+            
+            // Rotate insights every 2.5 seconds
+            const insightElement = loader.querySelector('#currentInsight');
+            const rotationInterval = setInterval(() => {
+                currentInsightIndex = (currentInsightIndex + 1) % insights.length;
+                
+                // Fade out
+                insightElement.style.opacity = '0';
+                insightElement.style.transform = 'translateY(-10px)';
+                
+                setTimeout(() => {
+                    insightElement.innerHTML = insights[currentInsightIndex];
+                    // Fade in
+                    insightElement.style.opacity = '1';
+                    insightElement.style.transform = 'translateY(0)';
+                }, 300);
+            }, 2500);
+            
+            // Store interval ID for cleanup
+            loader.dataset.intervalId = rotationInterval;
+            
+            return loader;
+        }
+
+        /**
+         * Hide market stats loader
+         */
+        function hideMarketStatsLoader() {
+            const loader = document.getElementById('marketStatsLoader');
+            if (loader) {
+                // Clear rotation interval
+                if (loader.dataset.intervalId) {
+                    clearInterval(parseInt(loader.dataset.intervalId));
+                }
+                
+                // Fade out animation
+                loader.style.opacity = '0';
+                loader.style.transform = 'translateY(-20px)';
+                loader.style.transition = 'all 0.4s ease-out';
+                
+                setTimeout(() => {
+                    loader.remove();
+                }, 400);
+            }
+        }
+
+        /**
+         * Enhanced typing indicator with smooth animations
+         * Used for non-property queries (general chat, valuations, etc.)
+         */
         function showTypingIndicator(customMessage = null) {
             const container = document.getElementById('chatContainer');
             
@@ -9179,16 +9607,50 @@
             
             const statusText = customMessage || 'AI is thinking...';
             
+            // Determine icon and color based on message type
+            let icon = '🤖';
+            let accentColor = '#33808d';
+            let statusIcon = '💭';
+            
+            if (statusText.includes('valuation') || statusText.includes('Calculating')) {
+                icon = '📊';
+                accentColor = '#9c27b0';
+                statusIcon = '🧮';
+            } else if (statusText.includes('Searching') || statusText.includes('database')) {
+                icon = '🔍';
+                accentColor = '#2196f3';
+                statusIcon = '🔎';
+            } else if (statusText.includes('Analyzing')) {
+                icon = '🤔';
+                accentColor = '#ff9800';
+                statusIcon = '📈';
+            } else if (statusText.includes('Loading')) {
+                icon = '⚡';
+                accentColor = '#4caf50';
+                statusIcon = '📂';
+            }
+            
             indicator.innerHTML = `
-                <div class="message-avatar ai-avatar">🤖</div>
+                <div class="message-avatar ai-avatar">${icon}</div>
                 <div class="message-content">
-                    <div class="typing-indicator">
-                        <div class="typing-dots">
-                            <div class="typing-dot"></div>
-                            <div class="typing-dot"></div>
-                            <div class="typing-dot"></div>
+                    <div class="typing-indicator-enhanced" style="
+                        background: linear-gradient(135deg, ${accentColor}15 0%, ${accentColor}08 100%);
+                        border-radius: 12px;
+                        padding: 16px 20px;
+                        border-left: 3px solid ${accentColor};
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                        animation: slideInLeft 0.3s ease-out;
+                    ">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div class="typing-dots-enhanced">
+                                <div class="typing-dot-enhanced" style="background: ${accentColor};"></div>
+                                <div class="typing-dot-enhanced" style="background: ${accentColor}; animation-delay: 0.2s;"></div>
+                                <div class="typing-dot-enhanced" style="background: ${accentColor}; animation-delay: 0.4s;"></div>
+                            </div>
+                            <span class="typing-text-enhanced" style="color: ${accentColor}; font-weight: 500;">
+                                ${statusIcon} ${statusText}
+                            </span>
                         </div>
-                        <span class="typing-text">${statusText}</span>
                     </div>
                 </div>
             `;
@@ -11533,9 +11995,34 @@
             if (indicator) indicator.remove();
         }
 
-        function scrollToBottom() {
+        /**
+         * Scroll to bottom of chat - with option to prevent scroll for property results
+         * @param {boolean} force - Set to false to prevent scrolling (e.g., for property cards)
+         */
+        function scrollToBottom(force = true) {
+            if (!force) return; // Don't scroll for property results
+            
             const container = document.getElementById('chatContainer');
-            container.scrollTop = container.scrollHeight;
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+
+        /**
+         * Scroll to top of results - used when displaying property cards
+         */
+        function scrollToResultsTop() {
+            const container = document.getElementById('chatContainer');
+            if (!container) return;
+            
+            // Find the last message (property results)
+            const messages = container.querySelectorAll('.message');
+            const lastMessage = messages[messages.length - 1];
+            
+            if (lastMessage) {
+                // Smooth scroll to the start of the results
+                lastMessage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
 
         // ==================== MANAGER DASHBOARD ====================

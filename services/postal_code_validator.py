@@ -41,7 +41,8 @@ FSA_TO_CITY_MAP = {
     'M6A': 'Toronto', 'M6B': 'Toronto', 'M6C': 'Toronto', 'M6E': 'Toronto',
     'M6G': 'Toronto', 'M6H': 'Toronto', 'M6J': 'Toronto', 'M6K': 'Toronto',
     'M6L': 'Toronto', 'M6M': 'Toronto', 'M6N': 'Toronto', 'M6P': 'Toronto',
-    'M6R': 'Toronto', 'M6S': 'Toronto',
+    'M6R': 'Toronto', 'M6S': 'Toronto', 'M6T': 'Toronto', 'M6V': 'Toronto',
+    'M6W': 'Toronto', 'M6X': 'Toronto', 'M6Y': 'Toronto', 'M6Z': 'Toronto',
     'M7A': 'Toronto',  # Queen's Park
     'M8V': 'Toronto', 'M8W': 'Toronto', 'M8X': 'Toronto', 'M8Y': 'Toronto',
     'M8Z': 'Toronto',

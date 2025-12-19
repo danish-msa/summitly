@@ -228,6 +228,14 @@ Response requirements:
 3. Use a natural, helpful tone
 4. Include 2-3 actionable follow-up suggestions
 
+CRITICAL - JSON FORMAT REQUIREMENTS (MUST FOLLOW):
+- You MUST return ONLY valid JSON
+- Do NOT truncate strings
+- Do NOT include unescaped line breaks in JSON strings (use \\n instead)
+- Do NOT add markdown code blocks or extra text
+- Return a single JSON object only
+- Validate JSON before returning
+
 CRITICAL - POSTAL CODE & STREET ADDRESS SPECIFICITY:
 When user searches by postal code or street address, BE SPECIFIC in your response:
 
@@ -484,18 +492,51 @@ def ask_gpt_summarizer(user_message: str, filters: Dict[str, Any], properties: L
             logger.warning(f"⚠️ Summarizer returned empty JSON after extraction. Original: {original_text[:200]}")
             raise ValueError("Empty JSON after extraction")
         
-        # Try parsing JSON
+        # CRITICAL FIX #4: Enhanced JSON parsing with retry logic
         try:
             result = json.loads(text)
             logger.info("✅ Successfully parsed summarizer JSON response")
+            
+            # Validate required fields
+            if not result.get("response_text"):
+                logger.warning("⚠️ Summarizer JSON missing response_text, using fallback")
+                raise ValueError("Invalid JSON structure: missing response_text")
+            
             return result
+        
         except json.JSONDecodeError as json_err:
             logger.error(f"❌ JSON parsing failed: {json_err}")
-            logger.error(f"❌ Raw text that failed to parse: {text[:300]}")
+            logger.error(f"❌ Raw text (first 500 chars): {text[:500]}")
+            
+            # CRITICAL FIX #4: Try to fix common JSON issues
+            # Remove trailing commas, fix quotes, etc.
+            try:
+                # Attempt 1: Remove trailing whitespace and try again
+                cleaned_text = text.strip().rstrip(',').rstrip()
+                result = json.loads(cleaned_text)
+                logger.info("✅ Fixed JSON by cleaning whitespace")
+                return result
+            except:
+                pass
+            
+            # Attempt 2: Try to extract JSON object if wrapped in text
+            try:
+                json_match = re.search(r'\{.*\}', text, re.DOTALL)
+                if json_match:
+                    extracted_json = json_match.group(0)
+                    result = json.loads(extracted_json)
+                    logger.info("✅ Fixed JSON by extracting object")
+                    return result
+            except:
+                pass
+            
+            # All attempts failed - raise to trigger fallback
             raise
+    
     except (json.JSONDecodeError, Exception) as e:
         if isinstance(e, json.JSONDecodeError):
-            logger.error(f"⚠️ Summarizer returned invalid JSON: {text[:200] if 'text' in locals() else 'empty'}...")
+            logger.error(f"⚠️ Summarizer returned invalid JSON after all retry attempts")
+            logger.error(f"⚠️ Text: {text[:200] if 'text' in locals() else 'empty'}...")
         logger.exception("⚠️ Summarizer error, using fallback")
         
         # Enhanced fallback response with detailed property information
@@ -633,6 +674,20 @@ class ChatGPTChatbot:
             logger.info(f"🎯 [INTENT CLASSIFIER] Confidence: {intent_metadata['confidence']}")
             if intent_metadata['requires_confirmation']:
                 logger.info(f"🎯 [INTENT CLASSIFIER] ⚠️ Requires confirmation: {intent_metadata['suggested_action']}")
+            
+            # CRITICAL FIX #5: Override classifier when numeric filters present
+            # Numbers (price, bedrooms, bathrooms) always indicate property search intent
+            has_numeric_filters = (
+                re.search(r'\$\d+|\d+\s*(?:bed|bath|bedroom|bathroom|k|m|million)', user_message, re.IGNORECASE) or
+                re.search(r'\b\d{6,}\b', user_message)  # 6+ digit numbers (likely prices)
+            )
+            
+            if has_numeric_filters and classified_intent == UserIntent.GENERAL_CHAT:
+                logger.info(f"🔢 [INTENT OVERRIDE] Numeric filters detected → overriding GENERAL_CHAT with PROPERTY_SEARCH")
+                logger.info(f"🔢 [INTENT OVERRIDE] Message: '{user_message}'")
+                classified_intent = UserIntent.PROPERTY_SEARCH
+                intent_metadata['reason'] = "Overridden: Numeric filters (price/beds/baths) detected"
+                intent_metadata['confidence'] = "high"
             
             # STEP 1.5.5: Override intent if answering confirmation
             # If user is responding to a pending confirmation, treat their response as answering that
@@ -1642,9 +1697,13 @@ class ChatGPTChatbot:
         min_p = filters_from_gpt.get("min_price")
         max_p = filters_from_gpt.get("max_price")
         
-        # Critical: If this is a fresh search (merge=False) and no price mentioned, clear old price
+        # CRITICAL FIX #1: NEVER clear price if extracted in this turn
+        # If user provides price explicitly, it MUST be respected
         price_mentioned = min_p is not None or max_p is not None
-        if not merge and not price_mentioned:
+        
+        # Only clear price on fresh search if price was NOT extracted at all
+        if not merge and not price_mentioned and current_state and current_state.price_range != (None, None):
+            # Fresh search without price mentioned - but DON'T clear if extracting now
             logger.info(f"🏠 [FRESH SEARCH] Clearing old price range (not mentioned in new search)")
             updates["price_range"] = (None, None)
         
@@ -1714,12 +1773,31 @@ class ChatGPTChatbot:
                     logger.warning(f"🏠 [PRICE VALIDATION] Ignoring unrealistic max_price {max_p} for sale property")
                     max_p = None
             
+            # CRITICAL FIX #1: Always apply extracted price (explicit user filter)
             if min_p is not None or max_p is not None:
                 updates["price_range"] = (min_p, max_p)
+                logger.info(f"✅ [PRICE FIX] Applied user-provided price range: ${min_p}-${max_p}")
         
-        # Listing type (critical for rental/sale fix)
-        if filters_from_gpt.get("listing_type"):
-            updates["listing_type"] = filters_from_gpt["listing_type"]
+        # CRITICAL FIX #2: Infer listing_type=sale for high prices (buy queries)
+        # If price > $100k and listing_type not specified, assume sale
+        extracted_listing_type = filters_from_gpt.get("listing_type")
+        current_listing_type = current_state.listing_type if current_state else None
+        
+        if extracted_listing_type:
+            updates["listing_type"] = extracted_listing_type
+            logger.info(f"✅ [LISTING TYPE] User explicitly requested: {extracted_listing_type}")
+        elif min_p is not None and min_p > 100000:
+            # High price range indicates sale query
+            updates["listing_type"] = "sale"
+            logger.info(f"🏠 [LISTING TYPE AUTO-INFER] Price ${min_p} > $100k → Assuming 'sale'")
+        elif max_p is not None and max_p > 100000:
+            # High max price indicates sale query
+            updates["listing_type"] = "sale"
+            logger.info(f"🏠 [LISTING TYPE AUTO-INFER] Max price ${max_p} > $100k → Assuming 'sale'")
+        elif current_listing_type and not extracted_listing_type and merge:
+            # Merge mode: keep current listing type if not explicitly changed
+            updates["listing_type"] = current_listing_type
+            logger.info(f"🔄 [LISTING TYPE] Preserving current: {current_listing_type}")
         
         # Amenities (merge if specified)
         if filters_from_gpt.get("amenities"):

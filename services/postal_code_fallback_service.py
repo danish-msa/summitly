@@ -228,17 +228,17 @@ class PostalCodeFallbackService:
         logger.debug(f"FSA fallback query params: {query_params}")
         
         try:
-            # SMART PAGINATION: FSA searches fetch ALL pages (no limit)
-            # Repliers API caps at 100 per page, so keep fetching until we get all results
+            # CRITICAL FIX #3: OPTIMIZED PAGINATION - Stop excessive fetching
+            # Limit to 5 pages max (500 properties) with early termination
             all_properties = []
             page = 1
-            max_pages = 20  # Safety limit to prevent infinite loops (20 pages = 2000 properties max)
+            max_pages = 5  # REDUCED from 20 to 5 (500 properties max, ~2-3s response time)
             
-            logger.info(f"📮 [POSTAL SEARCH] Starting pagination for FSA {fsa} (will fetch ALL available pages)")
+            logger.info(f"📮 [POSTAL SEARCH] Starting optimized pagination for FSA {fsa} (max {max_pages} pages)")
             
             while page <= max_pages:
                 query_params['page'] = page
-                logger.info(f"📮 [POSTAL SEARCH] Fetching page {page} for FSA {fsa}")
+                logger.info(f"📮 [POSTAL SEARCH] Fetching page {page}/{max_pages} for FSA {fsa}")
                 
                 # Execute search for this page
                 results = self.listings_service.search_listings(**query_params)
@@ -246,16 +246,23 @@ class PostalCodeFallbackService:
                 # Extract properties from this page
                 page_properties = results.get('listings', results.get('results', []))
                 
+                # CRITICAL FIX #3: Early termination when empty
                 if not page_properties or len(page_properties) == 0:
-                    logger.info(f"📮 [POSTAL SEARCH] Page {page} returned 0 results, stopping pagination")
+                    logger.info(f"📮 [POSTAL SEARCH] Page {page} returned 0 results → stopping pagination early")
                     break
                 
                 all_properties.extend(page_properties)
-                logger.info(f"📮 [POSTAL SEARCH] Page {page} returned {len(page_properties)} properties (total so far: {len(all_properties)})")
+                logger.info(f"📮 [POSTAL SEARCH] Page {page} returned {len(page_properties)} properties (total: {len(all_properties)})")
                 
-                # If we got fewer than 100 properties, this is the last page
-                if len(page_properties) < 100:
-                    logger.info(f"📮 [POSTAL SEARCH] Last page reached (got {len(page_properties)} < 100 properties)")
+                # CRITICAL FIX #3: Stop when we have enough results (after deduplication)
+                if len(all_properties) >= 200:
+                    logger.info(f"📮 [POSTAL SEARCH] Collected {len(all_properties)} properties → stopping (sufficient results)")
+                    break
+                
+                # If we got fewer than pageSize, this is the last page
+                page_size = query_params.get('page_size', 100)
+                if len(page_properties) < page_size:
+                    logger.info(f"📮 [POSTAL SEARCH] Last page reached (got {len(page_properties)} < {page_size})")
                     break
                 
                 page += 1

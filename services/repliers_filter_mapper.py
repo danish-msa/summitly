@@ -507,24 +507,30 @@ def buildRepliersSearchParams(
         params['style'] = normalized
     
     # Transaction type (Sale vs Lease)
-    # CRITICAL FIX: DO NOT add transactionType for postal code or street searches
-    # The Repliers API filters better without this constraint for location-specific queries
-    has_postal_code = params.get('postalCode') is not None
-    has_street = params.get('streetName') is not None
-    
-    if not has_postal_code and not has_street:
-        # Only add transactionType for general searches (city, neighborhood, community)
-        if state.listing_type == 'rent':
-            params['transactionType'] = 'Lease'
-        else:
+    # CRITICAL FIX #2: ALWAYS add transactionType to prevent rent/sale mixing
+    # The Repliers API needs this constraint to avoid returning wrong listing types
+    if state.listing_type == 'rent':
+        params['transactionType'] = 'Lease'
+        logger.debug(f"📋 Added transactionType: Lease (rent requested)")
+    elif state.listing_type == 'sale':
+        params['transactionType'] = 'Sale'
+        logger.debug(f"📋 Added transactionType: Sale (sale requested)")
+    elif state.listing_type is None:
+        # No explicit listing_type - check if we can infer from price
+        min_price = params.get('minPrice')
+        max_price = params.get('maxPrice')
+        if (min_price and min_price > 100000) or (max_price and max_price > 100000):
+            # High price indicates sale
             params['transactionType'] = 'Sale'
-        logger.debug(f"📋 Added transactionType: {params['transactionType']}")
+            logger.info(f"🏠 [AUTO-INFER] Price > $100k → transactionType=Sale")
+        else:
+            # Default to Sale for backward compatibility (most queries are sale)
+            params['transactionType'] = 'Sale'
+            logger.debug(f"� Added transactionType: Sale (default)")
     else:
-        # For postal/street searches, use status only
-        logger.info(
-            f"📮 [POSTAL/STREET SEARCH] Skipping transactionType for better results. "
-            f"Using status filter only. Post-filter by listing_type if needed."
-        )
+        # Default to Sale for any other case
+        params['transactionType'] = 'Sale'
+        logger.debug(f"📋 Added transactionType: Sale (fallback default)")
     
     # ===== BEDS & BATHS =====
     if state.bedrooms is not None:
