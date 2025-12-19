@@ -78,7 +78,7 @@ class ConversationState:
     bathrooms: Optional[float] = None
     property_type: Optional[str] = None  # condo, detached, townhouse, semi-detached
     price_range: Optional[Tuple[Optional[int], Optional[int]]] = None  # (min, max)
-    listing_type: str = "sale"  # "sale" or "rent"
+    listing_type: Optional[str] = None  # "sale" or "rent" - None means BOTH (no filter)
     
     # NEW: Structured Location State (for robust location filtering)
     location_state: LocationState = field(default_factory=LocationState)
@@ -134,6 +134,13 @@ class ConversationState:
     # Conversation Memory
     conversation_history: List[Dict[str, str]] = field(default_factory=list)  # [{"role": "user", "content": "..."}, ...]
     last_intent: Optional[str] = None  # search, refine, details, compare, general_question
+    
+    # NEW: Confirmation Flow Management
+    pending_confirmation: Optional[str] = None  # What we're waiting for user to confirm
+    pending_confirmation_type: Optional[str] = None  # Type: "filter_reuse", "location_change", "vague_request"
+    pending_confirmation_context: Dict[str, Any] = field(default_factory=dict)  # Additional context for confirmation
+    requires_location_clarification: bool = False  # True when location is needed before search
+    last_classification_intent: Optional[str] = None  # Last intent from intent_classifier
     
     # Session Metadata
     session_id: str = ""
@@ -209,16 +216,17 @@ class ConversationState:
                 )
                 logger.info(f"🛣️ [FRESH SEARCH] New street name specified, cleared old address details")
             elif has_postal_code:
-                # Postal code - clear street address, keep city
+                # POSTAL CODE PRIORITY: Clear street address, neighborhood, community
+                # Keep city ONLY if provided with postal code or previously confirmed
                 self.location_state = LocationState(
                     city=new_location.city if new_location.city is not None else current.city,
                     postalCode=new_location.postalCode,
-                    streetName=None,
+                    streetName=None,  # CRITICAL: Postal code overrides street
                     streetNumber=None,
-                    community=None,
-                    neighborhood=None
+                    community=None,   # CRITICAL: Postal code overrides community
+                    neighborhood=None  # CRITICAL: Postal code overrides neighborhood
                 )
-                logger.info(f"📮 [FRESH SEARCH] New postal code specified, cleared old street address")
+                logger.info(f"📮 [POSTAL CODE PRIORITY] Postal code '{new_location.postalCode}' set, cleared street/neighborhood/community")
             elif has_neighborhood:
                 # Neighborhood - clear street address and postal code, keep city
                 self.location_state = LocationState(
@@ -242,16 +250,30 @@ class ConversationState:
                 )
                 logger.info(f"🏙️ [FRESH SEARCH] New community specified, cleared old address details")
             elif has_city_only:
-                # City only - clear everything except city
-                self.location_state = LocationState(
-                    city=new_location.city,
-                    community=None,
-                    neighborhood=None,
-                    postalCode=None,
-                    streetName=None,
-                    streetNumber=None
-                )
-                logger.info(f"🌆 [FRESH SEARCH] New city specified, cleared all address details")
+                # Check if we're completing a partial location (street without city)
+                # vs starting a fresh search
+                if current.streetName and not current.city:
+                    # Completing partial location - keep street, add city
+                    self.location_state = LocationState(
+                        city=new_location.city,
+                        streetName=current.streetName,
+                        streetNumber=current.streetNumber,
+                        community=None,
+                        neighborhood=None,
+                        postalCode=None
+                    )
+                    logger.info(f"✅ [COMPLETING LOCATION] Added city to existing street: {current.streetName} → {new_location.city}")
+                else:
+                    # City only - clear everything except city (fresh search)
+                    self.location_state = LocationState(
+                        city=new_location.city,
+                        community=None,
+                        neighborhood=None,
+                        postalCode=None,
+                        streetName=None,
+                        streetNumber=None
+                    )
+                    logger.info(f"🌆 [FRESH SEARCH] New city specified, cleared all address details")
             else:
                 # No new location specified, keep current
                 self.location_state = current
@@ -503,8 +525,32 @@ class ConversationState:
         else:
             parts.append("properties")
         
-        if self.location:
-            parts.append(f"in {self.location}")
+        # Build location string with street details if available
+        location_str = None
+        if hasattr(self, 'location_state') and self.location_state:
+            # Check if we have street-level information
+            if self.location_state.streetName:
+                if self.location_state.streetNumber:
+                    location_str = f"at {self.location_state.streetNumber} {self.location_state.streetName}"
+                else:
+                    location_str = f"on {self.location_state.streetName}"
+                
+                # Add city if available
+                if self.location_state.city:
+                    location_str += f", {self.location_state.city}"
+            elif self.location_state.neighborhood:
+                location_str = f"in {self.location_state.neighborhood}"
+                if self.location_state.city:
+                    location_str += f", {self.location_state.city}"
+            elif self.location_state.city:
+                location_str = f"in {self.location_state.city}"
+        
+        # Fallback to simple location field
+        if not location_str and self.location:
+            location_str = f"in {self.location}"
+        
+        if location_str:
+            parts.append(location_str)
         
         if self.listing_type == "rent":
             parts.append("for rent")
@@ -553,7 +599,7 @@ class ConversationState:
         self.ownership_type = None
         self.property_style = None
         self.price_range = None
-        self.listing_type = "sale"
+        self.listing_type = None  # None = show BOTH sale AND rent (user didn't specify)
         
         # Advanced filters
         self.amenities = []
@@ -590,6 +636,45 @@ class ConversationState:
         
         logger.info(f"Reset search filters for session {self.session_id}")
         return self
+    
+    def set_pending_confirmation(
+        self,
+        confirmation_message: str,
+        confirmation_type: str,
+        context: Optional[Dict[str, Any]] = None
+    ) -> 'ConversationState':
+        """
+        Set a pending confirmation that user must respond to.
+        
+        Args:
+            confirmation_message: What we're asking user to confirm
+            confirmation_type: Type of confirmation (filter_reuse, location_change, vague_request)
+            context: Additional context data
+            
+        Returns:
+            Self for chaining
+        """
+        self.pending_confirmation = confirmation_message
+        self.pending_confirmation_type = confirmation_type
+        self.pending_confirmation_context = context or {}
+        logger.info(f"⏳ Pending confirmation set: {confirmation_type}")
+        return self
+    
+    def clear_pending_confirmation(self) -> 'ConversationState':
+        """Clear pending confirmation after user responds."""
+        self.pending_confirmation = None
+        self.pending_confirmation_type = None
+        self.pending_confirmation_context = {}
+        logger.info("✅ Pending confirmation cleared")
+        return self
+    
+    def has_pending_confirmation(self) -> bool:
+        """Check if there's a pending confirmation."""
+        return self.pending_confirmation is not None
+    
+    def get_confirmation_context(self) -> Dict[str, Any]:
+        """Get the context for current pending confirmation."""
+        return self.pending_confirmation_context.copy()
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for storage/serialization."""

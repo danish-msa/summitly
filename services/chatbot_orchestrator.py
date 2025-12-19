@@ -41,6 +41,7 @@ from services.conversation_state import ConversationState, conversation_state_ma
 from services.nlp_parser import nlp_parser
 from services.enhanced_mls_service import enhanced_mls_service
 from services.location_extractor import location_extractor, LocationState
+from services.intent_classifier import intent_classifier, UserIntent
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +65,17 @@ SYSTEM_PROMPT_INTERPRETER = """You are a precise real-estate assistant interpret
 
 Input: user's message + current conversation filters (location, bedrooms, property_type, price_range, listing_type, amenities, etc.) + pending_clarification (if any)
 
+IMPORTANT - Intent Classification System:
+This system now has an INTENT CLASSIFIER that pre-screens messages. Your role is to extract FILTERS ONLY for messages that:
+- Have explicit search criteria (location, bedrooms, price, etc.)
+- Are refinements of existing searches
+- Are property-related queries
+
+DO NOT try to force search intent on:
+- Off-topic messages (food, sports, weather, etc.) - these are blocked before reaching you
+- Vague requests without context ("show me more", "other properties") - these require confirmation
+- General greetings or questions - these are handled separately
+
 CRITICAL - Street Address Detection:
 When user provides a STREET ADDRESS with a number (e.g., "123 King Street West", "50 Yorkville Avenue", "825 Church Street"):
 1. This is ALWAYS a property search intent - DO NOT ask clarifying questions
@@ -80,6 +92,11 @@ Examples:
 IMPORTANT - Clarifying Questions:
 - If "pending_clarification" is present, the user's message is likely an ANSWER to that question, NOT a new intent.
 - DO NOT ask clarifying questions for obvious street addresses (number + street name)
+- DO NOT ask clarifying questions when user provides LOCATION + ANY PROPERTY CRITERION (property type, bedrooms, price, etc.)
+  Examples: "condos in M5B" → SEARCH IMMEDIATELY, don't ask clarification
+            "properties in M5V" → SEARCH IMMEDIATELY, don't ask clarification
+            "3 bedroom homes in Toronto" → SEARCH IMMEDIATELY, don't ask clarification
+- ONLY ask clarifying questions when REQUIRED data is MISSING (e.g., no location at all)
 - Examples:
   - Previous: "Are you looking for specific schools or general information?" User: "yes" → intent: "refine" (user confirming)
   - Previous: "Are you looking for specific schools?" User: "general information" → intent: "general_question"
@@ -96,13 +113,25 @@ Output: JSON ONLY with keys:
     max_price: number or null,
     min_sqft: number or null (minimum square footage),
     max_sqft: number or null (maximum square footage),
-    listing_type: "sale" or "rent" (IMPORTANT: detect rental vs purchase intent),
+    listing_type: "sale" or "rent" or null (CRITICAL: ONLY set if user explicitly mentions "for sale", "buy", "purchase" OR "rent", "rental", "lease". If user just says "properties" or "condos" without specifying, leave as null to show BOTH sale AND rent),
     amenities: array of strings (pool, gym, parking, balcony, garden, etc.),
     list_date_from: string or null (YYYY-MM-DD format - start of date range),
     list_date_to: string or null (YYYY-MM-DD format - end of date range)
   }
 - merge_with_previous: boolean (True = merge with existing filters, False = replace all - SET TO FALSE when user mentions a NEW/DIFFERENT city)
 - clarifying_question: optional string (if you need clarification, ask user)
+
+CRITICAL LISTING_TYPE RULES:
+- DO NOT set listing_type to "sale" by default
+- ONLY set listing_type if user EXPLICITLY says:
+  * "for sale", "buy", "purchase", "buying" → listing_type: "sale"
+  * "rent", "rental", "lease", "renting" → listing_type: "rent"
+- If user just says "properties", "condos", "homes" WITHOUT specifying sale/rent → listing_type: null
+- Examples:
+  * "properties in M5V" → listing_type: null (show BOTH sale AND rent)
+  * "condos in M5B" → listing_type: null (show BOTH)
+  * "properties for sale in M5V" → listing_type: "sale"
+  * "rentals in M5V" → listing_type: "rent"
 
 CRITICAL PRICING RULES:
 - For RENTALS (listing_type: "rent"): Use monthly prices in CAD (e.g., 3000 = $3,000/month)
@@ -154,7 +183,19 @@ When the search returns 0 results AND the user has multiple restrictive filters 
 When the user changes location significantly (e.g., Toronto → Mississauga) after no results:
 - clarifying_question: "Would you like me to search for the same criteria (4 beds, 2 baths, condos for rent) in Mississauga, or would you prefer to see any available properties there?"
 
-Special Queries (use intent: "special_query" for non-property searches):
+CRITICAL - Confirmation Flow:
+If the user's message is responding to a pending_clarification question:
+- Extract their answer and translate it to filters
+- DO NOT ask another clarifying question
+- Example: User previously asked "Show me other properties" → Bot: "Would you like to change location or budget?" → User: "yes change location" → intent: "search", extract new location from context
+
+CRITICAL - "Properties Near" vs Special Queries:
+When user asks about "properties near [address/location]", this is a PROPERTY SEARCH, NOT a special query.
+- "properties near 151 Dan Leckie Way Toronto" -> intent: "search", location: "Toronto" (extract street + city for radius search)
+- "condos near King Street" -> intent: "search", location: "Toronto" (street-based search with radius)
+- "homes near M5V 4B2" -> intent: "search", location: "Toronto" (postal code + radius search)
+
+ONLY use "special_query" for NON-PROPERTY information requests:
 - "schools near MLS C12633118" -> intent: "special_query", query_type: "schools", mls_number: "C12633118"
 - "crime rates in this neighborhood" -> intent: "special_query", query_type: "crime_stats", location: {from_context}
 - "walk score for this property" -> intent: "special_query", query_type: "walk_score", mls_number: {from_context}
@@ -186,6 +227,22 @@ Response requirements:
 2. Briefly summarize what was found (or explain why no results)
 3. Use a natural, helpful tone
 4. Include 2-3 actionable follow-up suggestions
+
+CRITICAL - POSTAL CODE & STREET ADDRESS SPECIFICITY:
+When user searches by postal code or street address, BE SPECIFIC in your response:
+
+✅ CORRECT Examples:
+- postalCode: "M5V 4B2" → "properties in postal code M5V 4B2, Toronto"
+- postalCode: "M5V" → "properties in postal code M5V, Toronto"
+- streetName: "King Street West" → "properties on King Street West"
+
+❌ WRONG Examples:
+- postalCode: "M5V 4B2" → "properties for sale in Toronto" (too generic!)
+- streetName: "King Street West" → "properties in the area" (not specific!)
+
+If results are too broad (500+) for postal/street searches:
+- Acknowledge the broad results
+- Suggest refinement: "To narrow this down, would you like to filter by price range or property type?"
 
 CRITICAL - When NO RESULTS Found:
 If properties_found = 0 and multiple restrictive filters are set (bedrooms, bathrooms, price, specific neighborhood):
@@ -554,6 +611,231 @@ class ChatGPTChatbot:
             # Add user message to history
             state.add_conversation_turn("user", user_message)
             
+            # STEP 1.4: Check if responding to pending confirmation
+            is_answering_confirmation = state.has_pending_confirmation()
+            if is_answering_confirmation:
+                logger.info(f"💬 [CONFIRMATION RESPONSE] User responding to pending confirmation: {state.pending_confirmation_type}")
+            
+            # STEP 1.5: INTENT CLASSIFICATION (NEW - First line of defense)
+            logger.info("🎯 [INTENT CLASSIFIER] Classifying user intent...")
+            classified_intent, intent_metadata = intent_classifier.classify(
+                user_message=user_message,
+                current_filters=state.get_active_filters(),
+                last_search_count=len(state.last_property_results)
+            )
+            
+            # Store classified intent in state
+            state.last_classification_intent = classified_intent.value
+            
+            # Log classification results
+            logger.info(f"🎯 [INTENT CLASSIFIER] Intent: {classified_intent.value}")
+            logger.info(f"🎯 [INTENT CLASSIFIER] Reason: {intent_metadata['reason']}")
+            logger.info(f"🎯 [INTENT CLASSIFIER] Confidence: {intent_metadata['confidence']}")
+            if intent_metadata['requires_confirmation']:
+                logger.info(f"🎯 [INTENT CLASSIFIER] ⚠️ Requires confirmation: {intent_metadata['suggested_action']}")
+            
+            # STEP 1.5.5: Override intent if answering confirmation
+            # If user is responding to a pending confirmation, treat their response as answering that
+            if is_answering_confirmation:
+                confirmation_type = state.pending_confirmation_type
+                confirmation_context = state.pending_confirmation_context or {}
+                logger.info(f"🔄 [CONFIRMATION OVERRIDE] Pending confirmation type: {confirmation_type}")
+                
+                # Check if user is providing a city name (single word city)
+                user_message_clean = user_message.strip().lower()
+                potential_cities = ['toronto', 'ottawa', 'mississauga', 'vancouver', 'calgary', 
+                                   'edmonton', 'montreal', 'markham', 'vaughan', 'brampton',
+                                   'hamilton', 'london', 'kitchener', 'windsor', 'halifax']
+                
+                # Positive confirmation patterns (yes, sure, ok, etc.)
+                positive_patterns = [
+                    r'^(yes|yeah|yep|yup|sure|ok|okay|alright|correct|right)\.{0,3}$',
+                    r'^(y|k)$',  # Single letter confirmations
+                ]
+                is_positive_response = any(re.match(pattern, user_message_clean) for pattern in positive_patterns)
+                
+                # Handle VAGUE_REQUEST confirmations (city name provided)
+                if confirmation_type == "vague_request" and user_message_clean in potential_cities:
+                    # User answered with a city name - update location directly
+                    logger.info(f"✅ [CONFIRMATION OVERRIDE] User provided new location: {user_message_clean}")
+                    
+                    # Update the state location immediately (before GPT processing)
+                    new_city = user_message_clean.capitalize()
+                    from services.location_extractor import LocationState
+                    state.location = new_city
+                    state.location_state = LocationState(city=new_city)
+                    logger.info(f"📍 [CONFIRMATION OVERRIDE] Updated state location to: {new_city}")
+                    
+                    # Override the intent to property_search
+                    classified_intent = UserIntent.PROPERTY_SEARCH
+                    intent_metadata['reason'] = f"User answered confirmation with new location: {new_city}"
+                    
+                    # Clear the pending confirmation
+                    state.clear_pending_confirmation()
+                
+                # Handle LOCATION_CHANGE confirmations (yes/no response)
+                elif confirmation_type == "location_change" and is_positive_response:
+                    # User confirmed they want to proceed with the location change
+                    logger.info(f"✅ [CONFIRMATION OVERRIDE] User confirmed location change")
+                    
+                    # The location will be extracted by location_extractor from the original_message
+                    # stored in the confirmation context (STEP 3 will handle this)
+                    # We just need to override the intent to PROPERTY_SEARCH
+                    classified_intent = UserIntent.PROPERTY_SEARCH
+                    intent_metadata['reason'] = "User confirmed location change"
+                    
+                    # DON'T clear confirmation yet - we need it for location extraction in STEP 3
+                    # It will be cleared after successful extraction
+            
+            # STEP 1.6: Handle special intents that don't need GPT processing
+            
+            # Handle OFF_TOPIC - Never trigger MLS search
+            if classified_intent == UserIntent.OFF_TOPIC:
+                logger.info("🚫 [OFF-TOPIC] Detected off-topic message, responding gracefully")
+                response = (
+                    "Nice! Though I'm specifically here to help with real estate in Toronto and the GTA. "
+                    "Let me know if you'd like to search for properties, learn about neighborhoods, "
+                    "or get market insights!"
+                )
+                suggestions = [
+                    "Show me properties in Toronto",
+                    "Tell me about neighborhoods",
+                    "What's the market like?"
+                ]
+                state.add_conversation_turn("assistant", response)
+                self.state_manager.save(state)
+                return {
+                    "success": True,
+                    "response": response,
+                    "suggestions": suggestions,
+                    "properties": [],
+                    "property_count": 0,
+                    "state_summary": state.get_summary(),
+                    "filters": state.get_active_filters(),
+                    "intent": "off_topic"
+                }
+            
+            # Handle CONFIRMATION_NEEDED - Ask what user wants to change
+            if classified_intent == UserIntent.CONFIRMATION_NEEDED:
+                logger.info("❓ [CONFIRMATION] User request is vague, asking for clarification")
+                
+                # Build confirmation message based on current filters
+                current_filters = state.get_active_filters()
+                filter_parts = []
+                if current_filters.get('location'):
+                    filter_parts.append(f"location ({current_filters['location']})")
+                if current_filters.get('bedrooms'):
+                    filter_parts.append(f"bedrooms ({current_filters['bedrooms']})")
+                if current_filters.get('property_type'):
+                    filter_parts.append(f"property type ({current_filters['property_type']})")
+                if current_filters.get('max_price'):
+                    filter_parts.append(f"budget (under ${current_filters['max_price']:,})")
+                
+                if filter_parts:
+                    response = (
+                        f"I can show you other properties, but would you like to change any of your "
+                        f"current criteria? Currently searching for: {', '.join(filter_parts)}."
+                    )
+                    suggestions = [
+                        "Change the location",
+                        "Adjust the budget",
+                        "Different property type",
+                        "Keep the same criteria"
+                    ]
+                else:
+                    response = "I'd be happy to show you properties! Could you tell me what you're looking for? For example, location, property type, or budget?"
+                    suggestions = [
+                        "Show me condos in Toronto",
+                        "Find houses under 800k",
+                        "I'm looking for rentals"
+                    ]
+                
+                # Set pending confirmation in state
+                state.set_pending_confirmation(
+                    confirmation_message=response,
+                    confirmation_type="vague_request",
+                    context={"original_message": user_message, "current_filters": current_filters}
+                )
+                
+                state.add_conversation_turn("assistant", response)
+                self.state_manager.save(state)
+                return {
+                    "success": True,
+                    "response": response,
+                    "suggestions": suggestions,
+                    "properties": [],
+                    "property_count": 0,
+                    "state_summary": state.get_summary(),
+                    "filters": state.get_active_filters(),
+                    "intent": "confirmation_needed",
+                    "requires_confirmation": True
+                }
+            
+            # Handle PROPERTY_CHANGE_REQUEST - Location change confirmation
+            if classified_intent == UserIntent.PROPERTY_CHANGE_REQUEST:
+                logger.info("🌆 [LOCATION CHANGE] Detected location change, asking for confirmation")
+                
+                old_location = intent_metadata.get('old_location', 'previous location')
+                new_location = intent_metadata.get('new_location', 'new location')
+                current_filters = state.get_active_filters()
+                
+                # Build list of current criteria (excluding location)
+                other_criteria = []
+                if current_filters.get('bedrooms'):
+                    other_criteria.append(f"{current_filters['bedrooms']} bedrooms")
+                if current_filters.get('property_type'):
+                    other_criteria.append(current_filters['property_type'])
+                if current_filters.get('max_price'):
+                    price_str = f"under ${current_filters['max_price']:,}"
+                    other_criteria.append(price_str)
+                if current_filters.get('listing_type'):
+                    other_criteria.append(f"for {current_filters['listing_type']}")
+                
+                if other_criteria:
+                    criteria_str = ", ".join(other_criteria)
+                    response = (
+                        f"Sure! I can search in {new_location}. Would you like me to keep "
+                        f"your current criteria ({criteria_str}), or start fresh?"
+                    )
+                    suggestions = [
+                        f"Yes, keep {criteria_str}",
+                        "Show me any properties",
+                        "Let me specify new criteria"
+                    ]
+                else:
+                    response = f"Got it! I'll search for properties in {new_location}. Any specific requirements?"
+                    suggestions = [
+                        "Show me any properties",
+                        "2 bedroom condos",
+                        "Houses under 800k"
+                    ]
+                
+                # Set pending confirmation
+                state.set_pending_confirmation(
+                    confirmation_message=response,
+                    confirmation_type="location_change",
+                    context={
+                        "old_location": old_location,
+                        "new_location": new_location,
+                        "keep_filters": other_criteria,
+                        "original_message": user_message  # Store the original request to extract location later
+                    }
+                )
+                
+                state.add_conversation_turn("assistant", response)
+                self.state_manager.save(state)
+                return {
+                    "success": True,
+                    "response": response,
+                    "suggestions": suggestions,
+                    "properties": [],
+                    "property_count": 0,
+                    "state_summary": state.get_summary(),
+                    "filters": state.get_active_filters(),
+                    "intent": "location_change_confirmation",
+                    "requires_confirmation": True
+                }
+            
             # STEP 2: Build session summary for interpreter (with clarification context)
             # FIX #2: Check if the last assistant message was a clarifying question
             last_turn = state.conversation_history[-2] if len(state.conversation_history) >= 2 else None
@@ -574,11 +856,191 @@ class ChatGPTChatbot:
             # STEP 3: Extract location entities FIRST (before GPT interpreter)
             logger.info("📍 Extracting location entities...")
             previous_location = state.location_state if hasattr(state, 'location_state') else LocationState()
+            
+            # If answering a location_change confirmation, use the original message for location extraction
+            message_for_location = user_message
+            if (is_answering_confirmation and 
+                state.pending_confirmation_type == "location_change" and
+                state.pending_confirmation_context):
+                original_msg = state.pending_confirmation_context.get('original_message')
+                if original_msg:
+                    logger.info(f"📍 [CONFIRMATION] Using original message for location extraction: '{original_msg[:50]}...'")
+                    message_for_location = original_msg
+            
             extracted_location = location_extractor.extract_location_entities(
-                user_message,
+                message_for_location,
                 previous_location=previous_location
             )
             logger.info(f"📍 Extracted location: {extracted_location.get_summary()}")
+            
+            # STEP 3.5: POSTAL CODE CONFIRMATION CHECK
+            # If postal code is provided WITHOUT city, ask user to confirm city
+            if extracted_location.postalCode and not extracted_location.city:
+                # Check if user is responding with "same city"
+                message_lower = user_message.lower().strip()
+                same_city_patterns = [
+                    'same city', 'same location', 'same area', 'this city', 'current city'
+                ]
+                
+                if any(pattern in message_lower for pattern in same_city_patterns):
+                    # Reuse previous city
+                    if previous_location and previous_location.city:
+                        extracted_location.city = previous_location.city
+                        logger.info(f"📮 [POSTAL CODE] User said 'same city', reusing: {previous_location.city}")
+                    else:
+                        # No previous city to reuse, ask for city
+                        logger.info(f"📮 [POSTAL CODE] User said 'same city' but no previous city found")
+                        response = (
+                            f"I found postal code {extracted_location.postalCode}, but I need to know which city "
+                            f"you're searching in. Could you please specify the city?"
+                        )
+                        suggestions = [
+                            f"{extracted_location.postalCode} in Toronto",
+                            f"{extracted_location.postalCode} in Mississauga",
+                            f"{extracted_location.postalCode} in Vaughan"
+                        ]
+                        
+                        state.set_pending_confirmation(
+                            confirmation_message=response,
+                            confirmation_type="postal_code_city",
+                            context={
+                                "postal_code": extracted_location.postalCode,
+                                "original_message": user_message
+                            }
+                        )
+                        
+                        state.add_conversation_turn("assistant", response)
+                        self.state_manager.save(state)
+                        return {
+                            "success": True,
+                            "response": response,
+                            "suggestions": suggestions,
+                            "properties": [],
+                            "property_count": 0,
+                            "state_summary": state.get_summary(),
+                            "filters": state.get_active_filters(),
+                            "intent": "postal_code_confirmation",
+                            "requires_confirmation": True
+                        }
+                else:
+                    # Try to auto-detect city from postal code
+                    from services.postal_code_validator import postal_code_validator
+                    suggested_city = postal_code_validator.suggest_city_for_postal(extracted_location.postalCode)
+                    
+                    if suggested_city:
+                        # We know the city for this postal code - use it automatically
+                        logger.info(f"✅ [POSTAL CODE AUTO-DETECT] Postal code {extracted_location.postalCode} → {suggested_city}")
+                        extracted_location.city = suggested_city
+                        # No confirmation needed - continue with GPT interpreter
+                    else:
+                        # Ask user to confirm city (postal code not in our map)
+                        logger.info(f"📮 [POSTAL CODE CONFIRMATION] Postal code '{extracted_location.postalCode}' provided without city")
+                        response = (
+                            f"I found postal code {extracted_location.postalCode}. Which city would you like to search in?"
+                        )
+                        suggestions = [
+                            "Toronto",
+                            "Mississauga",
+                            "Vaughan",
+                            "Markham"
+                        ]
+                        
+                        state.set_pending_confirmation(
+                            confirmation_message=response,
+                            confirmation_type="postal_code_city",
+                            context={
+                                "postal_code": extracted_location.postalCode,
+                                "original_message": user_message
+                            }
+                        )
+                        
+                        state.add_conversation_turn("assistant", response)
+                        self.state_manager.save(state)
+                        return {
+                            "success": True,
+                            "response": response,
+                            "suggestions": suggestions,
+                            "properties": [],
+                            "property_count": 0,
+                            "state_summary": state.get_summary(),
+                            "filters": state.get_active_filters(),
+                            "intent": "postal_code_confirmation",
+                            "requires_confirmation": True
+                        }
+            
+            # Handle response to postal_code_city confirmation
+            if (is_answering_confirmation and 
+                state.pending_confirmation_type == "postal_code_city"):
+                confirmation_context = state.pending_confirmation_context or {}
+                postal_code = confirmation_context.get('postal_code')
+                
+                # Extract city from user's response
+                if extracted_location.city:
+                    # City was extracted, combine with postal code
+                    logger.info(f"✅ [POSTAL CODE CONFIRMATION] User provided city: {extracted_location.city}")
+                    
+                    # VALIDATE POSTAL CODE AGAINST CITY
+                    from services.postal_code_validator import postal_code_validator
+                    validation = postal_code_validator.validate_postal_city_match(postal_code, extracted_location.city)
+                    
+                    if not validation['is_valid']:
+                        # Postal code doesn't match city - use correct city instead
+                        logger.warning(f"⚠️ [POSTAL VALIDATOR] User said {extracted_location.city} but {postal_code} is in {validation['correct_city']}")
+                        extracted_location.city = validation['correct_city']
+                        # Store warning message for user
+                        state.postal_city_mismatch_message = validation['message']
+                    
+                    extracted_location.postalCode = postal_code
+                    logger.info(f"📮 [POSTAL CODE] Combined: {postal_code} + {extracted_location.city}")
+                    state.clear_pending_confirmation()
+                else:
+                    # Try to extract city from message
+                    message_lower = user_message.lower().strip()
+                    potential_cities = ['toronto', 'mississauga', 'vaughan', 'markham', 'brampton', 
+                                       'richmond hill', 'oakville', 'burlington', 'ajax', 'whitby']
+                    
+                    matched_city = None
+                    for city in potential_cities:
+                        if city in message_lower:
+                            matched_city = city.title()
+                            break
+                    
+                    if matched_city:
+                        # VALIDATE POSTAL CODE AGAINST CITY
+                        from services.postal_code_validator import postal_code_validator
+                        validation = postal_code_validator.validate_postal_city_match(postal_code, matched_city)
+                        
+                        if not validation['is_valid']:
+                            # Postal code doesn't match city - use correct city instead
+                            logger.warning(f"⚠️ [POSTAL VALIDATOR] User said {matched_city} but {postal_code} is in {validation['correct_city']}")
+                            matched_city = validation['correct_city']
+                            # Store warning message for user
+                            state.postal_city_mismatch_message = validation['message']
+                        
+                        extracted_location.city = matched_city
+                        extracted_location.postalCode = postal_code
+                        logger.info(f"✅ [POSTAL CODE CONFIRMATION] Matched city: {matched_city}")
+                        logger.info(f"📮 [POSTAL CODE] Combined: {postal_code} + {matched_city}")
+                        state.clear_pending_confirmation()
+                    else:
+                        # Still couldn't extract city, ask again
+                        logger.warning(f"⚠️ [POSTAL CODE CONFIRMATION] Could not extract city from: {user_message}")
+                        response = f"I'm sorry, I didn't catch the city name. Could you please specify which city you'd like to search {postal_code} in?"
+                        suggestions = ["Toronto", "Mississauga", "Vaughan"]
+                        
+                        state.add_conversation_turn("assistant", response)
+                        self.state_manager.save(state)
+                        return {
+                            "success": True,
+                            "response": response,
+                            "suggestions": suggestions,
+                            "properties": [],
+                            "property_count": 0,
+                            "state_summary": state.get_summary(),
+                            "filters": state.get_active_filters(),
+                            "intent": "postal_code_confirmation",
+                            "requires_confirmation": True
+                        }
             
             # STEP 4: Call GPT-4 interpreter
             interpreter_out = ask_gpt_interpreter(session_summary, user_message)
@@ -600,8 +1062,25 @@ class ChatGPTChatbot:
                 filters_from_gpt['location_state'] = extracted_location
                 logger.info(f"✅ Added location_state to filters: {extracted_location.get_summary()}")
             
+            # STEP 5.5: Clear pending confirmation if it was a location_change confirmation
+            # (we've now extracted the location from the original message)
+            if (is_answering_confirmation and 
+                state.pending_confirmation_type == "location_change" and
+                not extracted_location.is_empty()):
+                logger.info(f"✅ [CONFIRMATION] Location extracted, clearing pending confirmation")
+                state.clear_pending_confirmation()
+            
             # STEP 6: If clarifying question, return immediately
+            # BUT: Save location_state first if it was extracted (so it persists for next message)
             if clarifying:
+                if 'location_state' in filters_from_gpt and not filters_from_gpt['location_state'].is_empty():
+                    logger.info(f"💾 [CLARIFYING] Saving location_state before asking clarifying question: {filters_from_gpt['location_state'].get_summary()}")
+                    state.location_state = state.location_state or LocationState()
+                    state.location_state = filters_from_gpt['location_state']
+                    # Also update city in main state for backwards compatibility
+                    if filters_from_gpt['location_state'].city:
+                        filters_from_gpt['location'] = filters_from_gpt['location_state'].city
+                
                 state.add_conversation_turn("assistant", clarifying)
                 self.state_manager.save(state)
                 return {
@@ -672,13 +1151,92 @@ class ChatGPTChatbot:
                         f"'{state.location_state.streetName}' - asking for clarification"
                     )
             
-            # STEP 11: Execute MLS search
-            should_search = intent in ("search", "refine") or any([
+            # STEP 11: SEARCH TRIGGER VALIDATION (NEW - Critical guard)
+            # Only trigger search if:
+            # 1. Intent from classifier allows search (property_search, property_refinement)
+            # 2. Location is explicit OR user confirmed filter reuse
+            # 3. Intent from GPT-4 is search/refine
+            
+            logger.info("🔍 [SEARCH GUARD] Evaluating whether to trigger MLS search...")
+            
+            # Check if intent allows search
+            search_allowed_intents = [
+                UserIntent.PROPERTY_SEARCH,
+                UserIntent.PROPERTY_REFINEMENT
+            ]
+            classifier_allows_search = classified_intent in search_allowed_intents
+            
+            # Check if GPT-4 intent is search/refine
+            gpt_allows_search = intent in ("search", "refine")
+            
+            # Check if we have explicit location or confirmation
+            has_explicit_location = bool(state.location) or (
+                state.location_state and not state.location_state.is_empty()
+            )
+            has_confirmation = state.has_pending_confirmation() and "keep" in user_message.lower()
+            
+            # Evaluate search criteria
+            has_any_criteria = any([
                 state.location,
                 state.bedrooms,
                 state.property_type,
                 state.price_range
             ])
+            
+            # NEW LOGIC: Allow search if EITHER:
+            # 1. Valid location exists AND (classifier OR GPT allows search)
+            # 2. Both classifier AND GPT agree on search (old behavior)
+            should_search = (
+                (has_explicit_location and (classifier_allows_search or gpt_allows_search)) or
+                (classifier_allows_search and gpt_allows_search)
+            ) and has_any_criteria
+            
+            # Detailed logging of decision
+            logger.info(f"🔍 [SEARCH GUARD] Decision: {'ALLOW' if should_search else 'BLOCK'}")
+            logger.info(f"  - Classifier intent: {classified_intent.value} (allows: {classifier_allows_search})")
+            logger.info(f"  - GPT-4 intent: {intent} (allows: {gpt_allows_search})")
+            logger.info(f"  - Has explicit location: {has_explicit_location}")
+            logger.info(f"  - Has confirmation: {has_confirmation}")
+            logger.info(f"  - Has any criteria: {has_any_criteria}")
+            logger.info(f"  - Logic: Location + (Classifier OR GPT) = {has_explicit_location and (classifier_allows_search or gpt_allows_search)}")
+            
+            if not should_search:
+                # Log why search was blocked
+                reasons = []
+                if not classifier_allows_search:
+                    reasons.append(f"classifier intent is {classified_intent.value}")
+                if not gpt_allows_search:
+                    reasons.append(f"GPT-4 intent is {intent}")
+                if not has_explicit_location and not has_confirmation:
+                    reasons.append("no explicit location and no confirmation")
+                if not has_any_criteria:
+                    reasons.append("no search criteria")
+                
+                logger.info(f"🚫 [SEARCH GUARD] Search blocked: {', '.join(reasons)}")
+                
+                # If search would have been triggered but we blocked it, ask for location
+                if gpt_allows_search and has_any_criteria and not has_explicit_location:
+                    logger.info("📍 [SEARCH GUARD] Criteria present but location missing - asking for location")
+                    response = "I'd be happy to search for that! Which location would you like me to search in?"
+                    suggestions = [
+                        "Toronto",
+                        "Mississauga",
+                        "Vaughan",
+                        "Markham"
+                    ]
+                    state.requires_location_clarification = True
+                    state.add_conversation_turn("assistant", response)
+                    self.state_manager.save(state)
+                    return {
+                        "success": True,
+                        "response": response,
+                        "suggestions": suggestions,
+                        "properties": [],
+                        "property_count": 0,
+                        "state_summary": state.get_summary(),
+                        "filters": state.get_active_filters(),
+                        "requires_location": True
+                    }
             
             properties = []
             total = 0
@@ -756,8 +1314,163 @@ class ChatGPTChatbot:
                     # Store results and continue to summarizer
                     state.update_search_results(properties, user_message)
                     
+                # STEP 11b.0: Check if "near" query - triggers radius search
+                elif 'near' in user_message.lower() and state.location_state:
+                    logger.info("📍 [NEAR SEARCH] Detected 'near' keyword, using radius search strategy...")
+                    
+                    # For "near" queries with postal code, use postal fallback for broader area
+                    if state.location_state.postalCode:
+                        logger.info(f"📮 [NEAR + POSTAL] Searching broader area around postal code: {state.location_state.postalCode}")
+                        
+                        # Import postal code fallback service
+                        from services.postal_code_fallback_service import postal_code_fallback_service
+                        
+                        # For "near" queries, we want to be more generous - use FSA if full postal returns few results
+                        postal_results = postal_code_fallback_service.search_with_fallback(
+                            state=state,
+                            user_message=user_message
+                        )
+                        
+                        if postal_results['success']:
+                            properties = postal_results['properties']
+                            total = len(properties)
+                            
+                            # Add "near" specific messaging
+                            if postal_results.get('fallback_type') in ['exact', 'pagesize_retry']:
+                                # Found results in exact postal code
+                                fallback_message = f"Found {total} properties in postal code {postal_results.get('postal_code_used')}."
+                            elif postal_results.get('fallback_message'):
+                                # Use the FSA fallback message (already explains expansion)
+                                fallback_message = postal_results['fallback_message']
+                            
+                            logger.info(
+                                f"✅ [NEAR + POSTAL] Found {total} properties "
+                                f"(fallback_type={postal_results.get('fallback_type')})"
+                            )
+                        else:
+                            # Postal search failed
+                            logger.warning(f"⚠️ [NEAR + POSTAL] Search failed: {postal_results.get('error')}")
+                            return {
+                                "success": False,
+                                "response": postal_results.get('error', 'Postal code search failed'),
+                                "suggestions": [],
+                                "properties": [],
+                                "property_count": 0
+                            }
+                        
+                        # Store results and continue to summarizer
+                        state.update_search_results(properties, user_message)
+                    
+                    # For "near" queries with street address, search broader city area
+                    elif state.location_state.streetName and state.location_state.city:
+                        logger.info(f"🛣️ [NEAR + STREET] Broadening search to city: {state.location_state.city}")
+                        
+                        # Create broader search: just city (remove street specificity)
+                        from services.conversation_state import ConversationState, LocationState
+                        broad_state = ConversationState(session_id=state.session_id)
+                        broad_state.location_state = LocationState(city=state.location_state.city)
+                        broad_state.property_type = state.property_type
+                        broad_state.bedrooms = state.bedrooms
+                        broad_state.price_range = state.price_range
+                        broad_state.listing_type = state.listing_type
+                        
+                        # Execute broader search
+                        logger.info("🔍 Executing city-wide search for 'near' query...")
+                        search_results = enhanced_mls_service.search_properties(
+                            broad_state,
+                            limit=50,  # Larger limit for "near" queries
+                            user_message=user_message
+                        )
+                        
+                        if search_results.get('success'):
+                            properties = search_results.get('results', [])
+                            total = search_results.get('total', len(properties))
+                            
+                            # Add transparency message
+                            original_street = state.location_state.streetName
+                            if state.location_state.streetNumber:
+                                original_address = f"{state.location_state.streetNumber} {original_street}"
+                            else:
+                                original_address = original_street
+                            
+                            fallback_message = (
+                                f"Showing properties near {original_address} in {state.location_state.city}. "
+                                f"Found {total} listings in the area."
+                            )
+                            
+                            logger.info(f"✅ [NEAR + STREET] Found {total} properties in {state.location_state.city}")
+                        else:
+                            logger.warning(f"⚠️ [NEAR + STREET] Search failed: {search_results.get('error')}")
+                        
+                        # Store results and continue to summarizer
+                        state.update_search_results(properties, user_message)
+                    
+                    # For other "near" queries, continue to standard search
+                    else:
+                        logger.info("📍 [NEAR] No specific location details, continuing to standard search...")
+                        # Fall through to standard search below
+                        search_results = enhanced_mls_service.search_properties(
+                            state,
+                            limit=20,
+                            user_message=user_message
+                        )
+                        
+                        if search_results.get('success'):
+                            properties = search_results.get('results', [])
+                            total = search_results.get('total', len(properties))
+                            state.update_search_results(properties, user_message)
+                            
+                            if search_results.get('validation_warnings'):
+                                for warning in search_results['validation_warnings']:
+                                    logger.info(f"📋 Filter info: {warning}")
+                            
+                            logger.info(f"✅ Found {total} properties")
+                        else:
+                            logger.warning(f"⚠️ MLS search failed: {search_results.get('error')}")
+                
+                # STEP 11b.1: Check if postal code search with fallback needed
+                elif state.location_state and state.location_state.postalCode:
+                    logger.info("📮 [POSTAL CODE SEARCH] Detected postal code, using fallback service...")
+                    
+                    # Import postal code fallback service
+                    from services.postal_code_fallback_service import postal_code_fallback_service
+                    
+                    # Execute postal code search with 3-tier fallback
+                    postal_results = postal_code_fallback_service.search_with_fallback(
+                        state=state,
+                        user_message=user_message
+                    )
+                    
+                    if postal_results['success']:
+                        properties = postal_results['properties']
+                        total = len(properties)
+                        
+                        # Store fallback information for user transparency
+                        if postal_results.get('fallback_message'):
+                            fallback_message = postal_results['fallback_message']
+                            logger.info(f"📮 [POSTAL FALLBACK] User message: {fallback_message}")
+                        
+                        logger.info(
+                            f"✅ [POSTAL CODE SEARCH] Found {total} properties "
+                            f"(fallback_type={postal_results.get('fallback_type')}, "
+                            f"postal_code_used={postal_results.get('postal_code_used')})"
+                        )
+                    else:
+                        # Postal search failed
+                        logger.warning(f"⚠️ [POSTAL CODE SEARCH] Search failed: {postal_results.get('error')}")
+                        return {
+                            "success": False,
+                            "response": postal_results.get('error', 'Postal code search failed'),
+                            "suggestions": [],
+                            "properties": [],
+                            "property_count": 0
+                        }
+                    
+                    # Store results and continue to summarizer
+                    state.update_search_results(properties, user_message)
+                
                 else:
-                    # STEP 11b: Standard search using enhanced_mls_service
+                    # STEP 11b.2: Standard search using enhanced_mls_service
                     logger.info("🔍 Executing standard MLS search...")
                     # Pass user_message for date intent detection
                     search_results = enhanced_mls_service.search_properties(
@@ -769,6 +1482,8 @@ class ChatGPTChatbot:
                     if search_results.get('success'):
                         properties = search_results.get('results', [])
                         total = search_results.get('total', len(properties))
+                        
+                        # Note: Postal code validation is now handled by postal_code_fallback_service
                         
                         # PRODUCTION FIX: Exact Address Fallback
                         # If exact address (streetNumber + streetName) returns 0 results, retry with just streetName
@@ -833,10 +1548,30 @@ class ChatGPTChatbot:
                        f"price_range={state.price_range}, listing_type={state.listing_type}")
             
             # STEP 12: Call GPT-4 summarizer for final response
-            summarizer_result = ask_gpt_summarizer(user_message, state.get_active_filters(), properties)
+            # REQUIRED FIX #3: Include location_state details for postal/street specificity
+            active_filters = state.get_active_filters()
+            if hasattr(state, 'location_state') and state.location_state:
+                # Add location_state fields to filters for summarizer context
+                location_dict = state.location_state.to_dict()
+                if location_dict:
+                    active_filters['location_state'] = location_dict
+                    logger.info(f"📮 [SUMMARIZER CONTEXT] Added location_state: {location_dict}")
+            
+            # Add refinement flag if results are too broad
+            if hasattr(state, 'needs_refinement') and state.needs_refinement:
+                active_filters['needs_refinement'] = True
+                logger.info(f"⚠️ [SUMMARIZER CONTEXT] Flagged for refinement suggestion")
+            
+            summarizer_result = ask_gpt_summarizer(user_message, active_filters, properties)
             
             assistant_text = summarizer_result.get("response_text") or "I'm here to help you find properties."
             suggestions = summarizer_result.get("suggestions", [])
+            
+            # Prepend postal city mismatch warning if needed
+            if hasattr(state, 'postal_city_mismatch_message') and state.postal_city_mismatch_message:
+                assistant_text = f"{state.postal_city_mismatch_message}\n\n{assistant_text}"
+                # Clear the message after using it
+                state.postal_city_mismatch_message = None
             
             # Prepend fallback message if we did an address fallback
             if fallback_message:

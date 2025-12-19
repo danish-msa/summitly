@@ -93,7 +93,7 @@ Return JSON with these fields (set to null if not mentioned):
 - city: City name (Toronto, Mississauga, Vaughan, Markham, Brampton, Richmond Hill, Oakville, Burlington, etc.)
 - community: Larger neighborhood/community (Downtown Core, Etobicoke, North York, Scarborough, Port Credit, etc.)
 - neighborhood: Specific neighborhood (Yorkville, Liberty Village, King West, Distillery District, etc.)
-- postalCode: Postal code (M5V 3A8, M4W 1A9, etc.) - format: "A1A 1A1"
+- postalCode: Canadian postal code (M5V, M5V 3A8, M4W 1A9, etc.) - supports FSA (3 chars) and full format (6 chars)
 - streetName: Full street name WITH suffix (King Street West, Yorkville Avenue, Church Street, etc.) - NO street number
 - streetNumber: Street number only (123, 456, etc.) - just the number
 
@@ -117,10 +117,20 @@ CRITICAL RULES:
 4. Handle contextual references:
    - "only in this neighborhood" → keep previous neighborhood
    - "same area" → keep previous city/community/neighborhood
+   - "same city" → keep previous city
    - "on this street" → keep previous streetName
    - "nearby" → keep previous city/community
-5. Postal code format: Always use uppercase with space (M5V 3A8, not m5v3a8)
-6. Street names: KEEP full name including "Street", "Avenue", "Road", "Boulevard", "Drive", "West", "East", "North", "South"
+5. Handle "near" queries for property searches:
+   - "properties near 151 Dan Leckie Way Toronto" → extract streetName: "Dan Leckie Way", streetNumber: "151", city: "Toronto"
+   - "condos near King Street" → extract streetName: "King Street", city: "Toronto" (infer from famous street)
+   - "homes near M5V 4B2" → extract postalCode: "M5V 4B2" (system will add radius search later)
+6. Postal code format:
+   - FSA format (3 characters): M5V, K1A → normalize to uppercase "M5V"
+   - Full format (6 characters): M5V3A8, m5v 3a8, M5V 3A8 → normalize to uppercase with space "M5V 3A8"
+   - Accept any spacing/casing: "m5v", "m5v3a8", "M5V 3A8" all valid
+7. Street names: KEEP full name including "Street", "Avenue", "Road", "Boulevard", "Drive", "Way", "West", "East", "North", "South"
+8. Postal code PRIORITY: When postal code is mentioned, do NOT extract streetName, neighborhood, or community unless explicitly specified separately
+9. EXCEPTION to rule 8: For "near [address with postal code]" queries, extract BOTH street address AND postal code if both are present
 
 Examples:
 
@@ -156,6 +166,27 @@ Output: {"city": null, "community": null, "neighborhood": null, "postalCode": nu
 
 Input: "properties in M5V 3A8"
 Output: {"city": null, "community": null, "neighborhood": null, "postalCode": "M5V 3A8", "streetName": null, "streetNumber": null}
+
+Input: "condos in M5V"
+Output: {"city": null, "community": null, "neighborhood": null, "postalCode": "M5V", "streetName": null, "streetNumber": null}
+
+Input: "condos in M5V Toronto"
+Output: {"city": "Toronto", "community": null, "neighborhood": null, "postalCode": "M5V", "streetName": null, "streetNumber": null}
+
+Input: "rentals in M5V 3A8 Toronto"
+Output: {"city": "Toronto", "community": null, "neighborhood": null, "postalCode": "M5V 3A8", "streetName": null, "streetNumber": null}
+
+Input: "m5v3a8"
+Output: {"city": null, "community": null, "neighborhood": null, "postalCode": "M5V 3A8", "streetName": null, "streetNumber": null}
+
+Input: "properties near 151 Dan Leckie Way M5V 4B2 Toronto"
+Output: {"city": "Toronto", "community": null, "neighborhood": null, "postalCode": "M5V 4B2", "streetName": "Dan Leckie Way", "streetNumber": "151"}
+
+Input: "condos near King Street Toronto"
+Output: {"city": "Toronto", "community": null, "neighborhood": null, "postalCode": null, "streetName": "King Street", "streetNumber": null}
+
+Input: "homes near M5V 4B2"
+Output: {"city": null, "community": null, "neighborhood": null, "postalCode": "M5V 4B2", "streetName": null, "streetNumber": null}
 
 CRITICAL: Return ONLY valid JSON. No markdown, no extra text."""
 
@@ -289,19 +320,52 @@ class LocationExtractor:
         return text.strip().title()
     
     def _normalize_postal_code(self, postal_code: Optional[str]) -> Optional[str]:
-        """Normalize postal code format."""
+        """
+        Normalize Canadian postal code format.
+        
+        Supports:
+        - FSA format (3 characters): M5V, K1A → "M5V"
+        - Full format (6 characters): M5V3A8, m5v 3a8 → "M5V 3A8"
+        
+        Returns:
+            Normalized postal code or None if invalid
+        """
         if not postal_code:
             return None
         
         # Remove all spaces and convert to uppercase
         pc = postal_code.replace(' ', '').upper()
         
-        # Validate format: A1A1A1
-        if len(pc) != 6:
-            return None
+        # Canadian postal code regex: Letter-Digit-Letter (Digit-Letter-Digit)
+        # FSA format: A1A (3 chars)
+        # Full format: A1A1A1 (6 chars)
         
-        # Add space: A1A 1A1
-        return f"{pc[:3]} {pc[3:]}"
+        if len(pc) == 3:
+            # FSA format (Forward Sortation Area)
+            # Validate: Letter-Digit-Letter
+            if pc[0].isalpha() and pc[1].isdigit() and pc[2].isalpha():
+                logger.debug(f"📮 Normalized FSA postal code: {pc}")
+                return pc
+            else:
+                logger.warning(f"⚠️ Invalid FSA postal code format: {postal_code}")
+                return None
+        
+        elif len(pc) == 6:
+            # Full postal code format
+            # Validate: A1A 1A1 pattern
+            if (pc[0].isalpha() and pc[1].isdigit() and pc[2].isalpha() and
+                pc[3].isdigit() and pc[4].isalpha() and pc[5].isdigit()):
+                # Add space: A1A 1A1
+                normalized = f"{pc[:3]} {pc[3:]}"
+                logger.debug(f"📮 Normalized full postal code: {normalized}")
+                return normalized
+            else:
+                logger.warning(f"⚠️ Invalid postal code format: {postal_code}")
+                return None
+        
+        else:
+            logger.warning(f"⚠️ Invalid postal code length ({len(pc)}): {postal_code}")
+            return None
     
     def _fallback_extract(
         self,
@@ -346,9 +410,16 @@ class LocationExtractor:
         if 'gta' in message_lower and not city:
             city = 'Toronto'
         
-        # Postal code extraction
-        postal_pattern = r'[A-Za-z]\d[A-Za-z]\s?\d[A-Za-z]\d'
-        postal_match = re.search(postal_pattern, user_message, re.IGNORECASE)
+        # Postal code extraction (supports FSA and full format)
+        # Try full format first: A1A 1A1 or A1A1A1
+        postal_pattern_full = r'[A-Za-z]\d[A-Za-z]\s?\d[A-Za-z]\d'
+        postal_match = re.search(postal_pattern_full, user_message, re.IGNORECASE)
+        
+        if not postal_match:
+            # Try FSA format: A1A (standalone, not part of full postal code)
+            postal_pattern_fsa = r'\b[A-Za-z]\d[A-Za-z]\b'
+            postal_match = re.search(postal_pattern_fsa, user_message, re.IGNORECASE)
+        
         postal_code = self._normalize_postal_code(postal_match.group(0)) if postal_match else None
         
         # Communities (basic)

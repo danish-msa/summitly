@@ -386,7 +386,8 @@ def buildRepliersSearchParams(
             location_warnings.append("Searching Toronto (GTA's largest city). For other GTA cities, please specify.")
         
         # Apply location fields to params (respecting hierarchy)
-        # streetNumber > streetName > postalCode > neighborhood > community > city
+        # POSTAL CODE PRIORITY: streetNumber > streetName > postalCode > neighborhood > community > city
+        # CRITICAL: DO NOT combine postalCode with streetName
         if street_number and street_name:
             params['streetName'] = street_name
             params['streetNumber'] = street_number
@@ -399,8 +400,21 @@ def buildRepliersSearchParams(
                 params['city'] = city
             logger.info(f"🛣️ Searching street: {street_name}, {city or 'Toronto'}")
         elif postal_code:
+            # POSTAL CODE SEARCH: Use postal code + city ONLY
+            # DO NOT combine with streetName, neighborhood, or community
             params['postalCode'] = postal_code
-            logger.info(f"📮 Searching postal code: {postal_code}")
+            if city:
+                params['city'] = city
+                logger.info(f"📮 [POSTAL CODE SEARCH] Searching: {postal_code}, {city}")
+            else:
+                logger.info(f"📮 [POSTAL CODE SEARCH] Searching: {postal_code} (no city specified)")
+            
+            # Log validation
+            if street_name or neighborhood or community:
+                logger.warning(
+                    f"⚠️ [POSTAL CODE PRIORITY] Ignoring street/neighborhood/community "
+                    f"because postal code is set: {postal_code}"
+                )
         elif neighborhood:
             # PRODUCTION FIX: Expand neighborhood aliases (e.g., "King West" -> ["Niagara", ...])
             if should_expand_neighborhood(neighborhood):
@@ -493,10 +507,24 @@ def buildRepliersSearchParams(
         params['style'] = normalized
     
     # Transaction type (Sale vs Lease)
-    if state.listing_type == 'rent':
-        params['transactionType'] = 'Lease'
+    # CRITICAL FIX: DO NOT add transactionType for postal code or street searches
+    # The Repliers API filters better without this constraint for location-specific queries
+    has_postal_code = params.get('postalCode') is not None
+    has_street = params.get('streetName') is not None
+    
+    if not has_postal_code and not has_street:
+        # Only add transactionType for general searches (city, neighborhood, community)
+        if state.listing_type == 'rent':
+            params['transactionType'] = 'Lease'
+        else:
+            params['transactionType'] = 'Sale'
+        logger.debug(f"📋 Added transactionType: {params['transactionType']}")
     else:
-        params['transactionType'] = 'Sale'
+        # For postal/street searches, use status only
+        logger.info(
+            f"📮 [POSTAL/STREET SEARCH] Skipping transactionType for better results. "
+            f"Using status filter only. Post-filter by listing_type if needed."
+        )
     
     # ===== BEDS & BATHS =====
     if state.bedrooms is not None:

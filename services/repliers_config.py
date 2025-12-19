@@ -67,7 +67,7 @@ class RepliersConfig:
     
     # Pagination
     DEFAULT_PAGE_SIZE = 25
-    MAX_PAGE_SIZE = 100
+    MAX_PAGE_SIZE = 200  # Increased from 100 to 200 for better coverage in large FSA areas
     
     # Cache Settings
     CACHE_TTL = {
