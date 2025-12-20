@@ -11,6 +11,7 @@ This module ensures:
 - Date filter application based on user intent
 - Complete support for all Repliers API parameters
 - Neighborhood alias expansion (King West -> Niagara, etc.)
+- ADDRESS KEY SUPPORT: addressKey-based exact and street-level searches
 
 Author: Summitly Team
 Date: December 15, 2025
@@ -18,9 +19,14 @@ Date: December 15, 2025
 
 import logging
 import re
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Dict, Any, Optional, List, Tuple, TYPE_CHECKING
 from datetime import datetime, timedelta
 from services.neighborhood_normalizer import normalize_neighborhood, should_expand_neighborhood
+
+# Avoid circular imports
+if TYPE_CHECKING:
+    from services.address_key_normalizer import NormalizedAddress
+    from services.conversation_state import ConversationState
 
 logger = logging.getLogger(__name__)
 
@@ -323,11 +329,82 @@ def parse_date_range(
 
 
 # ===========================
+# ADDRESS SEARCH BUILDER (NEW)
+# ===========================
+
+def buildRepliersAddressSearchParams(
+    normalized_address: Any,  # NormalizedAddress type
+    listing_type: str = "Sale",
+    limit: int = 25,
+    additional_filters: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    """
+    Build Repliers API parameters for deterministic address-specific searches using addressKey.
+    
+    RULES:
+    1. Exact address search: Use addressKey ONLY if street_number AND street_name present
+    2. Street search: Use city fetch + post-filter with addressKey.startswith() 
+    3. NO fuzzy q queries for street searches
+    
+    Args:
+        normalized_address: NormalizedAddress with addressKey data
+        listing_type: "Sale" or "Rent" (default: "Sale")
+        limit: Result limit (default 25)
+        additional_filters: Optional filters (beds, price, etc.)
+        
+    Returns:
+        Dictionary of Repliers API parameters for address search
+    """
+    params = {}
+    
+    # Basic parameters
+    params['transactionType'] = listing_type
+    params['pageSize'] = limit
+    
+    # Determine search strategy based on address components
+    components = normalized_address.components if hasattr(normalized_address, 'components') else None
+    
+    # RULE 1: Exact address search - use addressKey ONLY if street_number AND street_name present  
+    if (components and components.street_number and components.street_name and 
+        hasattr(normalized_address, 'exact_address_key') and normalized_address.exact_address_key):
+        
+        # Exact address matching with addressKey
+        params['addressKey'] = normalized_address.exact_address_key
+        logger.info(f"🎯 [EXACT_ADDRESS] Using addressKey: {normalized_address.exact_address_key}")
+        
+    # RULE 2: Street search - city fetch for post-filtering (NO fuzzy q)
+    elif (components and components.street_name and 
+          hasattr(normalized_address, 'street_address_key') and normalized_address.street_address_key):
+        
+        # Use city-based search for street filtering
+        params['city'] = components.city or 'Toronto'
+        params['pageSize'] = 200  # Fetch more for filtering
+        logger.info(f"🏘️ [STREET_SEARCH] City fetch for filtering: {params['city']}")
+        
+        # Store street key for post-filtering
+        params['_street_filter_key'] = normalized_address.street_address_key
+        params['_search_type'] = 'street_search'
+        
+    else:
+        logger.warning("⚠️ [ADDRESS_SEARCH] No valid deterministic search strategy available")
+        return {}
+    
+    # Apply additional filters if provided (these will be applied post-addressKey filtering)
+    if additional_filters:
+        for key, value in additional_filters.items():
+            if value is not None:
+                params[key] = value
+        logger.info(f"➕ [ADDRESS_SEARCH] Additional filters for post-filtering: {additional_filters}")
+    
+    return params
+
+
+# ===========================
 # MAIN FILTER BUILDER
 # ===========================
 
 def buildRepliersSearchParams(
-    state: 'ConversationState',
+    state: Any,  # ConversationState type  
     user_message: str = "",
     limit: int = 25
 ) -> Dict[str, Any]:

@@ -139,8 +139,19 @@ class ConversationState:
     pending_confirmation: Optional[str] = None  # What we're waiting for user to confirm
     pending_confirmation_type: Optional[str] = None  # Type: "filter_reuse", "location_change", "vague_request"
     pending_confirmation_context: Dict[str, Any] = field(default_factory=dict)  # Additional context for confirmation
+    
+    # NEW: Requirements Flow Management (separate from confirmation!)
+    pending_requirements_context: Dict[str, Any] = field(default_factory=dict)  # Context for requirements gathering
+    
     requires_location_clarification: bool = False  # True when location is needed before search
     last_classification_intent: Optional[str] = None  # Last intent from intent_classifier
+    
+    # Conversation Mode (prevents ambiguous replies from being interpreted as searches)
+    # CRITICAL: Three distinct modes with different yes/no semantics
+    # - "normal": Regular conversation flow
+    # - "awaiting_confirmation": Bot asked "Do you want to...?" - yes/no means accept/reject
+    # - "awaiting_requirements": Bot asked "Any specific requirements?" - yes/no/content means add filters
+    conversation_mode: str = "normal"  # "normal" | "awaiting_confirmation" | "awaiting_requirements"
     
     # Session Metadata
     session_id: str = ""
@@ -657,7 +668,8 @@ class ConversationState:
         self.pending_confirmation = confirmation_message
         self.pending_confirmation_type = confirmation_type
         self.pending_confirmation_context = context or {}
-        logger.info(f"⏳ Pending confirmation set: {confirmation_type}")
+        self.conversation_mode = "awaiting_confirmation"  # 🔧 Set mode
+        logger.info(f"⏳ Pending confirmation set: {confirmation_type} | Mode: awaiting_confirmation")
         return self
     
     def clear_pending_confirmation(self) -> 'ConversationState':
@@ -665,7 +677,8 @@ class ConversationState:
         self.pending_confirmation = None
         self.pending_confirmation_type = None
         self.pending_confirmation_context = {}
-        logger.info("✅ Pending confirmation cleared")
+        self.conversation_mode = "normal"  # 🔧 Reset mode
+        logger.info("✅ Pending confirmation cleared | Mode: normal")
         return self
     
     def has_pending_confirmation(self) -> bool:
