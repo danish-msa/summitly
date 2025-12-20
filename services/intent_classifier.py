@@ -101,6 +101,10 @@ class IntentClassifier:
             r'\bshow\s+me\s+\d+\s+bed',
             r'\bfind\s+(?:me\s+)?(?:a\s+)?\d+\s+bed',
             r'\blooking\s+for\s+(?:a\s+)?\d+\s+bed',
+            r'\bonly\s+\d+\s+bed',  # "only 5 beds"
+            r'\bjust\s+\d+\s+bed',  # "just 3 beds"
+            r'\b\d+\s+bed(?:room)?s?\s+only\b',  # "5 bedrooms only"
+            r'\bexactly\s+\d+\s+bed',  # "exactly 4 beds"
             r'\b(?:condos?|houses?|townhouses?|properties)\s+(?:in|at|near)\s+[A-Z]',
             r'\bunder\s+\$?\d+k?\b',
             r'\bbudget\s+(?:of\s+)?\$?\d+',

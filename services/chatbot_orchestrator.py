@@ -216,9 +216,24 @@ When the search returns 0 results AND the user has multiple restrictive filters 
 When the user changes location significantly (e.g., Toronto → Mississauga) after no results:
 - clarifying_question: "Would you like me to search for the same criteria (4 beds, 2 baths, condos for rent) in Mississauga, or would you prefer to see any available properties there?"
 
+CRITICAL - Pending Clarification Response Handling:
+If "pending_clarification" is present in the input, the user is responding to that question:
+1. ALWAYS set merge_with_previous: true (preserve existing filters)
+2. Extract ONLY the information they provided in response
+3. DO NOT clear or reset other filters that weren't mentioned
+4. DO NOT ask another clarifying question unless absolutely necessary
+
+Examples:
+- Bot asked: "Which location would you like me to search in?" → User: "toronto" 
+  → intent: "search", location: "Toronto", merge_with_previous: true (preserve bedrooms, price, etc.)
+- Bot asked: "What's your budget?" → User: "under 800k"
+  → intent: "refine", max_price: 800000, merge_with_previous: true (preserve location, bedrooms, etc.)
+- Bot asked: "Any specific requirements?" → User: "yes 3 beds with parking"
+  → intent: "refine", bedrooms: 3, amenities: ["parking"], merge_with_previous: true
+
 CRITICAL - Confirmation Flow:
 If the user's message is responding to a pending_clarification question:
-- Extract their answer and translate it to filters
+- Extract their answer and translate it to filters  
 - DO NOT ask another clarifying question
 - Example: User previously asked "Show me other properties" → Bot: "Would you like to change location or budget?" → User: "yes change location" → intent: "search", extract new location from context
 
@@ -1545,11 +1560,34 @@ class ChatGPTChatbot:
             # STEP 4: Call GPT-4 interpreter
             interpreter_out = ask_gpt_interpreter(session_summary, user_message)
             intent = interpreter_out.get("intent", "general_question")
+            
+            # STEP 4.0: CRITICAL FIX - Handle both nested and flat filter formats from GPT
+            # GPT sometimes returns {"filters": {"bedrooms": 5}} and sometimes {"bedrooms": 5}
             filters_from_gpt = interpreter_out.get("filters", {})
+            if not filters_from_gpt:
+                # If no nested filters, check for flat format
+                flat_filters = {}
+                filter_keys = ["location", "property_type", "bedrooms", "bathrooms", "min_price", "max_price", 
+                              "min_sqft", "max_sqft", "listing_type", "amenities", "list_date_from", "list_date_to"]
+                for key in filter_keys:
+                    if key in interpreter_out:
+                        flat_filters[key] = interpreter_out[key]
+                
+                if flat_filters:
+                    logger.info(f"🔧 [FORMAT FIX] GPT returned flat format, converted to nested: {flat_filters}")
+                    filters_from_gpt = flat_filters
+            
             merge = interpreter_out.get("merge_with_previous", True)
             clarifying = interpreter_out.get("clarifying_question")
             
+            # STEP 4.1: CRITICAL FIX - Override merge decision for pending clarification responses
+            if session_summary.get("pending_clarification"):
+                logger.info(f"🔧 [PENDING CLARIFICATION FIX] User responding to clarifying question - forcing merge=True to preserve existing filters")
+                logger.info(f"🔧 [PENDING CLARIFICATION FIX] Previous question: '{session_summary['pending_clarification']}'")
+                merge = True  # Always merge when responding to clarification to preserve existing filters
+            
             logger.info(f"🎯 Intent: {intent}")
+            logger.info(f"🎯 Merge with previous: {merge}")
             logger.debug(f"Filters from GPT: {filters_from_gpt}")
             
             # STEP 5: Merge extracted location into filters
