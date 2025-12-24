@@ -338,9 +338,8 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
       filtered = filtered.filter(project => {
         // Check multiple possible locations for bedroomRange
         const bedroomRange = 
-          project.details?.bedroomRange || 
           project.preCon?.details?.bedroomRange ||
-          (project as PropertyListing & { bedroomRange?: string }).bedroomRange; // Direct property
+          (project as PropertyListing & { bedroomRange?: string }).bedroomRange; // Direct property (fallback)
         
         if (!bedroomRange) {
           // If no bedroom range, check units for bedroom count
