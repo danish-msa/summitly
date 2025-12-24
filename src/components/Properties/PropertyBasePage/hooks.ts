@@ -386,7 +386,6 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
 
         // Add neighborhood filter if locationType is neighbourhood
         if (locationType === 'neighbourhood' && locationName) {
-          // @ts-expect-error - neighborhood parameter is supported by API but not in type definition
           apiParams.neighborhood = locationName;
           console.log('[PropertyBasePage] Adding neighborhood filter:', {
             locationType,
