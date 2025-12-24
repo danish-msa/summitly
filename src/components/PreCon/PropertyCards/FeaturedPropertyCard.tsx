@@ -43,9 +43,10 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
     if (cached && cached.data) {
       // Check if cache is still valid (5 minutes)
       if (cached.timestamp && Date.now() - cached.timestamp < 300000) {
+        const cachedData = cached.data as { average?: number; total?: number };
         setRatingData({
-          average: cached.data.average || 0,
-          total: cached.data.total || 0
+          average: cachedData.average || 0,
+          total: cachedData.total || 0
         });
         return;
       }
