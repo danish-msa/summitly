@@ -396,7 +396,6 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
 
         // Add majorIntersection filter if locationType is intersection
         if (locationType === 'intersection' && locationName) {
-          // @ts-expect-error - majorIntersection parameter may be supported by API
           apiParams.majorIntersection = locationName;
         }
 
