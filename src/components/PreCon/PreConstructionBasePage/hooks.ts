@@ -343,11 +343,11 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
         
         if (!bedroomRange) {
           // If no bedroom range, check units for bedroom count
-          const units = project.preCon?.units || (project as PropertyListing & { units?: Array<{ beds?: number; numBedrooms?: number; details?: { numBedrooms?: number } }> }).units || [];
+          const units = project.preCon?.units || [];
           if (units.length > 0) {
             // Check if any unit has the required bedrooms
             return units.some((unit) => {
-              const unitBedrooms = unit.details?.numBedrooms || unit.beds || unit.numBedrooms || 0;
+              const unitBedrooms = unit.beds || 0;
               return unitBedrooms >= filters.bedrooms;
             });
           }
