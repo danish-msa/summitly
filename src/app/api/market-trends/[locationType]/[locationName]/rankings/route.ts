@@ -283,11 +283,13 @@ export async function GET(
         },
         update: {
           rankings: rankingsResult.rankings as unknown as Prisma.InputJsonValue,
+          rankingOverview: {} as Prisma.InputJsonValue, // Not used - calculated dynamically per city
           lastFetchedAt: new Date(),
         },
         create: {
           month: currentMonth,
           rankings: rankingsResult.rankings as unknown as Prisma.InputJsonValue,
+          rankingOverview: {} as Prisma.InputJsonValue, // Not used - calculated dynamically per city
           lastFetchedAt: new Date(),
         },
       });
