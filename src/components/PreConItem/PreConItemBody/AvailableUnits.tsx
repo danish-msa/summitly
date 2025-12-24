@@ -335,7 +335,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, propertyId }) => {
   const unitSlug = slugify(unit.name || unit.id);
   
   return (
-    <Link href={`/pre-construction/${propertyId}/${unitSlug}`} className="block">
+    <Link href={`/pre-con/${propertyId}/${unitSlug}`} className="block">
       <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
         <CardContent className="p-0">
           <div className="flex flex-col md:flex-row gap-4 p-2">

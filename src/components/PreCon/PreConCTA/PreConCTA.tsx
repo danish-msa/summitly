@@ -21,12 +21,12 @@ const PreConCTA = () => {
             </div>
 
             {/* Heading */}
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-4">
               Why Pre-Construction?
             </h2>
             
             {/* Description */}
-            <p className="text-muted-foreground max-w-3xl mx-auto text-base md:text-lg mb-8 leading-relaxed">
+            <p className="text-muted-foreground max-w-3xl mx-auto text-sm sm:text-base md:text-lg mb-8 leading-relaxed">
               Investing in pre-construction properties offers flexible payment structures, 
               modern designs, and potential appreciation before completion. 
               Register your interest today to secure the best units.
@@ -66,10 +66,10 @@ const PreConCTA = () => {
             </div>
 
             {/* CTA Button */}
-            <Link href="/pre-construction/projects">
+            <Link href="/pre-con/projects">
               <Button 
                 size="lg"
-                className="bg-secondary hover:bg-secondary/90 text-white font-semibold px-8 py-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl text-base"
+                className="bg-secondary hover:bg-secondary/90 text-white font-semibold px-8 py-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl text-sm sm:text-base"
               >
                 Explore Pre-Construction Projects
               </Button>

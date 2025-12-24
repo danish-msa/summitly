@@ -1,4 +1,5 @@
 import { PropertyListing } from '@/lib/types';
+import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/single-listing';
 
 export interface ListingHistoryRecord {
   dateStart: string;
@@ -15,6 +16,7 @@ export interface ListingHistoryRecord {
 export interface PropertyHistoryProps {
   listingHistory: ListingHistoryRecord[];
   property?: PropertyListing;
+  rawProperty?: SinglePropertyListingResponse | null;
 }
 
 export interface EstimateData {

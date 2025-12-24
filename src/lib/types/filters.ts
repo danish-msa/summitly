@@ -84,7 +84,7 @@ export const DEFAULT_FILTER_STATE: FilterState = {
   maxPrice: 2000000,
   bedrooms: 0,
   bathrooms: 0,
-  listingType: 'all',
+  listingType: 'sell', // Default to 'sell' (For Sale) instead of 'all'
   developer: 'all',
   preConStatus: 'all',
   subPropertyType: 'all',
@@ -98,53 +98,165 @@ export const DEFAULT_FILTER_STATE: FilterState = {
   balcony: 'all'
 };
 
-// Location data
-export const LOCATIONS: Location[] = [
+// Region structure with cities
+export interface Region {
+  id: string;
+  name: string;
+  cities: string[];
+}
+
+// Location data - Hierarchical structure with regions and cities
+export const REGIONS: Region[] = [
   {
     id: "gta",
-    name: "Greater Toronto Area",
-    areas: ["All of GTA", "Toronto", "Durham", "Halton", "Peel", "York"],
+    name: "Greater Toronto Area (GTA)",
+    cities: [
+      "Toronto",
+      "Mississauga",
+      "Brampton",
+      "Markham",
+      "Vaughan",
+      "Richmond Hill",
+      "Oakville",
+      "Burlington",
+      "Oshawa",
+      "Whitby",
+      "Ajax",
+      "Pickering",
+      "Aurora",
+      "Newmarket",
+      "Milton",
+      "Caledon",
+      "Halton Hills",
+      "Georgina",
+      "Uxbridge",
+      "Scugog",
+      "Clarington",
+      "Brock",
+      "East Gwillimbury",
+      "King",
+      "Whitchurch-Stouffville"
+    ],
   },
   {
-    id: "toronto",
-    name: "Toronto",
-    areas: ["All of Toronto", "Etobicoke", "North York", "Scarborough", "Toronto & East York"],
+    id: "ottawa-eastern",
+    name: "Ottawa/Eastern Ontario",
+    cities: [
+      "Ottawa",
+      "Kingston",
+      "Cornwall",
+      "Belleville",
+      "Peterborough",
+      "Brockville",
+      "Pembroke",
+      "Hawkesbury",
+      "Gananoque",
+      "Smiths Falls",
+      "Carleton Place",
+      "Arnprior",
+      "Renfrew",
+      "Perth",
+      "Almonte"
+    ],
   },
   {
-    id: "durham",
-    name: "Durham",
-    areas: ["All of Durham", "Ajax", "Pickering", "Whitby", "Oshawa"],
+    id: "southwestern",
+    name: "Southwestern Ontario",
+    cities: [
+      "London",
+      "Windsor",
+      "Kitchener",
+      "Waterloo",
+      "Cambridge",
+      "Guelph",
+      "Hamilton",
+      "St. Catharines",
+      "Niagara Falls",
+      "Barrie",
+      "Sarnia",
+      "Chatham",
+      "Brantford",
+      "Woodstock",
+      "Stratford",
+      "Owen Sound",
+      "Collingwood",
+      "Orillia",
+      "Wasaga Beach",
+      "Midland",
+      "Penetanguishene"
+    ],
   },
   {
-    id: "halton",
-    name: "Halton",
-    areas: ["All of Halton", "Burlington", "Oakville", "Milton"],
-  },
-  {
-    id: "peel",
-    name: "Peel",
-    areas: ["All of Peel", "Brampton", "Mississauga", "Caledon"],
-  },
-  {
-    id: "york",
-    name: "York",
-    areas: ["All of York", "Markham", "Vaughan", "Richmond Hill", "Aurora"],
-  },
-  {
-    id: "outside-gta",
-    name: "Outside GTA",
-    areas: ["All Outside GTA", "Hamilton", "Niagara", "Barrie", "Kitchener-Waterloo"],
+    id: "northern",
+    name: "Northern Ontario",
+    cities: [
+      "Sudbury",
+      "Thunder Bay",
+      "North Bay",
+      "Sault Ste. Marie",
+      "Timmins",
+      "Sault Ste Marie",
+      "Elliot Lake",
+      "Kapuskasing",
+      "Cochrane",
+      "Kenora",
+      "Dryden",
+      "Fort Frances",
+      "Parry Sound",
+      "Bracebridge",
+      "Huntsville",
+      "Gravenhurst"
+    ],
   },
 ];
 
-// Property type options
+// Legacy LOCATIONS structure for backward compatibility
+// This maps regions to their cities for the existing Location interface
+export const LOCATIONS: Location[] = REGIONS.map(region => ({
+  id: region.id,
+  name: region.name,
+  areas: ["All of " + region.name, ...region.cities],
+}));
+
+// Property type options - using exact Repliers API property types
 export const PROPERTY_TYPES = [
   { value: 'all', label: 'All Types' },
-  { value: 'house', label: 'House' },
-  { value: 'condo', label: 'Condo' },
-  { value: 'apartment', label: 'Apartment' },
-  { value: 'townhouse', label: 'Townhouse' },
-  { value: 'commercial', label: 'Commercial' }
+  { value: 'Detached', label: 'Detached' },
+  { value: 'Condo Apartment', label: 'Condo Apartment' },
+  { value: 'Office', label: 'Office' },
+  { value: 'Att/Row/Townhouse', label: 'Att/Row/Townhouse' },
+  { value: 'Commercial Retail', label: 'Commercial Retail' },
+  { value: 'Condo Townhouse', label: 'Condo Townhouse' },
+  { value: 'Vacant Land', label: 'Vacant Land' },
+  { value: 'Industrial', label: 'Industrial' },
+  { value: 'Semi-Detached', label: 'Semi-Detached' },
+  { value: 'Sale Of Business', label: 'Sale Of Business' },
+  { value: 'Land', label: 'Land' },
+  { value: 'Multiplex', label: 'Multiplex' },
+  { value: 'Duplex', label: 'Duplex' },
+  { value: 'Investment', label: 'Investment' },
+  { value: 'Farm', label: 'Farm' },
+  { value: 'Common Element Condo', label: 'Common Element Condo' },
+  { value: 'Other', label: 'Other' },
+  { value: 'Store W Apt/Office', label: 'Store W Apt/Office' },
+  { value: 'Triplex', label: 'Triplex' },
+  { value: 'Mobiletrailer', label: 'Mobiletrailer' },
+  { value: 'Lower Level', label: 'Lower Level' },
+  { value: 'Rural Residential', label: 'Rural Residential' },
+  { value: 'Link', label: 'Link' },
+  { value: 'Upper Level', label: 'Upper Level' },
+  { value: 'Co-Op Apartment', label: 'Co-Op Apartment' },
+  { value: 'Modular Home', label: 'Modular Home' },
+  { value: 'Parking Space', label: 'Parking Space' },
+  { value: 'Vacant Land Condo', label: 'Vacant Land Condo' },
+  { value: 'Detached Condo', label: 'Detached Condo' },
+  { value: 'Semi-Detached Condo', label: 'Semi-Detached Condo' },
+  { value: 'Room', label: 'Room' },
+  { value: 'Leasehold Condo', label: 'Leasehold Condo' },
+  { value: 'Co-Ownership Apartment', label: 'Co-Ownership Apartment' },
+  { value: 'Locker', label: 'Locker' },
+  { value: 'Timeshare', label: 'Timeshare' },
+  { value: 'Shared Room', label: 'Shared Room' }
 ];
 
 // Listing type options

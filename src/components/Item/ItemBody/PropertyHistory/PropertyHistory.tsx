@@ -8,7 +8,7 @@ import EstimateHistorySection from './EstimateHistorySection';
 import { Button } from '@/components/ui/button';
 import { HistoryIcon } from 'lucide-react';
 
-export default function PropertyHistory({ listingHistory, property }: PropertyHistoryProps) {
+export default function PropertyHistory({ listingHistory, property, rawProperty }: PropertyHistoryProps) {
   // Get property address
   const propertyAddress = getPropertyAddress(property);
 
@@ -56,7 +56,7 @@ export default function PropertyHistory({ listingHistory, property }: PropertyHi
           <TaxHistory property={property} propertyAddress={propertyAddress} />
         </TabsContent>
       </Tabs>
-      <EstimateHistorySection propertyAddress={propertyAddress} />
+      <EstimateHistorySection propertyAddress={propertyAddress} rawProperty={property?.rawProperty} />
       
       {/* Call to Action */}
       <div className="flex justify-center pt-6 pb-4">

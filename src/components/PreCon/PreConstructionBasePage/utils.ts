@@ -2,8 +2,12 @@ import type { PropertyListing } from '@/lib/types';
 import type { PreConstructionProperty } from '@/components/PreCon/PropertyCards/types';
 
 // Helper function to convert slug back to city name
+// Handles cases where slug might include filters (e.g., "toronto/2-beds" -> "Toronto")
 export const unslugifyCityName = (slug: string): string => {
-  return slug
+  // If slug contains '/', it might have filters - extract just the city part
+  const cityPart = slug.split('/')[0];
+  
+  return cityPart
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');

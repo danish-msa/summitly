@@ -260,7 +260,7 @@ const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) 
           disabled={!ready}
           placeholder={animatedPlaceholder}
           onFocus={() => setIsOpen(true)}
-          className="pl-12 pr-12 h-12 text-base"
+          className="pl-12 pr-12 h-9 rounded-full sm:h-11 text-xs sm:text-base md:text-sm"
         />
         {/* Location detection button */}
         <button
@@ -288,7 +288,7 @@ const LocationInput: React.FC<LocationInputProps> = ({ onSelect, placeholder }) 
               <X className="h-4 w-4 text-gray-500" />
             </button>
           )}
-          <Search className="h-10 w-10 p-2 rounded-full text-white btn-gradient-dark cursor-pointer transition-colors" />
+          <Search className="h-7 sm:h-10 w-7 sm:w-10 p-2 sm:p-2 rounded-full text-white btn-gradient-dark cursor-pointer transition-colors" />
         </div>
       </div>
       {isOpen && status === 'OK' && (

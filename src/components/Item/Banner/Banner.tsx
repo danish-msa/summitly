@@ -250,7 +250,7 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false
                                     {isPreCon ? preConData?.projectName : shortAddress}
                                 </h1>
                                 {isPreCon ? (
-                                    <Link href={`/pre-construction/${getStatusSlug(statusText)}`}>
+                                    <Link href={`/pre-con/${getStatusSlug(statusText)}`}>
                                         <Badge className={`${getStatusColor(statusText)} uppercase py-1 px-4 cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl`}>
                                             <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-white"></span>
                                             {statusText}
@@ -268,7 +268,7 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false
                                 <span className="text-base text-foreground font-medium">
                                     Developed by{' '}
                                     <Link 
-                                        href={`/pre-construction?developer=${encodeURIComponent(preConData.developer)}`}
+                                        href={`/pre-con?developer=${encodeURIComponent(preConData.developer)}`}
                                         className="relative inline-block text-primary group"
                                     >
                                         <span className="relative z-10">{preConData.developer}</span>
@@ -291,7 +291,7 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false
                                                 </>
                                             ) : null}
                                             <Link 
-                                                href={`/pre-construction/${slugifyCity(property.address.city)}`}
+                                                href={`/pre-con/${slugifyCity(property.address.city)}`}
                                                 className="relative inline-block group"
                                             >
                                                 <span className="relative z-10 hover:text-primary/80 transition-colors duration-300">
@@ -343,7 +343,7 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false
                                                 // Only show if subPropertyType exists
                                                 if (subPropertyType && (isCondo || isHouse)) {
                                                     const displayText = isCondo ? `${subPropertyType} Condo` : `${subPropertyType} House`;
-                                                    const linkUrl = `/pre-construction/${getSubPropertyTypeSlug(subPropertyType, propertyType)}`;
+                                                    const linkUrl = `/pre-con/${getSubPropertyTypeSlug(subPropertyType, propertyType)}`;
                                                     
                                                     return (
                                                         <div className="flex flex-row items-center gap-1 group">
@@ -366,7 +366,7 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false
                                             {preConData?.completion?.date && (() => {
                                                 const year = extractYear(preConData.completion.date);
                                                 const displayText = year ? `Occupancy: ${year}` : `Occupancy: ${preConData.completion.date}`;
-                                                const linkUrl = year ? `/pre-construction/${year}` : null;
+                                                const linkUrl = year ? `/pre-con/${year}` : null;
                                                 
                                                 return (
                                                     <div className="flex flex-row items-center gap-1 group">
@@ -413,7 +413,7 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false
                                                     <div className="flex flex-row items-center gap-1 group">
                                                         <Building2 className="h-6 w-6 text-primary transition-transform duration-300 group-hover:scale-110" />
                                                         <Link 
-                                                            href={`/pre-construction/${propertyTypeSlug}`}
+                                                            href={`/pre-con/${propertyTypeSlug}`}
                                                             className="relative inline-block text-sm text-foreground font-medium"
                                                         >
                                                             <span className="relative z-10 transition-colors duration-300 group-hover:text-primary">

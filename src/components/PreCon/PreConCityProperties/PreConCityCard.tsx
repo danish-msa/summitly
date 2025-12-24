@@ -27,7 +27,7 @@ const PreConCityCard = ({ city }: PreConCityCardProps) => {
   const [imageError, setImageError] = useState(false);
   
   return (
-    <Link href={`/pre-construction/${citySlug}`}>
+    <Link href={`/pre-con/${citySlug}`}>
       <div className='relative rounded-lg overflow-hidden m-2 group cursor-pointer'>
           {imageError ? (
             <div className='w-full h-[250px] bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center'>

@@ -56,13 +56,6 @@ export async function GET(
       where: { id },
       include: {
         units: true,
-        creator: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
       },
     })
 
@@ -89,13 +82,30 @@ export async function GET(
       return parsed?.id || null
     }
 
+    // Fetch creator info separately if createdBy exists
+    let creator = null
+    if (project.createdBy) {
+      try {
+        const creatorUser = await prisma.user.findUnique({
+          where: { id: project.createdBy },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        })
+        creator = creatorUser
+      } catch (error) {
+        console.error('Error fetching creator:', error)
+      }
+    }
+
     // Type assertion to access all fields (Prisma types may not include all fields with include)
     const projectWithAllFields = project as typeof project & {
       interiorDesignerInfo: string | null
       landscapeArchitectInfo: string | null
       marketingInfo: string | null
       developmentTeamOverview: string | null
-      creator: { id: string; name: string | null; email: string } | null
     }
 
     // Convert completionProgress integer back to string for form compatibility
@@ -120,7 +130,7 @@ export async function GET(
       landscapeArchitectInfo: extractDeveloperId(projectWithAllFields.landscapeArchitectInfo ?? null),
       marketingInfo: extractDeveloperId(projectWithAllFields.marketingInfo ?? null),
       developmentTeamOverview: projectWithAllFields.developmentTeamOverview ?? null,
-      creatorName: projectWithAllFields.creator?.name || projectWithAllFields.creator?.email || null,
+      creatorName: creator?.name || creator?.email || null,
     }
 
     return NextResponse.json({ project: parsedProject })
@@ -451,13 +461,6 @@ export async function PUT(
       data: updateData as Prisma.PreConstructionProjectUncheckedUpdateInput,
       include: {
         units: true,
-        creator: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
       },
     })
 
@@ -496,9 +499,22 @@ export async function PUT(
       return progressMap[progress] || 'Pre-construction'
     }
 
-    // Type assertion to include creator
-    const projectWithCreator = project as typeof project & {
-      creator: { id: string; name: string | null; email: string } | null
+    // Fetch creator info separately if createdBy exists
+    let creator = null
+    if (project.createdBy) {
+      try {
+        const creatorUser = await prisma.user.findUnique({
+          where: { id: project.createdBy },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        })
+        creator = creatorUser
+      } catch (error) {
+        console.error('Error fetching creator:', error)
+      }
     }
 
     const parsedProject = {
@@ -512,7 +528,7 @@ export async function PUT(
       landscapeArchitectInfo: extractDeveloperId(projectWithAllFields.landscapeArchitectInfo ?? null),
       marketingInfo: extractDeveloperId(projectWithAllFields.marketingInfo ?? null),
       developmentTeamOverview: projectWithAllFields.developmentTeamOverview ?? null,
-      creatorName: projectWithCreator.creator?.name || projectWithCreator.creator?.email || null,
+      creatorName: creator?.name || creator?.email || null,
     }
 
     return NextResponse.json({ project: parsedProject })

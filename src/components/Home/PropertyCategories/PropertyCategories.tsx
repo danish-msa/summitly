@@ -120,9 +120,9 @@ const PropertyCategories = () => {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
-          className=" mb-12"
+          className="mb-8 sm:mb-12"
         >
-          <h2 className="text-3xl sm:text-3xl lg:text-3xl font-bold text-foreground mb-4">
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-4 px-2">
             Browse homes in <span className="text-gradient-brand">{displayLocation}</span>
           </h2>
         </motion.div>
@@ -155,10 +155,10 @@ const PropertyCategories = () => {
                   <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors duration-300" />
                   
                   {/* Content */}
-                  <div className="absolute inset-0 p-4 flex flex-col justify-between">
+                  <div className="absolute inset-0 p-3 sm:p-4 flex flex-col justify-between">
                     {/* Title */}
                     <div className="flex justify-between items-start">
-                      <h3 className="text-white font-semibold text-lg leading-tight">
+                      <h3 className="text-white font-semibold text-base sm:text-lg leading-tight">
                         {category.title}
                       </h3>
                     </div>

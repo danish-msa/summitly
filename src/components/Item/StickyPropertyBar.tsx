@@ -264,7 +264,7 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
                         <div className="flex items-center gap-1.5 group">
                           <User className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-transform duration-300 group-hover:scale-110" />
                           <Link 
-                            href={`/pre-construction?developer=${encodeURIComponent(property.preCon.developer)}`}
+                            href={`/pre-con?developer=${encodeURIComponent(property.preCon.developer)}`}
                             className="relative inline-block text-sm text-foreground whitespace-nowrap truncate max-w-[180px] lg:max-w-[220px]"
                           >
                             <span className="relative z-10 transition-colors duration-300 group-hover:text-primary">
@@ -287,7 +287,7 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
                         // Show sub-property type if available for Condos/Houses
                         if (subPropertyType && (isCondo || isHouse)) {
                           const displayText = isCondo ? `${subPropertyType} Condo` : `${subPropertyType} House`;
-                          const linkUrl = `/pre-construction/${getSubPropertyTypeSlug(subPropertyType, propertyType)}`;
+                          const linkUrl = `/pre-con/${getSubPropertyTypeSlug(subPropertyType, propertyType)}`;
                           
                           return (
                             <div className="flex items-center gap-1.5 group">
@@ -311,7 +311,7 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
                           <div className="flex items-center gap-1.5 group">
                             <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-transform duration-300 group-hover:scale-110" />
                             <Link 
-                              href={`/pre-construction/${propertyTypeSlug}`}
+                              href={`/pre-con/${propertyTypeSlug}`}
                               className="relative inline-block text-sm text-foreground whitespace-nowrap"
                             >
                               <span className="relative z-10 transition-colors duration-300 group-hover:text-primary">
@@ -359,7 +359,7 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
                       {property.preCon?.completion?.date && (() => {
                         const year = extractYear(property.preCon.completion.date);
                         const displayText = year ? `Occupancy: ${year}` : `Occupancy: ${property.preCon.completion.date}`;
-                        const linkUrl = year ? `/pre-construction/${year}` : null;
+                        const linkUrl = year ? `/pre-con/${year}` : null;
                         
                         return (
                           <div className="flex items-center gap-1.5 group">

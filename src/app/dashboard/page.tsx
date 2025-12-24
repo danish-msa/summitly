@@ -189,7 +189,7 @@ export default function DashboardHome() {
       if (activity.type === 'property_saved' && activity.mlsNumber) {
         if (isPreConProject && preConProject) {
           // Pre-construction project
-          link = `/pre-construction/${activity.mlsNumber}`
+          link = `/pre-con/${activity.mlsNumber}`
           linkText = preConProject.preCon?.projectName || preConProject.address?.location || propertyText
           actionText = 'Project saved'
         } else {
@@ -210,7 +210,7 @@ export default function DashboardHome() {
       } else if (activity.type === 'alert_watch' && activity.mlsNumber) {
         if (isPreConProject && preConProject) {
           // Pre-construction project
-          link = `/pre-construction/${activity.mlsNumber}`
+          link = `/pre-con/${activity.mlsNumber}`
           linkText = preConProject.preCon?.projectName || preConProject.address?.location || propertyText
         } else {
           // Regular property

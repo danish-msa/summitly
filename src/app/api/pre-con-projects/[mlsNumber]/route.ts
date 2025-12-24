@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { convertToS3Url } from '@/lib/image-url'
 
 // GET - Public endpoint to fetch a single pre-con project by MLS number
 export async function GET(
@@ -89,13 +90,22 @@ export async function GET(
       marketing?: DevelopmentTeamMember
     }
 
+    // Helper function to convert image URLs in team member objects
+    const convertTeamMemberImage = (member: any): DevelopmentTeamMember | undefined => {
+      if (!member) return undefined
+      return {
+        ...member,
+        image: member.image ? convertToS3Url(member.image) : undefined,
+      }
+    }
+
     const developmentTeam: DevelopmentTeam = {}
-    if (developerInfo) developmentTeam.developer = developerInfo as DevelopmentTeamMember
-    if (architectInfo) developmentTeam.architect = architectInfo as DevelopmentTeamMember
-    if (builderInfo) developmentTeam.builder = builderInfo as DevelopmentTeamMember
-    if (interiorDesignerInfo) developmentTeam.interiorDesigner = interiorDesignerInfo as DevelopmentTeamMember
-    if (landscapeArchitectInfo) developmentTeam.landscapeArchitect = landscapeArchitectInfo as DevelopmentTeamMember
-    if (marketingInfo) developmentTeam.marketing = marketingInfo as DevelopmentTeamMember
+    if (developerInfo) developmentTeam.developer = convertTeamMemberImage(developerInfo) as DevelopmentTeamMember
+    if (architectInfo) developmentTeam.architect = convertTeamMemberImage(architectInfo) as DevelopmentTeamMember
+    if (builderInfo) developmentTeam.builder = convertTeamMemberImage(builderInfo) as DevelopmentTeamMember
+    if (interiorDesignerInfo) developmentTeam.interiorDesigner = convertTeamMemberImage(interiorDesignerInfo) as DevelopmentTeamMember
+    if (landscapeArchitectInfo) developmentTeam.landscapeArchitect = convertTeamMemberImage(landscapeArchitectInfo) as DevelopmentTeamMember
+    if (marketingInfo) developmentTeam.marketing = convertTeamMemberImage(marketingInfo) as DevelopmentTeamMember
 
     // Convert units to UnitListing format
     const formattedUnits = project.units.map((unit) => {
@@ -104,6 +114,10 @@ export async function GET(
       type UnitWithImages = typeof unit & { images?: string[]; floorplanImage?: string | null; studio?: boolean }
       const unitWithImages = unit as UnitWithImages
       const unitImages = unitWithImages.images || (unitWithImages.floorplanImage ? [unitWithImages.floorplanImage] : [])
+      // Convert image URLs from Supabase to S3
+      const convertedImages = unitImages.length > 0 
+        ? unitImages.map(img => convertToS3Url(img))
+        : ['/images/floorplan-placeholder.jpg']
       return {
         id: unit.id,
         name: unit.unitName,
@@ -113,7 +127,7 @@ export async function GET(
         price: unit.price,
         maintenanceFee: unit.maintenanceFee,
         status: unit.status === 'for-sale' ? 'for-sale' : unit.status === 'sold-out' ? 'sold-out' : 'reserved',
-        images: unitImages && unitImages.length > 0 ? unitImages : ['/images/floorplan-placeholder.jpg'],
+        images: convertedImages,
         description: unit.description,
         features: unit.features || [],
         amenities: unit.amenities || [],
@@ -193,8 +207,10 @@ export async function GET(
       },
       boardId: 0,
       images: {
-        imageUrl: project.images[0] || '/images/p1.jpg',
-        allImages: project.images.length > 0 ? project.images : ['/images/p1.jpg'],
+        imageUrl: project.images[0] ? convertToS3Url(project.images[0]) : '/images/p1.jpg',
+        allImages: project.images.length > 0 
+          ? project.images.map(img => convertToS3Url(img))
+          : ['/images/p1.jpg'],
       },
         preCon: {
           projectName: project.projectName,

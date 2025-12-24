@@ -20,14 +20,17 @@ const RentForm = () => {
           <LocationInput onSelect={handleLocationSelect} placeholder="Where do you want to rent?" />
         </div>
       </form>
-      <div className='flex flex-col md:flex-row gap-2 justify-between bg-gradient-brand text-white text-white p-6 rounded-2xl mt-4'>
+      <div className='flex flex-col md:flex-row gap-2 justify-between bg-gradient-brand text-white text-white p-4 sm:p-6 rounded-2xl mt-2'>
         <div className='flex flex-col gap-2'>
           <div className='flex gap-2 items-center'>
-            <BiCalculator className='h-7 w-7' /><span className='text-white text-base md:text-xl font-bold'>Find the rental cost of a property, instantly</span>
+            <div className='w-[5%]'>
+              <BiCalculator className='h-5 w-5' />
+            </div>
+            <p className='w-[95%] text-white text-sm md:text-xl font-bold'>Find the property's rental cost, instantly</p>
           </div>
-          <p className='font-light text-sm'>Get a free online estimate of a property's rental income in minutes</p>
+          <p className='font-light text-xs sm:text-sm'>Get a free online estimate of a property's rental income in minutes</p>
         </div>
-        <button className='btn btn-primary bg-transparent rounded-full border-2 border-white text-white px-10 hover:bg-white hover:text-primary'>Start Rent Checker</button>
+        <button className='btn btn-primary text-xs sm:text-sm md:text-base bg-transparent rounded-full border-2 border-white text-white px-4 py-2 sm:px-10 sm:py-3 hover:bg-white hover:text-primary'>Start Rent Checker</button>
       </div>
     </>
   );

@@ -17,7 +17,7 @@ export const designSystem = {
       700: '#4338ca',
       800: '#3730a3',
       900: '#312e81',
-      DEFAULT: '#012169',
+      DEFAULT: '#001D3D',
     },
     secondary: {
       50: '#f0f9ff',

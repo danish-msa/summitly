@@ -3,14 +3,12 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Home, Building2 } from "lucide-react";
+import { Home, Building2, ChevronRight } from "lucide-react";
 import SectionHeading from "@/components/Helper/SectionHeading";
-import Image from "next/image";
 
 interface Recommendation {
   title: string;
   link: string;
-  image: string;
 }
 
 const cities = [
@@ -38,17 +36,10 @@ const cities = [
   "Vaughan",
 ];
 
-// City image mapping - using lowercase with hyphens for spaces
-const getCityImage = (city: string): string => {
-  const cityKey = city.toLowerCase().replace(/\s+/g, "-");
-  return `/images/cities/${cityKey}.webp`;
-};
-
 const generateRecommendations = (type: "Homes" | "Condos"): Recommendation[] => {
   return cities.map((city) => ({
     title: `New ${type} ${city}`,
-    link: `/pre-construction/${city.toLowerCase().replace(/\s+/g, "-")}`,
-    image: getCityImage(city),
+    link: `/pre-con/${city.toLowerCase().replace(/\s+/g, "-")}`,
   }));
 };
 
@@ -92,19 +83,11 @@ export const NewHomesRecommendations = () => {
                   key={index}
                   className="group flex items-center gap-3 p-3 hover:shadow-lg transition-all duration-300 cursor-pointer border-border bg-transparent hover:bg-gradient-to-r hover:from-brand-glacier hover:to-brand-ice-blue overflow-hidden"
                 >
-                  <a href={rec.link} className="block w-full flex items-center gap-3">
-                    <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
-                      <Image
-                        src={rec.image}
-                        alt={rec.title}
-                        fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-300"
-                        sizes="48px"
-                      />
-                    </div>
+                  <a href={rec.link} className="block w-full flex items-center justify-between gap-3">
                     <h3 className="text-base font-medium text-foreground group-hover:text-primary transition-colors">
                       {rec.title}
                     </h3>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
                   </a>
                 </Card>
               ))}
@@ -118,19 +101,11 @@ export const NewHomesRecommendations = () => {
                   key={index}
                   className="group flex items-center gap-3 p-3 hover:shadow-lg transition-all duration-300 cursor-pointer border-border bg-transparent hover:bg-gradient-to-r hover:from-brand-glacier hover:to-brand-ice-blue overflow-hidden"
                 >
-                  <a href={rec.link} className="block w-full flex items-center gap-3">
-                    <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
-                      <Image
-                        src={rec.image}
-                        alt={rec.title}
-                        fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-300"
-                        sizes="48px"
-                      />
-                    </div>
+                  <a href={rec.link} className="block w-full flex items-center justify-between gap-3">
                     <h3 className="text-base font-medium text-foreground group-hover:text-primary transition-colors">
                       {rec.title}
                     </h3>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
                   </a>
                 </Card>
               ))}

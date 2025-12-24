@@ -8,7 +8,7 @@ const AsSeenOn = () => {
   const duplicatedLogos = [...logos, ...logos]
 
   return (
-    <section className="py-2 overflow-hidden">
+    <section className="overflow-hidden">
       <div className="max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-6">
           {/* <p className="text-sm font-medium text-muted-foreground whitespace-nowrap flex-shrink-0 z-10 relative">

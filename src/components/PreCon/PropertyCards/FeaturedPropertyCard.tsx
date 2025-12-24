@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Bed, Bath, Maximize2, MapPin, Heart, ChevronLeft, ChevronRight, Building2, Star, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,8 +29,34 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
     average: 0,
     total: 0
   });
+  const cardRef = useRef<HTMLAnchorElement>(null);
 
+  // Lazy load ratings only when card is visible (using Intersection Observer)
   useEffect(() => {
+    const cardElement = cardRef.current;
+    if (!cardElement) return;
+
+    // Check in-memory cache to avoid duplicate requests
+    const cacheKey = `rating_${property.id}_pre-construction`;
+    const cached = (window as any).__ratingCache?.[cacheKey];
+    
+    if (cached && cached.data) {
+      // Check if cache is still valid (5 minutes)
+      if (cached.timestamp && Date.now() - cached.timestamp < 300000) {
+        setRatingData({
+          average: cached.data.average || 0,
+          total: cached.data.total || 0
+        });
+        return;
+      }
+    }
+
+    // Only fetch when card is visible
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            // Card is visible, fetch ratings
     const loadRatings = async () => {
       try {
         const { getProjectRating } = await import('@/lib/api/project-ratings');
@@ -39,12 +65,29 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
           average: data.average || 0,
           total: data.total || 0
         });
+                // Cache is handled in the API function
       } catch (error) {
         console.error('Error loading ratings:', error);
       }
     };
 
     loadRatings();
+            // Stop observing after first load
+            observer.disconnect();
+          }
+        });
+      },
+      {
+        rootMargin: '50px', // Start loading 50px before card is visible
+        threshold: 0.1
+      }
+    );
+
+    observer.observe(cardElement);
+
+    return () => {
+      observer.disconnect();
+    };
   }, [property.id]);
   
   const images = property.images;
@@ -133,16 +176,19 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
 
   return (
     <>
-    <Link href={`/pre-construction/${property.id}`}>
+    <Link 
+      ref={cardRef}
+      href={`/pre-con/${property.id}`}
+    >
       <div 
         className={cn(
-          "group bg-card rounded-xl overflow-hidden transition-all duration-500 hover:shadow-[var(--shadow-hover)] cursor-pointer flex flex-row h-full",
+          "group bg-card rounded-xl overflow-hidden transition-all duration-500 hover:shadow-[var(--shadow-hover)] cursor-pointer flex flex-col md:flex-row h-full",
           className
         )}
         style={{ boxShadow: 'var(--shadow-card)' }}
       >
         {/* Image Section - Left */}
-        <div className="relative overflow-hidden bg-muted flex-shrink-0 w-2/5">
+        <div className="relative overflow-hidden bg-muted flex-shrink-0 w-full md:w-2/5 h-48 sm:h-56 md:h-full">
           <div className="relative h-full">
             <img 
               src={imageSrc}
@@ -154,15 +200,15 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
             {/* Property Type Badge */}
-            <div className="absolute top-3 left-3">
-              <Badge className="bg-card/95 backdrop-blur-sm text-card-foreground border-0 shadow-lg text-xs">
+            <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
+              <Badge className="bg-card/95 backdrop-blur-sm text-card-foreground border-0 shadow-lg text-[10px] sm:text-xs">
                 {property.details.propertyType}
               </Badge>
             </div>
 
             {/* Featured Badge */}
-            <div className="absolute top-3 right-3">
-              <Badge className="bg-primary/95 backdrop-blur-sm text-white border-0 shadow-lg text-xs font-semibold">
+            <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
+              <Badge className="bg-primary/95 backdrop-blur-sm text-white border-0 shadow-lg text-[10px] sm:text-xs font-semibold">
                 Featured
               </Badge>
             </div>
@@ -205,10 +251,10 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
             )}
 
             {/* Address at bottom of image */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 via-black/50 to-transparent">
+            <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3 md:p-4 bg-gradient-to-t from-black/70 via-black/50 to-transparent">
               <div className="flex items-start">
-                <MapPin className="mr-2 text-white flex-shrink-0 mt-0.5" size={16} />
-                <p className="text-sm text-white line-clamp-2">
+                <MapPin className="mr-1.5 sm:mr-2 text-white flex-shrink-0 mt-0.5 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <p className="text-xs sm:text-sm text-white line-clamp-2">
                   {property.address.street}, {property.address.city}, {property.address.province}
                 </p>
               </div>
@@ -217,24 +263,35 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
         </div>
 
         {/* Content Section - Right */}
-        <div className="p-6 flex flex-col flex-1">
+        <div className="p-3 sm:p-4 md:p-6 flex flex-col flex-1">
           {/* Top Section */}
           <div className="flex-1">
             {/* Status Badges */}
-            <div className="flex items-center gap-2 flex-wrap mb-3">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mb-2 sm:mb-3">
               {getStatusBadge()}
             </div>
 
-            {/* Project Name */}
-            <h3 className="text-2xl font-bold text-foreground mb-2 line-clamp-2">
+            {/* Project Name and Price Row - Mobile */}
+            <div className="flex items-start justify-between gap-2 mb-1.5 sm:mb-2 md:hidden">
+              <h3 className="text-lg font-bold text-foreground line-clamp-2 flex-1">
+                {property.projectName}
+              </h3>
+              <div className="flex-shrink-0 text-right">
+                <p className="text-[10px] text-muted-foreground mb-0.5">Starting from</p>
+                <p className={`${hasPrice ? 'text-base' : 'text-sm'} font-bold text-foreground ${hasPrice ? 'whitespace-nowrap' : 'break-words'}`}>{formattedPrice}</p>
+              </div>
+            </div>
+
+            {/* Project Name - Desktop */}
+            <h3 className="hidden md:block text-xl md:text-2xl font-bold text-foreground mb-1.5 sm:mb-2">
               {property.projectName}
             </h3>
 
             {/* Developer */}
             {property.developer && (
-              <div className="flex items-center gap-2 mb-2">
-                <Building2 className="text-muted-foreground" size={16} />
-                <p className="text-sm text-muted-foreground">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+                <Building2 className="text-muted-foreground h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {property.developer}
                 </p>
               </div>
@@ -242,7 +299,7 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
 
             {/* Rating Display */}
             {ratingData.total > 0 && (
-              <div className="flex items-center gap-1.5 mb-4">
+              <div className="flex items-center gap-1 sm:gap-1.5 mb-3 sm:mb-4">
                 <div className="flex items-center gap-0.5">
                   {[1, 2, 3, 4, 5].map((star) => {
                     const isActive = star <= Math.round(ratingData.average);
@@ -250,51 +307,51 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
                       <Star
                         key={star}
                         className={cn(
-                          "h-3 w-3",
+                          "h-2.5 w-2.5 sm:h-3 sm:w-3",
                           isActive ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
                         )}
                       />
                     );
                   })}
                 </div>
-                <span className="text-xs font-semibold text-foreground">{ratingData.average.toFixed(1)}</span>
-                <span className="text-xs text-muted-foreground">/</span>
-                <span className="text-xs text-muted-foreground">5</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-[10px] sm:text-xs font-semibold text-foreground">{ratingData.average.toFixed(1)}</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground">/</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground">5</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground">
                   ({ratingData.total} {ratingData.total === 1 ? 'vote' : 'votes'})
                 </span>
               </div>
             )}
 
             {/* Property Details */}
-            <div className="flex flex-wrap gap-4 mb-4">
+            <div className="flex flex-wrap gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4">
               {property.details.bedroomRange && (
-                <div className="flex items-center gap-1.5">
-                  <Bed className="text-muted-foreground" size={16} />
-                  <span className="text-sm text-foreground font-medium">{property.details.bedroomRange}</span>
+                <div className="flex items-center gap-1 sm:gap-1.5">
+                  <Bed className="text-muted-foreground h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="text-xs sm:text-sm text-foreground font-medium">{property.details.bedroomRange}</span>
                 </div>
               )}
               {property.details.bathroomRange && (
-                <div className="flex items-center gap-1.5">
-                  <Bath className="text-muted-foreground" size={16} />
-                  <span className="text-sm text-foreground font-medium">{property.details.bathroomRange}</span>
+                <div className="flex items-center gap-1 sm:gap-1.5">
+                  <Bath className="text-muted-foreground h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="text-xs sm:text-sm text-foreground font-medium">{property.details.bathroomRange}</span>
                 </div>
               )}
               {property.details.sqftRange && (
-                <div className="flex items-center gap-1.5">
-                  <Maximize2 className="text-muted-foreground" size={16} />
-                  <span className="text-sm text-foreground font-medium">{property.details.sqftRange} sqft</span>
+                <div className="flex items-center gap-1 sm:gap-1.5">
+                  <Maximize2 className="text-muted-foreground h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="text-xs sm:text-sm text-foreground font-medium">{property.details.sqftRange} sqft</span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Bottom Section */}
-          <div className="flex items-end justify-between gap-4">
+          {/* Bottom Section - Desktop Only */}
+          <div className="hidden md:flex items-end justify-between gap-4">
             {/* Price */}
             <div className="flex-shrink-0 min-w-0">
               <p className="text-xs text-muted-foreground mb-1">Starting from</p>
-              <p className={`${hasPrice ? 'text-2xl' : 'text-lg'} font-bold text-foreground ${hasPrice ? 'whitespace-nowrap' : 'break-words'}`}>{formattedPrice}</p>
+              <p className={`${hasPrice ? 'text-xl md:text-2xl' : 'text-lg'} font-bold text-foreground ${hasPrice ? 'whitespace-nowrap' : 'break-words'}`}>{formattedPrice}</p>
             </div>
 
             {/* CTA Button */}
@@ -305,6 +362,15 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
               Register Interest
             </Button>
           </div>
+
+          {/* CTA Button - Mobile Only */}
+          <Button 
+            onClick={handleRegisterInterest}
+            size="sm"
+            className="md:hidden bg-secondary hover:bg-secondary/90 text-white font-semibold px-4 py-1.5 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl text-xs w-full"
+          >
+            Register Interest
+          </Button>
         </div>
       </div>
     </Link>

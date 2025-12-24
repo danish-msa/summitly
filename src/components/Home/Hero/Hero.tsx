@@ -4,7 +4,7 @@ import { BackgroundEffects } from '@/components/ui/background-effects'
 
 const Hero = () => {
   return (
-    <div className='w-full flex-col lg:flex-row flex justify-center items-center min-h-[600px] sm:min-h-[700px] lg:h-[800px] z-50 relative mx-auto'>
+    <div className='w-full flex-col lg:flex-row flex justify-center items-center min-h-[500px] sm:min-h-[700px] lg:h-[800px] z-50 relative mx-auto'>
         {/* Background Effects */}
         <BackgroundEffects />
         
@@ -19,10 +19,10 @@ const Hero = () => {
             <h1 className='font-outfit capitalize text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-tight text-center text-black px-2' style={{ fontWeight: 700 }}>
                 Canada's #1 place to <br /> <span className='text-gradient-brand'>buy, sell, and rent</span>
             </h1>
-            <p className='text-sm sm:text-base md:text-lg mt-4 text-black/90 text-center px-4 max-w-2xl'>
+            <p className='text-xs sm:text-base md:text-lg mt-4 text-black/90 text-center px-4 max-w-2xl'>
                 Find homes you'll love with fast search, real photos, and trusted data.
             </p>
-            <p>Search <span className='text-brand-red text-lg sm:text-xl md:text-2xl font-bold'>336,092</span> listings from trusted REALTORS®</p>
+            <p className='text-xs sm:text-sm md:text-base text-center px-4'>Search <span className='text-brand-red text-sm sm:text-lg md:text-xl font-bold'>336,092</span> listings from trusted REALTORS®</p>
             <div className='mt-8 sm:mt-8 w-full max-w-4xl z-40 -mb-16 sm:-mb-20 lg:-mb-28 px-4'>
                 {/* <SearchBox /> */}
                 <BannerSearch />

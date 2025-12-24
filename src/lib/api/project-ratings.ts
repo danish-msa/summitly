@@ -33,16 +33,42 @@ export async function getPropertyRating(
       ? `/api/projects/${propertyId}/ratings?propertyType=${propertyType}`
       : `/api/properties/${propertyId}/ratings?propertyType=${propertyType}`;
     
+    // Check in-memory cache first (client-side only)
+    if (typeof window !== 'undefined') {
+      const cacheKey = `rating_${propertyId}_${propertyType}`;
+      if ((window as any).__ratingCache?.[cacheKey]) {
+        const cached = (window as any).__ratingCache[cacheKey];
+        // Check if cache is still valid (5 minutes)
+        if (cached.timestamp && Date.now() - cached.timestamp < 300000) {
+          return cached.data;
+        }
+      }
+    }
+
     const response = await fetch(apiRoute, {
       method: 'GET',
-      cache: 'no-store'
+      cache: 'default' // Use browser's default cache
     });
 
     if (!response.ok) {
       throw new Error('Failed to fetch ratings');
     }
 
-    return await response.json();
+    const data = await response.json();
+    
+    // Cache the result (client-side only)
+    if (typeof window !== 'undefined') {
+      const cacheKey = `rating_${propertyId}_${propertyType}`;
+      if (!(window as any).__ratingCache) {
+        (window as any).__ratingCache = {};
+      }
+      (window as any).__ratingCache[cacheKey] = {
+        data,
+        timestamp: Date.now()
+      };
+    }
+
+    return data;
   } catch (error) {
     console.error('Error fetching property rating:', error);
     return {

@@ -18,12 +18,32 @@ import { BlogSectionWrapper } from './components/BlogSectionWrapper';
 import { FAQSection } from './components/FAQSection';
 import { PreConContactSection } from './components/ContactSection';
 
-const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({ slug, pageType, teamType }) => {
+const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({ 
+  slug, 
+  pageType, 
+  teamType,
+  locationType,
+  locationName,
+  bedroomFilter,
+  bathroomFilter,
+}) => {
   const [viewMode, setViewMode] = useState<'list' | 'mixed' | 'map'>('list');
   const [selectedProject, setSelectedProject] = useState<PreConstructionProperty | null>(null);
   
   // Use global filters hook
-  const { filters, handleFilterChange, resetFilters } = useGlobalFilters();
+  const { filters, handleFilterChange, resetFilters, setFilter } = useGlobalFilters();
+
+  // Set bedroom/bathroom filters from URL if provided
+  React.useEffect(() => {
+    if (bedroomFilter) {
+      console.log('[PreConstructionBasePage] Setting bedroom filter from URL:', bedroomFilter);
+      setFilter('bedrooms', bedroomFilter.bedrooms);
+    }
+    if (bathroomFilter) {
+      console.log('[PreConstructionBasePage] Setting bathroom filter from URL:', bathroomFilter);
+      setFilter('bathrooms', bathroomFilter.bathrooms);
+    }
+  }, [bedroomFilter, bathroomFilter, setFilter]);
 
   // Use custom hook for data fetching and filtering
   const {
@@ -34,7 +54,7 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({ slug,
     preConProjects,
     mapProperties,
     teamMemberInfo,
-  } = usePreConProjectsData({ slug, pageType, filters, teamType });
+  } = usePreConProjectsData({ slug, pageType, filters, teamType, locationType, locationName });
 
   // Find selected property for map
   const selectedPropertyForMap = useMemo(() => {

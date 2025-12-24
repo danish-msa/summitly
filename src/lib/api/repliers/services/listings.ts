@@ -21,12 +21,22 @@ export interface ListingsParams {
   resultsPerPage?: number;
   class?: string;
   propertyType?: string;
+  type?: string; // "Sale" or "Lease" for listing type
   minPrice?: number;
   maxPrice?: number;
   minBedrooms?: number;
   maxBedrooms?: number;
-  minBathrooms?: number;
-  maxBathrooms?: number;
+  minBaths?: number; // Use minBaths instead of minBathrooms
+  maxBaths?: number; // Use maxBaths instead of maxBathrooms
+  minBathrooms?: number; // Keep for backward compatibility
+  maxBathrooms?: number; // Keep for backward compatibility
+  minSqft?: number;
+  maxSqft?: number;
+  minYearBuilt?: number;
+  maxYearBuilt?: number;
+  yearBuilt?: string; // For age ranges like "0-5"
+  minListDate?: string; // Format: YYYY-MM-DD
+  maxListDate?: string; // Format: YYYY-MM-DD
   city?: string;
   status?: string | string[];
   sortBy?: string;
@@ -209,6 +219,7 @@ export function transformListing(listing: ApiListing): PropertyListing {
     soldPrice: typeof listing.soldPrice === 'string' ? listing.soldPrice : (listing.soldPrice ? String(listing.soldPrice) : ''),
     soldDate: listing.soldDate || '',
     daysOnMarket: listing.daysOnMarket ?? listing.simpleDaysOnMarket ?? undefined,
+    originalPrice: listing.originalPrice || undefined,
     
     address: {
       area: listing.address?.area || null,
@@ -244,6 +255,9 @@ export function transformListing(listing: ApiListing): PropertyListing {
       propertyType: listing.details?.propertyType || 'Unknown',
       sqft: listing.details?.sqft || 0,
       description: listing.details?.description || null,
+      yearBuilt: listing.details?.yearBuilt || null,
+      garage: listing.details?.garage || null,
+      numGarageSpaces: listing.details?.numGarageSpaces || null,
     },
     
     updatedOn: listing.updatedOn || new Date().toISOString(),
@@ -270,6 +284,8 @@ export function transformListing(listing: ApiListing): PropertyListing {
       imageUrl: images[0] || '',
       allImages: images,
     },
+    openHouse: listing.openHouse || undefined,
+    condominium: listing.condominium || undefined,
   };
 }
 
@@ -301,6 +317,8 @@ export async function fetchListings(): Promise<PropertyListing[]> {
  * Fetch listings with filters and pagination
  */
 export async function getListings(params: ListingsParams): Promise<ListingsResult> {
+  console.log('🔍 [Listings Service] Fetching listings with params:', params);
+  
   const response = await repliersClient.request<ListingsResponse>({
     endpoint: '/listings',
     params,
@@ -311,11 +329,20 @@ export async function getListings(params: ListingsParams): Promise<ListingsResul
   });
 
   if (response.error || !response.data) {
-    console.error('Failed to fetch filtered listings:', response.error?.message);
+    console.error('❌ [Listings Service] Failed to fetch filtered listings:', {
+      error: response.error?.message,
+      code: response.error?.code,
+    });
     return { listings: [], count: 0, numPages: 0 };
   }
 
   const transformedListings = response.data.listings.map(transformListing);
+
+  console.log('✅ [Listings Service] Successfully fetched listings:', {
+    totalFromAPI: response.data.count || response.data.listings.length,
+    transformed: transformedListings.length,
+    params: params,
+  });
 
   return {
     listings: transformedListings,

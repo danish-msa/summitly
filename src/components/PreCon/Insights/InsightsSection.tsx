@@ -24,7 +24,7 @@ export function InsightsSection() {
   const totalCompletions = areas.find((a) => a.id === selectedCompletionsArea)?.value || 0;
 
   return (
-    <section className="w-full py-16 px-4 bg-background">
+    <section className="w-full py-8 sm:py-12 md:py-16 px-4 bg-background">
       <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <SectionHeading
@@ -36,16 +36,16 @@ export function InsightsSection() {
 
 
         {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mt-6 sm:mt-10">
           {/* Average Price Chart */}
-          <Card className="p-6 border-border bg-card shadow-lg hover:shadow-xl transition-shadow">
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h3 className="text-base font-semibold text-foreground/80 mb-2">
+          <Card className="p-4 sm:p-6 border-border bg-card shadow-lg hover:shadow-xl transition-shadow">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4 sm:mb-6">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm sm:text-base font-semibold text-foreground/80 mb-2">
                   Average Price/sq.ft. (High Rise)
                 </h3>
-                <div className="flex items-baseline gap-3">
-                  <span className="text-4xl font-bold text-foreground">
+                <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
+                  <span className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
                     ${currentPrice.toLocaleString()}/ft
                   </span>
                   <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-destructive/10">
@@ -57,7 +57,7 @@ export function InsightsSection() {
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">from last year</p>
               </div>
-              <div className="w-48">
+              <div className="w-full sm:w-48 flex-shrink-0">
                 <AreaSelector
                   areas={areas}
                   selectedArea={selectedPriceArea}
@@ -69,20 +69,20 @@ export function InsightsSection() {
           </Card>
 
           {/* Completions Chart */}
-          <Card className="p-6 border-border bg-card shadow-lg hover:shadow-xl transition-shadow">
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h3 className="text-base font-semibold text-foreground/80 mb-2">
+          <Card className="p-4 sm:p-6 border-border bg-card shadow-lg hover:shadow-xl transition-shadow">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4 sm:mb-6">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm sm:text-base font-semibold text-foreground/80 mb-2">
                   Completions (High Rise)
                 </h3>
                 <div className="flex items-baseline gap-3">
-                  <span className="text-4xl font-bold text-foreground">
+                  <span className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
                     {totalCompletions.toLocaleString()}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">total units</p>
               </div>
-              <div className="w-48">
+              <div className="w-full sm:w-48 flex-shrink-0">
                 <AreaSelector
                   areas={areas}
                   selectedArea={selectedCompletionsArea}
@@ -95,33 +95,33 @@ export function InsightsSection() {
         </div>
 
         {/* Additional Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-          <Card className="p-6 border-none bg-card shadow-lg hover:shadow-xl transition-shadow">
-            <h4 className="text-sm font-semibold text-muted-foreground mb-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mt-4 sm:mt-6">
+          <Card className="p-4 sm:p-6 border-none bg-card shadow-lg hover:shadow-xl transition-shadow">
+            <h4 className="text-xs sm:text-sm font-semibold text-muted-foreground mb-2">
               Peak Year
             </h4>
-            <p className="text-3xl font-bold text-foreground">2025</p>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-2xl sm:text-3xl font-bold text-foreground">2025</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
               43,000 units expected
             </p>
           </Card>
 
-          <Card className="p-6 border-none bg-card shadow-lg hover:shadow-xl transition-shadow">
-            <h4 className="text-sm font-semibold text-muted-foreground mb-2">
+          <Card className="p-4 sm:p-6 border-none bg-card shadow-lg hover:shadow-xl transition-shadow">
+            <h4 className="text-xs sm:text-sm font-semibold text-muted-foreground mb-2">
               Average Growth
             </h4>
-            <p className="text-3xl font-bold text-foreground">8.2%</p>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-2xl sm:text-3xl font-bold text-foreground">8.2%</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
               Year-over-year (2016-2022)
             </p>
           </Card>
 
-          <Card className="p-6 border-none bg-card shadow-lg hover:shadow-xl transition-shadow">
-            <h4 className="text-sm font-semibold text-muted-foreground mb-2">
+          <Card className="p-4 sm:p-6 border-none bg-card shadow-lg hover:shadow-xl transition-shadow sm:col-span-2 md:col-span-1">
+            <h4 className="text-xs sm:text-sm font-semibold text-muted-foreground mb-2">
               Market Outlook
             </h4>
-            <p className="text-3xl font-bold text-foreground">Stable</p>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-2xl sm:text-3xl font-bold text-foreground">Stable</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
               Based on 10-year trends
             </p>
           </Card>

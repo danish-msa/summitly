@@ -27,6 +27,16 @@
     scrollbar-color: #cbd5e1 transparent;
   }
 
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+
   /* Smooth navbar transitions */
   .navbar-smooth {
     transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
@@ -445,13 +455,13 @@
     --radius: 0.5rem;
     
     /* Design System Tokens */
-    --shadow-sm: 0 1px 2px 0 rgb(1 33 105 / 0.05);
-    --shadow: 0 1px 3px 0 rgb(1 33 105 / 0.1), 0 1px 2px -1px rgb(1 33 105 / 0.1);
-    --shadow-md: 0 4px 6px -1px rgb(1 33 105 / 0.1), 0 2px 4px -2px rgb(1 33 105 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(1 33 105 / 0.1), 0 4px 6px -4px rgb(1 33 105 / 0.1);
-    --shadow-xl: 0 20px 25px -5px rgb(1 33 105 / 0.1), 0 8px 10px -6px rgb(1 33 105 / 0.1);
-    --shadow-card: 0 4px 6px -1px rgb(1 33 105 / 0.1), 0 2px 4px -2px rgb(1 33 105 / 0.1);
-    --shadow-hover: 0 20px 25px -5px rgb(1 33 105 / 0.15), 0 8px 10px -6px rgb(1 33 105 / 0.15);
+    --shadow-sm: 0 1px 2px 0 rgb(0 29 61 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(0 29 61 / 0.1), 0 1px 2px -1px rgb(0 29 61 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 29 61 / 0.1), 0 2px 4px -2px rgb(0 29 61 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 29 61 / 0.1), 0 4px 6px -4px rgb(0 29 61 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 29 61 / 0.1), 0 8px 10px -6px rgb(0 29 61 / 0.1);
+    --shadow-card: 0 4px 6px -1px rgb(0 29 61 / 0.1), 0 2px 4px -2px rgb(0 29 61 / 0.1);
+    --shadow-hover: 0 20px 25px -5px rgb(0 29 61 / 0.15), 0 8px 10px -6px rgb(0 29 61 / 0.15);
     
     /* Hero Gradient Colors - Light Mode */
     --hero-gradient-start: 240 100% 98%; /* #F0F5FB - ICY BLUE */

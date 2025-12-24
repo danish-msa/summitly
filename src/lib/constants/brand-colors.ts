@@ -8,9 +8,9 @@
 export const brandColors = {
   // Primary Brand Colors
   cbBlue: {
-    hex: '#012169',
-    rgb: '1, 33, 105',
-    hsl: '220, 100%, 20%',
+    hex: '#001D3D',
+    rgb: '0, 29, 61',
+    hsl: '214, 100%, 12%',
     usage: 'Primary brand color, main CTAs, headers'
   },
   

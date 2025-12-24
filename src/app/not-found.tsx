@@ -59,7 +59,7 @@ export default function NotFound() {
               variant="ghost"
               size="sm"
             >
-              <Link href="/pre-construction">
+              <Link href="/pre-con">
                 <Building2 className="mr-2 h-4 w-4" />
                 Pre-Construction
               </Link>

@@ -10,7 +10,7 @@ interface BreadcrumbsProps {
 const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ property }) => {
   const breadcrumbItems = [
     { label: 'Home', href: '/' },
-    { label: 'Pre-Construction', href: '/pre-construction' },
+    { label: 'Pre-Construction', href: '/pre-con' },
     ...(property.address.city ? [{ label: property.address.city, href: null }] : []),
     ...(property.address.neighborhood ? [{ label: property.address.neighborhood, href: null }] : []),
     { 

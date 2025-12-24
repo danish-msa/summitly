@@ -23,11 +23,14 @@ export async function GET(
     });
 
     if (ratings.length === 0) {
-      return NextResponse.json({
+      const response = NextResponse.json({
         average: 0,
         total: 0,
         ratings: []
       });
+      // Cache empty responses for shorter time (1 minute)
+      response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120');
+      return response;
     }
 
     // Calculate average
@@ -67,12 +70,18 @@ export async function GET(
       }
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       average,
       total,
       userRating,
       ratings: ratings.map(r => r.rating)
     });
+
+    // Add caching headers to reduce duplicate requests
+    // Cache for 5 minutes, but allow stale-while-revalidate
+    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+    
+    return response;
   } catch (error) {
     console.error('Error fetching ratings:', error);
     return NextResponse.json(

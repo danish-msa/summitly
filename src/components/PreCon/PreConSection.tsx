@@ -164,27 +164,28 @@ const PreConSection: React.FC<PreConSectionProps> = ({
 
   if (loading) {
     return (
-      <section className="py-16 bg-background">
+      <section className="py-8 sm:py-12 md:py-16 bg-background">
         <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
             <div className="flex-1">
-              <h2 className="text-2xl md:text-4xl font-bold mb-2 text-primary">{heading}</h2>
-              <p className="text-muted-foreground">{description}</p>
+              <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-2 text-primary">{heading}</h2>
+              <p className="text-xs sm:text-sm md:text-base text-muted-foreground">{description}</p>
             </div>
             {viewAllLink && (
-              <Link href={viewAllLink} className="whitespace-nowrap pt-2">
+              <Link href={viewAllLink} className="whitespace-nowrap sm:pt-2">
                 <Button
                   variant="outline"
-                  className="flex items-center gap-2"
+                  size="sm"
+                  className="flex items-center gap-2 text-xs sm:text-sm"
                 >
                   View All
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
                 </Button>
               </Link>
             )}
           </div>
-          <div className="flex items-center justify-center py-12">
-            <div className="text-muted-foreground">Loading projects...</div>
+          <div className="flex items-center justify-center py-8 sm:py-12">
+            <div className="text-sm sm:text-base text-muted-foreground">Loading projects...</div>
           </div>
         </div>
       </section>
@@ -196,38 +197,39 @@ const PreConSection: React.FC<PreConSectionProps> = ({
   }
 
   return (
-    <section className="py-10 bg-background">
+    <section className="py-6 sm:py-8 md:py-10 bg-background">
       <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-start justify-between gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
           <div className="flex-1">
-            <h2 className="text-2xl md:text-4xl font-bold mb-2 text-primary">{heading}</h2>
-            <p className="text-muted-foreground">{description}</p>
+            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-2 text-primary">{heading}</h2>
+            <p className="text-xs sm:text-sm md:text-base text-muted-foreground">{description}</p>
           </div>
           {viewAllLink && (
-            <Link href={viewAllLink} className="whitespace-nowrap pt-2">
+            <Link href={viewAllLink} className="whitespace-nowrap sm:pt-2">
               <Button
                 variant="outline"
-                className="flex items-center gap-2"
+                size="sm"
+                className="flex items-center gap-2 text-xs sm:text-sm"
               >
                 View All
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
               </Button>
             </Link>
           )}
         </div>
 
-        <div className="mt-12 relative">
+        <div className="mt-6 sm:mt-8 md:mt-12 relative">
           {/* Navigation Buttons - Positioned above the carousel */}
-          <div className="absolute -top-10 right-0 flex gap-1 justify-between items-center z-10 pointer-events-none">
+          <div className="absolute -top-8 sm:-top-10 right-0 flex gap-1 justify-between items-center z-10 pointer-events-none">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => carouselApi?.scrollPrev()}
               disabled={!canScrollPrev}
-              className="h-8 w-8 rounded-lg bg-secondary/95 text-white backdrop-blur-sm shadow-lg border border-border hover:bg-primary hover:shadow-xl transition-all duration-300 hidden md:flex pointer-events-auto"
+              className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-secondary/95 text-white backdrop-blur-sm shadow-lg border border-border hover:bg-primary hover:shadow-xl transition-all duration-300 hidden md:flex pointer-events-auto"
               aria-label="Previous slide"
             >
-              <ArrowLeft className="h-6 w-6" />
+              <ArrowLeft className="h-4 w-4 sm:h-6 sm:w-6" />
             </Button>
 
             <Button
@@ -235,10 +237,10 @@ const PreConSection: React.FC<PreConSectionProps> = ({
               size="icon"
               onClick={() => carouselApi?.scrollNext()}
               disabled={!canScrollNext}
-              className="h-8 w-8 rounded-lg bg-secondary/95 text-white backdrop-blur-sm shadow-lg border border-border hover:bg-primary hover:shadow-xl transition-all duration-300 hidden md:flex pointer-events-auto"
+              className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-secondary/95 text-white backdrop-blur-sm shadow-lg border border-border hover:bg-primary hover:shadow-xl transition-all duration-300 hidden md:flex pointer-events-auto"
               aria-label="Next slide"
             >
-              <ArrowRight className="h-6 w-6" />
+              <ArrowRight className="h-4 w-4 sm:h-6 sm:w-6" />
             </Button>
           </div>
 
@@ -255,11 +257,11 @@ const PreConSection: React.FC<PreConSectionProps> = ({
             }}
             className="w-full"
           >
-            <CarouselContent className="-ml-2 md:-ml-4">
+            <CarouselContent className="-ml-1 sm:-ml-2 md:-ml-4">
               {filteredProjects.map((property) => (
                 <CarouselItem
                   key={property.id}
-                  className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/4"
+                  className="pl-1 sm:pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
                 >
                   <PreConstructionPropertyCardV3
                     property={property}

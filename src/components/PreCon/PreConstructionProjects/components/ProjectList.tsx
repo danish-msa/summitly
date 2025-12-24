@@ -102,7 +102,7 @@ const ProjectList: React.FC<ProjectListProps> = ({
       
       {/* View All Projects Button */}
       <div className="flex justify-center mt-12">
-        <Link href="/pre-construction/projects">
+        <Link href="/pre-con/projects">
           <Button variant="default" size="lg" className="px-8">
             View All Projects
           </Button>

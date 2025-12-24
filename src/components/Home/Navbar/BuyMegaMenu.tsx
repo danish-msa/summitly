@@ -64,11 +64,18 @@ const mainCategories: CategoryItem[] = [
 ];
 
 const forSaleItems: ContentItem[] = [
-  { id: 'houses', label: 'Houses', description: 'Browse all houses for sale in your area', href: '/buy?type=houses', icon: Home },
-  { id: 'townhouses', label: 'Townhouses', description: 'Find your perfect townhouse today', href: '/buy?type=townhouses', icon: Building2 },
-  { id: 'condos', label: 'Condos', description: 'Explore condominiums and apartments', href: '/buy?type=condos', icon: Building2 },
-  { id: 'mobile-homes', label: 'Mobile Homes', description: 'Affordable mobile home options', href: '/buy?type=mobile-homes', icon: Home },
-  { id: 'open-houses', label: 'Open Houses', description: 'View scheduled open house events', href: '/buy?type=open-houses', icon: Search },
+  { id: 'houses', label: 'Houses', description: 'Browse all houses for sale in your area', href: '/properties/toronto/houses', icon: Home },
+  { id: 'townhouses', label: 'Townhouses', description: 'Find your perfect townhouse today', href: '/properties/toronto/townhouses', icon: Building2 },
+  { id: 'condos', label: 'Condos', description: 'Explore condominiums and apartments', href: '/properties/toronto/condos', icon: Building2 },
+  { id: 'detached-homes', label: 'Detached Homes', description: 'Browse detached homes for sale', href: '/properties/toronto/detached-homes', icon: Home },
+  { id: 'semi-detached', label: 'Semi-Detached', description: 'Find semi-detached homes', href: '/properties/toronto/semi-detached-homes', icon: Building2 },
+  { id: 'lofts', label: 'Lofts', description: 'Explore modern loft spaces', href: '/properties/toronto/lofts', icon: Building2 },
+  { id: 'under-500k', label: 'Homes Under $500K', description: 'Affordable homes under $500,000', href: '/properties/toronto/under-500000', icon: DollarSign },
+  { id: 'under-1m', label: 'Homes Under $1M', description: 'Browse homes under $1 million', href: '/properties/toronto/under-1000000', icon: DollarSign },
+  { id: 'luxury', label: 'Luxury Homes', description: 'Premium properties over $2M', href: '/properties/toronto/over-2000000', icon: TrendingUp },
+  { id: '1-bedroom', label: '1-Bedroom Homes', description: 'Perfect starter homes', href: '/properties/toronto/1-bedroom', icon: Home },
+  { id: '2-bedroom', label: '2-Bedroom Homes', description: 'Ideal for small families', href: '/properties/toronto/2-bedroom', icon: Home },
+  { id: '3-bedroom', label: '3-Bedroom Homes', description: 'Spacious family homes', href: '/properties/toronto/3-bedroom', icon: Home },
 ];
 
 const newHomesItems: ContentItem[] = [
@@ -255,7 +262,7 @@ export const BuyMegaMenu: React.FC<BuyMegaMenuProps> = ({
                       })}
                     </div>
                     <Link
-                      href="/buy"
+                      href={activeCategory === 'for-sale' ? '/properties/toronto/homes' : '/buy'}
                       className="inline-flex items-center gap-1 mt-4 text-xs font-semibold text-primary hover:underline"
                     >
                       View all {activeCategory.replace('-', ' ')}

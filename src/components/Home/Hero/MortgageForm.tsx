@@ -20,14 +20,17 @@ const MortgageForm = () => {
           <LocationInput onSelect={handleLocationSelect} placeholder="Where are you looking for a mortgage?" />
         </div>
       </form>
-      <div className='flex flex-col md:flex-row gap-2 justify-between bg-gradient-brand text-white text-white p-6 rounded-2xl mt-4'>
+      <div className='flex flex-col md:flex-row gap-2 justify-between bg-gradient-brand text-white text-white p-4 sm:p-6 rounded-2xl mt-2'>
         <div className='flex flex-col gap-2'>
           <div className='flex gap-2 items-center'>
-            <BiCalculator className='h-7 w-7' /><span className='text-white text-base md:text-xl font-bold'>Calculate your mortgage payments</span>
+            <div className='w-[5%]'>
+              <BiCalculator className='h-5 w-5' />
+            </div>
+            <p className='w-[95%] text-white text-sm md:text-xl font-bold'>Calculate your mortgage payments</p>
           </div>
-          <p className='font-light text-sm'>Get instant mortgage payment estimates and find the best rates</p>
+          <p className='font-light text-xs sm:text-sm'>Get instant mortgage payment estimates and find the best rates</p>
         </div>
-        <button className='btn btn-primary bg-transparent rounded-full border-2 border-white text-white px-10 hover:bg-white hover:text-primary'>Calculate Mortgage</button>
+        <button className='btn btn-primary text-xs sm:text-sm md:text-base bg-transparent rounded-full border-2 border-white text-white px-4 py-2 sm:px-10 sm:py-3 hover:bg-white hover:text-primary'>Calculate Mortgage</button>
       </div>
     </>
   );

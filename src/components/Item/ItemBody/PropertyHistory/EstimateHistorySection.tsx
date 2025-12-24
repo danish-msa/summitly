@@ -1,18 +1,119 @@
+"use client";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
-import { estimateData } from './mockData';
 import { formatCurrency, formatYAxis } from './utils';
+import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/single-listing';
+import type { EstimateData } from './types';
 
 interface EstimateHistorySectionProps {
   propertyAddress: string;
+  rawProperty?: SinglePropertyListingResponse | null;
 }
 
-export default function EstimateHistorySection({ propertyAddress }: EstimateHistorySectionProps) {
+export default function EstimateHistorySection({ propertyAddress, rawProperty }: EstimateHistorySectionProps) {
   const itemsPerPage = 6;
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Transform estimate history from API format to component format
+  const estimateData = useMemo<EstimateData[]>(() => {
+    if (!rawProperty?.estimate?.history?.mth) {
+      return [];
+    }
+
+    const history = rawProperty.estimate.history.mth;
+    
+    // Convert Record<string, { value: number }> to EstimateData[]
+    return Object.entries(history)
+      .map(([monthKey, data]) => {
+        // Parse month string (e.g., "Nov 2025", "2025-11", "2025-11-01", etc.)
+        let formattedMonth = monthKey;
+        let date = monthKey;
+        let sortDate: Date;
+        
+        // Try to parse different date formats
+        try {
+          // Try parsing as ISO date string (YYYY-MM-DD or YYYY-MM)
+          if (monthKey.includes('-')) {
+            // Add day if only year-month provided
+            const dateStr = monthKey.length === 7 ? `${monthKey}-01` : monthKey;
+            const dateObj = new Date(dateStr);
+            if (!isNaN(dateObj.getTime())) {
+              formattedMonth = dateObj.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+              date = dateObj.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+              sortDate = dateObj;
+            } else {
+              // Fallback: try parsing as is
+              sortDate = new Date(monthKey);
+              formattedMonth = monthKey;
+              date = monthKey;
+            }
+          } else {
+            // If it's already formatted like "Nov 2025", try to parse it
+            const parts = monthKey.split(' ');
+            if (parts.length >= 2) {
+              // Try to parse "Nov 2025" format
+              const monthName = parts[0];
+              const year = parts[1];
+              const monthMap: Record<string, number> = {
+                'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+                'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+              };
+              const monthIndex = monthMap[monthName];
+              if (monthIndex !== undefined && year) {
+                const dateObj = new Date(parseInt(year), monthIndex, 1);
+                formattedMonth = dateObj.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                date = `${monthName} ${year.slice(-2)}`;
+                sortDate = dateObj;
+              } else {
+                // Fallback: keep original format
+                formattedMonth = monthKey;
+                date = `${parts[0]} ${year?.slice(-2) || ''}`;
+                sortDate = new Date();
+              }
+            } else {
+              // Try parsing as date string
+              const dateObj = new Date(monthKey);
+              if (!isNaN(dateObj.getTime())) {
+                formattedMonth = dateObj.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                date = dateObj.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+                sortDate = dateObj;
+              } else {
+                // Keep original format if parsing fails
+                formattedMonth = monthKey;
+                date = monthKey;
+                sortDate = new Date();
+              }
+            }
+          }
+        } catch (e) {
+          // If parsing fails, use original values
+          formattedMonth = monthKey;
+          date = monthKey;
+          sortDate = new Date();
+        }
+
+        return {
+          month: formattedMonth,
+          value: data.value,
+          date: date,
+          sortDate: sortDate
+        };
+      })
+      .sort((a, b) => {
+        // Sort by date descending (most recent first)
+        return b.sortDate.getTime() - a.sortDate.getTime();
+      })
+      .map(({ sortDate, ...rest }) => rest); // Remove sortDate from final data
+  }, [rawProperty]);
+
+  // Hide component if no estimate history data is available
+  if (!estimateData || estimateData.length === 0) {
+    return null;
+  }
 
   // Calculate pagination
   const totalPages = Math.ceil(estimateData.length / itemsPerPage);
@@ -27,8 +128,8 @@ export default function EstimateHistorySection({ propertyAddress }: EstimateHist
     }
   };
 
-  // Prepare chart data
-  const chartData = useMemo(() => [...estimateData].reverse(), []);
+  // Prepare chart data (reverse to show oldest to newest)
+  const chartData = useMemo(() => [...estimateData].reverse(), [estimateData]);
 
   // Prepare chart option for echarts with modern styling
   const chartOption = useMemo(() => ({

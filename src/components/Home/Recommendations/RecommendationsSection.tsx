@@ -65,18 +65,18 @@ const baseRecommendationsData: RecommendationCategory[] = [
     label: "Pre-Construction",
     icon: <Hammer className="w-4 h-4" />,
     recommendations: [
-      { title: "New Homes", subtitle: "{location} pre-construction homes", link: "/pre-construction?type=homes" },
-      { title: "New Condos", subtitle: "{location} pre-construction condos", link: "/pre-construction?type=condos" },
-      { title: "VIP Access", subtitle: "{location} VIP pre-construction", link: "/pre-construction?type=vip" },
-      { title: "Now Selling", subtitle: "{location} pre-construction selling", link: "/pre-construction?status=selling" },
-      { title: "Coming Soon", subtitle: "{location} upcoming projects", link: "/pre-construction?status=coming-soon" },
-      { title: "Toronto Projects", subtitle: "Pre-construction in Toronto", link: "/pre-construction/toronto" },
-      { title: "Mississauga Projects", subtitle: "Pre-construction in Mississauga", link: "/pre-construction/mississauga" },
-      { title: "Brampton Projects", subtitle: "Pre-construction in Brampton", link: "/pre-construction/brampton" },
-      { title: "Markham Projects", subtitle: "Pre-construction in Markham", link: "/pre-construction/markham" },
-      { title: "Vaughan Projects", subtitle: "Pre-construction in Vaughan", link: "/pre-construction/vaughan" },
-      { title: "Oakville Projects", subtitle: "Pre-construction in Oakville", link: "/pre-construction/oakville" },
-      { title: "Hamilton Projects", subtitle: "Pre-construction in Hamilton", link: "/pre-construction/hamilton" },
+      { title: "New Homes", subtitle: "{location} pre-construction homes", link: "/pre-con?type=homes" },
+      { title: "New Condos", subtitle: "{location} pre-construction condos", link: "/pre-con?type=condos" },
+      { title: "VIP Access", subtitle: "{location} VIP pre-construction", link: "/pre-con?type=vip" },
+      { title: "Now Selling", subtitle: "{location} pre-construction selling", link: "/pre-con?status=selling" },
+      { title: "Coming Soon", subtitle: "{location} upcoming projects", link: "/pre-con?status=coming-soon" },
+      { title: "Toronto Projects", subtitle: "Pre-construction in Toronto", link: "/pre-con/toronto" },
+      { title: "Mississauga Projects", subtitle: "Pre-construction in Mississauga", link: "/pre-con/mississauga" },
+      { title: "Brampton Projects", subtitle: "Pre-construction in Brampton", link: "/pre-con/brampton" },
+      { title: "Markham Projects", subtitle: "Pre-construction in Markham", link: "/pre-con/markham" },
+      { title: "Vaughan Projects", subtitle: "Pre-construction in Vaughan", link: "/pre-con/vaughan" },
+      { title: "Oakville Projects", subtitle: "Pre-construction in Oakville", link: "/pre-con/oakville" },
+      { title: "Hamilton Projects", subtitle: "Pre-construction in Hamilton", link: "/pre-con/hamilton" },
     ],
   },
   {
@@ -171,7 +171,7 @@ export const RecommendationsSection = () => {
 
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
-          <TabsList className="grid grid-cols-2 md:grid-cols-5 h-auto gap-2 bg-brand-glacier/30 p-2 rounded-xl m-auto">
+          <TabsList className="inline-flex md:grid md:grid-cols-5 h-auto gap-2 bg-brand-glacier/30 p-2 rounded-xl m-auto">
             {recommendationsData.map((category) => (
               <TabsTrigger
                 key={category.id}
@@ -191,22 +191,22 @@ export const RecommendationsSection = () => {
               value={category.id}
               className="mt-8 animate-fade-in"
             >
-               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                 {category.recommendations.map((rec, index) => (
                    <Card
                      key={index}
                      variant="bordered"
-                     className="group flex items-center justify-between p-3 transition-all duration-300 cursor-pointer border-border bg-transparent hover:border-primary"
+                     className="group flex items-center justify-between p-3 sm:p-4 transition-all duration-300 cursor-pointer border-border bg-transparent hover:border-primary"
                    >
-                    <a href={rec.link} className="flex-1 block">
-                      <h3 className="text-xs font-medium text-muted-foreground group-hover:text-primary transition-colors">
+                    <a href={rec.link} className="flex-1 block min-w-0">
+                      <h3 className="text-xs sm:text-sm font-medium text-muted-foreground group-hover:text-primary transition-colors truncate">
                         {rec.title}
                       </h3>
-                      <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                      <p className="text-xs sm:text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">
                         {rec.subtitle}
                       </p>
                     </a>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0 ml-2" />
+                    <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0 ml-2" />
                   </Card>
                 ))}
               </div>

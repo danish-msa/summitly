@@ -580,6 +580,9 @@ export interface PropertyListing {
         propertyType: string;
         sqft: number | string;
         description?: string | null;
+        yearBuilt?: string | null;
+        garage?: string | null;
+        numGarageSpaces?: number | null;
     };
     updatedOn: string;
     lot: {
@@ -609,6 +612,33 @@ export interface PropertyListing {
         type?: string;
         status?: string;
     }>;
+    condominium?: {
+        buildingInsurance?: string | null;
+        condoCorp?: string | null;
+        condoCorpNum?: string | null;
+        exposure?: string | null;
+        lockerNumber?: string | null;
+        locker?: string | null;
+        parkingType?: string | null;
+        pets?: string | null;
+        propertyMgr?: string | null;
+        stories?: string | null;
+        fees?: {
+            cableInlc?: string | null;
+            heatIncl?: string | null;
+            hydroIncl?: string | null;
+            maintenance?: number | null;
+            parkingIncl?: string | null;
+            taxesIncl?: string | null;
+            waterIncl?: string | null;
+        };
+        lockerUnitNumber?: string | null;
+        ensuiteLaundry?: string | null;
+        sharesPercentage?: string | null;
+        lockerLevel?: string | null;
+        unitNumber?: string | null;
+        amenities?: string[];
+    } | null;
     preCon?: {
         projectName: string;
         developer: string;

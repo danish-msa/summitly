@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -15,15 +12,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -37,28 +33,26 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  phone         String? // Phone number field
-  password      String? // For credentials authentication
-  role          UserRole  @default(SUBSCRIBER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
+  id                 String              @id @default(cuid())
+  name               String?
+  email              String              @unique
+  emailVerified      DateTime?
+  image              String?
+  phone              String?
+  password           String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  role               UserRole            @default(SUBSCRIBER)
   accounts           Account[]
-  sessions           Session[]
-  properties         Property[]
+  agentProfile       AgentProfile?
   favorites          Favorite[]
+  pages              Page[]
+  properties         Property[]
+  propertyWatchlists PropertyWatchlist[]
   savedProperties    SavedProperty[]
   searches           SearchHistory[]
-  propertyWatchlists PropertyWatchlist[]
-  agentProfile       AgentProfile?
+  sessions           Session[]
   tours              Tour[]
-  preConProjects     PreConstructionProject[]
-  pages              Page[]
 }
 
 model VerificationToken {
@@ -73,47 +67,31 @@ model Property {
   id           String         @id @default(cuid())
   mlsNumber    String         @unique
   title        String
-  description  String?        @db.Text
+  description  String?
   price        Float
   propertyType PropertyType
   status       PropertyStatus @default(ACTIVE)
-
-  // Address
   streetNumber String?
   streetName   String?
   city         String
   state        String
   zipCode      String?
-  country      String  @default("US")
-
-  // Property Details
-  bedrooms   Int
-  bathrooms  Float
-  squareFeet Int?
-  lotSize    Float?
-  yearBuilt  Int?
-
-  // Coordinates
-  latitude  Float?
-  longitude Float?
-
-  // Images
-  images String[] @default([])
-
-  // Features
-  features String[] @default([])
-
-  // Agent/User
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  favorites Favorite[]
-  views     PropertyView[]
+  country      String         @default("US")
+  bedrooms     Int
+  bathrooms    Float
+  squareFeet   Int?
+  lotSize      Float?
+  yearBuilt    Int?
+  latitude     Float?
+  longitude    Float?
+  images       String[]       @default([])
+  features     String[]       @default([])
+  userId       String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  favorites    Favorite[]
+  user         User           @relation(fields: [userId], references: [id])
+  views        PropertyView[]
 }
 
 model Favorite {
@@ -121,24 +99,21 @@ model Favorite {
   userId     String
   propertyId String
   createdAt  DateTime @default(now())
-
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, propertyId])
 }
 
-// Saved properties from MLS/external listings (using MLS number as identifier)
 model SavedProperty {
   id        String   @id @default(cuid())
   userId    String
-  mlsNumber String // MLS number from PropertyListing
-  notes     String?  @db.Text // User's personal notes
-  tags      String[] @default([]) // User-defined tags
+  mlsNumber String
+  notes     String?
+  tags      String[] @default([])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, mlsNumber])
   @@index([userId])
@@ -152,8 +127,7 @@ model PropertyView {
   ipAddress  String?
   userAgent  String?
   viewedAt   DateTime @default(now())
-
-  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 }
 
 model SearchHistory {
@@ -167,14 +141,13 @@ model SearchHistory {
   bathrooms    Int?
   propertyType PropertyType?
   searchedAt   DateTime      @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model AgentProfile {
   id          String   @id @default(cuid())
   userId      String   @unique
-  bio         String?  @db.Text
+  bio         String?
   phone       String?
   license     String?
   specialties String[] @default([])
@@ -184,8 +157,7 @@ model AgentProfile {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Contact {
@@ -193,12 +165,334 @@ model Contact {
   name       String
   email      String
   phone      String?
-  message    String        @db.Text
+  message    String
   propertyId String?
   type       ContactType   @default(GENERAL)
   status     ContactStatus @default(PENDING)
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
+}
+
+model PropertyWatchlist {
+  id              String   @id @default(cuid())
+  userId          String
+  mlsNumber       String?
+  cityName        String?
+  neighborhood    String?
+  propertyType    String?
+  watchProperty   Boolean  @default(false)
+  newProperties   Boolean  @default(false)
+  soldListings    Boolean  @default(false)
+  expiredListings Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([mlsNumber])
+  @@index([cityName, neighborhood])
+}
+
+model Tour {
+  id            String     @id @default(cuid())
+  userId        String
+  mlsNumber     String
+  tourType      TourType   @default(IN_PERSON)
+  scheduledDate DateTime
+  name          String
+  phone         String
+  email         String
+  preApproval   Boolean    @default(false)
+  status        TourStatus @default(PENDING)
+  notes         String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([mlsNumber])
+  @@index([scheduledDate])
+}
+
+model DevelopmentTeam {
+  id          String        @id(map: "Developer_pkey") @default(cuid())
+  name        String
+  type        DeveloperType
+  description String?
+  website     String?
+  image       String?
+  email       String?
+  phone       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([type])
+  @@index([name])
+}
+
+model PreConstructionProject {
+  id                      String                @id @default(cuid())
+  mlsNumber               String                @unique
+  projectName             String
+  developer               String?
+  startingPrice           Float?
+  status                  String?
+  streetNumber            String?
+  streetName              String?
+  city                    String?
+  state                   String?
+  zip                     String?
+  country                 String?               @default("Canada")
+  neighborhood            String?
+  majorIntersection       String?
+  latitude                Float?
+  longitude               Float?
+  propertyType            String?
+  bedroomRange            String?
+  bathroomRange           String?
+  sqftRange               String?
+  totalUnits              Int?
+  availableUnits          Int?
+  storeys                 Int?
+  completionProgress      Int?
+  images                  String[]              @default([])
+  features                String[]              @default([])
+  amenities               String[]              @default([])
+  depositStructure        String?
+  description             String?
+  developerInfo           String?
+  architectInfo           String?
+  builderInfo             String?
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+  documents               String?
+  interiorDesignerInfo    String?
+  landscapeArchitectInfo  String?
+  marketingInfo           String?
+  endingPrice             Float?
+  subPropertyType         String?
+  promotions              String?
+  videos                  String[]              @default([])
+  avgPricePerSqft         Float?
+  parkingPrice            Float?
+  parkingPriceDetail      String?
+  lockerPrice             Float?
+  lockerPriceDetail       String?
+  assignmentFee           Float?
+  developmentLevies       String?
+  developmentCharges      Float?
+  height                  String?
+  maintenanceFeesPerSqft  Float?
+  maintenanceFeesDetail   String?
+  floorPremiums           String?
+  salesMarketingCompany   String?
+  hasDen                  Boolean               @default(false)
+  hasStudio               Boolean               @default(false)
+  hasLoft                 Boolean               @default(false)
+  hasWorkLiveLoft         Boolean               @default(false)
+  developmentTeamOverview String?
+  suites                  Int?
+  ownershipType           String?
+  garage                  String?
+  basement                String?
+  occupancyDate           String?
+  isPublished             Boolean               @default(false)
+  featured                Boolean               @default(false)
+  createdBy               String?
+  units                   PreConstructionUnit[]
+
+  @@index([city])
+  @@index([status])
+  @@index([propertyType])
+  @@index([isPublished])
+  @@index([featured])
+  @@index([createdBy])
+}
+
+model PreConstructionUnit {
+  id             String                 @id @default(cuid())
+  projectId      String
+  unitName       String
+  beds           Int
+  baths          Int
+  sqft           Int
+  price          Float
+  maintenanceFee Float?
+  status         String
+  description    String?
+  features       String[]               @default([])
+  amenities      String[]               @default([])
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  images         String[]               @default([])
+  studio         Boolean                @default(false)
+  project        PreConstructionProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([status])
+}
+
+model PropertyRating {
+  id           String   @id @default(cuid())
+  propertyId   String
+  propertyType String
+  userId       String?
+  sessionId    String?
+  rating       Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([propertyId])
+  @@index([propertyType])
+  @@index([userId])
+  @@index([propertyId, propertyType])
+  @@index([propertyId, rating])
+  @@index([propertyId, sessionId])
+}
+
+model PreConstructionPageContent {
+  id              String                       @id @default(cuid())
+  pageType        String
+  pageValue       String
+  title           String?
+  description     String?
+  heroImage       String?
+  metaTitle       String?
+  metaDescription String?
+  customContent   String?
+  isPublished     Boolean                      @default(false)
+  createdAt       DateTime                     @default(now())
+  updatedAt       DateTime                     @updatedAt
+  faqs            String?
+  locationType    String?
+  parentId        String?
+  parent          PreConstructionPageContent?  @relation("LocationHierarchy", fields: [parentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  children        PreConstructionPageContent[] @relation("LocationHierarchy")
+
+  @@unique([pageType, pageValue])
+  @@index([pageType])
+  @@index([pageValue])
+  @@index([isPublished])
+  @@index([locationType])
+  @@index([parentId])
+}
+
+model Page {
+  id         String        @id @default(cuid())
+  title      String
+  slug       String        @unique
+  content    String?
+  excerpt    String?
+  status     PageStatus    @default(DRAFT)
+  parentId   String?
+  categoryId String?
+  createdBy  String
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  category   PageCategory? @relation(fields: [categoryId], references: [id])
+  creator    User          @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  parent     Page?         @relation("PageHierarchy", fields: [parentId], references: [id])
+  children   Page[]        @relation("PageHierarchy")
+
+  @@index([slug])
+  @@index([status])
+  @@index([parentId])
+  @@index([categoryId])
+  @@index([createdBy])
+}
+
+model PageCategory {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  pages       Page[]
+
+  @@index([slug])
+}
+
+model MarketTrends {
+  id                       String   @id @default(cuid())
+  locationType             String
+  locationName             String
+  parentCity               String?
+  parentArea               String?
+  parentNeighbourhood      String?
+  month                    String
+  priceOverview            Json?
+  averageSoldPrice         Json?
+  salesVolumeByType        Json?
+  priceByBedrooms          Json?
+  inventoryOverview        Json?
+  newClosedAvailable       Json?
+  daysOnMarket             Json?
+  lastFetchedAt            DateTime @default(now())
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @default(now()) @updatedAt
+  averageSoldPriceByType   Json?
+  years                    Int      @default(2)
+  medianListingVsSoldPrice Json?
+
+  @@unique([locationType, locationName, month, years])
+  @@unique([locationType, locationName, month])
+  @@index([locationType])
+  @@index([locationName])
+  @@index([locationType, locationName])
+  @@index([month])
+  @@index([years])
+  @@index([locationType, locationName, month, years])
+  @@index([parentCity])
+  @@index([parentArea])
+  @@index([lastFetchedAt])
+  @@index([locationType, locationName, month])
+  @@index([priceOverview], type: Gin)
+}
+
+model MarketRankings {
+  id              String   @id @default(cuid())
+  month           String   @unique
+  rankings        Json
+  rankingOverview Json
+  lastFetchedAt   DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  @@index([month])
+  @@index([lastFetchedAt])
+}
+
+model CityBreakdown {
+  id            String   @id @default(cuid())
+  month         String   @unique
+  breakdownData Json
+  lastFetchedAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+
+  @@index([month])
+  @@index([lastFetchedAt])
+}
+
+model PropertyTypeBreakdown {
+  id            String   @id @default(cuid())
+  month         String   @unique
+  breakdownData Json
+  lastFetchedAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+
+  @@index([month])
+  @@index([lastFetchedAt])
+}
+
+model table_name {
+  id          BigInt   @id @default(autoincrement())
+  inserted_at DateTime @default(dbgenerated("timezone('utc'::text, now())")) @db.Timestamptz(6)
+  updated_at  DateTime @default(dbgenerated("timezone('utc'::text, now())")) @db.Timestamptz(6)
+  data        Json?
+  name        String?
 }
 
 enum UserRole {
@@ -246,55 +540,9 @@ enum ContactStatus {
   CLOSED
 }
 
-// Property Watchlist/Alerts - stores user's alert preferences
-model PropertyWatchlist {
-  id              String   @id @default(cuid())
-  userId          String
-  mlsNumber       String? // If watching a specific property
-  cityName        String?
-  neighborhood    String?
-  propertyType    String?
-  watchProperty   Boolean  @default(false) // Watch specific property updates
-  newProperties   Boolean  @default(false) // Alert for new properties in area
-  soldListings    Boolean  @default(false) // Alert for sold listings in area
-  expiredListings Boolean  @default(false) // Alert for expired listings in area
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([mlsNumber])
-  @@index([cityName, neighborhood])
-}
-
-// Property Tours - stores scheduled tours for properties
-model Tour {
-  id            String     @id @default(cuid())
-  userId        String
-  mlsNumber     String // MLS number of the property
-  tourType      TourType   @default(IN_PERSON)
-  scheduledDate DateTime // Combined date and time
-  name          String
-  phone         String
-  email         String
-  preApproval   Boolean    @default(false)
-  status        TourStatus @default(PENDING)
-  notes         String?    @db.Text
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([mlsNumber])
-  @@index([scheduledDate])
-}
-
 enum TourType {
   IN_PERSON
   VIDEO_CHAT
-  SELF_GUIDED
 }
 
 enum TourStatus {
@@ -304,23 +552,6 @@ enum TourStatus {
   CANCELLED
 }
 
-// DevelopmentTeam - stores developer and development team member information
-model DevelopmentTeam {
-  id          String        @id @default(cuid())
-  name        String
-  type        DeveloperType
-  description String?       @db.Text
-  website     String?
-  image       String? // Profile/image URL
-  email       String?
-  phone       String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-
-  @@index([type])
-  @@index([name])
-}
-
 enum DeveloperType {
   DEVELOPER
   ARCHITECT
@@ -328,338 +559,4 @@ enum DeveloperType {
   BUILDER
   LANDSCAPE_ARCHITECT
   MARKETING
-}
-
-// Pre-Construction Projects - stores pre-construction project data
-model PreConstructionProject {
-  id              String  @id @default(cuid())
-  mlsNumber       String  @unique // Auto-generated unique identifier from project name
-  projectName     String
-  developer       String?
-  startingPrice   Float?
-  endingPrice     Float?
-  avgPricePerSqft Float? // Average price per square foot
-  status          String? // 'platinum-access', 'now-selling', 'assignments', 'new-release-coming-soon', 'coming-soon', 'register-now', 'resale', 'sold-out'
-
-  // Additional Pricing
-  parkingPrice       Float?
-  parkingPriceDetail String? @db.Text
-  lockerPrice        Float?
-  lockerPriceDetail  String? @db.Text
-  assignmentFee      Float?
-  developmentLevies  String? @db.Text
-  developmentCharges Float?
-
-  // Address
-  streetNumber      String?
-  streetName        String?
-  city              String?
-  state             String?
-  zip               String?
-  country           String? @default("Canada")
-  neighborhood      String?
-  majorIntersection String?
-
-  // Coordinates
-  latitude  Float?
-  longitude Float?
-
-  // Property Details
-  propertyType    String? // 'Condos', 'Houses', 'Lofts', 'Master-Planned Communities', 'Multi Family', 'Offices'
-  subPropertyType String? // 'Low-Rise', 'Mid-Rise', 'High-Rise' (for Condos) or 'Link', 'Townhouse', 'Semi-Detached', 'Detached' (for Houses)
-  bedroomRange    String? // e.g., '1-3' (range format)
-  bathroomRange   String? // e.g., '1-3'
-  sqftRange       String? // e.g., '650-1,450'
-  hasDen          Boolean @default(false) // Unit has den available
-  hasStudio       Boolean @default(false) // Studio units available
-  hasLoft         Boolean @default(false) // Loft units available
-  hasWorkLiveLoft Boolean @default(false) // Work/Live Loft units available
-  totalUnits      Int?
-  availableUnits  Int?
-  suites          Int?
-  storeys         Int?
-  height          String? // Height in meters (e.g., "9'0\" to 10'0\"")
-
-  // Maintenance & Fees
-  maintenanceFeesPerSqft Float?
-  maintenanceFeesDetail  String? @db.Text
-  floorPremiums          String? @db.Text
-
-  // Completion
-  occupancyDate      String? // e.g., 'Q4 2025'
-  completionProgress Int? // 0 = Pre-construction, 1 = Construction, 2 = Complete
-  promotions         String? // '5% Down Payment', '10% Down Payment', '15% Down Payment'
-
-  // Additional Details
-  ownershipType String? // Ownership type
-  garage        String? // 'single', 'double', 'triple', 'other'
-  basement      String? // 'finished', 'unfinished'
-
-  // Images
-  images String[] @default([])
-
-  // Videos
-  videos String[] @default([])
-
-  // Features and Amenities
-  features  String[] @default([])
-  amenities String[] @default([])
-
-  // Additional Info
-  depositStructure String? @db.Text
-  description      String? @db.Text
-  documents        String? @db.Text // JSON string for documents array
-
-  // Development Team (stored as JSON)
-  developerInfo           String? @db.Text // JSON string for developer details
-  architectInfo           String? @db.Text // JSON string for architect details
-  builderInfo             String? @db.Text // JSON string for builder details
-  interiorDesignerInfo    String? @db.Text // JSON string for interior designer details
-  landscapeArchitectInfo  String? @db.Text // JSON string for landscape architect details
-  marketingInfo           String? @db.Text // JSON string for marketing details
-  salesMarketingCompany   String? // Sales & Marketing Company ID
-  developmentTeamOverview String? @db.Text // Overview of the development team
-
-  // Publication Status
-  isPublished Boolean @default(false) // Draft projects are not visible on public website
-  featured    Boolean @default(false) // Featured projects are highlighted on the website
-
-  // Creator tracking
-  createdBy String? // User ID who created this project
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  units   PreConstructionUnit[]
-  creator User?                 @relation(fields: [createdBy], references: [id])
-
-  @@index([city])
-  @@index([status])
-  @@index([propertyType])
-  @@index([isPublished])
-  @@index([featured])
-}
-
-// Pre-Construction Units - stores individual units within a project
-model PreConstructionUnit {
-  id        String                 @id @default(cuid())
-  projectId String
-  project   PreConstructionProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  unitName       String // e.g., '101', '202'
-  beds           Int
-  baths          Int
-  sqft           Int
-  price          Float
-  maintenanceFee Float?
-  status         String // 'for-sale', 'sold-out', 'reserved'
-  studio         Boolean @default(false)
-
-  images      String[] @default([]) // Multiple images for the unit (floorplans, renderings, etc.)
-  description String?  @db.Text
-  features    String[] @default([])
-  amenities   String[] @default([])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([projectId])
-  @@index([status])
-}
-
-// Property Ratings - stores ratings for ALL property types (regular listings, pre-cons, etc.)
-model PropertyRating {
-  id           String   @id @default(cuid())
-  propertyId   String // Can be mlsNumber for regular properties or projectId for pre-cons
-  propertyType String // 'regular', 'pre-construction' - to distinguish property types
-  userId       String? // Optional user ID if user is logged in, null for anonymous ratings
-  sessionId    String? // Session ID for anonymous users to prevent duplicate ratings
-  rating       Int // Rating value from 1 to 5 stars
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@index([propertyId])
-  @@index([propertyType])
-  @@index([userId])
-  @@index([propertyId, propertyType])
-  @@index([propertyId, rating])
-  @@index([propertyId, sessionId])
-}
-
-// Pre-Construction Page Content - stores custom content for filtered pages
-model PreConstructionPageContent {
-  id              String   @id @default(cuid())
-  pageType        String // 'propertyType', 'status', 'completionYear', 'by-location'
-  pageValue       String // e.g., 'Condos', 'now-selling', '2025', 'Toronto'
-  locationType    String? // 'by-city', 'by-area', 'by-neighbourhood', 'by-intersection', 'by-communities' (only for pageType='by-location')
-  parentId        String? // ID of parent location (for hierarchy: city -> area -> neighbourhood -> intersection)
-  title           String?  @db.Text
-  description     String?  @db.Text
-  heroImage       String?
-  metaTitle       String?  @db.Text
-  metaDescription String?  @db.Text
-  customContent   String?  @db.Text // JSON or rich text content
-  faqs            String?  @db.Text // JSON array of FAQ items
-  isPublished     Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  // Self-referential relation for parent-child hierarchy
-  parent   PreConstructionPageContent?  @relation("LocationHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children PreConstructionPageContent[] @relation("LocationHierarchy")
-
-  @@unique([pageType, pageValue])
-  @@index([pageType])
-  @@index([pageValue])
-  @@index([isPublished])
-  @@index([locationType])
-  @@index([parentId])
-}
-
-model Page {
-  id         String     @id @default(cuid())
-  title      String
-  slug       String     @unique
-  content    String?    @db.Text
-  excerpt    String?    @db.Text
-  status     PageStatus @default(DRAFT)
-  parentId   String?
-  categoryId String?
-  createdBy  String
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-
-  // Relations
-  parent   Page?         @relation("PageHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
-  children Page[]        @relation("PageHierarchy")
-  category PageCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  creator  User          @relation(fields: [createdBy], references: [id], onDelete: Cascade)
-
-  @@index([slug])
-  @@index([status])
-  @@index([parentId])
-  @@index([categoryId])
-  @@index([createdBy])
-}
-
-model PageCategory {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  description String?  @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  pages Page[]
-
-  @@index([slug])
-}
-
-// Market Trends - stores monthly market statistics for all location types
-model MarketTrends {
-  id String @id @default(cuid())
-
-  // Location identification (supports: city, area, neighbourhood, intersection, community)
-  locationType String // 'city' | 'area' | 'neighbourhood' | 'intersection' | 'community'
-  locationName String // The name of the location (e.g., "Oakville", "Downtown", "Main & King")
-
-  // Parent location hierarchy (for filtering and context)
-  parentCity          String? // City this location belongs to (if not a city)
-  parentArea          String? // Area this location belongs to (if neighbourhood/intersection/community)
-  parentNeighbourhood String? // Neighbourhood this location belongs to (if intersection/community)
-
-  month String // Format: "2025-01" (YYYY-MM)
-  years Int @default(2) // Number of years of historical data (5, 10, 15, 20)
-
-  // Price data (stored as JSON)
-  priceOverview          Json? // PriceOverviewData
-  averageSoldPrice       Json? // AverageSoldPriceData
-  averageSoldPriceByType Json? // AverageSoldPriceByTypeData
-  salesVolumeByType      Json? // SalesVolumeByTypeData
-  priceByBedrooms        Json? // PriceByBedroomsData
-
-  // Inventory data (stored as JSON)
-  inventoryOverview  Json? // InventoryOverviewData
-  newClosedAvailable Json? // NewClosedAvailableData
-  daysOnMarket       Json? // DaysOnMarketData
-
-  // Price comparison data (stored as JSON)
-  medianListingVsSoldPrice Json? // MedianListingVsSoldPriceData
-
-  // Metadata
-  lastFetchedAt DateTime @default(now())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  // Unique constraint: one record per location type + location name + month + years
-  // This allows caching different year ranges separately
-  @@unique([locationType, locationName, month, years])
-  @@index([locationType])
-  @@index([locationName])
-  @@index([locationType, locationName])
-  @@index([month])
-  @@index([years])
-  @@index([locationType, locationName, month, years])
-  @@index([parentCity])
-  @@index([parentArea])
-  @@index([lastFetchedAt])
-}
-
-// Market Rankings - stores GTA city rankings (same data for all cities, stored once per month)
-model MarketRankings {
-  id    String @id @default(cuid())
-  month String @unique // Format: "2025-01" (YYYY-MM) - one ranking per month for all cities
-
-  // Rankings data (stored as JSON)
-  rankings        Json // RankingData - contains rankings for all cities
-  rankingOverview Json? // RankingOverviewData - DEPRECATED: Calculated dynamically per city, not stored
-
-  // Metadata
-  lastFetchedAt DateTime @default(now())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@index([month])
-  @@index([lastFetchedAt])
-}
-
-// City Breakdown - stores city-level breakdown data (average/median prices, 1-year change, transactions)
-// One record per month for all cities (similar to MarketRankings)
-model CityBreakdown {
-  id    String @id @default(cuid())
-  month String @unique // Format: "2025-11" (YYYY-MM) - one breakdown per month for all cities
-
-  // City breakdown data (stored as JSON)
-  // Array of { city: string, averagePrice: number, medianPrice: number, averageOneYearChange: number, medianOneYearChange: number, totalTransactions: number }
-  breakdownData Json // CityBreakdownData[] - contains breakdown for all cities
-
-  // Metadata
-  lastFetchedAt DateTime @default(now())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@index([month])
-  @@index([lastFetchedAt])
-}
-
-// Property Type Breakdown - stores property type breakdown data (average prices, price changes, transactions)
-// One record per month per city (format: "2025-11" or "2025-11-Toronto")
-model PropertyTypeBreakdown {
-  id    String @id @default(cuid())
-  month String @unique // Format: "2025-11" (all cities) or "2025-11-Toronto" (city-specific)
-
-  // Property type breakdown data (stored as JSON)
-  // Array of { propertyType: string, avgPrice: number, medianPrice: number, avgPriceOneMonthChange: number, avgPriceOneYearChange: number, transactions: number, transactionsOneMonthChange: number, transactionsOneYearChange: number }
-  breakdownData Json // PropertyTypeBreakdownData[] - contains breakdown by property type
-
-  // Metadata
-  lastFetchedAt DateTime @default(now())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@index([month])
-  @@index([lastFetchedAt])
 }

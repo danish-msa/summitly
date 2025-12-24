@@ -50,7 +50,7 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const shareUrl = `${window.location.origin}/pre-construction/${property.id}`;
+    const shareUrl = `${window.location.origin}/pre-con/${property.id}`;
     const shareText = `Check out ${property.projectName} - Pre-construction starting from ${formattedPrice}`;
     
     if (navigator.share) {
@@ -99,7 +99,7 @@ const PreConstructionPropertyCard = ({ property, onHide, className }: PreConstru
         className
       )}
       style={{ boxShadow: 'var(--shadow-card)' }}
-      onClick={() => window.location.href = `/pre-construction/${property.id}`}
+      onClick={() => window.location.href = `/pre-con/${property.id}`}
     >
       <div className="flex flex-col h-full">
         {/* Image Section - Top */}

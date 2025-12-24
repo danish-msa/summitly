@@ -117,18 +117,29 @@ export async function GET(request: NextRequest) {
       skip,
       take: limit,
       orderBy,
-      include: {
+      select: {
+        id: true,
+        mlsNumber: true,
+        projectName: true,
+        developer: true,
+        startingPrice: true,
+        endingPrice: true,
+        status: true,
+        city: true,
+        state: true,
+        propertyType: true,
+        subPropertyType: true,
+        totalUnits: true,
+        availableUnits: true,
+        isPublished: true,
+        featured: true,
+        createdAt: true,
+        updatedAt: true,
+        createdBy: true,
         units: {
           select: {
             id: true,
             status: true,
-          },
-        },
-        creator: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
           },
         },
       },
@@ -160,13 +171,41 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Fetch creator names if createdBy is present
+    const creatorIds = [...new Set(projects.map(p => p.createdBy).filter(Boolean) as string[])]
+    const creatorNamesMap = new Map<string, { id: string; name: string | null; email: string }>()
+    
+    if (creatorIds.length > 0) {
+      try {
+        const creators = await prisma.user.findMany({
+          where: {
+            id: { in: creatorIds },
+          },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        })
+        
+        creators.forEach(creator => {
+          creatorNamesMap.set(creator.id, creator)
+        })
+      } catch (error) {
+        console.error('Error fetching creator names:', error)
+      }
+    }
+
     // Map projects to include developer name and creator info
-    const projectsWithDeveloperName = projects.map((project: typeof projects[0]) => ({
-      ...project,
-      developerName: project.developer ? (developerNamesMap.get(project.developer) || null) : null,
-      creatorName: project.creator?.name || project.creator?.email || 'Unknown',
-      creatorId: project.creator?.id || null,
-    }))
+    const projectsWithDeveloperName = projects.map((project: typeof projects[0]) => {
+      const creator = project.createdBy ? creatorNamesMap.get(project.createdBy) : null
+      return {
+        ...project,
+        developerName: project.developer ? (developerNamesMap.get(project.developer) || null) : null,
+        creatorName: creator?.name || creator?.email || 'Unknown',
+        creatorId: creator?.id || project.createdBy || null,
+      }
+    })
 
     return NextResponse.json({
       projects: projectsWithDeveloperName,

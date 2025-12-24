@@ -114,7 +114,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             <div className="mb-4 relative z-20">
               <nav className={`flex items-center gap-2 text-sm ${isDevelopmentTeamPage ? 'text-foreground' : 'text-white/90 drop-shadow-md'}`} aria-label="Breadcrumb">
                 <Link 
-                  href="/pre-construction" 
+                  href="/pre-con" 
                   className={`${isDevelopmentTeamPage ? 'text-primary hover:text-primary/80' : 'text-primary'} transition-colors font-medium`}
                 >
                   Pre-Construction

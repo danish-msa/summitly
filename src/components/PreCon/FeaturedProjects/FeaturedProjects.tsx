@@ -75,7 +75,7 @@ const FeaturedProjects: React.FC = () => {
 
   if (loading) {
     return (
-      <section className="py-16 bg-background">
+      <section className="py-8 sm:py-12 md:py-16 bg-background">
         <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeading
             heading="Our Top Picks"
@@ -83,8 +83,8 @@ const FeaturedProjects: React.FC = () => {
             description="Discover our handpicked selection of premium pre-construction properties"
             position="center"
           />
-          <div className="flex items-center justify-center py-12">
-            <div className="text-muted-foreground">Loading featured projects...</div>
+          <div className="flex items-center justify-center py-8 sm:py-12">
+            <div className="text-sm sm:text-base text-muted-foreground">Loading featured projects...</div>
           </div>
         </div>
       </section>
@@ -96,7 +96,7 @@ const FeaturedProjects: React.FC = () => {
   }
 
   return (
-    <section className="py-16 bg-background">
+    <section className="py-8 sm:py-12 md:py-16 bg-background">
       <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading
           heading="Our Top Picks"
@@ -105,7 +105,7 @@ const FeaturedProjects: React.FC = () => {
           position="center"
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mt-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mt-6 sm:mt-8 md:mt-12">
           {featuredProperties.map((property) => (
             <FeaturedPropertyCard
               key={property.id}

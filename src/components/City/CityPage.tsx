@@ -8,9 +8,8 @@ import { PropertyListing } from '@/lib/types';
 import { fetchTopCities } from '@/data/data';
 import { AreaSelector } from '@/components/City/AreaSelector';
 import { Separator } from '@/components/ui/separator';
-import { LayoutGrid, MapPin, Bell, TrendingUp, Home } from 'lucide-react';
+import { Bell, TrendingUp, Home } from 'lucide-react';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
 import { useGlobalFilters } from '@/hooks/useGlobalFilters';
 import GlobalFilters from '@/components/common/filters/GlobalFilters';
 import { LOCATIONS } from '@/lib/types/filters';
@@ -19,9 +18,6 @@ import PropertyAlertsDialog from '@/components/common/PropertyAlertsDialog';
 import { usePropertyAlerts } from '@/hooks/usePropertyAlerts';
 import { useSession } from 'next-auth/react';
 import { toast } from '@/hooks/use-toast';
-
-// Dynamically import the Google Maps component with no SSR
-const GooglePropertyMap = dynamic(() => import('@/components/MapSearch/GooglePropertyMap'), { ssr: false });
 
 // Helper function to convert slug back to city name
 const unslugifyCityName = (slug: string): string => {
@@ -39,8 +35,6 @@ const CityPage: React.FC = () => {
   const [allProperties, setAllProperties] = useState<PropertyListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [cityInfo, setCityInfo] = useState<{ name: string; numberOfProperties: number } | null>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'mixed' | 'map'>('list');
-  const [selectedProperty, setSelectedProperty] = useState<PropertyListing | null>(null);
   const [communities, setCommunities] = useState<string[]>([]);
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [alertOptions, setAlertOptions] = useState<Record<string, boolean>>({
@@ -330,113 +324,27 @@ const CityPage: React.FC = () => {
 
         {/* Property Listings */}
         <section className="pb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex gap-4">
-              <button className="text-sm font-medium text-primary border-b-2 border-primary pb-2">
-                Listings {properties.length}
-              </button>
-              <button className="text-sm font-medium text-muted-foreground hover:text-foreground pb-2">
-                Buildings
-              </button>
+          {properties.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {properties.map((property) => (
+                <div
+                  key={property.mlsNumber}
+                  className="cursor-pointer transition-all"
+                >
+                  <PropertyCard
+                    property={property}
+                    onHide={() => {}}
+                  />
+                </div>
+              ))}
             </div>
-            
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-muted-foreground">
-                Sort by Date (Newest)
-              </div>
-              <div className="flex ">
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`px-4 py-2.5 flex flex-col items-center gap-1.5 transition-all rounded-l-lg ${
-                    viewMode === 'list'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'bg-white text-gray-700 hover:bg-brand-tide'
-                  }`}
-                  title="List View"
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                  <span className="text-xs font-medium">List</span>
-                </button>
-                <button
-                  onClick={() => setViewMode('mixed')}
-                  className={`px-4 py-2.5 flex flex-col items-center gap-1.5 transition-all ${
-                    viewMode === 'mixed'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'bg-white text-gray-700 hover:bg-brand-tide'
-                  }`}
-                  title="Mixed View"
-                >
-                  <div className="flex gap-0.5 items-center">
-                    <LayoutGrid className="w-3 h-3" />
-                    <MapPin className="w-3 h-3" />
-                  </div>
-                  <span className="text-xs font-medium">Mixed</span>
-                </button>
-                <button
-                  onClick={() => setViewMode('map')}
-                  className={`px-4 py-2.5 flex flex-col items-center gap-1.5 transition-all rounded-r-lg ${
-                    viewMode === 'map'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'bg-white text-gray-700 hover:bg-brand-tide'
-                  }`}
-                  title="Map View"
-                >
-                  <MapPin className="w-4 h-4" />
-                  <span className="text-xs font-medium">Map</span>
-                </button>
-              </div>
+          ) : (
+            <div className="bg-secondary/30 rounded-lg p-12 text-center">
+              <p className="text-lg text-muted-foreground">
+                No properties found in {displayCityName}
+              </p>
             </div>
-          </div>
-
-          {/* View Content */}
-          <div className={`flex ${viewMode === 'map' ? 'flex-col' : viewMode === 'list' ? 'flex-col' : 'flex-col md:flex-row'} gap-6`}>
-            {/* Property Listings */}
-            {(viewMode === 'list' || viewMode === 'mixed') && (
-              <div className={`${viewMode === 'mixed' ? 'md:w-1/2' : 'w-full'} overflow-y-auto`} style={{ maxHeight: viewMode === 'mixed' ? 'calc(100vh - 200px)' : 'auto' }}>
-                {properties.length > 0 ? (
-                  <div className={`grid gap-6 ${
-                    viewMode === 'mixed' 
-                      ? 'grid-cols-1 sm:grid-cols-2' 
-                      : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-                  }`}>
-                    {properties.map((property) => (
-                      <div
-                        key={property.mlsNumber}
-                        className={`cursor-pointer transition-all ${
-                          selectedProperty?.mlsNumber === property.mlsNumber ? 'ring-2 ring-primary' : ''
-                        }`}
-                        onClick={() => setSelectedProperty(property)}
-                      >
-                        <PropertyCard
-                          property={property}
-                          onHide={() => {}}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-secondary/30 rounded-lg p-12 text-center">
-                    <p className="text-lg text-muted-foreground">
-                      No properties found in {displayCityName}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Map View */}
-            {(viewMode === 'map' || viewMode === 'mixed') && (
-              <div className={`${viewMode === 'mixed' ? 'md:w-1/2' : 'w-full'} bg-gray-100 rounded-lg overflow-hidden`} style={{ height: viewMode === 'mixed' ? 'calc(100vh - 200px)' : '70vh' }}>
-                <GooglePropertyMap
-                  properties={properties}
-                  selectedProperty={selectedProperty}
-                  onPropertySelect={setSelectedProperty}
-                  onBoundsChange={() => {}}
-                />
-              </div>
-            )}
-          </div>
+          )}
         </section>
       </main>
 

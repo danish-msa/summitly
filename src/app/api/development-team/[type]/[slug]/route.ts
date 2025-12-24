@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { DeveloperType } from '@prisma/client'
+import { convertToS3Url } from '@/lib/image-url'
 
 // Map URL type to DeveloperType enum
 const typeMap: Record<string, DeveloperType> = {
@@ -68,6 +69,7 @@ export async function GET(
     return NextResponse.json({
       teamMember: {
         ...teamMember,
+        image: teamMember.image ? convertToS3Url(teamMember.image) : null,
         projectCount,
       },
     })

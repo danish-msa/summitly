@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { isAdmin } from '@/lib/roles'
-import { supabase } from '@/lib/supabase'
+import { uploadToS3 } from '@/lib/s3'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -82,10 +82,10 @@ export async function POST(request: NextRequest) {
     const timestamp = Date.now()
     const fileName = `${sanitizedProjectName}-${sanitizedDocType}-${timestamp}.${fileExtension}`
 
-    // Validate Supabase configuration
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    // Validate AWS S3 configuration
+    if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
       return NextResponse.json(
-        { error: 'Supabase storage is not configured. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.' },
+        { error: 'AWS S3 is not configured. Please set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables.' },
         { status: 500 }
       )
     }
@@ -94,29 +94,9 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
-    // Upload to Supabase Storage
-    const filePath = `pre-con/${fileName}`
-    const { error: uploadError } = await supabase.storage
-      .from('documents')
-      .upload(filePath, buffer, {
-        contentType: file.type,
-        upsert: false,
-      })
-
-    if (uploadError) {
-      console.error('Supabase upload error:', uploadError)
-      return NextResponse.json(
-        { error: `Failed to upload document: ${uploadError.message}` },
-        { status: 500 }
-      )
-    }
-
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from('documents')
-      .getPublicUrl(filePath)
-
-    const publicPath = urlData.publicUrl
+    // Upload to AWS S3
+    const filePath = `documents/pre-con/${fileName}`
+    const publicPath = await uploadToS3(filePath, buffer, file.type)
 
     return NextResponse.json({
       success: true,

@@ -39,11 +39,11 @@ const Nav = ({ openNav }: Props) => {
     }
     
     // Pre-construction: only treat as property page if it's a specific project detail page
-    // NOT listing pages like /pre-construction, /pre-construction/toronto, /pre-construction/condos
-    if (pathname.startsWith('/pre-construction/')) {
+    // NOT listing pages like /pre-con, /pre-con/toronto, /pre-con/condos
+    if (pathname.startsWith('/pre-con/')) {
       const pathParts = pathname.split('/').filter(Boolean);
       
-      // If path has more than 2 parts (e.g., /pre-construction/[slug]/[unitId]), it's a detail page
+      // If path has more than 2 parts (e.g., /pre-con/[slug]/[unitId]), it's a detail page
       if (pathParts.length > 2) {
         return true; // Detail page (e.g., unit detail) - no sticky navbar
       }
@@ -270,7 +270,7 @@ const Nav = ({ openNav }: Props) => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.3 }}
                   >
-                    <Link href="/pre-construction" className="hover:text-primary">
+                    <Link href="/pre-con" className="hover:text-primary">
                       Pre-Con
                     </Link>
                     <ChevronDown className={cn("w-4 h-4 transition-transform", showProjectsDropdown && "rotate-180")} />

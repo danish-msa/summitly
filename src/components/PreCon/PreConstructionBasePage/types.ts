@@ -4,6 +4,10 @@ export interface PreConstructionBasePageProps {
   slug: string;
   pageType: PageType;
   teamType?: string; // For development team pages: 'developer', 'architect', etc.
+  locationType?: 'city' | 'neighbourhood' | 'intersection' | null;
+  locationName?: string | null; // Neighbourhood or intersection name
+  bedroomFilter?: { bedrooms: number; isPlus: boolean } | null;
+  bathroomFilter?: { bathrooms: number; isPlus: boolean } | null;
 }
 
 export interface PageContent {

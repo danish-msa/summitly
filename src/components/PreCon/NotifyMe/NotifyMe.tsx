@@ -35,30 +35,30 @@ const NotifyMe: React.FC = () => {
       <div className="px-4 sm:px-6 lg:px-8 relative z-10 bg-cover bg-center rounded-2xl bg-no-repeat py-16 " style={{ backgroundImage: 'url(/images/pre-con/notify.png)' }}>
         <div className="max-w-2xl mx-auto text-center">
           {/* Title */}
-          <h2 className="text-4xl md:text-5xl font-bold text-[#CBF4FA] mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#CBF4FA] mb-4">
             Notify Me of New Projects
           </h2>
 
           {/* Description */}
-          <p className="text-lg text-[#CBF4FA] mb-2">
+          <p className="text-sm sm:text-base md:text-lg text-[#CBF4FA] mb-2">
             Send me information about new projects that are launching or selling
           </p>
 
           {/* Community CTA */}
-          <p className="text-base text-[#CBF4FA] mb-8">
+          <p className="text-sm sm:text-base md:text-lg text-[#CBF4FA] mb-8">
             Join Summitly community of <span className="font-bold text-[#CBF4FA] underline">500,000+</span> Buyers & Investors today!
           </p>
 
           {/* Email Form */}
           <form onSubmit={handleSubmit} className="mb-6">
-            <div className="flex flex-col sm:flex-row max-w-lg mx-auto">
+            <div className="flex flex-row max-w-lg mx-auto">
               <div className="flex-1">
                 <Input
                   type="email"
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-12 pl-6 rounded-r-none text-[#CBF4FA] placeholder:text-[#CBF4FA] bg-transparent border-[#CBF4FA] focus:border-[#CBF4FA]"
+                  className="h-12 pl-6 rounded-full rounded-r-none text-[#CBF4FA] placeholder:text-[#CBF4FA] bg-transparent border-[#CBF4FA] focus:border-[#CBF4FA]"
                   required
                 />
               </div>
@@ -82,7 +82,7 @@ const NotifyMe: React.FC = () => {
           </form>
 
           {/* Privacy Assurances */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-sm text-muted-foreground">
+          <div className="flex flex-row items-center justify-center gap-6 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <Mail className="w-4 h-4 text-[#CBF4FA]" />
               <span className="text-[#CBF4FA]">No spam, ever</span>

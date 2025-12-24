@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { convertToS3Url } from '@/lib/image-url'
 import { Prisma } from '@prisma/client'
 
 // GET - Public endpoint to fetch all pre-con projects for website display
@@ -223,13 +224,22 @@ export async function GET(request: NextRequest) {
         marketing?: DevelopmentTeamMember
       }
 
+      // Helper function to convert image URLs in team member objects
+      const convertTeamMemberImage = (member: any): DevelopmentTeamMember | undefined => {
+        if (!member) return undefined
+        return {
+          ...member,
+          image: member.image ? convertToS3Url(member.image) : undefined,
+        }
+      }
+
       const developmentTeam: DevelopmentTeam = {}
-      if (developerInfo) developmentTeam.developer = developerInfo as DevelopmentTeamMember
-      if (architectInfo) developmentTeam.architect = architectInfo as DevelopmentTeamMember
-      if (builderInfo) developmentTeam.builder = builderInfo as DevelopmentTeamMember
-      if (interiorDesignerInfo) developmentTeam.interiorDesigner = interiorDesignerInfo as DevelopmentTeamMember
-      if (landscapeArchitectInfo) developmentTeam.landscapeArchitect = landscapeArchitectInfo as DevelopmentTeamMember
-      if (marketingInfo) developmentTeam.marketing = marketingInfo as DevelopmentTeamMember
+      if (developerInfo) developmentTeam.developer = convertTeamMemberImage(developerInfo) as DevelopmentTeamMember
+      if (architectInfo) developmentTeam.architect = convertTeamMemberImage(architectInfo) as DevelopmentTeamMember
+      if (builderInfo) developmentTeam.builder = convertTeamMemberImage(builderInfo) as DevelopmentTeamMember
+      if (interiorDesignerInfo) developmentTeam.interiorDesigner = convertTeamMemberImage(interiorDesignerInfo) as DevelopmentTeamMember
+      if (landscapeArchitectInfo) developmentTeam.landscapeArchitect = convertTeamMemberImage(landscapeArchitectInfo) as DevelopmentTeamMember
+      if (marketingInfo) developmentTeam.marketing = convertTeamMemberImage(marketingInfo) as DevelopmentTeamMember
 
       // Convert to PropertyListing format (matching mock data structure)
       return {
@@ -303,8 +313,10 @@ export async function GET(request: NextRequest) {
         },
         boardId: 0,
         images: {
-          imageUrl: project.images[0] || '/images/p1.jpg',
-          allImages: project.images.length > 0 ? project.images : ['/images/p1.jpg'],
+          imageUrl: project.images[0] ? convertToS3Url(project.images[0]) : '/images/p1.jpg',
+          allImages: project.images.length > 0 
+            ? project.images.map(img => convertToS3Url(img))
+            : ['/images/p1.jpg'],
         },
         preCon: {
           projectName: project.projectName,

@@ -35,10 +35,9 @@ const contactOptions = [
 
 export const ContactMethods = () => {
   return (
-    <section className="w-full py-16 px-4">
+    <section className="w-full py-16 px-4 mb-4">
       <div className="max-w-6xl mx-auto">
         <SectionHeading heading="Get in touch with us" subheading="Contact Methods" description="Choose your preferred way to connect with our real estate team. We're here to help you find your perfect home." />
-        
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-10">
           {contactOptions.map((option) => {

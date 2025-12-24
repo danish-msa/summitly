@@ -52,7 +52,7 @@ const PreConstructionPropertyCardV2 = ({ property, onHide, className }: PreConst
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const shareUrl = `${window.location.origin}/pre-construction/${property.id}`;
+    const shareUrl = `${window.location.origin}/pre-con/${property.id}`;
     const shareText = `Check out ${property.projectName} - Pre-construction starting from ${formattedPrice}`;
     
     if (navigator.share) {
@@ -88,7 +88,7 @@ const PreConstructionPropertyCardV2 = ({ property, onHide, className }: PreConst
   };
 
   return (
-    <Link href={`/pre-construction/${property.id}`}>
+    <Link href={`/pre-con/${property.id}`}>
       <div 
         className={cn(
           "group bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl cursor-pointer border border-gray-100",

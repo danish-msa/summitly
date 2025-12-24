@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { DeveloperType } from '@prisma/client'
+import { convertToS3Url } from '@/lib/image-url'
 
 // GET - Public endpoint to fetch all development team members for website display
 export async function GET(_request: NextRequest) {
@@ -100,7 +101,7 @@ export async function GET(_request: NextRequest) {
           name: member.name,
           slug: member.name.toLowerCase().replace(/\s+/g, '-'),
           description: member.description,
-          image: member.image,
+          image: member.image ? convertToS3Url(member.image) : null,
           projectCount: member.projectCount,
           url: `/${typeUrlMap[type as DeveloperType]}/${member.name.toLowerCase().replace(/\s+/g, '-')}`,
         })),

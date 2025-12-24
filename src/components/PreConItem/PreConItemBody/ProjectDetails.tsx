@@ -364,17 +364,17 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
               let linkUrl: string | null = null;
               if (detail.value) {
                 if (detail.label === 'Status') {
-                  linkUrl = `/pre-construction/${getStatusSlug(detail.value)}`;
+                  linkUrl = `/pre-con/${getStatusSlug(detail.value)}`;
                 } else if (detail.label === 'Occupancy Year') {
                   const year = extractYear(detail.value);
                   if (year && /^\d{4}$/.test(year)) {
-                    linkUrl = `/pre-construction/${year}`;
+                    linkUrl = `/pre-con/${year}`;
                   }
                 } else if (detail.label === 'Property Type') {
-                  linkUrl = `/pre-construction/${getPropertyTypeSlug(detail.value)}`;
+                  linkUrl = `/pre-con/${getPropertyTypeSlug(detail.value)}`;
                 } else if (detail.label === 'Sub Property Type') {
                   const propertyType = preCon.details?.propertyType || 'Condominium';
-                  linkUrl = `/pre-construction/${getSubPropertyTypeSlug(detail.value, propertyType)}`;
+                  linkUrl = `/pre-con/${getSubPropertyTypeSlug(detail.value, propertyType)}`;
                 }
               }
               

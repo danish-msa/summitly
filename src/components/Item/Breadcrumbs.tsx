@@ -17,7 +17,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ property, isPreCon = false, i
   };
 
   const getBreadcrumbHref = () => {
-    if (isPreCon) return '/pre-construction';
+    if (isPreCon) return '/pre-con';
     if (isRent) return '/rent';
     return '/listings';
   };

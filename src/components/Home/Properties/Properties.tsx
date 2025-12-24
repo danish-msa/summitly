@@ -1,4 +1,5 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import SectionHeading from '@/components/Helper/SectionHeading';
 import { fetchPropertyListings } from '@/data/data';
 import PropertyCard from '@/components/Helper/PropertyCard';
@@ -9,7 +10,14 @@ import { useLocationDetection } from '@/hooks/useLocationDetection';
 import { useGlobalFilters } from '@/hooks/useGlobalFilters';
 import { useHiddenProperties } from '@/hooks/useHiddenProperties';
 import { FilterChangeEvent, LOCATIONS } from '@/lib/types/filters';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Carousel,
+  CarouselApi,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
 
 const Properties = () => {
   const [allProperties, setAllProperties] = useState<PropertyListing[]>([]);
@@ -18,8 +26,9 @@ const Properties = () => {
   const [error, setError] = useState<string | null>(null);
   const [communities, setCommunities] = useState<string[]>([]);
   const [listingType, setListingType] = useState<'sell' | 'rent'>('sell');
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const sliderRef = useRef<HTMLDivElement>(null);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
   
   // Use global filters hook
   const { filters, handleFilterChange, resetFilters } = useGlobalFilters();
@@ -271,39 +280,23 @@ const Properties = () => {
   // Get visible properties (filtered properties minus hidden ones)
   const visibleProperties = getVisibleProperties(filteredProperties);
 
-  // Slider navigation functions - move one property at a time
-  const nextSlide = () => {
-    const slidesPerView = getSlidesPerView();
-    const maxPosition = Math.max(0, visibleProperties.length - slidesPerView);
-    setCurrentSlide(prev => prev < maxPosition ? prev + 1 : 0);
-  };
-
-  const prevSlide = () => {
-    const slidesPerView = getSlidesPerView();
-    const maxPosition = Math.max(0, visibleProperties.length - slidesPerView);
-    setCurrentSlide(prev => prev > 0 ? prev - 1 : maxPosition);
-  };
-
-
-  // Get number of slides per view based on screen size
-  const getSlidesPerView = () => {
-    if (typeof window === 'undefined') return 4;
-    if (window.innerWidth < 640) return 1; // sm
-    if (window.innerWidth < 1024) return 2; // lg
-    if (window.innerWidth < 1280) return 3; // xl
-    return 4; // 2xl+
-  };
-
-  // Calculate total possible positions (one property at a time)
-  const getTotalPositions = () => {
-    const slidesPerView = getSlidesPerView();
-    return Math.max(1, visibleProperties.length - slidesPerView + 1);
-  };
-
-  // Reset slide when visible properties change
+  // Handle carousel API updates
   useEffect(() => {
-    setCurrentSlide(0);
-  }, [visibleProperties]);
+    if (!carouselApi) {
+      return;
+    }
+
+    const updateSelection = () => {
+      setCanScrollPrev(carouselApi.canScrollPrev());
+      setCanScrollNext(carouselApi.canScrollNext());
+    };
+
+    updateSelection();
+    carouselApi.on("select", updateSelection);
+    return () => {
+      carouselApi.off("select", updateSelection);
+    };
+  }, [carouselApi]);
 
   if (loading) return (
     <div className="pt-12 sm:pt-16 pb-12 sm:pb-16">
@@ -393,9 +386,9 @@ const Properties = () => {
           
         />
         
-         <div className='flex flex-col lg:flex-row gap-4 mt-8 sm:gap-5'>
+         <div className='flex flex-col lg:flex-row gap-4 mt-6 sm:mt-8 mb-2 sm:mb-4 sm:gap-5'>
            {/* Left side - Property Filters */}
-           <div className="flex-1">
+           <div className="flex-1 w-full lg:w-auto">
              <PropertyFilters 
                filters={filters}
                handleFilterChange={handleFilterChange}
@@ -407,75 +400,65 @@ const Properties = () => {
            </div>
            
            {/* Right side - Sell/Rent Toggle and Results count */}
-           <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4 lg:gap-6">
+           <div className="flex flex-col sm:flex-row lg:flex-row items-start sm:items-center lg:items-center gap-3 sm:gap-4 lg:gap-6 w-full lg:w-auto">
              {/* Sell/Rent Toggle */}
-             <SellRentToggle 
-               listingType={listingType}
-               onListingTypeChange={handleListingTypeChange}
-             />
-             
-             {/* Results count */}
-             <div className="flex items-center relative">
-               <span className="text-gray-600 text-xs w-48 absolute top-8 right-0 text-right">
-                 Showing {visibleProperties.length} of {allProperties.length} properties
-               </span>
-             </div>
+              <SellRentToggle 
+                listingType={listingType}
+                onListingTypeChange={handleListingTypeChange}
+              />
            </div>
          </div>
 
-         
-        
-        {/* Properties Slider */}
+        {/* Properties Carousel */}
         {visibleProperties.length > 0 ? (
-          <div className="mt-8 sm:mt-10">
-            {/* Slider Container */}
-            <div className="relative">
-              {/* Navigation Buttons */}
-              <button
-                onClick={prevSlide}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110"
-                disabled={currentSlide === 0}
+          <div className="mt-8 sm:mt-2 relative">
+            {/* Navigation Buttons - Positioned above the carousel */}
+            <div className="absolute top-1/2 -translate-y-1/2 -left-12 -right-12 flex gap-1 justify-between items-center z-10 pointer-events-none">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => carouselApi?.scrollPrev()}
+                disabled={!canScrollPrev}
+                className="h-10 w-10 rounded-full bg-white/95 text-primary backdrop-blur-sm shadow-lg border border-border hover:bg-white hover:shadow-xl transition-all duration-300 hidden md:flex pointer-events-auto"
+                aria-label="Previous slide"
               >
-                <ChevronLeft className="h-5 w-5 text-gray-600" />
-              </button>
-              
-              <button
-                onClick={nextSlide}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110"
-                disabled={currentSlide >= getTotalPositions() - 1}
-              >
-                <ChevronRight className="h-5 w-5 text-gray-600" />
-              </button>
+                <ArrowLeft className="h-6 w-6" />
+              </Button>
 
-              {/* Slider */}
-              <div 
-                ref={sliderRef}
-                className="overflow-hidden"
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => carouselApi?.scrollNext()}
+                disabled={!canScrollNext}
+                className="h-10 w-10 rounded-full bg-white/95 text-primary backdrop-blur-sm shadow-lg border border-border hover:bg-white hover:shadow-xl transition-all duration-300 hidden md:flex pointer-events-auto"
+                aria-label="Next slide"
               >
-                <div 
-                  className="flex transition-transform duration-700 ease-in-out"
-                  style={{
-                    transform: `translateX(-${currentSlide * (100 / getSlidesPerView())}%)`,
-                  }}
-                >
-                  {visibleProperties.map((property) => (
-                    <div 
-                      key={property.mlsNumber} 
-                      className="flex-shrink-0"
-                      style={{ width: `${100 / getSlidesPerView()}%` }}
-                    >
-                      <div className="px-2">
-                        <PropertyCard 
-                          property={property} 
-                          onHide={() => hideProperty(property.mlsNumber)}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                <ArrowRight className="h-6 w-6" />
+              </Button>
             </div>
 
+            <Carousel
+              setApi={setCarouselApi}
+              opts={{
+                align: "start",
+                loop: false,
+              }}
+              className="w-full"
+            >
+              <CarouselContent className="-ml-1 md:-ml-2">
+                {visibleProperties.map((property) => (
+                  <CarouselItem 
+                    key={property.mlsNumber}
+                    className="pl-1 md:pl-2 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
+                  >
+                    <PropertyCard 
+                      property={property} 
+                      onHide={() => hideProperty(property.mlsNumber)}
+                    />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
           </div>
         ) : (
           <div className="text-center py-10 mt-8 sm:mt-10">
@@ -486,6 +469,18 @@ const Properties = () => {
             >
               Reset Filters
             </button>
+          </div>
+        )}
+
+        {/* View All Properties Button */}
+        {visibleProperties.length > 0 && (
+          <div className="text-center mt-8 sm:mt-10">
+            <Link
+              href="/listings"
+              className="inline-flex items-center px-5 sm:px-6 py-2.5 sm:py-3 bg-secondary hover:bg-secondary/90 text-white text-sm sm:text-base font-medium rounded-lg transition-colors"
+            >
+              View All Properties
+            </Link>
           </div>
         )}
       </div>

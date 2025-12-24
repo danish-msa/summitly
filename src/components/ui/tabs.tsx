@@ -7,10 +7,50 @@ import { cn } from "@/lib/utils"
 
 const Tabs = TabsPrimitive.Root
 
+interface TabsListProps extends React.ComponentPropsWithoutRef<typeof TabsPrimitive.List> {
+  mobileScrollable?: boolean
+}
+
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
->(({ className, ...props }, ref) => (
+  TabsListProps
+>(({ className, mobileScrollable = true, children, ...props }, ref) => {
+  // Check if className contains grid (which needs mobile scrolling)
+  const hasGrid = className?.includes('grid') || className?.includes('md:grid')
+  
+  // If mobileScrollable is true and has grid, wrap in scrollable container
+  if (mobileScrollable && hasGrid) {
+    // Clone children with flex-shrink-0 for mobile scrolling
+    const enhancedChildren = React.Children.map(children, (child) => {
+      if (React.isValidElement(child)) {
+        return React.cloneElement(child, {
+          className: cn(
+            child.props.className,
+            "flex-shrink-0 whitespace-nowrap"
+          )
+        } as any)
+      }
+      return child
+    })
+    
+    return (
+      <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible">
+        <TabsPrimitive.List
+          ref={ref}
+          className={cn(
+            "inline-flex min-w-max md:min-w-0 h-auto items-center gap-2 rounded-lg bg-muted/50 p-1 text-muted-foreground w-fit",
+            className
+          )}
+          {...props}
+        >
+          {enhancedChildren}
+        </TabsPrimitive.List>
+      </div>
+    )
+  }
+
+  // Default behavior for non-grid layouts or when mobileScrollable is false
+  return (
   <TabsPrimitive.List
     ref={ref}
     className={cn(
@@ -18,8 +58,11 @@ const TabsList = React.forwardRef<
       className
     )}
     {...props}
-  />
-))
+    >
+      {children}
+    </TabsPrimitive.List>
+  )
+})
 TabsList.displayName = TabsPrimitive.List.displayName
 
 const TabsTrigger = React.forwardRef<

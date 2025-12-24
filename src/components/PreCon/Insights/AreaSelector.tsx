@@ -44,7 +44,11 @@ export function AreaSelector({ areas, selectedArea, onAreaChange }: AreaSelector
           <ChevronDown className="ml-0 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-0 bg-card border-border" align="end">
+      <PopoverContent 
+        className="w-[calc(100vw-2rem)] sm:w-[300px] p-0 bg-card border-border" 
+        align="start"
+        sideOffset={4}
+      >
         <div className="p-2 border-b border-border">
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />

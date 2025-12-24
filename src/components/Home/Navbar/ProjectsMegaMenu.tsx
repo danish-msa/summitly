@@ -101,12 +101,12 @@ const mainCategories: CategoryItem[] = [
 ];
 
 const propertyTypes: ContentItem[] = [
-  { id: 'condos', label: 'Condos', description: 'Explore condominium projects', href: '/pre-construction/condos', icon: Building2 },
-  { id: 'houses', label: 'Houses', description: 'Browse house developments', href: '/pre-construction/houses', icon: Home },
-  { id: 'lofts', label: 'Lofts', description: 'Discover loft projects', href: '/pre-construction/lofts', icon: Warehouse },
-  { id: 'master-planned', label: 'Master-Planned Communities', description: 'View master-planned communities', href: '/pre-construction/master-planned-communities', icon: Building },
-  { id: 'multi-family', label: 'Multi Family', description: 'Multi-family developments', href: '/pre-construction/multi-family', icon: Building2 },
-  { id: 'offices', label: 'Offices', description: 'Find office spaces', href: '/pre-construction/offices', icon: Building2 },
+  { id: 'condos', label: 'Condos', description: 'Explore condominium projects', href: '/pre-con/condos', icon: Building2 },
+  { id: 'houses', label: 'Houses', description: 'Browse house developments', href: '/pre-con/houses', icon: Home },
+  { id: 'lofts', label: 'Lofts', description: 'Discover loft projects', href: '/pre-con/lofts', icon: Warehouse },
+  { id: 'master-planned', label: 'Master-Planned Communities', description: 'View master-planned communities', href: '/pre-con/master-planned-communities', icon: Building },
+  { id: 'multi-family', label: 'Multi Family', description: 'Multi-family developments', href: '/pre-con/multi-family', icon: Building2 },
+  { id: 'offices', label: 'Offices', description: 'Find office spaces', href: '/pre-con/offices', icon: Building2 },
 ];
 
 const currentYear = new Date().getFullYear();
@@ -114,18 +114,18 @@ const occupancyYears: ContentItem[] = Array.from({ length: 7 }, (_, i) => ({
   id: `year-${currentYear + i}`,
   label: `Move in ${currentYear + i}`,
   description: `Projects completing in ${currentYear + i}`,
-  href: `/pre-construction/${currentYear + i}`,
+  href: `/pre-con/${currentYear + i}`,
   icon: Calendar
 }));
 
 const sellingStatuses: ContentItem[] = [
-  { id: 'platinum-access', label: 'Platinum Access', description: 'Exclusive early access projects', href: '/pre-construction/platinum-access', icon: CheckCircle },
-  { id: 'now-selling', label: 'Now Selling', description: 'Currently available for purchase', href: '/pre-construction/now-selling', icon: CheckCircle },
-  { id: 'coming-soon', label: 'Coming Soon', description: 'Upcoming projects launching soon', href: '/pre-construction/coming-soon', icon: Clock },
-  { id: 'assignments', label: 'Assignments', description: 'Assignment opportunities available', href: '/pre-construction/assignments', icon: Tag },
-  { id: 'register-now', label: 'Register Now', description: 'Projects accepting registrations', href: '/pre-construction/register-now', icon: Clock },
-  { id: 'resale', label: 'Resale', description: 'Resale properties available', href: '/pre-construction/resale', icon: Tag },
-  { id: 'sold-out', label: 'Sold Out', description: 'Fully sold projects', href: '/pre-construction/sold-out', icon: XCircle },
+  { id: 'platinum-access', label: 'Platinum Access', description: 'Exclusive early access projects', href: '/pre-con/platinum-access', icon: CheckCircle },
+  { id: 'now-selling', label: 'Now Selling', description: 'Currently available for purchase', href: '/pre-con/now-selling', icon: CheckCircle },
+  { id: 'coming-soon', label: 'Coming Soon', description: 'Upcoming projects launching soon', href: '/pre-con/coming-soon', icon: Clock },
+  { id: 'assignments', label: 'Assignments', description: 'Assignment opportunities available', href: '/pre-con/assignments', icon: Tag },
+  { id: 'register-now', label: 'Register Now', description: 'Projects accepting registrations', href: '/pre-con/register-now', icon: Clock },
+  { id: 'resale', label: 'Resale', description: 'Resale properties available', href: '/pre-con/resale', icon: Tag },
+  { id: 'sold-out', label: 'Sold Out', description: 'Fully sold projects', href: '/pre-con/sold-out', icon: XCircle },
 ];
 
 const getCategoryTitle = (category: CategoryType): string => {
@@ -172,7 +172,7 @@ const getContentForCategory = (
         id: slugifyCityName(city),
         label: city,
         description: `View pre-construction projects in ${city}`,
-        href: `/pre-construction/${slugifyCityName(city)}`,
+        href: `/pre-con/${slugifyCityName(city)}`,
         icon: MapPin
       }));
     case 'occupancy-year': 
@@ -539,7 +539,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                                     </div>
                                     {combinedOthers.length > 4 && (
                                       <Link
-                                        href="/pre-construction/projects"
+                                        href="/pre-con/projects"
                                         className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-primary hover:underline"
                                       >
                                         View all others
@@ -605,7 +605,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                     )}
                     {activeCategory !== 'developer' && (
                       <Link
-                        href="/pre-construction/projects"
+                        href="/pre-con/projects"
                         className="inline-flex items-center gap-1 mt-4 text-xs font-semibold text-primary hover:underline"
                       >
                         View all {activeCategory === 'top-cities' ? 'cities' : activeCategory.replace('-', ' ')}

@@ -1,19 +1,16 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { FaChevronDown, FaMapMarkerAlt } from 'react-icons/fa';
-import { Navigation } from 'lucide-react';
-import { useLocationDetection } from '@/hooks/useLocationDetection';
-import { IndividualFilterProps, LOCATIONS, FilterChangeEvent } from '@/lib/types/filters';
+import { FaChevronDown, FaMapMarkerAlt, FaChevronRight } from 'react-icons/fa';
+import { IndividualFilterProps, REGIONS, FilterChangeEvent } from '@/lib/types/filters';
 
 const LocationFilter: React.FC<IndividualFilterProps> = ({ 
   filters, 
   handleFilterChange,
-  locations = LOCATIONS
 }) => {
   const [activeDropdown, setActiveDropdown] = useState<boolean>(false);
   const [locationSearchQuery, setLocationSearchQuery] = useState("");
-  const { location, detectLocation, isLoading: locationLoading } = useLocationDetection();
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -33,85 +30,71 @@ const LocationFilter: React.FC<IndividualFilterProps> = ({
     };
   }, [activeDropdown]);
 
-  // Handle location selection
-  const handleLocationSelect = (locationId: string, area: string) => {
+  // Handle region selection (first level)
+  const handleRegionSelect = (regionId: string) => {
+    setSelectedRegion(regionId);
+  };
+
+  // Handle city selection (second level)
+  const handleCitySelect = (regionId: string, city: string) => {
     const event = {
       target: {
         name: 'locationAndArea',
-        value: { location: locationId, area: area }
+        value: { location: regionId, area: city }
       }
     } as FilterChangeEvent;
     handleFilterChange(event);
-    // Removed setActiveDropdown(false) to keep dropdown open
-  };
-
-  // Handle location detection
-  const handleUseMyLocation = () => {
-    if (location) {
-      const matchedLocation = matchLocationWithFilters(location);
-      if (matchedLocation) {
-        const event = {
-          target: {
-            name: 'locationAndArea',
-            value: { location: matchedLocation.location, area: matchedLocation.area }
-          }
-        } as FilterChangeEvent;
-        handleFilterChange(event);
-        // Removed setActiveDropdown(false) to keep dropdown open
-      }
-    } else {
-      detectLocation();
-    }
-  };
-
-  // Function to match detected location with available locations
-  const matchLocationWithFilters = (detectedLocation: { city: string; area: string; fullLocation: string }) => {
-    for (const loc of locations) {
-      if (detectedLocation.city.toLowerCase().includes(loc.name.toLowerCase()) || 
-          loc.name.toLowerCase().includes(detectedLocation.city.toLowerCase())) {
-        return { location: loc.id, area: loc.areas?.[0] || 'all' };
-      }
-      
-      if (loc.areas) {
-        for (const area of loc.areas) {
-          if (detectedLocation.area.toLowerCase().includes(area.toLowerCase()) ||
-              area.toLowerCase().includes(detectedLocation.area.toLowerCase())) {
-            return { location: loc.id, area };
-          }
-        }
-      }
-    }
-    return null;
+    setActiveDropdown(false);
+    setSelectedRegion(null);
   };
 
   // Get display text for location
   const getLocationText = () => {
     if (filters.location === 'all') return 'All Locations';
-    const location = locations.find(loc => loc.id === filters.location);
-    if (location && filters.locationArea && filters.locationArea !== 'all') {
-      return `${location.name} - ${filters.locationArea}`;
+    const region = REGIONS.find(reg => reg.id === filters.location);
+    if (region && filters.locationArea && filters.locationArea !== 'all') {
+      return `${region.name} - ${filters.locationArea}`;
     }
-    return location?.name || 'All Locations';
+    return region?.name || 'All Locations';
   };
 
-  // Filter locations based on search
-  const filteredLocations = locations.filter((location) => {
+  // Filter regions based on search
+  const filteredRegions = REGIONS.filter((region) => {
     const searchQuery = locationSearchQuery.toLowerCase();
     
-    if (location.name.toLowerCase().includes(searchQuery)) {
+    if (region.name.toLowerCase().includes(searchQuery)) {
       return true;
     }
     
-    if (location.areas) {
-      return location.areas.some(area => 
-        area.toLowerCase().includes(searchQuery)
+    if (region.cities) {
+      return region.cities.some(city => 
+        city.toLowerCase().includes(searchQuery)
       );
     }
     
     return false;
   });
 
-  const currentLocation = locations.find((loc) => loc.id === filters.location);
+  // Get cities for selected region, filtered by search
+  const getFilteredCities = () => {
+    if (!selectedRegion) return [];
+    const region = REGIONS.find(reg => reg.id === selectedRegion);
+    if (!region) return [];
+    
+    const searchQuery = locationSearchQuery.toLowerCase();
+    if (!searchQuery) return region.cities;
+    
+    return region.cities.filter(city => 
+      city.toLowerCase().includes(searchQuery)
+    );
+  };
+
+  // Reset selected region when dropdown closes
+  useEffect(() => {
+    if (!activeDropdown) {
+      setSelectedRegion(null);
+    }
+  }, [activeDropdown]);
 
   // Handle individual filter reset
   const handleIndividualReset = () => {
@@ -160,7 +143,9 @@ const LocationFilter: React.FC<IndividualFilterProps> = ({
               </div>
               {locationSearchQuery && (
                 <span className="text-xs text-gray-600 bg-white px-2 py-1 rounded">
-                  {filteredLocations.length} location{filteredLocations.length !== 1 ? 's' : ''} found
+                  {selectedRegion 
+                    ? `${getFilteredCities().length} cit${getFilteredCities().length !== 1 ? 'ies' : 'y'} found`
+                    : `${filteredRegions.length} region${filteredRegions.length !== 1 ? 's' : ''} found`}
                 </span>
               )}
             </div>
@@ -185,98 +170,90 @@ const LocationFilter: React.FC<IndividualFilterProps> = ({
             </div>
           </div>
 
-          {/* Use My Location Button */}
-          <div className="px-4 py-2 border-b border-gray-200">
-            <button
-              onClick={handleUseMyLocation}
-              disabled={locationLoading}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-secondary bg-secondary/10 hover:bg-secondary/20 rounded-md transition-colors disabled:opacity-50"
-            >
-              {locationLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-secondary border-t-transparent"></div>
-                  <span>Detecting location...</span>
-                </>
-              ) : (
-                <>
-                  <Navigation className="h-4 w-4" />
-                  <span>{location ? `Use my location: ${location.fullLocation}` : "Use my location"}</span>
-                </>
-              )}
-            </button>
-          </div>
-
           {/* Two Column Layout */}
           <div className="grid grid-cols-5 min-h-[300px]">
             {/* Left Column - Regions */}
-            <div className="col-span-2 bg-gray-50">
+            <div className="col-span-2 bg-gray-50 border-r border-gray-200">
               <div className="p-2 space-y-1">
-                {filteredLocations.map((location) => (
+                {filteredRegions.map((region) => (
                   <button
-                    key={location.id}
-                    onClick={() => {
-                      const event = {
-                        target: {
-                          name: 'locationAndArea',
-                          value: { 
-                            location: location.id, 
-                            area: location.areas?.[0] || 'all' 
-                          }
-                        }
-                      } as FilterChangeEvent;
-                      handleFilterChange(event);
-                      // Removed setActiveDropdown(false) to keep dropdown open
-                    }}
+                    key={region.id}
+                    onClick={() => handleRegionSelect(region.id)}
                     className={`
                       w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all
-                      ${filters.location === location.id
+                      ${selectedRegion === region.id
                         ? "bg-secondary text-white shadow-sm"
+                        : filters.location === region.id
+                        ? "bg-secondary/20 text-secondary border border-secondary/30"
                         : "text-gray-700 hover:bg-gray-200"}
                     `}
                   >
-                    <span className="truncate">{location.name}</span>
-                    {filters.location === location.id && (
-                      <span className="ml-2 text-xs bg-white/20 px-1 rounded">
-                        {location.areas?.length || 0}
-                      </span>
-                    )}
+                    <span className="truncate">{region.name}</span>
+                    <div className="flex items-center gap-2">
+                      {selectedRegion === region.id && (
+                        <FaChevronRight className="text-xs" />
+                      )}
+                      {filters.location === region.id && selectedRegion !== region.id && (
+                        <span className="ml-2 text-xs bg-white/20 px-1.5 py-0.5 rounded">
+                          {region.cities.length}
+                        </span>
+                      )}
+                    </div>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Right Column - Areas */}
-            <div className="col-span-3 bg-white p-3">
-              {currentLocation ? (
-                <div className="space-y-1">
-                  {currentLocation.areas?.map((area, idx) => {
-                    const searchQuery = locationSearchQuery.toLowerCase();
-                    const isAreaMatch = searchQuery && area.toLowerCase().includes(searchQuery);
-                    
-                    return (
-                      <button
-                        key={area}
-                        onClick={() => handleLocationSelect(currentLocation.id, area)}
-                        className={`
-                          w-full px-3 py-2 rounded-md text-sm text-left transition-all
-                          ${filters.locationArea === area
-                            ? "bg-secondary/10 text-secondary font-medium border border-secondary/20"
-                            : isAreaMatch
-                              ? "bg-yellow-50 text-gray-800 hover:bg-yellow-100 border border-yellow-200"
-                              : "text-gray-700 hover:bg-gray-100"}
-                          ${idx === 0 && "font-semibold"}
-                        `}
-                      >
-                        {area}
-                      </button>
-                    );
-                  })}
-                </div>
+            {/* Right Column - Cities */}
+            <div className="col-span-3 bg-white p-3 flex flex-col">
+              {selectedRegion ? (
+                <>
+                  <div className="mb-2 pb-2 border-b border-gray-200 flex-shrink-0">
+                    <button
+                      onClick={() => setSelectedRegion(null)}
+                      className="flex items-center gap-2 text-sm text-gray-600 hover:text-secondary transition-colors"
+                    >
+                      <FaChevronRight className="rotate-180 text-xs" />
+                      <span>Back to Regions</span>
+                    </button>
+                  </div>
+                  {getFilteredCities().length > 0 ? (
+                    <div className="flex-1 overflow-y-auto max-h-[400px] pr-2 space-y-1">
+                      {getFilteredCities().map((city) => {
+                        const searchQuery = locationSearchQuery.toLowerCase();
+                        const isCityMatch = searchQuery && city.toLowerCase().includes(searchQuery);
+                        
+                        return (
+                          <button
+                            key={city}
+                            onClick={() => handleCitySelect(selectedRegion, city)}
+                            className={`
+                              w-full px-3 py-2 rounded-md text-sm text-left transition-all
+                              ${filters.location === selectedRegion && filters.locationArea === city
+                                ? "bg-secondary/10 text-secondary font-medium border border-secondary/20"
+                                : isCityMatch
+                                  ? "bg-yellow-50 text-gray-800 hover:bg-yellow-100 border border-yellow-200"
+                                  : "text-gray-700 hover:bg-gray-100"}
+                            `}
+                          >
+                            {city}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center flex-1 text-center py-8">
+                      <FaMapMarkerAlt className="h-8 w-8 text-gray-300 mb-3" />
+                      <p className="text-sm text-gray-500 mb-1">No cities found</p>
+                      <p className="text-xs text-gray-400">Try a different search term</p>
+                    </div>
+                  )}
+                </>
               ) : (
-                <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                <div className="flex flex-col items-center justify-center flex-1 text-center py-8">
                   <FaMapMarkerAlt className="h-8 w-8 text-gray-300 mb-3" />
-                  <p className="text-sm text-gray-500 mb-1">Select a location</p>
-                  <p className="text-xs text-gray-400">Choose a region to see available areas</p>
+                  <p className="text-sm text-gray-500 mb-1">Select a region</p>
+                  <p className="text-xs text-gray-400">Choose a region from the left to see available cities</p>
                 </div>
               )}
             </div>

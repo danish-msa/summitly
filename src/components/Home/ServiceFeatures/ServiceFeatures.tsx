@@ -185,7 +185,7 @@ export default function ServiceFeatures() {
 
         {/* Service Tabs */}
         <Tabs value={activeService} onValueChange={setActiveService} className="mt-8">
-          <TabsList className="grid grid-cols-2 md:grid-cols-5 h-auto gap-2 bg-brand-glacier/30 p-2 rounded-xl m-auto">
+          <TabsList className="inline-flex md:grid md:grid-cols-5 h-auto gap-2 bg-brand-glacier/30 p-2 rounded-xl m-auto">
             {servicesData.map((service) => (
               <TabsTrigger
                 key={service.id}
@@ -193,8 +193,7 @@ export default function ServiceFeatures() {
                 className="data-[state=active]:bg-secondary data-[state=active]:text-white text-base flex items-center gap-2 py-3 rounded-lg transition-all duration-300"
               >
                 <service.icon className="w-4 h-4" />
-                <span className="hidden sm:inline">{service.name}</span>
-                <span className="sm:hidden text-xs">{service.name.split(" ")[0]}</span>
+                <span>{service.name}</span>
               </TabsTrigger>
             ))}
           </TabsList>

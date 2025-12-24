@@ -190,19 +190,23 @@ const GlobalFilters: React.FC<GlobalFiltersProps> = ({
 
   return (
     <div className={`w-full ${className}`}>
-      <div className={`flex ${layout === 'horizontal' ? 'flex-wrap gap-1' : 'flex-col gap-4'} items-center`}>
-        {filterComponents}
+      <div className={`flex ${layout === 'horizontal' ? 'flex-nowrap md:flex-wrap gap-1 md:gap-2' : 'flex-col gap-4'} items-center`}>
+        {filterComponents.map((component, index) => (
+          <div key={index} className="flex-shrink-0">
+            {component}
+          </div>
+        ))}
         
         {/* Reset Filters Button */}
         {showResetButton && resetFilters && (
           <button 
             onClick={resetFilters}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:border-secondary hover:bg-gray-50 transition-all"
+            className="flex-shrink-0 w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:border-secondary hover:bg-gray-50 transition-all"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            <span className="text-sm">Reset</span>
+            <span className="text-sm whitespace-nowrap">Reset</span>
           </button>
         )}
       </div>

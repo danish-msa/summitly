@@ -107,14 +107,14 @@ const SearchResults: React.FC<SearchResultsProps> = ({
 
   const getProjectUrl = (result: SearchResult) => {
     if (result.type === 'project' && result.mlsNumber) {
-      return `/pre-construction/${result.mlsNumber}`;
+      return `/pre-con/${result.mlsNumber}`;
     }
     return '#';
   };
 
   const getPageUrl = (result: SearchResult) => {
     if (result.type === 'page' && result.location) {
-      return `/pre-construction/${result.location.toLowerCase()}`;
+      return `/pre-con/${result.location.toLowerCase()}`;
     }
     return '#';
   };

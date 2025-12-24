@@ -216,24 +216,27 @@ class RepliersAPIClient {
       const url = this.buildUrl(config);
       const headers = this.buildHeaders(config);
       
-      // Debug logging for analytics requests
-      if (config.endpoint === '/listings' && config.params?.statistics) {
-        // Convert headers to a record for safe access
-        const headersRecord = headers instanceof Headers 
-          ? Object.fromEntries(headers.entries())
-          : Array.isArray(headers)
-          ? Object.fromEntries(headers)
-          : headers;
-        const apiKey = headersRecord['REPLIERS-API-KEY'] as string | undefined;
-        console.log('[Repliers Client] Analytics Request:', {
-          url,
-          authMethod: config.authMethod,
-          hasApiKeyInHeader: !!apiKey,
-          apiKeyLength: apiKey?.length || 0,
-          apiKeyPreview: apiKey ? apiKey.substring(0, 10) + '...' : 'none',
-          params: config.params,
-        });
-      }
+      // Log all API requests to terminal
+      const headersRecord = headers instanceof Headers 
+        ? Object.fromEntries(headers.entries())
+        : Array.isArray(headers)
+        ? Object.fromEntries(headers)
+        : headers;
+      const apiKey = headersRecord['REPLIERS-API-KEY'] as string | undefined;
+      
+      // Format params for display (remove sensitive data if any)
+      const displayParams = { ...config.params };
+      
+      console.log('\n📡 [Repliers API Request]', {
+        method: config.method || 'GET',
+        endpoint: config.endpoint,
+        url: url.replace(API_CONFIG.apiKey, '***'),
+        authMethod: config.authMethod,
+        hasApiKey: !!apiKey,
+        params: displayParams,
+        priority: config.priority || 'normal',
+        cached: config.cache !== false,
+      });
       
       this.requestTimestamps.push(Date.now());
       
@@ -253,36 +256,65 @@ class RepliersAPIClient {
       clearTimeout(timeout);
 
       if (!response.ok) {
-        // Log detailed error for analytics requests
-        if (config.endpoint === '/listings' && config.params?.statistics) {
-          const errorText = await response.text();
-          console.error('[Repliers Client] Analytics Request Failed:', {
-            status: response.status,
-            statusText: response.statusText,
-            url,
-            errorBody: errorText,
-            headers: Object.fromEntries(response.headers.entries()),
-          });
-        }
+        const errorText = await response.text();
+        const responseTime = Date.now() - startTime;
+        
+        // Log error response
+        console.error('❌ [Repliers API Error]', {
+          endpoint: config.endpoint,
+          status: response.status,
+          statusText: response.statusText,
+          responseTime: `${responseTime}ms`,
+          url: url.replace(API_CONFIG.apiKey, '***'),
+          errorBody: errorText.substring(0, 500), // Limit error body length
+        });
+        
         throw this.createHttpError(response.status, response.statusText);
       }
 
       const data = await response.json();
+      const responseTime = Date.now() - startTime;
+      
+      // Log successful response
+      const resultCount = (data as { listings?: unknown[]; count?: number })?.listings?.length 
+        || (data as { listings?: unknown[]; count?: number })?.count 
+        || 'N/A';
+      
+      console.log('✅ [Repliers API Response]', {
+        endpoint: config.endpoint,
+        status: response.status,
+        responseTime: `${responseTime}ms`,
+        resultCount,
+        cached: false,
+      });
       
       if (config.cache !== false) {
         this.saveToCache(config, data);
       }
 
-      this.updateStats(true, Date.now() - startTime);
+      this.updateStats(true, responseTime);
 
       return { data, error: null, cached: false, timestamp: Date.now() };
 
     } catch (error) {
-      this.updateStats(false, Date.now() - startTime);
+      const responseTime = Date.now() - startTime;
+      this.updateStats(false, responseTime);
       
       if (error instanceof Error && error.name === 'AbortError') {
+        console.error('⏱️ [Repliers API Timeout]', {
+          endpoint: config.endpoint,
+          responseTime: `${responseTime}ms`,
+          timeout: config.timeout || API_CONFIG.defaultTimeout,
+        });
         throw this.createErrorResponse('TIMEOUT', 'Request timed out', true);
       }
+
+      // Log network/other errors
+      console.error('💥 [Repliers API Exception]', {
+        endpoint: config.endpoint,
+        error: error instanceof Error ? error.message : String(error),
+        responseTime: `${responseTime}ms`,
+      });
 
       throw this.handleError(error);
     }

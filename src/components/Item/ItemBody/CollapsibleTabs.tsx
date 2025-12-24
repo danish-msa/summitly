@@ -99,7 +99,8 @@ const CollapsibleTabs: React.FC<CollapsibleTabsProps> = ({ property, rawProperty
       content: (
         <PropertyHistory 
           listingHistory={generatePropertyDetailsData(property, rawProperty).listingHistory} 
-          property={property} 
+          property={property}
+          rawProperty={rawProperty}
         />
       )
     }]),

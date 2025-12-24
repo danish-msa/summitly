@@ -155,7 +155,9 @@ const PreConSearchBar: React.FC<PreConSearchBarProps> = ({
   }, [providedSellingStatuses]);
 
   // Use provided cities/statuses or fetched ones
-  const displayCities = providedCities || cities;
+  // Limit cities to top 6 for suggestions
+  const allCities = providedCities || cities;
+  const displayCities = allCities.slice(0, 6);
   const displayStatuses = providedSellingStatuses || sellingStatuses;
 
   // Perform search
@@ -264,7 +266,7 @@ const PreConSearchBar: React.FC<PreConSearchBarProps> = ({
     
     // Auto-navigate if enabled and no custom handler
     if (autoNavigate) {
-      router.push(`/pre-construction/${city.id}`);
+      router.push(`/pre-con/${city.id}`);
     }
   };
 
@@ -280,7 +282,7 @@ const PreConSearchBar: React.FC<PreConSearchBarProps> = ({
     
     // Auto-navigate if enabled and no custom handler
     if (autoNavigate) {
-      router.push(`/pre-construction/${status.id}`);
+      router.push(`/pre-con/${status.id}`);
     }
   };
 
@@ -293,12 +295,12 @@ const PreConSearchBar: React.FC<PreConSearchBarProps> = ({
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           placeholder={placeholder}
-          className={cn("pl-12 pr-12 h-12 rounded-full text-base", inputClassName)}
+          className={cn("pl-10 sm:pl-12 pr-10 sm:pr-12 h-10 sm:h-12 rounded-full text-xs sm:text-sm md:text-base", inputClassName)}
         />
         
         {/* Search icon */}
-        <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-          <Search className="h-5 w-5 text-muted-foreground" />
+        <div className="absolute inset-y-0 left-0 flex items-center pl-3 sm:pl-4 pointer-events-none">
+          <Search className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
         </div>
 
         {/* Clear button */}
@@ -306,10 +308,10 @@ const PreConSearchBar: React.FC<PreConSearchBarProps> = ({
           <button
             type="button"
             onClick={handleClear}
-            className="absolute inset-y-0 right-0 flex items-center justify-center pr-4 w-12 h-full rounded-full hover:bg-gray-200 transition-colors"
+            className="absolute inset-y-0 right-0 flex items-center justify-center pr-3 sm:pr-4 w-10 sm:w-12 h-full rounded-full hover:bg-gray-200 transition-colors"
             title="Clear search"
           >
-            <X className="h-4 w-4 text-gray-500" />
+            <X className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
           </button>
         )}
       </div>

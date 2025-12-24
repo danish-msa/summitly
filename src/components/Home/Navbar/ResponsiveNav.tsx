@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Nav from './Nav'
 import MobileNav from './MobileNav'
+import MobileBottomNav from './MobileBottomNav'
 
 const ResponsiveNav = () => {
     const pathname = usePathname()
@@ -21,6 +22,7 @@ const ResponsiveNav = () => {
     <div>
         <Nav openNav={openNavHandler} />
         <MobileNav showNav={showNav} closeNav={closeNavHandler} />
+        <MobileBottomNav openNav={openNavHandler} />
     </div >
   )
 }

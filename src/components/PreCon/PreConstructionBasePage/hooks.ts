@@ -20,9 +20,11 @@ interface UsePreConProjectsDataProps {
   pageType: PageType;
   filters: FilterState;
   teamType?: string; // For development team pages: 'developer', 'architect', etc.
+  locationType?: 'city' | 'neighbourhood' | 'intersection' | null;
+  locationName?: string | null;
 }
 
-export const usePreConProjectsData = ({ slug, pageType, filters, teamType }: UsePreConProjectsDataProps) => {
+export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locationType, locationName }: UsePreConProjectsDataProps) => {
   const [projects, setProjects] = useState<PropertyListing[]>([]);
   const [allProjects, setAllProjects] = useState<PropertyListing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,7 +61,16 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType }: Use
   // Build API query based on page type
   const buildApiQuery = useMemo(() => {
     if (pageType === 'by-location') {
-      const cityName = unslugifyCityName(slug);
+      // Extract city name from slug (handle cases where slug might include filters like "toronto/2-beds")
+      // Split by '/' and take the first part (city)
+      const slugParts = slug.split('/');
+      const citySlug = slugParts[0];
+      const cityName = unslugifyCityName(citySlug);
+      console.log('[PreConstructionBasePage] Building API query:', {
+        slug,
+        citySlug,
+        cityName,
+      });
       return `/api/pre-con-projects?city=${encodeURIComponent(cityName)}`;
     } else if (pageType === 'status') {
       const status = slugToStatus(slug);
@@ -116,6 +127,7 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType }: Use
 
         if (!buildApiQuery) return;
 
+        console.log('[PreConstructionBasePage] Fetching projects with query:', buildApiQuery);
         const response = await fetch(buildApiQuery);
         if (!response.ok) {
           throw new Error('Failed to fetch projects');
@@ -123,6 +135,15 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType }: Use
 
         const data = await response.json();
         const fetchedProjects = data.projects || [];
+        console.log('[PreConstructionBasePage] Fetched projects:', {
+          count: fetchedProjects.length,
+          query: buildApiQuery,
+          firstProject: fetchedProjects[0] ? {
+            mlsNumber: fetchedProjects[0].mlsNumber,
+            city: fetchedProjects[0].address?.city,
+            bedroomRange: fetchedProjects[0].preCon?.details?.bedroomRange || fetchedProjects[0].details?.bedroomRange,
+          } : null,
+        });
 
         // Extract province from first project (if available)
         const province = fetchedProjects.length > 0 
@@ -237,6 +258,17 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType }: Use
     if (allProjects.length === 0) return;
 
     let filtered = [...allProjects];
+    
+    console.log('[PreConstructionBasePage] Starting filter with:', {
+      totalProjects: allProjects.length,
+      filters: {
+        bedrooms: filters.bedrooms,
+        bathrooms: filters.bathrooms,
+        propertyType: filters.propertyType,
+        minPrice: filters.minPrice,
+        maxPrice: filters.maxPrice,
+      },
+    });
 
     // Filter by property type
     if (filters.propertyType !== 'all') {
@@ -280,8 +312,130 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType }: Use
       );
     }
 
+    // Filter by location (neighbourhood or intersection) if provided
+    if (locationType && locationName) {
+      filtered = filtered.filter(project => {
+        if (locationType === 'neighbourhood') {
+          const projectNeighbourhood = project.address?.neighborhood?.toLowerCase() || '';
+          const searchNeighbourhood = locationName.toLowerCase();
+          return projectNeighbourhood === searchNeighbourhood || 
+                 projectNeighbourhood.includes(searchNeighbourhood) || 
+                 searchNeighbourhood.includes(projectNeighbourhood);
+        } else if (locationType === 'intersection') {
+          const projectIntersection = project.address?.majorIntersection?.toLowerCase() || '';
+          const searchIntersection = locationName.toLowerCase();
+          return projectIntersection === searchIntersection || 
+                 projectIntersection.includes(searchIntersection) || 
+                 searchIntersection.includes(projectIntersection);
+        }
+        return true;
+      });
+    }
+
+    // Filter by bedrooms
+    if (filters.bedrooms > 0) {
+      const beforeFilterCount = filtered.length;
+      filtered = filtered.filter(project => {
+        // Check multiple possible locations for bedroomRange
+        const bedroomRange = 
+          project.details?.bedroomRange || 
+          project.preCon?.details?.bedroomRange ||
+          (project as any).bedroomRange; // Direct property
+        
+        if (!bedroomRange) {
+          // If no bedroom range, check units for bedroom count
+          const units = project.preCon?.units || (project as any).units || [];
+          if (units.length > 0) {
+            // Check if any unit has the required bedrooms
+            return units.some((unit: any) => {
+              const unitBedrooms = unit.details?.numBedrooms || unit.beds || unit.numBedrooms || 0;
+              return unitBedrooms >= filters.bedrooms;
+            });
+          }
+          // If no units and no range, exclude the project
+          console.log('[PreConstructionBasePage] Project excluded - no bedroom data:', {
+            mlsNumber: project.mlsNumber,
+            projectName: (project as any).projectName,
+            hasDetails: !!project.details,
+            hasPreCon: !!project.preCon,
+            detailsKeys: project.details ? Object.keys(project.details) : [],
+          });
+          return false;
+        }
+        
+        // Parse bedroom range (e.g., "1-3" or "2-4")
+        // Handle different formats: "1-3", "2+", "2", etc.
+        let minBeds = 0;
+        let maxBeds = Infinity;
+        
+        if (bedroomRange.includes('-')) {
+          const parts = bedroomRange.split('-');
+          minBeds = parseInt(parts[0]) || 0;
+          maxBeds = parseInt(parts[1]) || Infinity;
+        } else if (bedroomRange.includes('+')) {
+          minBeds = parseInt(bedroomRange.replace('+', '')) || 0;
+          maxBeds = Infinity;
+        } else {
+          // Single number, treat as exact
+          minBeds = parseInt(bedroomRange) || 0;
+          maxBeds = minBeds;
+        }
+        
+        // Include project if the filter bedrooms falls within the range
+        // e.g., if range is "1-3" and filter is 2, include it (has 2-bedroom units)
+        // if range is "2-4" and filter is 2, include it (has 2-bedroom units)
+        // if range is "3-4" and filter is 2, exclude it (no 2-bedroom units)
+        const matches = filters.bedrooms >= minBeds && filters.bedrooms <= maxBeds;
+        
+        if (!matches) {
+          console.log('[PreConstructionBasePage] Project excluded by bedroom filter:', {
+            mlsNumber: project.mlsNumber,
+            bedroomRange,
+            minBeds,
+            maxBeds,
+            filterBedrooms: filters.bedrooms,
+          });
+        }
+        return matches;
+      });
+      console.log('[PreConstructionBasePage] Bedroom filter applied:', {
+        filterBedrooms: filters.bedrooms,
+        beforeFilter: beforeFilterCount,
+        afterFilter: filtered.length,
+        filteredCount: filtered.length,
+      });
+    }
+
+    // Filter by bathrooms
+    if (filters.bathrooms > 0) {
+      filtered = filtered.filter(project => {
+        // Check if project has bathroom range in details
+        const bathroomRange = project.details?.bathroomRange || project.preCon?.details?.bathroomRange;
+        if (!bathroomRange) {
+          // If no bathroom range, check units for bathroom count
+          const units = project.preCon?.units || [];
+          if (units.length > 0) {
+            // Check if any unit has the required bathrooms
+            return units.some(unit => {
+              const unitBathrooms = unit.details?.numBathrooms || 0;
+              return unitBathrooms >= filters.bathrooms;
+            });
+          }
+          return false;
+        }
+        
+        // Parse bathroom range (e.g., "1-2" or "2-3")
+        const [minBaths] = bathroomRange.split('-').map(Number);
+        return minBaths >= filters.bathrooms;
+      });
+      console.log('[PreConstructionBasePage] Bathroom filter applied:', {
+        filterBathrooms: filters.bathrooms,
+        filteredCount: filtered.length,
+      });
+    }
+
     setProjects(filtered);
-  }, [filters, allProjects]);
+  }, [filters, allProjects, locationType, locationName]);
 
   // Convert projects to PreConstructionProperty format
   const preConProjects = useMemo(() => {

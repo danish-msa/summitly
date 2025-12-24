@@ -26,7 +26,7 @@ const PreConstructionJourney = () => {
               </div>
               <h3 className='text-black text-lg md:text-xl mb-3 font-semibold'>Guides & Insights</h3>
               <p className='text-gray-500 text-sm mb-4 flex-1 leading-relaxed'>Start your journey with our Ultimate Guide to Investing in Pre-Construction Real Estate and learn how to secure early-stage opportunities like a pro.</p>
-              <Link href="/guides/pre-construction-investing">
+              <Link href="/guides/pre-con-investing">
                 <Button className='bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg w-full'>
                   Read the Guide
                 </Button>
@@ -42,7 +42,7 @@ const PreConstructionJourney = () => {
               </div>
               <h3 className='text-black text-lg md:text-xl mb-3 font-semibold'>Search Pre-Construction Projects</h3>
               <p className='text-gray-500 text-sm mb-4 flex-1 leading-relaxed'>Find your next great investment across Canada's top cities — get first access to upcoming condo, townhouse, and detached home developments before they hit the public market.</p>
-              <Link href="/pre-construction">
+              <Link href="/pre-con">
                 <Button className='bg-secondary hover:bg-secondary/90 text-white px-6 py-2 rounded-lg w-full'>
                   Browse Projects
                 </Button>
@@ -58,7 +58,7 @@ const PreConstructionJourney = () => {
               </div>
               <h3 className='text-black text-lg md:text-xl mb-3 font-semibold'>Invest with Confidence</h3>
               <p className='text-gray-500 text-sm mb-4 flex-1 leading-relaxed'>Our clients receive priority access and exclusive incentives on the hottest new launches — helping them save thousands and maximize returns.</p>
-              <Link href="/pre-construction">
+              <Link href="/pre-con">
                 <Button className='bg-accent hover:bg-accent/90 text-white px-6 py-2 rounded-lg w-full'>
                   Start Investing
                 </Button>

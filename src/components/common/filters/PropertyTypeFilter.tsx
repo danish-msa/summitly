@@ -157,11 +157,11 @@ const PropertyTypeFilter: React.FC<IndividualFilterProps> = ({
       </button>
       
       {activeDropdown && (
-        <div className="absolute z-10 mt-2 w-full sm:w-80 bg-white rounded-lg shadow-lg p-4">
+        <div className="absolute z-10 mt-2 w-full sm:w-[600px] bg-white rounded-lg shadow-lg p-4">
           {!showSubFilter ? (
             <>
               <p className="font-semibold mb-3">Property Type</p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 {PROPERTY_TYPES.map((option) => {
                   const isSelected = filters.propertyType === option.value;
                   
@@ -170,7 +170,7 @@ const PropertyTypeFilter: React.FC<IndividualFilterProps> = ({
                       key={`type-${option.value}`}
                       className={`
                         border rounded-md py-2 px-3 cursor-pointer text-center
-                        transition-all hover:bg-gray-50 text-sm
+                        transition-all hover:bg-gray-50 text-xs
                         ${isSelected 
                           ? 'border-2 border-secondary bg-secondary/5 text-secondary font-semibold' 
                           : 'border-gray-300 hover:border-secondary text-gray-700'}
@@ -198,7 +198,7 @@ const PropertyTypeFilter: React.FC<IndividualFilterProps> = ({
                   {filters.propertyType === 'house' ? 'House Type' : 'Condo Type'}
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 {subFilterOptions.map((option) => {
                   // Check if this option is selected - handle both undefined and 'all' cases
                   const currentSubType = filters.subPropertyType;

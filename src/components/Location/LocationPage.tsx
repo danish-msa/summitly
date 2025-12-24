@@ -8,10 +8,9 @@ import { PropertyListing } from '@/lib/types';
 import { fetchTopCities } from '@/data/data';
 import { AreaSelector } from '@/components/City/AreaSelector';
 import { Separator } from '@/components/ui/separator';
-import { LayoutGrid, MapPin, Bell, TrendingUp, Home, ArrowLeft } from 'lucide-react';
+import { Bell, TrendingUp, Home, ArrowLeft, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import dynamic from 'next/dynamic';
 import { useGlobalFilters } from '@/hooks/useGlobalFilters';
 import GlobalFilters from '@/components/common/filters/GlobalFilters';
 import { LOCATIONS } from '@/lib/types/filters';
@@ -22,9 +21,6 @@ import { useSession } from 'next-auth/react';
 import { toast } from '@/hooks/use-toast';
 import { parseCityUrl } from '@/lib/utils/cityUrl';
 import Pagination from '@/components/ui/pagination';
-
-// Dynamically import the Google Maps component with no SSR
-const GooglePropertyMap = dynamic(() => import('@/components/MapSearch/GooglePropertyMap'), { ssr: false });
 
 // Helper function to convert slug back to name
 const unslugifyName = (slug: string): string => {
@@ -50,8 +46,6 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
   const [allProperties, setAllProperties] = useState<PropertyListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [locationInfo, setLocationInfo] = useState<{ name: string; numberOfProperties: number } | null>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'mixed' | 'map'>('list');
-  const [selectedProperty, setSelectedProperty] = useState<PropertyListing | null>(null);
   const [communities, setCommunities] = useState<string[]>([]);
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [alertOptions, setAlertOptions] = useState<Record<string, boolean>>({
@@ -526,29 +520,30 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
         {/* Filters */}
         <section>
             <div className="flex flex-col md:flex-row gap-4">
-                <div className="">
-                <GlobalFilters
-                    filters={filters}
-                    handleFilterChange={handleFilterChange}
-                    resetFilters={resetFilters}
-                    communities={communities}
-                    locations={LOCATIONS}
-                    showLocation={false}
-                    showPropertyType={true}
-                    showCommunity={false}
-                    showPrice={true}
-                    showBedrooms={false}
-                    showBathrooms={false}
-                    showAdvanced={false}
-                    showSellRentToggle={false}
-                    showResetButton={false}
-                    layout="horizontal"
-                    className="w-full"
-                />
+                {/* Left side - Property Filters */}
+                <div className="flex-1 w-full lg:w-auto">
+                  <GlobalFilters
+                      filters={filters}
+                      handleFilterChange={handleFilterChange}
+                      resetFilters={resetFilters}
+                      communities={communities}
+                      locations={LOCATIONS}
+                      showLocation={true}
+                      showPropertyType={true}
+                      showCommunity={false}
+                      showPrice={true}
+                      showBedrooms={false}
+                      showBathrooms={false}
+                      showAdvanced={true}
+                      showSellRentToggle={false}
+                      showResetButton={false}
+                      layout="horizontal"
+                      className="w-full"
+                  />
                 </div>
                 {/* Sell/Rent Toggle */}
-                <div className="flex justify-end">
-                    <SellRentToggle 
+                <div className="flex flex-col sm:flex-row lg:flex-row items-start sm:items-center lg:items-center gap-3 sm:gap-4 lg:gap-6 w-full lg:w-auto">
+                  <SellRentToggle 
                     listingType={(filters.listingType === 'sell' || filters.listingType === 'rent') ? filters.listingType : 'sell'}
                     onListingTypeChange={handleListingTypeChange}
                     />
@@ -559,130 +554,47 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
 
         {/* Property Listings */}
         <section className="pb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex gap-4 items-center">
-              <button className="text-sm font-medium text-primary border-b-2 border-primary pb-2">
-                Listings {properties.length}
-              </button>
-              <button className="text-sm font-medium text-muted-foreground hover:text-foreground pb-2">
-                Buildings
-              </button>
-              {properties.length > 0 && totalPages > 1 && (
-                <span className="text-sm text-muted-foreground">
-                  Showing {startIndex + 1}-{Math.min(endIndex, properties.length)} of {properties.length}
-                </span>
+          {properties.length > 0 && totalPages > 1 && (
+            <div className="mb-6">
+              <span className="text-sm text-muted-foreground">
+                Showing {startIndex + 1}-{Math.min(endIndex, properties.length)} of {properties.length}
+              </span>
+            </div>
+          )}
+          
+          {paginatedProperties.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
+                {paginatedProperties.map((property, index) => (
+                  <div
+                    key={`${property.mlsNumber}-${index}-${property.address?.streetNumber || ''}-${property.address?.streetName || ''}`}
+                    className="cursor-pointer transition-all"
+                  >
+                    <PropertyCard
+                      property={property}
+                      onHide={() => {}}
+                    />
+                  </div>
+                ))}
+              </div>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-8">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                </div>
               )}
+            </>
+          ) : (
+            <div className="bg-secondary/30 rounded-lg p-12 text-center">
+              <p className="text-lg text-muted-foreground">
+                No properties found in {displayLocationName}
+              </p>
             </div>
-            
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-muted-foreground">
-                Sort by Date (Newest)
-              </div>
-              <div className="flex ">
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`px-4 py-2.5 flex flex-col items-center gap-1.5 transition-all rounded-l-lg ${
-                    viewMode === 'list'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'bg-white text-gray-700 hover:bg-brand-tide'
-                  }`}
-                  title="List View"
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                  <span className="text-xs font-medium">List</span>
-                </button>
-                <button
-                  onClick={() => setViewMode('mixed')}
-                  className={`px-4 py-2.5 flex flex-col items-center gap-1.5 transition-all ${
-                    viewMode === 'mixed'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'bg-white text-gray-700 hover:bg-brand-tide'
-                  }`}
-                  title="Mixed View"
-                >
-                  <div className="flex gap-0.5 items-center">
-                    <LayoutGrid className="w-3 h-3" />
-                    <MapPin className="w-3 h-3" />
-                  </div>
-                  <span className="text-xs font-medium">Mixed</span>
-                </button>
-                <button
-                  onClick={() => setViewMode('map')}
-                  className={`px-4 py-2.5 flex flex-col items-center gap-1.5 transition-all rounded-r-lg ${
-                    viewMode === 'map'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'bg-white text-gray-700 hover:bg-brand-tide'
-                  }`}
-                  title="Map View"
-                >
-                  <MapPin className="w-4 h-4" />
-                  <span className="text-xs font-medium">Map</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* View Content */}
-          <div className={`flex ${viewMode === 'map' ? 'flex-col' : viewMode === 'list' ? 'flex-col' : 'flex-col md:flex-row'} gap-6`}>
-            {/* Property Listings */}
-            {(viewMode === 'list' || viewMode === 'mixed') && (
-              <div className={`${viewMode === 'mixed' ? 'md:w-1/2' : 'w-full'}`}>
-                {paginatedProperties.length > 0 ? (
-                  <>
-                    <div className={`grid gap-6 mb-6 ${
-                      viewMode === 'mixed' 
-                        ? 'grid-cols-1 sm:grid-cols-2' 
-                        : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-                    }`}>
-                      {paginatedProperties.map((property, index) => (
-                        <div
-                          key={`${property.mlsNumber}-${index}-${property.address?.streetNumber || ''}-${property.address?.streetName || ''}`}
-                          className={`cursor-pointer transition-all ${
-                            selectedProperty?.mlsNumber === property.mlsNumber ? 'ring-2 ring-primary' : ''
-                          }`}
-                          onClick={() => setSelectedProperty(property)}
-                        >
-                          <PropertyCard
-                            property={property}
-                            onHide={() => {}}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                    {/* Pagination */}
-                    {totalPages > 1 && (
-                      <div className="flex justify-center mt-8">
-                        <Pagination
-                          currentPage={currentPage}
-                          totalPages={totalPages}
-                          onPageChange={setCurrentPage}
-                        />
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="bg-secondary/30 rounded-lg p-12 text-center">
-                    <p className="text-lg text-muted-foreground">
-                      No properties found in {displayLocationName}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Map View */}
-            {(viewMode === 'map' || viewMode === 'mixed') && (
-              <div className={`${viewMode === 'mixed' ? 'md:w-1/2' : 'w-full'} bg-gray-100 rounded-lg overflow-hidden`} style={{ height: viewMode === 'mixed' ? 'calc(100vh - 200px)' : '70vh' }}>
-                <GooglePropertyMap
-                  properties={properties} // Show all properties on map
-                  selectedProperty={selectedProperty}
-                  onPropertySelect={setSelectedProperty}
-                  onBoundsChange={() => {}}
-                />
-              </div>
-            )}
-          </div>
+          )}
         </section>
       </main>
 

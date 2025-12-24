@@ -29,7 +29,6 @@ export const FAQField: React.FC<FAQFieldProps> = ({
       id: `faq-${Date.now()}-${Math.random()}`,
       question: "",
       answer: "",
-      icon: null,
     };
     onChange([...value, newFAQ]);
     setExpandedIndex(value.length);
@@ -45,7 +44,7 @@ export const FAQField: React.FC<FAQFieldProps> = ({
     }
   };
 
-  const updateFAQ = (index: number, field: keyof FaqItem, fieldValue: string | React.ReactNode) => {
+  const updateFAQ = (index: number, field: keyof FaqItem, fieldValue: string) => {
     const newFAQs = [...value];
     newFAQs[index] = {
       ...newFAQs[index],

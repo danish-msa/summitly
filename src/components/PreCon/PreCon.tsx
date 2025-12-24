@@ -38,7 +38,7 @@ const PreCon: React.FC = () => {
         subheading="Platinum Access VIP"
         description="Exclusive VIP access to prestigious high-rise pre-construction condominium projects with premium amenities and luxury living"
         filter={{ type: 'high-rise-condos' }}
-        viewAllLink="/pre-construction/high-rise-condos"
+        viewAllLink="/pre-con/high-rise-condos"
         limit={10}
       />
 
@@ -48,7 +48,7 @@ const PreCon: React.FC = () => {
         subheading="Platinum Access VIP"
         description="Exclusive VIP access to prestigious low-rise pre-construction condominium projects with premium amenities and luxury living"
         filter={{ type: 'low-rise-condos' }}
-        viewAllLink="/pre-construction/low-rise-condos"
+        viewAllLink="/pre-con/low-rise-condos"
         limit={10}
       />
 
@@ -58,7 +58,7 @@ const PreCon: React.FC = () => {
         subheading="Completing Soon"
         description={`Discover pre-construction projects completing in ${currentYear}. Explore upcoming developments ready for occupancy this year.`}
         filter={{ type: 'closing-this-year', year: currentYear }}
-        viewAllLink={`/pre-construction/${currentYear}`}
+        viewAllLink={`/pre-con/${currentYear}`}
         limit={10}
       />
 
@@ -68,7 +68,7 @@ const PreCon: React.FC = () => {
         subheading="New Projects"
         description="Explore the latest pre-construction projects added to our platform. Discover new developments and opportunities."
         filter={{ type: 'recently-added' }}
-        viewAllLink="/pre-construction/projects"
+        viewAllLink="/pre-con/projects"
         limit={10}
       />
 
