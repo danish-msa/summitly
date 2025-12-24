@@ -309,6 +309,19 @@ export default function EstimateHistorySection({ propertyAddress, rawProperty }:
     return null;
   }
 
+  // Calculate pagination
+  const totalPages = Math.ceil(estimateData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedData = estimateData.slice(startIndex, endIndex);
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
   return (
     <div className="mt-8 p-6">
       <div className="mb-6">
