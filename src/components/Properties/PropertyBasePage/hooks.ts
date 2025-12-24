@@ -67,11 +67,11 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
 
     // Only parse priceRange for single price-range pages (not combined pages)
     if (pageType === 'price-range') {
-      priceRange = parsePriceRangeSlug(slug);
+      priceRange = parsePriceRangeSlug(slug) ?? undefined;
     }
 
     if (pageType === 'bedrooms' || pageType.includes('bedrooms')) {
-      bedrooms = parseBedroomSlug(slug);
+      bedrooms = parseBedroomSlug(slug) ?? undefined;
       console.log('[PropertyBasePage] Parsing bedrooms:', {
         slug,
         pageType,
@@ -80,7 +80,7 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
     }
 
     if (pageType === 'bathrooms' || pageType.includes('bathrooms')) {
-      bathrooms = parseBathroomSlug(slug);
+      bathrooms = parseBathroomSlug(slug) ?? undefined;
       console.log('[PropertyBasePage] Parsing bathrooms:', {
         slug,
         pageType,
@@ -89,27 +89,27 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
     }
 
     if (pageType === 'sqft' || pageType.includes('sqft')) {
-      sqft = parseSqftSlug(slug);
+      sqft = parseSqftSlug(slug) ?? undefined;
     }
 
     if (pageType === 'lot-size' || pageType.includes('lot-size')) {
-      lotSize = parseLotSizeSlug(slug);
+      lotSize = parseLotSizeSlug(slug) ?? undefined;
     }
 
     if (pageType === 'year-built' || pageType.includes('year-built')) {
-      yearBuilt = parseYearBuiltSlug(slug);
+      yearBuilt = parseYearBuiltSlug(slug) ?? undefined;
     }
 
     if (pageType === 'ownership' || pageType.includes('ownership')) {
-      ownership = parseOwnershipSlug(slug);
+      ownership = parseOwnershipSlug(slug) ?? undefined;
     }
 
     if (pageType === 'feature' || pageType.includes('feature')) {
-      feature = parseFeatureSlug(slug);
+      feature = parseFeatureSlug(slug) ?? undefined;
     }
 
     if (pageType === 'status' || pageType.includes('status')) {
-      status = parseStatusSlug(slug);
+      status = parseStatusSlug(slug) ?? undefined;
     }
 
     // For combined pages, parse multiple parts
@@ -120,7 +120,7 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
       propertyType = slugToPropertyType(parts[0]);
       // Find price range (rest)
       const priceSlug = parts.slice(1).join('-');
-      priceRange = parsePriceRangeSlug(priceSlug);
+      priceRange = parsePriceRangeSlug(priceSlug) ?? undefined;
     }
 
     if (pageType === 'propertyType-bedrooms') {
@@ -128,7 +128,7 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
       const parts = slug.split('-');
       propertyType = slugToPropertyType(parts[0]);
       const bedroomSlug = parts.slice(1).join('-');
-      bedrooms = parseBedroomSlug(bedroomSlug);
+      bedrooms = parseBedroomSlug(bedroomSlug) ?? undefined;
     }
 
     if (pageType === 'propertyType-bathrooms') {
@@ -136,7 +136,7 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
       const parts = slug.split('-');
       propertyType = slugToPropertyType(parts[0]);
       const bathroomSlug = parts.slice(1).join('-');
-      bathrooms = parseBathroomSlug(bathroomSlug);
+      bathrooms = parseBathroomSlug(bathroomSlug) ?? undefined;
     }
 
     if (pageType === 'propertyType-sqft') {
@@ -144,7 +144,7 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
       const parts = slug.split('-');
       propertyType = slugToPropertyType(parts[0]);
       const sqftSlug = parts.slice(1).join('-');
-      sqft = parseSqftSlug(sqftSlug);
+      sqft = parseSqftSlug(sqftSlug) ?? undefined;
     }
 
     if (pageType === 'propertyType-lot-size') {
@@ -152,7 +152,7 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
       const parts = slug.split('-');
       propertyType = slugToPropertyType(parts[0]);
       const lotSizeSlug = parts.slice(1).join('-');
-      lotSize = parseLotSizeSlug(lotSizeSlug);
+      lotSize = parseLotSizeSlug(lotSizeSlug) ?? undefined;
     }
 
     if (pageType === 'propertyType-year-built') {
@@ -160,7 +160,7 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
       const parts = slug.split('-');
       propertyType = slugToPropertyType(parts[0]);
       const yearBuiltSlug = parts.slice(1).join('-');
-      yearBuilt = parseYearBuiltSlug(yearBuiltSlug);
+      yearBuilt = parseYearBuiltSlug(yearBuiltSlug) ?? undefined;
     }
 
     if (pageType === 'propertyType-ownership') {
@@ -168,7 +168,7 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
       const parts = slug.split('-');
       propertyType = slugToPropertyType(parts[0]);
       const ownershipSlug = parts.slice(1).join('-');
-      ownership = parseOwnershipSlug(ownershipSlug);
+      ownership = parseOwnershipSlug(ownershipSlug) ?? undefined;
     }
 
     if (pageType === 'propertyType-feature') {
@@ -176,7 +176,7 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
       const parts = slug.split('-');
       propertyType = slugToPropertyType(parts[0]);
       const featureSlug = parts.slice(1).join('-');
-      feature = parseFeatureSlug(featureSlug);
+      feature = parseFeatureSlug(featureSlug) ?? undefined;
       
       console.log('[PropertyBasePage] Parsing propertyType-feature:', {
         slug,
@@ -192,10 +192,10 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
       const parts = slug.split('-');
       // Find price range (first part)
       const priceSlug = parts.slice(0, -2).join('-'); // Everything except last 2 parts (bedroom)
-      priceRange = parsePriceRangeSlug(priceSlug);
+      priceRange = parsePriceRangeSlug(priceSlug) ?? undefined;
       // Find bedrooms (last part)
       const bedroomSlug = parts.slice(-2).join('-');
-      bedrooms = parseBedroomSlug(bedroomSlug);
+      bedrooms = parseBedroomSlug(bedroomSlug) ?? undefined;
     }
 
     if (pageType === 'price-bathrooms') {
@@ -203,10 +203,10 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
       const parts = slug.split('-');
       // Find price range (first part)
       const priceSlug = parts.slice(0, -2).join('-'); // Everything except last 2 parts (bathroom)
-      priceRange = parsePriceRangeSlug(priceSlug);
+      priceRange = parsePriceRangeSlug(priceSlug) ?? undefined;
       // Find bathrooms (last part)
       const bathroomSlug = parts.slice(-2).join('-');
-      bathrooms = parseBathroomSlug(bathroomSlug);
+      bathrooms = parseBathroomSlug(bathroomSlug) ?? undefined;
     }
 
     if (pageType === 'price-sqft') {
@@ -216,9 +216,9 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
       const sqftIndex = parts.findIndex(p => p === 'sqft');
       if (sqftIndex > 0) {
         const priceSlug = parts.slice(0, sqftIndex - (parts[sqftIndex - 1] === 'over' || parts[sqftIndex - 1] === 'under' ? 1 : 0)).join('-');
-        priceRange = parsePriceRangeSlug(priceSlug);
+        priceRange = parsePriceRangeSlug(priceSlug) ?? undefined;
         const sqftSlug = parts.slice(sqftIndex - (parts[sqftIndex - 1] === 'over' || parts[sqftIndex - 1] === 'under' ? 1 : 0)).join('-');
-        sqft = parseSqftSlug(sqftSlug);
+        sqft = parseSqftSlug(sqftSlug) ?? undefined;
       }
     }
 
@@ -227,10 +227,10 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
       const parts = slug.split('-');
       // Find price range (first part)
       const priceSlug = parts.slice(0, -2).join('-');
-      priceRange = parsePriceRangeSlug(priceSlug);
+      priceRange = parsePriceRangeSlug(priceSlug) ?? undefined;
       // Find lot size (last parts)
       const lotSizeSlug = parts.slice(-2).join('-');
-      lotSize = parseLotSizeSlug(lotSizeSlug);
+      lotSize = parseLotSizeSlug(lotSizeSlug) ?? undefined;
     }
 
     if (pageType === 'price-year-built') {
@@ -238,10 +238,10 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
       const parts = slug.split('-');
       // Find price range (first part)
       const priceSlug = parts.slice(0, -2).join('-');
-      priceRange = parsePriceRangeSlug(priceSlug);
+      priceRange = parsePriceRangeSlug(priceSlug) ?? undefined;
       // Find year built (last parts)
       const yearBuiltSlug = parts.slice(-2).join('-');
-      yearBuilt = parseYearBuiltSlug(yearBuiltSlug);
+      yearBuilt = parseYearBuiltSlug(yearBuiltSlug) ?? undefined;
     }
 
     if (pageType === 'price-feature') {
@@ -249,10 +249,10 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
       const parts = slug.split('-');
       // Find price range (first part)
       const priceSlug = parts.slice(0, -2).join('-');
-      priceRange = parsePriceRangeSlug(priceSlug);
+      priceRange = parsePriceRangeSlug(priceSlug) ?? undefined;
       // Find feature (last parts)
       const featureSlug = parts.slice(-2).join('-');
-      feature = parseFeatureSlug(featureSlug);
+      feature = parseFeatureSlug(featureSlug) ?? undefined;
     }
 
     if (pageType === 'propertyType-price-bedrooms') {
@@ -265,9 +265,9 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
       const bedroomIndex = parts.findIndex(p => p === 'bedroom');
       if (bedroomIndex > 0) {
         const priceSlug = parts.slice(1, bedroomIndex - 1).join('-');
-        priceRange = parsePriceRangeSlug(priceSlug);
+        priceRange = parsePriceRangeSlug(priceSlug) ?? undefined;
         const bedroomSlug = parts.slice(bedroomIndex - 1).join('-');
-        bedrooms = parseBedroomSlug(bedroomSlug);
+        bedrooms = parseBedroomSlug(bedroomSlug) ?? undefined;
       }
     }
 
@@ -281,9 +281,9 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
       const bathroomIndex = parts.findIndex(p => p === 'bathroom');
       if (bathroomIndex > 0) {
         const priceSlug = parts.slice(1, bathroomIndex - 1).join('-');
-        priceRange = parsePriceRangeSlug(priceSlug);
+        priceRange = parsePriceRangeSlug(priceSlug) ?? undefined;
         const bathroomSlug = parts.slice(bathroomIndex - 1).join('-');
-        bathrooms = parseBathroomSlug(bathroomSlug);
+        bathrooms = parseBathroomSlug(bathroomSlug) ?? undefined;
       }
     }
 
@@ -304,12 +304,12 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
         const priceEndIndex = 3; // Price is always parts[1] and parts[2]
         
         const priceSlug = parts.slice(1, priceEndIndex).join('-');
-        priceRange = parsePriceRangeSlug(priceSlug);
+        priceRange = parsePriceRangeSlug(priceSlug) ?? undefined;
         
         // Sqft slug includes everything from priceEndIndex to sqftIndex (inclusive)
         // Format: "1000-1500-sqft" or "under-600-sqft" or "over-1000-sqft"
         const sqftSlug = parts.slice(priceEndIndex, sqftIndex + 1).join('-');
-        sqft = parseSqftSlug(sqftSlug);
+        sqft = parseSqftSlug(sqftSlug) ?? undefined;
         
         console.log('[PropertyBasePage] Parsing propertyType-price-sqft:', {
           slug,
@@ -345,9 +345,9 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
       
       if (priceEndIndex < parts.length) {
         const priceSlug = parts.slice(1, priceEndIndex).join('-');
-        priceRange = parsePriceRangeSlug(priceSlug);
+        priceRange = parsePriceRangeSlug(priceSlug) ?? undefined;
         const featureSlug = parts.slice(priceEndIndex).join('-');
-        feature = parseFeatureSlug(featureSlug);
+        feature = parseFeatureSlug(featureSlug) ?? undefined;
       }
     }
 
