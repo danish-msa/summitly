@@ -91,7 +91,7 @@ export async function GET(
     }
 
     // Helper function to convert image URLs in team member objects
-    const convertTeamMemberImage = (member: any): DevelopmentTeamMember | undefined => {
+    const convertTeamMemberImage = (member: DevelopmentTeamMember | null | undefined): DevelopmentTeamMember | undefined => {
       if (!member) return undefined
       return {
         ...member,

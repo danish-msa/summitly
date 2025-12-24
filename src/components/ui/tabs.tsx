@@ -28,7 +28,7 @@ const TabsList = React.forwardRef<
             child.props.className,
             "flex-shrink-0 whitespace-nowrap"
           )
-        } as any)
+        } as React.HTMLAttributes<HTMLButtonElement>)
       }
       return child
     })

@@ -39,7 +39,7 @@ const PreConstructionPropertyCardV3 = ({
 
     // Check in-memory cache to avoid duplicate requests
     const cacheKey = `rating_${property.id}_pre-construction`;
-    const cached = (window as any).__ratingCache?.[cacheKey];
+    const cached = (window as Window & { __ratingCache?: Record<string, { data: unknown; timestamp: number }> }).__ratingCache?.[cacheKey];
     
     if (cached && cached.data) {
       // Check if cache is still valid (5 minutes)

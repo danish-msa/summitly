@@ -110,29 +110,16 @@ export default function EstimateHistorySection({ propertyAddress, rawProperty }:
       .map(({ sortDate, ...rest }) => rest); // Remove sortDate from final data
   }, [rawProperty]);
 
-  // Hide component if no estimate history data is available
-  if (!estimateData || estimateData.length === 0) {
-    return null;
-  }
+  // Prepare chart data (reverse to show oldest to newest) - must be before conditional return
+  const chartData = useMemo(() => {
+    if (!estimateData || estimateData.length === 0) return [];
+    return [...estimateData].reverse();
+  }, [estimateData]);
 
-  // Calculate pagination
-  const totalPages = Math.ceil(estimateData.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedData = estimateData.slice(startIndex, endIndex);
-
-  // Handle page change
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  // Prepare chart data (reverse to show oldest to newest)
-  const chartData = useMemo(() => [...estimateData].reverse(), [estimateData]);
-
-  // Prepare chart option for echarts with modern styling
-  const chartOption = useMemo(() => ({
+  // Prepare chart option for echarts with modern styling - must be before conditional return
+  const chartOption = useMemo(() => {
+    if (!estimateData || estimateData.length === 0) return null;
+    return {
     animation: true,
     animationDuration: 1500,
     animationEasing: 'cubicOut' as const,
@@ -310,7 +297,12 @@ export default function EstimateHistorySection({ propertyAddress, rawProperty }:
         },
       },
     ],
-  }), [chartData]);
+  }), [chartData, estimateData]);
+
+  // Hide component if no estimate history data is available - AFTER all hooks
+  if (!estimateData || estimateData.length === 0 || !chartOption) {
+    return null;
+  }
 
   return (
     <div className="mt-8 p-6">

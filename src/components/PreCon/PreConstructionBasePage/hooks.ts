@@ -340,14 +340,14 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
         const bedroomRange = 
           project.details?.bedroomRange || 
           project.preCon?.details?.bedroomRange ||
-          (project as any).bedroomRange; // Direct property
+          (project as PropertyListing & { bedroomRange?: string }).bedroomRange; // Direct property
         
         if (!bedroomRange) {
           // If no bedroom range, check units for bedroom count
-          const units = project.preCon?.units || (project as any).units || [];
+          const units = project.preCon?.units || (project as PropertyListing & { units?: Array<{ beds?: number; numBedrooms?: number; details?: { numBedrooms?: number } }> }).units || [];
           if (units.length > 0) {
             // Check if any unit has the required bedrooms
-            return units.some((unit: any) => {
+            return units.some((unit) => {
               const unitBedrooms = unit.details?.numBedrooms || unit.beds || unit.numBedrooms || 0;
               return unitBedrooms >= filters.bedrooms;
             });
@@ -355,7 +355,7 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
           // If no units and no range, exclude the project
           console.log('[PreConstructionBasePage] Project excluded - no bedroom data:', {
             mlsNumber: project.mlsNumber,
-            projectName: (project as any).projectName,
+            projectName: (project as PropertyListing & { projectName?: string }).projectName,
             hasDetails: !!project.details,
             hasPreCon: !!project.preCon,
             detailsKeys: project.details ? Object.keys(project.details) : [],
