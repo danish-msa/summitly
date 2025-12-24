@@ -108,7 +108,6 @@ export async function getIntersectionsForCity(city: string): Promise<string[]> {
       status: 'A',
       resultsPerPage: 1000,
       page: 1,
-      // @ts-expect-error - fields parameter may not be in type definition but is supported by API
       fields: 'address.majorIntersection',
     } as Record<string, unknown>);
 

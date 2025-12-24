@@ -36,7 +36,7 @@ export async function getPropertyRating(
     // Check in-memory cache first (client-side only)
     if (typeof window !== 'undefined') {
       const cacheKey = `rating_${propertyId}_${propertyType}`;
-      const ratingCache = (window as Window & { __ratingCache?: Record<string, { data: unknown; timestamp: number }> }).__ratingCache;
+      const ratingCache = (window as Window & { __ratingCache?: Record<string, { data: RatingData; timestamp: number }> }).__ratingCache;
       if (ratingCache?.[cacheKey]) {
         const cached = ratingCache[cacheKey];
         // Check if cache is still valid (5 minutes)
@@ -60,12 +60,12 @@ export async function getPropertyRating(
     // Cache the result (client-side only)
     if (typeof window !== 'undefined') {
       const cacheKey = `rating_${propertyId}_${propertyType}`;
-      const win = window as Window & { __ratingCache?: Record<string, { data: unknown; timestamp: number }> };
+      const win = window as Window & { __ratingCache?: Record<string, { data: RatingData; timestamp: number }> };
       if (!win.__ratingCache) {
         win.__ratingCache = {};
       }
       win.__ratingCache[cacheKey] = {
-        data,
+        data: data as RatingData,
         timestamp: Date.now()
       };
     }

@@ -23,9 +23,10 @@ const TabsList = React.forwardRef<
     // Clone children with flex-shrink-0 for mobile scrolling
     const enhancedChildren = React.Children.map(children, (child) => {
       if (React.isValidElement(child)) {
+        const childProps = child.props as { className?: string } & React.HTMLAttributes<HTMLButtonElement>;
         return React.cloneElement(child, {
           className: cn(
-            child.props.className,
+            childProps.className,
             "flex-shrink-0 whitespace-nowrap"
           )
         } as React.HTMLAttributes<HTMLButtonElement>)
