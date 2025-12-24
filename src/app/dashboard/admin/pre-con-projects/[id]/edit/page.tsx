@@ -64,6 +64,9 @@ interface PreConProject {
   amenities: Array<string | { name: string; icon: string }>
   depositStructure: string | null
   description: string | null
+  metaTitle: string | null
+  metaDescription: string | null
+  keywords: string[]
   documents: Array<{ id: string; name: string; url: string; type: string }> | null
   developerInfo: string | null
   architectInfo: string | null
