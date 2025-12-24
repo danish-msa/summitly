@@ -408,15 +408,15 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
     // Filter by bathrooms
     if (filters.bathrooms > 0) {
       filtered = filtered.filter(project => {
-        // Check if project has bathroom range in details
-        const bathroomRange = project.details?.bathroomRange || project.preCon?.details?.bathroomRange;
+        // Check if project has bathroom range in preCon details
+        const bathroomRange = project.preCon?.details?.bathroomRange;
         if (!bathroomRange) {
           // If no bathroom range, check units for bathroom count
           const units = project.preCon?.units || [];
           if (units.length > 0) {
             // Check if any unit has the required bathrooms
             return units.some(unit => {
-              const unitBathrooms = unit.details?.numBathrooms || 0;
+              const unitBathrooms = unit.baths || 0;
               return unitBathrooms >= filters.bathrooms;
             });
           }
