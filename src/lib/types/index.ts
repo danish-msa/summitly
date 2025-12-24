@@ -547,6 +547,7 @@ export interface PropertyListing {
     soldPrice: string;
     soldDate: string;
     daysOnMarket?: number;
+    originalPrice?: number;
 
     address: {
         area: string | null;
