@@ -56,7 +56,7 @@ export default function PropertyHistory({ listingHistory, property, rawProperty 
           <TaxHistory property={property} propertyAddress={propertyAddress} />
         </TabsContent>
       </Tabs>
-      <EstimateHistorySection propertyAddress={propertyAddress} rawProperty={property?.rawProperty} />
+      <EstimateHistorySection propertyAddress={propertyAddress} rawProperty={rawProperty} />
       
       {/* Call to Action */}
       <div className="flex justify-center pt-6 pb-4">
