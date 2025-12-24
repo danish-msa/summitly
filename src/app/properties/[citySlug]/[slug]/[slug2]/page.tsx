@@ -119,20 +119,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title = `${bathroomLabel} ${propertyTypeDisplay} for Sale in ${cityName}`;
     description = `Find ${bathroomLabel.toLowerCase()} ${propertyTypeDisplay.toLowerCase()} for sale in ${cityName}. Browse listings, view photos, and connect with real estate agents.`;
   } else if (pageInfo.pageType === 'propertyType-sqft') {
-    title = buildPropertyPageTitle('propertyType-sqft', cityName, resolvedParams.slug, undefined, undefined, undefined, sqftInfo);
-    description = buildPropertyPageDescription(cityName, resolvedParams.slug, undefined, undefined, undefined, sqftInfo);
+    title = buildPropertyPageTitle('propertyType-sqft', cityName, resolvedParams.slug, undefined, undefined, undefined, sqftInfo ?? undefined);
+    description = buildPropertyPageDescription(cityName, resolvedParams.slug, undefined, undefined, undefined, sqftInfo ?? undefined);
   } else if (pageInfo.pageType === 'propertyType-lot-size') {
-    title = buildPropertyPageTitle('propertyType-lot-size', cityName, resolvedParams.slug, undefined, undefined, undefined, undefined, lotSizeInfo);
-    description = buildPropertyPageDescription(cityName, resolvedParams.slug, undefined, undefined, undefined, undefined, lotSizeInfo);
+    title = buildPropertyPageTitle('propertyType-lot-size', cityName, resolvedParams.slug, undefined, undefined, undefined, undefined, lotSizeInfo ?? undefined);
+    description = buildPropertyPageDescription(cityName, resolvedParams.slug, undefined, undefined, undefined, undefined, lotSizeInfo ?? undefined);
   } else if (pageInfo.pageType === 'propertyType-year-built') {
-    title = buildPropertyPageTitle('propertyType-year-built', cityName, resolvedParams.slug, undefined, undefined, undefined, undefined, undefined, yearBuiltInfo);
-    description = buildPropertyPageDescription(cityName, resolvedParams.slug, undefined, undefined, undefined, undefined, undefined, yearBuiltInfo);
+    title = buildPropertyPageTitle('propertyType-year-built', cityName, resolvedParams.slug, undefined, undefined, undefined, undefined, undefined, yearBuiltInfo ?? undefined);
+    description = buildPropertyPageDescription(cityName, resolvedParams.slug, undefined, undefined, undefined, undefined, undefined, yearBuiltInfo ?? undefined);
   } else if (pageInfo.pageType === 'propertyType-ownership') {
-    title = buildPropertyPageTitle('propertyType-ownership', cityName, resolvedParams.slug, undefined, undefined, undefined, undefined, undefined, undefined, ownershipInfo);
-    description = buildPropertyPageDescription(cityName, resolvedParams.slug, undefined, undefined, undefined, undefined, undefined, undefined, ownershipInfo);
+    title = buildPropertyPageTitle('propertyType-ownership', cityName, resolvedParams.slug, undefined, undefined, undefined, undefined, undefined, undefined, ownershipInfo ?? undefined);
+    description = buildPropertyPageDescription(cityName, resolvedParams.slug, undefined, undefined, undefined, undefined, undefined, undefined, ownershipInfo ?? undefined);
   } else if (pageInfo.pageType === 'propertyType-feature') {
-    title = buildPropertyPageTitle('propertyType-feature', cityName, resolvedParams.slug, undefined, undefined, undefined, undefined, undefined, undefined, undefined, featureInfo);
-    description = buildPropertyPageDescription(cityName, resolvedParams.slug, undefined, undefined, undefined, undefined, undefined, undefined, undefined, featureInfo);
+    title = buildPropertyPageTitle('propertyType-feature', cityName, resolvedParams.slug, undefined, undefined, undefined, undefined, undefined, undefined, undefined, featureInfo ?? undefined);
+    description = buildPropertyPageDescription(cityName, resolvedParams.slug, undefined, undefined, undefined, undefined, undefined, undefined, undefined, featureInfo ?? undefined);
   } else if (pageInfo.pageType === 'price-bedrooms') {
     const priceLabel = priceInfo?.label || resolvedParams.slug;
     const bedroomLabel = bedroomInfo ? formatBedrooms(bedroomInfo.bedrooms, bedroomInfo.isPlus) : resolvedParams.slug2;
@@ -145,20 +145,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description = `Find ${bathroomLabel.toLowerCase()} homes for sale in ${cityName} ${priceLabel.toLowerCase()}. Browse listings, view photos, and connect with real estate agents.`;
   } else if (pageInfo.pageType === 'price-sqft') {
     const priceLabel = priceInfo?.label || resolvedParams.slug;
-    title = buildPropertyPageTitle('price-sqft', cityName, undefined, priceInfo, undefined, undefined, sqftInfo);
-    description = buildPropertyPageDescription(cityName, undefined, priceInfo, undefined, undefined, sqftInfo);
+    title = buildPropertyPageTitle('price-sqft', cityName, undefined, priceInfo ?? undefined, undefined, undefined, sqftInfo ?? undefined);
+    description = buildPropertyPageDescription(cityName, undefined, priceInfo ?? undefined, undefined, undefined, sqftInfo ?? undefined);
   } else if (pageInfo.pageType === 'price-lot-size') {
     const priceLabel = priceInfo?.label || resolvedParams.slug;
-    title = buildPropertyPageTitle('price-lot-size', cityName, undefined, priceInfo, undefined, undefined, undefined, lotSizeInfo);
-    description = buildPropertyPageDescription(cityName, undefined, priceInfo, undefined, undefined, undefined, lotSizeInfo);
+    title = buildPropertyPageTitle('price-lot-size', cityName, undefined, priceInfo ?? undefined, undefined, undefined, undefined, lotSizeInfo ?? undefined);
+    description = buildPropertyPageDescription(cityName, undefined, priceInfo ?? undefined, undefined, undefined, undefined, lotSizeInfo ?? undefined);
   } else if (pageInfo.pageType === 'price-year-built') {
     const priceLabel = priceInfo?.label || resolvedParams.slug;
-    title = buildPropertyPageTitle('price-year-built', cityName, undefined, priceInfo, undefined, undefined, undefined, undefined, yearBuiltInfo);
-    description = buildPropertyPageDescription(cityName, undefined, priceInfo, undefined, undefined, undefined, undefined, yearBuiltInfo);
+    title = buildPropertyPageTitle('price-year-built', cityName, undefined, priceInfo ?? undefined, undefined, undefined, undefined, undefined, yearBuiltInfo ?? undefined);
+    description = buildPropertyPageDescription(cityName, undefined, priceInfo ?? undefined, undefined, undefined, undefined, undefined, yearBuiltInfo ?? undefined);
   } else if (pageInfo.pageType === 'price-feature') {
     const priceLabel = priceInfo?.label || resolvedParams.slug;
-    title = buildPropertyPageTitle('price-feature', cityName, undefined, priceInfo, undefined, undefined, undefined, undefined, undefined, undefined, featureInfo);
-    description = buildPropertyPageDescription(cityName, undefined, priceInfo, undefined, undefined, undefined, undefined, undefined, undefined, featureInfo);
+    title = buildPropertyPageTitle('price-feature', cityName, undefined, priceInfo ?? undefined, undefined, undefined, undefined, undefined, undefined, undefined, featureInfo ?? undefined);
+    description = buildPropertyPageDescription(cityName, undefined, priceInfo ?? undefined, undefined, undefined, undefined, undefined, undefined, undefined, featureInfo ?? undefined);
   }
 
   return {

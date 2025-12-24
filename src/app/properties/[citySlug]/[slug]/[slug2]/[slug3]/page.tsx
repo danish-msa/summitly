@@ -57,12 +57,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description = `Find ${bathroomLabel.toLowerCase()} ${propertyTypeDisplay.toLowerCase()} for sale in ${cityName} ${priceLabel.toLowerCase()}. Browse listings, view photos, and connect with real estate agents.`;
   } else if (sqftInfo) {
     // propertyType-price-sqft
-    title = buildPropertyPageTitle('propertyType-price-sqft', cityName, resolvedParams.slug, priceInfo, undefined, undefined, sqftInfo);
-    description = buildPropertyPageDescription(cityName, resolvedParams.slug, priceInfo, undefined, undefined, sqftInfo);
+    title = buildPropertyPageTitle('propertyType-price-sqft', cityName, resolvedParams.slug, priceInfo ?? undefined, undefined, undefined, sqftInfo ?? undefined);
+    description = buildPropertyPageDescription(cityName, resolvedParams.slug, priceInfo ?? undefined, undefined, undefined, sqftInfo ?? undefined);
   } else if (featureInfo) {
     // propertyType-price-feature
-    title = buildPropertyPageTitle('propertyType-price-feature', cityName, resolvedParams.slug, priceInfo, undefined, undefined, undefined, undefined, undefined, undefined, featureInfo);
-    description = buildPropertyPageDescription(cityName, resolvedParams.slug, priceInfo, undefined, undefined, undefined, undefined, undefined, undefined, featureInfo);
+    title = buildPropertyPageTitle('propertyType-price-feature', cityName, resolvedParams.slug, priceInfo ?? undefined, undefined, undefined, undefined, undefined, undefined, undefined, featureInfo ?? undefined);
+    description = buildPropertyPageDescription(cityName, resolvedParams.slug, priceInfo ?? undefined, undefined, undefined, undefined, undefined, undefined, undefined, featureInfo ?? undefined);
   } else {
     // Fallback (shouldn't happen, but just in case)
     title = `${propertyTypeDisplay} for Sale in ${cityName} ${priceLabel}`;
