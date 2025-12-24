@@ -259,6 +259,9 @@ export async function PUT(
       amenities?: string[]
       depositStructure?: string | null
       description?: string | null
+      metaTitle?: string | null
+      metaDescription?: string | null
+      keywords?: string[]
       documents?: string | null
       developerInfo?: string | null
       architectInfo?: string | null
@@ -401,6 +404,13 @@ export async function PUT(
     }
     if (body.depositStructure !== undefined) updateData.depositStructure = body.depositStructure
     if (body.description !== undefined) updateData.description = body.description
+    if (body.metaTitle !== undefined) updateData.metaTitle = body.metaTitle && body.metaTitle.trim() ? body.metaTitle.trim() : null
+    if (body.metaDescription !== undefined) updateData.metaDescription = body.metaDescription && body.metaDescription.trim() ? body.metaDescription.trim() : null
+    if (body.keywords !== undefined) {
+      updateData.keywords = Array.isArray(body.keywords) 
+        ? body.keywords.filter(k => k && String(k).trim()).map(k => String(k).trim())
+        : []
+    }
     if (body.documents !== undefined) updateData.documents = body.documents ? JSON.stringify(body.documents) : null
     if (body.developerInfo !== undefined) updateData.developerInfo = body.developerInfo ? await fetchDeveloperData(body.developerInfo) : null
     if (body.architectInfo !== undefined) updateData.architectInfo = body.architectInfo ? await fetchDeveloperData(body.architectInfo) : null

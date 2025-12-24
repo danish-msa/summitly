@@ -91,6 +91,9 @@ export default function NewProjectPage() {
     
     // Description & Documents
     description: "",
+    metaTitle: "",
+    metaDescription: "",
+    keywords: [] as string[],
     depositStructure: "",
     documents: [] as Document[],
     
@@ -193,6 +196,9 @@ export default function NewProjectPage() {
                 customAmenityInput: "",
                 depositStructure: project.depositStructure || "",
                 description: project.description || "",
+                metaTitle: project.metaTitle || "",
+                metaDescription: project.metaDescription || "",
+                keywords: Array.isArray(project.keywords) ? project.keywords : [],
                 documents: project.documents || [],
                 developerInfo: project.developerInfo || "",
                 architectInfo: project.architectInfo || "",

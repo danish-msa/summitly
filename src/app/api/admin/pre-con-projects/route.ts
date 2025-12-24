@@ -299,6 +299,9 @@ export async function POST(request: NextRequest) {
       customAmenities = [],
       depositStructure,
       description,
+      metaTitle,
+      metaDescription,
+      keywords = [],
       documents,
       developerInfo,
       architectInfo,
@@ -479,6 +482,9 @@ export async function POST(request: NextRequest) {
         features: [], // Explicitly set features array (required by schema)
         depositStructure: depositStructure && depositStructure.trim() ? depositStructure.trim() : null,
         description: description && description.trim() ? description.trim() : null,
+        metaTitle: metaTitle && metaTitle.trim() ? metaTitle.trim() : null,
+        metaDescription: metaDescription && metaDescription.trim() ? metaDescription.trim() : null,
+        keywords: Array.isArray(keywords) ? keywords.filter(k => k && String(k).trim()).map(k => String(k).trim()) : [],
         documents: documents ? (() => {
           try {
             // If documents is already a string, parse and re-stringify to ensure it's valid JSON

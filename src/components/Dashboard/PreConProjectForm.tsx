@@ -105,6 +105,9 @@ export interface FormData {
   customAmenities: string[]
   customAmenityInput: string
   description: string
+  metaTitle: string
+  metaDescription: string
+  keywords: string[]
   depositStructure: string
   documents: Document[]
   developerInfo: string // Developer ID
@@ -1741,6 +1744,91 @@ export function PreConProjectForm({
                         placeholder="Detailed project description..."
                       />
                     </div>
+                    
+                    {/* SEO / Meta Information */}
+                    <div className="space-y-4 pt-4 border-t">
+                      <div className="space-y-2">
+                        <Label htmlFor="metaTitle">Meta Title</Label>
+                        <Input
+                          id="metaTitle"
+                          value={formData.metaTitle || ''}
+                          onChange={(e) => setFormData({ ...formData, metaTitle: e.target.value })}
+                          placeholder="SEO title for search engines (50-60 characters recommended)"
+                          maxLength={60}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          {formData.metaTitle?.length || 0}/60 characters
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="metaDescription">Meta Description</Label>
+                        <Textarea
+                          id="metaDescription"
+                          value={formData.metaDescription || ''}
+                          onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
+                          rows={3}
+                          placeholder="SEO description for search engines (150-160 characters recommended)"
+                          maxLength={160}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          {formData.metaDescription?.length || 0}/160 characters
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="keywords">Keywords</Label>
+                        <div className="space-y-2">
+                          <div className="flex gap-2">
+                            <Input
+                              id="keywordInput"
+                              placeholder="Add a keyword and press Enter"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault()
+                                  const input = e.currentTarget
+                                  const keyword = input.value.trim()
+                                  if (keyword && !formData.keywords?.includes(keyword)) {
+                                    setFormData({
+                                      ...formData,
+                                      keywords: [...(formData.keywords || []), keyword]
+                                    })
+                                    input.value = ''
+                                  }
+                                }
+                              }}
+                            />
+                          </div>
+                          {formData.keywords && formData.keywords.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {formData.keywords.map((keyword, index) => (
+                                <Badge
+                                  key={index}
+                                  variant="secondary"
+                                  className="flex items-center gap-1"
+                                >
+                                  {keyword}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setFormData({
+                                        ...formData,
+                                        keywords: formData.keywords.filter((_, i) => i !== index)
+                                      })
+                                    }}
+                                    className="ml-1 hover:text-destructive"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Add keywords to improve search engine visibility. Press Enter to add each keyword.
+                        </p>
+                      </div>
+                    </div>
+                    
                     <div className="space-y-2">
                       <Label htmlFor="depositStructure">Deposit Structure</Label>
                       <Textarea
