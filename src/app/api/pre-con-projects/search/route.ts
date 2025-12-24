@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { convertToS3Url } from '@/lib/image-url';
 
 // Helper function to strip HTML tags from text
 function stripHtmlTags(html: string | null): string {
