@@ -408,7 +408,7 @@ export async function PUT(
     if (body.metaDescription !== undefined) updateData.metaDescription = body.metaDescription && body.metaDescription.trim() ? body.metaDescription.trim() : null
     if (body.keywords !== undefined) {
       updateData.keywords = Array.isArray(body.keywords) 
-        ? body.keywords.filter(k => k && String(k).trim()).map(k => String(k).trim())
+        ? body.keywords.filter((k: unknown) => k && String(k).trim()).map((k: unknown) => String(k).trim())
         : []
     }
     if (body.documents !== undefined) updateData.documents = body.documents ? JSON.stringify(body.documents) : null
