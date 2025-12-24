@@ -297,7 +297,8 @@ export default function EstimateHistorySection({ propertyAddress, rawProperty }:
         },
       },
     ],
-  }), [chartData, estimateData]);
+    };
+  }, [chartData, estimateData]);
 
   // Hide component if no estimate history data is available - AFTER all hooks
   if (!estimateData || estimateData.length === 0) {
