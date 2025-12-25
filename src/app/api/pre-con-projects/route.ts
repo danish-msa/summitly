@@ -74,11 +74,23 @@ export async function GET(request: NextRequest) {
         if (developerRecord) {
           whereConditions.push({ developer: developerRecord.id })
         } else {
-          whereConditions.push({ developer: { contains: developer, mode: 'insensitive' } } as any)
+          // Use StringFilter type for case-insensitive search
+          whereConditions.push({ 
+            developer: { 
+              contains: developer, 
+              mode: 'insensitive' 
+            } as Prisma.StringFilter 
+          })
         }
       } catch (error) {
         console.warn('[API] Error looking up developer, using contains match:', error)
-        whereConditions.push({ developer: { contains: developer, mode: 'insensitive' } } as any)
+        // Use StringFilter type for case-insensitive search
+        whereConditions.push({ 
+          developer: { 
+            contains: developer, 
+            mode: 'insensitive' 
+          } as Prisma.StringFilter 
+        })
       }
     }
     if (featured !== null && featured !== undefined) {
