@@ -16,8 +16,19 @@ export async function GET(request: NextRequest) {
     const featured = searchParams.get('featured')
     const limit = searchParams.get('limit')
 
+    console.log('[API] Fetching pre-con projects with params:', {
+      status,
+      city,
+      propertyType,
+      subPropertyType,
+      completionYear,
+      developer,
+      featured,
+      limit,
+    })
+
     // Build where clause
-    // Use Prisma's proper structure for AND/OR conditions
+    // Use array-based approach for better Prisma compatibility
     const whereConditions: Prisma.PreConstructionProjectWhereInput[] = [
       { isPublished: true }, // Only show published projects on public website
     ]
@@ -49,7 +60,6 @@ export async function GET(request: NextRequest) {
       whereConditions.push({ subPropertyType })
     }
     if (completionYear) {
-      // Filter by occupancy date containing the year (e.g., "Q4 2025" contains "2025")
       whereConditions.push({ occupancyDate: { contains: completionYear } })
     }
     if (developer) {
@@ -64,23 +74,24 @@ export async function GET(request: NextRequest) {
         if (developerRecord) {
           whereConditions.push({ developer: developerRecord.id })
         } else {
-          // If not found by name, try as ID or name match
-          whereConditions.push({ developer: { contains: developer, mode: 'insensitive' } })
+          whereConditions.push({ developer: { contains: developer, mode: 'insensitive' } } as any)
         }
-      } catch {
-        // Fallback to simple contains match
-        whereConditions.push({ developer: { contains: developer, mode: 'insensitive' } })
+      } catch (error) {
+        console.warn('[API] Error looking up developer, using contains match:', error)
+        whereConditions.push({ developer: { contains: developer, mode: 'insensitive' } } as any)
       }
     }
     if (featured !== null && featured !== undefined) {
-      // Convert string to boolean
       whereConditions.push({ featured: featured === 'true' || featured === '1' })
     }
     
-    // Combine all conditions with AND
-    const where: Prisma.PreConstructionProjectWhereInput = whereConditions.length > 0 
-      ? { AND: whereConditions } 
-      : { isPublished: true }
+    // Combine all conditions with AND (only if we have multiple conditions)
+    // If we only have isPublished, use it directly
+    const where: Prisma.PreConstructionProjectWhereInput = whereConditions.length > 1
+      ? { AND: whereConditions }
+      : whereConditions[0] || { isPublished: true }
+    
+    console.log('[API] Built where clause:', JSON.stringify(where, null, 2))
 
     // Retry logic for connection issues
     let retries = 3
@@ -89,6 +100,8 @@ export async function GET(request: NextRequest) {
     
     while (retries > 0) {
       try {
+        console.log('[API] Executing Prisma query, attempt:', 4 - retries)
+        
         // Get projects
         // When filtering by featured, just order by createdAt
         // Otherwise, prioritize featured projects first
@@ -121,17 +134,27 @@ export async function GET(request: NextRequest) {
             },
           },
         })
+        
+        console.log('[API] Query successful, found', projects.length, 'projects')
         break // Success, exit retry loop
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error))
         retries--
+        
+        console.error('[API] Prisma query error:', {
+          message: lastError.message,
+          stack: lastError.stack,
+          retriesLeft: retries,
+        })
         
         // Check if it's a connection error
         const isConnectionError = 
           lastError.message.includes('Connection terminated') ||
           lastError.message.includes('ECONNRESET') ||
           lastError.message.includes('ETIMEDOUT') ||
-          lastError.message.includes('Connection closed')
+          lastError.message.includes('Connection closed') ||
+          lastError.message.includes('P1001') || // Prisma connection error code
+          lastError.message.includes('Can\'t reach database server')
         
         if (isConnectionError && retries > 0) {
           console.warn(`⚠️ Connection error, retrying... (${retries} attempts left)`)
@@ -145,13 +168,17 @@ export async function GET(request: NextRequest) {
             console.warn('Reconnection attempt failed, will retry query')
           }
         } else {
-          throw lastError // Not a connection error or out of retries
+          // Log the error and rethrow
+          console.error('[API] Non-connection error or out of retries:', lastError)
+          throw lastError
         }
       }
     }
     
     if (!projects) {
-      throw lastError || new Error('Failed to fetch projects after retries')
+      const finalError = lastError || new Error('Failed to fetch projects after retries')
+      console.error('[API] No projects returned after all retries:', finalError)
+      throw finalError
     }
 
     // Parse JSON fields and convert to PropertyListing format
@@ -391,10 +418,29 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ projects: formattedProjects })
   } catch (error) {
-    console.error('Error fetching pre-con projects:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch projects'
+    // Enhanced error logging for debugging production issues
+    const errorDetails = {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
+    }
+    
+    console.error('[API] Error fetching pre-con projects:', {
+      error: errorDetails,
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV,
+    })
+    
+    // In production, don't expose full error details to client
+    const errorMessage = process.env.NODE_ENV === 'production'
+      ? 'Failed to fetch projects. Please try again later.'
+      : errorDetails.message
+    
     return NextResponse.json(
-      { error: errorMessage },
+      { 
+        error: errorMessage,
+        ...(process.env.NODE_ENV === 'development' && { details: errorDetails })
+      },
       { status: 500 }
     )
   }
