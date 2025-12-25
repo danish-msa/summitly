@@ -260,9 +260,6 @@ model PreConstructionProject {
   amenities               String[]              @default([])
   depositStructure        String?
   description             String?
-  metaTitle               String?
-  metaDescription         String?
-  keywords                String[]              @default([])
   developerInfo           String?
   architectInfo           String?
   builderInfo             String?

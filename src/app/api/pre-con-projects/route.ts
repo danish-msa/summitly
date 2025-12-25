@@ -148,19 +148,20 @@ export async function GET(request: NextRequest) {
         
         // Get projects
         // When filtering by featured, just order by createdAt
-        // Otherwise, prioritize featured projects first
-        // Note: Only use featured in orderBy if we're not filtering by it
-        // Use createdAt as safe default since featured column might not exist in all databases
+        // Otherwise, prioritize featured projects first, then by createdAt
         let orderBy: Prisma.PreConstructionProjectOrderByWithRelationInput | Prisma.PreConstructionProjectOrderByWithRelationInput[]
         if (featured === 'true' || featured === '1') {
           orderBy = { createdAt: 'desc' }
         } else {
-          // Use createdAt only to avoid issues with featured column
-          // If featured column doesn't exist, this will work
-          orderBy = { createdAt: 'desc' }
+          // Prioritize featured projects, then by creation date
+          orderBy = [
+            { featured: 'desc' } as Prisma.PreConstructionProjectOrderByWithRelationInput,
+            { createdAt: 'desc' }
+          ]
         }
 
-        // Try to fetch with units, but if it fails, fetch without units
+        // Try to fetch with units and featured ordering
+        // If it fails (e.g., featured column issue), retry with simpler query
         try {
           projects = await prisma.preConstructionProject.findMany({
             where,
@@ -181,14 +182,19 @@ export async function GET(request: NextRequest) {
               },
             },
           })
-        } catch (unitsError) {
-          console.warn('[API] Error fetching with units, retrying without units:', unitsError)
-          // Retry without units if including them causes issues
-          projects = await prisma.preConstructionProject.findMany({
-            where,
-            take: limit ? parseInt(limit) : undefined,
-            orderBy,
-          })
+        } catch (queryError) {
+          console.warn('[API] Error with initial query, retrying with simpler query:', queryError)
+          // Retry with simpler orderBy (just createdAt) and without units
+          try {
+            projects = await prisma.preConstructionProject.findMany({
+              where,
+              take: limit ? parseInt(limit) : undefined,
+              orderBy: { createdAt: 'desc' },
+            })
+          } catch (fallbackError) {
+            console.error('[API] Fallback query also failed:', fallbackError)
+            throw fallbackError
+          }
         }
         
         console.log('[API] Query successful, found', projects.length, 'projects')
