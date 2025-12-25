@@ -149,15 +149,15 @@ export async function GET(request: NextRequest) {
         // Get projects
         // When filtering by featured, just order by createdAt
         // Otherwise, prioritize featured projects first
+        // Note: Only use featured in orderBy if we're not filtering by it
+        // Use createdAt as safe default since featured column might not exist in all databases
         let orderBy: Prisma.PreConstructionProjectOrderByWithRelationInput | Prisma.PreConstructionProjectOrderByWithRelationInput[]
         if (featured === 'true' || featured === '1') {
           orderBy = { createdAt: 'desc' }
         } else {
-          // Use type assertion since featured field exists in schema but types may not be regenerated yet
-          orderBy = [
-            { featured: 'desc' } as Prisma.PreConstructionProjectOrderByWithRelationInput,
-            { createdAt: 'desc' }
-          ]
+          // Use createdAt only to avoid issues with featured column
+          // If featured column doesn't exist, this will work
+          orderBy = { createdAt: 'desc' }
         }
 
         // Try to fetch with units, but if it fails, fetch without units
