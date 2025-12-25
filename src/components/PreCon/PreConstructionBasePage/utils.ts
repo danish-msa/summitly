@@ -15,7 +15,14 @@ export const unslugifyCityName = (slug: string): string => {
 
 // Convert PropertyListing to PreConstructionProperty format
 export const convertToPreConProperty = (property: PropertyListing): PreConstructionProperty | null => {
-  if (!property.preCon) return null;
+  if (!property.preCon) {
+    console.warn('[convertToPreConProperty] Property missing preCon:', {
+      mlsNumber: property.mlsNumber,
+      hasPreCon: !!property.preCon,
+      propertyKeys: Object.keys(property),
+    });
+    return null;
+  }
 
   const preCon = property.preCon;
   const address = property.address;

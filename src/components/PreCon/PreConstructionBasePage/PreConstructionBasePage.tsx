@@ -175,6 +175,19 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({
             setViewMode={setViewMode} 
             projectCount={preConProjects.length} 
           />
+          
+          {/* Show message if no projects but not loading */}
+          {!loading && preConProjects.length === 0 && (
+            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded text-sm">
+              <p className="font-semibold text-yellow-800">No projects found</p>
+              <p className="text-yellow-700 mt-2">
+                Debug: pageType={pageType}, slug={slug}, projects.length={preConProjects.length}
+              </p>
+              <p className="text-yellow-700 text-xs mt-1">
+                Check browser console for API call details
+              </p>
+            </div>
+          )}
 
           {/* View Content */}
           <div className={`flex ${viewMode === 'map' ? 'flex-col' : viewMode === 'list' ? 'flex-col' : 'flex-col md:flex-row'} gap-6`}>

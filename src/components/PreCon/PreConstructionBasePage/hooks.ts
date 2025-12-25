@@ -129,8 +129,13 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
 
         console.log('[PreConstructionBasePage] Fetching projects with query:', buildApiQuery);
         const response = await fetch(buildApiQuery);
+        
+        console.log('[PreConstructionBasePage] Response status:', response.status, response.statusText);
+        
         if (!response.ok) {
-          throw new Error('Failed to fetch projects');
+          const errorText = await response.text().catch(() => 'Unknown error');
+          console.error('[PreConstructionBasePage] API error response:', errorText);
+          throw new Error(`Failed to fetch projects: ${response.status} ${response.statusText}`);
         }
 
         const data = await response.json();
@@ -138,12 +143,25 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
         console.log('[PreConstructionBasePage] Fetched projects:', {
           count: fetchedProjects.length,
           query: buildApiQuery,
+          responseStatus: response.status,
+          hasProjects: !!data.projects,
+          projectsArrayLength: Array.isArray(data.projects) ? data.projects.length : 0,
           firstProject: fetchedProjects[0] ? {
             mlsNumber: fetchedProjects[0].mlsNumber,
             city: fetchedProjects[0].address?.city,
+            hasPreCon: !!fetchedProjects[0].preCon,
+            preConKeys: fetchedProjects[0].preCon ? Object.keys(fetchedProjects[0].preCon) : [],
             bedroomRange: fetchedProjects[0].preCon?.details?.bedroomRange || fetchedProjects[0].details?.bedroomRange,
+            propertyType: fetchedProjects[0].preCon?.details?.propertyType || fetchedProjects[0].details?.propertyType,
           } : null,
         });
+        
+        // Log if projects are missing preCon property
+        const projectsWithoutPreCon = fetchedProjects.filter((p: PropertyListing) => !p.preCon);
+        if (projectsWithoutPreCon.length > 0) {
+          console.warn('[PreConstructionBasePage] Projects missing preCon property:', projectsWithoutPreCon.length);
+          console.warn('[PreConstructionBasePage] Sample project without preCon:', projectsWithoutPreCon[0]);
+        }
 
         // Extract province from first project (if available)
         const province = fetchedProjects.length > 0 
@@ -438,9 +456,22 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
 
   // Convert projects to PreConstructionProperty format
   const preConProjects = useMemo(() => {
-    return projects
-      .map(convertToPreConProperty)
-      .filter((project): project is PreConstructionProperty => project !== null);
+    const converted = projects.map(convertToPreConProperty);
+    const valid = converted.filter((project): project is PreConstructionProperty => project !== null);
+    const invalid = converted.filter(project => project === null);
+    
+    if (invalid.length > 0) {
+      console.warn('[PreConstructionBasePage] Projects filtered out during conversion:', invalid.length);
+      console.warn('[PreConstructionBasePage] Sample invalid project:', projects[converted.indexOf(null)]);
+    }
+    
+    console.log('[PreConstructionBasePage] Project conversion:', {
+      total: projects.length,
+      valid: valid.length,
+      invalid: invalid.length,
+    });
+    
+    return valid;
   }, [projects]);
 
   // Convert projects to PropertyListing format for map
