@@ -6,6 +6,17 @@ import { Prisma } from '@prisma/client'
 // GET - Public endpoint to fetch all pre-con projects for website display
 export async function GET(request: NextRequest) {
   try {
+    // Log database connection info (masked for security)
+    const dbUrl = process.env.DATABASE_URL || 'NOT SET'
+    const maskedDbUrl = dbUrl !== 'NOT SET' 
+      ? dbUrl.replace(/:([^:@]+)@/, ':****@').replace(/\/\/([^:]+):/, '//****:')
+      : 'NOT SET'
+    console.log('[API] Database connection:', {
+      hasUrl: !!process.env.DATABASE_URL,
+      urlPreview: maskedDbUrl,
+      nodeEnv: process.env.NODE_ENV,
+    })
+
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status') || ''
     const city = searchParams.get('city') || ''
@@ -105,6 +116,15 @@ export async function GET(request: NextRequest) {
     
     console.log('[API] Built where clause:', JSON.stringify(where, null, 2))
 
+    // Test database connection first
+    try {
+      await prisma.$connect()
+      console.log('[API] Database connection: ✅ Connected')
+    } catch (connectError) {
+      console.error('[API] Database connection: ❌ Failed', connectError)
+      throw new Error(`Database connection failed: ${connectError instanceof Error ? connectError.message : String(connectError)}`)
+    }
+
     // Retry logic for connection issues
     let retries = 3
     let projects
@@ -148,6 +168,25 @@ export async function GET(request: NextRequest) {
         })
         
         console.log('[API] Query successful, found', projects.length, 'projects')
+        
+        // Log sample project data for debugging
+        if (projects.length > 0) {
+          console.log('[API] Sample project:', {
+            mlsNumber: projects[0].mlsNumber,
+            projectName: projects[0].projectName,
+            propertyType: projects[0].propertyType,
+            isPublished: projects[0].isPublished,
+            status: projects[0].status,
+          })
+        } else {
+          console.warn('[API] ⚠️ No projects found with current filters')
+          // Check if there are any published projects at all
+          const totalPublished = await prisma.preConstructionProject.count({
+            where: { isPublished: true }
+          })
+          console.log('[API] Total published projects in database:', totalPublished)
+        }
+        
         break // Success, exit retry loop
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error))
