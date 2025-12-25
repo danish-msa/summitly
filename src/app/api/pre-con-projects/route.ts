@@ -17,34 +17,40 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get('limit')
 
     // Build where clause
-    const where: {
-      status?: string
-      city?: { contains: string; mode: 'insensitive' }
-      propertyType?: string
-      subPropertyType?: string
-      occupancyDate?: { contains: string }
-      developer?: string | { contains: string; mode: 'insensitive' }
-      isPublished?: boolean
-      featured?: boolean
-    } = {
-      isPublished: true, // Only show published projects on public website
-    }
+    // Use Prisma's proper structure for AND/OR conditions
+    const whereConditions: Prisma.PreConstructionProjectWhereInput[] = [
+      { isPublished: true }, // Only show published projects on public website
+    ]
     
     if (status) {
-      where.status = status
+      whereConditions.push({ status })
     }
     if (city) {
-      where.city = { contains: city, mode: 'insensitive' }
+      whereConditions.push({ city: { contains: city, mode: 'insensitive' } })
     }
     if (propertyType) {
-      where.propertyType = propertyType
+      // Use case-insensitive matching for propertyType
+      // Check multiple case variations to handle different database values
+      const propertyTypeLower = propertyType.toLowerCase()
+      const propertyTypeCapitalized = propertyType.charAt(0).toUpperCase() + propertyType.slice(1).toLowerCase()
+      const propertyTypeUpper = propertyType.toUpperCase()
+      
+      const propertyTypeCondition: Prisma.PreConstructionProjectWhereInput = {
+        OR: [
+          { propertyType: propertyType },
+          { propertyType: propertyTypeCapitalized },
+          { propertyType: propertyTypeUpper },
+          { propertyType: propertyTypeLower },
+        ]
+      }
+      whereConditions.push(propertyTypeCondition)
     }
     if (subPropertyType) {
-      where.subPropertyType = subPropertyType
+      whereConditions.push({ subPropertyType })
     }
     if (completionYear) {
       // Filter by occupancy date containing the year (e.g., "Q4 2025" contains "2025")
-      where.occupancyDate = { contains: completionYear }
+      whereConditions.push({ occupancyDate: { contains: completionYear } })
     }
     if (developer) {
       // Try to find developer by name first, then fall back to ID
@@ -56,20 +62,25 @@ export async function GET(request: NextRequest) {
           select: { id: true }
         })
         if (developerRecord) {
-          where.developer = developerRecord.id
+          whereConditions.push({ developer: developerRecord.id })
         } else {
           // If not found by name, try as ID or name match
-          where.developer = { contains: developer, mode: 'insensitive' }
+          whereConditions.push({ developer: { contains: developer, mode: 'insensitive' } })
         }
       } catch {
         // Fallback to simple contains match
-        where.developer = { contains: developer, mode: 'insensitive' }
+        whereConditions.push({ developer: { contains: developer, mode: 'insensitive' } })
       }
     }
     if (featured !== null && featured !== undefined) {
       // Convert string to boolean
-      where.featured = featured === 'true' || featured === '1'
+      whereConditions.push({ featured: featured === 'true' || featured === '1' })
     }
+    
+    // Combine all conditions with AND
+    const where: Prisma.PreConstructionProjectWhereInput = whereConditions.length > 0 
+      ? { AND: whereConditions } 
+      : { isPublished: true }
 
     // Retry logic for connection issues
     let retries = 3
