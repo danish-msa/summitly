@@ -160,24 +160,36 @@ export async function GET(request: NextRequest) {
           ]
         }
 
-        projects = await prisma.preConstructionProject.findMany({
-          where,
-          take: limit ? parseInt(limit) : undefined,
-          orderBy,
-          include: {
-            units: {
-              select: {
-                id: true,
-                unitName: true,
-                beds: true,
-                baths: true,
-                sqft: true,
-                price: true,
-                status: true,
+        // Try to fetch with units, but if it fails, fetch without units
+        try {
+          projects = await prisma.preConstructionProject.findMany({
+            where,
+            take: limit ? parseInt(limit) : undefined,
+            orderBy,
+            include: {
+              units: {
+                select: {
+                  id: true,
+                  unitName: true,
+                  beds: true,
+                  baths: true,
+                  sqft: true,
+                  price: true,
+                  status: true,
+                },
+                take: 50, // Limit units per project to prevent memory issues
               },
             },
-          },
-        })
+          })
+        } catch (unitsError) {
+          console.warn('[API] Error fetching with units, retrying without units:', unitsError)
+          // Retry without units if including them causes issues
+          projects = await prisma.preConstructionProject.findMany({
+            where,
+            take: limit ? parseInt(limit) : undefined,
+            orderBy,
+          })
+        }
         
         console.log('[API] Query successful, found', projects.length, 'projects')
         
@@ -272,23 +284,34 @@ export async function GET(request: NextRequest) {
     const developerIds = [...new Set(projects.map(p => p.developer).filter(Boolean))]
     const developerNamesMap = new Map<string, string>()
     
-    await Promise.all(
-      developerIds
-        .filter((id): id is string => id !== null && id !== undefined)
-        .map(async (id) => {
-          const name = await getDeveloperName(id)
-          developerNamesMap.set(id, name)
-        })
-    )
+    try {
+      await Promise.all(
+        developerIds
+          .filter((id): id is string => id !== null && id !== undefined)
+          .map(async (id) => {
+            try {
+              const name = await getDeveloperName(id)
+              developerNamesMap.set(id, name)
+            } catch (error) {
+              console.warn('[API] Error fetching developer name for ID:', id, error)
+              developerNamesMap.set(id, id) // Fallback to ID if lookup fails
+            }
+          })
+      )
+    } catch (error) {
+      console.error('[API] Error fetching developer names:', error)
+      // Continue with empty map - will use developer ID as fallback
+    }
 
     const formattedProjects = projects.map((project) => {
-      const documents = parseJsonField(project.documents)
-      const developerInfo = parseJsonField(project.developerInfo)
-      const architectInfo = parseJsonField(project.architectInfo)
-      const builderInfo = parseJsonField(project.builderInfo)
-      const interiorDesignerInfo = parseJsonField(project.interiorDesignerInfo)
-      const landscapeArchitectInfo = parseJsonField(project.landscapeArchitectInfo)
-      const marketingInfo = parseJsonField(project.marketingInfo)
+      try {
+        const documents = parseJsonField(project.documents)
+        const developerInfo = parseJsonField(project.developerInfo)
+        const architectInfo = parseJsonField(project.architectInfo)
+        const builderInfo = parseJsonField(project.builderInfo)
+        const interiorDesignerInfo = parseJsonField(project.interiorDesignerInfo)
+        const landscapeArchitectInfo = parseJsonField(project.landscapeArchitectInfo)
+        const marketingInfo = parseJsonField(project.marketingInfo)
 
       // Get developer name from map
       const developerName = project.developer 
@@ -476,6 +499,117 @@ export async function GET(request: NextRequest) {
           documents: documents || undefined,
           developmentTeam: Object.keys(developmentTeam).length > 0 ? developmentTeam : undefined,
         },
+      }
+      } catch (error) {
+        console.error('[API] Error formatting project:', project.mlsNumber, error)
+        // Return a minimal valid project structure to prevent complete failure
+        return {
+          mlsNumber: project.mlsNumber,
+          status: project.status || null,
+          class: 'residential',
+          type: 'Sale',
+          listPrice: project.startingPrice || null,
+          priceRange: {
+            min: project.startingPrice || null,
+            max: project.endingPrice || project.startingPrice || null,
+          },
+          listDate: project.createdAt.toISOString(),
+          lastStatus: project.status || null,
+          soldPrice: '',
+          soldDate: '',
+          address: {
+            area: null,
+            city: project.city || null,
+            country: project.country || null,
+            district: null,
+            majorIntersection: project.majorIntersection || null,
+            neighborhood: project.neighborhood || null,
+            streetDirection: null,
+            streetName: project.streetName || null,
+            streetNumber: project.streetNumber || null,
+            streetSuffix: null,
+            unitNumber: null,
+            zip: project.zip || null,
+            state: project.state || null,
+            communityCode: null,
+            streetDirectionPrefix: null,
+            addressKey: null,
+            location: [
+              project.streetNumber,
+              project.streetName,
+              project.city,
+              project.state,
+              project.zip,
+            ]
+              .filter(Boolean)
+              .join(', '),
+          },
+          map: {
+            latitude: project.latitude,
+            longitude: project.longitude,
+            point: null,
+          },
+          details: {
+            numBathrooms: 1,
+            numBathroomsPlus: 1,
+            numBedrooms: 1,
+            numBedroomsPlus: 1,
+            propertyType: project.propertyType || null,
+            sqft: 0,
+          },
+          updatedOn: project.updatedAt.toISOString(),
+          lot: {
+            acres: 0,
+            depth: 0,
+            irregular: 0,
+            legalDescription: project.description || '',
+            measurement: '',
+            width: 0,
+            size: 0,
+            source: '',
+            dimensionsSource: '',
+            dimensions: '',
+            squareFeet: 0,
+            taxLot: '',
+          },
+          boardId: 0,
+          images: {
+            imageUrl: project.images[0] ? convertToS3Url(project.images[0]) : '/images/p1.jpg',
+            allImages: project.images.length > 0 
+              ? project.images.map(img => convertToS3Url(img))
+              : ['/images/p1.jpg'],
+          },
+          preCon: {
+            projectName: project.projectName,
+            developer: project.developer || null,
+            startingPrice: project.startingPrice || null,
+            endingPrice: project.endingPrice || null,
+            avgPricePerSqft: project.avgPricePerSqft || null,
+            priceRange: {
+              min: project.startingPrice || null,
+              max: project.endingPrice || project.startingPrice || null,
+            },
+            status: project.status || null,
+            completion: {
+              date: project.occupancyDate || null,
+              progress: 'Pre-construction',
+            },
+            details: {
+              bedroomRange: project.bedroomRange || null,
+              bathroomRange: project.bathroomRange || null,
+              sqftRange: project.sqftRange || null,
+              totalUnits: project.totalUnits || null,
+              availableUnits: project.availableUnits || null,
+              storeys: project.storeys || undefined,
+              height: project.height || undefined,
+              propertyType: project.propertyType || null,
+              subPropertyType: project.subPropertyType || undefined,
+            },
+            amenities: project.amenities || [],
+            features: project.features || [],
+            videos: project.videos || [],
+          },
+        }
       }
     })
 
