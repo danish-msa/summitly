@@ -52,20 +52,32 @@ export async function GET(request: NextRequest) {
     }
     if (propertyType) {
       // Use case-insensitive matching for propertyType
-      // Check multiple case variations to handle different database values
+      // Check multiple case variations and common alternative names
       const propertyTypeLower = propertyType.toLowerCase()
       const propertyTypeCapitalized = propertyType.charAt(0).toUpperCase() + propertyType.slice(1).toLowerCase()
       const propertyTypeUpper = propertyType.toUpperCase()
       
+      // Build list of variations to check
+      const variations: string[] = [
+        propertyType, // Exact match
+        propertyTypeCapitalized, // Capitalized
+        propertyTypeUpper, // Uppercase
+        propertyTypeLower, // Lowercase
+      ]
+      
+      // Add common alternative names for specific types
+      if (propertyTypeLower === 'condos' || propertyTypeLower === 'condo') {
+        variations.push('Condominium', 'condominium', 'CONDOMINIUM', 'Condo', 'condo')
+      } else if (propertyTypeLower === 'houses' || propertyTypeLower === 'house') {
+        variations.push('House', 'house', 'HOUSE', 'Houses')
+      }
+      
       const propertyTypeCondition: Prisma.PreConstructionProjectWhereInput = {
-        OR: [
-          { propertyType: propertyType },
-          { propertyType: propertyTypeCapitalized },
-          { propertyType: propertyTypeUpper },
-          { propertyType: propertyTypeLower },
-        ]
+        OR: variations.map(variation => ({ propertyType: variation }))
       }
       whereConditions.push(propertyTypeCondition)
+      
+      console.log('[API] PropertyType filter variations:', variations)
     }
     if (subPropertyType) {
       whereConditions.push({ subPropertyType })

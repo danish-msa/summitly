@@ -38,6 +38,30 @@ export async function GET() {
       }
     })
     
+    // Get actual propertyType values from database
+    const propertyTypes = await prisma.preConstructionProject.findMany({
+      where: { isPublished: true },
+      select: { propertyType: true },
+      distinct: ['propertyType'],
+    })
+    
+    const propertyTypeValues = propertyTypes
+      .map(p => p.propertyType)
+      .filter(Boolean)
+      .sort()
+    
+    // Get sample projects to see their propertyType
+    const sampleProjects = await prisma.preConstructionProject.findMany({
+      where: { isPublished: true },
+      select: {
+        mlsNumber: true,
+        projectName: true,
+        propertyType: true,
+        subPropertyType: true,
+      },
+      take: 5,
+    })
+    
     return NextResponse.json({
       success: true,
       message: 'Database connection successful',
@@ -49,6 +73,8 @@ export async function GET() {
           publishedProjects: projectCount,
           publishedCondos: condosCount,
         },
+        propertyTypes: propertyTypeValues,
+        sampleProjects,
         timestamp: new Date().toISOString(),
       }
     })
