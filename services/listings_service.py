@@ -3,13 +3,21 @@ Listings Service - Property Search and Details
 Handles all listing-related API operations including search, details, and similar properties
 """
 import logging
+import os
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 from services.repliers_client import client, RepliersAPIError
 from services.repliers_config import config
+from services.repliers_query_contract import (
+    normalize_to_repliers,
+    ContractError
+)
 
 logger = logging.getLogger(__name__)
+
+# Enable contract debug logging via environment variable
+CONTRACT_DEBUG = os.getenv('REPLIERS_CONTRACT_DEBUG', 'false').lower() == 'true'
 
 
 class ListingsService:
@@ -106,98 +114,94 @@ class ListingsService:
         Returns:
             Dictionary containing search results and metadata
         """
-        # Build query parameters
-        params = {}
+        # =====================================================================
+        # CONTRACT-BASED PARAMETER VALIDATION & NORMALIZATION
+        # =====================================================================
+        # Build internal parameter dictionary (snake_case)
+        internal_params = {}
         
         # Location parameters
-        if city:
-            params['city'] = city
-        if neighborhood:
-            params['neighborhood'] = neighborhood
-        if postal_code:
-            params['postalCode'] = postal_code
-        if street_name:
-            params['streetName'] = street_name
-        if street_number:
-            params['streetNumber'] = street_number
-        if latitude is not None and longitude is not None:
-            params['latitude'] = latitude
-            params['longitude'] = longitude
-            if radius_km:
-                params['radius'] = radius_km
+        if city is not None:
+            internal_params['city'] = city
+        if neighborhood is not None:
+            internal_params['neighborhood'] = neighborhood
+        if postal_code is not None:
+            internal_params['postal_code'] = postal_code
+        if street_name is not None:
+            internal_params['street_name'] = street_name
+        if street_number is not None:
+            internal_params['street_number'] = street_number
+        if latitude is not None:
+            internal_params['latitude'] = latitude
+        if longitude is not None:
+            internal_params['longitude'] = longitude
+        if radius_km is not None:
+            internal_params['radius_km'] = radius_km
         
         # Property parameters
         if min_price is not None:
-            params['minPrice'] = min_price
+            internal_params['min_price'] = min_price
         if max_price is not None:
-            params['maxPrice'] = max_price
-        if property_type:
-            params['propertyType'] = property_type
-        if property_style:
-            params['propertyStyle'] = property_style
+            internal_params['max_price'] = max_price
+        if property_type is not None:
+            internal_params['property_type'] = property_type
+        if property_style is not None:
+            internal_params['property_style'] = property_style
         if min_bedrooms is not None:
-            params['minBedrooms'] = min_bedrooms
+            internal_params['min_bedrooms'] = min_bedrooms
         if max_bedrooms is not None:
-            params['maxBedrooms'] = max_bedrooms
+            internal_params['max_bedrooms'] = max_bedrooms
         if min_bathrooms is not None:
-            params['minBathrooms'] = min_bathrooms
+            internal_params['min_bathrooms'] = min_bathrooms
         if max_bathrooms is not None:
-            params['maxBathrooms'] = max_bathrooms
+            internal_params['max_bathrooms'] = max_bathrooms
         if min_sqft is not None:
-            params['minSqft'] = min_sqft
+            internal_params['min_sqft'] = min_sqft
         if max_sqft is not None:
-            params['maxSqft'] = max_sqft
+            internal_params['max_sqft'] = max_sqft
         
-        # Status - API expects 'A' (Active) or 'U' (Under Contract)
-        if status:
-            status_mapping = {
-                'active': 'A',
-                'sold': 'S',
-                'leased': 'L',
-                'under_contract': 'U',
-                'A': 'A',
-                'U': 'U',
-                'S': 'S',
-                'L': 'L'
-            }
-            params['status'] = status_mapping.get(status.lower(), status)
-        
-        # Transaction type - Use 'type' parameter for Sale vs Lease
-        if transaction_type:
-            transaction_mapping = {
-                'sale': 'sale',
-                'lease': 'lease',
-                'rent': 'lease',
-                'buy': 'sale',
-            }
-            params['type'] = transaction_mapping.get(transaction_type.lower(), transaction_type.lower())
+        # Status and transaction
+        if status is not None:
+            internal_params['status'] = status
+        if transaction_type is not None:
+            internal_params['transaction_type'] = transaction_type
         
         # Features
-        if keywords:
-            params['keywords'] = ','.join(keywords)
+        if keywords is not None:
+            internal_params['keywords'] = keywords
         if has_pool is not None:
-            params['hasPool'] = str(has_pool).lower()
+            internal_params['has_pool'] = has_pool
         if has_garage is not None:
-            params['hasGarage'] = str(has_garage).lower()
+            internal_params['has_garage'] = has_garage
         if parking_spots is not None:
-            params['parkingSpots'] = parking_spots
+            internal_params['parking_spots'] = parking_spots
         
         # Date filters
-        # ✅ FIX: Use correct Repliers API parameter names (minListDate/maxListDate, not listedAfter/listedBefore)
-        if listed_after:
-            params['minListDate'] = listed_after  # Format: YYYY-MM-DD
-        if listed_before:
-            params['maxListDate'] = listed_before  # Format: YYYY-MM-DD
-        if open_house_date:
-            params['openHouseDate'] = open_house_date
+        if listed_after is not None:
+            internal_params['listed_after'] = listed_after
+        if listed_before is not None:
+            internal_params['listed_before'] = listed_before
+        if open_house_date is not None:
+            internal_params['open_house_date'] = open_house_date
         
         # Pagination
-        params['page'] = page
-        params['pageSize'] = min(page_size, config.MAX_PAGE_SIZE)
+        internal_params['page'] = page
+        internal_params['page_size'] = min(page_size, config.MAX_PAGE_SIZE)
         
         # Sorting
-        if sort_by:
-            params['sortBy'] = sort_by
+        if sort_by is not None:
+            internal_params['sort_by'] = sort_by
+        
+        # Apply contract: validate and normalize to Repliers API format (camelCase)
+        try:
+            params = normalize_to_repliers(internal_params, debug=CONTRACT_DEBUG)
+        except ContractError as e:
+            logger.error(f"Contract validation failed: {e}")
+            raise ValueError(f"Invalid query parameters: {e}") from e
+        
+        # =====================================================================
+        # END CONTRACT PROCESSING - params now in camelCase format
+        # =====================================================================
         
         try:
             logger.info(f"Searching listings with {len(params)} filters")

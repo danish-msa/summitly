@@ -358,19 +358,24 @@ def buildRepliersAddressSearchParams(
     params = {}
     
     # Basic parameters
-    params['transactionType'] = listing_type
-    params['pageSize'] = limit
+    params['transaction_type'] = listing_type
+    params['page_size'] = limit
     
     # Determine search strategy based on address components
     components = normalized_address.components if hasattr(normalized_address, 'components') else None
+    
+    # Track if this is an exact address search (for filter decision below)
+    is_exact_address_search = False
     
     # RULE 1: Exact address search - use addressKey ONLY if street_number AND street_name present  
     if (components and components.street_number and components.street_name and 
         hasattr(normalized_address, 'exact_address_key') and normalized_address.exact_address_key):
         
         # Exact address matching with addressKey
-        params['addressKey'] = normalized_address.exact_address_key
+        params['address_key'] = normalized_address.exact_address_key
+        is_exact_address_search = True
         logger.info(f"🎯 [EXACT_ADDRESS] Using addressKey: {normalized_address.exact_address_key}")
+        logger.info(f"🚫 [EXACT_ADDRESS] Skipping additional filters - user wants this specific property")
         
     # RULE 2: Street search - city fetch for post-filtering (NO fuzzy q)
     elif (components and components.street_name and 
@@ -378,7 +383,7 @@ def buildRepliersAddressSearchParams(
         
         # Use city-based search for street filtering
         params['city'] = components.city or 'Toronto'
-        params['pageSize'] = 200  # Fetch more for filtering
+        params['page_size'] = 200  # Fetch more for filtering
         logger.info(f"🏘️ [STREET_SEARCH] City fetch for filtering: {params['city']}")
         
         # Store street key for post-filtering
@@ -389,12 +394,14 @@ def buildRepliersAddressSearchParams(
         logger.warning("⚠️ [ADDRESS_SEARCH] No valid deterministic search strategy available")
         return {}
     
-    # Apply additional filters if provided (these will be applied post-addressKey filtering)
-    if additional_filters:
-        for key, value in additional_filters.items():
-            if value is not None:
-                params[key] = value
-        logger.info(f"➕ [ADDRESS_SEARCH] Additional filters for post-filtering: {additional_filters}")
+    # Apply additional filters ONLY for street searches, NOT for exact address searches
+    # For exact address: User wants to see THAT specific property regardless of previous filters
+    # For street search: Store filters for POST-FILTERING, NOT API level (to avoid 0 results)
+    if additional_filters and not is_exact_address_search:
+        # CRITICAL FIX: Don't apply restrictive filters at API level for street searches
+        # Store them as internal params for post-filtering only
+        params['_post_filters'] = additional_filters
+        logger.info(f"➕ [STREET_SEARCH] Filters saved for POST-filtering (not API level): {additional_filters}")
     
     return params
 
@@ -412,7 +419,7 @@ def buildRepliersSearchParams(
     Build comprehensive Repliers API search parameters from ConversationState.
     
     This function maps ALL supported Repliers API parameters correctly:
-    - Property basics (propertyType, transactionType, ownershipType)
+    - Property basics (propertyType, transaction_type, ownershipType)
     - Price (minPrice, maxPrice)
     - Beds & Baths (minBeds, maxBeds, minBaths, maxBaths, bedroomsPlus)
     - Location (city, community, neighborhood, postalCode, streetName)
@@ -433,6 +440,15 @@ def buildRepliersSearchParams(
     
     logger.info(f"🔨 Building Repliers params from state: {state.get_summary()}")
     
+    # Helper function to safely get filter values from either UnifiedConversationState or legacy state
+    def get_filter(attr_name, default=None):
+        """Get filter value from either state.active_filters (Unified) or state.attr (legacy)"""
+        # Try UnifiedConversationState path first
+        if hasattr(state, 'active_filters') and hasattr(state.active_filters, attr_name):
+            return getattr(state.active_filters, attr_name, default)
+        # Fall back to legacy ConversationState path
+        return getattr(state, attr_name, default)
+    
     # ===== LOCATION (NEW: Use location_state for structured location handling) =====
     location_state = getattr(state, 'location_state', None)
     
@@ -441,12 +457,26 @@ def buildRepliersSearchParams(
         logger.info(f"📍 Using location_state: {location_state.get_summary()}")
         
         # Extract location fields from location_state
+        # Handle both snake_case (Pydantic) and camelCase (legacy) attributes
         city = location_state.city
         community = location_state.community
         neighborhood = location_state.neighborhood
-        postal_code = location_state.postalCode
-        street_name = location_state.streetName
-        street_number = location_state.streetNumber
+        postal_code = getattr(location_state, 'postal_code', None) or getattr(location_state, 'postalCode', None)
+        street_name = getattr(location_state, 'street_name', None) or getattr(location_state, 'streetName', None)
+        street_number = getattr(location_state, 'street_number', None) or getattr(location_state, 'streetNumber', None)
+        
+        # PHOTON INTEGRATION: Check if lat/lng coordinates are available
+        # When Photon geocoding provides coordinates, we use city-level search + geo-filtering
+        # instead of postal code filtering (more accurate for intersections/landmarks)
+        latitude = getattr(location_state, 'latitude', None)
+        longitude = getattr(location_state, 'longitude', None)
+        has_coordinates = latitude is not None and longitude is not None
+        
+        if has_coordinates:
+            logger.info(
+                f"🌍 [PHOTON MODE] Coordinates available (lat={latitude:.4f}, lon={longitude:.4f}), "
+                f"will use city-level search + geo-filtering instead of postal code"
+            )
         
         # Validate location hierarchy
         city, community, neighborhood, location_warnings = validate_location_hierarchy(
@@ -465,21 +495,23 @@ def buildRepliersSearchParams(
         # Apply location fields to params (respecting hierarchy)
         # POSTAL CODE PRIORITY: streetNumber > streetName > postalCode > neighborhood > community > city
         # CRITICAL: DO NOT combine postalCode with streetName
+        # PHOTON OVERRIDE: When lat/lng available, skip postal code and use city-level search
         if street_number and street_name:
-            params['streetName'] = street_name
-            params['streetNumber'] = street_number
+            params['street_name'] = street_name
+            params['street_number'] = street_number
             if city:  # Always include city with street address for better results
                 params['city'] = city
             logger.info(f"🏠 Searching specific address: {street_number} {street_name}, {city or 'Toronto'}")
         elif street_name:
-            params['streetName'] = street_name
+            params['street_name'] = street_name
             if city:  # CRITICAL: Include city with street name to narrow down results
                 params['city'] = city
             logger.info(f"🛣️ Searching street: {street_name}, {city or 'Toronto'}")
-        elif postal_code:
+        elif postal_code and not has_coordinates:
             # POSTAL CODE SEARCH: Use postal code + city ONLY
             # DO NOT combine with streetName, neighborhood, or community
-            params['postalCode'] = postal_code
+            # SKIP if coordinates available (Photon geocoding provides better filtering)
+            params['postal_code'] = postal_code
             if city:
                 params['city'] = city
                 logger.info(f"📮 [POSTAL CODE SEARCH] Searching: {postal_code}, {city}")
@@ -491,6 +523,18 @@ def buildRepliersSearchParams(
                 logger.warning(
                     f"⚠️ [POSTAL CODE PRIORITY] Ignoring street/neighborhood/community "
                     f"because postal code is set: {postal_code}"
+                )
+        elif has_coordinates and city:
+            # PHOTON MODE: Use city-level search, let orchestrator geo-filter by distance
+            params['city'] = city
+            logger.info(
+                f"🌍 [PHOTON MODE] Using city-level search: {city} "
+                f"(geo-filtering will be applied by orchestrator)"
+            )
+            if postal_code:
+                logger.info(
+                    f"📮 [PHOTON MODE] Skipping postal code filter ({postal_code}) "
+                    f"in favor of geo-distance filtering"
                 )
         elif neighborhood:
             # PRODUCTION FIX: Expand neighborhood aliases (e.g., "King West" -> ["Niagara", ...])
@@ -552,128 +596,148 @@ def buildRepliersSearchParams(
         
         # Postal code
         if hasattr(state, 'postal_code') and state.postal_code:
-            params['postalCode'] = state.postal_code
+            params['postal_code'] = state.postal_code
         
         # Street name
         if hasattr(state, 'street_name') and state.street_name:
-            params['streetName'] = state.street_name
+            params['street_name'] = state.street_name
     
     # ===== PROPERTY BASICS =====
     # Property type
-    if state.property_type:
+    property_type = get_filter('property_type')
+    if property_type:
         normalized = PROPERTY_TYPE_MAPPING.get(
-            state.property_type.lower(),
-            state.property_type
+            property_type.lower(),
+            property_type
         )
-        params['propertyType'] = normalized
+        params['property_type'] = normalized
     
     # Ownership type
-    if hasattr(state, 'ownership_type') and state.ownership_type:
+    ownership_type = get_filter('ownership_type')
+    if ownership_type:
         normalized = OWNERSHIP_TYPE_MAPPING.get(
-            state.ownership_type.lower(),
-            state.ownership_type
+            ownership_type.lower(),
+            ownership_type
         )
-        params['ownershipType'] = normalized
+        params['ownership_type'] = normalized
     
     # Property style
-    if hasattr(state, 'property_style') and state.property_style:
+    property_style = get_filter('property_style')
+    if property_style:
         normalized = PROPERTY_STYLE_MAPPING.get(
-            state.property_style.lower(),
-            state.property_style
+            property_style.lower(),
+            property_style
         )
         params['style'] = normalized
     
     # Transaction type (Sale vs Lease)
-    # CRITICAL FIX #2: ALWAYS add transactionType to prevent rent/sale mixing
+    # CRITICAL FIX #2: ALWAYS add transaction_type to prevent rent/sale mixing
     # The Repliers API needs this constraint to avoid returning wrong listing types
-    if state.listing_type == 'rent':
-        params['transactionType'] = 'Lease'
-        logger.debug(f"📋 Added transactionType: Lease (rent requested)")
-    elif state.listing_type == 'sale':
-        params['transactionType'] = 'Sale'
-        logger.debug(f"📋 Added transactionType: Sale (sale requested)")
-    elif state.listing_type is None:
+    listing_type = get_filter('listing_type')
+    if listing_type == 'rent':
+        params['transaction_type'] = 'rent'
+        logger.debug(f"📋 Added transaction_type: rent (rent requested)")
+    elif listing_type == 'sale':
+        params['transaction_type'] = 'sale'
+        logger.debug(f"📋 Added transaction_type: sale (sale requested)")
+    elif listing_type is None:
         # No explicit listing_type - check if we can infer from price
         min_price = params.get('minPrice')
         max_price = params.get('maxPrice')
         if (min_price and min_price > 100000) or (max_price and max_price > 100000):
             # High price indicates sale
-            params['transactionType'] = 'Sale'
-            logger.info(f"🏠 [AUTO-INFER] Price > $100k → transactionType=Sale")
+            params['transaction_type'] = 'sale'
+            logger.info(f"🏠 [AUTO-INFER] Price > $100k → transaction_type=Sale")
         else:
             # Default to Sale for backward compatibility (most queries are sale)
-            params['transactionType'] = 'Sale'
-            logger.debug(f"� Added transactionType: Sale (default)")
+            params['transaction_type'] = 'sale'
+            logger.debug(f"� Added transaction_type: sale (default)")
     else:
         # Default to Sale for any other case
-        params['transactionType'] = 'Sale'
-        logger.debug(f"📋 Added transactionType: Sale (fallback default)")
+        params['transaction_type'] = 'sale'
+        logger.debug(f"📋 Added transaction_type: sale (fallback default)")
     
     # ===== BEDS & BATHS =====
-    if state.bedrooms is not None:
-        params['minBeds'] = state.bedrooms
-        params['maxBeds'] = state.bedrooms
+    bedrooms = get_filter('bedrooms')
+    if bedrooms is not None:
+        params['min_bedrooms'] = bedrooms
+        params['max_bedrooms'] = bedrooms
     
     # Support for separate min/max
-    if hasattr(state, 'min_bedrooms') and state.min_bedrooms is not None:
-        params['minBeds'] = state.min_bedrooms
-    if hasattr(state, 'max_bedrooms') and state.max_bedrooms is not None:
-        params['maxBeds'] = state.max_bedrooms
+    min_bedrooms = get_filter('min_bedrooms')
+    max_bedrooms = get_filter('max_bedrooms')
+    if min_bedrooms is not None:
+        params['min_bedrooms'] = min_bedrooms
+    if max_bedrooms is not None:
+        params['max_bedrooms'] = max_bedrooms
     
     # Bedrooms plus (e.g., 2+1)
-    if hasattr(state, 'bedrooms_plus') and state.bedrooms_plus:
-        params['bedroomsPlus'] = state.bedrooms_plus
+    bedrooms_plus = get_filter('bedrooms_plus')
+    if bedrooms_plus:
+        params['bedrooms_plus'] = bedrooms_plus
     
-    if state.bathrooms is not None:
-        params['minBaths'] = state.bathrooms
+    bathrooms = get_filter('bathrooms')
+    if bathrooms is not None:
+        params['min_bathrooms'] = bathrooms
     
     # Support for separate min/max
-    if hasattr(state, 'min_bathrooms') and state.min_bathrooms is not None:
-        params['minBaths'] = state.min_bathrooms
-    if hasattr(state, 'max_bathrooms') and state.max_bathrooms is not None:
-        params['maxBaths'] = state.max_bathrooms
+    min_bathrooms = get_filter('min_bathrooms')
+    max_bathrooms = get_filter('max_bathrooms')
+    if min_bathrooms is not None:
+        params['min_bathrooms'] = min_bathrooms
+    if max_bathrooms is not None:
+        params['max_bathrooms'] = max_bathrooms
     
     # ===== PRICE =====
-    if state.price_range:
-        min_price, max_price = state.price_range
+    price_range = get_filter('price_range')
+    if price_range:
+        min_price, max_price = price_range
         if min_price is not None:
-            params['minPrice'] = min_price
+            params['min_price'] = min_price
         if max_price is not None:
-            params['maxPrice'] = max_price
+            params['max_price'] = max_price
     
     # ===== SIZE & LOT =====
-    if state.sqft_range:
-        min_sqft, max_sqft = state.sqft_range
+    sqft_range = get_filter('sqft_range')
+    if sqft_range:
+        min_sqft, max_sqft = sqft_range
         if min_sqft is not None:
-            params['minSqft'] = min_sqft
+            params['min_sqft'] = min_sqft
         if max_sqft is not None:
-            params['maxSqft'] = max_sqft
+            params['max_sqft'] = max_sqft
     
     # Lot size
-    if hasattr(state, 'lot_size') and state.lot_size:
-        params['lotSize'] = state.lot_size
+    lot_size = get_filter('lot_size')
+    if lot_size:
+        params['lot_size'] = lot_size
     
     # ===== PARKING & GARAGE =====
-    if state.parking_spots is not None:
-        params['parkingSpaces'] = state.parking_spots
+    parking_spots = get_filter('parking_spots')
+    if parking_spots is not None:
+        params['parking_spots'] = parking_spots
     
-    if hasattr(state, 'garage_type') and state.garage_type:
-        params['garageType'] = state.garage_type
+    garage_type = get_filter('garage_type')
+    if garage_type:
+        params['garage_type'] = garage_type
     
     # ===== CONDO FEATURES =====
-    if hasattr(state, 'exposure') and state.exposure:
-        params['exposure'] = state.exposure
+    exposure = get_filter('exposure')
+    if exposure:
+        params['exposure'] = exposure
     
-    if hasattr(state, 'balcony') and state.balcony is not None:
-        params['balcony'] = state.balcony
+    balcony = get_filter('balcony')
+    if balcony is not None:
+        params['balcony'] = balcony
     
-    if hasattr(state, 'locker') and state.locker is not None:
-        params['locker'] = state.locker
+    locker = get_filter('locker')
+    if locker is not None:
+        params['locker'] = locker
     
     # ===== AMENITIES =====
-    if state.amenities:
+    amenities = get_filter('amenities')
+    if amenities:
         # Map common amenity names to API format
-        amenity_params = _map_amenities_to_repliers(state.amenities)
+        amenity_params = _map_amenities_to_repliers(amenities)
         params.update(amenity_params)
     
     # ===== LISTING DATES (CRITICAL FIX) =====
@@ -687,38 +751,44 @@ def buildRepliersSearchParams(
     )
     
     if min_date:
-        params['minListDate'] = min_date
+        params['listed_after'] = min_date
         logger.info(f"📅 Applied minListDate: {min_date}")
     
     if max_date:
-        params['maxListDate'] = max_date
+        params['listed_before'] = max_date
         logger.info(f"📅 Applied maxListDate: {max_date}")
     
     # ===== MLS & STATUS =====
-    if hasattr(state, 'mls_number') and state.mls_number:
-        params['mlsNumber'] = state.mls_number
+    mls_number = get_filter('mls_number')
+    if mls_number:
+        params['mls_number'] = mls_number
     
-    # Status - default to Active if not specified
-    if hasattr(state, 'status') and state.status:
-        params['status'] = state.status
+    # Status - default to active (lowercase required by contract)
+    status = get_filter('status')
+    if status:
+        params['status'] = status
     else:
-        params['status'] = 'Active'
+        params['status'] = 'active'  # Contract requires lowercase or API code 'A'
     
     # ===== YEAR BUILT =====
-    if hasattr(state, 'year_built_min') and state.year_built_min:
-        params['yearBuiltMin'] = state.year_built_min
-    if hasattr(state, 'year_built_max') and state.year_built_max:
-        params['yearBuiltMax'] = state.year_built_max
+    year_built_min = get_filter('year_built_min')
+    if year_built_min:
+        params['year_built_min'] = year_built_min
+    year_built_max = get_filter('year_built_max')
+    if year_built_max:
+        params['year_built_max'] = year_built_max
     
     # ===== MEDIA & EXTRAS =====
-    if hasattr(state, 'has_images') and state.has_images:
+    has_images = get_filter('has_images')
+    if has_images:
         params['hasImages'] = True
     
-    if hasattr(state, 'has_virtual_tour') and state.has_virtual_tour:
+    has_virtual_tour = get_filter('has_virtual_tour')
+    if has_virtual_tour:
         params['hasVirtualTour'] = True
     
     # ===== PAGINATION =====
-    params['pageSize'] = limit
+    params['page_size'] = limit
     params['page'] = 1
     
     # Log final params
@@ -774,7 +844,7 @@ def convert_to_snake_case(params: Dict[str, Any]) -> Dict[str, Any]:
     mapping = {
         # Property basics
         'propertyType': 'property_type',
-        'transactionType': 'transaction_type',
+        'transaction_type': 'transaction_type',
         'ownershipType': 'ownership_type',
         'propertyStyle': 'property_style',
         
@@ -868,7 +938,7 @@ def _map_amenities_to_repliers(amenities: List[str]) -> Dict[str, Any]:
     if any(word in amenities_lower for word in ['parking', 'garage']):
         if 'parkingSpaces' not in params:
             params['hasGarage'] = True
-            params['parkingSpaces'] = 1
+            params['parking_spots'] = 1
     
     # Balcony - add to keywords (no direct API support)
     if 'balcony' in amenities_lower:
@@ -979,11 +1049,11 @@ def log_filter_summary(params: Dict[str, Any], result_count: int) -> None:
         max_p = params.get('maxPrice', '∞')
         filter_summary.append(f"price=${min_p}-${max_p}")
     if 'minBeds' in params:
-        filter_summary.append(f"beds={params['minBeds']}")
+        filter_summary.append(f"beds={params['min_bedrooms']}")
     if 'propertyType' in params:
-        filter_summary.append(f"type={params['propertyType']}")
-    if 'transactionType' in params:
-        filter_summary.append(f"transaction={params['transactionType']}")
+        filter_summary.append(f"type={params['property_type']}")
+    if 'transaction_type' in params:
+        filter_summary.append(f"transaction={params['transaction_type']}")
     
     summary_str = ", ".join(filter_summary) if filter_summary else "no filters"
     

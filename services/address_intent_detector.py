@@ -26,7 +26,28 @@ class AddressIntentType(str, Enum):
     """Address-specific intent categories."""
     ADDRESS_SEARCH = "address_search"      # Exact address with unit/number
     STREET_SEARCH = "street_search"        # Street-level search only
+    INTERSECTION = "intersection"          # Intersection search (e.g., "Yonge and Bloor")
+    POSTAL_CODE = "postal_code"            # Postal code search (e.g., "M5V 1A1" or "M5V")
+    MLS_LOOKUP = "mls_lookup"              # MLS number lookup (e.g., "C12652668")
     NOT_ADDRESS = "not_address"            # Not an address query
+
+
+# MLS Number patterns (Canadian MLS format)
+MLS_PATTERNS = [
+    # Standard MLS format: Letter + 7-8 digits (e.g., C12652668, X12345678)
+    r'\b([A-Z][0-9]{7,8})\b',
+    # With MLS prefix: "MLS C12652668", "MLS: C12652668", "MLS #C12652668"
+    r'(?:mls[:\s#]*)?([A-Z][0-9]{7,8})\b',
+]
+
+
+# Intersection detection patterns
+INTERSECTION_PATTERNS = [
+    # Pattern 1: Full street names with suffixes (e.g., "Yonge Street and Bloor Street")
+    r'\b([A-Za-z]+(?:\s+[A-Za-z]+)*\s+(?:street|st|avenue|ave|road|rd|boulevard|blvd|drive|dr))\s+(?:and|&|at)\s+([A-Za-z]+(?:\s+[A-Za-z]+)*\s+(?:street|st|avenue|ave|road|rd|boulevard|blvd|drive|dr))\b',
+    # Pattern 2: Street names with optional suffixes (e.g., "Yonge and Bloor")
+    r'\b([A-Za-z]+)\s+(?:and|&|at)\s+([A-Za-z]+)\b(?=\s|$|,)',
+]
 
 
 @dataclass
@@ -38,6 +59,13 @@ class AddressComponents:
     unit_number: Optional[str] = None
     city: Optional[str] = None
     raw_input: str = ""
+    # Intersection fields
+    intersection_street1: Optional[str] = None
+    intersection_street2: Optional[str] = None
+    # Postal code fields
+    postal_code: Optional[str] = None
+    # MLS number field
+    mls_number: Optional[str] = None
     
     def has_exact_address(self) -> bool:
         """Check if this represents an exact address."""
@@ -50,6 +78,19 @@ class AddressComponents:
         return (self.street_name is not None and 
                 self.street_suffix is not None and
                 self.street_number is None)
+    
+    def has_intersection(self) -> bool:
+        """Check if this is an intersection search."""
+        return (self.intersection_street1 is not None and 
+                self.intersection_street2 is not None)
+    
+    def has_postal_code(self) -> bool:
+        """Check if this has a postal code."""
+        return self.postal_code is not None
+    
+    def has_mls_number(self) -> bool:
+        """Check if this has an MLS number."""
+        return self.mls_number is not None
 
 
 @dataclass
@@ -78,6 +119,8 @@ class AddressIntentDetector:
             'lane', 'way', 'crescent', 'court', 'place', 'terrace',
             'parkway', 'trail', 'path', 'grove', 'square', 'gardens',
             'heights', 'hill', 'valley', 'ridge', 'green', 'close',
+            # Special Canadian street names that act as suffixes
+            'esplanade', 'quay', 'mews', 'walk', 'gate', 'common',
             
             # Abbreviations
             'st', 'ave', 'rd', 'dr', 'cir', 'blvd', 'ln', 'cr', 'ct',
@@ -99,13 +142,41 @@ class AddressIntentDetector:
         
         logger.info("✅ AddressIntentDetector initialized")
     
+    def _detect_mls_number(self, text: str) -> Optional[str]:
+        """
+        Detect MLS number in user input.
+        
+        Canadian MLS numbers typically follow the pattern: Letter + 7-8 digits
+        Examples: C12652668, X12345678, W10987654
+        
+        Args:
+            text: User input text
+            
+        Returns:
+            MLS number if found, None otherwise
+        """
+        # Look for MLS patterns
+        # Pattern: Letter followed by 7-8 digits
+        mls_pattern = r'\b([A-Z][0-9]{7,8})\b'
+        match = re.search(mls_pattern, text.upper())
+        if match:
+            return match.group(1)
+        
+        # Also check with "MLS" prefix
+        mls_with_prefix = r'(?:mls[:\s#]*\s*)([a-zA-Z][0-9]{7,8})\b'
+        match = re.search(mls_with_prefix, text, re.IGNORECASE)
+        if match:
+            return match.group(1).upper()
+        
+        return None
+    
     def detect_intent(
         self, 
         user_message: str, 
         current_location: Optional[str] = None
     ) -> AddressIntentResult:
         """
-        Detect if user message is an address or street search query.
+        Detect if user message is an address, intersection, postal code, MLS lookup, or street search query.
         
         Args:
             user_message: User's input message
@@ -116,7 +187,95 @@ class AddressIntentDetector:
         """
         user_message_lower = user_message.lower().strip()
         
-        # Extract address components
+        # PRIORITY CHECK: Skip address detection for general questions
+        # WHY: "Is Toronto a good place to invest?" has "place" (a street suffix) but is NOT an address query
+        general_question_patterns = [
+            r'\bgood\s+(place|area|time|city)\s+to\s+(invest|buy|live)',
+            r'\bis\s+\w+\s+a\s+good\s+(place|market|investment)',
+            r'\bhow\s+is\s+the\s+market',
+            r'\bshould\s+i\s+(buy|invest)',
+            r'\bwhat\s+areas?\s+have',
+            r'\bhow\s+does\s+the\s+buying\s+process',
+        ]
+        for pattern in general_question_patterns:
+            if re.search(pattern, user_message_lower):
+                logger.info(f"🚫 [GENERAL_QUESTION] Skipping address detection for question: '{user_message[:50]}...'")
+                return AddressIntentResult(
+                    intent_type=AddressIntentType.NOT_ADDRESS,
+                    components=AddressComponents(raw_input=user_message),
+                    confidence=0.0,
+                    reason="General question - not an address query",
+                    metadata={"skipped_reason": "general_question_pattern"}
+                )
+        
+        # Check for MLS number FIRST (highest priority - specific property lookup)
+        mls_number = self._detect_mls_number(user_message)
+        if mls_number:
+            components = AddressComponents(
+                raw_input=user_message,
+                mls_number=mls_number
+            )
+            metadata = {
+                "has_mls_number": True,
+                "mls_number": mls_number,
+                "original_message": user_message
+            }
+            logger.info(f"🏷️ [MLS_LOOKUP] Detected MLS: {mls_number}")
+            return AddressIntentResult(
+                intent_type=AddressIntentType.MLS_LOOKUP,
+                components=components,
+                confidence=0.98,
+                reason=f"MLS number detected: {mls_number}",
+                metadata=metadata
+            )
+        
+        # Check for intersection SECOND
+        intersection = self._detect_intersection(user_message)
+        if intersection:
+            components = AddressComponents(
+                raw_input=user_message,
+                intersection_street1=intersection[0],
+                intersection_street2=intersection[1],
+                city=current_location  # Don't default to Toronto for cross-city support
+            )
+            metadata = {
+                "has_intersection": True,
+                "street1": intersection[0],
+                "street2": intersection[1],
+                "original_message": user_message
+            }
+            logger.info(f"🚦 [INTERSECTION] Detected: {intersection[0]} & {intersection[1]}")
+            return AddressIntentResult(
+                intent_type=AddressIntentType.INTERSECTION,
+                components=components,
+                confidence=0.95,
+                reason=f"Intersection detected: {intersection[0]} & {intersection[1]}",
+                metadata=metadata
+            )
+        
+        # Check for postal code SECOND
+        postal_code = self._detect_postal_code(user_message)
+        if postal_code:
+            components = AddressComponents(
+                raw_input=user_message,
+                postal_code=postal_code,
+                city=current_location
+            )
+            metadata = {
+                "has_postal_code": True,
+                "postal_code": postal_code,
+                "original_message": user_message
+            }
+            logger.info(f"📮 [POSTAL_CODE] Detected: {postal_code}")
+            return AddressIntentResult(
+                intent_type=AddressIntentType.POSTAL_CODE,
+                components=components,
+                confidence=0.90,
+                reason=f"Postal code detected: {postal_code}",
+                metadata=metadata
+            )
+        
+        # Extract address components for other types
         components = self._extract_address_components(user_message, current_location)
         
         # Determine intent type based on components
@@ -149,6 +308,88 @@ class AddressIntentDetector:
         
         return result
     
+    def _detect_intersection(self, message: str) -> Optional[Tuple[str, str]]:
+        """
+        Detect intersection from message.
+        
+        Returns:
+            Tuple of (street1, street2) if intersection detected, else None
+        """
+        # Common non-intersection words to exclude
+        exclude_words = {
+            # Action words
+            'show', 'me', 'find', 'search', 'looking', 'want', 'need', 'get',
+            'different', 'options', 'other', 'more', 'any', 'some',
+            # Property types
+            'condos', 'condo', 'homes', 'home', 'houses', 'house', 'properties', 
+            'property', 'listings', 'listing', 'apartments', 'apartment',
+            'townhouse', 'townhouses', 'detached', 'semi',
+            # Room features
+            'bedroom', 'bathroom', 'bed', 'bath', 'room', 'rooms',
+            # Transaction types
+            'sale', 'rent', 'lease', 'buy', 'purchase',
+            # Price words
+            'under', 'over', 'between', 'around', 'budget', 'price', 'cost',
+            # Prepositions
+            'with', 'without', 'for', 'in', 'on', 'at', 'the', 'a', 'an', 'near', 'close', 'by',
+            # AMENITY WORDS - Critical to exclude these from intersection detection!
+            'pool', 'pools', 'balcony', 'balconies', 'parking', 'garage', 'gym', 
+            'fitness', 'locker', 'storage', 'terrace', 'patio', 'garden', 
+            'laundry', 'washer', 'dryer', 'dishwasher', 'fireplace', 'view', 
+            'views', 'waterfront', 'rooftop', 'concierge', 'doorman', 'elevator',
+            'security', 'amenities', 'amenity', 'feature', 'features'
+        }
+        
+        for pattern in INTERSECTION_PATTERNS:
+            match = re.search(pattern, message, re.IGNORECASE)
+            if match:
+                street1 = match.group(1).strip()
+                street2 = match.group(2).strip()
+                
+                # Clean up street names
+                street1_lower = street1.lower()
+                street2_lower = street2.lower()
+                
+                # Skip if either street is a common non-intersection word
+                if street1_lower in exclude_words or street2_lower in exclude_words:
+                    continue
+                
+                # Skip if too short (single letter)
+                if len(street1) < 2 or len(street2) < 2:
+                    continue
+                
+                logger.info(f"🚦 [INTERSECTION] Pattern matched: '{street1}' & '{street2}'")
+                return (street1.title(), street2.title())
+        
+        return None
+    
+    def _detect_postal_code(self, message: str) -> Optional[str]:
+        """
+        Detect Canadian postal code from message.
+        
+        Returns:
+            Normalized postal code if detected, else None
+        """
+        # Pattern for Canadian postal codes (FSA or full)
+        # FSA: Letter-Digit-Letter (e.g., M5V)
+        # Full: Letter-Digit-Letter Digit-Letter-Digit (e.g., M5V 1A1)
+        postal_pattern = r'\b([A-Za-z]\d[A-Za-z])\s*(\d[A-Za-z]\d)?\b'
+        
+        match = re.search(postal_pattern, message.upper())
+        if match:
+            fsa = match.group(1).upper()
+            ldu = match.group(2)  # Local Delivery Unit (optional)
+            
+            if ldu:
+                postal_code = f"{fsa} {ldu.upper()}"
+            else:
+                postal_code = fsa
+            
+            logger.info(f"📮 [POSTAL_CODE] Pattern matched: '{postal_code}'")
+            return postal_code
+        
+        return None
+    
     def _extract_address_components(
         self, 
         user_message: str, 
@@ -174,10 +415,11 @@ class AddressIntentDetector:
             components.street_suffix = street_info['suffix']
         
         # Use current location as city if not explicitly provided
+        # Do NOT default to Toronto - leave as None for cross-city search support
         if current_location and not components.city:
             components.city = current_location
-        elif not components.city:
-            components.city = "Toronto"  # Default fallback
+        # elif not components.city:
+        #     components.city = "Toronto"  # Removed - enables cross-city search
         
         return components
     
@@ -246,6 +488,18 @@ class AddressIntentDetector:
     
     def _extract_street_info(self, text: str) -> Optional[Dict[str, str]]:
         """Extract street name and suffix."""
+        # SPECIAL CASE: "The Esplanade", "The Queensway" style addresses
+        # Pattern: [number] The <StreetSuffix> [unit]
+        # For these streets, "The Esplanade" IS the full street name
+        the_pattern = r'\b(\d+)\s+(The\s+(' + '|'.join(self.street_suffixes) + r'))\b'
+        match = re.search(the_pattern, text, re.IGNORECASE)
+        if match:
+            # "The Esplanade" - full name is "The Esplanade", suffix is "esplanade"
+            return {
+                'name': match.group(2).strip(),  # "The Esplanade"
+                'suffix': match.group(3).lower()  # "esplanade"
+            }
+        
         # First, try to find street names after specific indicators
         indicator_pattern = r'(?:on|at|near|along|about)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*?)\s+(' + \
                           '|'.join(self.street_suffixes) + r')\b'

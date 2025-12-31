@@ -21,7 +21,7 @@ import os
 import logging
 import json
 import re
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Union
 from datetime import datetime
 
 # Load environment variables from .env file
@@ -41,7 +41,27 @@ from services.conversation_state import ConversationState, conversation_state_ma
 from services.nlp_parser import nlp_parser
 from services.enhanced_mls_service import enhanced_mls_service
 from services.location_extractor import location_extractor, LocationState
-from services.intent_classifier import intent_classifier, UserIntent
+
+# NEW: Import centralized confirmation tokens (single source of truth)
+from services.confirmation_tokens import (
+    CONFIRMATION_WORDS, ALL_CONFIRMATION_TOKENS,
+    is_confirmation_word, is_positive_response, is_negative_response
+)
+
+# NEW: Import HybridIntentClassifier as the SINGLE source of truth for intent classification
+# This provides LOCAL-FIRST classification (95%+ messages in < 5ms) with GPT-4 fallback
+from services.hybrid_intent_classifier import intent_classifier, UserIntent
+
+# NEW: Import UnifiedConversationState and UnifiedStateManager for centralized state management
+from services.unified_conversation_state import (
+    UnifiedConversationState,
+    UnifiedStateManager,
+    UnifiedConversationStateManager,  # Backwards compatibility alias
+    LocationState as UnifiedLocationState,
+    ActiveFilters,
+    ConversationStage,
+    ListingType,
+)
 
 # NEW: Import location validator for hybrid LLM + deterministic validation
 from services.location_validator import get_location_validator
@@ -53,30 +73,51 @@ from services.repliers_filter_mapper import buildRepliersAddressSearchParams
 
 # NEW: Import confirmation manager for robust UUID-based confirmation tracking
 from services.confirmation_manager import (
+    ConfirmationManager,
     get_confirmation_manager,
     ConfirmationType,
-    ConfirmationStatus
+    ConfirmationStatus,
+    ConfirmationResult
 )
+
+# NEW: Import AtomicTransactionManager for safe state updates with automatic rollback
+from services.atomic_transaction_manager import AtomicTransactionManager, TransactionType
 
 logger = logging.getLogger(__name__)
 
-# 🔧 CONFIRMATION WORDS - Never extract entities from these
-CONFIRMATION_WORDS = {
-    'yes', 'yeah', 'yep', 'yup', 'sure', 'ok', 'okay', 'alright', 'correct', 'right',
-    'no', 'nah', 'nope', 'not', 'never',
-    'keep it same', 'keep same', 'keep it', 'same', 'that\'s fine', 'sounds good',
-    'y', 'k', 'n'  # Single letter confirmations
-}
+# =============================================================================
+# GLOBAL STATE MANAGER INITIALIZATION
+# =============================================================================
 
-def is_confirmation_word(message: str) -> bool:
-    """
-    Check if message is purely a confirmation word with no additional information.
-    Critical: These messages should NOT be parsed as location/property queries.
-    """
-    clean = message.strip().lower()
-    # Remove punctuation
-    clean = re.sub(r'[.,!?]', '', clean)
-    return clean in CONFIRMATION_WORDS
+# Initialize the global UnifiedStateManager with Redis URL from environment
+# This is the SINGLE source of truth for all conversation state
+_redis_url = os.getenv("REDIS_URL")
+state_manager = UnifiedStateManager(redis_url=_redis_url)
+
+# Log which backend is being used on startup
+try:
+    import structlog
+    _startup_log = structlog.get_logger(__name__)
+    _startup_log.info(
+        "State manager initialized",
+        backend=state_manager.backend,
+        redis_available=state_manager.is_redis_available,
+        redis_url_configured=bool(_redis_url),
+    )
+except ImportError:
+    logger.info(
+        f"State manager initialized | backend={state_manager.backend} | "
+        f"redis_available={state_manager.is_redis_available} | "
+        f"redis_url_configured={bool(_redis_url)}"
+    )
+
+# Backwards compatibility: keep unified_state_manager as alias
+unified_state_manager = state_manager
+
+logger = logging.getLogger(__name__)
+
+# 🔧 CONFIRMATION WORDS - Now imported from services.confirmation_tokens
+# (CONFIRMATION_WORDS and is_confirmation_word are imported at top of file)
 
 # Lazy import helper to avoid circular dependency
 def get_standardize_property_data():
@@ -485,19 +526,19 @@ def ask_gpt_summarizer(user_message: str, filters: Dict[str, Any], properties: L
         
         # GPT-5 models: use max_completion_tokens, temperature=1 only
         if "gpt-5" in model.lower():
-            params["max_completion_tokens"] = 300  # Reduced for faster responses
+            params["max_completion_tokens"] = 800  # Increased to prevent truncation
             # GPT-5-nano only supports temperature=1 (default), so we omit it
             # Try forcing JSON mode for GPT-5
             params["response_format"] = {"type": "json_object"}
         else:
-            params["max_tokens"] = 350  # Optimized: Reduced from 600 to 350 for 40% faster responses
+            params["max_tokens"] = 1000  # Increased from 350 to prevent JSON truncation
             params["temperature"] = 0.3  # Slightly increased for more natural responses
         
         resp = client.chat.completions.create(**params)
         text = resp.choices[0].message.content.strip() if resp.choices[0].message.content else ""
         
         # Log the full response for debugging
-        logger.info(f"📝 Summarizer full response (first 500 chars): {text[:500]}")
+        logger.info(f"📝 Summarizer full response (first 700 chars): {text[:700]}")
         
         # Check if response is empty - try fallback model if GPT-5 fails
         if not text:
@@ -554,7 +595,7 @@ def ask_gpt_summarizer(user_message: str, filters: Dict[str, Any], properties: L
         
         except json.JSONDecodeError as json_err:
             logger.error(f"❌ JSON parsing failed: {json_err}")
-            logger.error(f"❌ Raw text (first 500 chars): {text[:500]}")
+            logger.error(f"❌ Raw text (first 700 chars): {text[:700]}")
             
             # CRITICAL FIX #4: Try to fix common JSON issues
             # Remove trailing commas, fix quotes, etc.
@@ -567,7 +608,29 @@ def ask_gpt_summarizer(user_message: str, filters: Dict[str, Any], properties: L
             except:
                 pass
             
-            # Attempt 2: Try to extract JSON object if wrapped in text
+            # Attempt 2: Try to fix truncated JSON (unterminated strings/arrays)
+            try:
+                # Check if JSON was truncated mid-array or mid-string
+                if text.count('[') > text.count(']'):
+                    # Close open arrays
+                    text = text + ']' * (text.count('[') - text.count(']'))
+                if text.count('{') > text.count('}'):
+                    # Close open objects
+                    text = text + '}' * (text.count('{') - text.count('}'))
+                # Try to close unterminated strings by finding last quote
+                if text.count('"') % 2 != 0:
+                    # Odd number of quotes - add closing quote before last brace
+                    last_brace = text.rfind('}')
+                    if last_brace > 0:
+                        text = text[:last_brace] + '"' + text[last_brace:]
+                
+                result = json.loads(text)
+                logger.info("✅ Fixed truncated JSON by closing structures")
+                return result
+            except:
+                pass
+            
+            # Attempt 3: Try to extract JSON object if wrapped in text
             try:
                 json_match = re.search(r'\{.*\}', text, re.DOTALL)
                 if json_match:
@@ -649,16 +712,549 @@ class ChatGPTChatbot:
     
     Features:
     - GPT-4 interprets user intent and extracts filters
-    - Maintains full conversation context
+    - Maintains full conversation context using UnifiedConversationState (Pydantic v2)
+    - Uses UnifiedStateManager as single session store with Redis persistence
     - Fixes rental/sale mixing
     - Detects amenities correctly
     - Returns crisp ChatGPT-style responses
+    - Checkpoint/restore support for risky operations
     """
     
     def __init__(self):
-        self.state_manager = conversation_state_manager
+        # Primary state manager - UnifiedStateManager (single source of truth)
+        # Uses global state_manager which has Redis persistence with in-memory fallback
+        self.state_manager = state_manager
+        self.unified_state_manager = state_manager  # Backwards compatibility alias
+        
+        # Legacy state manager for backward compatibility during transition
+        self.legacy_state_manager = conversation_state_manager
+        
+        # Confirmation manager for handling confirmation flows
         self.confirmation_manager = get_confirmation_manager()
-        logger.info("✅ ChatGPTChatbot orchestrator loaded (GPT-4 pipeline + ConfirmationManager enabled)")
+        
+        # Atomic transaction manager for safe state updates with automatic rollback
+        self.transaction_manager = AtomicTransactionManager(state_manager=state_manager)
+        
+        # Log initialization with backend info
+        logger.info(
+            f"✅ ChatGPTChatbot orchestrator loaded | "
+            f"backend={state_manager.backend} | "
+            f"GPT-4 pipeline + ConfirmationManager + AtomicTransactionManager enabled"
+        )
+
+    def _save_state_with_error_handling(
+        self,
+        unified_state: UnifiedConversationState,
+        legacy_state: Optional[ConversationState] = None,
+        session_id: Optional[str] = None
+    ) -> bool:
+        """
+        Save state with comprehensive error handling and logging.
+        
+        Args:
+            unified_state: The UnifiedConversationState to save.
+            legacy_state: Optional legacy ConversationState for backwards compatibility.
+            session_id: Session ID for logging (uses unified_state.session_id if not provided).
+        
+        Returns:
+            True if save was successful, False otherwise.
+        """
+        sid = session_id or unified_state.session_id
+        
+        try:
+            # Save to primary state manager (UnifiedStateManager with Redis/memory)
+            success = self.state_manager.save(unified_state)
+            
+            if not success:
+                logger.warning(
+                    f"State save returned False | session_id={sid} | "
+                    f"error_type=SAVE_FAILED"
+                )
+            
+            # Also save legacy state if provided (during transition period)
+            if legacy_state is not None:
+                try:
+                    self.legacy_state_manager.save(legacy_state)
+                except Exception as legacy_error:
+                    logger.warning(
+                        f"Legacy state save failed | session_id={sid} | "
+                        f"error={str(legacy_error)}"
+                    )
+            
+            return success
+            
+        except ValueError as validation_error:
+            # Pydantic validation error
+            logger.warning(
+                f"State validation failed | session_id={sid} | "
+                f"error_type=VALIDATION_ERROR | error_message={str(validation_error)}"
+            )
+            return False
+            
+        except Exception as e:
+            # Unexpected error (likely Redis)
+            logger.error(
+                f"State save failed | session_id={sid} | "
+                f"error_type=SAVE_ERROR | error_message={str(e)}",
+                exc_info=True
+            )
+            # State manager handles fallback to in-memory internally
+            return False
+
+    def _create_checkpoint_via_manager(
+        self,
+        unified_state: UnifiedConversationState
+    ) -> Optional[str]:
+        """
+        Create a checkpoint through the state manager.
+        
+        Args:
+            unified_state: The state to checkpoint.
+            
+        Returns:
+            Checkpoint ID or None if failed.
+        """
+        try:
+            checkpoint_id = self.state_manager.create_checkpoint(unified_state)
+            logger.info(
+                f"Checkpoint created | session_id={unified_state.session_id} | "
+                f"checkpoint_id={checkpoint_id}"
+            )
+            return checkpoint_id
+        except Exception as e:
+            logger.error(
+                f"Checkpoint creation failed | session_id={unified_state.session_id} | "
+                f"error={str(e)}"
+            )
+            return None
+
+    def _restore_from_checkpoint(
+        self,
+        checkpoint_id: str,
+        session_id: str
+    ) -> Optional[UnifiedConversationState]:
+        """
+        Restore state from a checkpoint.
+        
+        Args:
+            checkpoint_id: The checkpoint to restore from.
+            session_id: The session ID (for logging).
+            
+        Returns:
+            Restored state or None if failed.
+        """
+        try:
+            restored_state = self.state_manager.get_checkpoint(checkpoint_id)
+            if restored_state:
+                logger.info(
+                    f"State restored from checkpoint | session_id={session_id} | "
+                    f"checkpoint_id={checkpoint_id}"
+                )
+                # Update in-memory cache with restored state
+                self.state_manager.save(restored_state)
+            else:
+                logger.warning(
+                    f"Checkpoint not found | session_id={session_id} | "
+                    f"checkpoint_id={checkpoint_id}"
+                )
+            return restored_state
+        except Exception as e:
+            logger.error(
+                f"Checkpoint restore failed | session_id={session_id} | "
+                f"checkpoint_id={checkpoint_id} | error={str(e)}"
+            )
+            return None
+
+    def _create_metadata_dict(
+        self,
+        intent: str,
+        confidence: float = 0.0,
+        reason: str = "N/A",
+        cache_hit: bool = False,
+        used_gpt_fallback: bool = False,
+        requires_confirmation: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Create a standardized metadata dictionary for API responses.
+        
+        This ensures all responses have consistent metadata structure.
+        """
+        return {
+            "intent": intent,
+            "confidence": confidence,
+            "reason": reason,
+            "cache_hit": cache_hit,
+            "used_gpt_fallback": used_gpt_fallback,
+            "requires_confirmation": requires_confirmation
+        }
+
+    # =============================================================================
+    # CONFIRMATION HANDLING (Central Methods)
+    # =============================================================================
+
+    def _handle_confirmation_response(
+        self,
+        session_id: str,
+        user_message: str,
+        unified_state: UnifiedConversationState
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Central handler for ALL confirmation responses.
+        
+        This is the SINGLE entry point for handling confirmation responses.
+        Uses ConfirmationManager.apply_confirmation() for atomic state updates.
+        
+        Args:
+            session_id: Session identifier
+            user_message: User's response message
+            unified_state: Current conversation state
+            
+        Returns:
+            Response dict if confirmation was handled, None if no confirmation pending
+        """
+        # Check if there's a pending confirmation
+        if not self.confirmation_manager.has_pending_confirmation(session_id):
+            return None
+        
+        # Get pending confirmation details
+        pending = self.confirmation_manager.get_pending_confirmation(session_id)
+        if not pending:
+            return None
+        
+        # Check if message is a confirmation response
+        if not self.confirmation_manager.is_confirmation_response(user_message, pending):
+            logger.info(
+                f"[CONFIRMATION] Message not recognized as confirmation response",
+                extra={
+                    "session_id": session_id,
+                    "user_response": user_message[:50],
+                    "pending_type": pending['type']
+                }
+            )
+            return None
+        
+        # Log confirmation handling
+        logger.info(
+            f"[CONFIRMATION] Processing response",
+            extra={
+                "session_id": session_id,
+                "confirmation_type": pending['type'],
+                "confirmation_id": pending['confirmation_id'],
+                "user_response": user_message[:50]
+            }
+        )
+        
+        # Apply confirmation using ConfirmationManager (atomic state update)
+        # ConfirmationManager already provides atomic operations
+        result: ConfirmationResult = self.confirmation_manager.apply_confirmation(
+            session_id=session_id,
+            response=user_message,
+            state=unified_state
+        )
+        
+        # Log result
+        logger.info(
+            f"[CONFIRMATION] Applied",
+            extra={
+                "session_id": session_id,
+                "success": result.success,
+                "applied": result.applied,
+                "next_action": result.next_action,
+                "error": result.error
+            }
+        )
+        
+        # Handle result
+        if not result.success:
+            logger.warning(
+                f"[CONFIRMATION] Application failed: {result.error}",
+                extra={"session_id": session_id}
+            )
+            return None
+        
+        # Route based on next_action
+        return self._handle_confirmation_result(
+            session_id=session_id,
+            result=result,
+            unified_state=unified_state,
+            user_message=user_message
+        )
+
+    def _handle_confirmation_result(
+        self,
+        session_id: str,
+        result: ConfirmationResult,
+        unified_state: UnifiedConversationState,
+        user_message: str
+    ) -> Dict[str, Any]:
+        """
+        Handle ConfirmationResult and route to appropriate action.
+        
+        This method routes based on result.next_action:
+        - 'search': Perform search with updated state
+        - 'parse_location': Parse new location from user's response
+        - 'parse_filters': Parse new filters from user's response
+        - 'parse_requirements': Parse requirements from user's response
+        - 'continue': Acknowledge without state change
+        
+        Args:
+            session_id: Session identifier
+            result: ConfirmationResult from apply_confirmation()
+            unified_state: Current conversation state (already updated if result.applied)
+            user_message: Original user message
+            
+        Returns:
+            Response dictionary
+        """
+        logger.info(
+            f"[CONFIRMATION] Handling result",
+            extra={
+                "session_id": session_id,
+                "next_action": result.next_action,
+                "applied": result.applied,
+                "reason": result.metadata.get('reason', 'N/A')
+            }
+        )
+        
+        # Update conversation history
+        unified_state.add_conversation_turn("user", user_message)
+        
+        if result.next_action == 'search':
+            # State already updated by apply_confirmation, perform search
+            logger.info(f"[CONFIRMATION] Executing search with updated state")
+            
+            # Save state before search
+            self._save_state_with_error_handling(unified_state)
+            
+            return self._execute_property_search(
+                state=unified_state,
+                user_message=user_message,
+                session_id=session_id,
+                intent_reason=result.metadata.get('reason', 'Confirmation applied'),
+                confirmation_result="accepted" if result.applied else "modified"
+            )
+        
+        elif result.next_action == 'parse_location':
+            # Parse new location from user's response
+            location_query = result.state_update.get('location_query', user_message)
+            logger.info(
+                f"[CONFIRMATION] Parsing new location: {location_query}",
+                extra={"session_id": session_id}
+            )
+            
+            # Extract location using location_extractor
+            location_result = location_extractor.extract_location_entities(location_query)
+            
+            if location_result.city:
+                # Apply location to state - use location_state AND active_filters
+                unified_state.location_state.city = location_result.city
+                # Note: province not in unified LocationState, skip it
+                if location_result.postalCode:
+                    unified_state.location_state.postal_code = location_result.postalCode
+                
+                # CRITICAL: Also update active_filters.location for search
+                unified_state.active_filters.location = location_result.city
+                
+                logger.info(
+                    f"[CONFIRMATION] Applied new location: {location_result.city}",
+                    extra={"session_id": session_id}
+                )
+                
+                # Save and search
+                self._save_state_with_error_handling(unified_state)
+                
+                return self._execute_property_search(
+                    state=unified_state,
+                    user_message=user_message,
+                    session_id=session_id,
+                    intent_reason="User provided new location",
+                    confirmation_result="location_changed"
+                )
+            else:
+                # Couldn't parse location, ask for clarification
+                response = f"I couldn't understand '{location_query}' as a location. Could you specify the city or area you're interested in?"
+                unified_state.add_conversation_turn("assistant", response)
+                self._save_state_with_error_handling(unified_state)
+                
+                return {
+                    "success": True,
+                    "response": response,
+                    "suggestions": [
+                        "Toronto",
+                        "Ottawa",
+                        "Mississauga"
+                    ],
+                    "properties": [],
+                    "property_count": 0,
+                    "state_summary": unified_state.get_summary(),
+                    "filters": unified_state.get_active_filters(),
+                    "intent": "clarification_needed",
+                    "mode": "normal"
+                }
+        
+        elif result.next_action == 'parse_filters':
+            # Parse new filters from user's response
+            filter_query = result.state_update.get('filter_query', user_message)
+            logger.info(
+                f"[CONFIRMATION] Parsing new filters: {filter_query}",
+                extra={"session_id": session_id}
+            )
+            
+            # Use GPT-4 to parse filters
+            try:
+                filter_result = self._parse_filters_with_gpt4(filter_query, unified_state)
+                
+                # Apply filters to state
+                if filter_result.get('bedrooms'):
+                    unified_state.filters.bedrooms = filter_result['bedrooms']
+                if filter_result.get('bathrooms'):
+                    unified_state.filters.bathrooms = filter_result['bathrooms']
+                if filter_result.get('price_min') or filter_result.get('price_max'):
+                    unified_state.filters.price_min = filter_result.get('price_min')
+                    unified_state.filters.price_max = filter_result.get('price_max')
+                
+                # Save and search
+                self._save_state_with_error_handling(unified_state)
+                
+                return self._execute_property_search(
+                    state=unified_state,
+                    user_message=user_message,
+                    session_id=session_id,
+                    intent_reason="User modified filters",
+                    confirmation_result="filters_changed"
+                )
+            except Exception as e:
+                logger.error(f"[CONFIRMATION] Filter parsing failed: {e}")
+                # Fall back to asking for clarification
+                response = "I had trouble understanding those filter changes. Could you specify what you're looking for?"
+                unified_state.add_conversation_turn("assistant", response)
+                self._save_state_with_error_handling(unified_state)
+                
+                return {
+                    "success": True,
+                    "response": response,
+                    "suggestions": [
+                        "3 bedrooms",
+                        "Under $800k",
+                        "With a pool"
+                    ],
+                    "properties": [],
+                    "property_count": 0,
+                    "state_summary": unified_state.get_summary(),
+                    "filters": unified_state.get_active_filters(),
+                    "intent": "clarification_needed",
+                    "mode": "normal"
+                }
+        
+        elif result.next_action == 'parse_requirements':
+            # Parse requirements from user's response
+            requirements_query = result.state_update.get('requirements_query', user_message)
+            logger.info(
+                f"[CONFIRMATION] Parsing requirements: {requirements_query}",
+                extra={"session_id": session_id}
+            )
+            
+            # Use GPT-4 to parse requirements
+            try:
+                filter_result = self._parse_filters_with_gpt4(requirements_query, unified_state)
+                
+                # Apply to state
+                if filter_result.get('bedrooms'):
+                    unified_state.filters.bedrooms = filter_result['bedrooms']
+                if filter_result.get('bathrooms'):
+                    unified_state.filters.bathrooms = filter_result['bathrooms']
+                if filter_result.get('price_min') or filter_result.get('price_max'):
+                    unified_state.filters.price_min = filter_result.get('price_min')
+                    unified_state.filters.price_max = filter_result.get('price_max')
+                if filter_result.get('property_type'):
+                    unified_state.filters.property_type = filter_result['property_type']
+                
+                # Save and search
+                self._save_state_with_error_handling(unified_state)
+                
+                return self._execute_property_search(
+                    state=unified_state,
+                    user_message=user_message,
+                    session_id=session_id,
+                    intent_reason="User provided requirements",
+                    confirmation_result="requirements_applied"
+                )
+            except Exception as e:
+                logger.error(f"[CONFIRMATION] Requirements parsing failed: {e}")
+                # Continue with search using defaults
+                self._save_state_with_error_handling(unified_state)
+                
+                return self._execute_property_search(
+                    state=unified_state,
+                    user_message=user_message,
+                    session_id=session_id,
+                    intent_reason="Searching with defaults",
+                    confirmation_result="requirements_skipped"
+                )
+        
+        elif result.next_action == 'continue':
+            # No state change, just acknowledge
+            response_text = result.metadata.get('acknowledgment', 
+                "Got it! Let me know if you'd like to adjust anything.")
+            
+            unified_state.add_conversation_turn("assistant", response_text)
+            self._save_state_with_error_handling(unified_state)
+            
+            return {
+                "success": True,
+                "response": response_text,
+                "suggestions": self._generate_contextual_suggestions(unified_state),
+                "properties": [],
+                "property_count": 0,
+                "state_summary": unified_state.get_summary(),
+                "filters": unified_state.get_active_filters(),
+                "intent": "confirmation_handled",
+                "mode": "normal",
+                "confirmation_result": "acknowledged"
+            }
+        
+        else:
+            # Unknown next_action
+            logger.warning(
+                f"[CONFIRMATION] Unknown next_action: {result.next_action}",
+                extra={"session_id": session_id}
+            )
+            
+            # Fall back to normal processing
+            return None
+
+    def _generate_contextual_suggestions(
+        self,
+        state: UnifiedConversationState
+    ) -> List[str]:
+        """Generate contextual suggestions based on current state."""
+        suggestions = []
+        
+        # Safely get location
+        location_city = None
+        if hasattr(state, 'location_state') and state.location_state and state.location_state.city:
+            location_city = state.location_state.city
+        elif hasattr(state, 'location') and hasattr(state.location, 'city'):
+            location_city = state.location.city
+        
+        if location_city:
+            suggestions.append(f"Show me properties in {location_city}")
+        
+        # Safely check filters
+        if hasattr(state, 'active_filters'):
+            if not state.active_filters.bedrooms:
+                suggestions.append("Find 3 bedroom homes")
+            if not state.active_filters.max_price:
+                suggestions.append("Under $800k")
+        elif hasattr(state, 'filters'):
+            if not getattr(state.filters, 'bedrooms', None):
+                suggestions.append("Find 3 bedroom homes")
+            if not getattr(state.filters, 'price_max', None):
+                suggestions.append("Under $800k")
+        
+        suggestions.append("Start a new search")
+        
+        return suggestions[:3]
 
     def process_message(
         self,
@@ -671,15 +1267,15 @@ class ChatGPTChatbot:
         Process user message through complete GPT-4 pipeline.
         
         Pipeline:
-        1. Load/create conversation state
-        2. Add user message to history
+        1. Load/create UnifiedConversationState via state_manager.get_or_create()
+        2. Add user message to history (atomic append with validation)
         3. Get session summary (for interpreter)
         4. Call GPT-4 interpreter for structured filters
         5. Handle clarifying questions
-        6. Update state with interpreted filters
+        6. Update state with interpreted filters (validated via Pydantic)
         7. Execute MLS search (if needed)
         8. Call GPT-4 summarizer for final response
-        9. Save state
+        9. Save state via state_manager.save() and return response
         
         Returns:
             {
@@ -688,24 +1284,174 @@ class ChatGPTChatbot:
                 "suggestions": [str] (follow-ups),
                 "properties": [dict] (search results),
                 "property_count": int,
-                "state_summary": str,
+                "state_summary": dict,
                 "filters": dict
             }
         """
         logger.info(f"📨 Processing message for session {session_id}: '{user_message[:60]}...'")
         
+        # Store checkpoint_id for potential rollback
+        checkpoint_id: Optional[str] = None
+        
+        # Initialize intent classification variables
+        classified_intent = None
+        intent_metadata = {}
+        
         try:
-            # STEP 1: Get conversation state
-            state = self.state_manager.get_or_create(session_id)
-            logger.debug(f"Current state: {state.get_summary()}")
+            # STEP 1: Get or create UnifiedConversationState via state_manager
+            # Extract user_id from context if available (for authenticated users)
+            user_id = user_context.get('user_id') if user_context else None
             
-            # Add user message to history
+            # Load unified state from primary state manager (Redis → memory fallback)
+            unified_state = self.state_manager.get_or_create(session_id, user_id=user_id)
+            
+            # Validate session_id matches
+            if unified_state.session_id != session_id:
+                logger.warning(f"Session ID mismatch: expected {session_id}, got {unified_state.session_id}")
+                unified_state.session_id = session_id
+            
+            logger.debug(f"Unified state summary: {unified_state.get_summary()}")
+            logger.info(f"📊 [UNIFIED STATE] search_count={unified_state.search_count}, zero_results_count={unified_state.zero_results_count}, cached_results={len(unified_state.last_property_results)}")
+            
+            # Also load legacy state for backward compatibility during transition
+            state = self.legacy_state_manager.get_or_create(session_id)
+            logger.debug(f"Legacy state: {state.get_summary()}")
+            
+            # ═════════════════════════════════════════════════════════════════
+            # STEP 1.1: PRIORITY CHECK - Handle Pending Confirmations FIRST
+            # ═════════════════════════════════════════════════════════════════
+            # This MUST come before any intent classification or processing
+            # Confirmation responses take absolute precedence over everything else
+            
+            confirmation_response = self._handle_confirmation_response(
+                session_id=session_id,
+                user_message=user_message,
+                unified_state=unified_state
+            )
+            
+            if confirmation_response is not None:
+                # Confirmation was handled, return the response directly
+                logger.info(
+                    f"[CONFIRMATION] Handled successfully, returning response",
+                    extra={"session_id": session_id}
+                )
+                return confirmation_response
+            
+            # No pending confirmation or message wasn't a confirmation response
+            # Continue with normal processing
+            
+            # STEP 1.2: Add user message to history (atomic append with timestamp validation)
+            unified_state.add_conversation_turn("user", user_message)
             state.add_conversation_turn("user", user_message)
+            
+            # STEP 1.3: Sync unified state → legacy state if needed
+            # This ensures legacy code paths still work
+            self._sync_unified_to_legacy(unified_state, state)
+            
+            # ─────────────────────────────────────────────────────────────────
+            # STEP 1.3.5: ZERO RESULTS UX - View Results / Cached Results Check
+            # ─────────────────────────────────────────────────────────────────
+            # If user is asking to view results and we have cached results, reuse them
+            # This avoids redundant MLS calls when user just wants to see what we have
+            if unified_state.is_view_results_request(user_message):
+                logger.info(f"📋 [VIEW RESULTS] User requesting to view accumulated results")
+                
+                if unified_state.last_property_results:
+                    # User wants to see cached results - skip MLS, return cached
+                    logger.info(f"✅ [CACHE HIT] Returning {len(unified_state.last_property_results)} cached results")
+                    
+                    # Standardize cached properties before returning
+                    standardize_property_data = get_standardize_property_data()
+                    formatted_cached_properties = []
+                    for i, prop in enumerate(unified_state.last_property_results[:10]):
+                        formatted_prop = standardize_property_data(prop)
+                        formatted_cached_properties.append(formatted_prop)
+                        logger.debug(f"✅ [CACHED] Property {i+1}: mls={formatted_prop.get('mls_number', 'N/A')}, price={formatted_prop.get('price')}")
+                    
+                    # Set stage to VIEWING since we're showing results
+                    unified_state.set_conversation_stage(ConversationStage.VIEWING)
+                    
+                    response = (
+                        f"Here are the best options I found based on your criteria! "
+                        f"I have {len(unified_state.last_property_results)} properties that match."
+                    )
+                    
+                    # Add assistant response to history
+                    unified_state.add_conversation_turn("assistant", response)
+                    state.add_conversation_turn("assistant", response)
+                    
+                    # Save states with error handling
+                    self._save_state_with_error_handling(unified_state, state)
+                    
+                    return {
+                        "success": True,
+                        "response": response,
+                        "suggestions": [
+                            "Show me more details on the first one",
+                            "Refine my search",
+                            "Search a different area"
+                        ],
+                        "properties": formatted_cached_properties,
+                        "property_count": len(unified_state.last_property_results),
+                        "state_summary": unified_state.get_summary(),
+                        "filters": unified_state.get_active_filters(),
+                        "intent": "view_cached_results",
+                        "mode": "normal",
+                        "cached_results": True,
+                        "metadata": self._create_metadata_dict(
+                            intent="view_cached_results",
+                            confidence=0.98,
+                            reason="User requesting to view accumulated cached results",
+                            cache_hit=True,
+                            used_gpt_fallback=False,
+                            requires_confirmation=False
+                        )
+                    }
+                
+                elif unified_state.zero_results_count >= 2:
+                    # Repeated zero results - suggest filter relaxation
+                    logger.info(f"⚠️ [ZERO RESULTS] {unified_state.zero_results_count} consecutive zero-result searches")
+                    
+                    suggestions_list = unified_state.get_relaxation_suggestions()
+                    relaxation_msg = unified_state.suggest_filter_relaxation()
+                    
+                    response = (
+                        f"I haven't found any properties matching your exact criteria yet. "
+                        f"{relaxation_msg}"
+                    )
+                    
+                    # Add assistant response to history
+                    unified_state.add_conversation_turn("assistant", response)
+                    state.add_conversation_turn("assistant", response)
+                    
+                    # Save states with error handling
+                    self._save_state_with_error_handling(unified_state, state)
+                    
+                    return {
+                        "success": True,
+                        "response": response,
+                        "suggestions": suggestions_list[:3] if suggestions_list else [
+                            "Remove price limit",
+                            "Search nearby areas",
+                            "Try fewer bedrooms"
+                        ],
+                        "properties": [],
+                        "property_count": 0,
+                        "state_summary": unified_state.get_summary(),
+                        "filters": unified_state.get_active_filters(),
+                        "intent": "suggest_relaxation",
+                        "mode": "zero_results",
+                        "zero_results_count": unified_state.zero_results_count
+                    }
             
             # STEP 1.4: Check if responding to pending confirmation OR requirements
             # Use ConfirmationManager for robust UUID-based confirmation tracking
             is_answering_confirmation = self.confirmation_manager.has_pending_confirmation(session_id)
-            is_answering_requirements = (state.conversation_mode == "awaiting_requirements")
+            # Check both unified and legacy state for awaiting_requirements mode
+            is_answering_requirements = (
+                unified_state.metadata.conversation_stage == ConversationStage.CONFIRMATION.value
+                or (hasattr(state, 'conversation_mode') and state.conversation_mode == "awaiting_requirements")
+            )
             
             # Initialize flags for special handling
             came_from_requirements = False
@@ -716,10 +1462,10 @@ class ChatGPTChatbot:
                 if pending_confirmation:
                     confirmation_type = pending_confirmation.type.value
                     logger.info(f"💬 [CONFIRMATION RESPONSE] User responding to pending confirmation: {confirmation_type}")
-                    logger.info(f"🔒 [MODE] Conversation mode: {state.conversation_mode}")
+                    logger.info(f"🔒 [MODE] Conversation stage: {unified_state.metadata.conversation_stage}")
             elif is_answering_requirements:
                 logger.info(f"📝 [REQUIREMENTS RESPONSE] User providing requirements after location change")
-                logger.info(f"🔒 [MODE] Conversation mode: awaiting_requirements")
+                logger.info(f"🔒 [MODE] Conversation stage: {unified_state.metadata.conversation_stage}")
             
             # 🔧 PRIORITY #0: Requirements responses NEVER go through confirmation logic
             # Rule: If bot asked "Any specific requirements?", the response is ALWAYS about filters
@@ -776,12 +1522,41 @@ class ChatGPTChatbot:
                         logger.info(f"🏠 [ADDRESS PRIORITY] Detected {address_result.intent_type.value} - skipping confirmation logic")
                         logger.info(f"🏠 [ADDRESS PRIORITY] Components: {address_result.components.raw_input}")
                         
+                        # RULE: Handle MLS lookup - BUT check for valuation request first!
+                        if address_result.intent_type == AddressIntentType.MLS_LOOKUP:
+                            mls_number = address_result.components.mls_number
+                            
+                            # CHECK: Is this actually a valuation request with an MLS number?
+                            # Valuation keywords that should route to valuation handler instead
+                            valuation_keywords = [
+                                'valuation', 'estimate', 'worth', 'value', 'appraisal',
+                                'what is it worth', 'how much is', 'price estimate',
+                                'property valuation', 'home value', 'ai valuation'
+                            ]
+                            user_message_lower = user_message.lower()
+                            is_valuation_request = any(kw in user_message_lower for kw in valuation_keywords)
+                            
+                            if is_valuation_request:
+                                logger.info(f"💰 [MLS+VALUATION] Detected valuation request with MLS: {mls_number}")
+                                logger.info(f"💰 [MLS+VALUATION] Routing to valuation handler instead of MLS lookup")
+                                # Route to valuation handler with the MLS number
+                                return self._handle_valuation_request(state, user_message)
+                            
+                            # Normal MLS lookup (no valuation keywords)
+                            logger.info(f"🏷️ [MLS LOOKUP] Processing MLS: {mls_number}")
+                            return self._handle_mls_lookup(
+                                session_id=session_id,
+                                user_message=user_message,
+                                mls_number=mls_number,
+                                state=state
+                            )
+                        
                         # RULE: Check for postal code exclusivity - clear street context if postal detected
                         extracted_location = location_extractor.extract_location_entities(user_message)
                         if extracted_location.postalCode:
                             logger.info(f"📮 [POSTAL CODE EXCLUSIVITY] Postal code detected: {extracted_location.postalCode} - clearing street context")
                             # Clear street/address context for postal code search
-                            state.clear_address_context()
+                            unified_state.clear_address_context()
                             # Handle as postal code search instead of address search
                             return self._handle_postal_code_search(
                                 session_id=session_id,
@@ -799,282 +1574,117 @@ class ChatGPTChatbot:
                             state=state
                         )
                 
-                # STEP 1.5: INTENT CLASSIFICATION (NEW - First line of defense)
-                logger.info("🎯 [INTENT CLASSIFIER] Classifying user intent...")
+                # STEP 1.5: HYBRID INTENT CLASSIFICATION (LOCAL-FIRST + GPT-4 fallback)
+                # This is the SINGLE source of truth for intent detection
+                logger.info("🎯 [HYBRID INTENT] Classifying user intent (local-first)...")
+                
+                # Build context for classification
+                filters_dict = unified_state.get_active_filters()
+                context = {
+                    "has_previous_results": bool(unified_state.last_property_results),
+                    "conversation_stage": unified_state.metadata.conversation_stage if unified_state.metadata else None,
+                    "last_search_count": len(unified_state.last_property_results)
+                }
+                
+                # Classify using HybridIntentClassifier (95%+ local, < 5ms)
                 classified_intent, intent_metadata = intent_classifier.classify(
                     user_message=user_message,
-                    current_filters=state.get_active_filters(),
-                    last_search_count=len(state.last_property_results)
+                    current_filters=filters_dict,
+                    context=context
                 )
                 
                 # Store classified intent in state
                 state.last_classification_intent = classified_intent.value
                 
-                # Log classification results
-                logger.info(f"🎯 [INTENT CLASSIFIER] Intent: {classified_intent.value}")
-                logger.info(f"🎯 [INTENT CLASSIFIER] Reason: {intent_metadata['reason']}")
-                logger.info(f"🎯 [INTENT CLASSIFIER] Confidence: {intent_metadata['confidence']}")
-                if intent_metadata['requires_confirmation']:
-                    logger.info(f"🎯 [INTENT CLASSIFIER] ⚠️ Requires confirmation: {intent_metadata['suggested_action']}")
-            
-            # STEP 1.5.5: PRIORITY #2 - Override intent if answering confirmation
-            # Confirmation responses ALWAYS take precedence over classifier output
-            confirmation_handled = False  # Track if we successfully handle confirmation
-            if is_answering_confirmation:
-                pending_confirmation = self.confirmation_manager.get_active_confirmation(session_id)
-                if pending_confirmation:
-                    confirmation_type = pending_confirmation.type.value
-                    confirmation_context = pending_confirmation.payload or {}
-                    logger.info(f"🔄 [PRIORITY #2] Processing confirmation override for: {confirmation_type}")
+                # Structured logging for monitoring
+                logger.info(
+                    f"intent_classified | "
+                    f"session_id={session_id} | "
+                    f"intent={classified_intent.value} | "
+                    f"confidence={intent_metadata.get('confidence', 0):.2f} | "
+                    f"reason={intent_metadata.get('reason', 'N/A')} | "
+                    f"cache_hit={intent_metadata.get('cache_hit', False)} | "
+                    f"gpt_fallback={intent_metadata.get('used_gpt_fallback', False)} | "
+                    f"requires_confirmation={intent_metadata.get('requires_confirmation', False)}"
+                )
+                
+                # Warn on low confidence (< 0.5)
+                confidence = intent_metadata.get('confidence', 0)
+                if confidence < 0.5:
+                    logger.warning(
+                        f"⚠️ LOW CONFIDENCE INTENT | "
+                        f"session_id={session_id} | "
+                        f"intent={classified_intent.value} | "
+                        f"confidence={confidence:.2f} | "
+                        f"reason={intent_metadata.get('reason')} | "
+                        f"message='{user_message[:50]}...'"
+                    )
                     
-                    # Check if user is providing a city name (single word city)
-                    user_message_clean = user_message.strip().lower()
-                    potential_cities = ['toronto', 'ottawa', 'mississauga', 'vancouver', 'calgary', 
-                                       'edmonton', 'montreal', 'markham', 'vaughan', 'brampton',
-                                       'hamilton', 'london', 'kitchener', 'windsor', 'halifax']
-                    
-                    # Positive confirmation patterns (yes, sure, ok, etc.)
-                    positive_patterns = [
-                        r'^(yes|yeah|yep|yup|sure|ok|okay|alright|correct|right)\.{0,3}$',
-                        r'^(y|k)$',  # Single letter confirmations
-                    ]
-                    is_positive_response = any(re.match(pattern, user_message_clean) for pattern in positive_patterns)
-                    
-                    # Negative confirmation patterns (no, but with additional criteria)
-                    negative_patterns = [
-                        r'^(no|nope|nah|not)',  # Starts with "no"
-                    ]
-                    is_negative_response = any(re.match(pattern, user_message_clean) for pattern in negative_patterns)
-                    has_additional_criteria = len(user_message.split()) > 1  # More than just "no"
-                    
-                    # Handle VAGUE_REQUEST confirmations (city name provided)
-                    if confirmation_type == "vague_request" and user_message_clean in potential_cities:
-                        # User answered with a city name - update location directly
-                        logger.info(f"✅ [PRIORITY #2] User provided new location: {user_message_clean}")
-                        
-                        # Update the state location immediately (before GPT processing)
-                        new_city = user_message_clean.capitalize()
-                        state.location = new_city
-                        state.location_state = LocationState(city=new_city)
-                        logger.info(f"📍 [PRIORITY #2] Updated state location to: {new_city}")
-                        
-                        # Override the intent to property_search
-                        classified_intent = UserIntent.PROPERTY_SEARCH
-                        intent_metadata['reason'] = f"User answered confirmation with new location: {new_city}"
-                        
-                        # Clear the pending confirmation using ConfirmationManager
-                        self.confirmation_manager.apply_confirmation(session_id, user_message)
-                    
-                    # Handle LOCATION_CHANGE confirmations (yes/no response)
-                    elif confirmation_type == "location_change" and is_positive_response and not has_additional_criteria:
-                        # User confirmed they want to proceed with the location change (simple "yes")
-                        logger.info(f"✅ [PRIORITY #2] User confirmed location change")
-                        logger.info(f"✅ [PRIORITY #2] Applying stored LocationState (NO re-extraction)")
-                        
-                        # 🔧 FIX: APPLY the stored location directly (don't re-extract)
-                        new_location_state_dict = confirmation_context.get('new_location_state')
-                        if new_location_state_dict:
-                            # Reconstruct LocationState from stored dict
-                            new_location_state = LocationState(**new_location_state_dict)
-                            
-                            # Apply it directly to state
-                            state.location_state = new_location_state
-                            if new_location_state.city:
-                                state.location = new_location_state.city
-                            
-                            logger.info(f"📍 [PRIORITY #2] Applied location: {new_location_state.get_summary()}")
-                            logger.info(f"🔒 [PRIORITY #2] Filters preserved: bedrooms={state.bedrooms}, price_range={state.price_range}, listing_type={state.listing_type}")
-                        else:
-                            logger.warning("⚠️ [PRIORITY #2] No new_location_state found in context!")
-                        
-                        # Clear confirmation using ConfirmationManager
-                        self.confirmation_manager.apply_confirmation(session_id, user_message)
-                        logger.info(f"✅ [CONFIRMATION] Resolved — exiting pipeline")
-                        
-                        # HARD RETURN - Trigger search immediately, do NOT continue pipeline
-                        return self._execute_property_search(
-                            state=state,
-                            user_message=user_message,
-                            session_id=session_id,
-                            intent_reason="User confirmed location change - filters preserved",
-                            confirmation_result="accepted"
+                    # For very low confidence, ask clarifying question
+                    if confidence < 0.5:
+                        response = (
+                            "I want to make sure I understand what you're looking for. "
+                            "Could you provide more details? For example, are you searching for "
+                            "properties in a specific location, or do you have a budget in mind?"
                         )
-                    
-                    # Handle LOCATION_CHANGE with positive response + modifications (e.g., "yes show me with 2 beds")
-                    elif confirmation_type == "location_change" and is_positive_response and has_additional_criteria:
-                        # User said "yes" AND added modifications (e.g., "yes show me with 2 beds")
-                        logger.info(f"✅ [PRIORITY #2] User confirmed location change with modifications")
-                        logger.info(f"✅ [PRIORITY #2] Applying stored LocationState AND processing additional criteria")
-                        
-                        # Apply the stored location
-                        new_location_state_dict = confirmation_context.get('new_location_state')
-                        if new_location_state_dict:
-                            new_location_state = LocationState(**new_location_state_dict)
-                            state.location_state = new_location_state
-                            if new_location_state.city:
-                                state.location = new_location_state.city
-                            logger.info(f"📍 [PRIORITY #2] Applied location: {new_location_state.get_summary()}")
-                        
-                        logger.info(f"🔧 [PRIORITY #2] Processing additional criteria: '{user_message}'")
-                        
-                        # Clear confirmation using ConfirmationManager
-                        self.confirmation_manager.apply_confirmation(session_id, user_message)
-                        logger.info(f"✅ [CONFIRMATION] Resolved — exiting pipeline")
-                        
-                        # HARD RETURN - Trigger search with additional criteria, do NOT continue pipeline
-                        return self._execute_property_search(
-                            state=state,
-                            user_message=user_message,
-                            session_id=session_id,
-                            intent_reason="User confirmed location change and added new filters",
-                            confirmation_result="accepted"
-                        )
-                    
-                    # 🔧 SPECIAL CASE: Handle "start fresh" responses (should accept location change but clear filters)
-                    elif (confirmation_type == "location_change" and 
-                          ('start fresh' in user_message_clean or 
-                           'fresh start' in user_message_clean or 
-                           'new search' in user_message_clean or
-                           (is_negative_response and ('fresh' in user_message_clean or 'new' in user_message_clean)))):
-                        # User wants to accept location change but start with no filters
-                        logger.info(f"🆕 [PRIORITY #2] User wants to start fresh with new location")
-                        
-                        # Apply the new location from stored confirmation context
-                        new_location_state_dict = confirmation_context.get('new_location_state')
-                        if new_location_state_dict:
-                            new_location_state = LocationState(**new_location_state_dict)
-                            state.location_state = new_location_state
-                            if new_location_state.city:
-                                state.location = new_location_state.city
-                            logger.info(f"📍 [PRIORITY #2] Applied new location: {new_location_state.get_summary()}")
-                        
-                        # Clear ALL other filters for fresh start
-                        state.property_type = None
-                        state.bedrooms = None
-                        state.price_range = (None, None)
-                        state.listing_type = None
-                        logger.info(f"🧹 [PRIORITY #2] Cleared all filters for fresh start")
-                        
-                        # Clear the pending confirmation using ConfirmationManager
-                        self.confirmation_manager.apply_confirmation(session_id, user_message)
-                        logger.info(f"✅ [CONFIRMATION] Resolved — starting fresh with new location")
-                        
-                        # HARD RETURN - Execute search with new location, no filters
-                        return self._execute_property_search(
-                            state=state,
-                            user_message=user_message,
-                            session_id=session_id,
-                            intent_reason="User chose to start fresh with new location",
-                            confirmation_result="start_fresh"
-                        )
-                    
-                    # Handle LOCATION_CHANGE with negative response + modifications
-                    elif confirmation_type == "location_change" and is_negative_response and has_additional_criteria:
-                        # User said "no" but added modifications (e.g., "no make it 3 beds")
-                        logger.info(f"❌ [PRIORITY #2] User rejected location change with modifications")
-                        logger.info(f"🔒 [PRIORITY #2] Keeping original location: {state.location}")
-                        logger.info(f"🔧 [PRIORITY #2] Processing additional criteria: '{user_message}'")
-                        
-                        # Clear the pending confirmation using ConfirmationManager (user rejected it)
-                        self.confirmation_manager.reject_confirmation(session_id, user_message)
-                        logger.info(f"✅ [CONFIRMATION] Resolved — exiting pipeline")
-                        
-                        # HARD RETURN - Search with current location and new filters, do NOT continue pipeline
-                        return self._execute_property_search(
-                            state=state,
-                            user_message=user_message,
-                            session_id=session_id,
-                            intent_reason="User rejected location change but added filters",
-                            confirmation_result="rejected"
-                        )
-                    
-                    # Handle pure negative response (just "no")
-                    elif confirmation_type == "location_change" and is_negative_response and not has_additional_criteria:
-                        # User just said "no" without modifications
-                        logger.info(f"❌ [PRIORITY #2] User rejected location change")
-                        logger.info(f"🔒 [PRIORITY #2] Keeping original location: {state.location}")
-                        
-                        # Clear the pending confirmation using ConfirmationManager
-                        self.confirmation_manager.reject_confirmation(session_id, user_message)
-                        logger.info(f"✅ [CONFIRMATION] Resolved — exiting pipeline")
-                        
-                        # Respond and don't trigger search - HARD RETURN
-                        response = f"Got it! I'll keep searching in {state.location}. Let me know if you'd like to adjust any filters."
+                        suggestions = [
+                            "Show me condos in Toronto",
+                            "Find houses under 800k",
+                            "I'm looking for 2 bedroom apartments"
+                        ]
                         state.add_conversation_turn("assistant", response)
                         self.state_manager.save(state)
                         return {
                             "success": True,
                             "response": response,
-                        "suggestions": [
-                            f"Show me properties under $800k",
-                            f"Find 3 bedroom homes",
-                            f"Actually, let's try Ottawa"
-                        ],
-                        "properties": [],
-                        "property_count": 0,
-                        "state_summary": state.get_summary(),
-                        "filters": state.get_active_filters(),
-                        "intent": "confirmation_rejected",
-                        "mode": "normal",
-                        "confirmation_result": "rejected",
-                        "action": "none"
-                    }
+                            "suggestions": suggestions,
+                            "properties": [],
+                            "property_count": 0,
+                            "state_summary": state.get_summary(),
+                            "filters": state.get_active_filters(),
+                            "intent": "clarification_needed",
+                            "low_confidence": True,
+                            "confidence": confidence,
+                            "metadata": {
+                                "intent": classified_intent.value if classified_intent else "clarification_needed",
+                                "confidence": confidence,
+                                "reason": intent_metadata.get('reason', 'Low confidence'),
+                                "cache_hit": intent_metadata.get('cache_hit', False),
+                                "used_gpt_fallback": intent_metadata.get('used_gpt_fallback', False),
+                                "requires_confirmation": True
+                            }
+                        }
             
-            # 🔒 CATCH-ALL: If we're still in awaiting_confirmation mode but didn't match any handler above
-            # This handles edge cases like:
-            # - Ambiguous responses ("maybe", "I'm not sure")
-            # - Non-standard confirmation types that weren't handled
-            # - Missing confirmation context
-            # CRITICAL: We must NEVER let confirmation responses be treated as general chat
-            if is_answering_confirmation:
-                logger.warning(f"⚠️ [CONFIRMATION CATCH-ALL] Still in awaiting_confirmation mode but no handler matched")
-                pending_confirmation = self.confirmation_manager.get_active_confirmation(session_id)
-                if pending_confirmation:
-                    confirmation_type = pending_confirmation.type.value
-                    logger.warning(f"⚠️ [CONFIRMATION CATCH-ALL] Confirmation type: {confirmation_type}")
-                logger.warning(f"⚠️ [CONFIRMATION CATCH-ALL] User message: {user_message}")
-                
-                # Clear confirmation to prevent getting stuck
-                self.confirmation_manager.expire_confirmation(session_id, "Ambiguous response - clearing to prevent stuck state")
-                
-                # Ask for clarification rather than treating as general chat
-                response = (
-                    f"I didn't quite catch that. Could you please confirm with 'yes' if you'd like to proceed, "
-                    f"or 'no' if you'd like to stay with {state.location}?"
-                )
-                
-                state.add_conversation_turn("assistant", response)
-                self.state_manager.save(state)
-                
-                return {
-                    "success": True,
-                    "response": response,
-                    "suggestions": [
-                        "Yes, let's proceed",
-                        "No, keep it as is",
-                        f"No, but show me 3 bedrooms in {state.location}"
-                    ],
-                    "properties": [],
-                    "property_count": 0,
-                    "state_summary": state.get_summary(),
-                    "filters": state.get_active_filters(),
-                    "intent": "confirmation_clarification_needed"
-                }
+            # STEP 1.6: Handle special intents from HybridIntentClassifier
+            # These intents are handled immediately without further GPT processing
             
-            # STEP 1.6: Handle special intents that don't need GPT processing
+            # Handle VALUATION - Route to valuation pipeline
+            if classified_intent == UserIntent.VALUATION:
+                logger.info("💰 [VALUATION] Detected valuation request, routing to valuation handler")
+                return self._handle_valuation_request(state, user_message)
+            
+            # Handle GENERAL_QUESTION - Route to general knowledge/market info
+            if classified_intent == UserIntent.GENERAL_QUESTION:
+                logger.info("❓ [GENERAL_QUESTION] Detected general question, routing to knowledge handler")
+                return self._handle_general_question(state, user_message)
+            
+            # Handle GENERAL_CHAT - Friendly response without search
+            if classified_intent == UserIntent.GENERAL_CHAT:
+                logger.info("💬 [GENERAL_CHAT] Detected general chat (greeting/help), responding gracefully")
+                return self._handle_general_question(state, user_message)
             
             # Handle OFF_TOPIC - Never trigger MLS search
             if classified_intent == UserIntent.OFF_TOPIC:
                 logger.info("🚫 [OFF-TOPIC] Detected off-topic message, responding gracefully")
                 response = (
-                    "Nice! Though I'm specifically here to help with real estate in Toronto and the GTA. "
+                    "I'm here to help you find properties and learn about real estate! "
                     "Let me know if you'd like to search for properties, learn about neighborhoods, "
-                    "or get market insights!"
+                    "or get market insights in any location."
                 )
                 suggestions = [
                     "Show me properties in Toronto",
-                    "Tell me about neighborhoods",
-                    "What's the market like?"
+                    "Find condos in Vancouver",
+                    "Tell me about neighborhoods"
                 ]
                 state.add_conversation_turn("assistant", response)
                 self.state_manager.save(state)
@@ -1086,7 +1696,14 @@ class ChatGPTChatbot:
                     "property_count": 0,
                     "state_summary": state.get_summary(),
                     "filters": state.get_active_filters(),
-                    "intent": "off_topic"
+                    "metadata": {
+                        "intent": classified_intent.value,
+                        "confidence": intent_metadata.get('confidence', 0),
+                        "reason": intent_metadata.get('reason', 'N/A'),
+                        "cache_hit": intent_metadata.get('cache_hit', False),
+                        "used_gpt_fallback": intent_metadata.get('used_gpt_fallback', False),
+                        "requires_confirmation": intent_metadata.get('requires_confirmation', False)
+                    }
                 }
             
             # Handle CONFIRMATION_NEEDED - Ask what user wants to change
@@ -1263,11 +1880,7 @@ class ChatGPTChatbot:
             
             # 🔧 CRITICAL FIX: NEVER extract from confirmation words
             if is_confirmation_word(user_message):
-                if confirmation_handled:
-                    # This confirmation was already handled in Priority #2 - skip extraction
-                    logger.info(f"✅ [CONFIRMATION] Confirmation already handled - using existing location")
-                    extracted_location = state.location_state
-                elif state.conversation_mode == "awaiting_confirmation":
+                if state.conversation_mode == "awaiting_confirmation":
                     # This is a confirmation response - location already applied
                     logger.info(f"✅ [CONFIRMATION] '{user_message}' is confirmation word in awaiting_confirmation mode - using existing location")
                     extracted_location = state.location_state
@@ -1285,16 +1898,13 @@ class ChatGPTChatbot:
                         "property_count": 0,
                         "state_summary": state.get_summary(),
                         "filters": state.get_active_filters(),
-                        "intent": "general_chat"
+                        "metadata": self._create_metadata_dict(
+                            intent="general_chat",
+                            confidence=0.95,
+                            reason="Confirmation word without pending confirmation context"
+                        )
                     }
             
-            # 🔧 FIX: If confirmation already applied location, SKIP extraction
-            elif (is_answering_confirmation and 
-                state.pending_confirmation_type == "location_change"):
-                # LocationState was already applied in confirmation handler
-                # Just reuse the current state.location_state
-                logger.info(f"✅ [CONFIRMATION] Using already-applied location state: {state.location_state.get_summary()}")
-                extracted_location = state.location_state
             # 🔧 NEW FIX: If requirements mode already applied location, SKIP extraction
             elif is_answering_requirements and state.location_state:
                 # Location was already applied in requirements handler from pending context
@@ -1357,8 +1967,13 @@ class ChatGPTChatbot:
                             "property_count": 0,
                             "state_summary": state.get_summary(),
                             "filters": state.get_active_filters(),
-                            "intent": "postal_code_confirmation",
-                            "requires_confirmation": True
+                            "requires_confirmation": True,
+                            "metadata": self._create_metadata_dict(
+                                intent="postal_code_confirmation",
+                                confidence=0.85,
+                                reason="Postal code detected, asking for city confirmation",
+                                requires_confirmation=True
+                            )
                         }
                 else:
                     # Try to auto-detect city from postal code
@@ -1403,84 +2018,13 @@ class ChatGPTChatbot:
                             "property_count": 0,
                             "state_summary": state.get_summary(),
                             "filters": state.get_active_filters(),
-                            "intent": "postal_code_confirmation",
-                            "requires_confirmation": True
-                        }
-            
-            # Handle response to postal_code_city confirmation
-            if is_answering_confirmation:
-                pending_confirmation = self.confirmation_manager.get_active_confirmation(session_id)
-                if (pending_confirmation and 
-                    pending_confirmation.type == ConfirmationType.POSTAL_CODE_CITY):
-                    confirmation_context = pending_confirmation.payload or {}
-                    postal_code = confirmation_context.get('postal_code')
-                    
-                    # Extract city from user's response
-                    if extracted_location.city:
-                        # City was extracted, combine with postal code
-                        logger.info(f"✅ [POSTAL CODE CONFIRMATION] User provided city: {extracted_location.city}")
-                        
-                        # VALIDATE POSTAL CODE AGAINST CITY
-                        from services.postal_code_validator import postal_code_validator
-                    validation = postal_code_validator.validate_postal_city_match(postal_code, extracted_location.city)
-                    
-                    if not validation['is_valid']:
-                        # Postal code doesn't match city - use correct city instead
-                        logger.warning(f"⚠️ [POSTAL VALIDATOR] User said {extracted_location.city} but {postal_code} is in {validation['correct_city']}")
-                        extracted_location.city = validation['correct_city']
-                        # Store warning message for user
-                        state.postal_city_mismatch_message = validation['message']
-                    
-                    extracted_location.postalCode = postal_code
-                    logger.info(f"📮 [POSTAL CODE] Combined: {postal_code} + {extracted_location.city}")
-                    self.confirmation_manager.apply_confirmation(session_id, user_message)
-                else:
-                    # Try to extract city from message
-                    message_lower = user_message.lower().strip()
-                    potential_cities = ['toronto', 'mississauga', 'vaughan', 'markham', 'brampton', 
-                                       'richmond hill', 'oakville', 'burlington', 'ajax', 'whitby']
-                    
-                    matched_city = None
-                    for city in potential_cities:
-                        if city in message_lower:
-                            matched_city = city.title()
-                            break
-                    
-                    if matched_city:
-                        # VALIDATE POSTAL CODE AGAINST CITY
-                        from services.postal_code_validator import postal_code_validator
-                        validation = postal_code_validator.validate_postal_city_match(postal_code, matched_city)
-                        
-                        if not validation['is_valid']:
-                            # Postal code doesn't match city - use correct city instead
-                            logger.warning(f"⚠️ [POSTAL VALIDATOR] User said {matched_city} but {postal_code} is in {validation['correct_city']}")
-                            matched_city = validation['correct_city']
-                            # Store warning message for user
-                            state.postal_city_mismatch_message = validation['message']
-                        
-                        extracted_location.city = matched_city
-                        extracted_location.postalCode = postal_code
-                        logger.info(f"✅ [POSTAL CODE CONFIRMATION] Matched city: {matched_city}")
-                        logger.info(f"📮 [POSTAL CODE] Combined: {postal_code} + {matched_city}")
-                        state.clear_pending_confirmation()
-                    else:
-                        # Still couldn't extract city, ask again
-                        logger.warning(f"⚠️ [POSTAL CODE CONFIRMATION] Could not extract city from: {user_message}")
-                        response = f"I'm sorry, I didn't catch the city name. Could you please specify which city you'd like to search {postal_code} in?"
-                        suggestions = ["Toronto", "Mississauga", "Vaughan"]
-                        
-                        state.add_conversation_turn("assistant", response)
-                        self.state_manager.save(state)
-                        return {
-                            "success": True,
-                            "response": response,
-                            "suggestions": suggestions,
-                            "properties": [],
-                            "property_count": 0,
-                            "state_summary": state.get_summary(),
-                            "filters": state.get_active_filters(),
-                            "intent": "postal_code_confirmation",
-                            "requires_confirmation": True
+                            "requires_confirmation": True,
+                            "metadata": self._create_metadata_dict(
+                                intent="postal_code_confirmation",
+                                confidence=0.80,
+                                reason="Unknown postal code, asking for city confirmation",
+                                requires_confirmation=True
+                            )
                         }
             
             # STEP 3.9: Handle awaiting_requirements mode
@@ -1647,23 +2191,32 @@ class ChatGPTChatbot:
                 if 'location_state' in filters_from_gpt:
                     filters_from_gpt['location_state'].city = validation_result.final_city
                 else:
-                    # Create new location_state
+                    # Create new location_state - PRESERVE existing postal code from state!
                     new_location_state = LocationState()
                     new_location_state.city = validation_result.final_city
+                    # CRITICAL: Preserve postal code from current state during refinements
+                    if state.location_state and state.location_state.postalCode:
+                        new_location_state.postal_code = state.location_state.postalCode
+                        logger.info(f"📮 [LOCATION_VALIDATION] Preserved postal code: {state.location_state.postalCode}")
                     filters_from_gpt['location_state'] = new_location_state
                 logger.info(f"✅ [LOCATION_VALIDATION] Corrected location to: {validation_result.final_city}")
             elif validation_result.final_city:
                 # Validation passed - use the validated city
                 filters_from_gpt['location'] = validation_result.final_city
+                # CRITICAL FIX: Also create location_state if it doesn't exist
+                if 'location_state' not in filters_from_gpt or filters_from_gpt['location_state'].is_empty():
+                    new_location_state = LocationState()
+                    new_location_state.city = validation_result.final_city
+                    # CRITICAL: Preserve postal code from current state during refinements
+                    if state.location_state and state.location_state.postalCode:
+                        new_location_state.postal_code = state.location_state.postalCode
+                        logger.info(f"📮 [LOCATION_VALIDATION] Preserved postal code: {state.location_state.postalCode}")
+                    filters_from_gpt['location_state'] = new_location_state
+                    logger.info(f"✅ [LOCATION_VALIDATION] Created location_state: {new_location_state.get_summary()}")
+                else:
+                    # Update existing location_state
+                    filters_from_gpt['location_state'].city = validation_result.final_city
                 logger.info(f"✅ [LOCATION_VALIDATION] Validated: {validation_result.final_city}")
-            
-            # STEP 5.5: Clear pending confirmation if it was a location_change confirmation
-            # (we've now extracted the location from the original message)
-            if (is_answering_confirmation and 
-                state.pending_confirmation_type == "location_change" and
-                not extracted_location.is_empty()):
-                logger.info(f"✅ [CONFIRMATION] Location extracted, clearing pending confirmation")
-                state.clear_pending_confirmation()
             
             # STEP 6: If clarifying question, return immediately
             # BUT: Save location_state first if it was extracted (so it persists for next message)
@@ -1713,9 +2266,115 @@ class ChatGPTChatbot:
                 loc_state = updates['location_state']
                 logger.info(f"📍 location_state in updates: {loc_state.get_summary() if hasattr(loc_state, 'get_summary') else loc_state}")
             
+            # STEP 8.5: DETECT LOCATION CHANGE (before applying updates)
+            # Check if user is trying to change location while they have an existing search
+            if 'location_state' in updates or 'location' in updates:
+                # Get the new location from updates
+                new_location = None
+                new_location_state = None
+                if 'location_state' in updates:
+                    new_location_state = updates['location_state']
+                    if hasattr(new_location_state, 'city'):
+                        new_location = new_location_state.city
+                elif 'location' in updates:
+                    new_location = updates['location']
+                
+                # Get the current location from state
+                current_location = None
+                if hasattr(state, 'location_state') and state.location_state and state.location_state.city:
+                    current_location = state.location_state.city
+                elif state.location:
+                    current_location = state.location
+                
+                # Check if this is a location change (not initial search)
+                # Only trigger if:
+                # 1. User has done at least one search (search_count > 0)
+                # 2. There's conversation history (not first message in session)
+                # 3. Locations are different
+                has_conversation_history = len(state.conversation_history) > 1 if hasattr(state, 'conversation_history') else state.search_count > 0
+                
+                if (new_location and current_location and 
+                    new_location.lower() != current_location.lower() and
+                    has_conversation_history):  # Has prior conversation context
+                    
+                    logger.info(f"🔄 [LOCATION CHANGE DETECTED] {current_location} → {new_location}")
+                    
+                    # Build new_location_state dict for ConfirmationManager
+                    new_location_state_dict = {}
+                    if new_location_state:
+                        # Use the LocationState object from updates
+                        new_location_state_dict = {
+                            'location': new_location,
+                            'location_state': new_location_state
+                        }
+                    else:
+                        # Just the location string
+                        new_location_state_dict = {'location': new_location}
+                    
+                    # Add all other filter updates (bedrooms, price, etc.)
+                    for key, value in updates.items():
+                        if key not in ['location', 'location_state']:
+                            new_location_state_dict[key] = value
+                    
+                    # Build previous_location_state dict to revert to
+                    previous_location_state_dict = {
+                        'location': current_location
+                    }
+                    if hasattr(state, 'location_state') and state.location_state:
+                        previous_location_state_dict['location_state'] = state.location_state
+                    
+                    # Create location change confirmation with proper context structure
+                    confirmation_id = self.confirmation_manager.create_confirmation(
+                        session_id=session_id,
+                        confirmation_type=ConfirmationType.LOCATION_CHANGE,
+                        question=f"You're currently searching in {current_location}. Would you like to switch to {new_location}?",
+                        payload={
+                            'old_location': current_location,
+                            'new_location': new_location,
+                            'new_location_state': new_location_state_dict,  # For YES
+                            'previous_location_state': previous_location_state_dict  # For NO
+                        }
+                    )
+                    
+                    logger.info(f"✅ [LOCATION CHANGE] Created confirmation {confirmation_id[:8]}... - awaiting user response")
+                    
+                    # Return early with confirmation question
+                    state.add_conversation_turn("assistant", f"You're currently searching in {current_location}. Would you like to switch to {new_location}?")
+                    self.state_manager.save(state)
+                    
+                    return {
+                        "success": True,
+                        "response": f"You're currently searching in {current_location}. Would you like to switch to {new_location}?",
+                        "suggestions": ["Yes, switch locations", "No, keep current location"],
+                        "properties": [],
+                        "property_count": 0,
+                        "requires_confirmation": True,
+                        "confirmation_id": confirmation_id,
+                        "confirmation_type": "location_change",
+                        "state_summary": state.get_summary(),
+                        "filters": state.get_active_filters(),
+                        "metadata": {
+                            "intent": classified_intent.value,
+                            "confidence": intent_metadata.get("confidence", 0.0),
+                            "reason": intent_metadata.get("reason", ""),
+                            "used_gpt_fallback": intent_metadata.get("used_gpt_fallback", False)
+                        }
+                    }
+            
+            # STEP 8.6: Apply filter updates through AtomicTransactionManager
             if updates:
-                state.update_from_dict(updates)
-                logger.info(f"✅ State updated: {state.get_summary()}")
+                # Use unified state with atomic transaction manager for validated updates
+                try:
+                    logger.info(f"🔒 [ATOMIC] Applying filter updates through transaction manager")
+                    self._update_unified_filters_from_gpt(unified_state, updates, merge=True)
+                    # Sync to legacy state
+                    self._sync_unified_to_legacy(unified_state, state)
+                    logger.info(f"✅ State updated with transaction: {unified_state.get_summary()}")
+                except ValueError as ve:
+                    logger.warning(f"⚠️ Filter validation failed: {ve}, falling back to legacy update")
+                    # Fallback to legacy state update if validation fails
+                    state.update_from_dict(updates)
+                    logger.info(f"✅ Legacy state updated: {state.get_summary()}")
             
             # STEP 9: Log merged location state for debugging
             if hasattr(state, 'location_state') and state.location_state:
@@ -2173,6 +2832,10 @@ class ChatGPTChatbot:
                         
                         state.update_search_results(properties, user_message)
                         
+                        # Update unified state with search results (for zero results tracking)
+                        unified_state.update_search_results(properties, increment_count=True)
+                        self._save_state_with_error_handling(unified_state, state)
+                        
                         # Log validation warnings if any
                         if search_results.get('validation_warnings'):
                             for warning in search_results['validation_warnings']:
@@ -2223,8 +2886,27 @@ class ChatGPTChatbot:
             # Add assistant response to history
             state.add_conversation_turn("assistant", assistant_text)
             
-            # Save state
-            self.state_manager.save(state)
+            # Sync legacy state back to unified state (so filters, location, etc. persist)
+            self._sync_legacy_to_unified(state, unified_state)
+            
+            # ─────────────────────────────────────────────────────────────────
+            # STEP 12.5: UPDATE CONVERSATION STAGE
+            # ─────────────────────────────────────────────────────────────────
+            # Progress the conversation stage based on what happened
+            if properties and len(properties) > 0:
+                # We have results to show → VIEWING
+                unified_state.set_conversation_stage(ConversationStage.VIEWING)
+                logger.debug(f"📈 [STAGE] Set to VIEWING (found {len(properties)} properties)")
+            elif unified_state.active_filters.location or unified_state.location_state.city:
+                # User has provided location filters → FILTERING
+                if unified_state.metadata.conversation_stage == ConversationStage.GREETING.value:
+                    unified_state.set_conversation_stage(ConversationStage.FILTERING)
+                    logger.debug(f"📈 [STAGE] Set to FILTERING (location: {unified_state.active_filters.location or unified_state.location_state.city})")
+            # Note: CONFIRMATION stage is set by confirmation_manager when needed
+            
+            # Final save with error handling
+            self._save_state_with_error_handling(unified_state, state)
+            logger.debug(f"🔄 [SYNC] Synced legacy→unified: filters={unified_state.active_filters}, location={unified_state.location_state}")
             
             # Use existing property standardization from voice_assistant_clean.py
             standardize_property_data = get_standardize_property_data()  # Lazy import
@@ -2246,7 +2928,15 @@ class ChatGPTChatbot:
                 "properties": formatted_properties,
                 "property_count": total,
                 "state_summary": state.get_summary(),
-                "filters": state.get_active_filters()
+                "filters": state.get_active_filters(),
+                "metadata": {
+                    "intent": classified_intent.value if classified_intent else "unknown",
+                    "confidence": intent_metadata.get('confidence', 0) if intent_metadata else 0,
+                    "reason": intent_metadata.get('reason', 'N/A') if intent_metadata else 'N/A',
+                    "cache_hit": intent_metadata.get('cache_hit', False) if intent_metadata else False,
+                    "used_gpt_fallback": intent_metadata.get('used_gpt_fallback', False) if intent_metadata else False,
+                    "requires_confirmation": intent_metadata.get('requires_confirmation', False) if intent_metadata else False
+                }
             }
         
         except Exception as e:
@@ -2254,6 +2944,297 @@ class ChatGPTChatbot:
             return self._handle_error(session_id, user_message, str(e))
     
     # Removed _format_price_for_frontend - using standardize_property_data from voice_assistant_clean.py instead
+
+    # =========================================================================
+    # UNIFIED STATE HELPER METHODS
+    # =========================================================================
+    
+    def _sync_unified_to_legacy(
+        self, 
+        unified_state: UnifiedConversationState, 
+        legacy_state: ConversationState
+    ) -> None:
+        """
+        Sync UnifiedConversationState (Pydantic v2) to legacy ConversationState.
+        
+        This ensures backward compatibility during the transition period.
+        The unified state is the source of truth.
+        
+        Args:
+            unified_state: The Pydantic v2 unified state (source of truth)
+            legacy_state: The legacy dataclass state (to be updated)
+        """
+        try:
+            # Sync location - UnifiedConversationState stores in location_state, not 'location'
+            if unified_state.active_filters.location:
+                # Legacy state expects a simple string location
+                legacy_state.location = unified_state.active_filters.location
+            elif not unified_state.location_state.is_empty() and unified_state.location_state.city:
+                # Fallback to location_state.city if no filter location
+                legacy_state.location = unified_state.location_state.city
+                
+            if not unified_state.location_state.is_empty():
+                # Convert UnifiedLocationState to legacy LocationState
+                # Use camelCase for constructor (legacy format) but access snake_case properties
+                loc = unified_state.location_state
+                legacy_state.location_state = LocationState(
+                    city=loc.city,
+                    community=loc.community,
+                    neighborhood=loc.neighborhood,
+                    # Access using snake_case (our standard), LocationState now has camelCase aliases
+                    postalCode=getattr(loc, 'postal_code', None) or getattr(loc, 'postalCode', None),
+                    streetName=getattr(loc, 'street_name', None) or getattr(loc, 'streetName', None),
+                    streetNumber=getattr(loc, 'street_number', None) or getattr(loc, 'streetNumber', None),
+                )
+            
+            # Sync filters
+            filters = unified_state.active_filters
+            if filters.bedrooms is not None:
+                legacy_state.bedrooms = filters.bedrooms
+            else:
+                # Clear bedrooms if unified state has None
+                legacy_state.bedrooms = None
+            if filters.bathrooms is not None:
+                legacy_state.bathrooms = filters.bathrooms
+            else:
+                # Clear bathrooms if unified state has None
+                legacy_state.bathrooms = None
+            if filters.property_type:
+                legacy_state.property_type = filters.property_type
+            else:
+                # Clear property_type if unified state has None/empty
+                legacy_state.property_type = None
+            if filters.listing_type:
+                legacy_state.listing_type = filters.listing_type
+            # CRITICAL FIX: Always sync price_range, including when clearing (both None)
+            # This ensures "show me any price range" actually clears the price filter
+            legacy_state.price_range = (filters.min_price, filters.max_price)
+            logger.debug(f"💰 [SYNC] price_range synced to legacy: {legacy_state.price_range}")
+            if filters.amenities:
+                legacy_state.amenities = filters.amenities
+            
+            # Sync search results
+            legacy_state.last_property_results = unified_state.last_property_results
+            legacy_state.search_count = unified_state.search_count
+            
+            logger.debug(f"✅ Synced unified state to legacy state for session {unified_state.session_id}")
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to sync unified to legacy state: {e}")
+    
+    def _sync_legacy_to_unified(
+        self, 
+        legacy_state: ConversationState, 
+        unified_state: UnifiedConversationState
+    ) -> None:
+        """
+        Sync legacy ConversationState to UnifiedConversationState (Pydantic v2).
+        
+        Used when legacy code paths modify state and we need to update unified state.
+        
+        Args:
+            legacy_state: The legacy dataclass state (source)
+            unified_state: The Pydantic v2 unified state (to be updated)
+        """
+        try:
+            # Build filter dict from legacy state
+            filter_updates = {}
+            
+            # Handle location - legacy has 'location' string, unified uses location_state + active_filters.location
+            if hasattr(legacy_state, 'location') and legacy_state.location:
+                filter_updates['location'] = legacy_state.location
+                
+            if legacy_state.bedrooms is not None:
+                filter_updates['bedrooms'] = legacy_state.bedrooms
+            if legacy_state.bathrooms is not None:
+                filter_updates['bathrooms'] = legacy_state.bathrooms
+            if legacy_state.property_type:
+                filter_updates['property_type'] = legacy_state.property_type
+            if legacy_state.listing_type:
+                filter_updates['listing_type'] = legacy_state.listing_type
+            if legacy_state.price_range:
+                min_p, max_p = legacy_state.price_range
+                if min_p:
+                    filter_updates['min_price'] = min_p
+                if max_p:
+                    filter_updates['max_price'] = max_p
+            if legacy_state.amenities:
+                filter_updates['amenities'] = legacy_state.amenities
+            
+            # Apply filter updates with validation
+            if filter_updates:
+                try:
+                    unified_state.merge_filters(filter_updates, force_replace=True)
+                except ValueError as ve:
+                    logger.warning(f"⚠️ Validation failed syncing legacy to unified: {ve}")
+            
+            # Sync location state - use snake_case accessors (compatible with both naming conventions)
+            if hasattr(legacy_state, 'location_state') and legacy_state.location_state:
+                loc = legacy_state.location_state
+                # Use getattr with fallbacks to handle both camelCase and snake_case fields
+                unified_state.location_state = UnifiedLocationState(
+                    city=getattr(loc, 'city', None),
+                    community=getattr(loc, 'community', None),
+                    neighborhood=getattr(loc, 'neighborhood', None),
+                    # Use snake_case (our new standard) with camelCase fallback
+                    postal_code=getattr(loc, 'postal_code', None) or getattr(loc, 'postalCode', None),
+                    street_name=getattr(loc, 'street_name', None) or getattr(loc, 'streetName', None),
+                    street_number=getattr(loc, 'street_number', None) or getattr(loc, 'streetNumber', None),
+                )
+            
+            # Sync search results
+            if legacy_state.last_property_results:
+                unified_state.update_search_results(
+                    legacy_state.last_property_results[:20],
+                    increment_count=False
+                )
+                unified_state.search_count = legacy_state.search_count
+            
+            logger.debug(f"✅ Synced legacy state to unified state for session {unified_state.session_id}")
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to sync legacy to unified state: {e}")
+    
+    def _update_unified_filters_from_gpt(
+        self,
+        unified_state: UnifiedConversationState,
+        filters_from_gpt: Dict[str, Any],
+        merge: bool = True
+    ) -> None:
+        """
+        Update UnifiedConversationState filters from GPT interpreter output.
+        
+        Uses AtomicTransactionManager with FILTER_UPDATE transaction type for
+        safe state updates with automatic rollback on validation errors.
+        
+        Args:
+            unified_state: The unified state to update
+            filters_from_gpt: Filters extracted by GPT interpreter
+            merge: If True, merge with existing; if False, replace
+        """
+        # Normalize filter keys to match ActiveFilters model
+        normalized = {}
+        
+        # Location
+        if filters_from_gpt.get('location'):
+            normalized['location'] = filters_from_gpt['location']
+        
+        # Property type
+        if filters_from_gpt.get('property_type'):
+            normalized['property_type'] = filters_from_gpt['property_type']
+        
+        # Bedrooms/Bathrooms
+        if filters_from_gpt.get('bedrooms') is not None:
+            normalized['bedrooms'] = filters_from_gpt['bedrooms']
+        if filters_from_gpt.get('bathrooms') is not None:
+            normalized['bathrooms'] = filters_from_gpt['bathrooms']
+        
+        # Price - handle both tuple format (price_range) and separate keys (min_price/max_price)
+        # CRITICAL: Handle (None, None) to CLEAR price filters (e.g., "show me any price range")
+        if 'price_range' in filters_from_gpt:
+            # Handle tuple format: (min_price, max_price)
+            price_range = filters_from_gpt['price_range']
+            if isinstance(price_range, (tuple, list)) and len(price_range) == 2:
+                min_p, max_p = price_range
+                # Check if user wants to CLEAR price filter (both are None)
+                if min_p is None and max_p is None:
+                    # Explicit clear - pass None to transaction manager which will reset the filter
+                    normalized['min_price'] = None
+                    normalized['max_price'] = None
+                    logger.info(f"💰 [PRICE CLEAR] User wants to clear price filter - setting min_price=None, max_price=None")
+                else:
+                    # Normal case - only set non-None values
+                    if min_p is not None:
+                        normalized['min_price'] = min_p
+                    if max_p is not None:
+                        normalized['max_price'] = max_p
+                    logger.info(f"💰 [PRICE UNPACK] Unpacked price_range {price_range} → min_price={min_p}, max_price={max_p}")
+        else:
+            # Handle separate keys format
+            if filters_from_gpt.get('min_price') is not None:
+                normalized['min_price'] = filters_from_gpt['min_price']
+            if filters_from_gpt.get('max_price') is not None:
+                normalized['max_price'] = filters_from_gpt['max_price']
+        
+        # Square footage - handle both tuple format (sqft_range) and separate keys (min_sqft/max_sqft)
+        if 'sqft_range' in filters_from_gpt:
+            # Handle tuple format: (min_sqft, max_sqft)
+            sqft_range = filters_from_gpt['sqft_range']
+            if isinstance(sqft_range, (tuple, list)) and len(sqft_range) == 2:
+                min_sqft, max_sqft = sqft_range
+                if min_sqft is not None:
+                    normalized['min_sqft'] = min_sqft
+                if max_sqft is not None:
+                    normalized['max_sqft'] = max_sqft
+                logger.info(f"📐 [SQFT UNPACK] Unpacked sqft_range {sqft_range} → min_sqft={min_sqft}, max_sqft={max_sqft}")
+        else:
+            # Handle separate keys format
+            if filters_from_gpt.get('min_sqft') is not None:
+                normalized['min_sqft'] = filters_from_gpt['min_sqft']
+            if filters_from_gpt.get('max_sqft') is not None:
+                normalized['max_sqft'] = filters_from_gpt['max_sqft']
+        
+        # Listing type
+        if filters_from_gpt.get('listing_type'):
+            normalized['listing_type'] = filters_from_gpt['listing_type']
+        
+        # Amenities
+        if filters_from_gpt.get('amenities'):
+            normalized['amenities'] = filters_from_gpt['amenities']
+        
+        # Execute filter update as atomic transaction with automatic rollback
+        try:
+            success, result, error = self.transaction_manager.execute_transaction(
+                transaction_type=TransactionType.FILTER_UPDATE.value,
+                session_id=unified_state.session_id,
+                data={
+                    "filters": normalized,
+                    "merge": merge
+                }
+            )
+            
+            if success:
+                logger.info(f"✅ [TRANSACTION] Filter update successful: {normalized}")
+                # ✅ FIX: Reload unified_state from Redis to sync with transaction manager's changes
+                # The transaction manager saved the updated state to Redis, but our in-memory
+                # unified_state is stale. We need to reload it so subsequent saves don't overwrite.
+                try:
+                    reloaded_state = self.state_manager.get_or_create(unified_state.session_id)
+                    if reloaded_state:
+                        # Update the in-memory unified_state object with the reloaded filters
+                        unified_state.active_filters = reloaded_state.active_filters
+                        unified_state.location_state = reloaded_state.location_state
+                        unified_state.updated_at = reloaded_state.updated_at
+                        logger.info(f"🔄 [RELOAD] Synced state after transaction - filters: {unified_state.get_active_filters()}")
+                    else:
+                        logger.warning(f"⚠️ [RELOAD] Failed to reload state after transaction")
+                except Exception as reload_error:
+                    logger.error(f"❌ [RELOAD] Error reloading state: {reload_error}", exc_info=True)
+            else:
+                logger.warning(f"⚠️ [TRANSACTION] Filter update failed: {error}")
+                
+        except Exception as e:
+            logger.error(f"❌ [TRANSACTION] Filter update error: {e}", exc_info=True)
+            # Transaction manager automatically rolls back on failure
+    
+    def _create_checkpoint_for_risky_operation(
+        self,
+        unified_state: UnifiedConversationState,
+        operation_type: str
+    ) -> str:
+        """
+        Create a checkpoint before risky operations (filter changes, search, etc.).
+        
+        Args:
+            unified_state: The state to checkpoint
+            operation_type: Description of the operation (for logging)
+            
+        Returns:
+            The checkpoint ID for potential rollback
+        """
+        checkpoint_id = unified_state.create_checkpoint()
+        logger.info(f"📸 Created checkpoint {checkpoint_id} before {operation_type}")
+        return checkpoint_id
 
     def _normalize_filters_for_state(self, filters_from_gpt: Dict[str, Any], merge: bool, user_message: str = "", current_state=None) -> Dict[str, Any]:
         """
@@ -2304,37 +3285,50 @@ class ChatGPTChatbot:
             not location_changed  # Not a location change
         )
         
+        # ═══════════════════════════════════════════════════════════════════════════
+        # CRITICAL: Check for explicit budget/price removal FIRST (before preservation logic)
+        # ═══════════════════════════════════════════════════════════════════════════
+        budget_removal_patterns = [
+            r'i don\'?t have (?:any )?budget',
+            r'no budget',
+            r'any budget',
+            r'show me any price(?: range)?',
+            r'remove (?:the )?budget(?: limit)?',
+            r'ignore budget',
+            r'any price(?: range)?',
+            r'without budget',
+            r'clear (?:the )?(?:price|budget)',
+            r'(?:price|budget) (?:doesn\'?t|does not) matter',
+            r'(?:i\'?m )?flexible on (?:price|budget)',
+        ]
+        
+        should_remove_budget = any(re.search(pattern, user_message, re.I) for pattern in budget_removal_patterns)
+        
+        if should_remove_budget:
+            logger.info(f"🏠 [BUDGET REMOVAL] User requested to remove budget constraints: '{user_message}'")
+            updates["price_range"] = (None, None)  # Clear budget - mark as explicit clear
+            updates["_explicit_price_clear"] = True  # Flag to prevent overwrite in refinement logic
+        
         # Only clear price on TRUE fresh search if price was NOT extracted
         # DON'T clear if: 1) Refining search, 2) Price mentioned, 3) User confirmed to keep filters
+        # DON'T overwrite if user explicitly asked to remove budget
         if not merge and not price_mentioned and not is_refining and current_state and current_state.price_range != (None, None):
-            # Fresh search without price mentioned - but DON'T clear if extracting now or refining
-            logger.info(f"🏠 [FRESH SEARCH] Clearing old price range (not mentioned in new search)")
-            updates["price_range"] = (None, None)
+            if not should_remove_budget:  # Don't double-clear
+                # Fresh search without price mentioned - but DON'T clear if extracting now or refining
+                logger.info(f"🏠 [FRESH SEARCH] Clearing old price range (not mentioned in new search)")
+                updates["price_range"] = (None, None)
         elif is_refining and current_state and current_state.price_range != (None, None):
-            # User is refining search - KEEP existing price range
-            logger.info(f"✅ [REFINEMENT] Keeping existing price range: {current_state.price_range}")
-            if "price_range" not in updates or updates.get("price_range") == (None, None):
-                updates["price_range"] = current_state.price_range
+            # User is refining search - KEEP existing price range UNLESS user explicitly wants to clear it
+            if not should_remove_budget:  # Critical: Don't overwrite explicit budget removal
+                logger.info(f"✅ [REFINEMENT] Keeping existing price range: {current_state.price_range}")
+                if "price_range" not in updates or updates.get("price_range") == (None, None):
+                    updates["price_range"] = current_state.price_range
         
         # Listing type handling - Critical for rental/sale distinction
         listing_type_mentioned = filters_from_gpt.get("listing_type") is not None
         if not merge and not listing_type_mentioned and current_state and current_state.listing_type:
             # Fresh search without explicit listing_type: inherit from state but log it
             logger.info(f"🏠 [FRESH SEARCH] No listing_type mentioned, keeping current: {current_state.listing_type}")
-        
-        # Check for explicit budget removal
-        budget_removal_patterns = [
-            r'i don\'?t have (?:any )?budget',
-            r'no budget',
-            r'any budget',
-            r'show me any price',
-            r'remove budget',
-            r'ignore budget',
-            r'any price range',
-            r'without budget'
-        ]
-        
-        should_remove_budget = any(re.search(pattern, user_message, re.I) for pattern in budget_removal_patterns)
         
         # Check for "any properties" broad search patterns - clears ALL restrictive filters
         broad_search_patterns = [
@@ -2357,11 +3351,9 @@ class ChatGPTChatbot:
             updates["sqft_range"] = (None, None)
             updates["property_type"] = None  # Also clear property type for maximum flexibility
             # Keep location and listing_type from current state
-        elif should_remove_budget:
-            logger.info(f"🏠 [BUDGET REMOVAL] User requested to remove budget constraints: '{user_message}'")
-            updates["price_range"] = (None, None)  # Clear budget
-        else:
+        elif not should_remove_budget:
             # Fix common misinterpretation: "$2-$3" should be $2M-$3M for sales
+            # (skip this if budget was already cleared)
             listing_type = filters_from_gpt.get("listing_type") 
             if current_state:
                 listing_type = listing_type or current_state.listing_type
@@ -2433,6 +3425,9 @@ class ChatGPTChatbot:
         if filters_from_gpt.get("list_date_to"):
             updates["list_date_to"] = filters_from_gpt["list_date_to"]
         
+        # Remove internal flags before returning
+        updates.pop("_explicit_price_clear", None)
+        
         return updates
     
     def _handle_reset(self, state: ConversationState, user_message: str) -> Dict[str, Any]:
@@ -2454,7 +3449,13 @@ class ChatGPTChatbot:
             "properties": [],
             "property_count": 0,
             "state_summary": state.get_summary(),
-            "filters": {}
+            "filters": {},
+            "metadata": {
+                "intent": "reset",
+                "confidence": 0.95,
+                "reason": "User requested to reset/start over",
+                "used_gpt_fallback": False
+            }
         }
     
     def _handle_details_request(self, state: ConversationState, user_message: str) -> Dict[str, Any]:
@@ -2584,12 +3585,16 @@ class ChatGPTChatbot:
                         "response": markdown_response,
                         "response_type": response_type,
                         "structured_data": structured_data,
-                        "intent": "valuation",
                         "mls_number": mls_number,
                         "suggestions": suggestions,
                         "properties": [],
                         "property_count": 0,
-                        "filters": state.get_active_filters()
+                        "filters": state.get_active_filters(),
+                        "metadata": self._create_metadata_dict(
+                            intent="valuation",
+                            confidence=0.98,
+                            reason="MLS-based valuation request detected"
+                        )
                     }
                     
         except Exception as e:
@@ -2613,7 +3618,12 @@ class ChatGPTChatbot:
             "properties": [],
             "property_count": 0,
             "state_summary": state.get_summary(),
-            "filters": state.get_active_filters()
+            "filters": state.get_active_filters(),
+            "metadata": self._create_metadata_dict(
+                intent="valuation",
+                confidence=0.90,
+                reason="Valuation request needs more details (MLS or address)"
+            )
         }
 
     def _handle_general_question(self, state: ConversationState, user_message: str) -> Dict[str, Any]:
@@ -2712,12 +3722,17 @@ Examples:
             "properties": [],
             "property_count": 0,
             "state_summary": state.get_summary(),
-            "filters": state.get_active_filters()
+            "filters": state.get_active_filters(),
+            "metadata": self._create_metadata_dict(
+                intent="general_question",
+                confidence=0.85,
+                reason="General real estate question (not property search)"
+            )
         }
     
     def _execute_property_search(
         self, 
-        state: ConversationState, 
+        state: Union[ConversationState, UnifiedConversationState], 
         user_message: str, 
         session_id: str,
         intent_reason: str,
@@ -2727,8 +3742,10 @@ Examples:
         Execute property search after confirmation is resolved.
         This is a terminal action - returns immediately without continuing pipeline.
         
+        Uses UnifiedConversationState for validated filter updates and state management.
+        
         Args:
-            state: Current conversation state
+            state: Current conversation state (legacy ConversationState or UnifiedConversationState)
             user_message: User's message (may contain additional filters)
             session_id: Session identifier
             intent_reason: Reason for the search intent
@@ -2738,47 +3755,69 @@ Examples:
             Response dict with mode, confirmation_result, and action fields for frontend
         """
         logger.info(f"🔍 [SEARCH EXECUTION] Starting property search after confirmation")
-        logger.info(f"📍 Location: {state.location}")
-        logger.info(f"🔧 Filters: {state.get_active_filters()}")
+        
+        # Handle both UnifiedConversationState and legacy ConversationState
+        if isinstance(state, UnifiedConversationState):
+            # State is already unified, use it directly
+            unified_state = state
+            # Get or create a legacy state for MLS service (which still expects legacy)
+            legacy_state = conversation_state_manager.get_or_create(session_id)
+            # Sync unified to legacy
+            self._sync_unified_to_legacy(unified_state, legacy_state)
+        else:
+            # State is legacy, get unified state separately
+            legacy_state = state
+            unified_state = self.unified_state_manager.get_or_create(session_id)
+        
+        # Get location for logging
+        location_str = "No location"
+        if unified_state.location_state and unified_state.location_state.city:
+            location_str = unified_state.location_state.city
+        elif unified_state.active_filters.location:
+            location_str = unified_state.active_filters.location
+        elif hasattr(legacy_state, 'location') and legacy_state.location:
+            location_str = legacy_state.location
+            
+        logger.info(f"📍 Location: {location_str}")
+        logger.info(f"🔧 Filters: {unified_state.get_active_filters()}")
         logger.info(f"💬 User message: '{user_message}'")
+        
+        # Create checkpoint before risky filter changes
+        checkpoint_id = self._create_checkpoint_for_risky_operation(
+            unified_state, 
+            "property_search_filter_update"
+        )
         
         # Extract any additional filters from the user message using GPT-4
         # Build session summary for interpreter
         session_summary = {
-            "filters": state.get_active_filters(),
-            "last_search_count": len(state.last_property_results),
-            "search_count": state.search_count,
-            "last_search_results": state.last_property_results[:3] if state.last_property_results else []
+            "filters": unified_state.get_active_filters(),
+            "last_search_count": len(unified_state.last_property_results),
+            "search_count": unified_state.search_count,
+            "last_search_results": unified_state.last_property_results[:3] if unified_state.last_property_results else []
         }
         
         # Call GPT-4 interpreter to extract filters
         logger.info("🤖 [GPT-4 INTERPRETER] Extracting filters from confirmation response")
         interpreter_out = ask_gpt_interpreter(session_summary, user_message)
         
-        # Apply interpreted filters
+        # Apply interpreted filters using unified state (with Pydantic validation)
         intent = interpreter_out.get("intent", "search")
         filters = interpreter_out.get("filters", {})
         
-        if filters.get("bedrooms"):
-            state.bedrooms = filters["bedrooms"]
-            logger.info(f"🛏️ Updated bedrooms: {state.bedrooms}")
+        # Use unified state for validated filter updates
+        try:
+            self._update_unified_filters_from_gpt(unified_state, filters, merge=True)
+            # Sync to legacy state for MLS service
+            self._sync_unified_to_legacy(unified_state, legacy_state)
+        except ValueError as ve:
+            logger.warning(f"⚠️ Filter validation failed: {ve}")
+            # Continue with legacy state if validation fails
         
-        if filters.get("property_type"):
-            state.property_type = filters["property_type"]
-            logger.info(f"🏠 Updated property_type: {state.property_type}")
-        
-        if filters.get("max_price"):
-            state.price_range = (state.price_range[0] if state.price_range else None, filters["max_price"])
-            logger.info(f"💰 Updated price_range: {state.price_range}")
-        
-        if filters.get("min_price"):
-            state.price_range = (filters["min_price"], state.price_range[1] if state.price_range else None)
-            logger.info(f"💰 Updated price_range: {state.price_range}")
-        
-        # Execute MLS search
+        # Execute MLS search using legacy state (MLS service expects legacy format)
         logger.info("🔍 [MLS SEARCH] Executing property search")
         search_results = enhanced_mls_service.search_properties(
-            state,
+            legacy_state,
             limit=10,
             user_message=user_message
         )
@@ -2786,40 +3825,106 @@ Examples:
         properties = search_results.get("results", [])
         total = search_results.get("total", 0)
         
-        # Update state with results
-        state.last_property_results = properties[:10]
-        state.search_count += 1
+        # Update both states with results
+        legacy_state.last_property_results = properties[:10]
+        legacy_state.search_count += 1
+        unified_state.last_property_results = properties[:10]
+        unified_state.search_count += 1
         
-        # Generate response
+        # Update unified state with results (max 20, set stage to viewing)
+        # This also tracks zero_results_count for UX improvements
+        unified_state.update_search_results(properties[:20], increment_count=True)
+        unified_state.set_conversation_stage(ConversationStage.VIEWING)
+        
+        # Generate response with improved zero results UX
         if properties:
-            response = interpreter_out.get("message", f"I found {total} properties in {state.location}!")
+            # Get location from unified state safely
+            location_str = "this area"
+            if unified_state.location_state and unified_state.location_state.city:
+                location_str = unified_state.location_state.city
+            elif unified_state.active_filters.location:
+                location_str = unified_state.active_filters.location
+            
+            response = interpreter_out.get("message", f"I found {total} properties in {location_str}!")
+            suggestions = [
+                "Show me more details",
+                "Adjust my filters",
+                "Try a different location"
+            ]
+            mode = "normal"
         else:
-            response = f"I couldn't find any properties matching your criteria in {state.location}. Would you like to adjust your filters?"
+            # Zero results - provide helpful relaxation suggestions
+            relaxation_msg = unified_state.suggest_filter_relaxation()
+            relaxation_suggestions = unified_state.get_relaxation_suggestions()
+            
+            # Get location safely from unified state
+            location_str = "this area"
+            if unified_state.location_state and unified_state.location_state.city:
+                location_str = unified_state.location_state.city
+            elif unified_state.active_filters.location:
+                location_str = unified_state.active_filters.location
+            
+            if unified_state.zero_results_count >= 2:
+                # Multiple consecutive zero results - be more helpful
+                response = (
+                    f"I still haven't found any properties matching your criteria in {location_str}. "
+                    f"{relaxation_msg}"
+                )
+            else:
+                response = (
+                    f"I couldn't find any properties matching your exact criteria in {location_str}. "
+                    f"{relaxation_msg}"
+                )
+            
+            suggestions = relaxation_suggestions[:3] if relaxation_suggestions else [
+                "Adjust my filters",
+                "Try a different location",
+                "Show me what's available"
+            ]
+            mode = "zero_results"
         
-        # Add suggestions
-        suggestions = [
-            "Show me more details",
-            "Adjust my filters",
-            "Try a different location"
-        ]
+        # Save both states
+        legacy_state.add_conversation_turn("assistant", response)
+        unified_state.add_conversation_turn("assistant", response)
         
-        # Save state
-        state.add_conversation_turn("assistant", response)
-        self.state_manager.save(state)
+        # Sync legacy state back to unified state (so filters, location, etc. persist)
+        self._sync_legacy_to_unified(legacy_state, unified_state)
+        
+        self.state_manager.save(legacy_state)
+        self.unified_state_manager.save(unified_state)
+        
+        # Standardize properties for frontend
+        standardize_property_data = get_standardize_property_data()
+        formatted_properties = []
+        for i, prop in enumerate(properties[:10]):
+            try:
+                formatted_prop = standardize_property_data(prop)
+                formatted_properties.append(formatted_prop)
+                logger.debug(f"✅ Standardized property {i+1}: price={formatted_prop.get('price')}, address={formatted_prop.get('address', '')[:50] if formatted_prop.get('address') else 'N/A'}")
+            except Exception as e:
+                logger.error(f"❌ Failed to standardize property {i+1}: {e}")
+                # Still include the property but log the error
+                formatted_properties.append(prop)
         
         # Return response with required fields for frontend
         return {
             "success": True,
             "response": response,
             "suggestions": suggestions,
-            "properties": properties[:10],
+            "properties": formatted_properties,
             "property_count": total,
-            "state_summary": state.get_summary(),
-            "filters": state.get_active_filters(),
-            "intent": "property_search",
-            "mode": "normal",
+            "state_summary": unified_state.get_summary(),  # Use unified state summary
+            "filters": unified_state.get_active_filters(),  # Use unified filters
+            "mode": mode,
             "confirmation_result": confirmation_result,
-            "action": "search"
+            "action": "search",
+            "checkpoint_id": checkpoint_id,  # Include for potential undo
+            "zero_results_count": unified_state.zero_results_count,
+            "metadata": self._create_metadata_dict(
+                intent="property_search",
+                confidence=0.96,
+                reason="Property search executed after confirmation"
+            )
         }
     
     def _handle_special_query(self, state: ConversationState, interpreter_out: Dict[str, Any], user_message: str) -> Dict[str, Any]:
@@ -2898,7 +4003,15 @@ Examples:
             "property_count": 0,
             "state_summary": state.get_summary(),
             "filters": state.get_active_filters(),
-            "query_type": query_type
+            "query_type": query_type,
+            "metadata": self._create_metadata_dict(
+                intent="general_question",
+                confidence=0.85,
+                reason=f"Special query about {query_type} - providing resource information",
+                cache_hit=False,
+                used_gpt_fallback=False,
+                requires_confirmation=False
+            )
         }
     
     def _handle_address_search(
@@ -2929,7 +4042,40 @@ Examples:
         logger.info(f"🏠 [ADDRESS_HANDLER] Processing {address_result.intent_type.value}")
         
         try:
-            # Step 1: Normalize address to addressKey format
+            # Import AddressIntentType for type checking
+            from services.address_intent_detector import AddressIntentType
+            
+            # SPECIAL HANDLING: Intersection searches - use majorIntersection field matching
+            if address_result.intent_type == AddressIntentType.INTERSECTION:
+                return self._handle_intersection_search(
+                    session_id, user_message, address_result, state
+                )
+            
+            # SPECIAL HANDLING: Postal code searches - use postal code filtering
+            if address_result.intent_type == AddressIntentType.POSTAL_CODE:
+                # Extract postal code from address_result components
+                postal_code = address_result.components.postal_code or address_result.raw_text
+                city = address_result.components.city
+                return self._handle_postal_code_search(
+                    session_id=session_id,
+                    user_message=user_message,
+                    postal_code=postal_code,
+                    city=city,
+                    state=state
+                )
+            
+            # NEW: Cross-city exact address search using streetNumber + streetName
+            # This allows finding properties in ANY city, not just Toronto
+            components = address_result.components
+            if components.street_number and components.street_name:
+                return self._handle_cross_city_address_search(
+                    session_id=session_id,
+                    user_message=user_message,
+                    address_result=address_result,
+                    state=state
+                )
+            
+            # Step 1: Normalize address to addressKey format (for STREET_SEARCH only now)
             normalizer = get_address_key_normalizer()
             normalized = normalizer.normalize_address(
                 address_result.components,
@@ -2950,7 +4096,10 @@ Examples:
             
             # Step 2: Build Repliers search parameters
             listing_type = state.get_active_filters().get('listing_type', 'Sale')
-            additional_filters = self._extract_address_filters(state.get_active_filters())
+            
+            # NEW: Check if user's message mentions specific filters
+            # If not, DON'T carry over stale session filters for new address searches
+            additional_filters = self._get_address_search_filters(user_message, state.get_active_filters())
             
             repliers_params = buildRepliersAddressSearchParams(
                 normalized_address=normalized,
@@ -3019,11 +4168,50 @@ Examples:
                     
                     logger.info(f"🏘️ [STREET_FILTER] Filtered {len(raw_properties)} → {len(properties)} using normalized street: '{street_name}'")
                 else:
-                    # Exact address search - use all results
-                    properties = raw_properties
+                    # Exact address search - FILTER to exact address only
+                    street_number = getattr(address_result.components, 'street_number', '') or ''
+                    street_name = getattr(address_result.components, 'street_name', '') or ''
+                    unit_number = getattr(address_result.components, 'unit_number', '') or ''
+                    
+                    if street_number:
+                        # Filter to properties matching the exact street number AND street name
+                        properties = []
+                        for prop in raw_properties:
+                            address_data = prop.get('address', {})
+                            prop_address_key = (address_data.get('addressKey', '') or '').lower()
+                            prop_street_number = str(address_data.get('streetNumber', ''))
+                            prop_street_name = (address_data.get('streetName', '') or '').lower()
+                            prop_unit = str(address_data.get('unitNumber', '') or '')
+                            
+                            # Match by street number
+                            number_match = prop_street_number == street_number or street_number.lower() in prop_address_key
+                            
+                            # Match by street name (if we have one)
+                            if street_name:
+                                street_name_match = (
+                                    street_name.lower() in prop_street_name or 
+                                    street_name.lower() in prop_address_key
+                                )
+                            else:
+                                street_name_match = True
+                            
+                            # If unit specified, also match unit
+                            if unit_number:
+                                unit_match = prop_unit.lower() == unit_number.lower() or unit_number.lower() in prop_address_key
+                                if number_match and street_name_match and unit_match:
+                                    properties.append(prop)
+                            else:
+                                if number_match and street_name_match:
+                                    properties.append(prop)
+                        
+                        logger.info(f"🏠 [EXACT_ADDRESS_FILTER] Filtered {len(raw_properties)} → {len(properties)} for address: {street_number} {street_name}")
+                    else:
+                        properties = raw_properties
                 
                 # Apply additional filters AFTER addressKey filtering
-                properties = self._apply_post_address_filters(properties, additional_filters)
+                # Get post-filters from repliers_params (stored there to avoid API-level filtering)
+                post_filters = repliers_params.get('_post_filters', additional_filters)
+                properties = self._apply_post_address_filters(properties, post_filters)
                 
                 # Log search results
                 logger.info(f"📊 [ADDRESS_HANDLER] Final results after filtering: {len(properties)}")
@@ -3109,6 +4297,432 @@ Examples:
             logger.error(f"❌ [ADDRESS_HANDLER] Unexpected error: {e}")
             return self._handle_error(session_id, user_message, "I had trouble processing that address search.")
     
+    def _handle_intersection_search(
+        self,
+        session_id: str,
+        user_message: str,
+        address_result: Any,  # AddressIntentResult type
+        state: Any  # ConversationState type
+    ) -> Dict[str, Any]:
+        """
+        Handle intersection searches by querying city and filtering by majorIntersection.
+        
+        For queries like "Yonge and Bloor" or "King and Spadina", we:
+        1. Extract the two street names
+        2. Search for properties in the city (default: Toronto)
+        3. Filter results where majorIntersection contains both street names
+        
+        Args:
+            session_id: Session identifier
+            user_message: Original user message
+            address_result: Address intent detection result with intersection streets
+            state: Current conversation state
+            
+        Returns:
+            Standard response dict with intersection search results
+        """
+        components = address_result.components
+        street1 = components.intersection_street1 or ""
+        street2 = components.intersection_street2 or ""
+        
+        logger.info(f"🚦 [INTERSECTION_HANDLER] Searching near {street1} & {street2}")
+        
+        try:
+            # Get city from state or default to Toronto
+            city = state.get_active_filters().get('location', 'Toronto')
+            listing_type = state.get_active_filters().get('listing_type', 'Sale')
+            
+            # Build search params for city-level search
+            from services.repliers_client import client as repliers_client
+            
+            api_params = {
+                'city': city,
+                'status': 'A',  # Active listings
+                'type': listing_type.lower() if listing_type else 'sale',
+                'pageSize': 100,  # Get more results for filtering
+            }
+            
+            # Add property type filter if specified
+            prop_type = state.get_active_filters().get('property_type')
+            if prop_type:
+                api_params['class'] = prop_type
+            
+            # Add bedroom filter if specified
+            bedrooms = state.get_active_filters().get('bedrooms')
+            if bedrooms:
+                api_params['minBeds'] = bedrooms
+            
+            logger.info(f"🔍 [INTERSECTION_HANDLER] API params: {api_params}")
+            
+            # Execute search
+            repliers_response = repliers_client.get('/listings', params=api_params)
+            raw_properties = repliers_response.get('results', repliers_response.get('listings', []))
+            
+            logger.info(f"📊 [INTERSECTION_HANDLER] Raw results: {len(raw_properties)}")
+            
+            # Filter by majorIntersection containing both street names
+            street1_lower = street1.lower().strip()
+            street2_lower = street2.lower().strip()
+            
+            filtered_properties = []
+            for prop in raw_properties:
+                address_data = prop.get('address', {})
+                major_intersection = (address_data.get('majorIntersection') or '').lower()
+                
+                # Check if both streets appear in the majorIntersection field
+                # Handle variations like "Yonge & Bloor", "Yonge St & Bloor St", etc.
+                has_street1 = street1_lower in major_intersection
+                has_street2 = street2_lower in major_intersection
+                
+                if has_street1 and has_street2:
+                    filtered_properties.append(prop)
+            
+            logger.info(f"✅ [INTERSECTION_HANDLER] Filtered to {len(filtered_properties)} properties near {street1} & {street2}")
+            
+            # If no exact matches, try looser matching on neighborhood or street name
+            if len(filtered_properties) == 0:
+                logger.info("🔄 [INTERSECTION_HANDLER] No exact intersection matches, trying street name fallback")
+                for prop in raw_properties[:50]:  # Check first 50
+                    address_data = prop.get('address', {})
+                    street_name = (address_data.get('streetName') or '').lower()
+                    neighborhood = (address_data.get('neighborhood') or '').lower()
+                    
+                    # Match if street name matches either search street
+                    if street1_lower in street_name or street2_lower in street_name:
+                        filtered_properties.append(prop)
+                    elif street1_lower in neighborhood or street2_lower in neighborhood:
+                        filtered_properties.append(prop)
+                
+                # Deduplicate
+                seen_mls = set()
+                unique_properties = []
+                for prop in filtered_properties:
+                    mls = prop.get('mlsNumber', '')
+                    if mls not in seen_mls:
+                        seen_mls.add(mls)
+                        unique_properties.append(prop)
+                filtered_properties = unique_properties
+                
+                logger.info(f"✅ [INTERSECTION_HANDLER] Fallback found {len(filtered_properties)} properties")
+            
+            # Limit results
+            properties = filtered_properties[:20]
+            
+            if not properties:
+                return {
+                    "success": True,
+                    "response": f"I couldn't find any properties near the intersection of {street1} and {street2} in {city}. Would you like to search a broader area or try different criteria?",
+                    "properties": [],
+                    "suggestions": [
+                        f"Search all of {city}",
+                        "Try a different intersection",
+                        "Expand search radius"
+                    ],
+                    "filters": state.get_active_filters(),
+                    "metadata": self._create_metadata_dict(
+                        intent="intersection_search",
+                        confidence=0.85,
+                        reason=f"No properties found near {street1} & {street2}",
+                        cache_hit=False,
+                        used_gpt_fallback=False,
+                        requires_confirmation=False
+                    )
+                }
+            
+            # Standardize properties
+            standardize_func = get_standardize_property_data()
+            standardized = [standardize_func(p) for p in properties]
+            
+            # Create response message
+            response_text = f"I found {len(properties)} properties near the intersection of {street1} and {street2} in {city}!"
+            if len(filtered_properties) > 20:
+                response_text += f" (Showing 20 of {len(filtered_properties)} results)"
+            
+            return {
+                "success": True,
+                "response": response_text,
+                "properties": standardized,
+                "suggestions": [
+                    "Filter by price range",
+                    "Filter by bedrooms",
+                    "Show more details"
+                ],
+                "filters": state.get_active_filters(),
+                "metadata": self._create_metadata_dict(
+                    intent="intersection_search",
+                    confidence=0.90,
+                    reason=f"Properties near {street1} & {street2}",
+                    cache_hit=False,
+                    used_gpt_fallback=False,
+                    requires_confirmation=False
+                )
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ [INTERSECTION_HANDLER] Error: {e}")
+            import traceback
+            traceback.print_exc()
+            return self._handle_error(
+                session_id,
+                user_message,
+                f"I had trouble searching near {street1} and {street2}. Please try again or search by city."
+            )
+
+    def _handle_cross_city_address_search(
+        self,
+        session_id: str,
+        user_message: str,
+        address_result: Any,
+        state: Any
+    ) -> Dict[str, Any]:
+        """
+        Handle exact address searches across ALL cities (not just Toronto).
+        
+        Uses Repliers streetNumber + streetName parameters for cross-city matching.
+        
+        Args:
+            session_id: Session identifier
+            user_message: Original user message
+            address_result: Address intent detection result
+            state: Current conversation state
+            
+        Returns:
+            Standard response dict with matching properties
+        """
+        components = address_result.components
+        street_number = components.street_number
+        street_name = components.street_name
+        unit_number = components.unit_number
+        
+        logger.info(f"🌍 [CROSS_CITY_ADDRESS] Searching: {street_number} {street_name} (unit: {unit_number})")
+        
+        try:
+            from services.repliers_client import client as repliers_client
+            
+            # Build cross-city search params using streetNumber + streetName
+            api_params = {
+                'streetNumber': street_number,
+                'streetName': street_name,
+                'status': 'A',  # Active listings
+                'pageSize': 50
+            }
+            
+            # Add city filter ONLY if explicitly specified in user's query
+            if components.city:
+                api_params['city'] = components.city
+                logger.info(f"🌍 [CROSS_CITY_ADDRESS] City specified: {components.city}")
+            
+            logger.info(f"🔍 [CROSS_CITY_ADDRESS] API params: {api_params}")
+            
+            # Execute search
+            repliers_response = repliers_client.get('/listings', params=api_params)
+            raw_properties = repliers_response.get('results', repliers_response.get('listings', []))
+            
+            logger.info(f"📊 [CROSS_CITY_ADDRESS] Raw results: {len(raw_properties)}")
+            
+            # Filter by unit number if specified
+            if unit_number:
+                filtered = []
+                unit_lower = unit_number.lower().replace('#', '').strip()
+                for prop in raw_properties:
+                    addr = prop.get('address', {})
+                    prop_unit = str(addr.get('unitNumber', '') or '').lower().strip()
+                    if prop_unit == unit_lower or unit_lower in prop_unit:
+                        filtered.append(prop)
+                raw_properties = filtered if filtered else raw_properties[:1]  # Fallback to first match
+                logger.info(f"📊 [CROSS_CITY_ADDRESS] After unit filter: {len(raw_properties)}")
+            
+            if not raw_properties:
+                address_str = f"{street_number} {street_name}"
+                if unit_number:
+                    address_str += f" Unit {unit_number}"
+                return {
+                    "success": True,
+                    "response": f"I couldn't find any active listings at {address_str}. The property might be off-market or the address may need verification.",
+                    "properties": [],
+                    "property_count": 0,
+                    "suggestions": [
+                        "Try searching without the unit number",
+                        f"Search properties on {street_name}",
+                        "Check if address is correct"
+                    ],
+                    "filters": state.get_active_filters(),
+                    "metadata": self._create_metadata_dict(
+                        intent="address_search",
+                        confidence=0.90,
+                        reason=f"No active listings at {address_str}"
+                    )
+                }
+            
+            # Standardize properties
+            standardize_func = get_standardize_property_data()
+            standardized = [standardize_func(p) for p in raw_properties[:10]]
+            
+            # Update state
+            state.last_property_results = standardized
+            self.state_manager.save(state)
+            
+            # Build response
+            first_prop = raw_properties[0]
+            first_addr = first_prop.get('address', {})
+            city = first_addr.get('city', 'Unknown city')
+            
+            address_str = f"{street_number} {street_name}"
+            if unit_number:
+                address_str += f" Unit {unit_number}"
+            
+            if len(raw_properties) == 1:
+                response = f"Found 1 property at {address_str} in {city}."
+            else:
+                response = f"Found {len(raw_properties)} properties at {address_str}."
+            
+            logger.info(f"✅ [CROSS_CITY_ADDRESS] Found {len(raw_properties)} properties")
+            
+            return {
+                "success": True,
+                "response": response,
+                "agent_response": response,
+                "properties": standardized,
+                "property_count": len(standardized),
+                "suggestions": [
+                    "Tell me more about this property",
+                    "What's the neighborhood like?",
+                    "Show similar properties"
+                ],
+                "filters": state.get_active_filters(),
+                "metadata": self._create_metadata_dict(
+                    intent="address_search",
+                    confidence=0.95,
+                    reason=f"Found properties at {address_str}"
+                )
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ [CROSS_CITY_ADDRESS] Error: {e}")
+            import traceback
+            traceback.print_exc()
+            return self._handle_error(
+                session_id,
+                user_message,
+                f"I had trouble searching for that address. Please try again."
+            )
+
+    def _handle_mls_lookup(
+        self,
+        session_id: str,
+        user_message: str,
+        mls_number: str,
+        state: Any  # ConversationState type
+    ) -> Dict[str, Any]:
+        """
+        Handle MLS number lookups to find a specific property.
+        
+        Args:
+            session_id: Session identifier
+            user_message: Original user message
+            mls_number: MLS number to lookup (e.g., "C12652668")
+            state: Current conversation state
+            
+        Returns:
+            Standard response dict with the specific property (or not found message)
+        """
+        logger.info(f"🏷️ [MLS_HANDLER] Looking up MLS: {mls_number}")
+        
+        try:
+            from services.repliers_client import client as repliers_client
+            
+            # Try direct MLS lookup first
+            api_params = {
+                'mlsNumber': mls_number,
+                'status': 'A',  # Active listings
+            }
+            
+            logger.info(f"🔍 [MLS_HANDLER] API params: {api_params}")
+            
+            # Execute search
+            repliers_response = repliers_client.get('/listings', params=api_params)
+            raw_properties = repliers_response.get('results', repliers_response.get('listings', []))
+            
+            logger.info(f"📊 [MLS_HANDLER] Results: {len(raw_properties)}")
+            
+            # If no active listings found, try without status filter
+            if not raw_properties:
+                logger.info(f"🔄 [MLS_HANDLER] No active listings, trying all statuses")
+                api_params_all = {'mlsNumber': mls_number}
+                repliers_response = repliers_client.get('/listings', params=api_params_all)
+                raw_properties = repliers_response.get('results', repliers_response.get('listings', []))
+                logger.info(f"📊 [MLS_HANDLER] Results (all statuses): {len(raw_properties)}")
+            
+            if not raw_properties:
+                # MLS not found
+                logger.info(f"❌ [MLS_HANDLER] MLS {mls_number} not found")
+                return {
+                    "success": True,
+                    "response": f"I couldn't find a property with MLS number {mls_number}. Please verify the MLS number and try again.",
+                    "properties": [],
+                    "property_count": 0,
+                    "suggestions": [
+                        "Search by address instead",
+                        "Try a different MLS number",
+                        "Search properties in Toronto"
+                    ],
+                    "filters": state.get_active_filters(),
+                    "metadata": self._create_metadata_dict(
+                        intent="mls_lookup",
+                        confidence=0.95,
+                        reason=f"MLS {mls_number} not found"
+                    )
+                }
+            
+            # Standardize the property
+            standardize_func = get_standardize_property_data()
+            property_data = raw_properties[0]  # Should only be one result
+            standardized = standardize_func(property_data)
+            
+            # Extract property details for response
+            address = standardized.get('address', 'Unknown address')
+            price = standardized.get('price', 'Price not available')
+            beds = standardized.get('bedrooms', 'N/A')
+            baths = standardized.get('bathrooms', 'N/A')
+            
+            # Update state with this property
+            state.last_property_results = [standardized]
+            self.state_manager.save(state)
+            
+            # Generate detailed response
+            response_text = f"Found property MLS {mls_number}:\n\n📍 {address}\n💰 {price}\n🛏️ {beds} beds | 🚿 {baths} baths"
+            
+            logger.info(f"✅ [MLS_HANDLER] Found property: {address}")
+            
+            return {
+                "success": True,
+                "response": response_text,
+                "agent_response": response_text,
+                "properties": [standardized],
+                "property_count": 1,
+                "suggestions": [
+                    "Tell me more about this property",
+                    "What's the neighborhood like?",
+                    "Show similar properties"
+                ],
+                "filters": state.get_active_filters(),
+                "metadata": self._create_metadata_dict(
+                    intent="mls_lookup",
+                    confidence=0.98,
+                    reason=f"Found property MLS {mls_number}"
+                )
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ [MLS_HANDLER] Error: {e}")
+            import traceback
+            traceback.print_exc()
+            return self._handle_error(
+                session_id,
+                user_message,
+                f"I had trouble looking up MLS {mls_number}. Please try again."
+            )
+
     def _handle_postal_code_search(
         self,
         session_id: str,
@@ -3118,28 +4732,178 @@ Examples:
         state: Any  # ConversationState type
     ) -> Dict[str, Any]:
         """
-        Handle postal code searches with exclusivity (clears street context).
+        Handle postal code searches with ACTUAL postal code filtering.
         
-        RULE: When postal code is detected, clear street/neighborhood and use postal-only search.
+        RULE: When postal code is detected, search by city and FILTER by postal code FSA.
+        This ensures properties returned actually match the postal code area.
         """
         logger.info(f"📮 [POSTAL_CODE_HANDLER] Processing postal code search: {postal_code}")
         
+        # Get unified state for context clearing
+        unified_state = self.state_manager.get_or_create(session_id)
+        
         # Clear conflicting location context
-        state.clear_address_context()
-        state.clear_neighborhood_context()
+        unified_state.clear_address_context()
+        unified_state.location_state.neighborhood = None
         
-        # Use normal orchestrator flow for postal code search (not address priority)
-        # This will trigger standard location extraction and MLS search
-        logger.info(f"📮 [POSTAL_CODE_HANDLER] Delegating to standard search flow")
+        # Extract FSA (Forward Sortation Area) - first 3 characters of postal code
+        # Canadian postal codes are in format: A1A 1A1 (letter-number-letter space number-letter-number)
+        postal_code_clean = postal_code.replace(" ", "").upper()
+        fsa = postal_code_clean[:3] if len(postal_code_clean) >= 3 else postal_code_clean
         
-        # Set postal code in location context
+        logger.info(f"📮 [POSTAL_CODE_HANDLER] FSA extracted: {fsa} from postal code: {postal_code}")
+        
+        # Determine city for API search (FSA or auto-detect)
+        search_city = city
+        if not search_city:
+            # Try to auto-detect city from postal code
+            from services.postal_code_validator import postal_code_validator
+            search_city = postal_code_validator.suggest_city_for_postal(postal_code)
+            logger.info(f"📮 [POSTAL_CODE_HANDLER] Auto-detected city: {search_city}")
+        
+        # Build API parameters - search with OR without city depending on availability
+        api_params = {
+            "pageSize": 100  # Get more results to filter from
+        }
+        
+        # Only add city if we know it - allows cross-Canada postal code searches
+        if search_city:
+            api_params["city"] = search_city
+            logger.info(f"📮 [POSTAL_CODE_HANDLER] Searching in city: {search_city}")
+        else:
+            # For unknown postal codes, search without city restriction
+            logger.info(f"📮 [POSTAL_CODE_HANDLER] Unknown postal code region - searching across all cities")
+        
+        # Add any existing filters
         current_filters = state.get_active_filters()
-        current_filters['postal_code'] = postal_code
-        if city:
-            current_filters['location'] = city
+        if current_filters.get('property_type'):
+            api_params['class'] = current_filters['property_type']
+        if current_filters.get('bedrooms'):
+            api_params['minBeds'] = current_filters['bedrooms']
+        if current_filters.get('bathrooms'):
+            api_params['minBaths'] = current_filters['bathrooms']
+        if current_filters.get('min_price'):
+            api_params['minPrice'] = current_filters['min_price']
+        if current_filters.get('max_price'):
+            api_params['maxPrice'] = current_filters['max_price']
+        
+        # CRITICAL FIX: Add listing_type filter to prevent rental/sale mixing
+        # Check user message for explicit sale/rent request OR use existing filter
+        listing_type = current_filters.get('listing_type')
+        
+        # If no explicit listing_type, check user message for sale/rent keywords
+        if not listing_type:
+            user_msg_lower = user_message.lower()
+            if any(kw in user_msg_lower for kw in ['for sale', 'buy', 'purchase', 'buying']):
+                listing_type = 'sale'
+                logger.info(f"📮 [POSTAL_CODE_HANDLER] Detected 'sale' intent from message")
+            elif any(kw in user_msg_lower for kw in ['rent', 'rental', 'lease', 'renting']):
+                listing_type = 'rent'
+                logger.info(f"📮 [POSTAL_CODE_HANDLER] Detected 'rent' intent from message")
+        
+        # Apply listing_type to API params
+        if listing_type == 'rent':
+            api_params['type'] = 'lease'
+            logger.info(f"📮 [POSTAL_CODE_HANDLER] Added type: lease (rent requested)")
+        elif listing_type == 'sale':
+            api_params['type'] = 'sale'
+            logger.info(f"📮 [POSTAL_CODE_HANDLER] Added type: sale (sale requested)")
+        else:
+            # Default to sale if not specified (most common use case)
+            api_params['type'] = 'sale'
+            logger.info(f"📮 [POSTAL_CODE_HANDLER] Added type: sale (default)")
+        
+        logger.info(f"📮 [POSTAL_CODE_HANDLER] Searching with params: {api_params}")
+        
+        # Call Repliers API
+        try:
+            from services.repliers_client import client as repliers_client
             
-        # Continue with normal processing (will be handled by location extraction)
-        return self.process_message(session_id, user_message, skip_address_detection=True)
+            repliers_response = repliers_client.get('/listings', params=api_params)
+            raw_properties = repliers_response.get('results', repliers_response.get('listings', []))
+            logger.info(f"📮 [POSTAL_CODE_HANDLER] Raw results from API: {len(raw_properties)}")
+            
+            # CRITICAL: Filter properties by postal code FSA
+            matched_properties = []
+            for prop in raw_properties:
+                # Check multiple possible locations for postal code
+                # Top-level fields
+                prop_zip = prop.get('zip', '') or prop.get('postalCode', '') or ''
+                
+                # Nested in address object
+                address_data = prop.get('address', {})
+                if not prop_zip and address_data:
+                    prop_zip = address_data.get('zip', '') or address_data.get('postalCode', '') or ''
+                
+                prop_zip_clean = prop_zip.replace(" ", "").upper()
+                
+                # Match if FSA (first 3 chars) matches
+                if prop_zip_clean.startswith(fsa):
+                    matched_properties.append(prop)
+                    logger.debug(f"📮 [POSTAL_CODE_HANDLER] ✅ Match: {prop_zip_clean} starts with {fsa}")
+                else:
+                    logger.debug(f"📮 [POSTAL_CODE_HANDLER] ❌ No match: {prop_zip_clean} does not start with {fsa}")
+            
+            logger.info(f"📮 [POSTAL_CODE_HANDLER] Filtered to {len(matched_properties)} properties matching FSA {fsa}")
+            
+            # Limit to reasonable number
+            matched_properties = matched_properties[:10]
+            
+            # Standardize properties
+            standardize_func = get_standardize_property_data()
+            standardized = [standardize_func(p) for p in matched_properties]
+            
+            # Update state (BOTH legacy and unified)
+            state.location = search_city
+            state.location_state.city = search_city
+            state.location_state.postal_code = postal_code
+            state.last_property_results = standardized
+            
+            # CRITICAL: Also save postal code to unified state for refinements
+            unified_state.location_state.city = search_city
+            unified_state.location_state.postal_code = postal_code
+            logger.info(f"📮 [POSTAL_CODE_HANDLER] Saved postal code {postal_code} to unified state")
+            
+            # Save state (both legacy and unified)
+            self.state_manager.save(state)
+            self.unified_state_manager.save(unified_state)
+            
+            # Generate response
+            if matched_properties:
+                response_text = f"I found {len(matched_properties)} properties in postal code {postal_code}, {search_city}."
+                if len(matched_properties) >= 10:
+                    response_text = f"I found several properties in postal code {postal_code}, {search_city}. Here are the top 10 listings."
+            else:
+                response_text = f"I couldn't find any properties currently listed in postal code {postal_code}. Try expanding your search to nearby areas."
+            
+            return {
+                "success": True,
+                "response": response_text,
+                "agent_response": response_text,
+                "properties": standardized,
+                "property_count": len(standardized),
+                "state_summary": state.get_summary(),
+                "filters": state.get_active_filters(),
+                "metadata": self._create_metadata_dict(
+                    intent="postal_code_search",
+                    confidence=0.95,
+                    reason=f"Postal code search filtered by FSA {fsa}"
+                )
+            }
+            
+        except Exception as e:
+            logger.error(f"📮 [POSTAL_CODE_HANDLER] Error: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            
+            # Fallback to general search
+            return {
+                "success": False,
+                "response": f"I had trouble searching for postal code {postal_code}. Please try again.",
+                "properties": [],
+                "property_count": 0,
+                "error": str(e)
+            }
     
     def _extract_address_filters(self, current_filters: Dict[str, Any]) -> Dict[str, Any]:
         """Extract non-location filters for address search."""
@@ -3162,6 +4926,75 @@ Examples:
             address_filters['minBeds'] = current_filters['bedrooms']
         if current_filters.get('bathrooms'):
             address_filters['minBaths'] = current_filters['bathrooms']
+            
+        return address_filters
+    
+    def _get_address_search_filters(self, user_message: str, current_filters: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Smart filter extraction for address searches.
+        
+        RULE: Only apply session filters if the user's message EXPLICITLY mentions them.
+        For new address searches without filter keywords, return empty filters to avoid
+        carrying over stale session state.
+        
+        This prevents: User searches "condos under $600K in Toronto" then
+        "properties on King Street" - the second search should NOT auto-apply
+        the $600K and condo filters from the first search.
+        
+        Args:
+            user_message: The user's current search query
+            current_filters: Session filters from previous searches
+            
+        Returns:
+            Dict of filters to apply (only those mentioned in user_message)
+        """
+        message_lower = user_message.lower()
+        address_filters = {}
+        
+        # Keywords that indicate user wants specific filters applied
+        price_keywords = ['under', 'below', 'less than', 'max', 'budget', 'over', 'above', 'more than', 'min', '$', 'k', 'm', 'million', 'thousand']
+        bedroom_keywords = ['bed', 'bedroom', 'br', '1 bed', '2 bed', '3 bed', '4 bed', '5 bed', '1br', '2br', '3br', '4br', '5br']
+        bathroom_keywords = ['bath', 'bathroom', 'washroom']
+        type_keywords = ['condo', 'house', 'townhouse', 'detached', 'semi', 'apartment', 'bungalow', 'duplex']
+        
+        # Check if user mentioned price
+        has_price_mention = any(kw in message_lower for kw in price_keywords)
+        if has_price_mention:
+            if current_filters.get('min_price'):
+                address_filters['minPrice'] = current_filters['min_price']
+            if current_filters.get('max_price'):
+                address_filters['maxPrice'] = current_filters['max_price']
+            logger.info(f"💰 [ADDRESS_FILTERS] Price mentioned in query - applying price filters")
+        
+        # Check if user mentioned bedrooms
+        has_bedroom_mention = any(kw in message_lower for kw in bedroom_keywords)
+        if has_bedroom_mention:
+            if current_filters.get('bedrooms'):
+                address_filters['minBeds'] = current_filters['bedrooms']
+            logger.info(f"🛏️ [ADDRESS_FILTERS] Bedrooms mentioned in query - applying bedroom filter")
+        
+        # Check if user mentioned bathrooms
+        has_bathroom_mention = any(kw in message_lower for kw in bathroom_keywords)
+        if has_bathroom_mention:
+            if current_filters.get('bathrooms'):
+                address_filters['minBaths'] = current_filters['bathrooms']
+            logger.info(f"🛁 [ADDRESS_FILTERS] Bathrooms mentioned in query - applying bathroom filter")
+        
+        # Check if user mentioned property type
+        has_type_mention = any(kw in message_lower for kw in type_keywords)
+        if has_type_mention:
+            if current_filters.get('property_type'):
+                address_filters['propertyType'] = current_filters['property_type']
+            logger.info(f"🏠 [ADDRESS_FILTERS] Property type mentioned in query - applying type filter")
+        
+        # Always apply listing type (sale/rent) as it's usually what user wants
+        if current_filters.get('listing_type'):
+            address_filters['transactionType'] = current_filters['listing_type']
+        
+        if not address_filters or address_filters.keys() == {'transactionType'}:
+            logger.info(f"🔄 [ADDRESS_FILTERS] No specific filters in query - searching all properties on street")
+        else:
+            logger.info(f"✅ [ADDRESS_FILTERS] Applied filters from query: {address_filters}")
             
         return address_filters
     
@@ -3466,10 +5299,50 @@ Examples:
             comparison += f"• {prop.get('sqft', 'N/A')} sqft\n\n"
         
         return comparison
+    
+    def get_intent_classifier_stats(self) -> Dict[str, Any]:
+        """
+        Get performance statistics from the HybridIntentClassifier.
+        Useful for monitoring local vs GPT-4 usage.
+        
+        Returns:
+            Dict with cache_hit_rate and other metrics
+        """
+        try:
+            cache_hit_rate = intent_classifier.get_cache_hit_rate()
+            return {
+                "success": True,
+                "cache_hit_rate": cache_hit_rate,
+                "cache_hit_rate_percent": f"{cache_hit_rate:.2%}",
+                "description": "Intent classification performance metrics",
+                "local_first": "95%+ messages classified locally in < 5ms",
+                "gpt_fallback": "Only used when confidence < 70%"
+            }
+        except Exception as e:
+            logger.error(f"Error getting intent classifier stats: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
 
 
-# Global chatbot instance
-chatbot = ChatGPTChatbot()
+# =============================================================================
+# GLOBAL CHATBOT INSTANCE
+# =============================================================================
+
+# Initialize single global chatbot instance for use by API endpoints and process_user_message
+chatbot_instance = ChatGPTChatbot()
+
+# Alias for backwards compatibility
+chatbot = chatbot_instance
+
+logger.info(
+    "Global chatbot instance initialized",
+    extra={
+        "backend": chatbot_instance.state_manager.backend,
+        "transaction_manager_enabled": True
+    }
+)
 
 
 def process_user_message(
@@ -3478,12 +5351,15 @@ def process_user_message(
     context: Optional[Dict] = None
 ) -> Dict[str, Any]:
     """
-    Convenience function to process a user message.
+    Convenience function to process a user message using the global chatbot instance.
     """
-    return chatbot.process_message(message, session_id, context)
+    return chatbot_instance.process_message(message, session_id, context)
 
 
-# ---------------- quick CLI test ----------------
+# =============================================================================
+# CLI TESTING
+# =============================================================================
+
 if __name__ == "__main__":
     import logging
     logging.basicConfig(level=logging.INFO)

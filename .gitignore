@@ -1,27 +1,14 @@
-# ==================== RENDER PRODUCTION DEPLOYMENT ====================
-# Only essential files for production deployment
-# Development, testing, and documentation files excluded
+# ==================== SUMMITLY BACKEND .gitignore ====================
 
-# Development Scripts  
-debug_*
-test_*
-tests/
-scripts/
-*.sh
-
-# Documentation (keep only essential)
-docs/
-*.md
-!README.md
-!RENDER_DEPLOYMENT_GUIDE.md
-
-# Environment variables
+# ===== SECURITY - NEVER COMMIT =====
+# Environment files with secrets
 .env
-.env.local
-.env.*.local
+*.env
 !.env.example
+config/.env
+app/config/.env
 
-# Python
+# ===== PYTHON =====
 __pycache__/
 *.py[cod]
 *$py.class
@@ -50,59 +37,79 @@ MANIFEST
 venv/
 ENV/
 env/
-.venv
+.venv/
+.conda/
 
-# IDE
+# ===== IDE & EDITOR =====
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-.DS_Store
 *.sublime-project
 *.sublime-workspace
 
-# Testing
+# ===== TESTING =====
 .tox/
 .coverage
 .coverage.*
-.cache
+htmlcov/
+.cache/
 nosetests.xml
 coverage.xml
 *.cover
 *.py,cover
 .hypothesis/
 .pytest_cache/
+e2e_results/
 
-# Logging
+# ===== LOGS =====
 *.log
-logs/
+logs/*.log
 !logs/.gitkeep
+nohup.out
 
-# Audio files
-temp_audio/
+# ===== AUDIO & TEMP FILES =====
+temp_audio/*
+!temp_audio/.gitkeep
 *.wav
 *.mp3
 *.m4a
 *.ogg
 
-# Data files (keep if needed for version control)
+# ===== DATA FILES =====
 *.xlsx
 *.xls
-*.csv
-!data/samples/**
 
-# Temporary files
+# Exclude test result files
+test_results*.json
+test_results*.csv
+test_scenarios*.json
+e2etest.json
+*_report.json
+audit_*.json
+
+# ===== TEMPORARY FILES =====
 .tmp/
 *.tmp
 *.bak
-*.swp
+*.backup
+*.orig
 
-# OS
-Thumbs.db
+# ===== OS FILES =====
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# Build artifacts
+# ===== BUILD ARTIFACTS =====
 dist/
 build/
 *.egg-info/
+
+# ===== BACKUP DIRECTORIES =====
+backups/

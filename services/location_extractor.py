@@ -38,6 +38,11 @@ class LocationState:
     """
     Represents location-specific state for property search.
     Follows Repliers API location hierarchy.
+    
+    COMPATIBILITY NOTE:
+    - Primary fields use camelCase (postalCode, streetName, streetNumber) for Repliers API
+    - Properties provide snake_case aliases (postal_code, street_name, street_number) for UnifiedConversationState
+    - Both access patterns work: state.postalCode == state.postal_code
     """
     city: Optional[str] = None
     community: Optional[str] = None
@@ -46,8 +51,42 @@ class LocationState:
     streetName: Optional[str] = None
     streetNumber: Optional[str] = None
     
+    # ═══════════════════════════════════════════════════════════════════════════
+    # COMPATIBILITY PROPERTIES - Allow snake_case access (for UnifiedConversationState)
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    @property
+    def postal_code(self) -> Optional[str]:
+        """Snake_case alias for postalCode (UnifiedConversationState compatibility)."""
+        return self.postalCode
+    
+    @postal_code.setter
+    def postal_code(self, value: Optional[str]):
+        """Setter for snake_case postal_code."""
+        self.postalCode = value
+    
+    @property
+    def street_name(self) -> Optional[str]:
+        """Snake_case alias for streetName (UnifiedConversationState compatibility)."""
+        return self.streetName
+    
+    @street_name.setter
+    def street_name(self, value: Optional[str]):
+        """Setter for snake_case street_name."""
+        self.streetName = value
+    
+    @property
+    def street_number(self) -> Optional[str]:
+        """Snake_case alias for streetNumber (UnifiedConversationState compatibility)."""
+        return self.streetNumber
+    
+    @street_number.setter
+    def street_number(self, value: Optional[str]):
+        """Setter for snake_case street_number."""
+        self.streetNumber = value
+    
     def to_dict(self) -> Dict[str, Optional[str]]:
-        """Convert to dictionary, excluding None values."""
+        """Convert to dictionary, excluding None values. Returns camelCase keys for API."""
         return {
             k: v for k, v in {
                 'city': self.city,
@@ -56,6 +95,19 @@ class LocationState:
                 'postalCode': self.postalCode,
                 'streetName': self.streetName,
                 'streetNumber': self.streetNumber
+            }.items() if v is not None
+        }
+    
+    def to_snake_case_dict(self) -> Dict[str, Optional[str]]:
+        """Convert to dictionary with snake_case keys (for UnifiedConversationState)."""
+        return {
+            k: v for k, v in {
+                'city': self.city,
+                'community': self.community,
+                'neighborhood': self.neighborhood,
+                'postal_code': self.postalCode,
+                'street_name': self.streetName,
+                'street_number': self.streetNumber
             }.items() if v is not None
         }
     

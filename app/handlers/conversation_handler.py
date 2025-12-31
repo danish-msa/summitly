@@ -2,8 +2,8 @@
 Conversation processing and session management handlers
 """
 from typing import Dict, List, Optional
-from models.models import Session
-from config.config import LEAD_COLLECTION_QUESTIONS
+from app.models.models import Session
+from app.config.config import LEAD_COLLECTION_QUESTIONS
 
 
 def extract_property_preferences_naturally(user_text: str, session: Session) -> Dict:

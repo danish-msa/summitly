@@ -4,7 +4,7 @@ Manager dashboard API routes
 from flask import Blueprint, request, jsonify
 from handlers.broker_handler import get_active_brokers, get_broker_by_id
 from utils.excel_utils import get_leads_data, update_lead_status, manual_assign_broker
-from config.config import Config
+from app.config.config import Config
 import traceback
 
 manager_api = Blueprint('manager_api', __name__)

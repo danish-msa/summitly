@@ -614,15 +614,20 @@ class ChatbotFormatter:
         # === Data Sources & Confidence Footer ===
         html_parts.append('''
 <div class="footer-info" style="
-    background: #f8f9fa;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     border-radius: 8px;
-    padding: 14px;
+    padding: 16px;
     margin: 16px 0;
     border-left: 4px solid #4CAF50;">
-    <div style="font-size: 12px; color: #666; line-height: 1.6;">
-        <div style="margin-bottom: 6px;"><strong>🔍 Data Sources:</strong> Repliers MLS Database, Recent Sales Data, Market Trends</div>
-        <div style="margin-bottom: 6px;"><strong>🤖 AI Model:</strong> OpenAI GPT-4o-mini with Canadian Real Estate Training</div>
-        <div><strong>📊 Analysis Date:</strong> Generated in real-time</div>
+    <div style="font-size: 12px; color: #666; line-height: 1.8;">
+        <div style="margin-bottom: 8px; font-weight: 600; color: #333; font-size: 13px;">📊 Analysis Details</div>
+        <div style="margin-bottom: 6px;"><strong>🔍 Data Source:</strong> Repliers MLS - Live Market Data</div>
+        <div style="margin-bottom: 6px;"><strong>🤖 AI Model:</strong> OpenAI GPT-4o-mini (Canadian Real Estate Trained)</div>
+        <div style="margin-bottom: 6px;"><strong>📈 Comparables:</strong> Multiple properties analyzed for accuracy</div>
+        <div style="margin-bottom: 6px;"><strong>� Analysis Date:</strong> Real-time market analysis</div>
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #dee2e6; font-style: italic; color: #888;">
+            ⚠️ This is an AI-powered market analysis. For official property valuations, financing, or legal purposes, please consult a licensed Canadian residential appraiser.
+        </div>
     </div>
 </div>
 ''')

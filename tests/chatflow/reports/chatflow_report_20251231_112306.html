@@ -1,0 +1,3184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatFlow Test Report - ChatFlow Test Suite</title>
+    <style>
+        :root {
+            --color-pass: #22c55e;
+            --color-fail: #ef4444;
+            --color-error: #f97316;
+            --color-skip: #6b7280;
+            --color-bg: #f8fafc;
+            --color-card: #ffffff;
+            --color-border: #e2e8f0;
+            --color-text: #1e293b;
+            --color-text-secondary: #64748b;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .header .meta {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        /* Summary Cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .summary-card {
+            background: var(--color-card);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .summary-card .label {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--color-text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        .summary-card .value {
+            font-size: 32px;
+            font-weight: 700;
+        }
+        
+        .summary-card.pass .value { color: var(--color-pass); }
+        .summary-card.fail .value { color: var(--color-fail); }
+        .summary-card.error .value { color: var(--color-error); }
+        
+        /* Score Cards */
+        .scores-section {
+            background: var(--color-card);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .scores-section h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .scores-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .score-card {
+            padding: 16px;
+            border-radius: 8px;
+            background: #f1f5f9;
+        }
+        
+        .score-card .score-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .score-card .score-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .score-card .score-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .score-bar {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .score-bar .fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        .score-excellent .score-value { color: #22c55e; }
+        .score-excellent .fill { background: #22c55e; }
+        
+        .score-good .score-value { color: #84cc16; }
+        .score-good .fill { background: #84cc16; }
+        
+        .score-fair .score-value { color: #eab308; }
+        .score-fair .fill { background: #eab308; }
+        
+        .score-poor .score-value { color: #f97316; }
+        .score-poor .fill { background: #f97316; }
+        
+        .score-critical .score-value { color: #ef4444; }
+        .score-critical .fill { background: #ef4444; }
+        
+        /* Category Section */
+        .category-section {
+            background: var(--color-card);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .category-section h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+        
+        .category-card {
+            padding: 16px;
+            border-radius: 8px;
+            background: #f8fafc;
+            border: 1px solid var(--color-border);
+        }
+        
+        .category-card .category-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 12px;
+            text-transform: capitalize;
+        }
+        
+        .category-card .stats {
+            display: flex;
+            gap: 16px;
+        }
+        
+        .category-card .stat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .category-card .stat-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .category-card .stat-dot.pass { background: var(--color-pass); }
+        .category-card .stat-dot.fail { background: var(--color-fail); }
+        .category-card .stat-dot.error { background: var(--color-error); }
+        
+        /* Test Results Table */
+        .results-section {
+            background: var(--color-card);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .results-section h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-tab {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid var(--color-border);
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .filter-tab:hover {
+            background: #f1f5f9;
+        }
+        
+        .filter-tab.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+        
+        .test-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .test-table th {
+            text-align: left;
+            padding: 12px;
+            background: #f8fafc;
+            border-bottom: 2px solid var(--color-border);
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            color: var(--color-text-secondary);
+        }
+        
+        .test-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--color-border);
+            vertical-align: top;
+        }
+        
+        .test-table tr:hover {
+            background: #f8fafc;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-badge.passed {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .status-badge.failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .status-badge.error {
+            background: #ffedd5;
+            color: #9a3412;
+        }
+        
+        .status-badge.skipped {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        
+        /* Test Detail */
+        .test-detail {
+            margin-top: 12px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        
+        .test-detail h4 {
+            font-size: 13px;
+            margin-bottom: 8px;
+            color: var(--color-text-secondary);
+        }
+        
+        .assertion-list {
+            list-style: none;
+        }
+        
+        .assertion-list li {
+            padding: 4px 0;
+            font-family: 'Menlo', 'Monaco', monospace;
+            font-size: 12px;
+        }
+        
+        .assertion-list li.pass {
+            color: #166534;
+        }
+        
+        .assertion-list li.fail {
+            color: #991b1b;
+        }
+        
+        /* Conversation View */
+        .conversation {
+            margin-top: 16px;
+        }
+        
+        .turn {
+            margin-bottom: 12px;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        
+        .turn.user {
+            background: #e0e7ff;
+            margin-right: 20%;
+        }
+        
+        .turn.assistant {
+            background: #f1f5f9;
+            margin-left: 20%;
+        }
+        
+        .turn .role {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--color-text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        .turn .message {
+            font-size: 14px;
+        }
+        
+        .turn .metadata {
+            margin-top: 8px;
+            font-size: 11px;
+            color: var(--color-text-secondary);
+        }
+        
+        /* Latency Section */
+        .latency-section {
+            background: var(--color-card);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .latency-section h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .latency-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+        }
+        
+        .latency-card {
+            text-align: center;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+        
+        .latency-card .latency-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #6366f1;
+        }
+        
+        .latency-card .latency-unit {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+        }
+        
+        .latency-card .latency-label {
+            margin-top: 4px;
+            font-size: 12px;
+            color: var(--color-text-secondary);
+        }
+        
+        /* Failures Section */
+        .failures-section {
+            background: var(--color-card);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid var(--color-fail);
+        }
+        
+        .failures-section h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--color-border);
+            color: var(--color-fail);
+        }
+        
+        .failure-item {
+            padding: 16px;
+            background: #fef2f2;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .failure-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .failure-item .failure-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .failure-item .test-id {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .failure-item .category {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+        }
+        
+        .failure-item .assertions {
+            font-family: 'Menlo', 'Monaco', monospace;
+            font-size: 12px;
+            color: #991b1b;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--color-text-secondary);
+            font-size: 12px;
+        }
+        
+        /* Expandable */
+        .expandable {
+            cursor: pointer;
+        }
+        
+        .expandable-content {
+            display: none;
+            padding-top: 12px;
+        }
+        
+        .expandable.expanded .expandable-content {
+            display: block;
+        }
+        
+        .expand-icon {
+            display: inline-block;
+            width: 20px;
+            transition: transform 0.2s;
+        }
+        
+        .expandable.expanded .expand-icon {
+            transform: rotate(90deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🤖 ChatFlow Test Suite</h1>
+            <div class="meta">
+                <span>📅 2025-12-31 11:23:06</span> &nbsp;|&nbsp;
+                <span>🌐 http://localhost:5050</span> &nbsp;|&nbsp;
+                <span>⏱️ Duration: 416.0s</span>
+            </div>
+        </div>
+        
+        <!-- Summary -->
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="label">Total Tests</div>
+                <div class="value">38</div>
+            </div>
+            <div class="summary-card pass">
+                <div class="label">Passed</div>
+                <div class="value">29</div>
+            </div>
+            <div class="summary-card fail">
+                <div class="label">Failed</div>
+                <div class="value">8</div>
+            </div>
+            <div class="summary-card error">
+                <div class="label">Errors</div>
+                <div class="value">1</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Pass Rate</div>
+                <div class="value" style="color: #eab308">76.3%</div>
+            </div>
+        </div>
+        
+        <!-- Quality Scores -->
+        <div class="scores-section">
+            <h2>📊 Quality Scores</h2>
+            <div class="scores-grid">
+                
+            <div class="score-card score-excellent">
+                <div class="score-header">
+                    <span class="score-name">Context Retention</span>
+                    <span class="score-value">91.2</span>
+                </div>
+                <div class="score-bar">
+                    <div class="fill" style="width: 91.22807017543859%"></div>
+                </div>
+                <div style="margin-top: 8px; font-size: 12px; color: #64748b;">How well the bot remembers context across turns</div>
+            </div>
+            
+
+            <div class="score-card score-poor">
+                <div class="score-header">
+                    <span class="score-name">Follow-up Correctness</span>
+                    <span class="score-value">57.7</span>
+                </div>
+                <div class="score-bar">
+                    <div class="fill" style="width: 57.726133515607195%"></div>
+                </div>
+                <div style="margin-top: 8px; font-size: 12px; color: #64748b;">Accuracy of follow-up handling</div>
+            </div>
+            
+
+            <div class="score-card score-fair">
+                <div class="score-header">
+                    <span class="score-name">NLP Extraction</span>
+                    <span class="score-value">71.1</span>
+                </div>
+                <div class="score-bar">
+                    <div class="fill" style="width: 71.09649122807018%"></div>
+                </div>
+                <div style="margin-top: 8px; font-size: 12px; color: #64748b;">Accuracy of intent and entity extraction</div>
+            </div>
+            
+
+            <div class="score-card score-good">
+                <div class="score-header">
+                    <span class="score-name">UX Quality</span>
+                    <span class="score-value">77.5</span>
+                </div>
+                <div class="score-bar">
+                    <div class="fill" style="width: 77.54385964912281%"></div>
+                </div>
+                <div style="margin-top: 8px; font-size: 12px; color: #64748b;">Overall user experience quality</div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <!-- Latency Metrics -->
+        <div class="latency-section">
+            <h2>⚡ Response Time Metrics</h2>
+            <div class="latency-grid">
+                <div class="latency-card">
+                    <div class="latency-value">5762</div>
+                    <div class="latency-unit">ms</div>
+                    <div class="latency-label">Average</div>
+                </div>
+                <div class="latency-card">
+                    <div class="latency-value">4</div>
+                    <div class="latency-unit">ms</div>
+                    <div class="latency-label">Minimum</div>
+                </div>
+                <div class="latency-card">
+                    <div class="latency-value">20886</div>
+                    <div class="latency-unit">ms</div>
+                    <div class="latency-label">Maximum</div>
+                </div>
+                <div class="latency-card">
+                    <div class="latency-value">12430</div>
+                    <div class="latency-unit">ms</div>
+                    <div class="latency-label">P95</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Category Breakdown -->
+        <div class="category-section">
+            <h2>📁 Category Breakdown</h2>
+            <div class="category-grid">
+                
+            <div class="category-card">
+                <div class="category-name">Yes No Followup</div>
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-dot pass"></span>
+                        <span>0 passed</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-dot fail"></span>
+                        <span>5 failed</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-dot error"></span>
+                        <span>0 errors</span>
+                    </div>
+                </div>
+            </div>
+            
+
+            <div class="category-card">
+                <div class="category-name">Partial Answer</div>
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-dot pass"></span>
+                        <span>3 passed</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-dot fail"></span>
+                        <span>0 failed</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-dot error"></span>
+                        <span>0 errors</span>
+                    </div>
+                </div>
+            </div>
+            
+
+            <div class="category-card">
+                <div class="category-name">Location Switch</div>
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-dot pass"></span>
+                        <span>3 passed</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-dot fail"></span>
+                        <span>0 failed</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-dot error"></span>
+                        <span>0 errors</span>
+                    </div>
+                </div>
+            </div>
+            
+
+            <div class="category-card">
+                <div class="category-name">Interruption</div>
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-dot pass"></span>
+                        <span>2 passed</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-dot fail"></span>
+                        <span>1 failed</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-dot error"></span>
+                        <span>0 errors</span>
+                    </div>
+                </div>
+            </div>
+            
+
+            <div class="category-card">
+                <div class="category-name">Multi Intent</div>
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-dot pass"></span>
+                        <span>3 passed</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-dot fail"></span>
+                        <span>0 failed</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-dot error"></span>
+                        <span>0 errors</span>
+                    </div>
+                </div>
+            </div>
+            
+
+            <div class="category-card">
+                <div class="category-name">Off Topic</div>
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-dot pass"></span>
+                        <span>10 passed</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-dot fail"></span>
+                        <span>0 failed</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-dot error"></span>
+                        <span>0 errors</span>
+                    </div>
+                </div>
+            </div>
+            
+
+            <div class="category-card">
+                <div class="category-name">General Question</div>
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-dot pass"></span>
+                        <span>2 passed</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-dot fail"></span>
+                        <span>1 failed</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-dot error"></span>
+                        <span>0 errors</span>
+                    </div>
+                </div>
+            </div>
+            
+
+            <div class="category-card">
+                <div class="category-name">Edge Case</div>
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-dot pass"></span>
+                        <span>4 passed</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-dot fail"></span>
+                        <span>0 failed</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-dot error"></span>
+                        <span>1 errors</span>
+                    </div>
+                </div>
+            </div>
+            
+
+            <div class="category-card">
+                <div class="category-name">Ux Quality</div>
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-dot pass"></span>
+                        <span>2 passed</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-dot fail"></span>
+                        <span>1 failed</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-dot error"></span>
+                        <span>0 errors</span>
+                    </div>
+                </div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <!-- Failures -->
+        
+        <div class="failures-section">
+            <h2>❌ Failed Tests (9)</h2>
+            
+            <div class="failure-item">
+                <div class="failure-header">
+                    <span class="test-id">yes_no_001</span>
+                    <span class="category">Yes No Followup</span>
+                </div>
+                <div class="assertions">✗ Final intent: expected 'confirmation': expected 'confirmation', got 'general_chat'</div>
+            </div>
+            
+            <div class="failure-item">
+                <div class="failure-header">
+                    <span class="test-id">yes_no_002</span>
+                    <span class="category">Yes No Followup</span>
+                </div>
+                <div class="assertions">✗ Final intent: expected 'confirmation': expected 'confirmation', got 'general_chat'</div>
+            </div>
+            
+            <div class="failure-item">
+                <div class="failure-header">
+                    <span class="test-id">yes_no_003</span>
+                    <span class="category">Yes No Followup</span>
+                </div>
+                <div class="assertions">✗ Final intent: expected 'confirmation': expected 'confirmation', got 'general_chat'</div>
+            </div>
+            
+            <div class="failure-item">
+                <div class="failure-header">
+                    <span class="test-id">yes_no_004</span>
+                    <span class="category">Yes No Followup</span>
+                </div>
+                <div class="assertions">✗ Final intent: expected 'confirmation': expected 'confirmation', got 'general_chat'</div>
+            </div>
+            
+            <div class="failure-item">
+                <div class="failure-header">
+                    <span class="test-id">yes_no_005</span>
+                    <span class="category">Yes No Followup</span>
+                </div>
+                <div class="assertions">✗ Final intent: expected 'confirmation': expected 'confirmation', got 'general_chat'</div>
+            </div>
+            
+            <div class="failure-item">
+                <div class="failure-header">
+                    <span class="test-id">interrupt_002</span>
+                    <span class="category">Interruption</span>
+                </div>
+                <div class="assertions">✗ Final intent: expected 'reset': expected 'reset', got 'None'</div>
+            </div>
+            
+            <div class="failure-item">
+                <div class="failure-header">
+                    <span class="test-id">general_001</span>
+                    <span class="category">General Question</span>
+                </div>
+                <div class="assertions">✗ Final intent: expected 'general_question': expected 'general_question', got 'None'</div>
+            </div>
+            
+            <div class="failure-item">
+                <div class="failure-header">
+                    <span class="test-id">edge_001</span>
+                    <span class="category">Edge Case</span>
+                </div>
+                <div class="assertions">Request failed at turn 1: HTTP 400: {
+  "error": "Message required",
+  "success": false
+}
+<br>ERROR: Request failed at turn 1: HTTP 400: {
+  "error": "Message required",
+  "success": false
+}
+</div>
+            </div>
+            
+            <div class="failure-item">
+                <div class="failure-header">
+                    <span class="test-id">ux_002</span>
+                    <span class="category">Ux Quality</span>
+                </div>
+                <div class="assertions">✗ Forbidden: Duplicate question at turn 1</div>
+            </div>
+            
+        </div>
+        
+        
+        <!-- All Test Results -->
+        <div class="results-section">
+            <h2>📋 All Test Results</h2>
+            <div class="filter-tabs">
+                <button class="filter-tab active" onclick="filterTests('all')">All (38)</button>
+                <button class="filter-tab" onclick="filterTests('passed')">Passed (29)</button>
+                <button class="filter-tab" onclick="filterTests('failed')">Failed (8)</button>
+                <button class="filter-tab" onclick="filterTests('error')">Errors (1)</button>
+            </div>
+            <table class="test-table">
+                <thead>
+                    <tr>
+                        <th>Test ID</th>
+                        <th>Category</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Duration</th>
+                        <th>Scores</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+            <tr data-status="failed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    yes_no_001
+                </td>
+                <td>Yes No Followup</td>
+                <td>Test 'yes' confirmation after initial property search...</td>
+                <td><span class="status-badge failed">failed</span></td>
+                <td>21901ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 40%, 
+                        NLP: 50%, 
+                        UX: 78%">
+                📊 67%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="failed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Assertions</h4>
+                <ul class="assertion-list">
+                    
+                    <li class="fail">✗ Final intent: expected 'confirmation': expected 'confirmation', got 'general_chat'</li>
+                </ul>
+            </div>
+            
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Show me condos in Toronto under 500k</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I found quite a few condos in Toronto under $500,000 for you! There are currently 100 options available, including some great choices in neighborhoods like Bendale and Niagara.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.96 | 
+                        Properties: 1026 |
+                        Time: 20886ms
+                    </div>
+                </div>
+                
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">yes</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I'm here to help! What would you like to know about real estate in Toronto and the GTA?</div>
+                    <div class="metadata">
+                        Intent: general_chat | 
+                        Confidence: 0.95 | 
+                        Properties: 0 |
+                        Time: 8ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="failed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    yes_no_002
+                </td>
+                <td>Yes No Followup</td>
+                <td>Test 'no' confirmation - should ask for refinement...</td>
+                <td><span class="status-badge failed">failed</span></td>
+                <td>13437ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 29%, 
+                        NLP: 50%, 
+                        UX: 78%">
+                📊 64%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="failed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Assertions</h4>
+                <ul class="assertion-list">
+                    
+                    <li class="fail">✗ Final intent: expected 'confirmation': expected 'confirmation', got 'general_chat'</li>
+                </ul>
+            </div>
+            
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Show me houses in Mississauga</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I found quite a few detached houses for sale in Mississauga—over 100 options! Here are some highlights: a beautiful 4-bedroom home on Shillington Drive listed at $989,999, and a stunning property on Bob-O-Link Road for $3,499,000.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.95 | 
+                        Properties: 600 |
+                        Time: 12430ms
+                    </div>
+                </div>
+                
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">no</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I'm here to help! What would you like to know about real estate in Toronto and the GTA?</div>
+                    <div class="metadata">
+                        Intent: general_chat | 
+                        Confidence: 0.95 | 
+                        Properties: 0 |
+                        Time: 5ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="failed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    yes_no_003
+                </td>
+                <td>Yes No Followup</td>
+                <td>Test 'sure' as positive confirmation...</td>
+                <td><span class="status-badge failed">failed</span></td>
+                <td>9051ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 50%, 
+                        NLP: 50%, 
+                        UX: 90%">
+                📊 72%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="failed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Assertions</h4>
+                <ul class="assertion-list">
+                    
+                    <li class="fail">✗ Final intent: expected 'confirmation': expected 'confirmation', got 'general_chat'</li>
+                </ul>
+            </div>
+            
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">2 bedroom rentals in downtown Toronto</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I've found 100 options for 2-bedroom rentals in downtown Toronto! Here are a few that might catch your interest.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.96 | 
+                        Properties: 3396 |
+                        Time: 8036ms
+                    </div>
+                </div>
+                
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">sure</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I'm here to help! What would you like to know about real estate in Toronto and the GTA?</div>
+                    <div class="metadata">
+                        Intent: general_chat | 
+                        Confidence: 0.95 | 
+                        Properties: 0 |
+                        Time: 8ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="failed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    yes_no_004
+                </td>
+                <td>Yes No Followup</td>
+                <td>Test 'sounds good' as positive confirmation...</td>
+                <td><span class="status-badge failed">failed</span></td>
+                <td>9056ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 50%, 
+                        NLP: 50%, 
+                        UX: 98%">
+                📊 74%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="failed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Assertions</h4>
+                <ul class="assertion-list">
+                    
+                    <li class="fail">✗ Final intent: expected 'confirmation': expected 'confirmation', got 'general_chat'</li>
+                </ul>
+            </div>
+            
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Show me properties in Vancouver</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I couldn't find any properties in Vancouver at the moment. Would you like to explore nearby areas like Burnaby or Richmond?</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.95 | 
+                        Properties: 0 |
+                        Time: 8045ms
+                    </div>
+                </div>
+                
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">sounds good</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I'm here to help! What would you like to know about real estate in Toronto and the GTA?</div>
+                    <div class="metadata">
+                        Intent: general_chat | 
+                        Confidence: 0.95 | 
+                        Properties: 0 |
+                        Time: 7ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="failed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    yes_no_005
+                </td>
+                <td>Yes No Followup</td>
+                <td>Test 'nope' as negative confirmation...</td>
+                <td><span class="status-badge failed">failed</span></td>
+                <td>9577ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 33%, 
+                        NLP: 50%, 
+                        UX: 80%">
+                📊 66%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="failed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Assertions</h4>
+                <ul class="assertion-list">
+                    
+                    <li class="fail">✗ Final intent: expected 'confirmation': expected 'confirmation', got 'general_chat'</li>
+                </ul>
+            </div>
+            
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Condos in Ottawa</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I found a great selection of condos in Ottawa for you! There are currently 100 options available, including a lovely 2-bedroom unit in Kanata for $305,000 and a stylish 1-bedroom suite downtown for $345,900.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.95 | 
+                        Properties: 569 |
+                        Time: 8562ms
+                    </div>
+                </div>
+                
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">nope</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I'm here to help! What would you like to know about real estate in Toronto and the GTA?</div>
+                    <div class="metadata">
+                        Intent: general_chat | 
+                        Confidence: 0.95 | 
+                        Properties: 0 |
+                        Time: 9ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    partial_001
+                </td>
+                <td>Partial Answer</td>
+                <td>Test budget-only response - should preserve previous location...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>20958ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 50%, 
+                        NLP: 100%, 
+                        UX: 58%">
+                📊 77%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Show me condos in Toronto</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I've found quite a few condos in Toronto for you—over 100 options! If you'd like, I can help narrow it down further.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.95 | 
+                        Properties: 4221 |
+                        Time: 7450ms
+                    </div>
+                </div>
+                
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">under 600k</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I've found some great condos for sale in Toronto under $600k! There are currently 100 listings available, including options like a bright 2-bedroom unit in Bendale for $498,000 and a renovated 1-bedroom plus solarium in the Church-Yonge Corridor for $599,000.</div>
+                    <div class="metadata">
+                        Intent: property_refinement | 
+                        Confidence: 0.93 | 
+                        Properties: 2072 |
+                        Time: 12501ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    partial_002
+                </td>
+                <td>Partial Answer</td>
+                <td>Test bedroom count only - should preserve location and type...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>20268ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 67%, 
+                        NLP: 100%, 
+                        UX: 68%">
+                📊 84%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Houses in Brampton under 800k</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I found 92 detached houses for sale in Brampton under $800,000! There are some great options available.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.96 | 
+                        Properties: 92 |
+                        Time: 11902ms
+                    </div>
+                </div>
+                
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">3 bedrooms</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I've found 71 detached homes with 3 bedrooms for sale in Brampton, which gives you a great selection to choose from! Here are a couple of notable options: one at 46 Loons Call Crescent listed for $799,000 and another at 40 Flavian Crescent for $720,000.</div>
+                    <div class="metadata">
+                        Intent: property_refinement | 
+                        Confidence: 0.93 | 
+                        Properties: 71 |
+                        Time: 7358ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    partial_003
+                </td>
+                <td>Partial Answer</td>
+                <td>Test property type change only...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>20347ms</td>
+                <td>
+            <span title="Context: 67%, 
+                        Follow-up: 50%, 
+                        NLP: 67%, 
+                        UX: 65%">
+                📊 62%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">2 bed condos in Markham under 700k</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I found 54 condos with 2 bedrooms under $700k in Markham! There are some great options available for you to consider.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.96 | 
+                        Properties: 54 |
+                        Time: 11847ms
+                    </div>
+                </div>
+                
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">actually townhouses</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I couldn't find any 2-bedroom townhouses for sale in Markham under $700,000 at the moment. Would you like to see properties with different bedroom counts, or perhaps expand your search to nearby areas?</div>
+                    <div class="metadata">
+                        Intent: property_refinement | 
+                        Confidence: 0.92 | 
+                        Properties: 0 |
+                        Time: 7493ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    location_001
+                </td>
+                <td>Location Switch</td>
+                <td>Test 'What about Mississauga?' - should switch location...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>17248ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 33%, 
+                        NLP: 33%, 
+                        UX: 75%">
+                📊 60%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Show me 2 bedroom condos in Toronto</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I found a great selection of 2-bedroom condos in Toronto for you! There are currently 100 options available, including some stunning properties in desirable neighborhoods.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.96 | 
+                        Properties: 1943 |
+                        Time: 11924ms
+                    </div>
+                </div>
+                
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">What about Mississauga?</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">Mississauga is a vibrant city located just west of Toronto, known for its diverse communities, beautiful parks, and a growing business district. It's home to the bustling Square One Shopping Centre, numerous cultural events, and a wide range of amenities. If you're considering moving there or just want to know more about the area, I can help with market information, neighborhood insights, or property valuations. What specific aspects of Mississauga are you interested in?</div>
+                    <div class="metadata">
+                        Intent: general_question | 
+                        Confidence: 0.85 | 
+                        Properties: 0 |
+                        Time: 4317ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    location_002
+                </td>
+                <td>Location Switch</td>
+                <td>Test explicit location change with 'instead'...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>10349ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 33%, 
+                        NLP: 33%, 
+                        UX: 85%">
+                📊 63%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Condos in Vancouver under 800k</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I couldn't find any condos for sale in Vancouver under $800,000 at the moment. Would you like to consider properties in nearby areas or adjust your price range?</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.96 | 
+                        Properties: 0 |
+                        Time: 6320ms
+                    </div>
+                </div>
+                
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">How about Toronto instead?</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">You're currently searching in Vancouver. Would you like to switch to Toronto?</div>
+                    <div class="metadata">
+                        Intent: property_refinement | 
+                        Confidence: 0.92 | 
+                        Properties: 0 |
+                        Time: 3023ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    location_003
+                </td>
+                <td>Location Switch</td>
+                <td>Test multiple location changes...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>22914ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 25%, 
+                        NLP: 33%, 
+                        UX: 77%">
+                📊 59%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">3 bed houses in Toronto</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I've found 100 detached houses with 3 bedrooms in Toronto for you! This gives you a variety of options to choose from.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.96 | 
+                        Properties: 672 |
+                        Time: 11602ms
+                    </div>
+                </div>
+                
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">What about Brampton?</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">Brampton is a vibrant city located in the Greater Toronto Area, known for its diverse community and growing economy. It's often referred to as the 'Flower City' due to its numerous parks and gardens. Brampton offers a mix of urban and suburban living, with plenty of shopping, dining, and recreational options. If you're interested, I can provide more details about specific neighborhoods, market trends, or even help with property valuations in Brampton!</div>
+                    <div class="metadata">
+                        Intent: general_question | 
+                        Confidence: 0.85 | 
+                        Properties: 0 |
+                        Time: 4471ms
+                    </div>
+                </div>
+                
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">And Mississauga?</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">Mississauga is a vibrant city located just west of Toronto, known for its diverse population and bustling economy. It's home to many corporate headquarters, great shopping centers, and beautiful parks along Lake Ontario. What specific aspects of Mississauga are you interested in? Whether it's neighborhoods, schools, or the real estate market, I’m here to help!</div>
+                    <div class="metadata">
+                        Intent: general_question | 
+                        Confidence: 0.85 | 
+                        Properties: 0 |
+                        Time: 4832ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    interrupt_001
+                </td>
+                <td>Interruption</td>
+                <td>Test interruption with new search while previous is processing...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>10077ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 33%, 
+                        NLP: 25%, 
+                        UX: 78%">
+                📊 59%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Show me condos in Toronto</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I've found a great selection of condos in Toronto for you! There are currently 100 options available, ranging from cozy units to more spacious ones.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.95 | 
+                        Properties: 4221 |
+                        Time: 5660ms
+                    </div>
+                </div>
+                
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Actually, forget that. I want houses in Vancouver</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">You're currently searching in Toronto. Would you like to switch to Vancouver?</div>
+                    <div class="metadata">
+                        Intent: property_refinement | 
+                        Confidence: 0.92 | 
+                        Properties: 0 |
+                        Time: 3415ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="failed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    interrupt_002
+                </td>
+                <td>Interruption</td>
+                <td>Test 'start over' interruption...</td>
+                <td><span class="status-badge failed">failed</span></td>
+                <td>13355ms</td>
+                <td>
+            <span title="Context: 0%, 
+                        Follow-up: 57%, 
+                        NLP: 50%, 
+                        UX: 78%">
+                📊 46%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="failed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Assertions</h4>
+                <ul class="assertion-list">
+                    
+                    <li class="fail">✗ Final intent: expected 'reset': expected 'reset', got 'None'</li>
+                </ul>
+            </div>
+            
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">2 bed condos in Markham under 600k</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I've found 14 2-bedroom condos for sale in Markham under $600,000! There are some great options available.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.96 | 
+                        Properties: 14 |
+                        Time: 9079ms
+                    </div>
+                </div>
+                
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">start over</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">Got it! I've cleared your search criteria. Let's start fresh. What kind of property are you looking for?</div>
+                    <div class="metadata">
+                        Intent: N/A | 
+                        Confidence: N/A | 
+                        Properties: 0 |
+                        Time: 3270ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    interrupt_003
+                </td>
+                <td>Interruption</td>
+                <td>Test mid-conversation topic change...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>15715ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 67%, 
+                        NLP: 100%, 
+                        UX: 70%">
+                📊 84%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Show me houses in Ottawa</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I've found a variety of detached houses for sale in Ottawa! There are currently 100 options available, including some lovely homes in neighborhoods like Hunt Club and Carlington.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.95 | 
+                        Properties: 545 |
+                        Time: 6392ms
+                    </div>
+                </div>
+                
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Wait, I need rentals not houses for sale</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I see you're looking for rentals in Ottawa! There are currently 100 rental properties available, including some lovely detached homes.</div>
+                    <div class="metadata">
+                        Intent: property_refinement | 
+                        Confidence: 0.95 | 
+                        Properties: 162 |
+                        Time: 8316ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    multi_001
+                </td>
+                <td>Multi Intent</td>
+                <td>Test combined location + budget + bedrooms in one message...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>10179ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 67%, 
+                        NLP: 80%, 
+                        UX: 55%">
+                📊 75%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Show me 3 bedroom condos in Toronto under 700k</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I've found some great options for 3-bedroom condos in Toronto under $700,000! There are currently 100 listings available for you to explore.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.96 | 
+                        Properties: 133 |
+                        Time: 10178ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    multi_002
+                </td>
+                <td>Multi Intent</td>
+                <td>Test location comparison request...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>2394ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 0%, 
+                        NLP: 0%, 
+                        UX: 85%">
+                📊 46%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Compare condos in Toronto vs Mississauga under 600k</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I need at least 2 properties to compare. Let me help you search first!</div>
+                    <div class="metadata">
+                        Intent: N/A | 
+                        Confidence: N/A | 
+                        Properties: 0 |
+                        Time: 2394ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    multi_003
+                </td>
+                <td>Multi Intent</td>
+                <td>Test refinement with multiple new criteria...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>18170ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 67%, 
+                        NLP: 80%, 
+                        UX: 70%">
+                📊 79%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Properties in Toronto</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I found a variety of properties in Toronto for you! There are currently 100 listings available, including condos and detached homes.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.95 | 
+                        Properties: 8811 |
+                        Time: 7411ms
+                    </div>
+                </div>
+                
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">I want 2 beds, under 500k, and it must be a condo</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I've found some great 2-bedroom condos for sale in Toronto under $500,000! Here are a few options that might interest you.</div>
+                    <div class="metadata">
+                        Intent: property_refinement | 
+                        Confidence: 0.93 | 
+                        Properties: 199 |
+                        Time: 9752ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    offtopic_001
+                </td>
+                <td>Off Topic</td>
+                <td>Test weather question - should redirect gracefully...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>7ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 100%, 
+                        NLP: 100%, 
+                        UX: 100%">
+                📊 100%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Assertions</h4>
+                <ul class="assertion-list">
+                    <li class="pass">✓ Final intent: expected 'off_topic'</li><li class="pass">✓ MLS search not triggered (as expected)</li><li class="pass">✓ No property data provided (as expected)</li><li class="pass">✓ No properties should be returned for non-property test</li>
+                    
+                </ul>
+            </div>
+            
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">What's the weather like today?</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I'm here to help you find properties and learn about real estate! Let me know if you'd like to search for properties, learn about neighborhoods, or get market insights in any location.</div>
+                    <div class="metadata">
+                        Intent: off_topic | 
+                        Confidence: 0.95 | 
+                        Properties: 0 |
+                        Time: 6ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    offtopic_002
+                </td>
+                <td>Off Topic</td>
+                <td>Test food/recipe question - should not trigger search...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>8ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 90%, 
+                        NLP: 100%, 
+                        UX: 100%">
+                📊 98%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Assertions</h4>
+                <ul class="assertion-list">
+                    <li class="pass">✓ Final intent: expected 'off_topic'</li><li class="pass">✓ MLS search not triggered (as expected)</li><li class="pass">✓ No property data provided (as expected)</li><li class="pass">✓ No properties should be returned for non-property test</li>
+                    
+                </ul>
+            </div>
+            
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">How do I make paneer butter masala?</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I'm here to help you find properties and learn about real estate! Let me know if you'd like to search for properties, learn about neighborhoods, or get market insights in any location.</div>
+                    <div class="metadata">
+                        Intent: off_topic | 
+                        Confidence: 0.95 | 
+                        Properties: 0 |
+                        Time: 7ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    offtopic_003
+                </td>
+                <td>Off Topic</td>
+                <td>Test sports question - should redirect to property help...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>4ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 90%, 
+                        NLP: 100%, 
+                        UX: 100%">
+                📊 98%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Assertions</h4>
+                <ul class="assertion-list">
+                    <li class="pass">✓ Final intent: expected 'off_topic'</li><li class="pass">✓ MLS search not triggered (as expected)</li><li class="pass">✓ No properties should be returned for non-property test</li>
+                    
+                </ul>
+            </div>
+            
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Who won the hockey game last night?</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I'm here to help you find properties and learn about real estate! Let me know if you'd like to search for properties, learn about neighborhoods, or get market insights in any location.</div>
+                    <div class="metadata">
+                        Intent: off_topic | 
+                        Confidence: 0.95 | 
+                        Properties: 0 |
+                        Time: 4ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    offtopic_004
+                </td>
+                <td>Off Topic</td>
+                <td>Test movie question - should not provide movie info...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>7ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 90%, 
+                        NLP: 100%, 
+                        UX: 100%">
+                📊 98%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Assertions</h4>
+                <ul class="assertion-list">
+                    <li class="pass">✓ Final intent: expected 'off_topic'</li><li class="pass">✓ MLS search not triggered (as expected)</li><li class="pass">✓ No properties should be returned for non-property test</li>
+                    
+                </ul>
+            </div>
+            
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">What are the best movies of 2024?</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I'm here to help you find properties and learn about real estate! Let me know if you'd like to search for properties, learn about neighborhoods, or get market insights in any location.</div>
+                    <div class="metadata">
+                        Intent: off_topic | 
+                        Confidence: 0.95 | 
+                        Properties: 0 |
+                        Time: 6ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    offtopic_005
+                </td>
+                <td>Off Topic</td>
+                <td>Test political question - should redirect gracefully...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>7ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 90%, 
+                        NLP: 100%, 
+                        UX: 100%">
+                📊 98%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Assertions</h4>
+                <ul class="assertion-list">
+                    <li class="pass">✓ Final intent: expected 'off_topic'</li><li class="pass">✓ MLS search not triggered (as expected)</li><li class="pass">✓ No properties should be returned for non-property test</li>
+                    
+                </ul>
+            </div>
+            
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">What do you think about the election?</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I'm here to help you find properties and learn about real estate! Let me know if you'd like to search for properties, learn about neighborhoods, or get market insights in any location.</div>
+                    <div class="metadata">
+                        Intent: off_topic | 
+                        Confidence: 0.95 | 
+                        Properties: 0 |
+                        Time: 7ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    offtopic_006
+                </td>
+                <td>Off Topic</td>
+                <td>Test travel question - should redirect to property...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>7ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 90%, 
+                        NLP: 100%, 
+                        UX: 100%">
+                📊 98%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Assertions</h4>
+                <ul class="assertion-list">
+                    <li class="pass">✓ Final intent: expected 'off_topic'</li><li class="pass">✓ MLS search not triggered (as expected)</li><li class="pass">✓ No properties should be returned for non-property test</li>
+                    
+                </ul>
+            </div>
+            
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">What are the best vacation spots in Europe?</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I'm here to help you find properties and learn about real estate! Let me know if you'd like to search for properties, learn about neighborhoods, or get market insights in any location.</div>
+                    <div class="metadata">
+                        Intent: off_topic | 
+                        Confidence: 0.95 | 
+                        Properties: 0 |
+                        Time: 7ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    offtopic_007
+                </td>
+                <td>Off Topic</td>
+                <td>Test music question - currently handled as general question (not redirected)...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>2311ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 100%, 
+                        NLP: 100%, 
+                        UX: 100%">
+                📊 100%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Assertions</h4>
+                <ul class="assertion-list">
+                    <li class="pass">✓ Final intent: expected 'general_question'</li><li class="pass">✓ MLS search not triggered (as expected)</li><li class="pass">✓ No properties should be returned for non-property test</li>
+                    
+                </ul>
+            </div>
+            
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">What's the best song by Taylor Swift?</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">That's such a tough question because it really depends on personal taste! Taylor Swift has so many amazing songs across different albums. Some fans love 'All Too Well' for its storytelling, while others might prefer the catchy vibes of 'Shake It Off.' What's your favorite genre or album by her? I’d love to help you find more songs you might enjoy!</div>
+                    <div class="metadata">
+                        Intent: general_question | 
+                        Confidence: 0.85 | 
+                        Properties: 0 |
+                        Time: 2310ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    offtopic_008
+                </td>
+                <td>Off Topic</td>
+                <td>Test gaming question - should redirect to property...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>7ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 83%, 
+                        NLP: 100%, 
+                        UX: 100%">
+                📊 96%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Assertions</h4>
+                <ul class="assertion-list">
+                    <li class="pass">✓ Final intent: expected 'off_topic'</li><li class="pass">✓ MLS search not triggered (as expected)</li><li class="pass">✓ No properties should be returned for non-property test</li>
+                    
+                </ul>
+            </div>
+            
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">What's the best strategy in Fortnite?</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I'm here to help you find properties and learn about real estate! Let me know if you'd like to search for properties, learn about neighborhoods, or get market insights in any location.</div>
+                    <div class="metadata">
+                        Intent: off_topic | 
+                        Confidence: 0.99 | 
+                        Properties: 0 |
+                        Time: 7ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    offtopic_009
+                </td>
+                <td>Off Topic</td>
+                <td>Test off-topic after property search - should handle gracefully...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>9030ms</td>
+                <td>
+            <span title="Context: 0%, 
+                        Follow-up: 55%, 
+                        NLP: 50%, 
+                        UX: 72%">
+                📊 44%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Show me condos in Toronto</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I found quite a few condos available in Toronto—over 100 options! If you'd like, I can help you narrow it down further.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.95 | 
+                        Properties: 4221 |
+                        Time: 6126ms
+                    </div>
+                </div>
+                
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">By the way, what's the best pizza in town?</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">No active listings found on By the Way.</div>
+                    <div class="metadata">
+                        Intent: N/A | 
+                        Confidence: N/A | 
+                        Properties: 0 |
+                        Time: 1897ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    offtopic_010
+                </td>
+                <td>Off Topic</td>
+                <td>Test random greeting followed by joke request - server handles gracefully...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>4203ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 80%, 
+                        NLP: 50%, 
+                        UX: 100%">
+                📊 82%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Assertions</h4>
+                <ul class="assertion-list">
+                    <li class="pass">✓ MLS search not triggered (as expected)</li><li class="pass">✓ No properties should be returned for non-property test</li>
+                    
+                </ul>
+            </div>
+            
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Hello!</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">Hello there! How's your day going? Is there something specific about Toronto or the GTA that you're curious about?</div>
+                    <div class="metadata">
+                        Intent: general_question | 
+                        Confidence: 0.85 | 
+                        Properties: 0 |
+                        Time: 1496ms
+                    </div>
+                </div>
+                
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Tell me a joke</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">Sure! Why did the scarecrow win an award? Because he was outstanding in his field! 😄 If you need anything related to real estate, feel free to ask!</div>
+                    <div class="metadata">
+                        Intent: general_question | 
+                        Confidence: 0.85 | 
+                        Properties: 0 |
+                        Time: 1702ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="failed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    general_001
+                </td>
+                <td>General Question</td>
+                <td>Test general market question - should provide info without search...</td>
+                <td><span class="status-badge failed">failed</span></td>
+                <td>1499ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 0%, 
+                        NLP: 0%, 
+                        UX: 85%">
+                📊 46%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="failed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Assertions</h4>
+                <ul class="assertion-list">
+                    
+                    <li class="fail">✗ Final intent: expected 'general_question': expected 'general_question', got 'None'</li>
+                </ul>
+            </div>
+            
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Is Toronto a good place to invest in real estate?</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">No active listings found on good Place.</div>
+                    <div class="metadata">
+                        Intent: N/A | 
+                        Confidence: N/A | 
+                        Properties: 0 |
+                        Time: 1499ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    general_002
+                </td>
+                <td>General Question</td>
+                <td>Test mortgage question - should provide helpful info...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>4836ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 100%, 
+                        NLP: 100%, 
+                        UX: 80%">
+                📊 95%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Assertions</h4>
+                <ul class="assertion-list">
+                    <li class="pass">✓ Final intent: expected 'general_question'</li>
+                    
+                </ul>
+            </div>
+            
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">How does a mortgage work in Canada?</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">A mortgage in Canada is essentially a loan that you take out to purchase a home, where the property itself serves as collateral. You'll typically make an upfront down payment, which is a percentage of the home's purchase price, and the rest is financed through the mortgage. The loan is then paid back over a set term, usually 15 to 30 years, with monthly payments that include both principal and interest. Canadian mortgages often have fixed or variable interest rates, and you’ll need to qualify ba...</div>
+                    <div class="metadata">
+                        Intent: general_question | 
+                        Confidence: 0.85 | 
+                        Properties: 0 |
+                        Time: 4835ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    general_003
+                </td>
+                <td>General Question</td>
+                <td>Test first-time buyer question...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>4244ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 75%, 
+                        NLP: 100%, 
+                        UX: 75%">
+                📊 88%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Assertions</h4>
+                <ul class="assertion-list">
+                    <li class="pass">✓ Final intent: expected 'general_question'</li>
+                    
+                </ul>
+            </div>
+            
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">What should first-time buyers know?</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">First-time buyers should know several key things when entering the Toronto real estate market. It's important to understand your budget, including the costs beyond just the purchase price, like closing costs, property taxes, and maintenance fees. Getting pre-approved for a mortgage can give you a clearer idea of what you can afford. Additionally, familiarize yourself with different neighborhoods, as each has its own vibe and amenities. Don't forget to consider factors like commute times and loca...</div>
+                    <div class="metadata">
+                        Intent: general_question | 
+                        Confidence: 0.85 | 
+                        Properties: 0 |
+                        Time: 4244ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="error" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    edge_001
+                </td>
+                <td>Edge Case</td>
+                <td>Test empty message handling...</td>
+                <td><span class="status-badge error">error</span></td>
+                <td>6ms</td>
+                <td>
+            <span title="Context: 0%, 
+                        Follow-up: 0%, 
+                        NLP: 0%, 
+                        UX: 0%">
+                📊 0%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="error" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Assertions</h4>
+                <ul class="assertion-list">
+                    
+                    <li class="fail">ERROR: Request failed at turn 1: HTTP 400: {
+  "error": "Message required",
+  "success": false
+}
+</li>
+                </ul>
+            </div>
+            
+            <div class="test-detail" style="background: #fef2f2;">
+                <h4>Error</h4>
+                <pre style="font-size: 12px; white-space: pre-wrap;">Request failed at turn 1: HTTP 400: {
+  "error": "Message required",
+  "success": false
+}
+</pre>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    edge_002
+                </td>
+                <td>Edge Case</td>
+                <td>Test very long message handling...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>9411ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 100%, 
+                        NLP: 100%, 
+                        UX: 80%">
+                📊 95%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">I'm looking for a property with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features with many features in Toronto</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I found a variety of properties in Toronto that might meet your needs! There are currently 100 listings available, including condos and detached homes.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.95 | 
+                        Properties: 8811 |
+                        Time: 9409ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    edge_003
+                </td>
+                <td>Edge Case</td>
+                <td>Test special characters handling...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>10883ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 50%, 
+                        NLP: 100%, 
+                        UX: 55%">
+                📊 76%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Condos in Toronto @ $500k!!! #bestdeals</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I found some great condos for sale in Toronto under $500k! There are currently 100 options available, including a couple of standout listings.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.95 | 
+                        Properties: 1026 |
+                        Time: 10882ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    edge_004
+                </td>
+                <td>Edge Case</td>
+                <td>Test typo handling...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>7526ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 50%, 
+                        NLP: 100%, 
+                        UX: 60%">
+                📊 78%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">condos in tornto undr 500k</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I've found some great condos in Toronto under $500,000! There are currently 100 options available, including a lovely 2-bedroom unit at 83 Borough Drive listed for $498,000 and a spacious 2-bedroom loft at 700 King Street West for $499,000.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.95 | 
+                        Properties: 1026 |
+                        Time: 7525ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    edge_005
+                </td>
+                <td>Edge Case</td>
+                <td>Test mixed language input...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>9079ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 50%, 
+                        NLP: 100%, 
+                        UX: 60%">
+                📊 78%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Je cherche condos in Toronto</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">Great choice! I found 100 condos for sale in Toronto that might interest you.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.95 | 
+                        Properties: 4221 |
+                        Time: 9078ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    ux_001
+                </td>
+                <td>Ux Quality</td>
+                <td>Test response should not be robotic...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>6057ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 80%, 
+                        NLP: 100%, 
+                        UX: 75%">
+                📊 89%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Hello, I'm looking for a condo</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">Hi there! That's exciting! There are so many great condos in Toronto and the GTA. Do you have a specific neighborhood in mind, or are you looking for something in particular, like size or amenities?</div>
+                    <div class="metadata">
+                        Intent: general_question | 
+                        Confidence: 0.85 | 
+                        Properties: 0 |
+                        Time: 6056ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="failed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    ux_002
+                </td>
+                <td>Ux Quality</td>
+                <td>Test no duplicate questions asked...</td>
+                <td><span class="status-badge failed">failed</span></td>
+                <td>18990ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 50%, 
+                        NLP: 50%, 
+                        UX: 60%">
+                📊 65%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="failed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Assertions</h4>
+                <ul class="assertion-list">
+                    
+                    <li class="fail">✗ Forbidden: Duplicate question at turn 1</li>
+                </ul>
+            </div>
+            
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Show me condos in Toronto under 500k</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I've found quite a few condos for sale in Toronto under $500,000! There are currently 100 options available, including some great choices in neighborhoods like Bendale and Niagara.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.96 | 
+                        Properties: 1026 |
+                        Time: 9057ms
+                    </div>
+                </div>
+                
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">What about those with 2 bedrooms?</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I found some great 2-bedroom condos for sale in Toronto! There are currently 100 options available, including a couple of fantastic listings.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.96 | 
+                        Properties: 199 |
+                        Time: 8925ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+
+            <tr data-status="passed" class="expandable">
+                <td>
+                    <span class="expand-icon">▶</span>
+                    ux_003
+                </td>
+                <td>Ux Quality</td>
+                <td>Test response provides clear next action...</td>
+                <td><span class="status-badge passed">passed</span></td>
+                <td>8661ms</td>
+                <td>
+            <span title="Context: 100%, 
+                        Follow-up: 20%, 
+                        NLP: 100%, 
+                        UX: 60%">
+                📊 70%
+            </span>
+            </td>
+            </tr>
+            <tr data-status="passed" class="expandable-content">
+                <td colspan="6">
+                    
+            <div class="test-detail">
+                <h4>Conversation</h4>
+                <div class="conversation">
+                    
+                <div class="turn user">
+                    <div class="role">👤 User</div>
+                    <div class="message">Show me condos in Toronto</div>
+                </div>
+                <div class="turn assistant">
+                    <div class="role">🤖 Assistant</div>
+                    <div class="message">I found quite a few condos for sale in Toronto—over 100 options! If you'd like, I can help narrow it down further.</div>
+                    <div class="metadata">
+                        Intent: property_search | 
+                        Confidence: 0.95 | 
+                        Properties: 4221 |
+                        Time: 8660ms
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+                </td>
+            </tr>
+            
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p>Generated by Summitly ChatFlow Test Framework v1.0.0</p>
+            <p>Report generated at 2025-12-31T11:23:06.598941</p>
+        </div>
+    </div>
+    
+    <script>
+        // Toggle expandable sections
+        document.querySelectorAll('.expandable').forEach(el => {
+            el.querySelector('.expandable-header').addEventListener('click', () => {
+                el.classList.toggle('expanded');
+            });
+        });
+        
+        // Filter tests
+        function filterTests(filter) {
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            document.querySelectorAll('.test-table tbody tr').forEach(row => {
+                const status = row.dataset.status;
+                if (filter === 'all' || status === filter) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

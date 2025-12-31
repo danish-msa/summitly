@@ -167,6 +167,13 @@ class CacheConfig:
     REDIS_DB = int(os.getenv('REDIS_DB', 0))
     REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', None)
     
+    # Redis Connection Settings (fixes "Connection reset by peer" errors)
+    REDIS_SOCKET_TIMEOUT = int(os.getenv('REDIS_SOCKET_TIMEOUT', 5))
+    REDIS_SOCKET_CONNECT_TIMEOUT = int(os.getenv('REDIS_SOCKET_CONNECT_TIMEOUT', 5))
+    REDIS_RETRY_ON_TIMEOUT = os.getenv('REDIS_RETRY_ON_TIMEOUT', 'true').lower() == 'true'
+    REDIS_CONNECTION_POOL_MAX_CONNECTIONS = int(os.getenv('REDIS_POOL_MAX_CONNECTIONS', 10))
+    REDIS_HEALTH_CHECK_INTERVAL = int(os.getenv('REDIS_HEALTH_CHECK_INTERVAL', 30))
+    
     # Cache Settings
     CACHE_TTL = {
         "conversation_history": 1800,  # 30 minutes

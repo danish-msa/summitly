@@ -8,30 +8,19 @@ Author: Real Estate AI Team
 Date: November 2025
 """
 
+from __future__ import annotations
+
 import re
 import json
 import logging
-import sys
-import os
-from typing import Dict, Optional, Any, Tuple
+from typing import Dict, Optional, Any, Tuple, TYPE_CHECKING
 from datetime import datetime, timedelta
 from functools import lru_cache
 import hashlib
 
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# Valuation engine imports
-from services.repliers_valuation_api import (
-    fetch_property_details,
-    find_comparables,
-    get_market_data
-)
-from services.valuation_engine import (
-    estimate_market_value,
-    generate_valuation_explanation
-)
-from models.valuation_models import PropertyDetails, ValuationResult
+# Type hints only (not imported at runtime to avoid circular imports)
+if TYPE_CHECKING:
+    from models.valuation_models import PropertyDetails, ValuationResult
 
 # Setup logging
 logging.basicConfig(
@@ -39,6 +28,10 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# NOTE: Valuation engine imports moved to function level to avoid import errors
+# when this module is loaded from different entry points (app/voice_assistant_clean.py vs services/)
+# The imports will happen inside the functions that need them
 
 # Valuation request cache (24-hour TTL)
 VALUATION_CACHE = {}
@@ -268,6 +261,25 @@ def process_valuation_request(
         - Falls back gracefully if API calls fail
         - Uses template explanation if AI unavailable
     """
+    # Lazy imports to avoid module loading issues when imported from different entry points
+    try:
+        from services.repliers_valuation_api import (
+            fetch_property_details,
+            find_comparables,
+            get_market_data
+        )
+        from services.valuation_engine import (
+            estimate_market_value,
+            generate_valuation_explanation
+        )
+        from models.valuation_models import PropertyDetails, ValuationResult
+    except ImportError as import_error:
+        logger.error(f"Failed to import valuation modules: {import_error}")
+        return _format_error_response(
+            "The property valuation service is currently unavailable. "
+            "Please try again later or contact support."
+        )
+    
     logger.info("=" * 80)
     logger.info("PROCESSING VALUATION REQUEST")
     logger.info(f"Query: {user_query}")
@@ -724,7 +736,7 @@ def process_valuation_request(
 # ==================== RESPONSE FORMATTING ====================
 
 def _format_chatbot_response(
-    valuation_result: ValuationResult,
+    valuation_result: "ValuationResult",
     explanation: str,
     asking_price: Optional[float] = None
 ) -> Dict[str, Any]:
@@ -739,6 +751,9 @@ def _format_chatbot_response(
     Returns:
         Dictionary with 'markdown' and 'structured_data' keys
     """
+    # Import here to avoid circular dependency
+    from models.valuation_models import ValuationResult
+    
     subject = valuation_result.subject_property
     estimated_value = valuation_result.estimated_value
     value_range = valuation_result.value_range
@@ -879,11 +894,39 @@ def _format_chatbot_response(
     
     # Footer with timestamp and methodology
     sections.append("---")
-    sections.append(
-        f"*Analysis Date: {valuation_result.valuation_date.strftime('%B %d, %Y')}*  \n"
-        f"*Methodology: {valuation_result.methodology}*  \n"
-        "*This is an automated market analysis. For official appraisal, consult a certified appraiser.*"
-    )
+    
+    # Build enhanced footer with API usage tracking
+    footer_lines = []
+    footer_lines.append(f"📅 **Analysis Date:** {valuation_result.valuation_date.strftime('%B %d, %Y at %I:%M %p')}")
+    footer_lines.append(f"📊 **Methodology:** {valuation_result.methodology}")
+    footer_lines.append(f"🔍 **Data Source:** Repliers MLS - Live Market Data")
+    footer_lines.append(f"🤖 **AI Model:** OpenAI GPT-4o-mini (Canadian Real Estate Trained)")
+    
+    # Track comparable properties count
+    footer_lines.append(f"📈 **Analysis Depth:** {len(comparables)} comparable properties analyzed")
+    
+    # Add confidence metrics
+    if confidence >= 90:
+        confidence_emoji = "🟢"
+        confidence_text = "Very High Reliability"
+    elif confidence >= 80:
+        confidence_emoji = "🟡"  
+        confidence_text = "High Reliability"
+    elif confidence >= 70:
+        confidence_emoji = "🟠"
+        confidence_text = "Good Reliability"
+    else:
+        confidence_emoji = "🔴"
+        confidence_text = "Moderate Reliability"
+    
+    footer_lines.append(f"{confidence_emoji} **Confidence Level:** {confidence:.0f}% ({confidence_text})")
+    
+    # Add disclaimer
+    footer_lines.append("")
+    footer_lines.append("⚠️ **Important Disclaimer:**")
+    footer_lines.append("*This is an automated market analysis powered by AI and live MLS data. While highly accurate, this should not replace a professional appraisal. For official property valuations, financing, or legal purposes, please consult a licensed Canadian residential appraiser.*")
+    
+    sections.append("\n".join(footer_lines))
     
     markdown_response = "\n".join(sections)
     
@@ -944,10 +987,17 @@ def _format_chatbot_response(
         ],
         "metadata": {
             "analysis_date": valuation_result.valuation_date.isoformat(),
+            "analysis_timestamp": valuation_result.valuation_date.strftime('%B %d, %Y at %I:%M %p'),
             "methodology": valuation_result.methodology,
             "num_comparables": len(comparables),
-            "data_source": "Active Listings (Repliers MLS)",
-            "disclaimer": "This valuation is based on active listing prices, not actual sold prices. Consult a licensed appraiser for official valuations."
+            "data_source": "Repliers MLS - Live Market Data",
+            "ai_model": "OpenAI GPT-4o-mini",
+            "ai_model_type": "Canadian Real Estate Trained",
+            "confidence_level": f"{confidence:.0f}%",
+            "reliability_rating": _confidence_label(confidence),
+            "disclaimer": "This valuation is based on active listing prices and AI analysis. For official property valuations, financing, or legal purposes, consult a licensed Canadian residential appraiser.",
+            "analysis_depth": f"{len(comparables)} comparable properties analyzed",
+            "market_coverage": f"{subject.city} market analysis"
         }
     }
     

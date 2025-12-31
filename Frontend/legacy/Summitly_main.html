@@ -3,51 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Summitly AI - Production Real Estate Assistant | OpenAI Powered</title>
+    <title>Summitly AI - AI-Powered Real Estate Intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --color-primary: #33808d;
-            --color-primary-hover: #1d7480;
-            --color-primary-active: #1a6873;
-            --color-primary-dark: #165966;
-            --color-bg-primary: #e8f4f8;
-            --color-bg-secondary: #d4eaf0;
+            /* CanaryAI-inspired color palette */
+            --color-primary: #1976D2;
+            --color-primary-hover: #1565C0;
+            --color-primary-active: #0D47A1;
+            --color-primary-dark: #0D47A1;
+            --color-primary-light: #42A5F5;
+            --color-primary-rgb: 25, 118, 210;
+            
+            /* Background colors */
+            --color-bg-primary: #f5f7fa;
+            --color-bg-secondary: #ffffff;
+            --color-bg-tertiary: #e8edf2;
             --color-surface: #ffffff;
-            --color-text: #134252;
-            --color-text-secondary: #626c71;
-            --color-border: rgba(94, 82, 64, 0.2);
-            --color-success: #33808d;
-            --color-error: #c0152f;
-            --color-warning: #a84b2f;
-            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+            
+            /* Text colors */
+            --color-text: #1a202c;
+            --color-text-secondary: #64748b;
+            --color-text-muted: #94a3b8;
+            
+            /* Border and dividers */
+            --color-border: #e2e8f0;
+            --color-border-light: #f1f5f9;
+            
+            /* Status colors */
+            --color-success: #10b981;
+            --color-success-light: #d1fae5;
+            --color-error: #ef4444;
+            --color-error-light: #fee2e2;
+            --color-warning: #f59e0b;
+            --color-warning-light: #fef3c7;
+            --color-info: #3b82f6;
+            --color-info-light: #dbeafe;
+            
+            /* Shadows - CanaryAI style */
+            --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04);
+            --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.06);
+            
+            /* Border radius */
+            --radius-xs: 4px;
             --radius-sm: 6px;
-            --radius-md: 10px;
+            --radius-md: 8px;
             --radius-lg: 12px;
+            --radius-xl: 16px;
+            --radius-2xl: 20px;
             --radius-full: 9999px;
-            --font-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            
+            /* Typography */
+            --font-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-mono: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            
+            /* Spacing */
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --spacing-2xl: 48px;
+            
+            /* Transitions */
+            --transition-fast: 0.15s ease;
+            --transition-normal: 0.25s ease;
+            --transition-slow: 0.35s ease;
         }
 
-        /* Force light theme - disable dark mode */
-        /* @media (prefers-color-scheme: dark) {
-            :root {
-                --color-bg-primary: #1f2121;
-                --color-bg-secondary: #262828;
-                --color-surface: #2a2c2c;
-                --color-text: #f5f5f5;
-                --color-text-secondary: rgba(167, 169, 169, 0.7);
-                --color-border: rgba(119, 124, 124, 0.3);
-                --color-primary: #32b8c6;
-                --color-primary-hover: #2da6b2;
-                --color-primary-active: #2996a1;
-            }
-        } */
-
+        /* Reset & Base Styles - CanaryAI Style */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
@@ -56,29 +95,171 @@
             color: var(--color-text);
             line-height: 1.6;
             overflow-x: hidden;
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         .app-container {
-            display: flex;
-            height: 100vh;
-            max-width: 1920px;
+            display: grid;
+            grid-template-columns: 1fr;
+            min-height: 100vh;
+            max-width: 100%;
             margin: 0 auto;
+            background: var(--color-bg-primary);
+        }
+        
+        /* When right panel is visible */
+        .app-container.has-right-panel {
+            grid-template-columns: 1fr 400px;
+        }
+        
+        /* Right Panel - Property Results */
+        .right-panel {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background: var(--color-surface);
+            border-left: 1px solid var(--color-border);
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform var(--transition-normal);
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .right-panel.active {
+            transform: translateX(0);
+        }
+        
+        .right-panel-header {
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--color-surface);
+        }
+        
+        .right-panel-title {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text);
+            margin: 0;
+        }
+        
+        .right-panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--spacing-md);
+        }
+        
+        .property-cards-container {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+        
+        /* Right panel property card styles */
+        .right-panel .property-card-mini {
+            background: white;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .right-panel .property-card-mini:hover {
+            border-color: var(--color-primary);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .right-panel .property-card-mini-image {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+        }
+        
+        .right-panel .property-card-mini-content {
+            padding: var(--spacing-md);
+        }
+        
+        .right-panel .property-card-mini-price {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .right-panel .property-card-mini-address {
+            font-size: 13px;
+            color: var(--color-text);
+            margin-bottom: var(--spacing-xs);
+            font-weight: 500;
+        }
+        
+        .right-panel .property-card-mini-details {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+        
+        .right-panel .property-card-mini-details span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        /* Right Panel Responsive */
+        @media (max-width: 1024px) {
+            .right-panel {
+                width: 350px;
+            }
+            
+            .app-container.has-right-panel {
+                grid-template-columns: 1fr 350px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .right-panel {
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .app-container.has-right-panel {
+                grid-template-columns: 1fr;
+            }
+            
+            .right-panel .property-card-mini-image {
+                height: 140px;
+            }
         }
 
-        /* Sidebar */
+        /* Sidebar - CanaryAI Style */
         .sidebar {
             position: fixed;
             left: 0;
             top: 0;
-            width: 280px;
+            width: 300px;
             height: 100vh;
             background: var(--color-surface);
             border-right: 1px solid var(--color-border);
             display: flex;
             flex-direction: column;
-            transition: transform 0.3s ease;
+            transition: transform var(--transition-normal);
             transform: translateX(-100%);
             z-index: 1000;
+            box-shadow: var(--shadow-lg);
         }
 
         .sidebar.active {
@@ -91,11 +272,12 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
             z-index: 999;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+            transition: opacity var(--transition-normal), visibility var(--transition-normal);
         }
 
         .sidebar-overlay.active {
@@ -104,44 +286,55 @@
         }
 
         .sidebar-header {
-            padding: 20px;
+            padding: var(--spacing-lg);
             border-bottom: 1px solid var(--color-border);
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: var(--spacing-md);
+            background: var(--color-surface);
         }
 
         .sidebar-close-btn {
             margin-left: auto;
-            font-size: 24px;
+            font-size: 20px;
             color: var(--color-text-secondary);
-            transition: all 0.2s ease;
+            transition: all var(--transition-fast);
+            cursor: pointer;
+            background: none;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .sidebar-close-btn:hover {
             color: var(--color-text);
-            transform: rotate(90deg);
+            background: var(--color-bg-tertiary);
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-size: 20px;
-            font-weight: 600;
+            gap: var(--spacing-md);
+            font-size: 18px;
+            font-weight: 700;
             color: var(--color-text);
+            letter-spacing: -0.02em;
         }
 
         .logo-icon {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             background: transparent;
-            border-radius: 0;
+            border-radius: var(--radius-md);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 20px;
+            font-size: 18px;
         }
 
         .logo-icon img {
@@ -153,86 +346,190 @@
 
         .new-chat-btn {
             width: 100%;
-            padding: 12px 16px;
-            margin: 16px 0;
+            padding: var(--spacing-md);
+            margin: var(--spacing-md) 0;
             background: var(--color-primary);
             color: white;
             border: none;
             border-radius: var(--radius-md);
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            transition: all 0.2s ease;
+            gap: var(--spacing-sm);
+            transition: all var(--transition-fast);
+            box-shadow: 0 2px 4px rgba(25, 118, 210, 0.2);
         }
 
         .new-chat-btn:hover {
             background: var(--color-primary-hover);
             transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 4px 8px rgba(25, 118, 210, 0.3);
+        }
+        
+        /* Chat History Styles */
+        .chat-history-section {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--spacing-md);
+        }
+        
+        .chat-history-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--color-text-muted);
+            letter-spacing: 0.08em;
+            margin-bottom: var(--spacing-sm);
+            padding: 0 var(--spacing-sm);
+        }
+        
+        .chat-history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .chat-history-item {
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .chat-history-item:hover {
+            background: var(--color-bg-tertiary);
+        }
+        
+        .chat-history-item.active {
+            background: var(--color-primary-light);
+            border-left: 3px solid var(--color-primary);
+        }
+        
+        .chat-history-item-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+        
+        .chat-history-item-title .icon {
+            font-size: 14px;
+        }
+        
+        .chat-history-item-meta {
+            font-size: 11px;
+            color: var(--color-text-muted);
+        }
+        
+        .chat-history-empty {
+            padding: var(--spacing-xl);
+            text-align: center;
+            color: var(--color-text-muted);
+            font-size: 13px;
+        }
+        
+        /* Sidebar Filters Section */
+        .sidebar-filters-section {
+            border-top: 1px solid var(--color-border);
+            padding: var(--spacing-md);
+        }
+        
+        .sidebar-filters-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: var(--spacing-sm);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .sidebar-filters-toggle:hover {
+            color: var(--color-text);
+        }
+        
+        .sidebar-filters-content {
+            margin-top: var(--spacing-sm);
         }
 
         .quick-actions {
-            padding: 0 20px;
+            padding: 0 var(--spacing-lg);
             flex: 1;
             overflow-y: auto;
         }
 
         .quick-actions h3 {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
-            color: var(--color-text-secondary);
-            margin-bottom: 12px;
-            letter-spacing: 0.5px;
+            color: var(--color-text-muted);
+            margin-bottom: var(--spacing-md);
+            letter-spacing: 0.08em;
         }
 
         .action-card {
-            padding: 12px;
-            margin-bottom: 8px;
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
             background: var(--color-bg-primary);
             border: 1px solid var(--color-border);
             border-radius: var(--radius-md);
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all var(--transition-fast);
         }
 
         .action-card:hover {
-            background: var(--color-bg-secondary);
+            background: var(--color-bg-tertiary);
             border-color: var(--color-primary);
             transform: translateX(4px);
+            box-shadow: var(--shadow-sm);
         }
 
         .action-card-title {
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
             color: var(--color-text);
-            margin-bottom: 4px;
+            margin-bottom: var(--spacing-xs);
         }
 
         .action-card-desc {
-            font-size: 12px;
+            font-size: 13px;
             color: var(--color-text-secondary);
         }
 
         .filter-chips {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 12px;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
         }
 
         .filter-chip {
-            padding: 6px 12px;
+            padding: 6px 14px;
             background: var(--color-bg-primary);
             border: 1px solid var(--color-border);
             border-radius: var(--radius-full);
-            font-size: 12px;
+            font-size: 13px;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all var(--transition-fast);
+            color: var(--color-text-secondary);
         }
 
         .filter-chip:hover {
@@ -241,39 +538,44 @@
             border-color: var(--color-primary);
         }
 
-        /* Main Chat Area */
+        /* Main Content - CanaryAI Style */
         .main-content {
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: var(--color-bg-secondary);
+            background: var(--color-bg-primary);
             width: 100%;
-            margin-left: 0;
-            transition: margin-left 0.3s ease;
+            min-height: 100vh;
+            transition: margin-left var(--transition-normal);
         }
 
+        /* Header - CanaryAI Style */
         .chat-header {
-            padding: 20px 24px;
+            padding: var(--spacing-md) var(--spacing-lg);
             background: var(--color-surface);
             border-bottom: 1px solid var(--color-border);
             display: flex;
             align-items: center;
             justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-xs);
         }
 
         .header-left {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: var(--spacing-md);
         }
 
         .status-badge {
             display: flex;
             align-items: center;
             gap: 6px;
-            padding: 6px 12px;
-            background: rgba(51, 128, 141, 0.1);
-            border: 1px solid rgba(51, 128, 141, 0.25);
+            padding: 6px 14px;
+            background: var(--color-info-light);
+            border: 1px solid rgba(59, 130, 246, 0.2);
             border-radius: var(--radius-full);
             font-size: 12px;
             font-weight: 500;
@@ -281,21 +583,21 @@
         }
 
         .status-dot {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             background: var(--color-success);
             border-radius: 50%;
             animation: pulse 2s infinite;
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
         }
 
         .header-actions {
             display: flex;
-            gap: 12px;
+            gap: var(--spacing-sm);
         }
 
         .icon-btn {
@@ -308,39 +610,43 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--color-text);
-            transition: all 0.2s ease;
+            color: var(--color-text-secondary);
+            transition: all var(--transition-fast);
+            font-size: 16px;
         }
 
         .icon-btn:hover {
             background: var(--color-bg-primary);
             border-color: var(--color-primary);
+            color: var(--color-primary);
         }
 
-        /* Chat Messages */
+        /* Chat Container - CanaryAI Style */
         .chat-container {
             flex: 1;
             overflow-y: auto;
-            padding: 24px;
+            padding: var(--spacing-xl);
             display: flex;
             flex-direction: column;
+            background: var(--color-bg-primary);
         }
 
+        /* Welcome Screen - CanaryAI Style */
         .welcome-screen {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100%;
+            min-height: 60vh;
             text-align: center;
-            padding: 40px;
-            animation: fadeInUp 0.8s ease-out;
+            padding: var(--spacing-2xl);
+            animation: fadeInUp 0.6s ease-out;
         }
 
         @keyframes fadeInUp {
             from {
                 opacity: 0;
-                transform: translateY(30px);
+                transform: translateY(20px);
             }
             to {
                 opacity: 1;
@@ -349,19 +655,15 @@
         }
 
         .welcome-icon {
-            width: 140px;
-            height: 140px;
+            width: 100px;
+            height: 100px;
             background: transparent;
-            border-radius: 24px;
+            border-radius: var(--radius-xl);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-size: 48px;
-            margin-bottom: 24px;
-            animation: bounce 2s ease-in-out infinite;
-            padding: 0;
-            overflow: visible;
+            margin-bottom: var(--spacing-lg);
+            animation: float 3s ease-in-out infinite;
         }
 
         .welcome-icon img {
@@ -369,178 +671,169 @@
             height: 100%;
             object-fit: contain;
             display: block;
-            filter: drop-shadow(0 6px 20px rgba(33, 150, 243, 0.3));
+            filter: drop-shadow(0 4px 12px rgba(25, 118, 210, 0.25));
         }
 
-        @keyframes bounce {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-10px);
-            }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
         }
 
         .hero-badge {
             display: inline-block;
             padding: 8px 20px;
-            background: linear-gradient(135deg, #2196F3, #1976D2);
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
             color: white;
             font-size: 12px;
             font-weight: 600;
             text-transform: none;
-            letter-spacing: 0.5px;
-            border-radius: 50px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4);
-            animation: glow 2s ease-in-out infinite;
-        }
-
-        @keyframes glow {
-            0%, 100% {
-                box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4);
-            }
-            50% {
-                box-shadow: 0 4px 20px rgba(33, 150, 243, 0.6), 0 0 15px rgba(33, 150, 243, 0.4);
-            }
+            letter-spacing: 0.02em;
+            border-radius: var(--radius-full);
+            margin-bottom: var(--spacing-md);
+            box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
         }
 
         .hero-main-title {
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 700;
-            line-height: 1.3;
-            margin-bottom: 16px;
-            color: #1a1a1a;
-            animation: slideInScale 0.8s ease-out 0.2s both;
-        }
-
-        @keyframes slideInScale {
-            from {
-                opacity: 0;
-                transform: scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
+            line-height: 1.2;
+            margin-bottom: var(--spacing-md);
+            color: var(--color-text);
+            letter-spacing: -0.02em;
+            max-width: 600px;
         }
 
         .number-highlight {
-            background: linear-gradient(135deg, #FFD700, #FFA500);
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            font-weight: 900;
-            text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
-            animation: shimmer 2s ease-in-out infinite;
-        }
-
-        @keyframes shimmer {
-            0%, 100% {
-                filter: brightness(1);
-            }
-            50% {
-                filter: brightness(1.3);
-            }
+            font-weight: 800;
         }
 
         .action-highlight {
-            background: linear-gradient(135deg, #11998e, #38ef7d);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-weight: 900;
-            animation: colorShift 3s ease-in-out infinite;
-        }
-
-        @keyframes colorShift {
-            0%, 100% {
-                filter: hue-rotate(0deg);
-            }
-            50% {
-                filter: hue-rotate(20deg);
-            }
+            color: var(--color-success);
+            font-weight: 700;
         }
 
         .hero-description {
             font-size: 16px;
-            color: #555;
-            max-width: 650px;
-            margin-bottom: 12px;
-            line-height: 1.5;
-            animation: fadeIn 1s ease-out 0.4s both;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
+            color: var(--color-text-secondary);
+            max-width: 500px;
+            margin-bottom: var(--spacing-sm);
+            line-height: 1.6;
         }
 
         .hero-stats {
             font-size: 14px;
-            color: #666;
-            margin-top: 8px;
-            animation: fadeIn 1s ease-out 0.6s both;
+            color: var(--color-text-muted);
+            margin-top: var(--spacing-sm);
         }
 
         .stats-number {
-            font-weight: 800;
-            font-size: 16px;
-            background: linear-gradient(135deg, #2196F3, #1976D2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: countUp 2s ease-out;
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--color-primary);
         }
 
-        @keyframes countUp {
-            from {
-                opacity: 0;
-                transform: scale(0.5);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .suggestion-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 16px;
-            max-width: 800px;
+        /* Trending Prompts - CanaryAI Style */
+        .trending-prompts {
+            margin-top: 32px;
+            max-width: 700px;
             width: 100%;
         }
 
+        .trending-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .trending-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .trending-prompt {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .trending-prompt:hover {
+            border-color: var(--color-primary);
+            background: rgba(25, 118, 210, 0.05);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(25, 118, 210, 0.15);
+        }
+
+        .trending-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .trending-text {
+            font-size: 13px;
+            color: var(--color-text-primary);
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .trending-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .trending-prompt {
+                padding: 12px 14px;
+            }
+        }
+
+        /* Suggestion Cards - CanaryAI Style */
+        .suggestion-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: var(--spacing-md);
+            max-width: 800px;
+            width: 100%;
+            margin-top: var(--spacing-xl);
+        }
+
         .suggestion-card {
-            padding: 20px;
+            padding: var(--spacing-lg);
             background: var(--color-surface);
             border: 1px solid var(--color-border);
             border-radius: var(--radius-lg);
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all var(--transition-normal);
             text-align: left;
+            box-shadow: var(--shadow-card);
         }
 
         .suggestion-card:hover {
             transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
+            box-shadow: var(--shadow-card-hover);
             border-color: var(--color-primary);
         }
 
         .suggestion-icon {
             font-size: 24px;
-            margin-bottom: 12px;
+            margin-bottom: var(--spacing-md);
         }
 
         .suggestion-title {
             font-size: 15px;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: var(--spacing-sm);
             color: var(--color-text);
         }
 
@@ -550,10 +843,11 @@
             line-height: 1.5;
         }
 
+        /* Messages - CanaryAI Style */
         .message {
             display: flex;
-            gap: 16px;
-            margin-bottom: 24px;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
             animation: slideUp 0.3s ease;
         }
 
@@ -745,48 +1039,53 @@
             }
         }
 
+        /* Property Cards - CanaryAI Style */
         .property-card {
             background: var(--color-surface);
             border: 1px solid var(--color-border);
             border-radius: var(--radius-lg);
             overflow: hidden;
-            margin-top: 12px;
-            transition: all 0.3s ease;
+            margin-top: var(--spacing-md);
+            transition: all var(--transition-normal);
+            box-shadow: var(--shadow-card);
         }
 
         .property-card:hover {
-            box-shadow: var(--shadow-lg);
-            transform: translateY(-2px);
+            box-shadow: var(--shadow-card-hover);
+            transform: translateY(-4px);
+            border-color: var(--color-primary);
         }
 
         .property-image {
             width: 100%;
             height: 200px;
             object-fit: cover;
-            background: var(--color-bg-primary);
+            background: var(--color-bg-tertiary);
         }
 
         .property-details {
-            padding: 16px;
+            padding: var(--spacing-lg);
         }
 
         .property-price {
             font-size: 24px;
-            font-weight: 600;
+            font-weight: 700;
             color: var(--color-primary);
-            margin-bottom: 8px;
+            margin-bottom: var(--spacing-sm);
+            letter-spacing: -0.02em;
         }
 
         .property-address {
             font-size: 15px;
+            font-weight: 600;
             color: var(--color-text);
-            margin-bottom: 12px;
+            margin-bottom: var(--spacing-sm);
         }
 
         .property-specs {
             display: flex;
-            gap: 16px;
-            margin-bottom: 12px;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
             font-size: 14px;
             color: var(--color-text-secondary);
         }
@@ -799,96 +1098,148 @@
 
         .property-actions {
             display: flex;
-            gap: 8px;
-            margin-top: 16px;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
         }
 
+        /* Property Status Badge - CanaryAI Style */
+        .property-status-badge {
+            position: absolute;
+            top: var(--spacing-md);
+            left: var(--spacing-md);
+            background: var(--color-primary);
+            color: white;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .property-status-badge.sold {
+            background: var(--color-error);
+        }
+
+        .property-status-badge.pending {
+            background: var(--color-warning);
+        }
+
+        /* Button Styles - CanaryAI Style */
         .btn-small {
-            padding: 8px 16px;
+            padding: 10px 18px;
             border: 1px solid var(--color-border);
             border-radius: var(--radius-md);
             font-size: 13px;
+            font-weight: 500;
             cursor: pointer;
-            background: transparent;
+            background: var(--color-surface);
             color: var(--color-text);
-            transition: all 0.2s ease;
+            transition: all var(--transition-fast);
         }
 
         .btn-small:hover {
             background: var(--color-primary);
             color: white;
             border-color: var(--color-primary);
+            transform: translateY(-1px);
         }
 
+        .btn-small.primary {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        .btn-small.primary:hover {
+            background: var(--color-primary-hover);
+            border-color: var(--color-primary-hover);
+        }
+
+        .btn-small.secondary {
+            background: var(--color-surface);
+            color: var(--color-primary);
+            border-color: var(--color-primary);
+        }
+
+        .btn-small.secondary:hover {
+            background: var(--color-info-light);
+        }
+
+        /* Quick Replies - CanaryAI Style */
         .quick-replies {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 16px;
-            margin-bottom: 8px;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
         }
 
         .quick-reply-btn {
             padding: 10px 18px;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border: 1.5px solid #dee2e6;
-            border-radius: 20px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-full);
             font-size: 14px;
             font-weight: 500;
-            color: #495057;
+            color: var(--color-text-secondary);
             cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            transition: all var(--transition-fast);
+            box-shadow: var(--shadow-xs);
         }
 
         .quick-reply-btn:hover {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--color-primary);
             color: white;
-            border-color: #667eea;
+            border-color: var(--color-primary);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
         }
 
         .quick-reply-btn:active {
             transform: translateY(0);
-            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
         }
 
+        /* Source Links - CanaryAI Style */
         .source-links {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 12px;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
         }
 
         .source-link {
-            padding: 6px 12px;
+            padding: 6px 14px;
             background: var(--color-bg-primary);
             border: 1px solid var(--color-border);
             border-radius: var(--radius-md);
             font-size: 12px;
+            font-weight: 500;
             color: var(--color-primary);
             text-decoration: none;
-            transition: all 0.2s ease;
+            transition: all var(--transition-fast);
         }
 
         .source-link:hover {
             background: var(--color-primary);
             color: white;
+            border-color: var(--color-primary);
         }
 
-        /* Input Area */
+        /* Input Area - CanaryAI Style */
         .input-area {
-            padding: 20px 24px;
+            padding: var(--spacing-lg) var(--spacing-xl);
             background: var(--color-surface);
             border-top: 1px solid var(--color-border);
+            position: sticky;
+            bottom: 0;
         }
 
         .input-container {
             display: flex;
-            gap: 12px;
+            gap: var(--spacing-md);
             align-items: flex-end;
-            max-width: 1000px;
+            max-width: 900px;
             margin: 0 auto;
         }
 
@@ -899,30 +1250,35 @@
 
         .chat-input {
             width: 100%;
-            padding: 14px 120px 14px 16px;
+            padding: 16px 130px 16px 20px;
             background: var(--color-bg-primary);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-lg);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-xl);
             font-size: 15px;
             font-family: var(--font-base);
             color: var(--color-text);
             resize: none;
             max-height: 200px;
-            transition: all 0.2s ease;
+            transition: all var(--transition-fast);
         }
 
         .chat-input:focus {
             outline: none;
             border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px rgba(51, 128, 141, 0.1);
+            box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.1);
+            background: var(--color-surface);
+        }
+
+        .chat-input::placeholder {
+            color: var(--color-text-muted);
         }
 
         .input-actions {
             position: absolute;
-            right: 8px;
-            bottom: 8px;
+            right: 12px;
+            bottom: 12px;
             display: flex;
-            gap: 4px;
+            gap: 6px;
         }
 
         .input-icon-btn {
@@ -935,12 +1291,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--color-text-secondary);
-            transition: all 0.2s ease;
+            color: var(--color-text-muted);
+            transition: all var(--transition-fast);
+            font-size: 16px;
         }
 
         .input-icon-btn:hover {
-            background: var(--color-bg-secondary);
+            background: var(--color-bg-tertiary);
             color: var(--color-primary);
         }
 
@@ -955,21 +1312,24 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-            transition: all 0.2s ease;
+            font-size: 18px;
+            transition: all var(--transition-fast);
+            box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3);
         }
 
         .send-btn:hover {
             background: var(--color-primary-hover);
             transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(25, 118, 210, 0.4);
         }
 
         .send-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+            transform: none;
         }
 
-        /* Autocomplete Suggestions */
+        /* Autocomplete Suggestions - CanaryAI Style */
         .autocomplete-suggestions {
             position: absolute;
             bottom: 100%;
@@ -978,10 +1338,10 @@
             background: var(--color-surface);
             border: 1px solid var(--color-border);
             border-radius: var(--radius-lg);
-            margin-bottom: 8px;
+            margin-bottom: var(--spacing-sm);
             max-height: 300px;
             overflow-y: auto;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-xl);
             display: none;
             z-index: 100;
         }
@@ -1088,9 +1448,11 @@
         }
 
         .modal-title {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 8px;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: var(--spacing-sm);
+            color: var(--color-text);
+            letter-spacing: -0.02em;
         }
 
         .modal-subtitle {
@@ -1098,14 +1460,15 @@
             color: var(--color-text-secondary);
         }
 
-        /* Market Analysis Center Panel */
+        /* Market Analysis Panel - CanaryAI Style */
         .market-analysis-panel {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
             display: none;
             align-items: center;
             justify-content: center;
@@ -1114,53 +1477,73 @@
 
         .market-analysis-panel.open {
             display: flex;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .market-analysis-content {
             background: var(--color-surface);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-lg);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
             max-width: 90vw;
             max-height: 90vh;
             overflow-y: auto;
             position: relative;
             min-width: 800px;
             min-height: 600px;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
         .market-analysis-header {
-            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
             color: white;
-            padding: 20px;
+            padding: var(--spacing-lg);
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: sticky;
             top: 0;
             z-index: 1;
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
         }
 
         .market-analysis-close {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.15);
             border: none;
             color: white;
-            font-size: 24px;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
+            font-size: 20px;
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-full);
             cursor: pointer;
-            transition: background 0.2s ease;
+            transition: all var(--transition-fast);
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .market-analysis-close:hover {
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.25);
+            transform: rotate(90deg);
         }
 
         .market-analysis-body {
-            padding: 20px;
+            padding: var(--spacing-xl);
         }
 
         @media (max-width: 768px) {
@@ -1168,6 +1551,7 @@
                 min-width: 95vw;
                 min-height: 95vh;
                 margin: 10px;
+                border-radius: var(--radius-lg);
             }
         }
 
@@ -1175,12 +1559,12 @@
             width: 100%;
             height: 100px;
             background: var(--color-bg-primary);
-            border-radius: var(--radius-md);
-            margin: 24px 0;
+            border-radius: var(--radius-lg);
+            margin: var(--spacing-lg) 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            gap: 6px;
         }
 
         .voice-bar {
@@ -1203,18 +1587,19 @@
 
         .voice-controls {
             display: flex;
-            gap: 12px;
+            gap: var(--spacing-md);
         }
 
         .voice-btn {
             flex: 1;
-            padding: 12px;
+            padding: var(--spacing-md);
             border: 1px solid var(--color-border);
             border-radius: var(--radius-md);
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all var(--transition-fast);
+            background: var(--color-surface);
         }
 
         .voice-btn-primary {
@@ -1227,10 +1612,10 @@
             background: var(--color-primary-hover);
         }
 
-        /* Responsive */
+        /* Responsive Design - CanaryAI Style */
         @media (max-width: 768px) {
             .hero-main-title {
-                font-size: 22px;
+                font-size: 24px;
             }
 
             .hero-badge {
@@ -1251,8 +1636,8 @@
             }
 
             .welcome-icon {
-                width: 90px;
-                height: 90px;
+                width: 80px;
+                height: 80px;
             }
 
             .sidebar {
@@ -1273,19 +1658,19 @@
             }
 
             .chat-header {
-                padding: 16px;
+                padding: var(--spacing-md);
             }
 
             .chat-container {
-                padding: 16px;
+                padding: var(--spacing-md);
             }
 
             .input-area {
-                padding: 12px;
+                padding: var(--spacing-md);
             }
         }
 
-        /* File Upload */
+        /* File Upload - CanaryAI Style */
         .file-upload-area {
             border: 2px dashed var(--color-border);
             border-radius: var(--radius-lg);
@@ -1599,27 +1984,13 @@
             color: var(--color-error);
         }
 
-        /* OpenAI Enhancement Badge */
+        /* OpenAI Enhancement Badge - Hidden, keeping class for compatibility */
         .openai-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
-            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-            color: #000;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-left: 8px;
-            box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
-            animation: shimmer 2s infinite;
+            display: none;
         }
 
         .openai-badge::before {
-            content: "✨";
-            font-size: 14px;
+            content: "";
         }
 
         @keyframes shimmer {
@@ -1628,9 +1999,10 @@
         }
 
         .message-content.openai-enhanced {
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.05) 0%, rgba(255, 165, 0, 0.05) 100%);
-            border-left: 3px solid #FFD700;
-            padding-left: 15px;
+            /* Clean styling without golden accents */
+            background: transparent;
+            border-left: none;
+            padding-left: 0;
         }
 
         /* Responsive Design */
@@ -1705,17 +2077,17 @@
             }
         }
 
-        /* AI Analysis Side Panel */
+        /* AI Analysis Side Panel - CanaryAI Style */
         .ai-analysis-panel {
             position: fixed;
-            right: 0;
+            left: 0;
             top: 0;
-            width: 500px;
+            width: 420px;
             height: 100vh;
             background: var(--color-surface);
-            box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
-            transform: translateX(100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+            transform: translateX(-100%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 1000;
             display: flex;
             flex-direction: column;
@@ -1726,53 +2098,60 @@
         }
 
         .ai-panel-header {
-            padding: 24px;
+            padding: var(--spacing-lg);
             border-bottom: 1px solid var(--color-border);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
             color: white;
         }
 
         .ai-panel-title {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 600;
             margin: 0;
+            letter-spacing: -0.01em;
         }
 
         .ai-panel-close {
-            background: none;
+            background: rgba(255, 255, 255, 0.15);
             border: none;
             color: white;
-            font-size: 24px;
+            font-size: 18px;
             cursor: pointer;
-            padding: 8px;
-            border-radius: var(--radius-sm);
-            transition: background 0.2s;
+            padding: var(--spacing-sm);
+            border-radius: var(--radius-md);
+            transition: all var(--transition-fast);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .ai-panel-close:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.25);
+            transform: rotate(90deg);
         }
 
         .ai-panel-body {
             flex: 1;
             overflow-y: auto;
-            padding: 24px;
+            padding: var(--spacing-lg);
         }
 
-        /* Property Details Side Panel (Left) */
+        /* Property Details Side Panel (Right) - CanaryAI Style */
         .property-details-panel {
             position: fixed;
-            left: 0;
+            right: 0;
             top: 0;
-            width: 500px;
+            width: 480px;
             height: 100vh;
             background: var(--color-surface);
-            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
-            transform: translateX(-100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 1000;
             display: flex;
             flex-direction: column;
@@ -1783,34 +2162,40 @@
         }
 
         .property-panel-header {
-            padding: 24px;
+            padding: var(--spacing-lg);
             border-bottom: 1px solid var(--color-border);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: linear-gradient(135deg, #134252 0%, #0d2f3a 100%);
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
             color: white;
         }
 
         .property-panel-title {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 600;
             margin: 0;
+            letter-spacing: -0.01em;
         }
 
         .property-panel-close {
-            background: none;
+            background: rgba(255, 255, 255, 0.15);
             border: none;
             color: white;
-            font-size: 24px;
+            font-size: 18px;
             cursor: pointer;
-            padding: 8px;
-            border-radius: var(--radius-sm);
-            transition: background 0.2s;
+            padding: var(--spacing-sm);
+            border-radius: var(--radius-md);
+            transition: all var(--transition-fast);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .property-panel-close:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.25);
         }
 
         .property-panel-body {
@@ -1990,12 +2375,12 @@
             color: var(--color-success);
         }
 
-        /* Property Search Grid */
+        /* Property Search Grid - CanaryAI Style */
         .property-search-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 20px;
-            margin: 16px 0;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+            margin: var(--spacing-lg) 0;
         }
 
         .property-search-card {
@@ -2003,20 +2388,89 @@
             border: 1px solid var(--color-border);
             border-radius: var(--radius-lg);
             overflow: hidden;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow-sm);
+            transition: all var(--transition-normal);
+            box-shadow: var(--shadow-card);
+            position: relative;
         }
 
         .property-search-card:hover {
-            box-shadow: var(--shadow-lg);
-            transform: translateY(-4px);
+            box-shadow: var(--shadow-card-hover);
+            transform: translateY(-6px);
+            border-color: var(--color-primary);
         }
 
         .property-image-container {
             width: 100%;
-            height: 200px;
+            height: 180px;
             overflow: hidden;
-            background: var(--color-bg-primary);
+            background: var(--color-bg-tertiary);
+            position: relative;
+        }
+
+        .property-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform var(--transition-slow);
+        }
+
+        .property-search-card:hover .property-image-container img {
+            transform: scale(1.05);
+        }
+
+        /* Image Navigation Arrows */
+        .image-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            opacity: 0;
+            transition: all 0.2s ease;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .image-nav-btn:hover {
+            background: white;
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .image-nav-btn.prev {
+            left: 8px;
+        }
+
+        .image-nav-btn.next {
+            right: 8px;
+        }
+
+        .property-image-container:hover .image-nav-btn {
+            opacity: 1;
+        }
+
+        /* Image Counter Badge */
+        .image-counter-badge {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 5;
         }
 
         .property-no-image {
@@ -2024,7 +2478,8 @@
             align-items: center;
             justify-content: center;
             font-size: 48px;
-            color: var(--color-text-secondary);
+            color: var(--color-text-muted);
+            height: 100%;
         }
 
         .loading-address {
@@ -2033,20 +2488,113 @@
             animation: pulse 1.5s ease-in-out infinite;
         }
 
-        /* Button Styles */
-        .btn-small {
-            padding: 8px 16px;
+        /* Property Card Content - CanaryAI Style */
+        .property-card-content {
+            padding: var(--spacing-lg);
+        }
+
+        .property-card-status {
+            position: absolute;
+            top: var(--spacing-md);
+            left: var(--spacing-md);
+            background: var(--color-primary);
+            color: white;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
             border-radius: var(--radius-sm);
-            border: none;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .property-card-price {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: var(--spacing-sm);
+            letter-spacing: -0.02em;
+        }
+
+        .property-card-address {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+
+        .property-card-city {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .property-card-specs {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            margin-bottom: var(--spacing-md);
+            display: flex;
+            gap: var(--spacing-md);
+            flex-wrap: wrap;
+        }
+
+        .property-card-spec {
+            display: flex;
             align-items: center;
             gap: 4px;
         }
 
+        .property-card-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--color-border-light);
+        }
+
+        .property-card-actions .btn-small {
+            flex: 1;
+            justify-content: center;
+        }
+
+        /* Primary action button - CanaryAI style */
+        .btn-property-report {
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            flex: 1;
+        }
+
+        .btn-property-report:hover {
+            background: var(--color-primary-hover);
+            transform: translateY(-1px);
+        }
+
+        /* Secondary action button - CanaryAI style */
+        .btn-view-details {
+            background: var(--color-surface);
+            color: var(--color-primary);
+            border: 2px solid var(--color-primary);
+            padding: 10px 16px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            flex: 1;
+        }
+
+        .btn-view-details:hover {
+            background: var(--color-info-light);
+        }
+
+        /* Button Styles - CanaryAI Style */
         .btn-primary {
             background: var(--color-primary);
             color: white;
@@ -2536,91 +3084,110 @@
             opacity: 0.85;
         }
 
-        /* ==================== ENHANCED SCHOOL LISTINGS ==================== */
+        /* ==================== ENHANCED SCHOOL LISTINGS - CanaryAI Style ==================== */
         
         .schools-list {
-            max-height: 400px;
+            max-height: 450px;
             overflow-y: auto;
+            padding: 4px;
         }
 
         .school-card {
-            padding: 12px;
-            margin: 8px 0;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            background: #f9f9f9;
-            transition: all 0.3s ease;
+            padding: 16px;
+            margin: 10px 0;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            background: var(--color-bg-primary);
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
         }
 
         .school-card:hover {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow-md);
+            border-color: var(--color-primary);
             transform: translateY(-2px);
         }
 
         .school-name {
             font-weight: 600;
-            color: #1a1a1a;
-            margin-bottom: 4px;
+            font-size: 14px;
+            color: var(--color-text);
+            margin-bottom: 8px;
         }
 
         .school-type {
-            display: inline-block;
-            padding: 2px 8px;
-            background: #e3f2fd;
-            color: #1976d2;
-            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            background: rgba(25, 118, 210, 0.1);
+            color: var(--color-primary);
+            border-radius: var(--radius-full);
             font-size: 11px;
+            font-weight: 500;
             margin-right: 8px;
         }
 
         .school-rating {
-            display: inline-block;
-            padding: 2px 8px;
-            background: #fff3e0;
-            color: #f57c00;
-            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+            border-radius: var(--radius-full);
             font-size: 11px;
+            font-weight: 600;
         }
 
         .school-distance {
             font-size: 13px;
-            color: #666;
-            margin-top: 4px;
+            color: var(--color-text-secondary);
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .school-programs {
             font-size: 12px;
-            color: #555;
-            margin-top: 4px;
+            color: var(--color-text-secondary);
+            margin-top: 8px;
         }
 
         .program-tag {
             display: inline-block;
-            padding: 2px 6px;
-            background: #f0f0f0;
-            border-radius: 3px;
-            margin-right: 4px;
-            margin-top: 2px;
+            padding: 3px 8px;
+            background: var(--color-bg-tertiary);
+            border-radius: var(--radius-sm);
+            margin-right: 6px;
+            margin-top: 4px;
+            font-size: 11px;
+            color: var(--color-text-secondary);
         }
 
         .schools-loading {
             text-align: center;
-            padding: 20px;
+            padding: 24px;
+            color: var(--color-text-secondary);
         }
 
         .schools-error {
             color: #d32f2f;
             background: #ffebee;
-            padding: 12px;
-            border-radius: 6px;
-            margin: 8px 0;
+            padding: 16px;
+            border-radius: var(--radius-md);
+            margin: 10px 0;
+            font-size: 13px;
         }
 
         .schools-metadata {
             font-size: 11px;
-            color: #999;
-            margin-bottom: 8px;
+            color: var(--color-text-muted);
+            margin-bottom: 12px;
             text-align: center;
+            padding: 8px;
+            background: var(--color-bg-secondary);
+            border-radius: var(--radius-sm);
         }
 
         .hidden {
@@ -3826,19 +4393,19 @@
         /* Analysis metrics styling */
         .analysis-metric {
             display: inline-block;
-            background: linear-gradient(135deg, rgba(51, 128, 141, 0.1), rgba(51, 128, 141, 0.05));
-            border: 1px solid rgba(51, 128, 141, 0.2);
+            background: linear-gradient(135deg, rgba(25, 118, 210, 0.1), rgba(25, 118, 210, 0.05));
+            border: 1px solid rgba(25, 118, 210, 0.2);
             padding: 8px 12px;
             border-radius: 20px;
             margin: 4px;
             font-size: 14px;
             font-weight: 600;
-            color: #33808d;
+            color: #1976D2;
             transition: all 0.3s ease;
         }
 
         .analysis-metric:hover {
-            background: #33808d;
+            background: #1976D2;
             color: white;
             transform: scale(1.05);
         }
@@ -4143,7 +4710,7 @@
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
     
     <div class="app-container">
-        <!-- Sidebar -->
+        <!-- Left Sidebar - Chat History -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
@@ -4161,159 +4728,86 @@
                 </button>
             </div>
 
-            <div class="quick-actions sidebar-content">
-                <!-- City Selector -->
+            <div class="sidebar-content">
+                <!-- Chat History Section -->
                 <div class="filter-group">
                     <div class="filter-group-title">
-                        <span>🏙️</span>
-                        <span>SELECT CITY</span>
+                        <span>💬</span>
+                        <span>CHAT HISTORY</span>
                     </div>
-                    <div class="custom-select-wrapper">
-                        <select id="citySelector" class="custom-select" onchange="handleCityChange(this.value)">
-                            <option value="">Choose a city...</option>
-                            <option value="Toronto">Toronto</option>
-                            <option value="Mississauga">Mississauga</option>
-                            <option value="Brampton">Brampton</option>
-                            <option value="Oakville">Oakville</option>
-                            <option value="Burlington">Burlington</option>
-                            <option value="Hamilton">Hamilton</option>
-                            <option value="Ottawa">Ottawa</option>
-                            <option value="Kingston">Kingston</option>
-                            <option value="London">London</option>
-                            <option value="Kitchener">Kitchener</option>
-                            <option value="Waterloo">Waterloo</option>
-                            <option value="Guelph">Guelph</option>
-                            <option value="Windsor">Windsor</option>
-                        </select>
-                        <span class="select-arrow">▼</span>
+                    <div class="chat-history-list" id="chatHistoryList">
+                        <!-- Chat sessions will be populated here -->
+                        <div class="chat-history-empty" id="chatHistoryEmpty">
+                            <p style="color: var(--color-text-secondary); font-size: 13px; text-align: center; padding: 20px;">
+                                No previous conversations yet.<br>Start a new chat to begin!
+                            </p>
+                        </div>
                     </div>
-                    <div id="selectedCityBadge"></div>
                 </div>
 
-                <!-- Quick Actions -->
-                <div class="filter-group">
+                <!-- Today's Chats -->
+                <div class="filter-group" id="todayChatsSection" style="display: none;">
                     <div class="filter-group-title">
+                        <span>📅</span>
+                        <span>TODAY</span>
+                    </div>
+                    <div class="chat-session-list" id="todayChatsList"></div>
+                </div>
+
+                <!-- Previous Chats -->
+                <div class="filter-group" id="previousChatsSection" style="display: none;">
+                    <div class="filter-group-title">
+                        <span>📁</span>
+                        <span>PREVIOUS</span>
+                    </div>
+                    <div class="chat-session-list" id="previousChatsList"></div>
+                </div>
+
+                <!-- Quick Filters (Collapsed) -->
+                <div class="filter-group">
+                    <div class="filter-group-title" onclick="toggleQuickFilters()" style="cursor: pointer;">
                         <span>⚡</span>
-                        <span>QUICK ACTIONS</span>
+                        <span>QUICK FILTERS</span>
+                        <span id="filterToggleIcon" style="margin-left: auto;">▼</span>
                     </div>
-                    <div class="quick-actions-grid">
-                        <button class="action-btn" onclick="handleQuickAction('search')">
-                            <span class="action-icon">🔍</span>
-                            <span class="action-label">Search Properties</span>
-                        </button>
-                        <button class="action-btn" onclick="handleQuickAction('market')">
-                            <span class="action-icon">📈</span>
-                            <span class="action-label">Market Analysis</span>
-                        </button>
-                        <button class="action-btn" onclick="handleQuickAction('neighborhood')">
-                            <span class="action-icon">🏘️</span>
-                            <span class="action-label">Neighborhood Intel</span>
-                        </button>
-                        <button class="action-btn" onclick="handleQuickAction('roi')">
-                            <span class="action-icon">💰</span>
-                            <span class="action-label">ROI Calculator</span>
-                        </button>
-                        <button class="action-btn" onclick="handleQuickAction('dashboard')">
-                            <span class="action-icon">📊</span>
-                            <span class="action-label">Manager Dashboard</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Price Range Filters -->
-                <div class="filter-group">
-                    <div class="filter-group-title">
-                        <span>💵</span>
-                        <span>PRICE RANGE</span>
-                    </div>
-                    <div class="filter-pills">
-                        <button class="filter-pill" onclick="handleFilterClick('priceRange', 'under500k', this)">
-                            Under $500K
-                        </button>
-                        <button class="filter-pill" onclick="handleFilterClick('priceRange', '500k-750k', this)">
-                            $500K-$750K
-                        </button>
-                        <button class="filter-pill" onclick="handleFilterClick('priceRange', '750k-1m', this)">
-                            $750K-$1M
-                        </button>
-                        <button class="filter-pill" onclick="handleFilterClick('priceRange', 'over1m', this)">
-                            $1M+
-                        </button>
+                    <div class="quick-filters-content" id="quickFiltersContent" style="display: none;">
+                        <!-- City Selector -->
+                        <div class="custom-select-wrapper" style="margin-bottom: 12px;">
+                            <select id="citySelector" class="custom-select" onchange="handleCityChange(this.value)">
+                                <option value="">Choose a city...</option>
+                                <option value="Toronto">Toronto</option>
+                                <option value="Mississauga">Mississauga</option>
+                                <option value="Brampton">Brampton</option>
+                                <option value="Oakville">Oakville</option>
+                                <option value="Burlington">Burlington</option>
+                                <option value="Hamilton">Hamilton</option>
+                                <option value="Ottawa">Ottawa</option>
+                                <option value="Kingston">Kingston</option>
+                                <option value="London">London</option>
+                                <option value="Kitchener">Kitchener</option>
+                                <option value="Waterloo">Waterloo</option>
+                                <option value="Guelph">Guelph</option>
+                                <option value="Windsor">Windsor</option>
+                            </select>
+                            <span class="select-arrow">▼</span>
+                        </div>
+                        <div id="selectedCityBadge"></div>
+                        
+                        <!-- Property Type Pills -->
+                        <div class="filter-pills" style="margin-top: 8px;">
+                            <button class="filter-pill" onclick="handleFilterClick('propertyType', 'Condo', this)">Condo</button>
+                            <button class="filter-pill" onclick="handleFilterClick('propertyType', 'House', this)">House</button>
+                            <button class="filter-pill" onclick="handleFilterClick('propertyType', 'Townhouse', this)">Townhouse</button>
+                        </div>
+                        
+                        <!-- Price Pills -->
+                        <div class="filter-pills" style="margin-top: 8px;">
+                            <button class="filter-pill" onclick="handleFilterClick('priceRange', 'under500k', this)">< $500K</button>
+                            <button class="filter-pill" onclick="handleFilterClick('priceRange', '500k-1m', this)">$500K-$1M</button>
+                            <button class="filter-pill" onclick="handleFilterClick('priceRange', 'over1m', this)">$1M+</button>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Property Type Filters -->
-                <div class="filter-group">
-                    <div class="filter-group-title">
-                        <span>🏡</span>
-                        <span>PROPERTY TYPE</span>
-                    </div>
-                    <div class="filter-pills">
-                        <button class="filter-pill" onclick="handleFilterClick('propertyType', 'Condo', this)">
-                            Condo
-                        </button>
-                        <button class="filter-pill" onclick="handleFilterClick('propertyType', 'House', this)">
-                            House
-                        </button>
-                        <button class="filter-pill" onclick="handleFilterClick('propertyType', 'Townhouse', this)">
-                            Townhouse
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Location Filters -->
-                <div class="filter-group">
-                    <div class="filter-group-title">
-                        <span>📍</span>
-                        <span>LOCATION</span>
-                    </div>
-                    <div class="filter-pills">
-                        <button class="filter-pill" onclick="handleFilterClick('location', 'Downtown', this)">
-                            Downtown
-                        </button>
-                        <button class="filter-pill" onclick="handleFilterClick('location', 'Waterfront', this)">
-                            Waterfront
-                        </button>
-                        <button class="filter-pill" onclick="handleFilterClick('location', 'Suburbs', this)">
-                            Suburbs
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Amenities Section -->
-                <div class="filter-group">
-                    <div class="filter-group-title">
-                        <span>🏢</span>
-                        <span>AMENITIES</span>
-                    </div>
-                    <div class="filter-pills">
-                        <button class="filter-pill" onclick="handleAmenityClick('schools', this)">
-                            🎓 Schools
-                        </button>
-                        <button class="filter-pill" onclick="handleAmenityClick('shopping', this)">
-                            🛍️ Shopping
-                        </button>
-                        <button class="filter-pill" onclick="handleAmenityClick('grocery', this)">
-                            🛒 Grocery
-                        </button>
-                        <button class="filter-pill" onclick="handleAmenityClick('hospitals', this)">
-                            🏥 Hospitals
-                        </button>
-                        <button class="filter-pill" onclick="handleAmenityClick('parks', this)">
-                            🌳 Parks
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Apply Filters Button -->
-                <button class="apply-filters-btn" onclick="applyAllFilters()">
-                    🎯 Apply Filters
-                </button>
-
-                <!-- Clear Filters Button -->
-                <button class="clear-filters-btn" onclick="clearAllFilters()">
-                    🗑️ Clear All Filters
-                </button>
             </div>
         </aside>
 
@@ -4329,9 +4823,7 @@
                     </div>
                 </div>
                 <div class="header-actions">
-                    <button class="icon-btn" onclick="showVoiceDisabled()" title="Voice Chat (Coming Soon)">🎤</button>
-                    <button class="icon-btn" onclick="toggleTheme()" title="Toggle Theme">🌙</button>
-                    <button class="icon-btn" onclick="showSettings()" title="Settings">⚙️</button>
+                    <button class="icon-btn" onclick="toggleRightPanel()" title="Toggle Properties Panel" id="propertyPanelBtn">🏠</button>
                 </div>
             </header>
 
@@ -4350,6 +4842,37 @@
                     </p>
                     <div class="hero-stats">
                         Search <span class="stats-number">336,092</span> listings from trusted REALTORS®
+                    </div>
+                    
+                    <!-- Trending Prompts Section -->
+                    <div class="trending-prompts" id="trendingPromptsSection">
+                        <div class="trending-title">🔥 Popular searches</div>
+                        <div class="trending-grid">
+                            <button class="trending-prompt" onclick="sendMessage('Show me 2-bedroom condos in Toronto under $700K')">
+                                <span class="trending-icon">🏢</span>
+                                <span class="trending-text">2BR condos in Toronto under $700K</span>
+                            </button>
+                            <button class="trending-prompt" onclick="sendMessage('Find houses with 3+ bedrooms in Mississauga')">
+                                <span class="trending-icon">🏠</span>
+                                <span class="trending-text">3+ BR houses in Mississauga</span>
+                            </button>
+                            <button class="trending-prompt" onclick="sendMessage('What are the best neighborhoods in Ottawa for families?')">
+                                <span class="trending-icon">👨‍👩‍👧‍👦</span>
+                                <span class="trending-text">Family neighborhoods in Ottawa</span>
+                            </button>
+                            <button class="trending-prompt" onclick="sendMessage('Show me luxury homes over $2M in Vancouver')">
+                                <span class="trending-icon">💎</span>
+                                <span class="trending-text">Luxury homes in Vancouver</span>
+                            </button>
+                            <button class="trending-prompt" onclick="sendMessage('Compare real estate market trends: Toronto vs Calgary')">
+                                <span class="trending-icon">📊</span>
+                                <span class="trending-text">Toronto vs Calgary market</span>
+                            </button>
+                            <button class="trending-prompt" onclick="sendMessage('Find townhouses near good schools in Oakville')">
+                                <span class="trending-icon">🎓</span>
+                                <span class="trending-text">Townhouses near schools in Oakville</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4381,6 +4904,44 @@
                 </div>
             </div>
         </main>
+
+        <!-- Right Panel - Property Results -->
+        <aside class="right-panel" id="rightPanel">
+            <div class="right-panel-header">
+                <h2 class="right-panel-title">
+                    <span>🏠</span>
+                    <span>Properties</span>
+                </h2>
+                <button class="icon-btn" onclick="toggleRightPanel()" title="Close Panel">✕</button>
+            </div>
+            <div class="right-panel-content" id="rightPanelContent">
+                <!-- Empty State -->
+                <div class="right-panel-empty" id="rightPanelEmpty">
+                    <div style="text-align: center; padding: 40px 20px; color: var(--color-text-secondary);">
+                        <div style="font-size: 48px; margin-bottom: 16px;">🏡</div>
+                        <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--color-text);">No Properties Yet</h3>
+                        <p style="font-size: 13px; line-height: 1.5;">
+                            Search for properties in the chat to see results here.
+                        </p>
+                        <div style="margin-top: 20px;">
+                            <button class="btn-small btn-primary" onclick="sendMessage('Show me condos in Toronto under $700k')" style="padding: 10px 16px;">
+                                🔍 Try a Search
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Property Cards Container -->
+                <div class="property-cards-container" id="propertyCardsContainer" style="display: none;">
+                    <!-- Property cards will be dynamically added here -->
+                </div>
+                
+                <!-- Property Details Section (shown when a property is selected) -->
+                <div class="property-details-section" id="propertyDetailsSection" style="display: none;">
+                    <!-- Property details will be shown here -->
+                </div>
+            </div>
+        </aside>
     </div>
 
     <!-- Welcome Name Collection Modal -->
@@ -4395,31 +4956,31 @@
                 </div>
                 
                 <!-- Title -->
-                <h2 class="modal-title" style="font-size: 28px; font-weight: 700; color: #333; margin-bottom: 12px;">
+                <h2 class="modal-title" style="font-size: 28px; font-weight: 700; color: #1a1a1a; margin-bottom: 12px;">
                     Welcome to Summitly AI!
                 </h2>
                 
                 <!-- Description -->
-                <p style="margin-bottom: 28px; color: #666; font-size: 16px; line-height: 1.5;">
+                <p style="margin-bottom: 28px; color: #64748b; font-size: 16px; line-height: 1.5;">
                     Your AI-powered real estate assistant is ready to help you find the perfect property.
                 </p>
                 
                 <!-- Name Input -->
                 <div style="margin: 24px 0;">
-                    <label for="userName" style="display: block; margin-bottom: 10px; font-weight: 600; color: #333; font-size: 15px;">
+                    <label for="userName" style="display: block; margin-bottom: 10px; font-weight: 600; color: #1a1a1a; font-size: 15px;">
                         What's your name?
                     </label>
                     <input type="text" id="userName" placeholder="Enter your name..." 
-                           style="width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px; text-align: center; transition: border-color 0.3s ease;"
+                           style="width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 16px; text-align: center; transition: border-color 0.3s ease;"
                            onkeypress="if(event.key==='Enter') saveUserName()"
-                           onfocus="this.style.borderColor='#2196F3'"
-                           onblur="this.style.borderColor='#e0e0e0'">
+                           onfocus="this.style.borderColor='#1976D2'"
+                           onblur="this.style.borderColor='#e2e8f0'">
                 </div>
                 
                 <!-- Get Started Button -->
                 <button onclick="saveUserName()" 
                         style="background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); color: white; border: none; padding: 14px 40px; border-radius: 25px; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; width: 100%; margin-top: 8px;"
-                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(33, 150, 243, 0.4)';"
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(25, 118, 210, 0.4)';"
                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
                     Get Started 🚀
                 </button>
@@ -4533,6 +5094,24 @@
         console.log('🚀 Summitly Production Frontend Loaded');
         console.log('🌐 API Base URL:', filterState.apiBaseUrl);
         console.log('📍 Environment:', window.location.hostname.includes('render') ? 'Production (Render)' : 'Development');
+
+        /**
+         * Toggle Quick Filters dropdown visibility
+         */
+        function toggleQuickFilters() {
+            const content = document.getElementById('quickFiltersContent');
+            const icon = document.getElementById('filterToggleIcon');
+            
+            if (!content) return;
+            
+            if (content.style.display === 'none' || content.style.display === '') {
+                content.style.display = 'block';
+                if (icon) icon.textContent = '▲';
+            } else {
+                content.style.display = 'none';
+                if (icon) icon.textContent = '▼';
+            }
+        }
 
         /**
          * Handle city selection change
@@ -5707,7 +6286,6 @@
                     <div class="amenity-header">
                         <h2>${amenityIcons[amenity]} ${amenityLabels[amenity]}</h2>
                         <p>Comprehensive ${amenity} information with ratings and details for ${city}</p>
-                        <div class="openai-badge">AI Enhanced</div>
                     </div>
                     <div class="amenity-grid">
             `;
@@ -6501,6 +7079,313 @@
             sidebar.classList.toggle('active');
             overlay.classList.toggle('active');
         }
+        
+        // Toggle Right Panel
+        function toggleRightPanel() {
+            const rightPanel = document.getElementById('rightPanel');
+            const appContainer = document.querySelector('.app-container');
+            rightPanel.classList.toggle('active');
+            appContainer.classList.toggle('has-right-panel');
+        }
+        
+        // Show Right Panel with Properties
+        function showRightPanel() {
+            const rightPanel = document.getElementById('rightPanel');
+            const appContainer = document.querySelector('.app-container');
+            rightPanel.classList.add('active');
+            appContainer.classList.add('has-right-panel');
+        }
+        
+        // Hide Right Panel
+        function hideRightPanel() {
+            const rightPanel = document.getElementById('rightPanel');
+            const appContainer = document.querySelector('.app-container');
+            rightPanel.classList.remove('active');
+            appContainer.classList.remove('has-right-panel');
+        }
+        
+        // Chat History Manager (for sidebar display)
+        const chatHistoryManager = {
+            sessions: [],
+            currentSessionId: null,
+            
+            init() {
+                this.loadFromStorage();
+                // Create a new session if none exists or no current session
+                if (this.sessions.length === 0 || !this.currentSessionId) {
+                    this.createNewSession();
+                }
+                this.renderHistory();
+            },
+            
+            loadFromStorage() {
+                try {
+                    const stored = localStorage.getItem('summitly_chat_history');
+                    if (stored) {
+                        const data = JSON.parse(stored);
+                        this.sessions = data.sessions || [];
+                        this.currentSessionId = data.currentSessionId || null;
+                    }
+                } catch (e) {
+                    console.error('Error loading chat history:', e);
+                    this.sessions = [];
+                }
+            },
+            
+            saveToStorage() {
+                try {
+                    localStorage.setItem('summitly_chat_history', JSON.stringify({
+                        sessions: this.sessions,
+                        currentSessionId: this.currentSessionId
+                    }));
+                } catch (e) {
+                    console.error('Error saving chat history:', e);
+                }
+            },
+            
+            createNewSession() {
+                const session = {
+                    id: Date.now().toString(),
+                    title: 'New Chat',
+                    messages: [],
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                this.sessions.unshift(session);
+                this.currentSessionId = session.id;
+                this.saveToStorage();
+                this.renderHistory();
+                return session;
+            },
+            
+            updateSessionTitle(sessionId, title) {
+                const session = this.sessions.find(s => s.id === sessionId);
+                if (session) {
+                    // Use first message as title (truncated)
+                    session.title = title.substring(0, 40) + (title.length > 40 ? '...' : '');
+                    session.updatedAt = new Date().toISOString();
+                    this.saveToStorage();
+                    this.renderHistory();
+                }
+            },
+            
+            addMessageToSession(sessionId, message) {
+                const session = this.sessions.find(s => s.id === sessionId);
+                if (session) {
+                    session.messages.push(message);
+                    session.updatedAt = new Date().toISOString();
+                    // Update title if it's the first user message
+                    if (message.role === 'user' && session.title === 'New Chat') {
+                        this.updateSessionTitle(sessionId, message.content);
+                    }
+                    this.saveToStorage();
+                }
+            },
+            
+            loadSession(sessionId) {
+                const session = this.sessions.find(s => s.id === sessionId);
+                if (session) {
+                    this.currentSessionId = sessionId;
+                    this.renderHistory();
+                    // Clear chat and reload messages
+                    const chatMessages = document.getElementById('chatMessages');
+                    if (chatMessages) {
+                        chatMessages.innerHTML = '';
+                        session.messages.forEach(msg => {
+                            if (msg.role === 'user') {
+                                addMessage(msg.content, 'user');
+                            } else {
+                                addMessage(msg.content, 'assistant');
+                            }
+                        });
+                    }
+                }
+            },
+            
+            renderHistory() {
+                const container = document.getElementById('chatHistoryList');
+                if (!container) return;
+                
+                if (this.sessions.length === 0) {
+                    container.innerHTML = `
+                        <div class="chat-history-empty">
+                            <p>No chat history yet.</p>
+                            <p>Start a conversation to see it here!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Group by date
+                const today = new Date().toDateString();
+                const yesterday = new Date(Date.now() - 86400000).toDateString();
+                
+                let html = '';
+                let currentGroup = '';
+                
+                this.sessions.forEach(session => {
+                    const sessionDate = new Date(session.updatedAt).toDateString();
+                    let groupLabel = '';
+                    
+                    if (sessionDate === today) {
+                        groupLabel = 'Today';
+                    } else if (sessionDate === yesterday) {
+                        groupLabel = 'Yesterday';
+                    } else {
+                        groupLabel = new Date(session.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    }
+                    
+                    if (groupLabel !== currentGroup) {
+                        currentGroup = groupLabel;
+                        html += `<div class="chat-history-label">${groupLabel}</div>`;
+                    }
+                    
+                    const isActive = session.id === this.currentSessionId ? 'active' : '';
+                    html += `
+                        <div class="chat-history-item ${isActive}" onclick="chatHistoryManager.loadSession('${session.id}')">
+                            <div class="chat-history-item-title">
+                                <span class="icon">💬</span>
+                                <span>${session.title}</span>
+                            </div>
+                            <div class="chat-history-item-meta">
+                                ${session.messages.length} messages
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            },
+            
+            startNewChat() {
+                // Clear current chat
+                const chatMessages = document.getElementById('chatMessages');
+                if (chatMessages) {
+                    chatMessages.innerHTML = '';
+                }
+                // Reset properties panel
+                const propertyCardsContainer = document.getElementById('propertyCardsContainer');
+                const rightPanelEmpty = document.getElementById('rightPanelEmpty');
+                if (propertyCardsContainer) {
+                    propertyCardsContainer.innerHTML = '';
+                    propertyCardsContainer.style.display = 'none';
+                }
+                if (rightPanelEmpty) {
+                    rightPanelEmpty.style.display = 'block';
+                }
+                // Create new session
+                this.createNewSession();
+                // Show welcome message
+                showWelcomeScreen();
+                // Close sidebar on mobile
+                toggleSidebar();
+            }
+        };
+        
+        // Add property to right panel
+        function addPropertyToRightPanel(property) {
+            const container = document.getElementById('propertyCardsContainer');
+            const emptyState = document.getElementById('rightPanelEmpty');
+            
+            if (!container) return;
+            
+            // Hide empty state and show container
+            if (emptyState) emptyState.style.display = 'none';
+            container.style.display = 'flex';
+            
+            const price = property.listPrice || property.price || 0;
+            const address = property.streetAddress || property.address || 'Address unavailable';
+            const city = property.city || '';
+            const beds = property.bedroomsTotal || property.bedrooms || 0;
+            const baths = property.bathroomsTotalInteger || property.bathrooms || 0;
+            const sqft = property.sqft || property.square_footage || null;
+            const images = property.images || [property.image || 'https://via.placeholder.com/400x200?text=No+Image'];
+            const image = images[0] || 'https://via.placeholder.com/400x200?text=No+Image';
+            const mls = property.mlsNumber || property.mls || '';
+            const cardIndex = container.children.length;
+            
+            const cardHtml = `
+                <div class="property-card-mini" data-mls="${mls}" data-index="${cardIndex}" data-images='${JSON.stringify(images).replace(/'/g, "&apos;")}' data-current-image="0">
+                    <div style="position: relative;">
+                        <img src="${image}" alt="${address}" class="property-card-mini-image" id="right-panel-img-${cardIndex}" onerror="this.src='https://via.placeholder.com/400x200?text=No+Image'">
+                        ${images.length > 1 ? `
+                            <button class="image-nav-btn image-nav-btn-prev" onclick="event.stopPropagation(); navigateRightPanelImage(${cardIndex}, -1)" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;">‹</button>
+                            <button class="image-nav-btn image-nav-btn-next" onclick="event.stopPropagation(); navigateRightPanelImage(${cardIndex}, 1)" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;">›</button>
+                            <div class="image-counter-badge" id="right-panel-counter-${cardIndex}" style="position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px;">1 / ${images.length}</div>
+                        ` : ''}
+                    </div>
+                    <div class="property-card-mini-content">
+                        <div class="property-card-mini-price">$${price.toLocaleString()}</div>
+                        <div class="property-card-mini-address">${address}${city ? ', ' + city : ''}</div>
+                        <div class="property-card-mini-details">
+                            <span>🛏️ ${beds}</span>
+                            <span>🛁 ${baths}</span>
+                            ${sqft ? `<span>📐 ${sqft.toLocaleString()} sqft</span>` : ''}
+                        </div>
+                        ${mls ? `<div style="font-size: 11px; color: #888; margin-top: 4px;">MLS: ${mls}</div>` : ''}
+                        <div style="display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap;">
+                            <button class="btn-small btn-primary" onclick="event.stopPropagation(); openPropertyDetailsPanel('${mls}')" style="font-size: 11px; padding: 6px 10px;">
+                                🏠 Details
+                            </button>
+                            <button class="btn-small btn-primary" onclick="event.stopPropagation(); openAIAnalysisPanel('${mls}', 'property')" style="font-size: 11px; padding: 6px 10px;">
+                                🤖 AI
+                            </button>
+                            <button class="btn-small btn-primary" onclick="event.stopPropagation(); openMarketAnalysisClickHandler('${mls}', this)" style="font-size: 11px; padding: 6px 10px;">
+                                📊 Market
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', cardHtml);
+            
+            // Show right panel
+            showRightPanel();
+        }
+        
+        // Navigate images in right panel property cards
+        function navigateRightPanelImage(cardIndex, direction) {
+            const container = document.getElementById('propertyCardsContainer');
+            const card = container.querySelector(`[data-index="${cardIndex}"]`);
+            if (!card) return;
+            
+            try {
+                const images = JSON.parse(card.dataset.images || '[]');
+                if (images.length <= 1) return;
+                
+                let currentIndex = parseInt(card.dataset.currentImage || '0');
+                currentIndex = (currentIndex + direction + images.length) % images.length;
+                card.dataset.currentImage = currentIndex;
+                
+                const img = document.getElementById(`right-panel-img-${cardIndex}`);
+                const counter = document.getElementById(`right-panel-counter-${cardIndex}`);
+                
+                if (img) img.src = images[currentIndex];
+                if (counter) counter.textContent = `${currentIndex + 1} / ${images.length}`;
+            } catch (error) {
+                console.error('Error navigating right panel image:', error);
+            }
+        }
+        
+        // Clear properties from right panel
+        function clearRightPanelProperties() {
+            const container = document.getElementById('propertyCardsContainer');
+            const emptyState = document.getElementById('rightPanelEmpty');
+            
+            if (container) {
+                container.innerHTML = '';
+                container.style.display = 'none';
+            }
+            if (emptyState) {
+                emptyState.style.display = 'block';
+            }
+        }
+        
+        // Initialize chat history on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            chatHistoryManager.init();
+        });
 
         // Handle Enter Key
         function handleKeyPress(event) {
@@ -6563,6 +7448,58 @@
 
         let currentSuggestionIndex = -1;
 
+        // Generate dynamic suggestions based on user input
+        function generateDynamicSuggestions(input) {
+            const dynamicSuggestions = [];
+            const words = input.toLowerCase().split(' ').filter(w => w.length > 0);
+            const lastWord = words[words.length - 1] || '';
+            
+            // City detection
+            const cities = ['toronto', 'mississauga', 'brampton', 'ottawa', 'vancouver', 'calgary', 'hamilton', 'oakville', 'burlington', 'kitchener', 'waterloo', 'guelph', 'kingston', 'london', 'windsor', 'montreal'];
+            const detectedCity = words.find(w => cities.some(city => city.startsWith(w) && w.length >= 3));
+            const fullCity = detectedCity ? cities.find(c => c.startsWith(detectedCity)) : null;
+            const cityCapitalized = fullCity ? fullCity.charAt(0).toUpperCase() + fullCity.slice(1) : null;
+            
+            // Property type detection
+            const propertyTypes = ['condo', 'house', 'townhouse', 'detached', 'semi', 'apartment', 'bungalow'];
+            const detectedType = words.find(w => propertyTypes.some(type => type.includes(w) || w.includes(type)));
+            
+            // Price detection
+            const hasPriceIntent = words.some(w => ['under', 'below', 'less', 'over', 'above', 'budget', 'afford', 'cheap', 'expensive', 'luxury'].includes(w));
+            const hasPrice = input.match(/\$?\d+[km]?/i);
+            
+            // Bedroom detection
+            const bedroomMatch = input.match(/(\d)\s*(?:bed|bedroom|br)/i);
+            const bedrooms = bedroomMatch ? bedroomMatch[1] : null;
+            
+            // Generate contextual completions
+            if (cityCapitalized) {
+                if (bedrooms) {
+                    dynamicSuggestions.push({ icon: '🏠', text: `Show me ${bedrooms}-bedroom homes in ${cityCapitalized}` });
+                    dynamicSuggestions.push({ icon: '🏢', text: `Find ${bedrooms}-bedroom condos in ${cityCapitalized} under $800K` });
+                } else if (detectedType) {
+                    const typeCapitalized = detectedType.charAt(0).toUpperCase() + detectedType.slice(1);
+                    dynamicSuggestions.push({ icon: '🔍', text: `Search for ${typeCapitalized}s in ${cityCapitalized}` });
+                    dynamicSuggestions.push({ icon: '💰', text: `${typeCapitalized}s in ${cityCapitalized} under $700K` });
+                } else {
+                    dynamicSuggestions.push({ icon: '🏠', text: `Show me homes for sale in ${cityCapitalized}` });
+                    dynamicSuggestions.push({ icon: '🏢', text: `Find condos in ${cityCapitalized}` });
+                    dynamicSuggestions.push({ icon: '📈', text: `What are market trends in ${cityCapitalized}?` });
+                    dynamicSuggestions.push({ icon: '🏘️', text: `Best neighborhoods in ${cityCapitalized}` });
+                }
+            } else if (bedrooms) {
+                dynamicSuggestions.push({ icon: '🏠', text: `${bedrooms}-bedroom homes in Toronto` });
+                dynamicSuggestions.push({ icon: '🏢', text: `${bedrooms}-bedroom condos under $600K` });
+                dynamicSuggestions.push({ icon: '🔍', text: `Find ${bedrooms}-bedroom properties near me` });
+            } else if (hasPriceIntent || hasPrice) {
+                dynamicSuggestions.push({ icon: '💵', text: 'Properties under $500K in the GTA' });
+                dynamicSuggestions.push({ icon: '💰', text: 'Homes between $500K and $800K' });
+                dynamicSuggestions.push({ icon: '💎', text: 'Luxury properties over $1.5M' });
+            }
+            
+            return dynamicSuggestions;
+        }
+
         // Handle Input Change
         function handleInputChange(event) {
             const input = event.target.value.toLowerCase().trim();
@@ -6574,31 +7511,36 @@
                 return;
             }
 
-            let suggestions = [];
-            let allSuggestions = [
-                ...suggestionData.property,
-                ...suggestionData.market,
-                ...suggestionData.price,
-                ...suggestionData.neighborhood,
-                ...suggestionData.compare
-            ];
+            // First try dynamic suggestions based on user input
+            let suggestions = generateDynamicSuggestions(input);
             
-            // Filter suggestions that match what user is typing
-            suggestions = allSuggestions.filter(item => {
-                const text = item.text.toLowerCase();
-                const words = input.split(' ');
-                // Check if any word in the input matches words in the suggestion
-                return words.some(word => word.length > 2 && text.includes(word));
-            });
-            
-            // If no matches, check for keyword categories
+            // If no dynamic suggestions, use filtered static suggestions
             if (suggestions.length === 0) {
-                if (input.includes('property') || input.includes('home') || input.includes('house') || input.includes('condo') || input.includes('search') || input.includes('find') || input.includes('show')) {
-                    suggestions = suggestionData.property.slice(0, 3);
-                } else if (input.includes('market') || input.includes('trend') || input.includes('price') || input.includes('cost')) {
-                    suggestions = [...suggestionData.market.slice(0, 2), ...suggestionData.price.slice(0, 1)];
-                } else if (input.includes('neighborhood') || input.includes('area') || input.includes('school') || input.includes('transit')) {
-                    suggestions = suggestionData.neighborhood.slice(0, 3);
+                let allSuggestions = [
+                    ...suggestionData.property,
+                    ...suggestionData.market,
+                    ...suggestionData.price,
+                    ...suggestionData.neighborhood,
+                    ...suggestionData.compare
+                ];
+                
+                // Filter suggestions that match what user is typing
+                suggestions = allSuggestions.filter(item => {
+                    const text = item.text.toLowerCase();
+                    const words = input.split(' ');
+                    // Check if any word in the input matches words in the suggestion
+                    return words.some(word => word.length > 2 && text.includes(word));
+                });
+                
+                // If no matches, check for keyword categories
+                if (suggestions.length === 0) {
+                    if (input.includes('property') || input.includes('home') || input.includes('house') || input.includes('condo') || input.includes('search') || input.includes('find') || input.includes('show')) {
+                        suggestions = suggestionData.property.slice(0, 3);
+                    } else if (input.includes('market') || input.includes('trend') || input.includes('price') || input.includes('cost')) {
+                        suggestions = [...suggestionData.market.slice(0, 2), ...suggestionData.price.slice(0, 1)];
+                    } else if (input.includes('neighborhood') || input.includes('area') || input.includes('school') || input.includes('transit')) {
+                        suggestions = suggestionData.neighborhood.slice(0, 3);
+                    }
                 }
             }
             
@@ -6711,10 +7653,25 @@
             if (welcomeScreen) {
                 welcomeScreen.style.display = 'none';
             }
+            
+            // Hide trending prompts
+            const trendingPrompts = document.getElementById('trendingPromptsSection');
+            if (trendingPrompts) {
+                trendingPrompts.style.display = 'none';
+            }
 
-            // Add user message
+            // Add user message to UI
             addMessage('user', message);
             appState.addMessage('user', message);
+            
+            // Save to chat history manager
+            if (chatHistoryManager.currentSessionId) {
+                chatHistoryManager.addMessageToSession(chatHistoryManager.currentSessionId, {
+                    role: 'user',
+                    content: message,
+                    timestamp: new Date().toISOString()
+                });
+            }
 
             // Detect if this is a property search query
             const isPropertySearch = /\b(properties|homes|houses|condos|listings|show me|find|search)\b/i.test(message) &&
@@ -6750,6 +7707,15 @@
             const isUser = sender === 'user';
             const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             
+            // Save AI messages to chat history (user messages are saved in sendMessage)
+            if (!isUser && chatHistoryManager.currentSessionId) {
+                chatHistoryManager.addMessageToSession(chatHistoryManager.currentSessionId, {
+                    role: 'assistant',
+                    content: content.substring(0, 500), // Save truncated version for history display
+                    timestamp: new Date().toISOString()
+                });
+            }
+            
             // Determine AI provider label
             let aiLabel = 'Summitly AI';
             let badgeHTML = '';
@@ -6757,9 +7723,9 @@
             
             if (!isUser) {
                 if (options.openai) {
-                    badgeHTML = '<span class="openai-badge">AI Enhanced</span>';
+                    // Remove AI Enhanced badge - just use standard styling
                     contentClass += ' openai-enhanced';
-                    console.log('✨ Adding OpenAI badge to message');
+                    console.log('✨ Using OpenAI for message');
                 } else if (options.exa) {
                     aiLabel = 'Summitly AI (Research Mode)';
                 } else if (options.llama) {
@@ -6948,6 +7914,21 @@
                 `;
                 appState.sessionId = appState.generateSessionId();
                 currentSessionId = appState.sessionId;
+                
+                // Clear right panel properties
+                clearRightPanelProperties();
+                
+                // Create new chat history session
+                chatHistoryManager.createNewSession();
+                
+                // Close sidebar on mobile
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                if (sidebar && sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                }
+                
                 init();
             }
         }
@@ -7039,7 +8020,12 @@
                         
                         // Use suggestions from backend (supports both field names for backward compatibility)
                         const suggestions = data.suggestions || data.predicted_questions || data.quick_replies || [];
-                        addPropertySearchMessage(data.properties, data.response, suggestions, searchCity);
+                        
+                        // Get total count from backend response
+                        const totalCount = data.total_count || data.count || data.total || null;
+                        console.log('📊 [TOTAL COUNT] From backend:', totalCount);
+                        
+                        addPropertySearchMessage(data.properties, data.response, suggestions, searchCity, totalCount);
                     } else {
                         // Display AI response (text only)
                         // Use suggestions from backend (supports both field names)
@@ -7109,7 +8095,9 @@
                     else if (data.properties && Array.isArray(data.properties) && data.properties.length > 0) {
                         console.log('🏠 Rendering property search results');
                         const suggestions = data.suggestions || data.quick_replies || data.predicted_questions || [];
-                        addPropertySearchMessage(data.properties, data.response, suggestions);
+                        const totalCount = data.total_count || data.count || data.total || null;
+                        const searchCity = data.city || data.location || data.filters?.city || null;
+                        addPropertySearchMessage(data.properties, data.response, suggestions, searchCity, totalCount);
                     }
                     // Check if response contains EXA results (market analysis, etc.)
                     else if (data.exa_results && data.exa_results.length > 0) {
@@ -7246,11 +8234,11 @@
             let emoji, text, color;
             if (level >= 9) { emoji = '🔥'; text = 'Hot Lead!'; color = '#ff4757'; }
             else if (level >= 7) { emoji = '⭐'; text = 'Highly Engaged'; color = '#ffa502'; }
-            else if (level >= 5) { emoji = '👍'; text = 'Engaged'; color = '#1e90ff'; }
+            else if (level >= 5) { emoji = '👍'; text = 'Engaged'; color = '#1976D2'; }
             else if (level >= 3) { emoji = '👀'; text = 'Exploring'; color = '#2ed573'; }
-            else { emoji = '🌱'; text = 'Browsing'; color = '#a4b0be'; }
+            else { emoji = '🌱'; text = 'Browsing'; color = '#94a3b8'; }
             
-            indicator.innerHTML = `<div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 20px;">${emoji}</span><div><div style="font-weight: 600; font-size: 12px; color: ${color};">${text}</div><div style="font-size: 10px; color: #666;">Engagement: ${level}/10</div></div></div>`;
+            indicator.innerHTML = `<div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 20px;">${emoji}</span><div><div style="font-weight: 600; font-size: 12px; color: ${color};">${text}</div><div style="font-size: 10px; color: #64748b;">Engagement: ${level}/10</div></div></div>`;
         }
 
         // Display suggested actions
@@ -7314,20 +8302,20 @@
                 document.body.appendChild(prefsPanel);
             }
             
-            let html = '<div style="font-weight: 600; margin-bottom: 12px; color: #333; font-size: 14px;">Your Preferences</div>';
+            let html = '<div style="font-weight: 600; margin-bottom: 12px; color: #1a1a1a; font-size: 14px;">Your Preferences</div>';
             if (preferences.locations && preferences.locations.length > 0) {
-                html += `<div style="margin-bottom: 8px;"><span style="color: #666; font-size: 12px;">📍 Locations:</span><br/><span style="font-size: 13px; color: #333;">${preferences.locations.join(', ')}</span></div>`;
+                html += `<div style="margin-bottom: 8px;"><span style="color: #64748b; font-size: 12px;">📍 Locations:</span><br/><span style="font-size: 13px; color: #1a1a1a;">${preferences.locations.join(', ')}</span></div>`;
             }
             if (preferences.property_types && preferences.property_types.length > 0) {
-                html += `<div style="margin-bottom: 8px;"><span style="color: #666; font-size: 12px;">🏠 Types:</span><br/><span style="font-size: 13px; color: #333;">${preferences.property_types.join(', ')}</span></div>`;
+                html += `<div style="margin-bottom: 8px;"><span style="color: #64748b; font-size: 12px;">🏠 Types:</span><br/><span style="font-size: 13px; color: #1a1a1a;">${preferences.property_types.join(', ')}</span></div>`;
             }
             if (preferences.price_ranges && preferences.price_ranges.length > 0) {
                 const range = preferences.price_ranges[0];
                 const priceText = range.max ? `Up to $${(range.max/1000).toFixed(0)}k` : range.min ? `From $${(range.min/1000).toFixed(0)}k` : '';
-                if (priceText) html += `<div style="margin-bottom: 8px;"><span style="color: #666; font-size: 12px;">💰 Budget:</span><br/><span style="font-size: 13px; color: #333;">${priceText}</span></div>`;
+                if (priceText) html += `<div style="margin-bottom: 8px;"><span style="color: #64748b; font-size: 12px;">💰 Budget:</span><br/><span style="font-size: 13px; color: #1a1a1a;">${priceText}</span></div>`;
             }
             if (preferences.bedrooms_ranges && preferences.bedrooms_ranges.length > 0) {
-                html += `<div style="margin-bottom: 8px;"><span style="color: #666; font-size: 12px;">🛏️ Bedrooms:</span><br/><span style="font-size: 13px; color: #333;">${preferences.bedrooms_ranges.join(', ')}</span></div>`;
+                html += `<div style="margin-bottom: 8px;"><span style="color: #64748b; font-size: 12px;">🛏️ Bedrooms:</span><br/><span style="font-size: 13px; color: #1a1a1a;">${preferences.bedrooms_ranges.join(', ')}</span></div>`;
             }
             prefsPanel.innerHTML = html;
         }
@@ -7590,7 +8578,7 @@
                 console.warn('⚠️ No valid bullets to display');
                 return `
                     <div class="exa-summary-container" style="
-                        background: linear-gradient(135deg, #33808d 0%, #1d7480 100%);
+                        background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
                         border-radius: 16px;
                         padding: 24px;
                         color: white;
@@ -7648,7 +8636,7 @@
 
             return `
                 <div class="exa-summary-container" style="
-                    background: linear-gradient(135deg, #33808d 0%, #1d7480 100%);
+                    background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
                     border-radius: 16px;
                     padding: 24px;
                     color: white;
@@ -7771,7 +8759,7 @@
                 top: 20px;
                 right: 20px;
                 padding: 16px 24px;
-                background: ${type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#33808d'};
+                background: ${type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#1976D2'};
                 color: white;
                 border-radius: 8px;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -7804,8 +8792,8 @@
                 `;
                 overlay.innerHTML = `
                     <div style="background: white; padding: 32px; border-radius: 12px; text-align: center;">
-                        <div class="spinner" style="width: 48px; height: 48px; border: 4px solid #e8f4f8; border-top-color: #33808d; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
-                        <p style="color: #134252; font-size: 16px;">${message}</p>
+                        <div class="spinner" style="width: 48px; height: 48px; border: 4px solid #e3f2fd; border-top-color: #1976D2; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
+                        <p style="color: #1a1a1a; font-size: 16px;">${message}</p>
                     </div>
                 `;
                 document.body.appendChild(overlay);
@@ -7887,6 +8875,51 @@
             card.dataset.currentIndex = currentIndex;
             img.src = images[currentIndex];
             if (counter) counter.textContent = `${currentIndex + 1} / ${images.length}`;
+        }
+
+        /**
+         * Navigate Property Card Images (for search results)
+         * @param {number} cardIndex - The index of the property card
+         * @param {number} direction - Direction to navigate (-1 for prev, 1 for next)
+         */
+        function navigatePropertyImage(cardIndex, direction) {
+            const card = document.querySelector(`[data-index="${cardIndex}"]`);
+            if (!card) return;
+
+            try {
+                const imagesAttr = card.dataset.images;
+                if (!imagesAttr) return;
+                
+                const images = JSON.parse(imagesAttr.replace(/&apos;/g, "'"));
+                if (!images || images.length <= 1) return;
+
+                const img = document.getElementById(`prop-img-${cardIndex}`);
+                const counter = document.getElementById(`img-counter-${cardIndex}`);
+                
+                if (!img) return;
+
+                let currentIndex = parseInt(card.dataset.currentImage || '0');
+                currentIndex = (currentIndex + direction + images.length) % images.length;
+                
+                // Update card data and image
+                card.dataset.currentImage = currentIndex;
+                img.src = images[currentIndex];
+                
+                // Add fade animation
+                img.style.opacity = '0.5';
+                setTimeout(() => {
+                    img.style.opacity = '1';
+                }, 100);
+                
+                // Update counter
+                if (counter) {
+                    counter.textContent = `${currentIndex + 1} / ${images.length}`;
+                }
+                
+                console.log(`📸 [Image Nav] Card ${cardIndex}: Showing image ${currentIndex + 1} of ${images.length}`);
+            } catch (error) {
+                console.error('Error navigating property images:', error);
+            }
         }
 
         /**
@@ -8417,7 +9450,7 @@
                     const mainAnalysis = lines.slice(1).join(' ').trim();
                     
                     enhanced += `
-                    <div class="analysis-header" style="background: linear-gradient(135deg, #33808d 0%, #1d7480 100%); padding: 24px; color: white;">
+                    <div class="analysis-header" style="background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%); padding: 24px; color: white;">
                         <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 700; display: flex; align-items: center; gap: 12px;">
                             <span style="background: rgba(255,255,255,0.2); padding: 8px; border-radius: 50%; font-size: 20px;">📝</span>
                             ${title}
@@ -8462,7 +9495,7 @@
         function formatAnalysisContent(text) {
             // Highlight key values and percentages
             let formatted = text
-                .replace(/\$[\d,]+/g, match => `<strong style="color: #33808d; font-weight: 700; background: rgba(51, 128, 141, 0.1); padding: 2px 6px; border-radius: 4px;">${match}</strong>`)
+                .replace(/\$[\d,]+/g, match => `<strong style="color: #1976D2; font-weight: 700; background: rgba(25, 118, 210, 0.1); padding: 2px 6px; border-radius: 4px;">${match}</strong>`)
                 .replace(/(\d+%)(?!\w)/g, '<strong style="color: #27ae60; font-weight: 600;">$1</strong>')
                 .replace(/(high confidence \(\d+%\))/gi, '<span style="background: rgba(39, 174, 96, 0.1); color: #27ae60; padding: 4px 8px; border-radius: 12px; font-weight: 600; font-size: 13px;">$1</span>');
             
@@ -8475,8 +9508,8 @@
         function formatAnalysisText(text) {
             return text
                 .replace(/\*\*(.*?)\*\*/g, '<strong style="color: #2c3e50; font-weight: 600;">$1</strong>')
-                .replace(/MLS [A-Z]\d+/g, match => `<span style="background: rgba(51, 128, 141, 0.1); color: #33808d; padding: 2px 6px; border-radius: 4px; font-weight: 500; font-size: 13px;">${match}</span>`)
-                .replace(/\$[\d,]+/g, match => `<strong style="color: #33808d; font-weight: 600;">${match}</strong>`)
+                .replace(/MLS [A-Z]\d+/g, match => `<span style="background: rgba(25, 118, 210, 0.1); color: #1976D2; padding: 2px 6px; border-radius: 4px; font-weight: 500; font-size: 13px;">${match}</span>`)
+                .replace(/\$[\d,]+/g, match => `<strong style="color: #1976D2; font-weight: 600;">${match}</strong>`)
                 .replace(/(\d+%)(?!\w)/g, '<strong style="color: #27ae60;">$1</strong>');
         }
 
@@ -8738,8 +9771,8 @@
             // Add header
             enhanced += `
             <div style="text-align: center; margin-bottom: 32px;">
-                <h2 style="color: #33808d; font-size: 24px; font-weight: 700; margin: 0 0 12px 0; display: flex; align-items: center; justify-content: center; gap: 12px;">
-                    <span style="background: linear-gradient(135deg, #33808d, #1d7480); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 28px;">${headerIcon}</span>
+                <h2 style="color: #1976D2; font-size: 24px; font-weight: 700; margin: 0 0 12px 0; display: flex; align-items: center; justify-content: center; gap: 12px;">
+                    <span style="background: linear-gradient(135deg, #1976D2, #1565C0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 28px;">${headerIcon}</span>
                     ${headerTitle}
                 </h2>
             </div>`;
@@ -8899,8 +9932,8 @@
                 });
                 
                 // Color scheme based on rating
-                let ratingColor = '#33808d';
-                let ratingBg = 'rgba(51, 128, 141, 0.1)';
+                let ratingColor = '#1976D2';
+                let ratingBg = 'rgba(25, 118, 210, 0.1)';
                 if (rating !== 'N/A') {
                     const ratingNum = parseFloat(rating);
                     if (ratingNum >= 8.5) {
@@ -8916,13 +9949,13 @@
                 }
                 
                 enhanced += `
-                <div class="item-card" style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 8px 24px rgba(51, 128, 141, 0.1); border: 1px solid rgba(51, 128, 141, 0.1); transition: all 0.3s ease; position: relative; overflow: hidden;">
+                <div class="item-card" style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 8px 24px rgba(25, 118, 210, 0.1); border: 1px solid rgba(25, 118, 210, 0.1); transition: all 0.3s ease; position: relative; overflow: hidden;">
                     <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, ${ratingColor}, ${ratingColor}88);"></div>
                     
                     <div style="display: flex; justify-content: between; align-items: flex-start; gap: 16px; margin-bottom: 16px;">
                         <div style="flex: 1;">
                             <h3 style="color: #2c3e50; font-size: 20px; font-weight: 700; margin: 0 0 8px 0; line-height: 1.3;">${item.name}</h3>
-                            ${type ? `<span style="background: rgba(51, 128, 141, 0.1); color: #33808d; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: 600;">${type}</span>` : ''}
+                            ${type ? `<span style="background: rgba(25, 118, 210, 0.1); color: #1976D2; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: 600;">${type}</span>` : ''}
                         </div>
                         ${rating !== 'N/A' ? `
                         <div style="background: ${ratingBg}; border: 2px solid ${ratingColor}; border-radius: 12px; padding: 8px 12px; text-align: center; min-width: 60px;">
@@ -8932,14 +9965,14 @@
                     </div>
                     
                     ${address ? `
-                    <div style="display: flex; align-items: start; gap: 8px; margin: 16px 0; padding: 12px; background: rgba(51, 128, 141, 0.05); border-radius: 8px;">
-                        <span style="color: #33808d; font-size: 16px; margin-top: 2px;">📍</span>
-                        <span style="color: #1a6873; font-size: 14px; line-height: 1.4;">${address}</span>
+                    <div style="display: flex; align-items: start; gap: 8px; margin: 16px 0; padding: 12px; background: rgba(25, 118, 210, 0.05); border-radius: 8px;">
+                        <span style="color: #1976D2; font-size: 16px; margin-top: 2px;">📍</span>
+                        <span style="color: #1565C0; font-size: 14px; line-height: 1.4;">${address}</span>
                     </div>` : ''}
                     
                     ${item.description ? `
                     <div style="margin-top: 16px;">
-                        <h4 style="color: #33808d; font-size: 14px; font-weight: 600; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px;">What Makes It Special</h4>
+                        <h4 style="color: #1976D2; font-size: 14px; font-weight: 600; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px;">What Makes It Special</h4>
                         <p style="color: #4a6741; font-size: 14px; line-height: 1.6; margin: 0; background: rgba(39, 174, 96, 0.05); padding: 12px; border-radius: 8px; border-left: 3px solid #27ae60;">${item.description}</p>
                     </div>` : ''}
                 </div>`;
@@ -9032,8 +10065,8 @@
                         enhanced += '</ul>';
                         inList = false;
                     }
-                    enhanced += `<h3 style="color: #33808d; font-size: 18px; font-weight: 700; margin: 20px 0 12px 0; display: flex; align-items: center; gap: 8px;">
-                        <span style="background: linear-gradient(135deg, #33808d, #1d7480); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 16px;">✨</span>
+                    enhanced += `<h3 style="color: #1976D2; font-size: 18px; font-weight: 700; margin: 20px 0 12px 0; display: flex; align-items: center; gap: 8px;">
+                        <span style="background: linear-gradient(135deg, #1976D2, #1565C0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 16px;">✨</span>
                         ${para}
                     </h3>`;
                     continue;
@@ -9047,8 +10080,8 @@
                     }
                     
                     const listContent = para.replace(/^[-•*]\s/, '').replace(/^\d+\.\s/, '');
-                    enhanced += `<li style="margin: 8px 0; padding: 12px 16px; background: rgba(51, 128, 141, 0.05); border-left: 3px solid #33808d; border-radius: 0 8px 8px 0; display: flex; align-items: start; gap: 8px;">
-                        <span style="color: #33808d; font-weight: 600; margin-top: 2px;">▸</span>
+                    enhanced += `<li style="margin: 8px 0; padding: 12px 16px; background: rgba(25, 118, 210, 0.05); border-left: 3px solid #1976D2; border-radius: 0 8px 8px 0; display: flex; align-items: start; gap: 8px;">
+                        <span style="color: #1976D2; font-weight: 600; margin-top: 2px;">▸</span>
                         <span style="line-height: 1.6;">${listContent}</span>
                     </li>`;
                     continue;
@@ -9063,10 +10096,10 @@
                 // Key information (lines with important keywords)
                 if (para.includes('important') || para.includes('note') || para.includes('remember') || 
                     para.includes('tip') || para.includes('warning') || para.includes('advice')) {
-                    enhanced += `<div style="background: linear-gradient(135deg, rgba(51, 128, 141, 0.1), rgba(29, 116, 128, 0.05)); border: 1px solid rgba(51, 128, 141, 0.2); border-radius: 12px; padding: 16px; margin: 16px 0; box-shadow: 0 2px 8px rgba(51, 128, 141, 0.1);">
+                    enhanced += `<div style="background: linear-gradient(135deg, rgba(25, 118, 210, 0.1), rgba(21, 101, 192, 0.05)); border: 1px solid rgba(25, 118, 210, 0.2); border-radius: 12px; padding: 16px; margin: 16px 0; box-shadow: 0 2px 8px rgba(25, 118, 210, 0.1);">
                         <div style="display: flex; align-items: start; gap: 12px;">
-                            <span style="background: #33808d; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; margin-top: 2px;">💡</span>
-                            <div style="line-height: 1.7; color: #1a6873;">${para}</div>
+                            <span style="background: #1976D2; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; margin-top: 2px;">💡</span>
+                            <div style="line-height: 1.7; color: #1565C0;">${para}</div>
                         </div>
                     </div>`;
                     continue;
@@ -9076,12 +10109,12 @@
                 let processedPara = para;
                 if (para.includes('$')) {
                     processedPara = para.replace(/\$[\d,]+/g, match => 
-                        `<strong style="color: #33808d; font-weight: 700;">${match}</strong>`
+                        `<strong style="color: #1976D2; font-weight: 700;">${match}</strong>`
                     );
                 }
                 
                 // Regular paragraphs with better typography
-                enhanced += `<p style="line-height: 1.7; margin: 12px 0; color: #134252; font-size: 15px;">${processedPara}</p>`;
+                enhanced += `<p style="line-height: 1.7; margin: 12px 0; color: #1a1a1a; font-size: 15px;">${processedPara}</p>`;
             }
             
             // Close any open list
@@ -9143,7 +10176,7 @@
             
             // Build HTML with BRAND COLORS
             const html = `
-                <div class="valuation-card" style="background: linear-gradient(135deg, #33808d 0%, #1d7480 100%); border-radius: 16px; padding: 24px; margin: 16px 0; color: white; box-shadow: 0 8px 20px rgba(51, 128, 141, 0.3);">
+                <div class="valuation-card" style="background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%); border-radius: 16px; padding: 24px; margin: 16px 0; color: white; box-shadow: 0 8px 20px rgba(25, 118, 210, 0.3);">
                     <h2 style="margin: 0 0 20px 0; font-size: 24px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
                         <span style="background: rgba(255, 255, 255, 0.2); padding: 8px; border-radius: 8px; font-size: 20px;">🏠</span>
                         Property Valuation Report
@@ -9167,19 +10200,19 @@
                     <!-- Price Comparison -->
                     <div class="price-comparison" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
                         <!-- List Price -->
-                        <div style="background: rgba(255, 255, 255, 0.15); padding: 16px; border-radius: 12px; backdrop-filter: blur(10px);">
+                        <div style="background: rgba(255, 255, 255, 0.15); padding: 16px; border-radius: 12px; backdrop-filter: blur(10px); text-align: center;">
                             <div style="font-size: 13px; opacity: 0.9; margin-bottom: 8px;">📋 List Price</div>
                             <div style="font-size: 28px; font-weight: 700;">$${listPrice.toLocaleString()}</div>
                         </div>
                         
-                        <!-- AI Estimate (HIGHLIGHTED) -->
-                        <div style="background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); padding: 16px; border-radius: 12px; border: 3px solid rgba(255, 255, 255, 0.4); box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);">
-                            <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: #333;">✨ AI Estimated Value</div>
-                            <div style="font-size: 32px; font-weight: 800; color: #333;">$${aiEstimate.toLocaleString()}</div>
-                            <div style="font-size: 12px; margin-top: 8px; color: #555; font-weight: 600;">
+                        <!-- AI Estimate -->
+                        <div style="background: rgba(255, 255, 255, 0.25); padding: 16px; border-radius: 12px; border: 2px solid rgba(255, 255, 255, 0.4); text-align: center;">
+                            <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; opacity: 0.95;">✨ AI Estimated Value</div>
+                            <div style="font-size: 28px; font-weight: 800;">$${aiEstimate.toLocaleString()}</div>
+                            <div style="font-size: 12px; margin-top: 8px; opacity: 0.9;">
                                 Range: $${Math.round(rangeLow).toLocaleString()} - $${Math.round(rangeHigh).toLocaleString()}
                             </div>
-                            <div style="font-size: 11px; margin-top: 6px; color: #666;">
+                            <div style="font-size: 11px; margin-top: 6px; opacity: 0.85;">
                                 🎯 Confidence: ${confidence}%
                             </div>
                         </div>
@@ -9212,17 +10245,17 @@
                         <h3 style="margin: 0 0 16px 0; color: #333; font-size: 18px; font-weight: 700;">🏘️ Comparable Properties (${comparables.length})</h3>
                         <div style="display: grid; grid-template-columns: 1fr; gap: 12px;">
                             ${comparables.slice(0, 5).map((comp, i) => `
-                                <div style="background: #f8f9fa; padding: 14px; border-radius: 8px; border-left: 4px solid #33808d;">
+                                <div style="background: #f8f9fa; padding: 14px; border-radius: 8px; border-left: 4px solid #1976D2;">
                                     <div style="display: flex; justify-content: space-between; align-items: start;">
                                         <div style="flex: 1;">
                                             <div style="font-weight: 700; color: #333; margin-bottom: 4px;">${i + 1}. ${comp.address || 'Comparable Property'}</div>
                                             <div style="font-size: 13px; color: #666;">MLS: ${comp.mls_id || 'N/A'}</div>
-                                            <div style="font-size: 14px; color: #33808d; margin-top: 6px; font-weight: 600;">
+                                            <div style="font-size: 14px; color: #1976D2; margin-top: 6px; font-weight: 600;">
                                                 Sold: $${(comp.sold_price || comp.sale_price || 0).toLocaleString()}
                                             </div>
                                             <div style="font-size: 12px; color: #999; margin-top: 4px;">${comp.sold_date || comp.sale_date || 'Recently'}</div>
                                         </div>
-                                        <div style="background: #33808d; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                                        <div style="background: #1976D2; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
                                             📍 ${(comp.distance_km || 0).toFixed(1)}km
                                         </div>
                                     </div>
@@ -9230,8 +10263,8 @@
                             `).join('')}
                         </div>
                         ${comparables.length > 5 ? `
-                            <div style="text-align: center; margin-top: 16px; padding: 12px; background: #e8f4f8; border-radius: 8px;">
-                                <span style="color: #33808d; font-weight: 600;">+${comparables.length - 5} more comparables analyzed</span>
+                            <div style="text-align: center; margin-top: 16px; padding: 12px; background: #e3f2fd; border-radius: 8px;">
+                                <span style="color: #1976D2; font-weight: 600;">+${comparables.length - 5} more comparables analyzed</span>
                             </div>
                         ` : ''}
                     </div>
@@ -9271,12 +10304,12 @@
                 }
                 // Headers (lines ending with colon)
                 else if (trimmed.endsWith(':')) {
-                    formatted += `<div style="font-weight: 700; color: #33808d; margin: 16px 0 8px 0;">${trimmed}</div>`;
+                    formatted += `<div style="font-weight: 700; color: #1976D2; margin: 16px 0 8px 0;">${trimmed}</div>`;
                 }
                 // Section markers (## or **)
                 else if (trimmed.startsWith('##') || trimmed.startsWith('**')) {
                     const text = trimmed.replace(/^##\s*/, '').replace(/^\*\*/, '').replace(/\*\*$/, '');
-                    formatted += `<div style="font-weight: 700; color: #33808d; margin: 16px 0 8px 0;">${text}</div>`;
+                    formatted += `<div style="font-weight: 700; color: #1976D2; margin: 16px 0 8px 0;">${text}</div>`;
                 }
                 // Regular paragraphs
                 else {
@@ -9288,9 +10321,10 @@
         }
 
         /**
-         * Display property search results
+         * Display property search results - CanaryAI Style
+         * Properties go to right panel, summary goes to chat center
          */
-        function addPropertySearchMessage(properties, responseText, quickReplies = [], searchCity = null) {
+        function addPropertySearchMessage(properties, responseText, quickReplies = [], searchCity = null, totalCount = null) {
             const container = document.getElementById('chatContainer');
             const message = document.createElement('div');
             message.className = 'message';
@@ -9298,117 +10332,51 @@
             const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             
             console.log('🏙️ [PROPERTY CARDS] Search city parameter:', searchCity);
+            console.log('🏠 [CANARY STYLE] Sending', properties.length, 'properties to right panel');
+            console.log('📊 [TOTAL COUNT] Backend reported total:', totalCount);
             
-            // Build property cards grid
-            const propertyCards = properties.map((prop, index) => {
-                // Extract city from search context first, then fallback to property data
-                let city = searchCity || 'Toronto'; // Use search city if available
-                
-                // Debug: Log the entire property object for first property
-                if (index === 0) {
-                    console.log('🔍 [DEBUG] First property object:', prop);
-                    console.log('🔍 [DEBUG] All property keys:', Object.keys(prop));
-                    console.log('🔍 [DEBUG] prop.location:', prop.location);
-                    console.log('🔍 [DEBUG] prop.full_address:', prop.full_address);
-                    console.log('🔍 [DEBUG] prop.address:', prop.address);
-                    console.log('🔍 [DEBUG] prop.city:', prop.city);
-                    console.log('🔍 [DEBUG] prop.neighborhood:', prop.neighborhood);
-                    console.log('🔍 [DEBUG] prop.title:', prop.title);
-                }
-                
-                // Only try to extract from property data if search city wasn't provided
-                if (!searchCity) {
-                    if (prop.location) {
-                        // location format: "City, Province"
-                        city = prop.location.split(',')[0].trim();
-                        console.log(`🏙️ [Property ${index}] City from location: ${city}`);
-                    } else if (prop.full_address) {
-                        // Try to extract from full address
-                        const parts = prop.full_address.split(',');
-                        if (parts.length >= 2) {
-                            city = parts[parts.length - 2].trim(); // Second to last is usually city
-                            console.log(`🏙️ [Property ${index}] City from full_address: ${city}`);
-                        }
-                    } else if (prop.address) {
-                        // Check if there's a nested address string
-                        const addressStr = typeof prop.address === 'string' ? prop.address : prop.address?.full_address;
-                        if (addressStr && addressStr.includes(',')) {
-                            const parts = addressStr.split(',');
-                            if (parts.length >= 2) {
-                                city = parts[parts.length - 2].trim();
-                                console.log(`🏙️ [Property ${index}] City from address string: ${city}`);
-                            }
-                        }
-                    } else {
-                        console.warn(`⚠️ [Property ${index}] No location data found, using default: Toronto`);
-                    }
-                } else {
-                    console.log(`🏙️ [Property ${index}] Using search city: ${city}`);
-                }
-                
-                return `
-                <div class="property-search-card" data-mls="${prop.mls_number || prop.mls_id}" data-city="${city}" data-index="${index}" style="--index: ${index};">
-                    <div class="property-image-container">
-                        ${(prop.image_url || (prop.images && prop.images.length > 0)) ? `
-                            <img src="${prop.image_url || prop.images[0]}" alt="${prop.full_address || prop.address}" class="property-image" 
-                                 onerror="this.src='/static/images/no-property-image.svg'">
-                        ` : `
-                            <div class="property-image property-no-image">🏠 No Image</div>
-                        `}
-                    </div>
-                    <div class="property-details">
-                        <div class="property-price">$${formatNumber(prop.price || prop.list_price)}</div>
-                        <div class="property-address">${prop.full_address || prop.address || 'Address not available'}</div>
-                        ${prop.mls_number || prop.mls_id ? `
-                            <div style="font-size: 12px; color: var(--color-text-secondary); margin: 4px 0;">
-                                MLS: ${prop.mls_number || prop.mls_id}
-                            </div>
-                        ` : ''}
-                        <div class="property-specs">
-                            ${prop.bedrooms || prop.beds ? `<span class="property-spec">🛏️ ${prop.bedrooms || prop.beds} beds</span>` : ''}
-                            ${prop.bathrooms || prop.baths ? `<span class="property-spec">🚿 ${prop.bathrooms || prop.baths} baths</span>` : ''}
-                            ${prop.sqft || prop.square_footage ? `<span class="property-spec">📐 ${formatNumber(prop.sqft || prop.square_footage)} sq ft</span>` : ''}
-                        </div>
-                        <div class="property-actions" style="margin-top: 12px; display: flex; gap: 6px; flex-wrap: wrap;">
-                            <button class="btn-small btn-primary" onclick="openPropertyDetailsPanel('${prop.mls_number || prop.mls_id}')">
-                                🏠 View Details
-                            </button>
-                            <button class="btn-small btn-primary" onclick="openAIAnalysisPanel('${prop.mls_number || prop.mls_id}', 'property')">
-                                🤖 AI Analysis
-                            </button>
-                            <button class="btn-small btn-primary" onclick="openMarketAnalysisClickHandler('${prop.mls_number || prop.mls_id}', this)">
-                                📊 Market Analysis
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            }).join('');
-
+            // Clear and populate right panel with property cards
+            clearRightPanelProperties();
+            properties.forEach(prop => {
+                addPropertyToRightPanel({
+                    listPrice: prop.price || prop.list_price,
+                    streetAddress: prop.full_address || prop.address,
+                    city: searchCity || prop.city || 'Toronto',
+                    bedroomsTotal: prop.bedrooms || prop.beds,
+                    bathroomsTotalInteger: prop.bathrooms || prop.baths,
+                    sqft: prop.sqft || prop.square_footage,
+                    images: prop.images || [prop.image_url],
+                    mlsNumber: prop.mls_number || prop.mls_id
+                });
+            });
+            
+            // Show right panel
+            showRightPanel();
+            
+            // Calculate property statistics for summary
+            const stats = calculatePropertyStats(properties);
+            
+            // Build CanaryAI-style summary for chat center (pass totalCount for accurate messaging)
+            const summaryHtml = generateCanarySummary(properties, stats, searchCity, responseText, totalCount);
+            
             message.innerHTML = `
-                <div class="message-avatar ai-avatar">🤖</div>
+                <div class="message-avatar ai-avatar">
+                    <img src="summitly_logo.webp" alt="Summitly" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;" onerror="this.style.display='none'; this.parentElement.innerHTML='🤖';">
+                </div>
                 <div class="message-content">
                     <div class="message-header">
                         <span class="message-author">Summitly AI</span>
                         <span class="message-time">${time}</span>
                     </div>
                     <div class="message-text">
-                        <div style="margin-bottom: 16px;">${responseText || ''}</div>
-                        <div class="property-search-grid results-container">
-                            ${propertyCards}
-                        </div>
+                        ${summaryHtml}
                         ${quickReplies.length > 0 ? generateQuickReplies(quickReplies) : ''}
                     </div>
                 </div>
             `;
             
             container.appendChild(message);
-            
-            // CRITICAL FIX: Scroll to TOP of results, not bottom
-            // Wait for render, then scroll to the start of the results
-            setTimeout(() => {
-                scrollToResultsTop();
-            }, 100);
+            scrollToBottom();
             
             chatHistory.push({ 
                 sender: 'ai', 
@@ -9417,27 +10385,185 @@
                 timestamp: new Date() 
             });
         }
-
-        function generatePropertyCards(properties) {
-            return properties.map(prop => `
-                <div class="property-card">
-                    <img src="${prop.image}" alt="${prop.address}" class="property-image">
-                    <div class="property-details">
-                        <div class="property-price">${prop.price}</div>
-                        <div class="property-address">${prop.address}</div>
-                        <div class="property-specs">
-                            <span class="property-spec">🛏️ ${prop.beds} beds</span>
-                            <span class="property-spec">🚿 ${prop.baths} baths</span>
-                            <span class="property-spec">📐 ${prop.sqft}</span>
+        
+        /**
+         * Calculate statistics from property list
+         */
+        function calculatePropertyStats(properties) {
+            const prices = properties.map(p => p.price || p.list_price || 0).filter(p => p > 0);
+            const beds = properties.map(p => p.bedrooms || p.beds || 0).filter(b => b > 0);
+            const baths = properties.map(p => p.bathrooms || p.baths || 0).filter(b => b > 0);
+            const sqfts = properties.map(p => p.sqft || p.square_footage || 0).filter(s => s > 0);
+            
+            const median = arr => {
+                if (arr.length === 0) return 0;
+                const sorted = [...arr].sort((a, b) => a - b);
+                const mid = Math.floor(sorted.length / 2);
+                return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+            };
+            
+            return {
+                count: properties.length,
+                priceRange: prices.length > 0 ? { min: Math.min(...prices), max: Math.max(...prices), median: median(prices) } : null,
+                bedsRange: beds.length > 0 ? { min: Math.min(...beds), max: Math.max(...beds), median: median(beds) } : null,
+                bathsRange: baths.length > 0 ? { min: Math.min(...baths), max: Math.max(...baths), median: median(baths) } : null,
+                sqftRange: sqfts.length > 0 ? { min: Math.min(...sqfts), max: Math.max(...sqfts), median: median(sqfts) } : null
+            };
+        }
+        
+        /**
+         * Generate CanaryAI-style property summary
+         */
+        function generateCanarySummary(properties, stats, city, responseText, totalCount = null) {
+            const cityName = city || 'your area';
+            
+            // Extract property type from first property or default
+            const propertyType = properties[0]?.property_type || properties[0]?.type || 'properties';
+            
+            // Use total count from backend if available, otherwise show displayed count
+            const displayCount = stats.count;
+            const actualTotal = totalCount || displayCount;
+            const showingSubset = actualTotal > displayCount;
+            
+            let html = `
+                <div class="canary-summary" style="background: linear-gradient(135deg, #f8fbff 0%, #e8f4fd 100%); border-radius: 16px; padding: 24px; border: 1px solid rgba(25, 118, 210, 0.15);">
+                    <!-- Header -->
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+                        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #1976D2, #1565C0); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: white;">🏠</div>
+                        <div>
+                            ${showingSubset ? `
+                                <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: #1a1a1a;">Found ${actualTotal} ${propertyType}</h3>
+                                <p style="margin: 4px 0 0 0; font-size: 14px; color: #666;">Showing ${displayCount} great options in ${cityName}</p>
+                            ` : `
+                                <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: #1a1a1a;">Showing ${displayCount} great ${propertyType}</h3>
+                                <p style="margin: 4px 0 0 0; font-size: 14px; color: #666;">in ${cityName}</p>
+                            `}
                         </div>
-                        <div class="property-actions">
-                            <button class="btn-small" onclick="viewProperty(${prop.id})">View Details</button>
-                            <button class="btn-small" onclick="scheduleViewing(${prop.id})">Schedule Tour</button>
-                            <button class="btn-small" onclick="analyzeProperty(${prop.id})">Investment Analysis</button>
+                    </div>
+                    
+                    <!-- Stats Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">
+            `;
+            
+            // Price Range
+            if (stats.priceRange) {
+                html += `
+                    <div style="background: white; border-radius: 12px; padding: 16px; border: 1px solid #e0e0e0;">
+                        <div style="font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Price Range</div>
+                        <div style="font-size: 16px; font-weight: 600; color: #1976D2;">$${formatNumber(stats.priceRange.min)} - $${formatNumber(stats.priceRange.max)}</div>
+                        <div style="font-size: 13px; color: #666; margin-top: 4px;">Median: $${formatNumber(stats.priceRange.median)}</div>
+                    </div>
+                `;
+            }
+            
+            // Bedrooms & Bathrooms
+            if (stats.bedsRange || stats.bathsRange) {
+                html += `
+                    <div style="background: white; border-radius: 12px; padding: 16px; border: 1px solid #e0e0e0;">
+                        <div style="font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Bedrooms & Bathrooms</div>
+                        ${stats.bedsRange ? `<div style="font-size: 14px; color: #333;">${stats.bedsRange.min} to ${stats.bedsRange.max} bedrooms (median: ${stats.bedsRange.median})</div>` : ''}
+                        ${stats.bathsRange ? `<div style="font-size: 14px; color: #333;">${stats.bathsRange.min} to ${stats.bathsRange.max} bathrooms (median: ${stats.bathsRange.median})</div>` : ''}
+                    </div>
+                `;
+            }
+            
+            // Size
+            if (stats.sqftRange) {
+                html += `
+                    <div style="background: white; border-radius: 12px; padding: 16px; border: 1px solid #e0e0e0;">
+                        <div style="font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Living Area</div>
+                        <div style="font-size: 16px; font-weight: 600; color: #333;">${formatNumber(stats.sqftRange.min)} - ${formatNumber(stats.sqftRange.max)} sq ft</div>
+                        <div style="font-size: 13px; color: #666; margin-top: 4px;">Median: ${formatNumber(stats.sqftRange.median)} sq ft</div>
+                    </div>
+                `;
+            }
+            
+            html += `
+                    </div>
+                    
+                    <!-- Response Text / AI Commentary -->
+                    ${responseText ? `
+                        <div style="background: white; border-radius: 12px; padding: 16px; border-left: 4px solid #1976D2; margin-bottom: 16px;">
+                            <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #333;">${responseText}</p>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Properties Panel Indicator -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(25, 118, 210, 0.08); border-radius: 8px; padding: 12px 16px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 14px; color: #1976D2; font-weight: 500;">${displayCount} properties loaded in the panel</span>
+                        </div>
+                        <button onclick="toggleRightPanel()" style="background: #1976D2; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500;">
+                            View Properties
+                        </button>
+                    </div>
+                    
+                    <!-- Follow-up Suggestions -->
+                    <div style="margin-top: 16px;">
+                        <p style="font-size: 13px; color: #666; margin-bottom: 12px;">Would you like me to filter these results further?</p>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            <button class="btn-small" onclick="sendMessage('Show me only properties under $400K')" style="background: white; border: 1px solid #ddd; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 12px;">Under $400K</button>
+                            <button class="btn-small" onclick="sendMessage('Show me 2+ bedroom options')" style="background: white; border: 1px solid #ddd; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 12px;">2+ Bedrooms</button>
+                            <button class="btn-small" onclick="sendMessage('Sort by lowest price')" style="background: white; border: 1px solid #ddd; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 12px;">Lowest Price First</button>
+                            <button class="btn-small" onclick="sendMessage('Show me the newest listings')" style="background: white; border: 1px solid #ddd; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 12px;">Newest Listings</button>
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `;
+            
+            return html;
+        }
+
+        function generatePropertyCards(properties) {
+            return properties.map(prop => {
+                // Format price properly
+                let formattedPrice = 'Price on Request';
+                if (prop.price || prop.listPrice) {
+                    const priceValue = prop.price || prop.listPrice;
+                    formattedPrice = typeof priceValue === 'number' ? 
+                        `$${priceValue.toLocaleString()}` : 
+                        (priceValue === 'N/A' ? 'Price on Request' : priceValue);
+                }
+                
+                // Get address (handle both 'address' and 'location' fields)
+                const address = prop.address || prop.location || 'Property Address';
+                
+                // Get bedrooms (handle N/A)
+                const bedrooms = (prop.bedrooms === 'N/A' || prop.bedrooms === null || prop.bedrooms === undefined) ? 
+                    (prop.beds || 'Studio') : prop.bedrooms;
+                
+                // Get bathrooms
+                const bathrooms = prop.bathrooms || prop.baths || 0;
+                
+                // Get sqft
+                const sqft = (prop.sqft && prop.sqft !== 'N/A') ? prop.sqft : null;
+                
+                // Get image URL
+                const imageUrl = prop.image || prop.image_url || 'https://via.placeholder.com/400x300?text=Property+Image';
+                
+                // Get property ID
+                const propertyId = prop.mlsNumber || prop.mls_number || prop.id || '';
+                
+                return `
+                <div class="property-card">
+                    <img src="${imageUrl}" alt="${address}" class="property-image" onerror="this.src='https://via.placeholder.com/400x300?text=Property+Image'">
+                    <div class="property-details">
+                        <div class="property-price">${formattedPrice}</div>
+                        <div class="property-address">${address}</div>
+                        <div class="property-specs">
+                            <span class="property-spec">🛏️ ${bedrooms} bed${bedrooms !== 1 && bedrooms !== 'Studio' ? 's' : ''}</span>
+                            <span class="property-spec">🚿 ${bathrooms} bath${bathrooms !== 1 ? 's' : ''}</span>
+                            ${sqft ? `<span class="property-spec">📐 ${sqft}</span>` : ''}
+                        </div>
+                        <div class="property-actions">
+                            <button class="btn-small" onclick="viewProperty('${propertyId}')">🏠 View Details</button>
+                            <button class="btn-small" onclick="analyzeProperty('${propertyId}', '${address.replace(/'/g, '\\\'').replace(/"/g, '&quot;')}')">🤖 AI Analysis</button>
+                            <button class="btn-small" onclick="showMarketAnalysis('${address.replace(/'/g, '\\\'').replace(/"/g, '&quot;')}')">📊 Market Analysis</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            }).join('');
         }
 
         function generateQuickReplies(replies) {
@@ -9609,24 +10735,24 @@
             
             // Determine icon and color based on message type
             let icon = '🤖';
-            let accentColor = '#33808d';
+            let accentColor = '#1976D2';
             let statusIcon = '💭';
             
             if (statusText.includes('valuation') || statusText.includes('Calculating')) {
                 icon = '📊';
-                accentColor = '#9c27b0';
+                accentColor = '#1976D2';
                 statusIcon = '🧮';
             } else if (statusText.includes('Searching') || statusText.includes('database')) {
                 icon = '🔍';
-                accentColor = '#2196f3';
+                accentColor = '#1976D2';
                 statusIcon = '🔎';
             } else if (statusText.includes('Analyzing')) {
                 icon = '🤔';
-                accentColor = '#ff9800';
+                accentColor = '#1976D2';
                 statusIcon = '📈';
             } else if (statusText.includes('Loading')) {
                 icon = '⚡';
-                accentColor = '#4caf50';
+                accentColor = '#1976D2';
                 statusIcon = '📂';
             }
             
@@ -11060,27 +12186,48 @@
             
             htmlContent += `
                     <div>
-                        <div style="font-size: 13px; opacity: 0.8; margin-bottom: 4px;">AI Estimated Value</div>
-                        <div style="font-size: 28px; font-weight: 700; margin-bottom: 8px;">
-                            $${formatNumber(estimated.mid || estimated.estimated_value || 0)}
-                        </div>`;
-                        
-            if (estimated.low && estimated.high) {
-                htmlContent += `
-                        <div style="display: flex; justify-content: space-between; font-size: 12px; opacity: 0.85;">
-                            <div>Range: $${formatNumber(estimated.low)} - $${formatNumber(estimated.high)}</div>
-                        </div>`;
-            }
+                        <div style="font-size: 13px; opacity: 0.8; margin-bottom: 4px;">✨ AI Estimated Value</div>
+                        <div style="position: relative; margin-bottom: 8px;">
+                            <div style="font-size: 28px; font-weight: 700; filter: blur(8px); user-select: none; pointer-events: none;">
+                                $${formatNumber((estimated.mid || estimated.estimated_value || 500000))}
+                            </div>
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.95); padding: 8px 16px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                                <span style="font-size: 20px; animation: shimmer 2s infinite;">🔒</span>
+                                <span style="font-size: 14px; font-weight: 600; color: #1976D2;">Premium Analysis</span>
+                            </div>
+                        </div>
+                        <style>
+                            @keyframes shimmer {
+                                0%, 100% { opacity: 0.6; transform: scale(1); }
+                                50% { opacity: 1; transform: scale(1.1); }
+                            }
+                            @keyframes pulse-glow {
+                                0%, 100% { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 0 rgba(25, 118, 210, 0.4); }
+                                50% { box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2), 0 0 20px 5px rgba(25, 118, 210, 0.6); }
+                            }
+                            @keyframes gradient-shift {
+                                0% { background-position: 0% 50%; }
+                                50% { background-position: 100% 50%; }
+                                100% { background-position: 0% 50%; }
+                            }
+                        </style>
+                    </div>`;
             
             if (mlsId) {
                 htmlContent += `
+                    <div style="margin-top: 20px;">
                         <button onclick="viewFullPropertyReport('${mlsId}')" 
-                            style="margin-top: 20px; width: 100%; padding: 14px 24px; background: white; color: #1d7480; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);"
-                            onmouseover="this.style.background='#f0f8ff'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 16px rgba(0, 0, 0, 0.2)'"
-                            onmouseout="this.style.background='white'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.15)'">
-                            <span style="font-size: 18px;">📊</span>
-                            <span>See Full Property Report</span>
-                        </button>`;
+                            style="width: 100%; padding: 16px 24px; background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%); background-size: 200% 200%; color: #1a1a1a; border: none; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4); animation: pulse-glow 2s infinite; position: relative; overflow: hidden;"
+                            onmouseover="this.style.transform='translateY(-3px) scale(1.02)'; this.style.animation='gradient-shift 1s ease infinite, pulse-glow 2s infinite';"
+                            onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.animation='pulse-glow 2s infinite';">
+                            <span style="font-size: 22px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">🔓</span>
+                            <span style="text-shadow: 0 1px 2px rgba(0,0,0,0.1);">Unlock Full Property Report</span>
+                            <span style="position: absolute; top: 4px; right: 4px; background: rgba(255, 255, 255, 0.9); color: #FF6B6B; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;">PREMIUM</span>
+                        </button>
+                        <div style="text-align: center; margin-top: 8px; font-size: 11px; opacity: 0.7; font-style: italic;">
+                            Click to reveal detailed AI valuation analysis
+                        </div>
+                    </div>`;
             }
             
             htmlContent += `
@@ -11096,8 +12243,8 @@
             // Neighborhood Section
             if ((neighborhood && Object.keys(neighborhood).length > 0) || insights.walkability || insights.walkability_score) {
                 htmlContent += `
-                    <div class="insight-section" style="background: #f3e5f5; border-left: 4px solid #9c27b0; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-                        <h3 class="insight-title" style="margin: 0 0 12px 0; color: #7b1fa2; font-size: 16px; font-weight: 600;">🏘️ Neighborhood Data</h3>`;
+                    <div class="insight-section" style="background: #e3f2fd; border-left: 4px solid #1976D2; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+                        <h3 class="insight-title" style="margin: 0 0 12px 0; color: #1976D2; font-size: 16px; font-weight: 600;">🏘️ Neighborhood Data</h3>`;
                         
                 if (neighborhood.summary) {
                     htmlContent += `<p style="margin-bottom: 12px; color: #333; font-size: 14px; line-height: 1.5;">${neighborhood.summary}</p>`;
@@ -11107,9 +12254,9 @@
                 
                 if (neighborhood.safety_score || insights.safety_score) {
                     htmlContent += `
-                        <div class="metric-row" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e1bee7;">
+                        <div class="metric-row" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #bbdefb;">
                             <span style="font-size: 13px; color: #666;">🛡️ Safety Score:</span>
-                            <strong style="color: #7b1fa2;">${neighborhood.safety_score || insights.safety_score}/10</strong>
+                            <strong style="color: #1976D2;">${neighborhood.safety_score || insights.safety_score}/10</strong>
                         </div>`;
                 }
                 
@@ -11121,21 +12268,21 @@
                     const suffix = (typeof walkability === 'number' && walkability <= 10) ? '/10' : 
                                   (typeof walkability === 'number' && walkability <= 100) ? '/100' : '';
                     htmlContent += `
-                        <div class="metric-row" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e1bee7;">
+                        <div class="metric-row" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #bbdefb;">
                             <span style="font-size: 13px; color: #666;">🚶 Walkability:</span>
-                            <strong style="color: #7b1fa2;">${walkability}${suffix}</strong>
+                            <strong style="color: #1976D2;">${walkability}${suffix}</strong>
                         </div>`;
                 } else {
                     htmlContent += `
-                        <div class="metric-row" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e1bee7;">
+                        <div class="metric-row" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #bbdefb;">
                             <span style="font-size: 13px; color: #666;">🚶 Walkability:</span>
-                            <strong style="color: #ff9800;">Data being analyzed...</strong>
+                            <strong style="color: #1976D2;">Data being analyzed...</strong>
                         </div>`;
                 }
                 
                 if (neighborhood.demographics) {
                     htmlContent += `
-                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e1bee7;">
+                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #bbdefb;">
                             <div style="font-size: 12px; color: #666; font-weight: 600; margin-bottom: 4px;">Demographics:</div>
                             <div style="font-size: 13px; color: #555; line-height: 1.4;">${neighborhood.demographics}</div>
                         </div>`;
@@ -11199,7 +12346,8 @@
             closeAIAnalysisPanel();
             
             // Send message to generate full valuation report
-            const message = `value of MLS: ${mlsNumber}`;
+            // Use explicit valuation phrasing to trigger the valuation handler
+            const message = `What is the valuation estimate for property MLS ${mlsNumber}? Please provide a full property valuation analysis.`;
             sendMessage(message);
             
             // Scroll to chat to show the response
@@ -11232,44 +12380,6 @@
         }
 
         /**
-         * View full property valuation report
-         * Closes the AI Analysis panel and sends a chat message to generate the full report
-         */
-        function viewFullPropertyReport(mlsNumber) {
-            if (!mlsNumber) {
-                console.error('MLS number not available');
-                return;
-            }
-            
-            // Close the AI Analysis panel
-            closeAIAnalysisPanel();
-            
-            // Send message to generate full valuation report
-            const message = `value of MLS: ${mlsNumber}`;
-            sendMessage(message);
-            
-            // Scroll to chat to show the response
-            setTimeout(() => {
-                const chatContainer = document.querySelector('.chat-container') || document.querySelector('#chatMessages');
-                if (chatContainer) {
-                    chatContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            }, 300);
-        }
-
-        function toggleDataSources() {
-            const content = document.getElementById('sourcesContent');
-            const toggle = document.getElementById('sourcesToggle');
-            if (content.style.display === 'none') {
-                content.style.display = 'block';
-                toggle.textContent = '↑ Hide Sources';
-            } else {
-                content.style.display = 'none';
-                toggle.textContent = 'View Sources →';
-            }
-        }
-
-        /**
          * View Property Details - Opens modal with full property information
          */
         async function viewPropertyDetails(propertyId, mlsNumber) {
@@ -11290,7 +12400,7 @@
                 <div class="property-details-content">
                     <button class="modal-close-btn" onclick="closePropertyDetails()">✕</button>
                     <div class="property-loading">
-                        <div class="spinner" style="width: 48px; height: 48px; border: 4px solid #e8f4f8; border-top-color: #33808d; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
+                        <div class="spinner" style="width: 48px; height: 48px; border: 4px solid #e3f2fd; border-top-color: #1976D2; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
                         <p>Loading property details...</p>
                     </div>
                 </div>

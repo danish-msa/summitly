@@ -109,6 +109,103 @@ FSA_TO_CITY_MAP = {
     'K2S': 'Ottawa', 'K2T': 'Ottawa', 'K2V': 'Ottawa', 'K2W': 'Ottawa',
     'K4A': 'Ottawa', 'K4B': 'Ottawa', 'K4C': 'Ottawa', 'K4M': 'Ottawa',
     'K4P': 'Ottawa', 'K4R': 'Ottawa',
+    
+    # Kingston FSAs (K7 prefix)
+    'K7K': 'Kingston', 'K7L': 'Kingston', 'K7M': 'Kingston', 'K7N': 'Kingston',
+    'K7P': 'Kingston',
+    
+    # London FSAs (N prefix)
+    'N5V': 'London', 'N5W': 'London', 'N5X': 'London', 'N5Y': 'London', 'N5Z': 'London',
+    'N6A': 'London', 'N6B': 'London', 'N6C': 'London', 'N6E': 'London', 'N6G': 'London',
+    'N6H': 'London', 'N6J': 'London', 'N6K': 'London', 'N6L': 'London', 'N6M': 'London',
+    'N6N': 'London', 'N6P': 'London',
+    
+    # Windsor FSAs (N8, N9 prefix)
+    'N8N': 'Windsor', 'N8P': 'Windsor', 'N8R': 'Windsor', 'N8S': 'Windsor',
+    'N8T': 'Windsor', 'N8V': 'Windsor', 'N8W': 'Windsor', 'N8X': 'Windsor',
+    'N8Y': 'Windsor', 'N9A': 'Windsor', 'N9B': 'Windsor', 'N9C': 'Windsor',
+    'N9E': 'Windsor', 'N9G': 'Windsor', 'N9H': 'Windsor', 'N9J': 'Windsor',
+    'N9K': 'Windsor', 'N9Y': 'Windsor',
+    
+    # Kitchener-Waterloo FSAs (N2 prefix)
+    'N2A': 'Kitchener', 'N2B': 'Kitchener', 'N2C': 'Kitchener', 'N2E': 'Kitchener',
+    'N2G': 'Kitchener', 'N2H': 'Kitchener', 'N2J': 'Kitchener', 'N2K': 'Kitchener',
+    'N2L': 'Waterloo', 'N2M': 'Waterloo', 'N2N': 'Waterloo', 'N2P': 'Kitchener',
+    'N2R': 'Kitchener', 'N2T': 'Kitchener', 'N2V': 'Waterloo',
+    
+    # Guelph FSAs (N1 prefix)
+    'N1E': 'Guelph', 'N1G': 'Guelph', 'N1H': 'Guelph', 'N1K': 'Guelph',
+    'N1L': 'Guelph', 'N1M': 'Guelph',
+    
+    # Niagara FSAs (L2, L3 prefix)
+    'L2E': 'Niagara Falls', 'L2G': 'Niagara Falls', 'L2H': 'Niagara Falls',
+    'L2J': 'Niagara Falls', 'L2M': 'St. Catharines', 'L2N': 'St. Catharines',
+    'L2P': 'St. Catharines', 'L2R': 'St. Catharines', 'L2S': 'St. Catharines',
+    'L2T': 'St. Catharines', 'L2V': 'St. Catharines', 'L2W': 'St. Catharines',
+    
+    # Barrie FSAs (L4M, L4N, L9X, L9Y prefix)
+    'L4M': 'Barrie', 'L4N': 'Barrie', 'L9S': 'Barrie', 'L9X': 'Barrie', 'L9Y': 'Barrie',
+    
+    # Vancouver FSAs (V prefix)
+    'V5A': 'Vancouver', 'V5B': 'Vancouver', 'V5C': 'Vancouver', 'V5E': 'Vancouver',
+    'V5G': 'Vancouver', 'V5H': 'Vancouver', 'V5J': 'Vancouver', 'V5K': 'Vancouver',
+    'V5L': 'Vancouver', 'V5M': 'Vancouver', 'V5N': 'Vancouver', 'V5P': 'Vancouver',
+    'V5R': 'Vancouver', 'V5S': 'Vancouver', 'V5T': 'Vancouver', 'V5V': 'Vancouver',
+    'V5W': 'Vancouver', 'V5X': 'Vancouver', 'V5Y': 'Vancouver', 'V5Z': 'Vancouver',
+    'V6A': 'Vancouver', 'V6B': 'Vancouver', 'V6C': 'Vancouver', 'V6E': 'Vancouver',
+    'V6G': 'Vancouver', 'V6H': 'Vancouver', 'V6J': 'Vancouver', 'V6K': 'Vancouver',
+    'V6L': 'Vancouver', 'V6M': 'Vancouver', 'V6N': 'Vancouver', 'V6P': 'Vancouver',
+    'V6R': 'Vancouver', 'V6S': 'Vancouver', 'V6T': 'Vancouver', 'V6Z': 'Vancouver',
+    'V7A': 'Vancouver', 'V7B': 'Vancouver', 'V7C': 'Vancouver', 'V7E': 'Vancouver',
+    'V7G': 'Vancouver', 'V7H': 'Vancouver', 'V7J': 'Vancouver', 'V7K': 'Vancouver',
+    'V7L': 'Vancouver', 'V7M': 'Vancouver', 'V7N': 'Vancouver', 'V7P': 'Vancouver',
+    'V7R': 'Vancouver', 'V7S': 'Vancouver', 'V7T': 'Vancouver', 'V7V': 'Vancouver',
+    'V7W': 'Vancouver', 'V7X': 'Vancouver', 'V7Y': 'Vancouver',
+    
+    # Montreal FSAs (H prefix)
+    'H1A': 'Montreal', 'H1B': 'Montreal', 'H1C': 'Montreal', 'H1E': 'Montreal',
+    'H1G': 'Montreal', 'H1H': 'Montreal', 'H1J': 'Montreal', 'H1K': 'Montreal',
+    'H1L': 'Montreal', 'H1M': 'Montreal', 'H1N': 'Montreal', 'H1P': 'Montreal',
+    'H1R': 'Montreal', 'H1S': 'Montreal', 'H1T': 'Montreal', 'H1V': 'Montreal',
+    'H1W': 'Montreal', 'H1X': 'Montreal', 'H1Y': 'Montreal', 'H1Z': 'Montreal',
+    'H2A': 'Montreal', 'H2B': 'Montreal', 'H2C': 'Montreal', 'H2E': 'Montreal',
+    'H2G': 'Montreal', 'H2H': 'Montreal', 'H2J': 'Montreal', 'H2K': 'Montreal',
+    'H2L': 'Montreal', 'H2M': 'Montreal', 'H2N': 'Montreal', 'H2P': 'Montreal',
+    'H2R': 'Montreal', 'H2S': 'Montreal', 'H2T': 'Montreal', 'H2V': 'Montreal',
+    'H2W': 'Montreal', 'H2X': 'Montreal', 'H2Y': 'Montreal', 'H2Z': 'Montreal',
+    'H3A': 'Montreal', 'H3B': 'Montreal', 'H3C': 'Montreal', 'H3E': 'Montreal',
+    'H3G': 'Montreal', 'H3H': 'Montreal', 'H3J': 'Montreal', 'H3K': 'Montreal',
+    'H3L': 'Montreal', 'H3M': 'Montreal', 'H3N': 'Montreal', 'H3P': 'Montreal',
+    'H3R': 'Montreal', 'H3S': 'Montreal', 'H3T': 'Montreal', 'H3V': 'Montreal',
+    'H3W': 'Montreal', 'H3X': 'Montreal', 'H3Y': 'Montreal', 'H3Z': 'Montreal',
+    'H4A': 'Montreal', 'H4B': 'Montreal', 'H4C': 'Montreal', 'H4E': 'Montreal',
+    'H4G': 'Montreal', 'H4H': 'Montreal', 'H4J': 'Montreal', 'H4K': 'Montreal',
+    'H4L': 'Montreal', 'H4M': 'Montreal', 'H4N': 'Montreal', 'H4P': 'Montreal',
+    'H4R': 'Montreal', 'H4S': 'Montreal', 'H4T': 'Montreal', 'H4V': 'Montreal',
+    'H4W': 'Montreal', 'H4X': 'Montreal', 'H4Y': 'Montreal', 'H4Z': 'Montreal',
+    
+    # Edmonton FSAs (T prefix)
+    'T5A': 'Edmonton', 'T5B': 'Edmonton', 'T5C': 'Edmonton', 'T5E': 'Edmonton',
+    'T5G': 'Edmonton', 'T5H': 'Edmonton', 'T5J': 'Edmonton', 'T5K': 'Edmonton',
+    'T5L': 'Edmonton', 'T5M': 'Edmonton', 'T5N': 'Edmonton', 'T5P': 'Edmonton',
+    'T5R': 'Edmonton', 'T5S': 'Edmonton', 'T5T': 'Edmonton', 'T5V': 'Edmonton',
+    'T5W': 'Edmonton', 'T5X': 'Edmonton', 'T5Y': 'Edmonton', 'T5Z': 'Edmonton',
+    'T6A': 'Edmonton', 'T6B': 'Edmonton', 'T6C': 'Edmonton', 'T6E': 'Edmonton',
+    'T6G': 'Edmonton', 'T6H': 'Edmonton', 'T6J': 'Edmonton', 'T6K': 'Edmonton',
+    'T6L': 'Edmonton', 'T6M': 'Edmonton', 'T6N': 'Edmonton', 'T6P': 'Edmonton',
+    'T6R': 'Edmonton', 'T6S': 'Edmonton', 'T6T': 'Edmonton', 'T6V': 'Edmonton',
+    'T6W': 'Edmonton', 'T6X': 'Edmonton',
+    
+    # Winnipeg FSAs (R prefix)
+    'R2C': 'Winnipeg', 'R2E': 'Winnipeg', 'R2G': 'Winnipeg', 'R2H': 'Winnipeg',
+    'R2J': 'Winnipeg', 'R2K': 'Winnipeg', 'R2L': 'Winnipeg', 'R2M': 'Winnipeg',
+    'R2N': 'Winnipeg', 'R2P': 'Winnipeg', 'R2R': 'Winnipeg', 'R2V': 'Winnipeg',
+    'R2W': 'Winnipeg', 'R2X': 'Winnipeg', 'R2Y': 'Winnipeg',
+    'R3A': 'Winnipeg', 'R3B': 'Winnipeg', 'R3C': 'Winnipeg', 'R3E': 'Winnipeg',
+    'R3G': 'Winnipeg', 'R3H': 'Winnipeg', 'R3J': 'Winnipeg', 'R3K': 'Winnipeg',
+    'R3L': 'Winnipeg', 'R3M': 'Winnipeg', 'R3N': 'Winnipeg', 'R3P': 'Winnipeg',
+    'R3R': 'Winnipeg', 'R3S': 'Winnipeg', 'R3T': 'Winnipeg', 'R3V': 'Winnipeg',
+    'R3W': 'Winnipeg', 'R3X': 'Winnipeg', 'R3Y': 'Winnipeg',
 }
 
 

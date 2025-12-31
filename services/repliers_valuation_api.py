@@ -8,21 +8,21 @@ Author: Real Estate Valuation System
 Date: November 2025
 """
 
+from __future__ import annotations
+
 import os
 import logging
 import requests
 from datetime import datetime, timedelta, date
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any, Tuple, TYPE_CHECKING
 from functools import lru_cache
 import time
 import hashlib
 import json
 
-# Import our data models
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent))
-from models.valuation_models import PropertyDetails, ComparableProperty
+# Type hints only (not imported at runtime to avoid circular imports)
+if TYPE_CHECKING:
+    from models.valuation_models import PropertyDetails, ComparableProperty
 
 # Configure logging
 logging.basicConfig(
@@ -323,7 +323,7 @@ def _parse_date(date_str: Any) -> Optional[date]:
 
 # ==================== MAIN API FUNCTIONS ====================
 
-def fetch_property_details(mls_id: str) -> Optional[PropertyDetails]:
+def fetch_property_details(mls_id: str) -> Optional["PropertyDetails"]:
     """
     Fetch detailed property information from Repliers API by MLS ID.
     
@@ -343,6 +343,9 @@ def fetch_property_details(mls_id: str) -> Optional[PropertyDetails]:
         ...     print(f"Found: {property_data.address}")
         ...     print(f"Size: {property_data.sqft} sqft, {property_data.bedrooms} beds")
     """
+    # Lazy import to avoid module loading issues
+    from models.valuation_models import PropertyDetails
+    
     if not mls_id or not mls_id.strip():
         logger.error("MLS ID cannot be empty")
         return None
@@ -558,11 +561,11 @@ def fetch_property_details(mls_id: str) -> Optional[PropertyDetails]:
 
 
 def find_comparables(
-    subject_property: PropertyDetails,
+    subject_property: "PropertyDetails",
     limit: int = 8,
     radius_km: float = 2.0,
     max_age_days: int = 180
-) -> List[ComparableProperty]:
+) -> List["ComparableProperty"]:
     """
     Find comparable sold properties for valuation analysis.
     
@@ -598,6 +601,10 @@ def find_comparables(
         >>> for comp in comparables:
         ...     print(f"{comp.property_details.address}: ${comp.sale_price:,.0f}")
     """
+    # Ensure project root is in sys.path for imports
+    # Lazy import to avoid module loading issues
+    from models.valuation_models import PropertyDetails, ComparableProperty
+    
     if not subject_property:
         logger.error("Subject property cannot be None")
         return []
@@ -884,8 +891,15 @@ def get_market_data(city: str, province: str = 'ON') -> Dict[str, Any]:
 
 # ==================== HELPER FUNCTIONS ====================
 
-def _create_property_from_result(result: Dict) -> Optional[PropertyDetails]:
+def _create_property_from_result(result: Dict) -> Optional["PropertyDetails"]:
     """Create PropertyDetails object from API search result."""
+    # Ensure project root is in sys.path for imports
+    import sys
+    import os
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # Lazy import to avoid module loading issues
+    from models.valuation_models import PropertyDetails
+    
     try:
         # Extract MLS first for logging
         mls_id = result.get('mlsNumber', result.get('mls_id', f"MLS{int(time.time())}"))
@@ -999,7 +1013,7 @@ def _calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> f
     return R * c
 
 
-def _calculate_similarity_score(subject: PropertyDetails, comparable: PropertyDetails) -> float:
+def _calculate_similarity_score(subject: "PropertyDetails", comparable: "PropertyDetails") -> float:
     """
     Calculate similarity score between subject and comparable property.
     

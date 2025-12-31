@@ -8,11 +8,6 @@ from services import openai_service
 from typing import Dict, List, Optional
 import logging
 import uuid
-import sys
-import os
-
-# Add parent directory to path to import from app
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import property data processing and AI insights generation
 from app.utils.property_utils import (

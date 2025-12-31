@@ -2,10 +2,10 @@
 Main API routes for property analysis and chat functionality
 """
 from flask import Blueprint, request, jsonify
-from handlers.property_handler import generate_quick_ai_insights
-from handlers.conversation_handler import process_conversation_stage, generate_contextual_response
-from models.models import Session
-from utils.audio_utils import text_to_speech_bytes, speech_to_text
+from app.handlers.property_handler import generate_quick_ai_insights
+from app.handlers.conversation_handler import process_conversation_stage, generate_contextual_response
+from app.models.models import Session
+from app.utils.audio_utils import text_to_speech_bytes, speech_to_text
 import os
 import tempfile
 import traceback
@@ -291,6 +291,124 @@ def text_chat():
         
     except Exception as e:
         print(f"❌ Text chat error: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@main_api.route('/admin/transactions/<session_id>', methods=['GET'])
+def get_transaction_log(session_id: str):
+    """
+    Get transaction audit log for a session.
+    
+    Returns complete transaction history including:
+    - Transaction type and status
+    - Timestamps and duration
+    - State changes
+    - Checkpoints created
+    - Rollback events
+    
+    Args:
+        session_id: Session to get transaction log for
+        
+    Returns:
+        JSON with transaction log array
+    """
+    try:
+        from services.chatbot_orchestrator import chatbot_instance
+        
+        if not chatbot_instance:
+            return jsonify({
+                "success": False,
+                "error": "Chatbot not initialized"
+            }), 500
+        
+        # Get transaction log from transaction manager
+        transaction_log = chatbot_instance.transaction_manager.get_transaction_log(session_id)
+        
+        # Get checkpoint count
+        checkpoint_count = len(chatbot_instance.transaction_manager.get_checkpoints(session_id))
+        
+        return jsonify({
+            "success": True,
+            "session_id": session_id,
+            "transaction_count": len(transaction_log),
+            "checkpoint_count": checkpoint_count,
+            "transactions": [log.model_dump() for log in transaction_log]  # ✅ Pydantic v2: model_dump() instead of to_dict()
+        })
+        
+    except Exception as e:
+        print(f"❌ Transaction log error: {e}")
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@main_api.route('/admin/transactions/<session_id>/rollback', methods=['POST'])
+def rollback_transaction(session_id: str):
+    """
+    Rollback session state to a previous checkpoint.
+    
+    Args:
+        session_id: Session to rollback
+        
+    Request body:
+        {
+            "checkpoint_id": "checkpoint_uuid"  // Optional, defaults to most recent
+        }
+        
+    Returns:
+        JSON with rollback result
+    """
+    try:
+        from services.chatbot_orchestrator import chatbot_instance
+        
+        if not chatbot_instance:
+            return jsonify({
+                "success": False,
+                "error": "Chatbot not initialized"
+            }), 500
+        
+        data = request.get_json() or {}
+        checkpoint_id = data.get('checkpoint_id')
+        
+        # Get available checkpoints
+        checkpoints = chatbot_instance.transaction_manager.get_checkpoints(session_id)
+        
+        if not checkpoints:
+            return jsonify({
+                "success": False,
+                "error": f"No checkpoints available for session {session_id}"
+            }), 404
+        
+        # Use most recent checkpoint if not specified
+        if not checkpoint_id:
+            checkpoint_id = checkpoints[-1].checkpoint_id
+        
+        # Execute rollback
+        success = chatbot_instance.transaction_manager.rollback_to_checkpoint(
+            session_id=session_id,
+            checkpoint_id=checkpoint_id
+        )
+        
+        if success:
+            return jsonify({
+                "success": True,
+                "message": f"Rolled back to checkpoint {checkpoint_id}",
+                "checkpoint_id": checkpoint_id
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "error": "Rollback failed"
+            }), 500
+        
+    except Exception as e:
+        print(f"❌ Rollback error: {e}")
+        traceback.print_exc()
         return jsonify({
             "success": False,
             "error": str(e)

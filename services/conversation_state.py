@@ -4,6 +4,31 @@ ChatGPT-Style Conversation State Management
 Maintains complete conversation context like ChatGPT - remembers everything,
 understands follow-ups, never loses state.
 
+DEPRECATION NOTICE:
+-------------------
+This module (ConversationState, ConversationStateManager) is being phased out
+in favor of UnifiedConversationState and UnifiedStateManager from:
+    services.unified_conversation_state
+
+The new implementation provides:
+- Pydantic v2 validation
+- Redis persistence with auto-fallback to in-memory
+- Structured logging with structlog
+- Checkpoint/restore functionality
+- Analytics methods
+
+Migration:
+    # Old (deprecated)
+    from services.conversation_state import conversation_state_manager
+    state = conversation_state_manager.get_or_create(session_id)
+    
+    # New (preferred)
+    from services.chatbot_orchestrator import state_manager
+    state = state_manager.get_or_create(session_id)
+
+The legacy ConversationStateManager is kept for backward compatibility during
+the transition period. New code should use UnifiedStateManager.
+
 Author: Summitly Team
 Date: December 12, 2025
 """
@@ -14,8 +39,18 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field, asdict
 from copy import deepcopy
+import warnings
 
 logger = logging.getLogger(__name__)
+
+# Deprecation warning for direct imports
+def _emit_deprecation_warning():
+    warnings.warn(
+        "conversation_state module is deprecated. Use UnifiedStateManager from "
+        "services.chatbot_orchestrator instead.",
+        DeprecationWarning,
+        stacklevel=3
+    )
 
 # Import LocationState for structured location handling
 try:

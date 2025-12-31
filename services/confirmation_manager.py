@@ -6,14 +6,24 @@ timeouts, and UUID-based confirmation tracking.
 
 This module prevents confirmation race conditions by:
 1. Explicit pending confirmation objects with UUIDs
-2. Timeout-based expiration (default 120 seconds)
+2. Timeout-based expiration (default 1 hour)
 3. Routing confirmation responses before normal intent classification
-4. Support for multiple pending confirmations with priority queuing
+4. Redis-based storage with TTL
+5. Clear, atomic state update logic
+
+Core Features:
+- Create confirmations with specific types
+- Get pending confirmations
+- Apply confirmation responses with atomic state updates
+- Auto-expire old confirmations
+- Detect confirmation responses
 """
 
 import uuid
 import logging
-from typing import Dict, List, Optional, Any
+import json
+import re
+from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timedelta
 from enum import Enum
@@ -28,6 +38,11 @@ CONFIRMATION_METRICS = Counter()
 class ConfirmationType(Enum):
     """Types of confirmations."""
     LOCATION_CHANGE = "location_change"
+    PROPERTY_REFINEMENT = "property_refinement"
+    REQUIREMENTS_NEEDED = "requirements_needed"
+    POSTAL_CODE_CLARIFICATION = "postal_code_clarification"
+    
+    # Legacy types (for backwards compatibility)
     FILTER_CHANGE = "filter_change"
     PROPERTY_SELECTION = "property_selection"
     SEARCH_REFINEMENT = "search_refinement"
@@ -45,30 +60,30 @@ class ConfirmationStatus(Enum):
     SUPERSEDED = "superseded"
 
 
+
 @dataclass
 class PendingConfirmation:
     """
     Represents a pending confirmation request.
     
     Attributes:
-        id: Unique identifier for this confirmation
-        type: Type of confirmation (location_change, etc.)
-        message: Confirmation message shown to user
-        payload: Additional context data for confirmation
-        created_at: When confirmation was created
-        expires_at: When confirmation expires
-        status: Current status
-        session_id: Associated session
+        confirmation_id: Unique identifier (UUID) for this confirmation
+        session_id: Associated session identifier
+        type: Type of confirmation (location_change, property_refinement, etc.)
+        question: The question asked to the user
+        payload: Additional context data needed to apply the confirmation
+        created_at: Timestamp when confirmation was created
+        expires_at: When confirmation expires (default 1 hour)
+        status: Current status (pending, accepted, rejected, expired)
     """
-    id: str
+    confirmation_id: str
+    session_id: str
     type: ConfirmationType
-    message: str
+    question: str
     payload: Dict[str, Any]
     created_at: datetime
     expires_at: datetime
     status: ConfirmationStatus = ConfirmationStatus.PENDING
-    session_id: Optional[str] = None
-    choices: List[str] = field(default_factory=list)  # For multiple choice confirmations
     
     def is_expired(self) -> bool:
         """Check if confirmation has expired."""
@@ -99,145 +114,192 @@ class PendingConfirmation:
 
 
 @dataclass
-class ConfirmationResponse:
+class ConfirmationResult:
     """
-    Result of processing a confirmation response.
+    Result of applying a confirmation response.
     
     Attributes:
-        accepted: Whether confirmation was accepted
-        confirmation_id: ID of the confirmation that was responded to
-        original_payload: The payload from the original confirmation
-        reason: Explanation of the decision
-        needs_further_action: Whether additional processing is needed
+        success: Whether the confirmation was successfully processed
+        state_update: Dictionary of state updates to apply
+        next_action: What action to take next ('search', 'ask_requirements', 'continue', etc.)
+        applied: Whether state was actually modified
+        error: Error message if success=False
+        metadata: Additional info about the confirmation
     """
-    accepted: bool
-    confirmation_id: str
-    original_payload: Dict[str, Any]
-    reason: str
-    needs_further_action: bool = False
+    success: bool
+    state_update: Dict[str, Any] = field(default_factory=dict)
+    next_action: str = "continue"
+    applied: bool = False
+    error: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
-# Confirmation tokens (case-insensitive)
-POSITIVE_TOKENS = {
-    'yes', 'yeah', 'yep', 'yup', 'sure', 'ok', 'okay', 
-    'alright', 'correct', 'right', 'affirmative', 'y'
-}
-
-NEGATIVE_TOKENS = {
-    'no', 'nope', 'nah', 'not', 'negative', 'n',
-    'cancel', 'nevermind', 'never mind'
-}
+# Confirmation tokens - Now imported from shared module (single source of truth)
+from services.confirmation_tokens import (
+    POSITIVE_TOKENS, NEGATIVE_TOKENS, SKIP_TOKENS,
+    is_positive_response, is_negative_response, is_skip_response,
+    normalize_message
+)
 
 
 class ConfirmationManager:
     """
-    Manages pending confirmations with timeout and race condition handling.
+    Manages pending confirmations with clear, simple logic.
+    
+    Features:
+    - UUID-based confirmation tracking
+    - Redis storage with 1-hour TTL
+    - Atomic state updates
+    - Clear YES/NO/OTHER response detection
+    - Type-specific application logic
     """
     
-    def __init__(self, default_timeout_seconds: int = 120):
+    def __init__(self, default_timeout_seconds: int = 3600, redis_client=None):
         """
         Initialize confirmation manager.
         
         Args:
-            default_timeout_seconds: Default timeout for confirmations (seconds)
+            default_timeout_seconds: Default timeout for confirmations (default: 1 hour)
+            redis_client: Optional Redis client for persistent storage
         """
         self.default_timeout = default_timeout_seconds
-        # Store confirmations by session_id -> list of confirmations
-        self._confirmations: Dict[str, List[PendingConfirmation]] = {}
+        self.redis_client = redis_client
+        
+        # In-memory storage (fallback if no Redis)
+        self._confirmations: Dict[str, PendingConfirmation] = {}
         self._confirmation_history: List[PendingConfirmation] = []
-        self._max_history = 1000  # Keep last 1000 confirmations for debugging
+        self._max_history = 1000
+        
+        logger.info(f"[CONFIRMATION_MANAGER] Initialized with {default_timeout_seconds}s timeout")
     
     def create_confirmation(
         self,
         session_id: str,
         confirmation_type: ConfirmationType,
-        message: str,
+        question: str,
         payload: Dict[str, Any],
-        timeout_seconds: Optional[int] = None,
-        choices: Optional[List[str]] = None
-    ) -> PendingConfirmation:
+        timeout_seconds: Optional[int] = None
+    ) -> str:
         """
         Create a new pending confirmation.
         
         Args:
             session_id: Session identifier
             confirmation_type: Type of confirmation
-            message: Message to show user
-            payload: Context data for confirmation
-            timeout_seconds: Custom timeout (uses default if None)
-            choices: List of choice options (for multiple choice confirmations)
+            question: Question to ask the user
+            payload: Context data needed to apply confirmation
+            timeout_seconds: Custom timeout (default: 1 hour)
             
         Returns:
-            Created PendingConfirmation object
+            confirmation_id: UUID string of created confirmation
         """
         timeout = timeout_seconds if timeout_seconds is not None else self.default_timeout
+        confirmation_id = str(uuid.uuid4())
         
         confirmation = PendingConfirmation(
-            id=str(uuid.uuid4()),
+            confirmation_id=confirmation_id,
+            session_id=session_id,
             type=confirmation_type,
-            message=message,
+            question=question,
             payload=payload,
             created_at=datetime.utcnow(),
             expires_at=datetime.utcnow() + timedelta(seconds=timeout),
-            session_id=session_id,
-            choices=choices or []
+            status=ConfirmationStatus.PENDING
         )
         
-        # Add to session's confirmation list
-        if session_id not in self._confirmations:
-            self._confirmations[session_id] = []
+        # Store in memory
+        confirmation_key = f"{session_id}:confirmation"
+        self._confirmations[confirmation_key] = confirmation
         
-        # Mark any existing pending confirmations as superseded
-        for existing in self._confirmations[session_id]:
-            if existing.is_active():
-                existing.status = ConfirmationStatus.SUPERSEDED
-                logger.info(
-                    f"[CONFIRMATION] Superseded confirmation {existing.id} "
-                    f"with new confirmation {confirmation.id}"
+        # Store in Redis if available (with TTL)
+        if self.redis_client:
+            try:
+                redis_key = f"confirmation:{session_id}"
+                self.redis_client.setex(
+                    redis_key,
+                    timeout,
+                    json.dumps(confirmation.to_dict())
                 )
-        
-        self._confirmations[session_id].append(confirmation)
+                logger.info(f"[CONFIRMATION] Stored in Redis: {redis_key}")
+            except Exception as e:
+                logger.warning(f"[CONFIRMATION] Redis storage failed: {e}")
         
         # Metrics
         CONFIRMATION_METRICS['created'] += 1
         CONFIRMATION_METRICS[f'created_{confirmation_type.value}'] += 1
         
         logger.info(
-            f"[CONFIRMATION] Created confirmation {confirmation.id} "
-            f"type={confirmation_type.value} session={session_id} "
+            f"[CONFIRMATION] Created: {confirmation_id[:8]} "
+            f"type={confirmation_type.value} session={session_id[:8]} "
             f"expires_at={confirmation.expires_at.isoformat()}"
         )
         
-        return confirmation
+        return confirmation_id
     
-    def get_active_confirmation(self, session_id: str) -> Optional[PendingConfirmation]:
+    def get_pending_confirmation(self, session_id: str) -> Optional[Dict[str, Any]]:
         """
-        Get the active (most recent non-expired) confirmation for a session.
+        Get pending confirmation for a session.
         
         Args:
             session_id: Session identifier
             
         Returns:
-            Active PendingConfirmation or None
+            Full confirmation dictionary or None
         """
-        if session_id not in self._confirmations:
+        confirmation_key = f"{session_id}:confirmation"
+        
+        # Try memory first
+        confirmation = self._confirmations.get(confirmation_key)
+        
+        # Try Redis if not in memory
+        if not confirmation and self.redis_client:
+            try:
+                redis_key = f"confirmation:{session_id}"
+                data = self.redis_client.get(redis_key)
+                if data:
+                    confirmation = PendingConfirmation.from_dict(json.loads(data))
+                    # Cache in memory
+                    self._confirmations[confirmation_key] = confirmation
+            except Exception as e:
+                logger.warning(f"[CONFIRMATION] Redis retrieval failed: {e}")
+        
+        if not confirmation:
             return None
         
-        # Clean up expired confirmations
-        self._cleanup_expired(session_id)
+        # Auto-expire old confirmations
+        if confirmation.is_expired():
+            logger.info(f"[CONFIRMATION] Expired: {confirmation.confirmation_id[:8]}")
+            self._delete_confirmation(session_id)
+            CONFIRMATION_METRICS['expired'] += 1
+            return None
         
-        # Find most recent active confirmation
-        active = [c for c in self._confirmations[session_id] if c.is_active()]
+        if confirmation.status != ConfirmationStatus.PENDING:
+            logger.info(
+                f"[CONFIRMATION] Not pending: {confirmation.confirmation_id[:8]} "
+                f"status={confirmation.status.value}"
+            )
+            return None
         
-        if active:
-            return active[-1]  # Most recent
+        return confirmation.to_dict()
+    
+    def get_active_confirmation(self, session_id: str) -> Optional[PendingConfirmation]:
+        """
+        Get active confirmation object (for backwards compatibility).
         
+        Args:
+            session_id: Session identifier
+            
+        Returns:
+            PendingConfirmation object or None
+        """
+        pending_dict = self.get_pending_confirmation(session_id)
+        if pending_dict:
+            return PendingConfirmation.from_dict(pending_dict)
         return None
     
     def has_pending_confirmation(self, session_id: str) -> bool:
         """
-        Check if session has any pending confirmation.
+        Check if session has a pending confirmation.
         
         Args:
             session_id: Session identifier
@@ -245,144 +307,535 @@ class ConfirmationManager:
         Returns:
             True if pending confirmation exists
         """
-        return self.get_active_confirmation(session_id) is not None
+        return self.get_pending_confirmation(session_id) is not None
     
-    def is_confirmation_token(self, message: str) -> bool:
+    def is_confirmation_response(
+        self, 
+        message: str, 
+        pending_confirmation: Optional[Dict[str, Any]] = None
+    ) -> bool:
         """
-        Check if message is a simple confirmation token (yes/no).
+        Check if message is a response to a specific confirmation type.
+        
+        CRITICAL: Only treat "yes/no" as valid for LOCATION_CHANGE and FILTER_CHANGE.
+        For VAGUE_REQUEST, require semantic confirmation (referencing subject).
         
         Args:
             message: User message
+            pending_confirmation: The pending confirmation context (optional)
             
         Returns:
-            True if message is a confirmation token
+            True if message appears to be a confirmation response
         """
-        clean_message = message.lower().strip().rstrip('.')
+        clean_message = message.lower().strip().rstrip('.!?')
+        words = clean_message.split()
         
-        # Check single-word tokens
-        if clean_message in POSITIVE_TOKENS or clean_message in NEGATIVE_TOKENS:
+        if not words:
+            return False
+        
+        # Strip punctuation from first word for token matching
+        first_word = words[0].strip(',.!?;:')
+        
+        # Get confirmation type if available
+        conf_type = None
+        if pending_confirmation:
+            conf_type = pending_confirmation.get('type')
+        
+        # GUARD: For VAGUE_REQUEST, plain "yes/no" is NOT valid
+        # User must reference the subject (e.g., "filters", "budget", "location")
+        if conf_type == ConfirmationType.VAGUE_REQUEST.value:
+            if first_word in POSITIVE_TOKENS or first_word in NEGATIVE_TOKENS:
+                # Check if message contains semantic context
+                semantic_keywords = [
+                    'filter', 'budget', 'location', 'price', 'bedroom', 
+                    'bathroom', 'property', 'search', 'criteria', 'requirement'
+                ]
+                has_semantic_context = any(keyword in clean_message for keyword in semantic_keywords)
+                if not has_semantic_context:
+                    # Plain yes/no without context - let normal pipeline handle it
+                    return False
+                else:
+                    # Has semantic context - valid confirmation response
+                    return True
+        
+        # Check for simple YES/NO responses
+        # Only valid for LOCATION_CHANGE, FILTER_CHANGE, and other explicit confirmation types
+        if first_word in POSITIVE_TOKENS or first_word in NEGATIVE_TOKENS:
+            # Allow yes/no for specific confirmation types
+            allowed_types = [
+                ConfirmationType.LOCATION_CHANGE.value,
+                ConfirmationType.FILTER_CHANGE.value,
+                ConfirmationType.PROPERTY_REFINEMENT.value,
+                ConfirmationType.POSTAL_CODE_CLARIFICATION.value,
+                ConfirmationType.REQUIREMENTS_NEEDED.value,
+                ConfirmationType.LOCATION_DISAMBIGUATION.value,
+                ConfirmationType.POSTAL_CODE_CITY.value,
+            ]
+            # If we have confirmation type context, only allow if it's in allowed list
+            if conf_type and conf_type not in allowed_types:
+                return False
+            # If no confirmation type provided, assume it's valid (backwards compatibility)
             return True
         
-        # Check short phrases (max 3 words)
-        words = clean_message.split()
-        if len(words) <= 3:
-            # Check if it starts with a confirmation token
-            if words[0] in POSITIVE_TOKENS or words[0] in NEGATIVE_TOKENS:
+        # Check for skip tokens
+        if first_word in SKIP_TOKENS:
+            return True
+        
+        # Short messages (1-3 words) starting with confirmation tokens
+        if len(words) <= 3 and (first_word in POSITIVE_TOKENS or first_word in NEGATIVE_TOKENS):
+            return True
+        
+        # If we have context about the confirmation type, check for relevant patterns
+        if pending_confirmation:
+            if conf_type == ConfirmationType.REQUIREMENTS_NEEDED.value:
+                # Anything could be requirements, so be permissive
                 return True
+            
+            if conf_type == ConfirmationType.LOCATION_CHANGE.value:
+                # Check if it contains location-like content
+                location_patterns = [
+                    r'\b(in|at|near|around)\b',
+                    r'\b(city|town|area|neighborhood|street|avenue|road)\b',
+                    r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b'  # Capitalized names
+                ]
+                for pattern in location_patterns:
+                    if re.search(pattern, message, re.IGNORECASE):
+                        return True
         
         return False
     
-    def handle_confirmation_response(
-        self,
-        session_id: str,
-        message: str,
-        message_id: Optional[str] = None,
-        confirmation_id: Optional[str] = None
-    ) -> Optional[ConfirmationResponse]:
+    def apply_confirmation(
+        self, 
+        session_id: str, 
+        response: str,
+        state: Optional[Any] = None
+    ) -> ConfirmationResult:
         """
-        Handle a user's response to a pending confirmation.
+        Apply a confirmation response with atomic state updates.
+        
+        This is the main method that handles all confirmation logic:
+        1. Get pending confirmation
+        2. Parse response (YES/NO/OTHER)
+        3. Extract data from response if needed
+        4. Apply to state based on type
+        5. Delete confirmation
+        6. Return result with state updates
         
         Args:
             session_id: Session identifier
-            message: User's response message
-            message_id: Message identifier for logging
-            confirmation_id: Optional specific confirmation ID to respond to
+            response: User's response message
+            state: Optional state object to update directly
             
         Returns:
-            ConfirmationResponse if handled, None if no active confirmation
+            ConfirmationResult with success, state_update, next_action
         """
-        # Get active confirmation
-        if confirmation_id:
-            confirmation = self._get_confirmation_by_id(session_id, confirmation_id)
-        else:
-            confirmation = self.get_active_confirmation(session_id)
+        # Get pending confirmation
+        pending = self.get_pending_confirmation(session_id)
         
-        if not confirmation:
-            logger.warning(
-                f"[CONFIRMATION] No active confirmation for session={session_id} "
-                f"msg_id={message_id}"
+        if not pending:
+            logger.warning(f"[CONFIRMATION] No pending confirmation for session={session_id[:8]}")
+            return ConfirmationResult(
+                success=False,
+                error="No pending confirmation"
             )
-            CONFIRMATION_METRICS['no_active_confirmation'] += 1
-            return None
         
-        # Check if expired
-        if confirmation.is_expired():
-            confirmation.status = ConfirmationStatus.EXPIRED
-            logger.warning(
-                f"[CONFIRMATION] Confirmation {confirmation.id} expired "
-                f"session={session_id}"
-            )
-            CONFIRMATION_METRICS['expired'] += 1
-            return None
-        
-        # Parse response
-        clean_message = message.lower().strip().rstrip('.')
-        words = clean_message.split()
-        first_word = words[0] if words else ''
-        
-        # Determine acceptance
-        accepted = None
-        reason = ''
-        
-        # Check for explicit positive/negative
-        if first_word in POSITIVE_TOKENS:
-            accepted = True
-            reason = f"User confirmed with '{first_word}'"
-        elif first_word in NEGATIVE_TOKENS:
-            accepted = False
-            reason = f"User rejected with '{first_word}'"
-        
-        # Handle multiple choice confirmations
-        elif confirmation.choices:
-            # Check if message matches one of the choices
-            for choice in confirmation.choices:
-                if choice.lower() in clean_message:
-                    accepted = True
-                    reason = f"User selected choice: {choice}"
-                    confirmation.payload['selected_choice'] = choice
-                    break
-        
-        # Ambiguous response
-        if accepted is None:
-            logger.warning(
-                f"[CONFIRMATION] Ambiguous response '{message}' "
-                f"for confirmation {confirmation.id}"
-            )
-            CONFIRMATION_METRICS['ambiguous_response'] += 1
-            return None
-        
-        # Update confirmation status
-        confirmation.status = (
-            ConfirmationStatus.ACCEPTED if accepted 
-            else ConfirmationStatus.REJECTED
-        )
-        
-        # Add to history
-        self._add_to_history(confirmation)
-        
-        # Metrics
-        CONFIRMATION_METRICS['handled'] += 1
-        CONFIRMATION_METRICS['accepted' if accepted else 'rejected'] += 1
+        conf_id = pending['confirmation_id']
+        conf_type = ConfirmationType(pending['type'])
+        payload = pending['payload']
         
         logger.info(
-            f"[CONFIRMATION] {'Accepted' if accepted else 'Rejected'} "
-            f"confirmation {confirmation.id} session={session_id} "
-            f"reason='{reason}'"
+            f"[CONFIRMATION] Applying: {conf_id[:8]} "
+            f"type={conf_type.value} response='{response[:50]}'"
         )
         
-        return ConfirmationResponse(
-            accepted=accepted,
-            confirmation_id=confirmation.id,
-            original_payload=confirmation.payload,
-            reason=reason,
-            metadata={
-                'confirmation_type': confirmation.type.value,
-                'created_at': confirmation.created_at.isoformat(),
-                'response_time_seconds': (
-                    datetime.utcnow() - confirmation.created_at
-                ).total_seconds()
-            }
+        # Parse response
+        clean_response = response.lower().strip().rstrip('.!?')
+        words = clean_response.split()
+        # CRITICAL: Strip punctuation from first word before token matching
+        # WHY: Button text like "Yes, switch locations" has comma after "yes"
+        first_word = words[0].strip(',.!?;:') if words else ''
+        
+        # Determine response type
+        is_yes = first_word in POSITIVE_TOKENS
+        is_no = first_word in NEGATIVE_TOKENS
+        is_skip = first_word in SKIP_TOKENS
+        
+        logger.info(f"[CONFIRMATION] Parsed response: first_word='{first_word}', is_yes={is_yes}, is_no={is_no}")
+        
+        # Apply based on confirmation type
+        result = None
+        
+        try:
+            if conf_type == ConfirmationType.LOCATION_CHANGE:
+                result = self._apply_location_change(is_yes, is_no, response, payload, state)
+            
+            elif conf_type == ConfirmationType.PROPERTY_REFINEMENT:
+                result = self._apply_property_refinement(is_yes, is_no, response, payload, state)
+            
+            elif conf_type == ConfirmationType.REQUIREMENTS_NEEDED:
+                result = self._apply_requirements_needed(is_yes, is_no, is_skip, response, payload, state)
+            
+            elif conf_type == ConfirmationType.POSTAL_CODE_CLARIFICATION:
+                result = self._apply_postal_code_clarification(is_yes, is_no, response, payload, state)
+            
+            else:
+                # Generic handling for legacy types
+                result = self._apply_generic(is_yes, is_no, response, payload, state)
+            
+            if result and result.success:
+                # Delete confirmation
+                self._delete_confirmation(session_id)
+                CONFIRMATION_METRICS['applied'] += 1
+                CONFIRMATION_METRICS[f'applied_{conf_type.value}'] += 1
+                
+                logger.info(
+                    f"[CONFIRMATION] Applied successfully: {conf_id[:8]} "
+                    f"state_updated={result.applied}"
+                )
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"[CONFIRMATION] Error applying: {e}", exc_info=True)
+            return ConfirmationResult(
+                success=False,
+                error=f"Application error: {str(e)}"
+            )
+    
+    def _apply_location_change(
+        self, 
+        is_yes: bool, 
+        is_no: bool, 
+        response: str,
+        payload: Dict[str, Any],
+        state: Optional[Any]
+    ) -> ConfirmationResult:
+        """
+        Apply LOCATION_CHANGE confirmation.
+        
+        Logic:
+        - YES: Apply stored new_location_state AND clear old restrictive filters
+        - NO: Revert to previous location
+        - OTHER: Parse as new location + apply
+        """
+        if is_yes:
+            # Apply stored location state
+            new_location_state = payload.get('new_location_state', {})
+            
+            if state:
+                # 🔧 STATE SYNC FIX: Update BOTH location_state AND active_filters['location']
+                # WHY: Prevents stale location in filters when confirmation applied
+                
+                # Update location_state attributes
+                for key, value in new_location_state.items():
+                    # Skip 'location' key if state doesn't have it (UnifiedConversationState uses location_state)
+                    if key == 'location' and not hasattr(state, 'location'):
+                        continue
+                    if hasattr(state, key):
+                        setattr(state, key, value)
+                
+                # CRITICAL: Synchronize active_filters.location with location_state.city
+                if hasattr(state, 'active_filters') and hasattr(state, 'location_state'):
+                    if state.location_state and state.location_state.city:
+                        state.active_filters.location = state.location_state.city
+                        logger.info(
+                            f"✅ [STATE_SYNC] location_state and active_filters.location synchronized to: {state.location_state.city}",
+                            extra={"location": state.location_state.city}
+                        )
+                    
+                    # 🔧 FRESH SEARCH FIX: Clear old restrictive filters when changing locations
+                    # WHY: User searching in new city shouldn't have old price/amenity filters applied
+                    # Check if price_range was in payload (user mentioned it in new search)
+                    price_mentioned = 'price_range' in new_location_state or 'min_price' in new_location_state or 'max_price' in new_location_state
+                    amenities_mentioned = 'amenities' in new_location_state
+                    bedrooms_mentioned = 'bedrooms' in new_location_state
+                    
+                    if not price_mentioned:
+                        # Clear old price filters
+                        if hasattr(state.active_filters, 'min_price'):
+                            state.active_filters.min_price = None
+                        if hasattr(state.active_filters, 'max_price'):
+                            state.active_filters.max_price = None
+                        logger.info("🔄 [LOCATION_CHANGE] Cleared old price filters for fresh city search")
+                    
+                    if not amenities_mentioned:
+                        # Clear old amenities
+                        if hasattr(state.active_filters, 'amenities'):
+                            state.active_filters.amenities = []
+                        logger.info("🔄 [LOCATION_CHANGE] Cleared old amenities for fresh city search")
+                    
+                    if not bedrooms_mentioned:
+                        # Clear old bedroom filter
+                        if hasattr(state.active_filters, 'bedrooms'):
+                            state.active_filters.bedrooms = None
+                        logger.info("🔄 [LOCATION_CHANGE] Cleared old bedroom filter for fresh city search")
+            
+            return ConfirmationResult(
+                success=True,
+                state_update=new_location_state,
+                next_action='search',
+                applied=True,
+                metadata={'reason': 'User confirmed location change'}
+            )
+        
+        elif is_no:
+            # Revert to previous location
+            previous_location_state = payload.get('previous_location_state', {})
+            
+            if state:
+                # Only apply attributes that exist on the state object
+                for key, value in previous_location_state.items():
+                    # Skip 'location' key if state doesn't have it
+                    if key == 'location' and not hasattr(state, 'location'):
+                        continue
+                    if hasattr(state, key):
+                        setattr(state, key, value)
+            
+            return ConfirmationResult(
+                success=True,
+                state_update=previous_location_state,
+                next_action='continue',
+                applied=True,
+                metadata={'reason': 'User rejected location change, reverted'}
+            )
+        
+        else:
+            # Parse as new location
+            # Extract location data from response
+            # (This would integrate with your location parser)
+            return ConfirmationResult(
+                success=True,
+                state_update={'location_query': response},
+                next_action='parse_location',
+                applied=False,
+                metadata={'reason': 'User provided new location', 'raw_location': response}
+            )
+    
+    def _apply_property_refinement(
+        self,
+        is_yes: bool,
+        is_no: bool,
+        response: str,
+        payload: Dict[str, Any],
+        state: Optional[Any]
+    ) -> ConfirmationResult:
+        """
+        Apply PROPERTY_REFINEMENT confirmation.
+        
+        Logic:
+        - YES: Apply stored filters
+        - OTHER: Parse as new filters + apply
+        """
+        if is_yes:
+            # Apply stored filters
+            filters = payload.get('filters', {})
+            
+            if state:
+                for key, value in filters.items():
+                    setattr(state, key, value)
+            
+            return ConfirmationResult(
+                success=True,
+                state_update=filters,
+                next_action='search',
+                applied=True,
+                metadata={'reason': 'User confirmed property refinement'}
+            )
+        
+        else:
+            # Parse as new filters
+            # (This would integrate with your filter parser)
+            return ConfirmationResult(
+                success=True,
+                state_update={'filter_query': response},
+                next_action='parse_filters',
+                applied=False,
+                metadata={'reason': 'User provided new filters', 'raw_filters': response}
+            )
+    
+    def _apply_requirements_needed(
+        self,
+        is_yes: bool,
+        is_no: bool,
+        is_skip: bool,
+        response: str,
+        payload: Dict[str, Any],
+        state: Optional[Any]
+    ) -> ConfirmationResult:
+        """
+        Apply REQUIREMENTS_NEEDED confirmation.
+        
+        Logic:
+        - Response contains data: Parse and apply as filters
+        - NO/SKIP: Continue with current filters
+        """
+        if is_no or is_skip:
+            # User doesn't want to add requirements
+            return ConfirmationResult(
+                success=True,
+                state_update={},
+                next_action='search',
+                applied=False,
+                metadata={'reason': 'User skipped requirements'}
+            )
+        
+        # Parse requirements from response
+        # (This would integrate with your requirements parser)
+        return ConfirmationResult(
+            success=True,
+            state_update={'requirements_query': response},
+            next_action='parse_requirements',
+            applied=False,
+            metadata={'reason': 'User provided requirements', 'raw_requirements': response}
         )
+    
+    def _apply_postal_code_clarification(
+        self,
+        is_yes: bool,
+        is_no: bool,
+        response: str,
+        payload: Dict[str, Any],
+        state: Optional[Any]
+    ) -> ConfirmationResult:
+        """
+        Apply POSTAL_CODE_CLARIFICATION confirmation.
+        
+        Logic:
+        - YES: Use postal code
+        - NO: Use city/broader area
+        - OTHER: Parse as clarification
+        """
+        if is_yes:
+            # Use postal code
+            postal_code = payload.get('postal_code')
+            
+            update = {'postal_code': postal_code, 'use_postal_code': True}
+            
+            if state:
+                for key, value in update.items():
+                    setattr(state, key, value)
+            
+            return ConfirmationResult(
+                success=True,
+                state_update=update,
+                next_action='search',
+                applied=True,
+                metadata={'reason': 'User confirmed postal code'}
+            )
+        
+        elif is_no:
+            # Use broader area
+            city = payload.get('city')
+            
+            update = {'city': city, 'use_postal_code': False}
+            
+            if state:
+                for key, value in update.items():
+                    setattr(state, key, value)
+            
+            return ConfirmationResult(
+                success=True,
+                state_update=update,
+                next_action='search',
+                applied=True,
+                metadata={'reason': 'User chose broader area'}
+            )
+        
+        else:
+            # Parse as clarification
+            return ConfirmationResult(
+                success=True,
+                state_update={'location_query': response},
+                next_action='parse_location',
+                applied=False,
+                metadata={'reason': 'User provided clarification', 'raw_response': response}
+            )
+    
+    def _apply_generic(
+        self,
+        is_yes: bool,
+        is_no: bool,
+        response: str,
+        payload: Dict[str, Any],
+        state: Optional[Any]
+    ) -> ConfirmationResult:
+        """
+        Generic confirmation handler for legacy types.
+        """
+        if is_yes:
+            # Apply payload as state update
+            if state:
+                for key, value in payload.items():
+                    if hasattr(state, key):
+                        setattr(state, key, value)
+            
+            return ConfirmationResult(
+                success=True,
+                state_update=payload,
+                next_action='continue',
+                applied=True,
+                metadata={'reason': 'User confirmed'}
+            )
+        
+        elif is_no:
+            # User rejected
+            return ConfirmationResult(
+                success=True,
+                state_update={},
+                next_action='continue',
+                applied=False,
+                metadata={'reason': 'User rejected'}
+            )
+        
+        else:
+            # Ambiguous response
+            return ConfirmationResult(
+                success=True,
+                state_update={'user_response': response},
+                next_action='clarify',
+                applied=False,
+                metadata={'reason': 'Ambiguous response', 'raw_response': response}
+            )
+    
+    def reject_confirmation(self, session_id: str, reason: str = ""):
+        """
+        Explicitly reject and delete a confirmation.
+        
+        Args:
+            session_id: Session identifier
+            reason: Optional reason for rejection
+        """
+        pending = self.get_pending_confirmation(session_id)
+        
+        if pending:
+            conf_id = pending['confirmation_id']
+            logger.info(
+                f"[CONFIRMATION] Rejected: {conf_id[:8]} "
+                f"reason='{reason}'"
+            )
+            CONFIRMATION_METRICS['rejected'] += 1
+        
+        self._delete_confirmation(session_id)
+    
+    def expire_confirmation(self, session_id: str, reason: str = ""):
+        """
+        Explicitly expire and delete a confirmation.
+        
+        Args:
+            session_id: Session identifier
+            reason: Optional reason for expiration
+        """
+        pending = self.get_pending_confirmation(session_id)
+        
+        if pending:
+            conf_id = pending['confirmation_id']
+            logger.info(
+                f"[CONFIRMATION] Expired: {conf_id[:8]} "
+                f"reason='{reason}'"
+            )
+            CONFIRMATION_METRICS['expired'] += 1
+        
+        self._delete_confirmation(session_id)
     
     def cancel_confirmation(self, session_id: str, confirmation_id: Optional[str] = None):
         """
@@ -390,18 +843,10 @@ class ConfirmationManager:
         
         Args:
             session_id: Session identifier
-            confirmation_id: Specific confirmation to cancel (None = cancel active)
+            confirmation_id: Specific confirmation ID (ignored, for compatibility)
         """
-        if confirmation_id:
-            confirmation = self._get_confirmation_by_id(session_id, confirmation_id)
-        else:
-            confirmation = self.get_active_confirmation(session_id)
-        
-        if confirmation and confirmation.is_active():
-            confirmation.status = ConfirmationStatus.SUPERSEDED
-            self._add_to_history(confirmation)
-            logger.info(f"[CONFIRMATION] Cancelled confirmation {confirmation.id}")
-            CONFIRMATION_METRICS['cancelled'] += 1
+        self._delete_confirmation(session_id)
+        CONFIRMATION_METRICS['cancelled'] += 1
     
     def clear_session_confirmations(self, session_id: str):
         """
@@ -410,68 +855,51 @@ class ConfirmationManager:
         Args:
             session_id: Session identifier
         """
-        if session_id in self._confirmations:
-            for conf in self._confirmations[session_id]:
-                if conf.is_active():
-                    self._add_to_history(conf)
-            del self._confirmations[session_id]
-            logger.info(f"[CONFIRMATION] Cleared all confirmations for session={session_id}")
+        self._delete_confirmation(session_id)
+        logger.info(f"[CONFIRMATION] Cleared session: {session_id[:8]}")
     
-    def _get_confirmation_by_id(
-        self, 
-        session_id: str, 
-        confirmation_id: str
-    ) -> Optional[PendingConfirmation]:
-        """Get confirmation by ID."""
-        if session_id not in self._confirmations:
-            return None
+    def _delete_confirmation(self, session_id: str):
+        """Delete confirmation from both memory and Redis."""
+        confirmation_key = f"{session_id}:confirmation"
         
-        for confirmation in self._confirmations[session_id]:
-            if confirmation.id == confirmation_id:
-                return confirmation
+        # Delete from memory
+        if confirmation_key in self._confirmations:
+            conf = self._confirmations.pop(confirmation_key)
+            # Add to history
+            self._confirmation_history.append(conf)
+            if len(self._confirmation_history) > self._max_history:
+                self._confirmation_history = self._confirmation_history[-self._max_history:]
         
-        return None
-    
-    def _cleanup_expired(self, session_id: str):
-        """Mark expired confirmations and clean up."""
-        if session_id not in self._confirmations:
-            return
-        
-        for confirmation in self._confirmations[session_id]:
-            if confirmation.is_expired() and confirmation.status == ConfirmationStatus.PENDING:
-                confirmation.status = ConfirmationStatus.EXPIRED
-                self._add_to_history(confirmation)
-                CONFIRMATION_METRICS['expired'] += 1
-    
-    def _add_to_history(self, confirmation: PendingConfirmation):
-        """Add confirmation to history for debugging."""
-        self._confirmation_history.append(confirmation)
-        
-        # Trim history if too large
-        if len(self._confirmation_history) > self._max_history:
-            self._confirmation_history = self._confirmation_history[-self._max_history:]
+        # Delete from Redis
+        if self.redis_client:
+            try:
+                redis_key = f"confirmation:{session_id}"
+                self.redis_client.delete(redis_key)
+            except Exception as e:
+                logger.warning(f"[CONFIRMATION] Redis deletion failed: {e}")
     
     def get_metrics(self) -> Dict[str, int]:
         """Get current metrics."""
         return dict(CONFIRMATION_METRICS)
     
     def get_session_confirmation_count(self, session_id: str) -> int:
-        """Get count of confirmations for session."""
-        return len(self._confirmations.get(session_id, []))
+        """Get count of confirmations for session (0 or 1)."""
+        return 1 if self.has_pending_confirmation(session_id) else 0
 
 
 # Singleton instance
 _manager_instance = None
 
 
-def get_confirmation_manager() -> ConfirmationManager:
+def get_confirmation_manager(redis_client=None) -> ConfirmationManager:
     """Get singleton instance of ConfirmationManager."""
     global _manager_instance
     if _manager_instance is None:
-        _manager_instance = ConfirmationManager()
+        _manager_instance = ConfirmationManager(redis_client=redis_client)
     return _manager_instance
 
 
 def get_confirmation_metrics() -> Dict[str, int]:
     """Get current confirmation metrics."""
     return dict(CONFIRMATION_METRICS)
+

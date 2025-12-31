@@ -16,16 +16,17 @@ Author: Real Estate Valuation System
 Date: November 2024
 """
 
+from __future__ import annotations
+
 import logging
-from typing import List, Tuple, Dict, Any, Optional
+import os
+from typing import List, Tuple, Dict, Any, Optional, TYPE_CHECKING
 from datetime import datetime, timedelta
 from math import radians, sin, cos, sqrt, atan2
 
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from models.valuation_models import PropertyDetails, ComparableProperty, AdjustmentItem, ValuationResult
+# Type hints only (not imported at runtime to avoid circular imports)
+if TYPE_CHECKING:
+    from models.valuation_models import PropertyDetails, ComparableProperty, AdjustmentItem, ValuationResult
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -194,10 +195,10 @@ def _normalize_basement(basement: str) -> str:
 # ==================== ADJUSTMENT CALCULATION FUNCTIONS ====================
 
 def calculate_date_adjustment(
-    comparable: ComparableProperty,
+    comparable: "ComparableProperty",
     market_data: Dict[str, Any],
-    subject_property: PropertyDetails
-) -> AdjustmentItem:
+    subject_property: "PropertyDetails"
+) -> "AdjustmentItem":
     """
     Calculate time/market trend adjustment based on sale date.
     
@@ -221,6 +222,9 @@ def calculate_date_adjustment(
         >>> adj = calculate_date_adjustment(comp, market_data, subject)
         >>> print(adj.amount)  # 25000.0
     """
+    # Lazy import to avoid module loading issues
+    from models.valuation_models import AdjustmentItem
+    
     if not comparable.sale_date:
         logger.warning(f"No sale date for comparable {comparable.property_details.mls_id}")
         return AdjustmentItem(
@@ -290,9 +294,9 @@ def calculate_date_adjustment(
 
 
 def calculate_location_adjustment(
-    comparable: ComparableProperty,
+    comparable: "ComparableProperty",
     subject_property: PropertyDetails
-) -> AdjustmentItem:
+) -> "AdjustmentItem":
     """
     Calculate location adjustment based on neighborhood and proximity.
     
@@ -398,9 +402,9 @@ def calculate_location_adjustment(
 
 
 def calculate_property_type_adjustment(
-    comparable: ComparableProperty,
+    comparable: "ComparableProperty",
     subject_property: PropertyDetails
-) -> AdjustmentItem:
+) -> "AdjustmentItem":
     """
     Calculate adjustment for property type differences.
     
@@ -484,10 +488,10 @@ def calculate_property_type_adjustment(
 
 
 def calculate_condition_adjustment(
-    comparable: ComparableProperty,
-    subject_property: PropertyDetails,
+    comparable: "ComparableProperty",
+    subject_property: "PropertyDetails",
     market_data: Dict[str, Any] = None
-) -> AdjustmentItem:
+) -> "AdjustmentItem":
     """
     Calculate adjustment for property condition differences.
     
@@ -571,10 +575,10 @@ def calculate_condition_adjustment(
 
 
 def calculate_size_adjustment(
-    comparable: ComparableProperty,
-    subject_property: PropertyDetails,
+    comparable: "ComparableProperty",
+    subject_property: "PropertyDetails",
     market_data: Dict[str, Any] = None
-) -> AdjustmentItem:
+) -> "AdjustmentItem":
     """
     Calculate adjustment for square footage differences.
     
@@ -654,9 +658,9 @@ def calculate_size_adjustment(
 
 
 def calculate_room_adjustment(
-    comparable: ComparableProperty,
+    comparable: "ComparableProperty",
     subject_property: PropertyDetails
-) -> AdjustmentItem:
+) -> "AdjustmentItem":
     """
     Calculate adjustment for bedroom and bathroom differences.
     
@@ -756,9 +760,9 @@ def calculate_room_adjustment(
 
 
 def calculate_lot_size_adjustment(
-    comparable: ComparableProperty,
+    comparable: "ComparableProperty",
     subject_property: PropertyDetails
-) -> AdjustmentItem:
+) -> "AdjustmentItem":
     """
     Calculate adjustment for lot size differences.
     
@@ -839,9 +843,9 @@ def calculate_lot_size_adjustment(
 
 
 def calculate_basement_adjustment(
-    comparable: ComparableProperty,
+    comparable: "ComparableProperty",
     subject_property: PropertyDetails
-) -> AdjustmentItem:
+) -> "AdjustmentItem":
     """
     Calculate adjustment for basement finish differences.
     
@@ -909,9 +913,9 @@ def calculate_basement_adjustment(
 
 
 def calculate_garage_adjustment(
-    comparable: ComparableProperty,
+    comparable: "ComparableProperty",
     subject_property: PropertyDetails
-) -> AdjustmentItem:
+) -> "AdjustmentItem":
     """
     Calculate adjustment for garage/parking differences.
     
@@ -1096,8 +1100,8 @@ def reconcile_adjustments(
 # ==================== COMPLETE VALUATION WORKFLOW ====================
 
 def calculate_all_adjustments(
-    comparable: ComparableProperty,
-    subject_property: PropertyDetails,
+    comparable: "ComparableProperty",
+    subject_property: "PropertyDetails",
     market_data: Dict[str, Any] = None
 ) -> List[AdjustmentItem]:
     """
@@ -1203,10 +1207,10 @@ def calculate_all_adjustments(
 # ==================== MARKET VALUE ESTIMATION ====================
 
 def estimate_market_value(
-    subject_property: PropertyDetails,
-    comparables: List[ComparableProperty],
+    subject_property: "PropertyDetails",
+    comparables: List["ComparableProperty"],
     market_data: Dict[str, Any] = None
-) -> ValuationResult:
+) -> "ValuationResult":
     """
     Estimate market value using Direct Comparison Approach (CUSPAP standards).
     
@@ -1241,6 +1245,10 @@ def estimate_market_value(
         >>> print(f"Range: ${result.value_range[0]:,.0f} - ${result.value_range[1]:,.0f}")
         >>> print(f"Confidence: {result.confidence_score:.1%}")
     """
+    # Ensure project root is in sys.path for imports
+    import sys
+    # Lazy import to avoid module loading issues
+    from models.valuation_models import ValuationResult
     
     if not comparables:
         raise ValueError("No comparables provided for valuation")
@@ -1735,7 +1743,7 @@ if __name__ == '__main__':
 # ==================== NATURAL LANGUAGE EXPLANATION GENERATION ====================
 
 def generate_valuation_explanation(
-    valuation_result: ValuationResult,
+    valuation_result: "ValuationResult",
     subject_price: Optional[float] = None,
     use_ai: bool = True
 ) -> str:
@@ -1801,7 +1809,7 @@ def generate_valuation_explanation(
 
 
 def _generate_ai_explanation(
-    valuation_result: ValuationResult,
+    valuation_result: "ValuationResult",
     subject_price: Optional[float] = None
 ) -> Optional[str]:
     """
@@ -1849,7 +1857,7 @@ def _generate_ai_explanation(
 
 
 def _build_ai_prompt(
-    valuation_result: ValuationResult,
+    valuation_result: "ValuationResult",
     subject_price: Optional[float] = None
 ) -> str:
     """Build comprehensive prompt for AI models."""
@@ -1943,7 +1951,7 @@ Format with clear paragraphs for easy reading."""
 
 
 def _generate_claude_explanation(
-    valuation_result: ValuationResult,
+    valuation_result: "ValuationResult",
     subject_price: Optional[float] = None
 ) -> Optional[str]:
     """Generate explanation using Claude API."""
@@ -1981,7 +1989,7 @@ def _generate_claude_explanation(
 
 
 def _generate_gpt4_explanation(
-    valuation_result: ValuationResult,
+    valuation_result: "ValuationResult",
     subject_price: Optional[float] = None
 ) -> Optional[str]:
     """Generate explanation using GPT-4 API."""
@@ -2020,7 +2028,7 @@ def _generate_gpt4_explanation(
 
 
 def _generate_template_explanation(
-    subject: PropertyDetails,
+    subject: "PropertyDetails",
     estimated_value: float,
     value_range: Tuple[float, float],
     confidence: float,
@@ -2048,23 +2056,31 @@ def _generate_template_explanation(
     explanation_parts = []
     
     # 1. Valuation Summary
+    comp_type = "active listings" if num_comps > 0 else "market data"
     explanation_parts.append(
-        f"Based on comparable market analysis of {num_comps} similar **active listings** in "
+        f"Based on comprehensive market analysis of {num_comps} similar **{comp_type}** in "
         f"{city_name} from the past {months_span} months, we estimate "
-        f"{subject.address} is worth approximately ${estimated_value:,.0f} "
+        f"**{subject.address}** is worth approximately **${estimated_value:,.0f}** "
         f"as of {valuation_date.strftime('%B %d, %Y')}. "
-        f"The estimated value range is ${value_range[0]:,.0f} to ${value_range[1]:,.0f}, "
+        f"The estimated value range is **${value_range[0]:,.0f} to ${value_range[1]:,.0f}**, "
         f"representing normal market variance for properties of this type."
     )
     
     # 1a. Important Disclaimer about Active Listings
-    explanation_parts.append(
-        f"⚠️ **Important Note:** This valuation is based on current **asking prices** of similar "
-        f"properties on the market, not actual sold prices. Active listing prices may be higher "
-        f"than what properties ultimately sell for. The actual market value could be 5-10% lower "
-        f"depending on negotiation and market conditions. For a more accurate valuation based on "
-        f"recent sold data, please consult a licensed real estate appraiser."
-    )
+    if num_comps > 0:
+        explanation_parts.append(
+            f"⚠️ **Important Note:** This valuation is based on current **asking prices** of similar "
+            f"properties on the market, not actual sold prices. Active listing prices may be higher "
+            f"than what properties ultimately sell for. The actual market value could be 5-10% lower "
+            f"depending on negotiation and market conditions. For a more accurate valuation based on "
+            f"recent sold data, please consult a licensed real estate appraiser."
+        )
+    else:
+        explanation_parts.append(
+            f"⚠️ **Important Note:** This valuation is based on market indicators and property "
+            f"characteristics. For a comprehensive valuation with comparable sales data, please "
+            f"provide additional property details or consult a licensed real estate appraiser."
+        )
     
     # 2. Price Comparison (if asking price provided)
     if subject_price:
@@ -2176,10 +2192,14 @@ def _generate_template_explanation(
         outlook = "remain steady"
         appreciation_range = "2-3%"
     
+    # Format price per sqft display
+    sqft_display = f"${price_per_sqft:,.0f}" if price_per_sqft > 0 else "market-appropriate rates"
+    market_time = market_analysis.get('estimated_absorption_time', 30)
+    
     explanation_parts.append(
         f"The {city_name} market is currently {trend_desc}, with properties averaging "
-        f"${price_per_sqft:.0f} per square foot and typical market time of "
-        f"{market_analysis.get('estimated_absorption_time', 30)} days. "
+        f"{sqft_display} per square foot and typical market time of "
+        f"{market_time} days. "
         f"Based on recent trends, we expect the market to {outlook} over the next 12 months, "
         f"with potential appreciation of {appreciation_range} for well-maintained properties "
         f"in desirable locations. This property's {subject.property_type.lower()} style and "

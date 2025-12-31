@@ -21,7 +21,20 @@ import tempfile
 import pandas as pd
 
 # Add parent directory to Python path for service imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Also remove the app directory if it's in sys.path (it interferes with imports)
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+app_dir = os.path.join(project_root, 'app')
+
+# Remove app directory from sys.path if present
+while app_dir in sys.path:
+    sys.path.remove(app_dir)
+
+# Remove all instances of project_root from sys.path first (prevent duplicates)
+while project_root in sys.path:
+    sys.path.remove(project_root)
+
+# Now add project root once at the beginning
+sys.path.insert(0, project_root)
 
 # Load environment variables from .env file in config directory
 try:
@@ -128,13 +141,34 @@ def standardize_property_data(property_data):
     standardized = dict(property_data)
     
     # Standardize bedroom fields (safely handle details that might be None)
+    # WHY: Repliers returns numBedrooms in details object, must map to bedrooms for frontend
     details = standardized.get('details') or {}
     if 'beds' in standardized and 'bedrooms' not in standardized:
         standardized['bedrooms'] = standardized['beds']
     elif 'numBedrooms' in standardized and 'bedrooms' not in standardized:
         standardized['bedrooms'] = standardized['numBedrooms']
-    elif isinstance(details, dict) and details.get('numBedrooms') and 'bedrooms' not in standardized:
+    elif isinstance(details, dict) and details.get('numBedrooms') is not None and 'bedrooms' not in standardized:
+        # Prioritize details.numBedrooms - this is the authoritative source from Repliers
         standardized['bedrooms'] = details['numBedrooms']
+    
+    # 🔧 DATA INTEGRITY FIX: If bedrooms still None but details has numBedrooms, try nested paths
+    if ('bedrooms' not in standardized or standardized.get('bedrooms') is None):
+        # Check nested details structures from different API responses
+        if isinstance(standardized.get('property'), dict):
+            prop_details = standardized['property'].get('details', {})
+            if isinstance(prop_details, dict) and prop_details.get('numBedrooms') is not None:
+                standardized['bedrooms'] = prop_details['numBedrooms']
+        
+        # Check if it's in top-level property_details
+        if ('bedrooms' not in standardized or standardized.get('bedrooms') is None):
+            prop_details = standardized.get('property_details', {})
+            if isinstance(prop_details, dict) and prop_details.get('numBedrooms') is not None:
+                standardized['bedrooms'] = prop_details['numBedrooms']
+    
+    # 🔧 SAFE FALLBACK: Warn if still None (do NOT fail, just note it)
+    if standardized.get('bedrooms') is None:
+        # Property will get 'N/A' assigned later at line 310
+        pass
     
     # Standardize bathroom fields (safely handle details that might be None)
     if 'baths' in standardized and 'bathrooms' not in standardized:
@@ -490,8 +524,24 @@ try:
 except Exception as e:
     print(f"ℹ️ Context chat API disabled: {str(e).split('(')[0]}")
 
+# Register Main API Blueprint with Admin Transaction Endpoints
+try:
+    from app.routes.main_api import main_api
+    app.register_blueprint(main_api)
+    print("✅ Main API registered (includes admin transaction endpoints)")
+except Exception as e:
+    print(f"ℹ️ Main API disabled: {str(e).split('(')[0]}")
+
 # Register ChatGPT-Style Chatbot (Optional but Preferred)
 try:
+    # DEBUG: Check sys.path and test models import BEFORE importing chatbot_api
+    print(f"[DEBUG BEFORE CHATBOT_API] sys.path[0:3] = {sys.path[0:3]}")
+    try:
+        from models.valuation_models import PropertyDetails
+        print("[DEBUG BEFORE CHATBOT_API] ✅ models.valuation_models imports successfully")
+    except Exception as import_err:
+        print(f"[DEBUG BEFORE CHATBOT_API] ❌ models.valuation_models import failed: {import_err}")
+    
     from services.chatbot_api import register_chatbot_blueprint
     register_chatbot_blueprint(app)
     print("✅ ChatGPT-style chatbot API registered at /api/chat")
@@ -5639,6 +5689,9 @@ def chat_gpt4():
             response_data["mls_number"] = result["mls_number"]
         if "predicted_questions" in result:
             response_data["predicted_questions"] = result["predicted_questions"]
+        # Pass through metadata for intent classification transparency
+        if "metadata" in result:
+            response_data["metadata"] = result["metadata"]
             
         return jsonify(response_data)
         
@@ -7471,6 +7524,113 @@ def intelligent_chat_sync():
                 print(f"❌ [PROPERTY DETAILS ERROR] {detail_error}")
                 traceback.print_exc()
         
+        # ========== POSTAL CODE SEARCH DETECTION (CROSS-CITY SUPPORT) ==========
+        # Detect Canadian postal codes like "K7L 4V1", "M5V 2H1", etc.
+        postal_pattern = r'\b([A-Za-z]\d[A-Za-z])\s*(\d[A-Za-z]\d)?\b'
+        postal_match = re.search(postal_pattern, message.upper())
+        
+        if postal_match and len(message.split()) <= 5:  # Short postal code queries only
+            fsa = postal_match.group(1).upper()  # First 3 chars (Forward Sortation Area)
+            print(f"📮 [POSTAL CODE SEARCH] Detected FSA: {fsa}")
+            
+            try:
+                from services.repliers_client import client as repliers_client
+                from services.postal_code_validator import postal_code_validator
+                
+                # Try to detect city from postal code
+                detected_city = postal_code_validator.suggest_city_for_postal(message)
+                
+                # Build API params - include city if known for better results
+                api_params = {
+                    'status': 'A',
+                    'pageSize': 200  # Fetch more to filter from
+                }
+                
+                if detected_city:
+                    api_params['city'] = detected_city
+                    print(f"📮 [POSTAL CODE SEARCH] Searching in city: {detected_city}")
+                else:
+                    print(f"📮 [POSTAL CODE SEARCH] Unknown postal code region - will filter results")
+                
+                print(f"📮 [POSTAL CODE SEARCH] Using params: {api_params}")
+                
+                response = repliers_client.get('/listings', params=api_params)
+                raw_listings = response.get('listings', []) if isinstance(response, dict) else []
+                print(f"📮 [POSTAL CODE SEARCH] Raw listings: {len(raw_listings)}")
+                
+                # FILTER by postal code FSA
+                matched_listings = []
+                for listing in raw_listings:
+                    address_obj = listing.get('address', {})
+                    prop_zip = address_obj.get('zip', '') or listing.get('zip', '') or ''
+                    prop_zip_clean = prop_zip.replace(" ", "").upper()
+                    
+                    if prop_zip_clean.startswith(fsa):
+                        matched_listings.append(listing)
+                
+                print(f"📮 [POSTAL CODE SEARCH] Matched {len(matched_listings)} with FSA {fsa}")
+                
+                # Format properties for frontend
+                properties = []
+                for listing in matched_listings[:20]:
+                    prop = {}
+                    address_obj = listing.get('address', {})
+                    details = listing.get('details', {})
+                    
+                    prop['id'] = listing.get('mlsNumber', '')
+                    prop['mls_number'] = listing.get('mlsNumber', '')
+                    prop['address'] = f"{address_obj.get('streetNumber', '')} {address_obj.get('streetName', '')} {address_obj.get('streetSuffix', '')}".strip()
+                    prop['full_address'] = prop['address']
+                    prop['location'] = f"{address_obj.get('city', '')}, {address_obj.get('state', 'ON')}"
+                    
+                    list_price = listing.get('listPrice', 0)
+                    prop['price'] = f"${int(list_price):,}" if list_price else 'N/A'
+                    prop['price_num'] = list_price
+                    prop['beds'] = str(details.get('numBedrooms', 'N/A'))
+                    prop['bedrooms'] = prop['beds']
+                    prop['baths'] = str(details.get('numBathrooms', 'N/A'))
+                    prop['bathrooms'] = prop['baths']
+                    prop['sqft'] = details.get('sqft', 'N/A')
+                    prop['status'] = listing.get('status', 'A')
+                    
+                    images = listing.get('images', [])
+                    if images:
+                        prop['image'] = images[0] if images[0].startswith('http') else f"https://cdn.repliers.io/{images[0]}"
+                        prop['images'] = [img if img.startswith('http') else f"https://cdn.repliers.io/{img}" for img in images[:10]]
+                    
+                    prop['source'] = 'repliers_live_mls'
+                    properties.append(prop)
+                
+                if properties:
+                    first_city = properties[0].get('location', '') if properties else ''
+                    response_text = f"📮 **Properties in {fsa}**<br><br>"
+                    response_text += f"I found **{len(properties)} properties** in the {fsa} postal code area.<br><br>"
+                    response_text += "Here are the available properties:"
+                    
+                    print(f"✅ [POSTAL CODE SEARCH] Found {len(properties)} properties in {fsa}, first city: {first_city}")
+                    
+                    return jsonify({
+                        "success": True,
+                        "response": response_text,
+                        "properties": properties,
+                        "quick_replies": [
+                            "Neighborhood info",
+                            "Filter by price",
+                            "Filter by bedrooms"
+                        ],
+                        "stage": "postal_code_search",
+                        "postal_code": fsa,
+                        "session_id": session_id,
+                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "live_mls_data": True
+                    })
+                else:
+                    print(f"⚠️ [POSTAL CODE SEARCH] No properties found matching FSA {fsa}")
+                    
+            except Exception as postal_error:
+                print(f"⚠️ [POSTAL CODE SEARCH ERROR] {postal_error}")
+                traceback.print_exc()
+        
         # ========== ADDRESS-BASED SEARCH DETECTION (BEFORE GENERAL SEARCH) ==========
         # Extract street address ONLY if it's a simple address query (not a property search)
         # Examples: "88 Sheppard Avenue", "123 Main Street Toronto"
@@ -7498,57 +7658,98 @@ def intelligent_chat_sync():
                     extracted_address = f"{street_number} {street_name} {street_type}"
                     print(f"🏠 [ADDRESS DETECTION] Found address: {extracted_address}")
         
-        # If we found a valid address, search for properties at that location
+        # If we found a valid address, search for properties at that location (cross-city)
         if extracted_address:
             print(f"🔍 [ADDRESS SEARCH] Searching for properties at: {extracted_address}")
             
             try:
-                # Extract city if mentioned
-                city = "Toronto"  # Default
-                cities = ['mississauga', 'markham', 'vaughan', 'brampton', 'scarborough', 
-                         'north york', 'etobicoke', 'richmond hill', 'ajax', 'pickering']
-                for city_name in cities:
-                    if city_name in message_lower:
-                        city = city_name.title()
-                        break
+                # Parse address components
+                addr_match = re.match(r'(\d+)\s+(.+?)\s+(Street|St|Avenue|Ave|Road|Rd|Drive|Dr|Boulevard|Blvd|Lane|Ln|Court|Ct|Circle|Cir|Way|Place|Pl|Crescent|Cres)$', extracted_address, re.IGNORECASE)
                 
-                # Build search query with address
-                address_query = f"{extracted_address} {city}".strip()
-                print(f"🔍 [ADDRESS SEARCH] Query: {address_query}")
-                
-                # Use existing search function
-                search_result = search_summitly_properties(address_query)
-                properties = search_result.get('properties', []) if isinstance(search_result, dict) else []
-                
-                if properties and len(properties) > 0:
-                    response_text = f"🏠 **Properties at {extracted_address}**<br><br>"
-                    response_text += f"I found **{len(properties)} properties** at or near this location.<br><br>"
-                    response_text += "Here are the available properties:"
+                if addr_match:
+                    street_num = addr_match.group(1)
+                    street_name_only = addr_match.group(2).strip()
                     
-                    print(f"✅ [ADDRESS SEARCH] Found {len(properties)} properties")
+                    # Use cross-city search with streetNumber + streetName API params
+                    from services.repliers_client import client as repliers_client
                     
-                    return jsonify({
-                        "success": True,
-                        "response": response_text,
-                        "properties": properties,
-                        "quick_replies": [
-                            "Property details",
-                            "Neighborhood info",
-                            "Nearby amenities"
-                        ],
-                        "stage": "address_search",
-                        "address": extracted_address,
-                        "session_id": session_id,
-                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        "live_mls_data": True
-                    })
-                else:
-                    # No exact match, fall through to general search
-                    print(f"⚠️ [ADDRESS SEARCH] No properties found at exact address, continuing to general search")
+                    api_params = {
+                        'streetNumber': street_num,
+                        'streetName': street_name_only,
+                        'status': 'A',
+                        'pageSize': 50
+                    }
+                    print(f"🔍 [CROSS-CITY SEARCH] Using params: {api_params}")
                     
+                    response = repliers_client.get('/listings', params=api_params)
+                    raw_listings = response.get('listings', []) if isinstance(response, dict) else []
+                    
+                    # Format properties for frontend
+                    properties = []
+                    for listing in raw_listings[:20]:  # Limit to 20
+                        prop = {}
+                        address_obj = listing.get('address', {})
+                        details = listing.get('details', {})
+                        
+                        prop['id'] = listing.get('mlsNumber', '')
+                        prop['mls_number'] = listing.get('mlsNumber', '')
+                        prop['address'] = f"{address_obj.get('streetNumber', '')} {address_obj.get('streetName', '')} {address_obj.get('streetSuffix', '')}".strip()
+                        prop['full_address'] = prop['address']
+                        prop['location'] = f"{address_obj.get('city', '')}, {address_obj.get('state', 'ON')}"
+                        
+                        list_price = listing.get('listPrice', 0)
+                        prop['price'] = f"${int(list_price):,}" if list_price else 'N/A'
+                        prop['price_num'] = list_price
+                        prop['beds'] = str(details.get('numBedrooms', 'N/A'))
+                        prop['bedrooms'] = prop['beds']
+                        prop['baths'] = str(details.get('numBathrooms', 'N/A'))
+                        prop['bathrooms'] = prop['baths']
+                        prop['sqft'] = details.get('sqft', 'N/A')
+                        prop['status'] = listing.get('status', 'A')
+                        
+                        # Images
+                        images = listing.get('images', [])
+                        if images:
+                            prop['image'] = images[0] if images[0].startswith('http') else f"https://cdn.repliers.io/{images[0]}"
+                            prop['images'] = [img if img.startswith('http') else f"https://cdn.repliers.io/{img}" for img in images[:10]]
+                        
+                        prop['source'] = 'repliers_live_mls'
+                        properties.append(prop)
+                    
+                    if properties:
+                        # Get city from first result
+                        first_city = properties[0].get('location', '') if properties else ''
+                        response_text = f"🏠 **Properties at {extracted_address}**<br><br>"
+                        response_text += f"I found **{len(properties)} properties** matching this address.<br><br>"
+                        response_text += "Here are the available properties:"
+                        
+                        print(f"✅ [CROSS-CITY SEARCH] Found {len(properties)} properties, first city: {first_city}")
+                        
+                        return jsonify({
+                            "success": True,
+                            "response": response_text,
+                            "properties": properties,
+                            "quick_replies": [
+                                "Property details",
+                                "Neighborhood info",
+                                "Nearby amenities"
+                            ],
+                            "stage": "address_search",
+                            "address": extracted_address,
+                            "session_id": session_id,
+                            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            "live_mls_data": True
+                        })
+                    else:
+                        print(f"⚠️ [CROSS-CITY SEARCH] No properties found, continuing to general search")
+                        
             except Exception as addr_error:
                 print(f"⚠️ [ADDRESS SEARCH ERROR] {addr_error}, falling through to general search")
                 traceback.print_exc()
+        
+        # ========== OLD ADDRESS SEARCH - REMOVED ==========
+        # If we found a valid address, search for properties at that location
+        # REPLACED with cross-city search above
         
         # ========== PROPERTY SEARCH DETECTION (HIGH PRIORITY - CHECK FIRST) ==========
         # IMPROVED: Tighter logic to prevent overtriggering on non-search queries
@@ -8704,15 +8905,24 @@ def get_schools_for_property(mls_number):
             )
             
             if schools_result.get('success'):
-                print(f"✅ [SCHOOLS API] Found {len(schools_result.get('schools', []))} schools for MLS {mls_number}")
-                return jsonify({
+                # 🔧 UX TRANSPARENCY: Include fallback disclosure in response
+                response_data = {
                     'success': True,
                     'mls_number': mls_number,
                     'city': schools_result.get('city'),
                     'schools': schools_result.get('schools', []),
                     'count': len(schools_result.get('schools', [])),
                     'fetch_timestamp': schools_result.get('fetch_timestamp')
-                })
+                }
+                
+                # Add fallback disclosure if data came from public registry
+                if schools_result.get('is_fallback'):
+                    response_data['data_source'] = schools_result.get('data_source')
+                    response_data['note'] = "School data from Ontario Education Registry (public source)"
+                    print(f"📢 [SCHOOLS API] Returning fallback data with disclosure for MLS {mls_number}")
+                
+                print(f"✅ [SCHOOLS API] Found {len(schools_result.get('schools', []))} schools for MLS {mls_number}")
+                return jsonify(response_data)
             else:
                 return jsonify({
                     'success': False,
