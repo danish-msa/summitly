@@ -1992,20 +1992,24 @@ def _generate_gpt4_explanation(
     valuation_result: "ValuationResult",
     subject_price: Optional[float] = None
 ) -> Optional[str]:
-    """Generate explanation using GPT-4 API."""
+    """Generate explanation using GPT-4 API (OpenAI v1.0+ compatible)."""
     try:
-        import openai
+        from openai import OpenAI
         
         # Get API key from environment
         api_key = os.getenv('OPENAI_API_KEY')
         if not api_key:
             return None
         
-        openai.api_key = api_key
+        # Initialize OpenAI client (v1.0+ API)
+        client = OpenAI(api_key=api_key)
         prompt = _build_ai_prompt(valuation_result, subject_price)
         
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
+        # Use model from environment or default to gpt-4o-mini
+        model = os.getenv('OPENAI_MODEL', 'gpt-4o-mini')
+        
+        response = client.chat.completions.create(
+            model=model,
             messages=[
                 {"role": "system", "content": "You are a professional real estate appraiser writing valuation explanations."},
                 {"role": "user", "content": prompt}

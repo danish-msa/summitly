@@ -443,7 +443,7 @@ def fetch_property_details(mls_id: str) -> Optional["PropertyDetails"]:
         if lot_size:
             lot_size = int(float(lot_size))
         
-        # Year built - handle "New" or other non-numeric values
+        # Year built - handle "New" or other non-numeric values with robust validation
         year_built = (
             details.get('yearBuilt') or 
             property_data.get('yearBuilt')
@@ -453,11 +453,20 @@ def fetch_property_details(mls_id: str) -> Optional["PropertyDetails"]:
                 # Try to extract digits only
                 year_str = ''.join(filter(str.isdigit, str(year_built)))
                 if year_str:
-                    year_built = int(year_str)
-                    # Validate year range (must be between 1700 and current year + 10)
+                    parsed_year = int(year_str)
                     current_year = datetime.now().year
-                    if year_built < 1700 or year_built > current_year + 10:
-                        logger.warning(f"Invalid year_built value: {year_built}. Setting to None.")
+                    
+                    # Handle cases where value might be "age" not "year" (e.g., 5, 10, 15)
+                    if parsed_year < 100:
+                        # Likely represents building age, convert to year
+                        parsed_year = current_year - parsed_year
+                        logger.debug(f"Converted age {year_str} to year {parsed_year}")
+                    
+                    # Validate the year is reasonable
+                    if parsed_year >= 1700 and parsed_year <= current_year + 5:
+                        year_built = parsed_year
+                    else:
+                        logger.debug(f"Year {parsed_year} out of valid range, setting to None")
                         year_built = None
                 else:
                     year_built = None  # "New" or other text
@@ -942,12 +951,29 @@ def _create_property_from_result(result: Dict) -> Optional["PropertyDetails"]:
         if lot_size:
             lot_size = int(float(lot_size))
         
-        # Year built - handle "New" or other non-numeric values
+        # Year built - handle "New" or other non-numeric values with robust validation
         year_built = details.get('yearBuilt') or result.get('yearBuilt')
         if year_built:
             try:
                 year_str = ''.join(filter(str.isdigit, str(year_built)))
-                year_built = int(year_str) if year_str else None
+                if year_str:
+                    parsed_year = int(year_str)
+                    current_year = datetime.now().year
+                    
+                    # Handle cases where value might be "age" not "year" (e.g., 5, 10, 15)
+                    if parsed_year < 100:
+                        # Likely represents building age, convert to year
+                        parsed_year = current_year - parsed_year
+                        logger.debug(f"Converted age {year_str} to year {parsed_year}")
+                    
+                    # Validate the year is reasonable
+                    if parsed_year >= 1700 and parsed_year <= current_year + 5:
+                        year_built = parsed_year
+                    else:
+                        logger.debug(f"Year {parsed_year} out of valid range, setting to None")
+                        year_built = None
+                else:
+                    year_built = None
             except (ValueError, AttributeError):
                 year_built = None
         

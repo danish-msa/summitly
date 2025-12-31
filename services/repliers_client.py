@@ -145,7 +145,7 @@ class RepliersClient:
         
         # Log full error details for debugging
         logger.error(f"API Error {response.status_code}: URL={response.url}")
-        logger.error(f"Response content: {response.text[:500]}")  # First 500 chars
+        logger.error(f"Response content: {response.text[:700]}")  # First 700 chars
         logger.error(f"Error message: {error_message}")
         
         if response.status_code == 401:

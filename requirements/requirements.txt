@@ -107,3 +107,14 @@ pyyaml>=6.0.1
 click>=8.1.7
 rich>=13.7.0
 tqdm>=4.66.1
+
+# ===== LOCATION SERVICES AND NLP =====
+
+# spaCy for Named Entity Recognition (location extraction)
+spacy>=3.7.0
+
+# Fuzzy string matching for location validation
+rapidfuzz>=3.5.0
+
+# Geocoding services
+geopy>=2.4.0
