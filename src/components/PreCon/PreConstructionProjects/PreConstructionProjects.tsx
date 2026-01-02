@@ -6,6 +6,12 @@ import type { PreConstructionProperty } from '../PropertyCards/types';
 import { usePreConProjects } from './hooks/usePreConProjects';
 import ProjectList from './components/ProjectList';
 import PropertyTypeToggle from './components/PropertyTypeToggle';
+import { PreConstructionCardSkeleton } from '@/components/skeletons';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from '@/components/ui/carousel';
 
 const PreConstructionProjects = () => {
   const [selectedProject, setSelectedProject] = useState<PreConstructionProperty | null>(null);
@@ -36,27 +42,6 @@ const PreConstructionProjects = () => {
 
         {/* Global Filters with View Toggle */}
         <div className="mt-8 mb-4">
-          <div className="flex flex-col md:flex-row md:flex-wrap justify-between items-start md:items-center gap-4">
-            {/* <GlobalFilters
-              filters={filters}
-              handleFilterChange={handleFilterChange}
-              resetFilters={resetFilters}
-              communities={communities}
-              locations={LOCATIONS}
-              isPreCon={true}
-              showLocation={true}
-              showPropertyType={false}
-              showCommunity={false}
-              showPrice={true}
-              showBedrooms={true}
-              showBathrooms={true}
-              showAdvanced={false}
-              layout="horizontal"
-              className="w-full md:w-auto"
-            /> */}
-            {/* <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} /> */}
-          </div>
-          
           {/* Property Type Toggle */}
           <PropertyTypeToggle
             filters={filters}
@@ -66,8 +51,30 @@ const PreConstructionProjects = () => {
         </div>
 
         {loading ? (
-          <div className="text-center py-12">
-            <div className="text-muted-foreground">Loading projects...</div>
+          <div className="relative">
+            <Carousel
+              opts={{
+                align: "start",
+                loop: true,
+                breakpoints: {
+                  "(max-width: 768px)": {
+                    dragFree: true,
+                  },
+                },
+              }}
+              className="w-full"
+            >
+              <CarouselContent className="-ml-2 md:-ml-4">
+                {[...Array(8)].map((_, index) => (
+                  <CarouselItem
+                    key={index}
+                    className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/4"
+                  >
+                    <PreConstructionCardSkeleton />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
           </div>
         ) : visibleProjects.length > 0 ? (
           <ProjectList

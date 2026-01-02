@@ -6,7 +6,6 @@ import { PropertyListing } from '@/lib/types';
 import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/single-listing';
 import ShareModal from './ShareModal';
 import ScheduleTourModal from '../ItemBody/ScheduleTourModal';
-import RatingsOverview from '../ItemBody/QualityScore';
 import ProjectRatingDisplay from '../../PreConItem/PreConItemBody/ProjectRatingDisplay';
 import Link from 'next/link';
 
@@ -240,9 +239,9 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false
                 {/* Header Section */}
                 <div>
                     {/* Two Column Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         {/* First Column */}
-                        <div className="flex flex-col gap-2 col-span-2">
+                        <div className="flex flex-col gap-2 col-span-3">
                             {/* Heading with MLS and Status */}
                             <div className="flex flex-wrap items-center gap-3">
                                 
@@ -257,8 +256,8 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false
                                         </Badge>
                                     </Link>
                                 ) : (
-                                    <Badge className={`${getStatusColor(statusText)} uppercase py-1 px-4`}>
-                                        <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-white"></span>
+                                    <Badge variant='active'>
+                                        <span className="inline-block h-2 w-2 rounded-full bg-green-700"></span>
                                         {statusText}
                                     </Badge>
                                 )}
@@ -313,9 +312,13 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false
                                 )}
                                 {/* MLS Number or Project ID - Same line as heading */}
                                 {!isPreCon && !isRent && (
-                                    <span className="text-base text-muted-foreground font-normal">
-                                        MLS # <span className="text-gray-600">{property.mlsNumber}</span>
-                                    </span>
+                                    <div className="flex flex-row items-center gap-4">
+                                        <span className="text-base text-muted-foreground font-normal">
+                                            MLS # <span className="text-gray-600">{property.mlsNumber}</span>
+                                        </span>
+                                        {/* Project Rating Display for Pre-Con */}
+                                        <ProjectRatingDisplay propertyId={property.mlsNumber || preConData?.projectName || 'default'} />
+                                    </div>
                                 )}
                                 {isRent && (
                                     <span className="text-base text-muted-foreground font-normal">
@@ -323,6 +326,8 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false
                                     </span>
                                 )}
                                 
+                                
+                            
                                 {/* Property Stats with Icons */}
                                 {isPreCon ? (
                                     <>
@@ -490,13 +495,7 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false
                                         </div>
                                         </>
                                     )}
-                                
-
-                                {/* Ratings Overview for regular properties */}
-                                {isPreCon ? "" : <RatingsOverview />}
-                                
                             </div>
-                            
                         </div>
 
                         {/* Second Column */}
@@ -504,7 +503,7 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false
                             {/* Two Price Blocks Side by Side */}
                             
                                 {/* Listed Price Block */}
-                                <div className="flex flex-col gap-1 items-end  rounded-lg bg-white p-4">
+                                <div className="flex flex-col gap-1 items-end rounded-xl shadow-sm bg-background border border-gray-200 p-4 w-full">
                                     <span className="text-xs text-gray-600 font-medium uppercase">
                                         {isRent ? 'Monthly Rent' : isPreCon ? 'Starting Price' : 'Listed Price'}
                                     </span>
@@ -533,9 +532,9 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false
 
                                 {/* Estimated Price Block - Only for buy properties */}
                                 {!isPreCon && !isRent && (
-                                    <div className="flex flex-col gap-1 items-end bg-gradient-to-r from-green-100 to-brand-cb-blue/30 rounded-lg p-4">
+                                    <div className="flex flex-col gap-1 items-end bg-green-50 rounded-xl shadow-sm border border-green-200 p-4 w-full">
                                         <span className="text-xs text-gray-600 font-medium uppercase">Estimated Price</span>
-                                        <div className="text-lg font-bold text-green-700 sm:text-xl">
+                                        <div className="text-lg font-bold text-green-700 sm:text-3xl">
                                             {formatPrice(estimatedPrice)}
                                         </div>
                                         <div className="flex items-center flex-row gap-1 mb-2">
@@ -566,54 +565,19 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false
                                 <Button 
                                     onClick={handleGetPreQualified}
                                     variant="outline"
-                                    className="w-full sm:w-auto font-medium py-2.5 bg-green-600 text-white px-4 rounded-lg transition-colors"
+                                    className="w-full sm:w-auto font-medium py-2.5 px-4 rounded-lg transition-colors"
                                 >
                                     <CreditCard className="h-4 w-4 mr-2" />
                                     Get Pre-Qualified
                                 </Button>
                                 )}
-                                {/* Project Rating Display for Pre-Con */}
-                            <ProjectRatingDisplay propertyId={property.mlsNumber || preConData?.projectName || 'default'} />
-                            
+                                
                                 
                         </div>
                     </div>
                     
                     
-                    {/* home estimate and CTA Row */}
-                    {!isPreCon && !isRent && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                        {/* Announcement Message */}
-                        <div className="flex flex-col gap-4 p-3 bg-white rounded-lg">
-                            <div className="flex gap-2 flex-1">
-                                <Megaphone className="h-6 w-6 text-red-600 flex-shrink-0" />
-                                <span className="text-lg text-red-900 font-medium flex-1">
-                                    Prices are changing. Get a free home estimate
-                                </span>
-                            </div>
-                            
-                            <Button variant="default" className="w-full sm:w-auto rounded-lg bg-red-600 text-white">
-                                Find Home Estimate
-                            </Button>
-                        </div>
-
-                        {/* CTA Block */}
-                        <div className="flex flex-col gap-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                            <div className="flex items-center gap-2">
-                                <span className="text-base font-semibold text-gray-900">
-                                    We estimate this home will sell faster than 85% nearby.
-                                </span>
-                            </div>
-                            <Button 
-                                onClick={handleScheduleTour}
-                                className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors"
-                            >
-                                <Calendar className="h-4 w-4 mr-2" />
-                                Schedule Tour
-                            </Button>
-                        </div>
-                    </div>
-                    )}
+                    
                     {/* Property Stats Grid */}
                     {/* <PropertyStats property={property} rawProperty={rawProperty} isPreCon={isPreCon} /> */}
                 </div>

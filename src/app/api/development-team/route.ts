@@ -3,6 +3,10 @@ import { prisma } from '@/lib/prisma'
 import { DeveloperType } from '@prisma/client'
 import { convertToS3Url } from '@/lib/image-url'
 
+// Caching configuration - teams don't change frequently
+export const dynamic = 'force-dynamic'
+export const revalidate = 300 // Cache for 5 minutes
+
 // GET - Public endpoint to fetch all development team members for website display
 export async function GET(_request: NextRequest) {
   try {
@@ -120,10 +124,17 @@ export async function GET(_request: NextRequest) {
       })
     }
 
-    return NextResponse.json({
-      teams: result,
-      total: filteredMembers.length,
-    })
+    return NextResponse.json(
+      {
+        teams: result,
+        total: filteredMembers.length,
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        },
+      }
+    )
   } catch (error) {
     console.error('Error fetching development teams:', error)
     const errorMessage = error instanceof Error ? error.message : String(error)

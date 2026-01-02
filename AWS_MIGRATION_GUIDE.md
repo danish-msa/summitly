@@ -501,12 +501,6 @@ SELECT COUNT(*) FROM "MarketTrends";
    ```
    (Update NEXTAUTH_URL after first deployment with your actual Amplify domain)
 
-   **Supabase (if still using for storage temporarily):**
-   ```
-   NEXT_PUBLIC_SUPABASE_URL = https://omsefyactufffyqaxowx.supabase.co
-   SUPABASE_SERVICE_ROLE_KEY = [YOUR_SUPABASE_KEY]
-   ```
-   (Keep these if you haven't migrated storage yet)
 
    **API Keys (keep your existing ones):**
    ```

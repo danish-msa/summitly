@@ -5,7 +5,13 @@ const WhyChooseUs = () => {
   return (
     <div className='flex flex-col md:flex-row max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 bg-background justify-center items-center rounded-lg relative py-8 md:py-0 md:h-[800px] lg:h-[700px]'>
         <div className='w-full md:w-1/2 relative h-64 sm:h-80 md:h-[80%] mb-6 md:mb-0'>
-            <Image src='/images/hero.jpg' layout="fill" objectFit="cover" alt='hero' className='rounded-xl'/>
+            <Image 
+                src='/images/hero.jpg' 
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                alt='hero' 
+                className='rounded-xl object-cover'
+            />
         </div>
         <div className='w-full md:w-1/2 py-6 sm:py-8 md:py-12 px-4 sm:px-6 md:px-8 lg:px-12'>
             <div className='w-full'>

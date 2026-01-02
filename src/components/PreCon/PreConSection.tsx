@@ -13,6 +13,7 @@ import {
   CarouselContent,
   CarouselItem,
 } from '@/components/ui/carousel';
+import { PreConstructionCardSkeleton } from '@/components/skeletons';
 
 // Convert PropertyListing to PreConstructionProperty format
 const convertToPreConProperty = (property: PropertyListing): PreConstructionProperty | null => {
@@ -164,7 +165,7 @@ const PreConSection: React.FC<PreConSectionProps> = ({
 
   if (loading) {
     return (
-      <section className="py-8 sm:py-12 md:py-16 bg-background">
+      <section className="py-6 sm:py-8 md:py-10 bg-background">
         <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
             <div className="flex-1">
@@ -184,8 +185,31 @@ const PreConSection: React.FC<PreConSectionProps> = ({
               </Link>
             )}
           </div>
-          <div className="flex items-center justify-center py-8 sm:py-12">
-            <div className="text-sm sm:text-base text-muted-foreground">Loading projects...</div>
+
+          <div className="mt-6 sm:mt-8 md:mt-12 relative">
+            <Carousel
+              opts={{
+                align: "start",
+                loop: true,
+                breakpoints: {
+                  "(max-width: 768px)": {
+                    dragFree: true,
+                  },
+                },
+              }}
+              className="w-full"
+            >
+              <CarouselContent className="-ml-1 sm:-ml-2 md:-ml-4">
+                {[...Array(Math.min(limit, 8))].map((_, index) => (
+                  <CarouselItem
+                    key={index}
+                    className="pl-1 sm:pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
+                  >
+                    <PreConstructionCardSkeleton />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
           </div>
         </div>
       </section>

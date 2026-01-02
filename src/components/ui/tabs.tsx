@@ -27,7 +27,7 @@ const TabsList = React.forwardRef<
         return React.cloneElement(child, {
           className: cn(
             childProps.className,
-            "flex-shrink-0 whitespace-nowrap"
+            "flex-shrink-0 whitespace-nowrap "
           )
         } as React.HTMLAttributes<HTMLButtonElement>)
       }
@@ -39,7 +39,7 @@ const TabsList = React.forwardRef<
         <TabsPrimitive.List
           ref={ref}
           className={cn(
-            "inline-flex min-w-max md:min-w-0 h-auto items-center gap-2 rounded-lg bg-muted/50 p-1 text-muted-foreground w-fit",
+            "inline-flex min-w-max md:min-w-0 h-auto items-center gap-1 text-zinc-600 w-fit",
             className
           )}
           {...props}
@@ -55,7 +55,7 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "inline-flex h-12 items-center justify-center rounded-lg bg-muted/50 p-1 text-muted-foreground w-fit",
+      "inline-flex h-auto items-center justify-center text-zinc-600 w-fit gap-1",
       className
     )}
     {...props}
@@ -73,7 +73,11 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-secondary data-[state=active]:text-white data-[state=active]:shadow",
+      "inline-flex items-center gap-2 justify-center whitespace-nowrap px-4 py-4 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+      // Inactive state: dark grey text, transparent background
+      "text-zinc-700 bg-transparent hover:text-zinc-900 hover:bg-zinc-50",
+      // Active state: blue text, white background with rounded corners
+      "data-[state=active]:text-secondary data-[state=active]:bg-secondary/10 data-[state=active]:rounded-tl-lg rounded-tr-lg data-[state=active]:border-b-2 data-[state=active]:border-secondary data-[state=active]:shadow-sm data-[state=active]:shadow-bottom-0 ",
       className
     )}
     {...props}
@@ -92,8 +96,8 @@ const TabsContent = React.forwardRef<
   TabsContentProps
 >(({ className, variant = "default", ...props }, ref) => {
   const variantClasses = {
-    default: "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-    borderless: "mt-2 focus-visible:outline-none",
+    default: "mt-6 bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+    borderless: "mt-4 focus-visible:outline-none",
   }
 
   return (

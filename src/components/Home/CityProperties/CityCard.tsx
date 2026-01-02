@@ -35,7 +35,6 @@ const CityCard = ({ city }: CityCardProps) => {
           )}
           <div className='absolute bottom-2 left-2 right-2 rounded-xl px-4 pt-4 pb-4 bg-white text-black flex justify-between items-center'>
             <div className='flex flex-col'>
-              <p className='text-sm'>{city.numberOfProperties} Properties</p>
               <h4 className='text-base font-medium'>{city.cityName}</h4>
             </div>
             <BsArrowRightCircle className='text-3xl text-gray-400 group-hover:text-black transition-colors' />

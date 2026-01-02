@@ -17,6 +17,12 @@ import StickyPropertyBar from './StickyPropertyBar'
 import Breadcrumbs from './Breadcrumbs'
 import { ContactSection } from './ItemBody/ContactSection'
 import { parsePropertyUrl } from '@/lib/utils/propertyUrl'
+import NewItemBody from './NewItemBody/NewItemBody'
+import PropertyHeader from './NewItemBody/PropertyHeader'
+import ModernBannerGallery from './Banner/ModernBannerGallery'
+import PriceCard from './NewItemBody/PriceCard'
+import Description from './ItemBody/Description'
+import Sidebar from './ItemBody/Sidebar'
 
 const Item: React.FC = () => {
   const params = useParams();
@@ -34,41 +40,17 @@ const Item: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isRental, setIsRental] = useState<boolean>(false);
 
-  console.log('[Item Component] Mounted with params:', {
-    citySlug,
-    cityName,
-    propertyAddress,
-    propertyId,
-    allParams: params,
-  });
-
   useEffect(() => {
-    console.log('[Item useEffect] Effect triggered with:', {
-      cityName,
-      propertyAddress,
-      propertyId,
-    });
-
     const fetchPropertyDetails = async () => {
       let mlsNumber: string | undefined;
       
       try {
-        console.log('[Property Fetch] Starting fetch...');
-        
         // Extract MLS number from URL
         if (cityName && propertyAddress) {
-          console.log('[Property Fetch] Parsing URL:', {
-            cityName,
-            propertyAddress,
-          });
-          
           // New URL structure: /{citySlug}/{streetNumber}-{streetName}-{mlsNumber}
           const parsed = parsePropertyUrl(cityName, propertyAddress);
           
-          console.log('[Property Fetch] Parsed result:', parsed);
-          
           if (!parsed) {
-            console.error('[Property Fetch] Failed to parse URL');
             setError('Invalid property URL');
             setLoading(false);
             return;
@@ -77,10 +59,7 @@ const Item: React.FC = () => {
           // Extract MLS number from URL - this is the primary method
           if (parsed.mlsNumber) {
             mlsNumber = parsed.mlsNumber;
-            console.log('[Property Fetch] ✅ MLS number extracted:', mlsNumber);
           } else {
-            // If MLS number is not in URL, show error
-            console.error('[Property Fetch] ❌ MLS number not found in parsed URL:', parsed);
             setError('Property URL must include MLS number');
             setLoading(false);
             return;
@@ -88,9 +67,7 @@ const Item: React.FC = () => {
         } else if (propertyId) {
           // Fallback to old URL structure (using MLS number directly)
           mlsNumber = propertyId;
-          console.log('[Property Fetch] Using propertyId as MLS number:', mlsNumber);
         } else {
-          console.error('[Property Fetch] ❌ No valid URL parameters found');
           setError('Invalid URL - MLS number required');
           setLoading(false);
           return;
@@ -98,41 +75,28 @@ const Item: React.FC = () => {
 
         // Fetch property directly from Repliers API using MLS number
         if (!mlsNumber) {
-          console.error('[Property Fetch] ❌ MLS number is undefined');
           setError('MLS number not found in URL');
           setLoading(false);
           return;
         }
 
-        console.log('[Property Fetch] 🚀 Fetching property from Repliers API with MLS number:', mlsNumber);
-
         const foundProperty = await getListingDetails(mlsNumber);
         
         if (!foundProperty) {
-          console.error('[Property Fetch] ❌ Property not found for MLS number:', mlsNumber);
           setError(`Property not found for MLS number: ${mlsNumber}`);
           setLoading(false);
           return;
         }
-
-        console.log('[Property Fetch] ✅ Property found:', {
-          mlsNumber: foundProperty.mlsNumber,
-          boardId: foundProperty.boardId,
-          address: foundProperty.address?.location,
-          type: foundProperty.type,
-        });
 
         // Detect if this is a rental property (no redirect - keep SEO-friendly URL)
         const isRentalProperty = foundProperty.type === 'Lease' || foundProperty.type?.toLowerCase().includes('lease');
         setIsRental(isRentalProperty);
         
         // Fetch raw listing for imageInsights
-        console.log('[Property Fetch] Fetching raw listing data for:', mlsNumber);
         let rawListing: SinglePropertyListingResponse | null = null;
         try {
           rawListing = await getRawListingDetails(mlsNumber);
         } catch (rawError) {
-          console.warn('[Property Fetch] Failed to fetch raw listing (non-critical):', rawError);
           // Continue without raw listing - it's not critical
         }
         
@@ -143,27 +107,8 @@ const Item: React.FC = () => {
         };
         setProperty(propertyWithOpenHouse);
         setRawProperty(rawListing);
-
-        console.log('[Property Fetch] ✅ Property loaded successfully:', mlsNumber);
       } catch (err) {
-        // Enhanced error logging
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        const errorStack = err instanceof Error ? err.stack : undefined;
-        const errorName = err instanceof Error ? err.name : undefined;
-        
-        console.error('[Property Fetch] Error details:', {
-          message: errorMessage,
-          name: errorName,
-          stack: errorStack,
-          error: err,
-          mlsNumber: mlsNumber || 'NOT EXTRACTED',
-          params: {
-            cityName,
-            propertyAddress,
-            propertyId,
-          },
-        });
-        
         setError(`Failed to load property details: ${errorMessage}`);
       } finally {
         setLoading(false);
@@ -207,6 +152,9 @@ const Item: React.FC = () => {
     );
   }
 
+  // Determine if this is a pre-construction property
+  const isPreCon = !!property.preCon;
+
   // Define navigation sections - rentals don't have history section
   const navigationSections = isRental
     ? [
@@ -230,25 +178,24 @@ const Item: React.FC = () => {
       ];
 
   return (
-    <div className='bg-background'>
+    <div>
       {/* Sticky Property Bar */}
-      <StickyPropertyBar property={property} bannerRef={bannerRef} />
-      <div className='container-1400 mt-5 mb-4'>
-        {/* Breadcrumbs */}
+      {/* <StickyPropertyBar property={property} bannerRef={bannerRef} /> */}
+      {/* <div className='container-1400 mt-10 mb-4'>
         <Breadcrumbs property={property} isPreCon={false} isRent={isRental} />
         <BannerGallery property={property} />
-      </div>
-      {/* Sticky Navigation Panel */}
+      </div> */}
+      
+      {/* <div className='container-1400'>
       <SectionNavigation sections={navigationSections} property={property} />
-      <div className='container-1400'>
-          
         <div className='flex flex-row gap-8'>
           <div className='w-[70%] flex flex-col gap-6'>
             <div ref={bannerRef} data-banner-section>
               <Banner property={property} rawProperty={rawProperty} isPreCon={false} isRent={isRental} />
             </div>
-            <ItemBody property={property} rawProperty={rawProperty} isPreCon={false} isRent={isRental} />
-          </div>
+            <NewItemBody property={property} rawProperty={rawProperty} isPreCon={false} isRent={isRental} /> */}
+            {/* <ItemBody property={property} rawProperty={rawProperty} isPreCon={false} isRent={isRental} /> */}
+          {/* </div>
           <div className='w-[30%] flex flex-col gap-4 items-start gap-0 sticky top-[130px] self-start'>
             <BasicInfo property={property} rawProperty={rawProperty} isPreCon={false} isRent={isRental} />
             <PropertyAlerts 
@@ -259,9 +206,29 @@ const Item: React.FC = () => {
             />
           </div>
         </div>
-        <div className='mt-6'>
-          
+      </div> */}
+
+      <div className='container-1400 mt-10 mb-4'>
+        {/* Breadcrumbs */}
+        <Breadcrumbs property={property} isPreCon={false} isRent={isRental} />
+        <PropertyHeader property={property} />
+        
+        <div className='flex flex-row gap-8 mt-6 mb-10'>
+          <div className='w-[70%] flex flex-col gap-6'>
+            <ModernBannerGallery property={property} />
+            <Description property={property} isPreCon={isPreCon} />
+            {/* <div ref={bannerRef} data-banner-section>
+              <Banner property={property} rawProperty={rawProperty} isPreCon={false} isRent={isRental} />
+            </div> */}
+            
+          </div>
+          <div className='w-[30%] flex flex-col gap-4 items-start gap-0'>
+            <PriceCard property={property} rawProperty={rawProperty} isPreCon={false} isRent={isRental} />
+            <BasicInfo property={property} rawProperty={rawProperty} isPreCon={false} isRent={isRental} />
+            <Sidebar isPreCon={isPreCon} isRent={isRental} property={property} />
+          </div>
         </div>
+        <NewItemBody property={property} rawProperty={rawProperty} isPreCon={isPreCon} isRent={isRental} />
       </div>
 
       <div className='container-1400 mt-20 mb-4'>

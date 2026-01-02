@@ -15,7 +15,7 @@ export const CategoryTabs = ({ categories, activeTab, onTabChange }: CategoryTab
           onClick={() => onTabChange(category.id)}
           className={`whitespace-nowrap px-6 py-3 text-sm font-medium transition-colors ${
             activeTab === category.id
-              ? "border-b-2 border-primary text-primary bg-secondary/10"
+              ? "border-b-2 border-primary text-primary bg-secondary/10 rounded-tl-lg rounded-tr-lg"
               : "text-gray-500 hover:text-gray-700"
           }`}
         >

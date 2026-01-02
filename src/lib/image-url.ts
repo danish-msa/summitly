@@ -1,20 +1,15 @@
 /**
- * Image URL utilities for handling Supabase to S3 migration
+ * Image URL utilities for handling image URLs
  */
 
 // AWS S3 Public URL - using custom domain
 const AWS_PUBLIC_URL = 'https://shared-s3.property.ca/public'
 
 /**
- * Convert Supabase storage URL to S3 URL
- * Handles migration from Supabase to S3 for existing data
+ * Convert legacy storage URL to S3 URL (for backward compatibility)
  * 
- * @param url - Image URL (can be Supabase, S3, or other)
- * @returns Converted S3 URL or original URL if not a Supabase URL
- * 
- * @example
- * convertToS3Url('https://omsefyactufffyqaxowx.supabase.co/storage/v1/object/public/images/pre-con/projects/file.jpg')
- * // Returns: 'https://shared-s3.property.ca/public/images/pre-con/projects/file.jpg'
+ * @param url - Image URL (can be legacy storage, S3, or other)
+ * @returns Converted S3 URL or original URL if not a legacy storage URL
  */
 export function convertToS3Url(url: string | null | undefined): string {
   if (!url) return ''
@@ -26,9 +21,9 @@ export function convertToS3Url(url: string | null | undefined): string {
     return url
   }
   
-  // Check if it's a Supabase storage URL
-  const supabasePattern = /https:\/\/[^/]+\.supabase\.co\/storage\/v1\/object\/public\/(images|documents)\/(.+)$/
-  const match = url.match(supabasePattern)
+  // Check if it's a legacy storage URL (kept for backward compatibility)
+  const legacyPattern = /https:\/\/[^/]+\.supabase\.co\/storage\/v1\/object\/public\/(images|documents)\/(.+)$/
+  const match = url.match(legacyPattern)
   
   if (match) {
     const [, bucket, path] = match
@@ -36,7 +31,7 @@ export function convertToS3Url(url: string | null | undefined): string {
     return `${AWS_PUBLIC_URL}/${bucket}/${path}`
   }
   
-  // Return original URL if not a Supabase URL
+  // Return original URL if not a legacy storage URL
   return url
 }
 

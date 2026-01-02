@@ -27,6 +27,9 @@ interface GoogleMapsProviderProps {
   children: React.ReactNode;
 }
 
+// Move libraries array outside component to prevent reloads
+const GOOGLE_MAPS_LIBRARIES: ('places')[] = ['places'];
+
 // Custom full-screen loading overlay
 const LoadingElement = () => {
   return (
@@ -78,7 +81,7 @@ export const GoogleMapsProvider: React.FC<GoogleMapsProviderProps> = ({ children
   return (
     <LoadScript
       googleMapsApiKey={apiKey}
-      libraries={['places']}
+      libraries={GOOGLE_MAPS_LIBRARIES}
       onLoad={handleLoad}
       onError={handleError}
       loadingElement={<LoadingElement />}

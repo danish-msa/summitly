@@ -8,10 +8,18 @@ import { MarketChartSection } from './MarketChartSection';
 import { ListingsChartSection } from './ListingsChartSection';
 import { SoldPriceChartSection } from './SoldPriceChartSection';
 import { TableView } from './TableView';
+import { MarketStats } from './MarketStats';
 import { Button } from "@/components/ui/button";
 import { UserCheck } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Download, Table2, TrendingUp, RefreshCw, ArrowDown, BarChart3 } from "lucide-react";
+import { 
+  VerticalTabs, 
+  VerticalTabsList, 
+  VerticalTabsTrigger, 
+  VerticalTabsContent,
+  VerticalTabsContainer
+} from '@/components/ui/vertical-tabs';
+import { Download, Table2, TrendingUp, RefreshCw, ArrowDown, BarChart3, Activity } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -436,108 +444,38 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
   };
 
   return (
-    <div className="w-full px-6 mt-6 pb-6">
-      {isLoading && (
-        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-700">Loading market analytics data...</p>
-        </div>
-      )}
-      {apiError && (
-        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-sm text-yellow-700">{apiError}. Using sample data.</p>
-        </div>
-      )}
+    <div className="w-full">
+      <VerticalTabs defaultValue="stats" className="w-full">
+        <VerticalTabsContainer>
+          <VerticalTabsList>
+            <VerticalTabsTrigger value="stats" className="flex items-center gap-3">
+              <BarChart3 className="h-6 w-6 text-secondary" />
+              <span>Market Stats</span>
+            </VerticalTabsTrigger>
+            <VerticalTabsTrigger value="market" className="flex items-center gap-3">
+              <TrendingUp className="h-6 w-6 text-secondary" />
+              <span>Market Trends</span>
+            </VerticalTabsTrigger>
+            <VerticalTabsTrigger value="listings" className="flex items-center gap-3">
+              <Activity className="h-6 w-6 text-secondary" />
+              <span>Listings Activity</span>
+            </VerticalTabsTrigger>
+            <VerticalTabsTrigger value="prices" className="flex items-center gap-3">
+              <TrendingUp className="h-6 w-6 text-secondary" />
+              <span>Sold Prices</span>
+            </VerticalTabsTrigger>
+          </VerticalTabsList>
 
-      {/* Market Stats Section - Always Visible */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold text-foreground">
-            Market Insights in {neighborhood}, {displayCity}
-          </h3>
-          <span className="text-sm text-muted-foreground">
-            As of {new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-          </span>
-        </div>
-        
-        {/* Stats Grid - Top Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <p className="text-sm text-muted-foreground mb-1">Active Listings</p>
-            <p className="text-2xl font-bold text-foreground">{marketStats.activeListings}</p>
-          </div>
-          
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <p className="text-sm text-muted-foreground mb-1">New Listings</p>
-            <p className="text-2xl font-bold text-foreground">{marketStats.newListings}</p>
-          </div>
-          
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <p className="text-sm text-muted-foreground mb-1">Sold Properties</p>
-            <p className="text-2xl font-bold text-foreground">{marketStats.soldProperties}</p>
-          </div>
-          
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <p className="text-sm text-muted-foreground mb-1">Total Count</p>
-            <p className="text-2xl font-bold text-foreground">{marketStats.activeListings + marketStats.soldProperties}</p>
-          </div>
-        </div>
+          <div className="flex-1">
+            <VerticalTabsContent value="stats">
+              <MarketStats 
+                neighborhood={neighborhood}
+                displayCity={displayCity}
+                marketStats={marketStats}
+              />
+            </VerticalTabsContent>
 
-        {/* Stats Grid - Bottom Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <p className="text-sm text-muted-foreground mb-1">Median Price</p>
-            <p className="text-2xl font-bold text-foreground">{formatPrice(marketStats.medianPrice)}</p>
-          </div>
-          
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <p className="text-sm text-muted-foreground mb-1">Avg DOM</p>
-            <p className="text-2xl font-bold text-foreground">{marketStats.avgDOM}</p>
-          </div>
-          
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <p className="text-sm text-muted-foreground mb-1">Last 1 Year's Growth</p>
-            <div className="flex items-center gap-1">
-              {marketStats.last1YearGrowth >= 0 ? (
-                <>
-                  <TrendingUp className="h-4 w-4 text-green-600" />
-                  <p className="text-2xl font-bold text-green-600">{marketStats.last1YearGrowth.toFixed(1)}%</p>
-                </>
-              ) : (
-                <>
-                  <ArrowDown className="h-4 w-4 text-red-600" />
-                  <p className="text-2xl font-bold text-red-600">{Math.abs(marketStats.last1YearGrowth).toFixed(1)}%</p>
-                </>
-              )}
-            </div>
-          </div>
-          
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <p className="text-sm text-muted-foreground mb-1">Last 5 Years' Growth</p>
-            <div className="flex items-center gap-1">
-              {marketStats.last5YearsGrowth >= 0 ? (
-                <>
-                  <TrendingUp className="h-4 w-4 text-green-600" />
-                  <p className="text-2xl font-bold text-green-600">{marketStats.last5YearsGrowth.toFixed(1)}%</p>
-                </>
-              ) : (
-                <>
-                  <ArrowDown className="h-4 w-4 text-red-600" />
-                  <p className="text-2xl font-bold text-red-600">{Math.abs(marketStats.last5YearsGrowth).toFixed(1)}%</p>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <Tabs defaultValue="market" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
-          <TabsTrigger value="market">Market Trends</TabsTrigger>
-          <TabsTrigger value="listings">Listings Activity</TabsTrigger>
-          <TabsTrigger value="prices">Sold Prices</TabsTrigger>
-        </TabsList>
-
-          <TabsContent value="market" className="mt-0">
+            <VerticalTabsContent value="market">
             {/* Header Section for Market Trends */}
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
               <div>
@@ -645,9 +583,9 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
                 </Table>
               </div>
             )}
-          </TabsContent>
+            </VerticalTabsContent>
 
-          <TabsContent value="listings" className="mt-0">
+            <VerticalTabsContent value="listings">
             {/* Header Section for Listings Activity */}
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
               <div>
@@ -748,9 +686,9 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
                 </Table>
               </div>
             )}
-          </TabsContent>
+            </VerticalTabsContent>
 
-          <TabsContent value="prices" className="mt-0">
+            <VerticalTabsContent value="prices">
             {/* Header Section for Sold Prices */}
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
               <div>
@@ -848,8 +786,10 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
                 </Table>
               </div>
             )}
-          </TabsContent>
-      </Tabs>
+            </VerticalTabsContent>
+          </div>
+        </VerticalTabsContainer>
+      </VerticalTabs>
 
       {/* Call to Action */}
       <div className="flex justify-center pt-6 pb-4">

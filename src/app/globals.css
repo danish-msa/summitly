@@ -156,6 +156,16 @@
     color: #F0F5FB;
   }
 
+  /* Price Card Gradient - Vibrant cyan-blue to purple-pink */
+  .price-card-gradient {
+    background: linear-gradient(135deg, #06B6D4 0%,  #2563EB 100%);
+  }
+
+  /* Tab Active Gradient - Same as price card for seamless connection */
+  .tab-active-gradient {
+    background: linear-gradient(135deg, #06B6D4 0%,  #2563EB 100%);
+  }
+
   /* Custom Pastel Colors for Feature Grid */
   .feature-bg-1 {
     background-color: #EBEDFD;
@@ -427,7 +437,7 @@
 @layer base {
   :root {
     /* Brand Identity Colors - Light Mode */
-    --background: 209 100% 98%; /* # */
+    --background: 210 67% 98%; /* #f8fafc */
     --foreground: 220 65% 15%; /* #0A1730 - MIDNIGHT */
     --card: 0 0% 100%; /* Pure white for cards */
     --card-foreground: 220 65% 15%; /* #0A1730 - MIDNIGHT */
@@ -455,13 +465,13 @@
     --radius: 0.5rem;
     
     /* Design System Tokens */
-    --shadow-sm: 0 1px 2px 0 rgb(0 29 61 / 0.05);
-    --shadow: 0 1px 3px 0 rgb(0 29 61 / 0.1), 0 1px 2px -1px rgb(0 29 61 / 0.1);
-    --shadow-md: 0 4px 6px -1px rgb(0 29 61 / 0.1), 0 2px 4px -2px rgb(0 29 61 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 29 61 / 0.1), 0 4px 6px -4px rgb(0 29 61 / 0.1);
-    --shadow-xl: 0 20px 25px -5px rgb(0 29 61 / 0.1), 0 8px 10px -6px rgb(0 29 61 / 0.1);
-    --shadow-card: 0 4px 6px -1px rgb(0 29 61 / 0.1), 0 2px 4px -2px rgb(0 29 61 / 0.1);
-    --shadow-hover: 0 20px 25px -5px rgb(0 29 61 / 0.15), 0 8px 10px -6px rgb(0 29 61 / 0.15);
+    --shadow-sm: 0px 2px 4px rgba(0, 0, 0, .08);
+    --shadow: 0px 2px 4px rgba(0, 0, 0, .08);
+    --shadow-md: 0px 5px 20px rgba(0, 0, 0, .08);
+    --shadow-lg: 0px 5px 20px rgba(0, 0, 0, .08);
+    --shadow-xl: 0px 40px 80px rgba(0, 0, 0, .2);
+    --shadow-card: 0px 5px 20px rgba(0, 0, 0, .08);
+    --shadow-hover: 0px 0px 30px 0px rgba(0, 0, 0, .1);
     
     /* Hero Gradient Colors - Light Mode */
     --hero-gradient-start: 240 100% 98%; /* #F0F5FB - ICY BLUE */

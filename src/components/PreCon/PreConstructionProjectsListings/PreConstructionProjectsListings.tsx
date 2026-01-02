@@ -9,6 +9,8 @@ import PreConListingFilters from './PreConListingFilters';
 import { LOCATIONS } from '@/lib/types/filters';
 import { useHiddenProperties } from '@/hooks/useHiddenProperties';
 import dynamic from 'next/dynamic';
+import { PreConstructionCardSkeleton } from '@/components/skeletons';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Dynamically import the Google Maps component with no SSR to avoid hydration issues
 const GooglePropertyMap = dynamic(() => import('@/components/MapSearch/GooglePropertyMap'), { ssr: false });
@@ -357,8 +359,27 @@ const PreConstructionProjectsListings: React.FC = () => {
   if (loading) {
     return (
       <div className="container mx-auto pt-10 pb-24 px-4">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-muted-foreground">Loading projects...</div>
+        {/* Filters Skeleton */}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-4 mb-4">
+            <Skeleton className="h-12 w-48 rounded-lg" />
+            <Skeleton className="h-12 w-48 rounded-lg" />
+            <Skeleton className="h-12 w-48 rounded-lg" />
+            <Skeleton className="h-12 w-48 rounded-lg" />
+          </div>
+        </div>
+
+        {/* Results Header Skeleton */}
+        <div className="container mx-auto px-4 flex flex-col sm:flex-row justify-between items-center mb-4 mt-8">
+          <Skeleton className="h-5 w-48 mb-4 sm:mb-0" />
+          <Skeleton className="h-10 w-64 rounded-lg" />
+        </div>
+
+        {/* Project Listings Grid Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-10">
+          {[...Array(12)].map((_, index) => (
+            <PreConstructionCardSkeleton key={index} />
+          ))}
         </div>
       </div>
     );

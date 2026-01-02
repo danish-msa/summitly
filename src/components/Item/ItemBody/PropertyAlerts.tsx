@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Toggle } from '@/components/ui/toggle';
 import { usePropertyAlerts } from '@/hooks/usePropertyAlerts';
 import { useSession } from 'next-auth/react';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Heart } from 'lucide-react';
+import { Loader2, Heart, Bell, Home, Tag, Clock, Check } from 'lucide-react';
 
 interface AlertOptions {
   watchProperty: boolean;
@@ -15,6 +16,8 @@ interface AlertOptions {
 }
 
 interface PropertyAlertsProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   propertyId?: string;
   cityName?: string;
   propertyType?: string;
@@ -22,6 +25,8 @@ interface PropertyAlertsProps {
 }
 
 const PropertyAlerts: React.FC<PropertyAlertsProps> = ({ 
+  open,
+  onOpenChange,
   propertyId,
   cityName = 'this area',
   propertyType = 'property',
@@ -102,114 +107,138 @@ const PropertyAlerts: React.FC<PropertyAlertsProps> = ({
     }
   };
 
-  if (isLoading) {
-    return (
-      <Card className="w-full shadow-lg border-0 bg-white">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  const benefits = [
+    "Get instant notifications when properties matching your criteria become available",
+    "Stay ahead of the market with real-time price change alerts",
+    "Never miss a new listing in your preferred neighborhoods",
+    "Track sold properties to understand market trends",
+    "Receive updates on expired listings that may be relisted",
+    "Save time by getting personalized property recommendations"
+  ];
 
   return (
-    <Card className="w-full shadow-lg border-0 bg-white">
-      <CardContent className="p-4">
-        <div className="flex flex-col gap-2 mb-4">
-          {/* Watch Property Toggle */}
-          <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
-            <div className="text-left flex-1">
-              <div className="font-semibold text-foreground text-sm mb-1">Watch Property</div>
-              <div className="text-xs text-muted-foreground">Get notified about updates for this property</div>
-            </div>
-            <button
-              onClick={() => handleToggleOption('watchProperty')}
-              disabled={isSaving}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                alertOptions.watchProperty ? 'bg-primary' : 'bg-gray-300'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  alertOptions.watchProperty ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold text-gray-900">
+            Notification Preferences
+          </DialogTitle>
+        </DialogHeader>
 
-          {/* New Properties Toggle */}
-          <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
-            <div className="text-left flex-1">
-              <div className="font-semibold text-foreground text-sm mb-1">New Properties</div>
-              <div className="text-xs text-muted-foreground">
-                 Notify me for new {propertyType} listings in {areaName}.
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Left Column - Benefits */}
+              <div className="flex flex-col gap-4">
+                {benefits.map((benefit, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center mt-0.5">
+                      <Check className="h-5 w-5 text-secondary" />
+                    </div>
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                      {benefit}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Right Column - Alerts Section */}
+              <div className="flex flex-col">
+                <div className="flex flex-col gap-8 bg-muted/20 rounded-lg p-4 border border-secondary/20">
+                {/* Watch Property Toggle */}
+                <div className="flex items-center gap-4">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
+                    <Bell className="h-5 w-5 text-secondary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-gray-900 text-sm mb-1">Watch Property</div>
+                    <div className="text-xs text-gray-500 font-light">
+                      Get notified about price changes and updates for this property
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <Toggle
+                      checked={alertOptions.watchProperty}
+                      onCheckedChange={() => handleToggleOption('watchProperty')}
+                      disabled={isSaving}
+                      variant="secondary"
+                    />
+                  </div>
+              </div>
+
+              {/* New Properties Toggle */}
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
+                  <Home className="h-5 w-5 text-secondary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-gray-900 text-sm mb-1">New Properties</div>
+                  <div className="text-xs text-gray-500 font-light">
+                    Notify me for new {propertyType} listings in {areaName}
+                  </div>
+                </div>
+                <div className="flex-shrink-0">
+                  <Toggle
+                    checked={alertOptions.newProperties}
+                    onCheckedChange={() => handleToggleOption('newProperties')}
+                    disabled={isSaving}
+                    variant="primary"
+                  />
+                </div>
+              </div>
+
+              {/* Sold Listings Toggle */}
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
+                  <Tag className="h-5 w-5 text-secondary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-gray-900 text-sm mb-1">Sold Listings</div>
+                  <div className="text-xs text-gray-500 font-light">
+                    Notify me when {propertyType} properties are sold in {areaName}
+                  </div>
+                </div>
+                <div className="flex-shrink-0">
+                  <Toggle
+                    checked={alertOptions.soldListings}
+                    onCheckedChange={() => handleToggleOption('soldListings')}
+                    disabled={isSaving}
+                    variant="primary"
+                  />
+                </div>
+              </div>
+
+              {/* Expired Listings Toggle */}
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
+                  <Clock className="h-5 w-5 text-secondary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-gray-900 text-sm mb-1">Expired Listings</div>
+                  <div className="text-xs text-gray-500 font-light">
+                    Notify me when {propertyType} listings expire in {areaName}
+                  </div>
+                </div>
+                <div className="flex-shrink-0">
+                  <Toggle
+                    checked={alertOptions.expiredListings}
+                    onCheckedChange={() => handleToggleOption('expiredListings')}
+                    disabled={isSaving}
+                    variant="primary"
+                  />
+                </div>
+              </div>
+                </div>
               </div>
             </div>
-            <button
-              onClick={() => handleToggleOption('newProperties')}
-              disabled={isSaving}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                alertOptions.newProperties ? 'bg-primary' : 'bg-gray-300'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  alertOptions.newProperties ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
           </div>
-
-          {/* Sold Listings Toggle */}
-          <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
-            <div className="text-left flex-1">
-              <div className="font-semibold text-foreground text-sm mb-1">Sold Listings</div>
-              <div className="text-xs text-muted-foreground">
-                Notify me when {propertyType} properties are sold in {areaName}.
-              </div>
-            </div>
-            <button
-              onClick={() => handleToggleOption('soldListings')}
-              disabled={isSaving}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                alertOptions.soldListings ? 'bg-primary' : 'bg-gray-300'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  alertOptions.soldListings ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </div>
-
-          {/* Expired Listings Toggle */}
-          <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
-            <div className="text-left flex-1">
-              <div className="font-semibold text-foreground text-sm mb-1">Expired Listings</div>
-              <div className="text-xs text-muted-foreground">
-                Notify me when {propertyType} listings expire in {areaName}.
-              </div>
-            </div>
-            <button
-              onClick={() => handleToggleOption('expiredListings')}
-              disabled={isSaving}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                alertOptions.expiredListings ? 'bg-primary' : 'bg-gray-300'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  alertOptions.expiredListings ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 };
 

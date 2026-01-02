@@ -5,7 +5,13 @@ const WhySellWithUs = () => {
   return (
     <div className='flex flex-col md:flex-row w-[90%] bg-background justify-center items-center mx-auto rounded-lg relative md:h-[800px] lg:h-[700px]'>
         <div className='w-1/2 relative h-[80%]'>
-            <Image src='/images/hero.jpg' layout="fill" objectFit="cover" alt='hero' className='rounded-xl'/>
+            <Image 
+                src='/images/hero.jpg' 
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                alt='hero' 
+                className='rounded-xl object-cover'
+            />
         </div>
         <div className='w-full lg:w-1/2 py-12 px-8 md:px-12'>
             <div className='w-full'>

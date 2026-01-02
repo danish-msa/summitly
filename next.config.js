@@ -17,18 +17,6 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'omsefyactufffyqaxowx.supabase.co',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: '*.supabase.co',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
         hostname: 'shared-s3.property.ca',
         port: '',
         pathname: '/**',
@@ -45,10 +33,30 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'shared-s3.property.ca',
+        port: '',
+        pathname: '/**',
+      },
     ],
     // Configure image qualities for Next.js 16 compatibility
     qualities: [75, 100],
+    // Optimize image formats and caching
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 60,
   },
+  // Performance optimizations
+  compress: true,
+  poweredByHeader: false,
 }
 
 module.exports = nextConfig

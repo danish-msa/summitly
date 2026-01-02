@@ -161,7 +161,7 @@ export const RecommendationsSection = () => {
   }, [locationDisplayName]);
 
   return (
-    <section className="w-full py-16 px-4 bg-white">
+    <section className="w-full py-16 px-4">
       <div className="container-1400 mx-auto">
         <SectionHeading
           heading="Explore Our Recommendations"
@@ -171,12 +171,11 @@ export const RecommendationsSection = () => {
 
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
-          <TabsList className="inline-flex md:grid md:grid-cols-5 h-auto gap-2 bg-brand-glacier/30 p-2 rounded-xl m-auto">
+          <TabsList className="inline-flex md:grid md:grid-cols-5 h-auto">
             {recommendationsData.map((category) => (
               <TabsTrigger
                 key={category.id}
                 value={category.id}
-                className="data-[state=active]:bg-secondary data-[state=active]:text-white text-base flex items-center gap-2 py-3 rounded-lg transition-all duration-300"
               >
                 {category.icon}
                 <span className="hidden sm:inline">{category.label}</span>
@@ -189,7 +188,7 @@ export const RecommendationsSection = () => {
             <TabsContent
               key={category.id}
               value={category.id}
-              className="mt-8 animate-fade-in"
+              className=""
             >
                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                 {category.recommendations.map((rec, index) => (

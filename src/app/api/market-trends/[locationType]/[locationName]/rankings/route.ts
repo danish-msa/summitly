@@ -123,7 +123,7 @@ export async function GET(
         error: error.message,
         code: error.code,
         month: currentMonth,
-        hint: 'Make sure the MarketRankings table exists in the database. Run supabase_market_rankings_setup.sql',
+        hint: 'Make sure the MarketRankings table exists in the database.',
       });
       // Continue - will try to fetch from API
     }

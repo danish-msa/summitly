@@ -298,10 +298,10 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
     <div 
       ref={navBarRef}
       data-section-navigation
-      className="sticky top-0 bg-white border-b border-gray-200 shadow-sm mb-4 z-50"
+      className="sticky top-0 bg-white border-b border-gray-200  mb-4 z-50 rounded-xl"
     >
-      <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-0.5 overflow-x-auto py-2 scrollbar-hide">
+      <div className="container-1400 mx-auto px-4 sm:px-4">
+        <div className="flex items-center gap-2 overflow-x-auto py-2 scrollbar-hide">
           {/* Video, Gallery, and Scroll to Top Icons */}
           {property && (
             <div className="flex items-center gap-0.5 flex-shrink-0 mr-2 border-r border-gray-200 pr-3">

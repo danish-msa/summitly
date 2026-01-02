@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { convertToS3Url } from '@/lib/image-url';
 import { PreConCity, PreConSellingStatus } from './types';
 
 export type { PreConCity, PreConSellingStatus };
@@ -15,6 +16,7 @@ export interface PreConSuggestionsProps {
   onCitySelect: (city: PreConCity) => void;
   onStatusSelect: (status: PreConSellingStatus) => void;
   isOpen: boolean;
+  isLoading?: boolean;
   className?: string;
 }
 
@@ -24,6 +26,7 @@ const PreConSuggestions: React.FC<PreConSuggestionsProps> = ({
   onCitySelect,
   onStatusSelect,
   isOpen,
+  isLoading = false,
   className,
 }) => {
   if (!isOpen) {
@@ -36,8 +39,21 @@ const PreConSuggestions: React.FC<PreConSuggestionsProps> = ({
         {/* Pre construction Cities Section */}
         <div className="mb-4 sm:mb-6">
           <h3 className="text-xs sm:text-sm font-bold text-primary mb-2 sm:mb-3 px-1">Pre construction Cities</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 sm:gap-2">
-            {cities.map((city) => (
+          {isLoading && cities.length === 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 sm:gap-2">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-lg animate-pulse">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex-shrink-0 rounded-lg bg-gray-200" />
+                  <div className="flex-1 min-w-0">
+                    <div className="h-3 sm:h-4 bg-gray-200 rounded mb-1" />
+                    <div className="h-2 sm:h-3 bg-gray-200 rounded w-2/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 sm:gap-2">
+              {cities.map((city) => (
               <Link
                 key={city.id}
                 href={`/pre-con/${city.id}`}
@@ -46,7 +62,7 @@ const PreConSuggestions: React.FC<PreConSuggestionsProps> = ({
               >
                 <div className="relative w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex-shrink-0 rounded-lg overflow-hidden">
                   <Image
-                    src={city.image}
+                    src={convertToS3Url(city.image) || '/images/p1.jpg'}
                     alt={city.name}
                     fill
                     className="object-cover"
@@ -62,11 +78,27 @@ const PreConSuggestions: React.FC<PreConSuggestionsProps> = ({
                 </div>
               </Link>
             ))}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Selling Status Section */}
-        {sellingStatuses.length > 0 && (
+        {isLoading && sellingStatuses.length === 0 ? (
+          <div>
+            <h3 className="text-xs sm:text-sm font-bold text-gray-900 mb-2 sm:mb-3 px-1">Selling Status</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1.5 sm:gap-2">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="flex flex-col sm:flex-row items-center sm:items-start gap-1.5 sm:gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-lg animate-pulse">
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 rounded-full bg-gray-200" />
+                  <div className="flex-1 min-w-0 text-center sm:text-left">
+                    <div className="h-2 sm:h-3 bg-gray-200 rounded mb-1" />
+                    <div className="h-2 sm:h-3 bg-gray-200 rounded w-1/2 mx-auto sm:mx-0" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : sellingStatuses.length > 0 && (
           <div>
             <h3 className="text-xs sm:text-sm font-bold text-gray-900 mb-2 sm:mb-3 px-1">Selling Status</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1.5 sm:gap-2">

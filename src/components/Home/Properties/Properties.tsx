@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import SectionHeading from '@/components/Helper/SectionHeading';
-import { fetchPropertyListings } from '@/data/data';
+import { RepliersAPI } from '@/lib/api/repliers';
 import PropertyCard from '@/components/Helper/PropertyCard';
 import PropertyFilters from './PropertyFilters';
 import SellRentToggle from '@/components/common/filters/SellRentToggle';
@@ -18,6 +18,8 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
+import { PropertyCardSkeleton } from "@/components/skeletons";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Properties = () => {
   const [allProperties, setAllProperties] = useState<PropertyListing[]>([]);
@@ -80,30 +82,58 @@ const Properties = () => {
   }, [location, filters.location, handleFilterChange]);
 
   useEffect(() => {
+    const controller = new AbortController();
+    let isMounted = true;
+    
     const loadProperties = async () => {
       try {
-        const listings = await fetchPropertyListings();
-        setAllProperties(listings);
-        setFilteredProperties(listings);
+        setLoading(true);
+        setError(null);
         
-        // Extract unique communities from the data
+        // Fetch only 30 properties initially for homepage performance
+        // Use API limit instead of fetching all then slicing
+        const result = await RepliersAPI.listings.getFiltered({
+          status: 'A',
+          resultsPerPage: 30,
+          page: 1,
+        });
+        
+        if (!isMounted || controller.signal.aborted) return;
+        
+        // Result already contains transformed PropertyListing[]
+        const limitedListings = result.listings || [];
+        
+        setAllProperties(limitedListings);
+        setFilteredProperties(limitedListings);
+        
+        // Extract unique communities from limited data
         const uniqueCommunities = Array.from(
           new Set(
-            listings
+            limitedListings
               .map(listing => listing.address.neighborhood)
               .filter(Boolean) as string[]
           )
         ).sort();
         setCommunities(uniqueCommunities);
       } catch (err) {
-        setError('Failed to load property listings');
-        console.error(err);
+        if (!controller.signal.aborted && isMounted) {
+          setError('Failed to load property listings');
+          console.error('Error loading properties:', err);
+        }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted && isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadProperties();
+    
+    // Cleanup: abort fetch on unmount
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
   }, []);
 
   // Filter properties based on current filters
@@ -298,55 +328,46 @@ const Properties = () => {
     };
   }, [carouselApi]);
 
+
   if (loading) return (
-    <div className="pt-12 sm:pt-16 pb-12 sm:pb-16">
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="relative mb-6">
-            {/* Property-themed loading spinner */}
-            <div className="relative w-16 h-16">
-              {/* Outer ring */}
-              <div 
-                className="absolute inset-0 border-4 border-gray-200 rounded-full"
-                style={{ animation: 'spin 3s linear infinite' }}
-              ></div>
-              
-              {/* Middle ring */}
-              <div 
-                className="absolute inset-2 border-3 border-gray-300 rounded-full"
-                style={{ animation: 'spin 2s linear infinite reverse' }}
-              ></div>
-              
-              {/* Inner ring */}
-              <div 
-                className="absolute inset-4 border-2 border-blue-500 rounded-full"
-                style={{ animation: 'spin 1s linear infinite, pulse 2s infinite' }}
-              ></div>
-              
-              {/* Center house icon */}
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                <div 
-                  className="w-4 h-4 bg-blue-500 rounded-sm"
-                  style={{ animation: 'pulse 2s infinite' }}
-                ></div>
-              </div>
-            </div>
+    <div className='pt-12 sm:pt-16 pb-12 sm:pb-16'>
+      <div className='max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8'>
+        <SectionHeading 
+          heading='Browse the Latest Properties' 
+          subheading='Latest Properties' 
+          description='Explore our latest property listings to find your perfect home, investment opportunity, or commercial space.' 
+        />
+        
+        <div className='flex flex-col lg:flex-row gap-4 mt-6 sm:mt-8 mb-2 sm:mb-4 sm:gap-5'>
+          {/* Filters skeleton */}
+          <div className="flex-1 w-full lg:w-auto">
+            <Skeleton className="h-12 w-full rounded-lg" />
           </div>
-          
-          <h3 className="text-lg font-semibold text-gray-800 mb-2 animate-fade-in">
-            Loading Properties...
-          </h3>
-          <p className="text-sm text-gray-600 mb-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            Fetching the latest listings for you
-          </p>
-          
-          {/* Progress indicator */}
-          <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden mb-4">
-            <div 
-              className="h-full bg-gradient-to-r from-blue-500 via-blue-600 to-blue-500 rounded-full"
-              style={{ animation: 'progress-fill 3s ease-out forwards' }}
-            ></div>
+          <div className="flex flex-col sm:flex-row lg:flex-row items-start sm:items-center lg:items-center gap-3 sm:gap-4 lg:gap-6 w-full lg:w-auto">
+            <Skeleton className="h-10 w-32 rounded-lg" />
           </div>
+        </div>
+
+        {/* Properties Carousel Skeleton */}
+        <div className="mt-8 sm:mt-2 relative">
+          <Carousel
+            opts={{
+              align: "start",
+              loop: false,
+            }}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-1 md:-ml-2">
+              {[...Array(8)].map((_, index) => (
+                <CarouselItem 
+                  key={index}
+                  className="pl-1 md:pl-2 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
+                >
+                  <PropertyCardSkeleton />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
         </div>
       </div>
     </div>

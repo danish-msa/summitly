@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { PropertyListing } from '@/lib/types'
-import { Calendar } from 'lucide-react'
+import { Calendar, Clock, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import ScheduleTourModal from './ScheduleTourModal'
 import RequestInfoModal from './RequestInfoModal'
@@ -13,7 +13,7 @@ interface BasicInfoProps {
   isRent?: boolean;
 }
 
-const BasicInfo: React.FC<BasicInfoProps> = ({ property }) => {
+const BasicInfo: React.FC<BasicInfoProps> = ({ property, rawProperty }) => {
   const [isScheduleTourModalOpen, setIsScheduleTourModalOpen] = useState(false);
   const [isRequestInfoModalOpen, setIsRequestInfoModalOpen] = useState(false);
   
@@ -73,35 +73,44 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ property }) => {
     setIsRequestInfoModalOpen(true);
   };
 
+  // Get listing provider name
+  const listingProvider = rawProperty?.office?.brokerageName || 'Summitly';
+
   return (
-    <div className="w-full border border-gray-100">
+    <div className="w-full">
       {/* Request a Tour / Book Appointment Section */}
-      <div className="space-y-3 pb-6 border-b border-gray-200 bg-white p-6 rounded-xl shadow-sm ">
-        <div className="text-base text-center font-regular text-gray-900">
-          <span className="text-gray-700">
-            Request a tour as early as<br />{' '}
-            <span className=" font-semibold text-gray-900">
-              {getNearestAvailableDateTime.shortDate} at {getNearestAvailableDateTime.time}
-            </span>
-          </span>
+      <div className="bg-white p-6 rounded-xl shadow-lg">
+        {/* Tour Availability Header */}
+        <div className="mb-4 pb-4 border-b border-gray-200">
+          <div className="flex items-center gap-2 mb-2">
+            <Clock className="h-4 w-4 text-secondary" />
+            <span className="text-sm text-gray-600">Request a tour as early as</span>
+          </div>
+          <div className="text-xl font-bold text-gray-900">
+            {getNearestAvailableDateTime.shortDate} at {getNearestAvailableDateTime.time}
+          </div>
         </div>
-        {/* Two Buttons */}
-        <div className="flex flex-col gap-3">
-          <Button 
+
+        {/* Action Buttons */}
+        <div className="flex flex-row gap-3">
+          <Button
+            variant="default"
             onClick={handleScheduleTour}
-            className="flex-1 bg-brand-celestial hover:bg-brand-midnight text-white font-semibold py-2 rounded-lg transition-colors"
+            className="w-full text-white font-semibold py-6 rounded-lg transition-colors flex items-center justify-center gap-2"
           >
-            <Calendar className="h-4 w-4 mr-2" />
+            <Calendar className="h-4 w-4" />
             Schedule Tour
           </Button>
           <Button 
             onClick={handleRequestInfo}
             variant="outline"
-            className="flex-1 border-brand-celestial text-brand-celestial hover:bg-brand-celestial hover:text-white font-semibold py-2 rounded-lg transition-colors"
+            className="w-full font-semibold py-6 rounded-lg transition-colors flex items-center justify-center gap-2"
           >
+            <Info className="h-4 w-4" />
             Request Info
           </Button>
         </div>
+
       </div>
 
       {/* Schedule Tour Modal */}

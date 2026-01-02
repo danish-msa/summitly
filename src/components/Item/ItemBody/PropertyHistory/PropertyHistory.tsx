@@ -4,9 +4,16 @@ import ListingTimeline from './ListingTimeline';
 import PriceChange from './PriceChange';
 import TaxHistory from './TaxHistory';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  VerticalTabs, 
+  VerticalTabsList, 
+  VerticalTabsTrigger, 
+  VerticalTabsContent,
+  VerticalTabsContainer
+} from '@/components/ui/vertical-tabs';
 import EstimateHistorySection from './EstimateHistorySection';
 import { Button } from '@/components/ui/button';
-import { HistoryIcon } from 'lucide-react';
+import { HistoryIcon, Clock, TrendingUp, Receipt } from 'lucide-react';
 
 export default function PropertyHistory({ listingHistory, property, rawProperty }: PropertyHistoryProps) {
   // Get property address
@@ -36,26 +43,39 @@ export default function PropertyHistory({ listingHistory, property, rawProperty 
   });
 
   return (
-    <div className="w-full mt-5">
-      <Tabs defaultValue="timeline" className="w-full">
-        <TabsList className=" h-12 p-1">
-          <TabsTrigger value="timeline" className="py-2 text-base">Listing Timeline</TabsTrigger>
-          <TabsTrigger value="price" className="py-2 text-base">Price Change</TabsTrigger>
-          <TabsTrigger value="tax" className="py-2 text-base">Tax History</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="timeline" className="mt-0">
-          <ListingTimeline groupedHistory={groupedHistory} propertyAddress={propertyAddress} />
-        </TabsContent>
-        
-        <TabsContent value="price" className="mt-0">
-          <PriceChange groupedHistory={groupedHistory} propertyAddress={propertyAddress} />
-        </TabsContent>
-        
-        <TabsContent value="tax" className="mt-0">
-          <TaxHistory property={property} propertyAddress={propertyAddress} />
-        </TabsContent>
-      </Tabs>
+    <div className="w-full">
+      <VerticalTabs defaultValue="timeline" className="w-full">
+        <VerticalTabsContainer>
+          <VerticalTabsList>
+            <VerticalTabsTrigger value="timeline" className="flex items-center gap-3">
+              <Clock className="h-6 w-6 text-secondary" />
+              <span>Listing Timeline</span>
+            </VerticalTabsTrigger>
+            <VerticalTabsTrigger value="price" className="flex items-center gap-3">
+              <TrendingUp className="h-6 w-6 text-secondary" />
+              <span>Price Change</span>
+            </VerticalTabsTrigger>
+            <VerticalTabsTrigger value="tax" className="flex items-center gap-3">
+              <Receipt className="h-6 w-6 text-secondary" />
+              <span>Tax History</span>
+            </VerticalTabsTrigger>
+          </VerticalTabsList>
+          
+          <div className="flex-1">
+            <VerticalTabsContent value="timeline">
+              <ListingTimeline groupedHistory={groupedHistory} propertyAddress={propertyAddress} />
+            </VerticalTabsContent>
+            
+            <VerticalTabsContent value="price">
+              <PriceChange groupedHistory={groupedHistory} propertyAddress={propertyAddress} />
+            </VerticalTabsContent>
+            
+            <VerticalTabsContent value="tax">
+              <TaxHistory property={property} propertyAddress={propertyAddress} />
+            </VerticalTabsContent>
+          </div>
+        </VerticalTabsContainer>
+      </VerticalTabs>
       <EstimateHistorySection propertyAddress={propertyAddress} rawProperty={rawProperty} />
       
       {/* Call to Action */}

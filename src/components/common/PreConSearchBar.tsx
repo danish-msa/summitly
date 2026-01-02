@@ -337,7 +337,8 @@ const PreConSearchBar: React.FC<PreConSearchBarProps> = ({
               sellingStatuses={displayStatuses}
               onCitySelect={handleCitySelectInternal}
               onStatusSelect={handleStatusSelectInternal}
-              isOpen={isSuggestionsOpen && !loadingCities && !loadingStatuses}
+              isOpen={isSuggestionsOpen}
+              isLoading={loadingCities || loadingStatuses}
             />
           )}
         </>

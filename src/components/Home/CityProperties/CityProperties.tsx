@@ -1,7 +1,14 @@
-import { useEffect, useState } from 'react';
+"use client";
+
+import { useState, useEffect } from 'react';
 import SectionHeading from '@/components/Helper/SectionHeading'
-import { fetchTopCities } from '@/data/data';
 import CitySlider from './CitySlider';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from '@/components/ui/carousel';
 
 interface City {
   id: number;
@@ -10,25 +17,69 @@ interface City {
   numberOfProperties: number;
 }
 
+// Static city data - no API calls for better performance
+const STATIC_CITIES: City[] = [
+  {
+    id: 1,
+    image: '/images/cities/toronto.webp',
+    cityName: 'Toronto',
+    numberOfProperties: 0, // Count removed for performance
+  },
+  {
+    id: 2,
+    image: '/images/cities/vancouver.webp',
+    cityName: 'Vancouver',
+    numberOfProperties: 0,
+  },
+  {
+    id: 3,
+    image: '/images/cities/calgary.webp',
+    cityName: 'Calgary',
+    numberOfProperties: 0,
+  },
+  {
+    id: 4,
+    image: '/images/cities/montreal.webp',
+    cityName: 'Montreal',
+    numberOfProperties: 0,
+  },
+  {
+    id: 5,
+    image: '/images/cities/ottawa.webp',
+    cityName: 'Ottawa',
+    numberOfProperties: 0,
+  },
+  {
+    id: 6,
+    image: '/images/cities/edmonton.webp',
+    cityName: 'Edmonton',
+    numberOfProperties: 0,
+  },
+  {
+    id: 7,
+    image: '/images/cities/mississauga.webp',
+    cityName: 'Mississauga',
+    numberOfProperties: 0,
+  },
+  {
+    id: 8,
+    image: '/images/cities/winnipeg.webp',
+    cityName: 'Winnipeg',
+    numberOfProperties: 0,
+  },
+];
+
 const CityProperties = () => {
-  const [cities, setCities] = useState<City[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const cities = STATIC_CITIES;
 
+  // Simulate loading time for images
   useEffect(() => {
-    const loadCities = async () => {
-      try {
-        const topCities = await fetchTopCities();
-        setCities(topCities);
-      } catch (err) {
-        setError('Failed to load city data');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500); // Short delay to show skeleton
 
-    loadCities();
+    return () => clearTimeout(timer);
   }, []);
 
   return (
@@ -41,40 +92,42 @@ const CityProperties = () => {
         />
         <div className='mt-7 md:mt-20'>
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <div className="relative mb-6">
-                {/* City-themed loading spinner */}
-                <div className="relative w-16 h-16">
-                  {/* Outer ring */}
-                  <div className="absolute inset-0 border-4 border-gray-200 rounded-full animate-spin-slow"></div>
-                  
-                  {/* Middle ring */}
-                  <div className="absolute inset-2 border-3 border-gray-300 rounded-full animate-spin-reverse"></div>
-                  
-                  {/* Inner ring */}
-                  <div className="absolute inset-4 border-2 border-secondary rounded-full animate-spin animate-pulse-glow"></div>
-                  
-                  {/* Center city icon */}
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                    <div className="w-4 h-4 bg-secondary rounded-full animate-pulse-glow"></div>
-                  </div>
-                </div>
-              </div>
-              
-              <h3 className="text-lg font-semibold text-gray-800 mb-2 animate-fade-in">
-                Loading City Data...
-              </h3>
-              <p className="text-sm text-gray-600 mb-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-                Fetching popular cities and their properties
-              </p>
-              
-              {/* Progress indicator */}
-              <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden mb-4">
-                <div className="h-full bg-gradient-to-r from-secondary via-blue-500 to-secondary rounded-full animate-progress-fill"></div>
-              </div>
+            <div className="relative">
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                  breakpoints: {
+                    "(max-width: 640px)": {
+                      dragFree: true,
+                    },
+                  },
+                }}
+                className="w-full"
+              >
+                <CarouselContent className="-ml-2 md:-ml-4">
+                  {[...Array(8)].map((_, index) => (
+                    <CarouselItem
+                      key={index}
+                      className="pl-2 md:pl-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
+                    >
+                      <div className='relative rounded-lg overflow-hidden m-2'>
+                        {/* Image Skeleton */}
+                        <Skeleton className='w-full h-[250px] rounded-2xl' />
+                        
+                        {/* Bottom Overlay Skeleton */}
+                        <div className='absolute bottom-2 left-2 right-2 rounded-xl px-4 pt-4 pb-4 bg-white flex justify-between items-center'>
+                          <div className='flex flex-col flex-1'>
+                            <Skeleton className='h-5 w-24 mb-1' />
+                          </div>
+                          <Skeleton className='h-8 w-8 rounded-full' />
+                        </div>
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+              </Carousel>
             </div>
-          ) : error ? (
-            <div className="text-center py-10 text-red-500">{error}</div>
           ) : (
             <CitySlider cities={cities} />
           )}

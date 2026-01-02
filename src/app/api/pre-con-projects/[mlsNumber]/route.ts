@@ -114,7 +114,7 @@ export async function GET(
       type UnitWithImages = typeof unit & { images?: string[]; floorplanImage?: string | null; studio?: boolean }
       const unitWithImages = unit as UnitWithImages
       const unitImages = unitWithImages.images || (unitWithImages.floorplanImage ? [unitWithImages.floorplanImage] : [])
-      // Convert image URLs from Supabase to S3
+      // Convert image URLs to S3 format
       const convertedImages = unitImages.length > 0 
         ? unitImages.map(img => convertToS3Url(img))
         : ['/images/floorplan-placeholder.jpg']

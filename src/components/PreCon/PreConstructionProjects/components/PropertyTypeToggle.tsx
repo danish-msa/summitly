@@ -44,7 +44,7 @@ const PropertyTypeToggle: React.FC<PropertyTypeToggleProps> = ({
     <div className="mt-6 mb-4">
       {/* Mobile: Horizontal scrollable container */}
       <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible">
-        <div className="flex flex-nowrap md:flex-wrap md:justify-center items-center gap-3 min-w-max md:min-w-0">
+        <div className="flex flex-nowrap md:flex-wrap gap-3 min-w-max md:min-w-0">
           {propertyTypes.map((type) => {
             const isActive = filters.propertyType === type;
             return (
@@ -52,7 +52,7 @@ const PropertyTypeToggle: React.FC<PropertyTypeToggleProps> = ({
                 key={type}
                 onClick={() => handleTypeClick(type)}
                 className={cn(
-                  "px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-all duration-200 border border-gray-300 flex-shrink-0 whitespace-nowrap",
+                  "px-4 py-2 rounded-tl-xl rounded-tr-xl text-sm sm:text-base font-medium transition-all duration-200 shadow-sm flex-shrink-0 whitespace-nowrap",
                   "hover:scale-105",
                   isActive
                     ? "bg-primary text-white border-primary shadow-md"

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { PreConstructionPropertyCardV3 } from '@/components/PreCon/PropertyCards';
 import type { PreConstructionProperty } from '@/components/PreCon/PropertyCards/types';
 import SectionHeading from '@/components/Helper/SectionHeading';
@@ -15,6 +15,7 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
+import { PreConstructionCardSkeleton } from "@/components/skeletons";
 
 const PreConstruction: React.FC = () => {
   const [projects, setProjects] = useState<PropertyListing[]>([]);
@@ -26,13 +27,18 @@ const PreConstruction: React.FC = () => {
 
   // Fetch pre-construction projects from backend
   useEffect(() => {
+    const controller = new AbortController();
+    let isMounted = true;
+    
     const fetchProjects = async () => {
       try {
         setLoading(true);
         setError(null);
 
         // Fetch featured projects first, fallback to recent projects
-        const response = await fetch('/api/pre-con-projects?limit=4&featured=true');
+        const response = await fetch('/api/pre-con-projects?limit=4&featured=true', {
+          signal: controller.signal,
+        });
         
         if (!response.ok) {
           throw new Error('Failed to fetch pre-construction projects');
@@ -42,8 +48,10 @@ const PreConstruction: React.FC = () => {
         let fetchedProjects = data.projects || [];
 
         // If we don't have enough featured projects, fetch recent ones
-        if (fetchedProjects.length < 4) {
-          const recentResponse = await fetch('/api/pre-con-projects?limit=4');
+        if (fetchedProjects.length < 4 && !controller.signal.aborted && isMounted) {
+          const recentResponse = await fetch('/api/pre-con-projects?limit=4', {
+            signal: controller.signal,
+          });
           if (recentResponse.ok) {
             const recentData = await recentResponse.json();
             const recentProjects = recentData.projects || [];
@@ -58,17 +66,29 @@ const PreConstruction: React.FC = () => {
           }
         }
 
-        setProjects(fetchedProjects);
+        if (!controller.signal.aborted && isMounted) {
+          setProjects(fetchedProjects);
+        }
       } catch (err) {
-        console.error('Error fetching pre-construction projects:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load projects');
-        setProjects([]);
+        if (!controller.signal.aborted && isMounted) {
+          console.error('Error fetching pre-construction projects:', err);
+          setError(err instanceof Error ? err.message : 'Failed to load projects');
+          setProjects([]);
+        }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted && isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchProjects();
+    
+    // Cleanup: abort fetch on unmount
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
   }, []);
 
   // Convert PropertyListing to PreConstructionProperty format
@@ -106,9 +126,27 @@ const PreConstruction: React.FC = () => {
           position="center"
         />
 
+        {/* Pre-Construction Card Skeleton Component */}
         {loading && (
-          <div className="flex justify-center items-center py-12">
-            <div className="text-base sm:text-lg text-gray-600">Loading projects...</div>
+          <div className="mt-8 sm:mt-12 relative">
+            <Carousel
+              opts={{
+                align: "start",
+                loop: false,
+              }}
+              className="w-full"
+            >
+              <CarouselContent className="-ml-1 md:-ml-2">
+                {[...Array(4)].map((_, index) => (
+                  <CarouselItem 
+                    key={index}
+                    className="pl-1 md:pl-2 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
+                  >
+                    <PreConstructionCardSkeleton />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
           </div>
         )}
 

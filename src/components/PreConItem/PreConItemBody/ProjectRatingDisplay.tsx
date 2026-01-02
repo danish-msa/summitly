@@ -130,16 +130,16 @@ const ProjectRatingDisplay: React.FC<ProjectRatingDisplayProps> = ({ propertyId 
               )}
               aria-label={`Rate ${star} out of 5 stars`}
             >
-              <Star
-                className={cn(
-                  "h-5 w-5 transition-colors",
-                  isActive || isHovered
-                    ? "text-yellow-400 fill-yellow-400"
-                    : isAverage && ratingData.average > 0 && !hasRated
-                    ? "text-yellow-400 fill-yellow-400"
-                    : "text-gray-300 hover:text-yellow-300"
-                )}
-              />
+            <Star
+              className={cn(
+                "h-6 w-6 transition-colors",
+                isActive || isHovered
+                  ? "text-yellow-400 fill-yellow-400"
+                  : isAverage && ratingData.average > 0 && !hasRated
+                  ? "text-yellow-400 fill-yellow-400"
+                  : "text-primary/50 hover:text-yellow-300"
+              )}
+            />
             </button>
           );
         })}

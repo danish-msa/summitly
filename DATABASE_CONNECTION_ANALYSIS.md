@@ -46,7 +46,7 @@ Supabase provides different connection string formats:
 **You DON'T need:**
 - ❌ `@supabase/ssr` package
 - ❌ `createServerClient()` function
-- ❌ `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (unless you want Supabase client features later)
+- ❌ Supabase client SDK packages
 
 ---
 

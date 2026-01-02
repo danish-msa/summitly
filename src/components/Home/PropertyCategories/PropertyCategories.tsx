@@ -4,6 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { ButtonColorful } from '@/components/ui/button-colorful';
 import Image from 'next/image';
 import { useLocationDetection } from '@/hooks/useLocationDetection';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 interface PropertyCategory {
   id: number;
@@ -84,9 +86,13 @@ const PropertyCategories = () => {
   const displayLocation = location ? location.fullLocation : "Henderson, NV";
 
   useEffect(() => {
+    const controller = new AbortController();
+    
     const fetchCategoryCounts = async () => {
       try {
-        const response = await fetch('/api/property-categories');
+        const response = await fetch('/api/property-categories', {
+          signal: controller.signal,
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch category counts');
         }
@@ -99,16 +105,27 @@ const PropertyCategories = () => {
           count: data[cat.apiKey]?.count || 0,
         }));
         
-        setCategories(updatedCategories);
+        if (!controller.signal.aborted) {
+          setCategories(updatedCategories);
+        }
       } catch (error) {
-        console.error('Error fetching category counts:', error);
-        // Keep default counts (0) on error
+        if (!controller.signal.aborted) {
+          console.error('Error fetching category counts:', error);
+          // Keep default counts (0) on error
+        }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchCategoryCounts();
+    
+    // Cleanup: abort fetch on unmount
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   return (
@@ -148,6 +165,7 @@ const PropertyCategories = () => {
                     src={category.image}
                     alt={category.title}
                     fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     className="object-cover transition-transform duration-300 group-hover:scale-110"
                   />
                   
@@ -191,13 +209,15 @@ const PropertyCategories = () => {
             <h3 className="text-xl font-semibold text-foreground">
               Ready to find your perfect property?
             </h3>
-            <ButtonColorful label="Start Searching" href="/listings" />
+            <Button variant="secondary" asChild>
+              <Link href="/listings">
+                Start Searching
+              </Link>
+            </Button>
           </div>
-        </motion.div>
-        
-      </div>
+        </motion.div>  </div>
     </section>
   );
-};
+}
 
 export default PropertyCategories;

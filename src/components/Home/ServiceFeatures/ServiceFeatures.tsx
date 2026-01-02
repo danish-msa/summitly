@@ -29,21 +29,21 @@ const servicesData: ServiceData[] = [
         icon: Search,
         title: "Smart Property Search",
         description: "Find your perfect home with our advanced search filters and AI-powered recommendations tailored to your preferences.",
-        colorClass: "feature-bg-1 border",
+        colorClass: "border",
         iconColorClass: "text-blue-600",
       },
       {
         icon: DollarSign,
         title: "Competitive Pricing",
         description: "Get the best deals with our market analysis and negotiation expertise. We help you buy at the right price.",
-        colorClass: "feature-bg-2 border",
+        colorClass: "border",
         iconColorClass: "text-rose-600",
       },
       {
         icon: Key,
         title: "Seamless Process",
         description: "From viewing to closing, we guide you through every step with our streamlined buying process and expert support.",
-        colorClass: "feature-bg-3 border",
+        colorClass: "border",
         iconColorClass: "text-emerald-600",
       },
     ]
@@ -57,21 +57,21 @@ const servicesData: ServiceData[] = [
         icon: Search,
         title: "Market Analysis",
         description: "Get accurate property valuations and market insights to price your home competitively and sell faster.",
-        colorClass: "feature-bg-4 border",
+        colorClass: "border",
         iconColorClass: "text-amber-600",
       },
       {
         icon: Home,
         title: "Professional Marketing",
         description: "Showcase your property with professional photography, virtual tours, and targeted marketing campaigns.",
-        colorClass: "feature-bg-5 border",
+        colorClass: "border",
         iconColorClass: "text-blue-600",
       },
       {
         icon: Key,
         title: "Expert Negotiation",
         description: "Maximize your sale price with our experienced negotiators who work to get you the best possible deal.",
-        colorClass: "feature-bg-6 border",
+        colorClass: "border",
         iconColorClass: "text-rose-600",
       },
     ]
@@ -85,21 +85,21 @@ const servicesData: ServiceData[] = [
         icon: Search,
         title: "Extensive Listings",
         description: "Browse thousands of rental properties with detailed photos, virtual tours, and comprehensive property information.",
-        colorClass: "feature-bg-1 border",
+        colorClass: "border",
         iconColorClass: "text-blue-600",
       },
       {
         icon: Home,
         title: "Verified Properties",
         description: "All our rental listings are verified for accuracy and quality, ensuring you find legitimate and well-maintained properties.",
-        colorClass: "feature-bg-2 border",
+        colorClass: "border",
         iconColorClass: "text-rose-600",
       },
       {
         icon: DollarSign,
         title: "Transparent Pricing",
         description: "No hidden fees or surprises. See all costs upfront including rent, deposits, and any additional charges.",
-        colorClass: "feature-bg-3 border",
+        colorClass: "border",
         iconColorClass: "text-emerald-600",
       },
     ]
@@ -113,21 +113,21 @@ const servicesData: ServiceData[] = [
         icon: DollarSign,
         title: "Best Rates",
         description: "Compare mortgage rates from top lenders and secure the best deal with our network of trusted financial partners.",
-        colorClass: "feature-bg-4 border",
+        colorClass: "border",
         iconColorClass: "text-amber-600",
       },
       {
         icon: Calculator,
         title: "Mortgage Calculator",
         description: "Calculate your monthly payments, affordability, and total costs with our comprehensive mortgage calculator tools.",
-        colorClass: "feature-bg-5 border",
+        colorClass: "border",
         iconColorClass: "text-blue-600",
       },
       {
         icon: Key,
         title: "Pre-Approval Process",
         description: "Get pre-approved quickly with our streamlined application process and expert guidance through every step.",
-        colorClass: "feature-bg-6 border",
+        colorClass: "border",
         iconColorClass: "text-rose-600",
       },
     ]
@@ -141,21 +141,21 @@ const servicesData: ServiceData[] = [
         icon: Home,
         title: "Instant Valuation",
         description: "Get an accurate home value estimate in minutes using our advanced AI-powered property valuation technology.",
-        colorClass: "feature-bg-1 border",
+        colorClass: "border",
         iconColorClass: "text-blue-600",
       },
       {
         icon: DollarSign,
         title: "Market Comparison",
         description: "Compare your property with similar homes in your area to understand your home's market position and value.",
-        colorClass: "feature-bg-2 border",
+        colorClass: "border",
         iconColorClass: "text-rose-600",
       },
       {
         icon: Search,
         title: "Detailed Report",
         description: "Receive a comprehensive valuation report with market trends, neighborhood insights, and property recommendations.",
-        colorClass: "feature-bg-3 border",
+        colorClass: "border",
         iconColorClass: "text-emerald-600",
       },
     ]
@@ -166,7 +166,7 @@ export default function ServiceFeatures() {
   const [activeService, setActiveService] = useState('buy');
 
   return (
-    <section className="w-full py-16 px-4 sm:px-6 lg:px-8 bg-white">
+    <section className="w-full py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-[1300px] mx-auto">
         {/* Section Header */}
         <motion.div
@@ -185,12 +185,11 @@ export default function ServiceFeatures() {
 
         {/* Service Tabs */}
         <Tabs value={activeService} onValueChange={setActiveService} className="mt-8">
-          <TabsList className="inline-flex md:grid md:grid-cols-5 h-auto gap-2 bg-brand-glacier/30 p-2 rounded-xl m-auto">
+          <TabsList className="inline-flex md:grid md:grid-cols-5 h-auto ">
             {servicesData.map((service) => (
               <TabsTrigger
                 key={service.id}
                 value={service.id}
-                className="data-[state=active]:bg-secondary data-[state=active]:text-white text-base flex items-center gap-2 py-3 rounded-lg transition-all duration-300"
               >
                 <service.icon className="w-4 h-4" />
                 <span>{service.name}</span>
@@ -202,37 +201,20 @@ export default function ServiceFeatures() {
             <TabsContent
               key={service.id}
               value={service.id}
-              className="mt-8 animate-fade-in"
+              className="transition-none"
+              style={{ animation: 'none', transition: 'none' }}
             >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={service.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -30 }}
-                  transition={{ duration: 0.5 }}
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                >
+              <div
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
                   {service.features.map((feature, index) => (
-                    <motion.div
+                    <div
                       key={`${service.id}-${index}`}
-                      initial={{ opacity: 0, y: 30 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.6, delay: index * 0.1 }}
-                      className={`${feature.colorClass} border rounded-2xl px-6 py-4 transition-all duration-300 hover:scale-105 hover:translate-y-1 hover:shadow-md group`}
+                      className="group"
                     >
-                      <div className='flex items-center gap-2'>
-                        {/* Icon Container */}
-                        <motion.div 
-                          className="bg-white/80 backdrop-blur-sm rounded-xl p-2 w-fit mb-2 shadow-sm border border-white/50 transition-all duration-300"
-                          whileHover={{ scale: 1.05 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <feature.icon className={`w-6 h-6 ${feature.iconColorClass}`} />
-                        </motion.div>
-                        
+                      <div>
                         {/* Content */}
-                        <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors duration-300">
+                        <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors duration-300 mb-2">
                           {feature.title}
                         </h3>
                       </div>
@@ -240,10 +222,9 @@ export default function ServiceFeatures() {
                       <p className="text-muted-foreground leading-relaxed">
                         {feature.description}
                       </p>
-                    </motion.div>
+                    </div>
                   ))}
-                </motion.div>
-              </AnimatePresence>
+              </div>
             </TabsContent>
           ))}
         </Tabs>

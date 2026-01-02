@@ -135,7 +135,7 @@ export async function GET(request: NextRequest) {
           ? (developerMap.get(project.developer) || project.developer)
           : null;
         
-        // Get first image, ensure it's a valid URL (convert from Supabase to S3)
+        // Get first image, ensure it's a valid URL
         const firstImage = project.images && project.images.length > 0 
           ? convertToS3Url(project.images[0])
           : null;

@@ -3,6 +3,10 @@ import { prisma } from '@/lib/prisma'
 import { convertToS3Url } from '@/lib/image-url'
 import { Prisma } from '@prisma/client'
 
+// Caching configuration for better performance
+export const dynamic = 'force-dynamic' // Keep dynamic for real-time filtering
+export const revalidate = 60 // Cache for 60 seconds
+
 // GET - Public endpoint to fetch all pre-con projects for website display
 export async function GET(request: NextRequest) {
   try {
@@ -619,7 +623,14 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({ projects: formattedProjects })
+    return NextResponse.json(
+      { projects: formattedProjects },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+        },
+      }
+    )
   } catch (error) {
     // Enhanced error logging for debugging production issues
     const errorDetails = {

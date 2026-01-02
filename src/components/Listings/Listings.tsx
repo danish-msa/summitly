@@ -9,6 +9,7 @@ import { LOCATIONS, REGIONS } from '@/lib/types/filters';
 import SellRentToggle from '@/components/common/filters/SellRentToggle';
 import { useHiddenProperties } from '@/hooks/useHiddenProperties';
 import GlobalFilters from '../common/filters/GlobalFilters';
+import { PropertyCardSkeleton } from '@/components/skeletons';
 
 const Listings = () => {
   const [properties, setProperties] = useState<PropertyListing[]>([]);
@@ -288,8 +289,10 @@ const Listings = () => {
       
       {/* Property Listings */}
       {loading ? (
-        <div className="flex justify-center items-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-secondary"></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-10">
+          {[...Array(12)].map((_, index) => (
+            <PropertyCardSkeleton key={index} />
+          ))}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-10">
@@ -323,8 +326,10 @@ const Listings = () => {
       {/* Infinite Scroll Observer Target */}
       <div ref={observerTarget} className="h-10 flex items-center justify-center">
         {isLoadingMore && (
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-secondary"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-10 w-full">
+            {[...Array(4)].map((_, index) => (
+              <PropertyCardSkeleton key={`loading-${index}`} />
+            ))}
           </div>
         )}
         {!hasMore && visibleProperties.length > 0 && (

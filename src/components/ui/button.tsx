@@ -10,16 +10,17 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          // "btn-gradient-default text-brand-midnight border-0",
-          "bg-brand-celestial hover:bg-brand-midnight text-white border-0",
+          "bg-secondary text-white border-0 rounded-lg hover:bg-[#17B0D9] hover:text-white hover:shadow-[0_0_0_5px_rgba(26,192,235,0.2)] transition-all duration-300",
         destructive:
-          "btn-gradient-destructive text-red-800 border-0",
+          "bg-[#fef2f2] text-[#dc2626] border-0 rounded-lg hover:bg-[#dc2626] hover:text-white hover:shadow-[0_0_0_5px_rgba(220,38,38,0.373)] transition-all duration-300",
         outline:
-          "btn-gradient-outline text-primary-700",
+          "bg-transparent text-secondary border-2 border-secondary rounded-lg hover:bg-secondary/10 hover:text-secondary hover:border-secondary transition-all duration-300",
         secondary:
-          "btn-gradient-secondary text-secondary-800 border-0",
-        ghost: "hover:bg-gradient-to-r hover:from-primary-50 hover:to-primary-100 text-primary-700 transition-[background] duration-500 ease-in-out",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-[#3b82f6] text-white border-0 rounded-lg hover:bg-[#3b82f6]/90 hover:text-white hover:shadow-[0_0_0_5px_rgba(59,131,246,0.373)] transition-all duration-300",
+        ghost: 
+          "bg-transparent text-[#001D3D] border-0 rounded-lg hover:bg-[#001D3D] hover:text-white hover:shadow-[0_0_0_5px_rgba(0,29,61,0.373)] transition-all duration-300",
+        link: 
+          "bg-transparent text-[#001D3D] border-0 rounded-lg hover:bg-[#001D3D] hover:text-white hover:shadow-[0_0_0_5px_rgba(0,29,61,0.373)] transition-all duration-300 underline-offset-4 hover:underline",
       },
       size: {
         default: "h-10 px-4 py-2 rounded-full",

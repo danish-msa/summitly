@@ -63,17 +63,16 @@ export function getS3PublicUrl(filePath: string): string {
 }
 
 /**
- * Convert Supabase storage URL to S3 URL
- * Handles migration from Supabase to S3
- * @param supabaseUrl - Old Supabase storage URL
- * @returns S3 URL or original URL if not a Supabase URL
+ * Convert legacy storage URL to S3 URL (for backward compatibility)
+ * @param url - Legacy storage URL
+ * @returns S3 URL or original URL if not a legacy storage URL
  */
-export function convertSupabaseUrlToS3(supabaseUrl: string): string {
-  if (!supabaseUrl) return supabaseUrl
+export function convertSupabaseUrlToS3(url: string): string {
+  if (!url) return url
   
-  // Check if it's a Supabase storage URL
-  const supabasePattern = /https:\/\/[^/]+\.supabase\.co\/storage\/v1\/object\/public\/(images|documents)\/(.+)$/
-  const match = supabaseUrl.match(supabasePattern)
+  // Check if it's a legacy storage URL (kept for backward compatibility)
+  const legacyPattern = /https:\/\/[^/]+\.supabase\.co\/storage\/v1\/object\/public\/(images|documents)\/(.+)$/
+  const match = url.match(legacyPattern)
   
   if (match) {
     const [, bucket, path] = match
@@ -81,7 +80,7 @@ export function convertSupabaseUrlToS3(supabaseUrl: string): string {
     return getS3PublicUrl(`${bucket}/${path}`)
   }
   
-  // Return original URL if not a Supabase URL
-  return supabaseUrl
+  // Return original URL if not a legacy storage URL
+  return url
 }
 
