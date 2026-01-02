@@ -4,9 +4,9 @@
  */
 
 interface CachedRequest {
-  data: any;
+  data: unknown;
   timestamp: number;
-  promise: Promise<any>;
+  promise: Promise<Response>;
 }
 
 const requestCache = new Map<string, CachedRequest>();
