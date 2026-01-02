@@ -12,6 +12,8 @@ import BannerGallery from './Banner/BannerGallery'
 import SectionNavigation from './ItemBody/SectionNavigation'
 import StickyPropertyBar from './StickyPropertyBar'
 import Breadcrumbs from './Breadcrumbs'
+import { Button } from '@/components/ui/button'
+import { Bell } from 'lucide-react'
 
 // Mock pre-construction data
 const getMockPreConData = () => ({
@@ -114,6 +116,7 @@ const ItemPreCon: React.FC = () => {
   const [property, setProperty] = useState<PropertyListing | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isPropertyAlertsOpen, setIsPropertyAlertsOpen] = useState(false);
 
   useEffect(() => {
     const fetchPropertyDetails = async () => {
@@ -179,7 +182,17 @@ const ItemPreCon: React.FC = () => {
           </div>
           <div className='w-[30%] flex flex-col gap-4 items-start gap-0 sticky top-[130px] self-start'>
             <BasicInfo property={property} rawProperty={null} isPreCon={true} />
+            <Button
+              variant="outline"
+              onClick={() => setIsPropertyAlertsOpen(true)}
+              className="w-full justify-start gap-2"
+            >
+              <Bell className="h-4 w-4" />
+              Set Property Alerts
+            </Button>
             <PropertyAlerts 
+              open={isPropertyAlertsOpen}
+              onOpenChange={setIsPropertyAlertsOpen}
               propertyId={property.mlsNumber} 
               cityName={property.address.city || 'this area'}
               propertyType={property.details.propertyType || 'property'}
