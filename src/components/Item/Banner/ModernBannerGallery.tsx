@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { PropertyListing } from '@/lib/types'
-import { ChevronLeft, ChevronRight, Layers, Map as MapIcon } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Layers, Map as MapIcon, Minus, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -13,6 +13,25 @@ import Zoom from 'yet-another-react-lightbox/plugins/zoom'
 import Fullscreen from 'yet-another-react-lightbox/plugins/fullscreen'
 import 'yet-another-react-lightbox/styles.css'
 import Image from 'next/image'
+import { Slider } from '@/components/ui/slider'
+
+// Custom styles for lightbox close button position (left side)
+const lightboxStyles = `
+  .yarl__button[aria-label="Close"],
+  .yarl__button[aria-label*="Close"],
+  button[aria-label="Close"],
+  button[aria-label*="Close"] {
+    left: 1rem !important;
+    right: auto !important;
+  }
+  
+  /* Also target by class if aria-label doesn't work */
+  .yarl__button.yarl__button_close,
+  .yarl__button_close {
+    left: 1rem !important;
+    right: auto !important;
+  }
+`
 
 interface ModernBannerGalleryProps {
   property: PropertyListing
@@ -37,6 +56,7 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0)
   const [defaultTab, setDefaultTab] = useState<string>('all')
   const [thumbnailStartIndex, setThumbnailStartIndex] = useState(0)
+  const [gridColumns, setGridColumns] = useState([4]) // Default to 4 columns (xl:grid-cols-4)
 
   // Get image source with fallback
   const getImageSrc = (index: number) => {
@@ -91,9 +111,24 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
     floorplan: categorizedImages.filter(img => img.category === 'floorplan').length,
   }
 
+  // Get grid columns class based on slider value
+  const getGridColsClass = () => {
+    const cols = gridColumns[0]
+    const gridMap: Record<number, string> = {
+      1: 'grid-cols-1',
+      2: 'grid-cols-1 md:grid-cols-2',
+      3: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
+      4: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
+      5: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5',
+      6: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6',
+    }
+    return gridMap[cols] || gridMap[4]
+  }
+
   const handleImageClick = (index: number) => {
     setLightboxIndex(index)
     setIsLightboxOpen(true)
+    // Keep modal open - lightbox will appear on top
   }
 
   const handleModalOpen = (tab: string = 'all') => {
@@ -157,6 +192,7 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
 
   return (
     <>
+      <style>{lightboxStyles}</style>
       <div className="relative w-full">
         {/* Main Image Container */}
         <div className="relative w-full aspect-[16/10] bg-muted rounded-xl overflow-hidden group">
@@ -164,9 +200,21 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
             src={categorizedImages[currentSlideIndex]?.src || property.images.imageUrl}
             alt={categorizedImages[currentSlideIndex]?.alt || 'Property image'}
             fill
-            className="object-cover transition-opacity duration-300"
+            className="object-cover transition-opacity duration-300 cursor-pointer"
             priority
             onError={() => handleImageError(currentSlideIndex)}
+            onClick={() => {
+              // Open the gallery modal only
+              const currentImage = categorizedImages[currentSlideIndex]
+              if (currentImage) {
+                setActiveCategory(currentImage.category)
+                setDefaultTab(currentImage.category)
+              } else {
+                setActiveCategory('all')
+                setDefaultTab('all')
+              }
+              setIsModalOpen(true)
+            }}
           />
 
           {/* Navigation Arrows */}
@@ -210,7 +258,7 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
         </div>
 
         {/* Thumbnail Carousel */}
-        <div className="mt-4 flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+        <div className="mt-4 py-1 flex gap-2 overflow-x-auto scrollbar-hide">
           {visibleThumbnails.map((image, index) => {
             const actualIndex = thumbnailStartIndex + index
             const isActive = actualIndex === currentSlideIndex
@@ -221,7 +269,7 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
                 onClick={() => handleThumbnailClick(actualIndex)}
                 className={`relative flex-shrink-0 w-24 h-16 rounded-lg overflow-hidden transition-all duration-200 ${
                   isActive
-                    ? 'ring-2 ring-primary ring-offset-2 scale-105'
+                    ? 'border-2 border-primary scale-105'
                     : 'opacity-60 hover:opacity-100'
                 }`}
               >
@@ -249,13 +297,11 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
           }
         }}
       >
-        <DialogContent className="w-full max-w-none h-full p-0 gap-0 z-[9999] bg-background flex flex-col">
+        <DialogContent className={`w-full max-w-none h-full p-0 gap-0 ${isLightboxOpen ? 'z-[9998]' : 'z-[9999]'} bg-background flex flex-col`}>
           <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <DialogTitle className="text-2xl font-semibold">
-                Property Gallery
-              </DialogTitle>
-            </div>
+            <DialogTitle className="text-2xl font-semibold">
+              Property Gallery
+            </DialogTitle>
           </DialogHeader>
 
           <div className="flex-1 overflow-hidden flex flex-col min-h-0">
@@ -269,44 +315,72 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
               }}
             >
               <div className="sticky top-0 bg-background z-10 px-6 pt-4 pb-2 border-b flex-shrink-0">
-                <TabsList className="w-full justify-start">
-                  <TabsTrigger value="all" className="gap-2">
-                    All
-                    <span className="text-xs text-muted-foreground">({categoryCounts.all})</span>
-                  </TabsTrigger>
-                  {categoryCounts.exterior > 0 && (
-                    <TabsTrigger value="exterior" className="gap-2">
-                      Exterior
-                      <span className="text-xs text-muted-foreground">({categoryCounts.exterior})</span>
+                <div className="flex items-center justify-between gap-4">
+                  <TabsList className="flex-1 justify-start">
+                    <TabsTrigger value="all" className="gap-2">
+                      All
+                      <span className="text-xs text-muted-foreground">({categoryCounts.all})</span>
                     </TabsTrigger>
-                  )}
-                  {categoryCounts.interior > 0 && (
-                    <TabsTrigger value="interior" className="gap-2">
-                      Interior
-                      <span className="text-xs text-muted-foreground">({categoryCounts.interior})</span>
+                    {categoryCounts.exterior > 0 && (
+                      <TabsTrigger value="exterior" className="gap-2">
+                        Exterior
+                        <span className="text-xs text-muted-foreground">({categoryCounts.exterior})</span>
+                      </TabsTrigger>
+                    )}
+                    {categoryCounts.interior > 0 && (
+                      <TabsTrigger value="interior" className="gap-2">
+                        Interior
+                        <span className="text-xs text-muted-foreground">({categoryCounts.interior})</span>
+                      </TabsTrigger>
+                    )}
+                    {categoryCounts.amenities > 0 && (
+                      <TabsTrigger value="amenities" className="gap-2">
+                        Amenities
+                        <span className="text-xs text-muted-foreground">({categoryCounts.amenities})</span>
+                      </TabsTrigger>
+                    )}
+                    {categoryCounts.floorplan > 0 && (
+                      <TabsTrigger value="floorplan" className="gap-2">
+                        Floor Plans
+                        <span className="text-xs text-muted-foreground">({categoryCounts.floorplan})</span>
+                      </TabsTrigger>
+                    )}
+                    <TabsTrigger value="map" className="gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Map
                     </TabsTrigger>
-                  )}
-                  {categoryCounts.amenities > 0 && (
-                    <TabsTrigger value="amenities" className="gap-2">
-                      Amenities
-                      <span className="text-xs text-muted-foreground">({categoryCounts.amenities})</span>
-                    </TabsTrigger>
-                  )}
-                  {categoryCounts.floorplan > 0 && (
-                    <TabsTrigger value="floorplan" className="gap-2">
-                      Floor Plans
-                      <span className="text-xs text-muted-foreground">({categoryCounts.floorplan})</span>
-                    </TabsTrigger>
-                  )}
-                  <TabsTrigger value="map" className="gap-2">
-                    <MapPin className="h-4 w-4" />
-                    Map
-                  </TabsTrigger>
-                </TabsList>
+                  </TabsList>
+                  
+                  {/* Image Size Slider */}
+                  <div className="flex items-center gap-3 min-w-[200px] flex-shrink-0">
+                    <button
+                      onClick={() => setGridColumns([Math.max(1, gridColumns[0] - 1)])}
+                      className="w-8 h-8 rounded-full border border-gray-300 hover:bg-gray-100 flex items-center justify-center transition-colors"
+                      aria-label="Decrease image size"
+                    >
+                      <Minus className="h-4 w-4 text-gray-600" />
+                    </button>
+                    <Slider
+                      value={gridColumns}
+                      onValueChange={setGridColumns}
+                      min={1}
+                      max={6}
+                      step={1}
+                      className="flex-1"
+                    />
+                    <button
+                      onClick={() => setGridColumns([Math.min(6, gridColumns[0] + 1)])}
+                      className="w-8 h-8 rounded-full border border-gray-300 hover:bg-gray-100 flex items-center justify-center transition-colors"
+                      aria-label="Increase image size"
+                    >
+                      <Plus className="h-4 w-4 text-gray-600" />
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <TabsContent value="all" className="mt-0 p-6 overflow-y-auto flex-1">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className={`grid ${getGridColsClass()} gap-4`}>
                   {categorizedImages.map((image, index) => (
                     <div
                       key={index}
@@ -333,7 +407,7 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
 
               {categoryCounts.exterior > 0 && (
                 <TabsContent value="exterior" className="mt-0 p-6 overflow-y-auto flex-1">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className={`grid ${getGridColsClass()} gap-4`}>
                     {categorizedImages
                       .filter(img => img.category === 'exterior')
                       .map((image, index) => {
@@ -363,7 +437,7 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
 
               {categoryCounts.interior > 0 && (
                 <TabsContent value="interior" className="mt-0 p-6 overflow-y-auto flex-1">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className={`grid ${getGridColsClass()} gap-4`}>
                     {categorizedImages
                       .filter(img => img.category === 'interior')
                       .map((image, index) => {
@@ -393,7 +467,7 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
 
               {categoryCounts.amenities > 0 && (
                 <TabsContent value="amenities" className="mt-0 p-6 overflow-y-auto flex-1">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className={`grid ${getGridColsClass()} gap-4`}>
                     {categorizedImages
                       .filter(img => img.category === 'amenities')
                       .map((image, index) => {
@@ -423,7 +497,7 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
 
               {categoryCounts.floorplan > 0 && (
                 <TabsContent value="floorplan" className="mt-0 p-6 overflow-y-auto flex-1">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className={`grid ${getGridColsClass()} gap-4`}>
                     {categorizedImages
                       .filter(img => img.category === 'floorplan')
                       .map((image, index) => {
@@ -478,35 +552,52 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
         </DialogContent>
       </Dialog>
 
-      {/* Lightbox for Individual Image Viewing */}
-      <Lightbox
-        open={isLightboxOpen}
-        close={() => setIsLightboxOpen(false)}
-        index={lightboxIndex}
-        slides={filteredImages}
-        plugins={[Zoom, Fullscreen]}
-        zoom={{
-          maxZoomPixelRatio: 3,
-          scrollToZoom: true,
-        }}
-        animation={{
-          fade: 300,
-          swipe: 300,
-        }}
-        carousel={{
-          finite: false,
-          preload: 2,
-        }}
-        styles={{
-          container: {
-            backgroundColor: 'rgba(0, 0, 0, 0.95)',
-            backdropFilter: 'blur(8px)',
-          },
-        }}
-        on={{
-          view: ({ index }) => setLightboxIndex(index),
-        }}
-      />
+      {/* Lightbox for Individual Image Viewing - Rendered outside Dialog with highest z-index */}
+      {isLightboxOpen && (
+        <div 
+          className="fixed inset-0"
+          style={{ 
+            zIndex: 10001,
+            pointerEvents: 'auto'
+          }}
+        >
+          <Lightbox
+            open={isLightboxOpen}
+            close={() => {
+              // Only close lightbox, keep modal open
+              setIsLightboxOpen(false)
+            }}
+            index={lightboxIndex}
+            slides={categorizedImages}
+            plugins={[Zoom, Fullscreen]}
+            zoom={{
+              maxZoomPixelRatio: 3,
+              scrollToZoom: true,
+            }}
+            animation={{
+              fade: 300,
+              swipe: 300,
+            }}
+            carousel={{
+              finite: false,
+              preload: 2,
+            }}
+            styles={{
+              container: {
+                backgroundColor: 'rgba(0, 0, 0, 0.95)',
+                backdropFilter: 'blur(8px)',
+              },
+              root: {
+                zIndex: 10001,
+              },
+            }}
+            className="lightbox-close-right"
+            on={{
+              view: ({ index }) => setLightboxIndex(index),
+            }}
+          />
+        </div>
+      )}
     </>
   )
 }

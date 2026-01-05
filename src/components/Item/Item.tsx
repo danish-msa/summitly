@@ -227,7 +227,7 @@ const Item: React.FC = () => {
             </div> */}
             
           </div>
-          <div className='w-[30%] flex flex-col gap-4 items-start gap-0'>
+          <div className='w-[30%] flex flex-col gap-4 items-start gap-0 sticky top-2 self-start'>
             <PriceCard property={property} rawProperty={rawProperty} isPreCon={false} isRent={isRental} />
             <BasicInfo property={property} rawProperty={rawProperty} isPreCon={false} isRent={isRental} />
             <Sidebar isPreCon={isPreCon} isRent={isRental} property={property} />

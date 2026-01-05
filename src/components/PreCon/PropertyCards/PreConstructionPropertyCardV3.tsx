@@ -122,7 +122,7 @@ const PreConstructionPropertyCardV3 = ({
     >
       <Card 
         className={cn(
-          "group hover:shadow-lg transition-all duration-300 overflow-hidden border-border cursor-pointer h-full w-full flex flex-col",
+          "group p-0 hover:shadow-lg transition-all duration-300 overflow-hidden border-border cursor-pointer h-full w-full flex flex-col",
           className
         )}
       >

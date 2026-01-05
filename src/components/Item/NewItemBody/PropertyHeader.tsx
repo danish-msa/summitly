@@ -12,6 +12,7 @@ import ShareModal from '../Banner/ShareModal'
 import AuthModal from '@/components/Auth/AuthModal'
 import ProjectRatingDisplay from '@/components/PreConItem/PreConItemBody/ProjectRatingDisplay'
 import PropertyAlerts from '../ItemBody/PropertyAlerts'
+import { formatCurrency } from '@/lib/utils'
 
 interface PropertyHeaderProps {
   property: PropertyListing;
@@ -169,23 +170,27 @@ const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property }) => {
       {/* Main Content */}
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         {/* Left Section: Address and Features */}
-        <div className="flex-1">
-          <div className="flex flex-row items-center gap-2 mb-4">
+        <div className="flex-1 gap-4">
+          <div className="flex flex-row items-center gap-4 mb-2">
             {/* Address */}
             <h1 className="text-2xl font-bold text-gray-900">
               {address}
             </h1>
             
+            {/* Status Badge */}
+            <Badge variant={propertyStatus.variant} showDot>
+              {propertyStatus.label}
+            </Badge>
           </div>
 
           {/* Property Features */}
           <div className="flex flex-wrap items-center gap-4">
-            <span className="text-sm text-gray-500">MLS # {property.mlsNumber}</span>
+            <span className="text-base text-gray-500">MLS # {property.mlsNumber}</span>
 
             {/* Property Type */}
             <div className="flex items-center gap-2">
               <Home className="h-4 w-4 text-gray-600" />
-              <span className="text-sm text-gray-700">
+              <span className="text-base text-gray-700">
                 {property.details?.propertyType || 'Property'}
               </span>
             </div>
@@ -194,7 +199,7 @@ const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property }) => {
             {property.details?.numBedrooms > 0 && (
               <div className="flex items-center gap-2">
                 <Bed className="h-4 w-4 text-gray-600" />
-                <span className="text-sm text-gray-700">
+                <span className="text-base text-gray-700">
                   {property.details.numBedrooms} {property.details.numBedrooms === 1 ? 'Bed' : 'Beds'}
                 </span>
               </div>
@@ -204,7 +209,7 @@ const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property }) => {
             {property.details?.numBathrooms > 0 && (
               <div className="flex items-center gap-2">
                 <Bath className="h-4 w-4 text-gray-600" />
-                <span className="text-sm text-gray-700">
+                <span className="text-base text-gray-700">
                   {property.details.numBathrooms} {property.details.numBathrooms === 1 ? 'Bath' : 'Baths'}
                 </span>
               </div>
@@ -214,80 +219,81 @@ const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property }) => {
             {sqftDisplay !== 'N/A' && (
               <div className="flex items-center gap-2">
                 <Maximize2 className="h-4 w-4 text-gray-600" />
-                <span className="text-sm text-gray-700">{sqftDisplay}</span>
+                <span className="text-base text-gray-700">{sqftDisplay}</span>
               </div>
             )}
-            {/* Status Badge */}
-            <Badge variant={propertyStatus.variant} showDot>
-              {propertyStatus.label}
-            </Badge>
+            {/* Project Rating Display */}
+            <ProjectRatingDisplay propertyId={property.mlsNumber || preConData?.projectName || 'default'} />
           </div>
         </div>
 
         {/* Right Section: Status, Rating, Actions */}
-        <div className="flex flex-col items-end gap-2">
-           {/* Action Buttons */}
-           <div className="flex items-center gap-2">
-            {/* Contact Button */}
-            <Button
-              variant="default"
-              size="icon"
-              onClick={handleContactClick}
-              className="h-10 w-10 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
-              aria-label="Contact us"
-            >
-              <MessageCircle className="h-5 w-5" />
-            </Button>
-            {/* Calculator Button */}
-            <Button
-              variant="default"
-              size="icon"
-              onClick={handleCalculatorClick}
-              className="h-10 w-10 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
-              aria-label="Go to calculators"
-            >
-              <Calculator className="h-5 w-5" />
-            </Button>
-            {/* Property Alerts Button */}
-            <Button
-              variant="default"
-              size="icon"
-              onClick={() => setIsPropertyAlertsModalOpen(true)}
-              className="h-10 w-10 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
-              aria-label="Property Alerts"
-            >
-              <Bell className="h-5 w-5" />
-            </Button>
-            {/* Heart Button */}
-             <Button
-               variant="default"
-               size="icon"
-               onClick={handleSave}
-               disabled={isSaving || isUnsaving}
-               className={`h-10 w-10 rounded-lg bg-white border border-gray transition-all duration-200 ${
-                 isSaved 
-                   ? 'bg-red-50 text-red-600 hover:bg-red-100 border-red-200' 
-                   : 'text-gray-600 hover:bg-gray-50 hover:text-red-600'
-               } disabled:opacity-50 disabled:cursor-not-allowed`}
-               aria-label="Save property"
-             >
-               <Heart className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
-             </Button>
+        <div className="flex flex-col items-end gap-4">
+          {/* Listed Price Badge */}
+            <div className="flex items-center gap-2 bg-secondary/20 p-2 px-4 rounded-full">
+              <span className="text-base font-medium text-gray-700">Listed Price: {formatCurrency(property.listPrice || 0)}</span>
+            </div>
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+              {/* Contact Button */}
+              <Button
+                variant="default"
+                size="icon"
+                onClick={handleContactClick}
+                className="h-10 w-10 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
+                aria-label="Contact us"
+              >
+                <MessageCircle className="h-5 w-5" />
+              </Button>
+              {/* Calculator Button */}
+              <Button
+                variant="default"
+                size="icon"
+                onClick={handleCalculatorClick}
+                className="h-10 w-10 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
+                aria-label="Go to calculators"
+              >
+                <Calculator className="h-5 w-5" />
+              </Button>
+              {/* Property Alerts Button */}
+              <Button
+                variant="default"
+                size="icon"
+                onClick={() => setIsPropertyAlertsModalOpen(true)}
+                className="h-10 w-10 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
+                aria-label="Property Alerts"
+              >
+                <Bell className="h-5 w-5" />
+              </Button>
+              {/* Heart Button */}
+              <Button
+                variant="default"
+                size="icon"
+                onClick={handleSave}
+                disabled={isSaving || isUnsaving}
+                className={`h-10 w-10 rounded-lg bg-white border border-gray transition-all duration-200 ${
+                  isSaved 
+                    ? 'bg-red-50 text-red-600 hover:bg-red-100 border-red-200' 
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-red-600'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                aria-label="Save property"
+              >
+                <Heart className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
+              </Button>
 
-             {/* Share Button */}
-             <Button
-               variant="default"
-               size="icon"
-               onClick={() => setIsShareModalOpen(true)}
-               className="h-10 w-10 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
-               aria-label="Share property"
-             >
-               <Share2 className="h-5 w-5" />
-             </Button>
-           </div>
-
-           {/* Project Rating Display */}
-          <ProjectRatingDisplay propertyId={property.mlsNumber || preConData?.projectName || 'default'} />
+              {/* Share Button */}
+              <Button
+                variant="default"
+                size="icon"
+                onClick={() => setIsShareModalOpen(true)}
+                className="h-10 w-10 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
+                aria-label="Share property"
+              >
+                <Share2 className="h-5 w-5" />
+              </Button>
+            </div>
+            
+            
          </div>
        </div>
 
