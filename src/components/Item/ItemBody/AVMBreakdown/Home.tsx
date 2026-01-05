@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { PropertyListing } from '@/lib/types';
-import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/single-listing';
+import type { SinglePropertyListingResponse, ComparableListing } from '@/lib/api/repliers/types/single-listing';
 
 interface HomeProps {
   property: PropertyListing;
@@ -24,8 +24,8 @@ const Home: React.FC<HomeProps> = ({ property, rawProperty }) => {
   // Calculate typical square footage from comparables or use default
   const typicalSqFt = useMemo(() => {
     if (rawProperty?.comparables && rawProperty.comparables.length > 0) {
-      const totalSqft = rawProperty.comparables.reduce((sum, comp) => {
-        const compSqft = (comp as any)?.details?.sqft;
+      const totalSqft = rawProperty.comparables.reduce((sum, comp: ComparableListing) => {
+        const compSqft = comp?.details?.sqft;
         const sqft = typeof compSqft === 'number' 
           ? compSqft 
           : typeof compSqft === 'string' 

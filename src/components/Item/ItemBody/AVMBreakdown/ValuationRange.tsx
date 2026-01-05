@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import { PropertyListing } from '@/lib/types';
 import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/single-listing';
-import { Home, ArrowDown, ArrowUp, CheckCircle } from 'lucide-react';
+import { ArrowDown, ArrowUp, CheckCircle } from 'lucide-react';
 import ReactECharts from 'echarts-for-react';
 
 interface ValuationData {
@@ -130,9 +130,10 @@ const ValuationRange: React.FC<ValuationRangeProps> = ({ property, rawProperty }
         fontSize: 13,
       },
       extraCssText: 'box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24); backdrop-filter: blur(8px);',
-      formatter: (params: any) => {
+      formatter: (params: unknown) => {
         const param = Array.isArray(params) ? params[0] : params;
-        const dataIndex = param.dataIndex;
+        const typedParam = param as { dataIndex?: number };
+        const dataIndex = typedParam.dataIndex ?? 0;
         const item = chartData[dataIndex];
         const isEstimate = item.isCenter;
         
@@ -243,8 +244,8 @@ const ValuationRange: React.FC<ValuationRangeProps> = ({ property, rawProperty }
         {/* Estimated Value Card */}
         <div className="bg-secondary/20 rounded-xl p-4 space-y-2">
           <div className="flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 text-primary fill-primary/20" />
-            <span className="text-sm font-medium text-primary">HC Estimated Value</span>
+            <CheckCircle className="w-5 h-5 text-secondary fill-secondary/20" />
+            <span className="text-sm font-medium text-primary">Estimated Value</span>
           </div>
           <div className="space-y-1">
             <p className="text-2xl font-bold text-foreground">{formatCurrency(data.estimatedValue)}</p>

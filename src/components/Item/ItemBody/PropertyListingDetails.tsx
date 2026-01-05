@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import RequestInfoModal from "./RequestInfoModal";
 import { 
   Home,  
   MapPin, 
-  Ruler, 
   Car, 
   Zap,
   Building2,
@@ -17,13 +15,11 @@ import {
   Layers,
   TreePine,
   Waves,
-  Wind,
   Snowflake,
   Sun,
   Droplet,
   Gauge,
   DoorOpen,
-  MessageCircle,
   Sparkles,
   Shield,
   Dumbbell,
@@ -40,8 +36,7 @@ import {
   Coffee,
   Gamepad2,
   ShoppingBag,
-  CreditCard,
-  Bed
+  CreditCard
 } from "lucide-react";
 import { PropertyListing } from "@/lib/types";
 
@@ -94,14 +89,6 @@ export default function PropertyListingDetails({ data, property }: ListingDetail
   // Debug: Check if property has preCon data
   // console.log('Property preCon data:', property?.preCon);
   
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
 
   // Get appropriate icon for highlight key
   const getHighlightIcon = (key: string) => {
@@ -202,7 +189,7 @@ export default function PropertyListingDetails({ data, property }: ListingDetail
   };
 
   // Get appropriate icon for fact key
-  const getFactIcon = (key: string) => {
+  const _getFactIcon = (key: string) => {
     const keyLower = key.toLowerCase();
     
     // Year/Built related

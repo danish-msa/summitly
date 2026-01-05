@@ -87,14 +87,14 @@ export default function TransactionHistory({ groupedHistory, propertyAddress }: 
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[120px] text-xs py-2">Date</TableHead>
-            <TableHead className="w-[150px] text-xs py-2">Event</TableHead>
-            <TableHead className="w-[120px] text-right text-xs py-2">Price</TableHead>
-            <TableHead className="w-[130px] text-right text-xs py-2">Price Change</TableHead>
-            <TableHead className="w-[120px] text-right text-xs py-2">Days on Market</TableHead>
-            <TableHead className="w-[120px] text-right text-xs py-2">Appreciation</TableHead>
-            <TableHead className="w-[200px] text-xs py-2">Brokerage</TableHead>
-            <TableHead className="w-[100px] text-center text-xs py-2">Actions</TableHead>
+            <TableHead className="w-[120px] py-2">Date</TableHead>
+            <TableHead className="w-[150px] py-2">Status</TableHead>
+            <TableHead className="w-[120px] text-right py-2">Price</TableHead>
+            <TableHead className="w-[130px] text-right py-2">Price Change</TableHead>
+            <TableHead className="w-[120px] text-right py-2">Days on Market</TableHead>
+            <TableHead className="w-[120px] text-right py-2">Appreciation</TableHead>
+            <TableHead className="w-[200px] py-2">Brokerage</TableHead>
+            <TableHead className="w-[100px] text-center py-2">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -107,10 +107,10 @@ export default function TransactionHistory({ groupedHistory, propertyAddress }: 
             return (
               <TableRow key={index} className={record.isActive ? 'bg-green-50/50' : ''}>
                 <TableCell className="font-medium py-2">
-                  <span className="text-xs text-gray-900">{record.formattedDateShort}</span>
+                  <span className="text-gray-900">{record.formattedDateShort}</span>
                 </TableCell>
                 <TableCell className="py-2">
-                  <Badge {...badgeProps} className={`text-[10px] px-1.5 py-0.5 ${badgeProps.className}`}>
+                  <Badge {...badgeProps} className={` px-2.5 py-1 ${badgeProps.className}`}>
                     {record.event === 'Listed For Sale' && record.isActive 
                       ? 'Active' 
                       : record.event}
@@ -118,9 +118,9 @@ export default function TransactionHistory({ groupedHistory, propertyAddress }: 
                 </TableCell>
                 <TableCell className="text-right py-2">
                   {hasPrice ? (
-                    <span className="text-xs font-semibold text-gray-900">{record.price}</span>
+                    <span className="font-semibold text-gray-900">{record.price}</span>
                   ) : (
-                    <span className="text-xs text-gray-500">$—</span>
+                    <span className="text-gray-500">$—</span>
                   )}
                 </TableCell>
                 <TableCell className="text-right py-2">
@@ -131,36 +131,36 @@ export default function TransactionHistory({ groupedHistory, propertyAddress }: 
                       {record.isIncrease && <ArrowUp className="h-3 w-3" />}
                       {record.isDecrease && <ArrowDown className="h-3 w-3" />}
                       {!record.isIncrease && !record.isDecrease && <Minus className="h-3 w-3" />}
-                      <span className="text-xs font-medium">
+                      <span className="font-medium">
                         {record.isIncrease ? '+' : ''}{formatCurrency(record.priceChange)}
                       </span>
                     </div>
                   ) : (
-                    <span className="text-xs text-gray-500">—</span>
+                    <span className="text-gray-500">—</span>
                   )}
                 </TableCell>
                 <TableCell className="text-right py-2">
                   {record.daysOnMarket > 0 ? (
-                    <span className="text-xs text-gray-900">
+                    <span className="text-gray-900">
                       {record.daysOnMarket} day{record.daysOnMarket !== 1 ? 's' : ''}
                     </span>
                   ) : (
-                    <span className="text-xs text-gray-500">—</span>
+                    <span className="text-gray-500">—</span>
                   )}
                 </TableCell>
                 <TableCell className="text-right py-2">
                   {showAppreciation ? (
-                    <span className={`text-xs font-medium ${
+                    <span className={`font-medium ${
                       record.isIncrease ? 'text-green-600' : record.isDecrease ? 'text-red-600' : 'text-gray-600'
                     }`}>
                       {record.isIncrease ? '+' : ''}{record.percentChange.toFixed(1)}%
                     </span>
                   ) : (
-                    <span className="text-xs text-gray-500">—</span>
+                    <span className="text-gray-500">—</span>
                   )}
                 </TableCell>
                 <TableCell className="py-2">
-                  <span className="text-xs text-gray-700">{record.brokerage}</span>
+                  <span className="text-gray-700">{record.brokerage}</span>
                 </TableCell>
                 <TableCell className="text-center py-2">
                   <Button
