@@ -12,6 +12,7 @@ import {
   VerticalTabsContent,
   VerticalTabsContainer,
 } from '@/components/ui/vertical-tabs';
+import { BarChart3, House } from 'lucide-react';
 
 interface AVMBreakdownProps {
   property: PropertyListing;
@@ -25,8 +26,12 @@ const AVMBreakdown: React.FC<AVMBreakdownProps> = ({ property, rawProperty }) =>
       <VerticalTabs defaultValue="valuation-range" className="w-full">
         <VerticalTabsContainer>
           <VerticalTabsList>
-            <VerticalTabsTrigger value="valuation-range">Valuation Range</VerticalTabsTrigger>
-            <VerticalTabsTrigger value="home">Home</VerticalTabsTrigger>
+            <VerticalTabsTrigger value="valuation-range" className="flex items-center gap-3">
+              <BarChart3 className="h-4 w-4 text-secondary" />
+              Valuation Range</VerticalTabsTrigger>
+            <VerticalTabsTrigger value="home" className="flex items-center gap-3">
+              <House className="h-4 w-4 text-secondary" />
+              Home Value</VerticalTabsTrigger>
           </VerticalTabsList>
           
           <div className="flex-1 relative z-0">
