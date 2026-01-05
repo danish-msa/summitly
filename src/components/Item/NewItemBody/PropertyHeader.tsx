@@ -230,8 +230,9 @@ const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property }) => {
         {/* Right Section: Status, Rating, Actions */}
         <div className="flex flex-col items-end gap-4">
           {/* Listed Price Badge */}
-            <div className="flex items-center gap-2 bg-secondary/20 p-2 px-4 rounded-full">
-              <span className="text-base font-medium text-gray-700">Listed Price: {formatCurrency(property.listPrice || 0)}</span>
+            <div className="flex items-end flex-col">
+              <span className="text-sm font-medium text-gray-700">Listed Price</span>
+              <span className="text-3xl font-bold text-gray-700">{formatCurrency(property.listPrice || 0)}</span>
             </div>
           {/* Action Buttons */}
           <div className="flex items-center gap-2">

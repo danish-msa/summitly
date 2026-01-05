@@ -76,14 +76,14 @@ const Description: React.FC<DescriptionProps> = ({ property, isPreCon = false })
             </button>
           )}
         </div>
-        <div className="flex flex-col justify-start rounded-lg w-[50%]">
+        <div className="flex flex-col justify-start bg-muted/20 rounded-lg w-[50%]">
           <div className="flex items-center gap-2 py-6 px-4 rounded-t-lg price-card-gradient ">
             <Sparkles className="h-5 w-5 text-white" />
             <h3 className="text-xl font-semibold text-white">
               {isPreCon ? 'AI Summary of this project' : 'AI Summary of this property'}
             </h3>
           </div>
-          <ul className="text-primary bg-muted/20 font-light text-sm leading-relaxed space-y-2 list-none pt-4 px-4">
+          <ul className="text-primary font-light text-sm leading-relaxed space-y-2 list-none pt-4 px-4">
             {displayedPoints.map((point, index) => (
               <li key={index} className="flex items-start">
                 <span className="mr-2">•</span>

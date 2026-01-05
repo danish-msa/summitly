@@ -1,9 +1,11 @@
+"use client"
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
+import { Send } from "lucide-react";
 
 const preBuiltQuestions = [
   "How much out-of-pocket expenses do I need to purchase a home?",
@@ -15,33 +17,40 @@ const preBuiltQuestions = [
 
 export const ContactSection = () => {
   const [formData, setFormData] = useState({
-    fullName: "",
+    firstName: "",
+    lastName: "",
     email: "",
     phone: "",
     message: "",
   });
 
   const handleQuestionClick = (question: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      message: prev.message ? `${prev.message} ${question}` : question,
-    }));
+    setFormData((prev) => {
+      // If message already exists, add newline and the question
+      // If message is empty, just add the question
+      const newMessage = prev.message 
+        ? `${prev.message}\n${question}` 
+        : question;
+      
+      return {
+        ...prev,
+        message: newMessage,
+      };
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Basic validation
-    if (!formData.fullName || !formData.email || !formData.phone || !formData.message) {
+
+    if (!formData.firstName || !formData.email || !formData.phone || !formData.message) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all fields before sending.",
+        description: "Please fill in all required fields before sending.",
         variant: "destructive",
       });
       return;
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       toast({
@@ -57,9 +66,9 @@ export const ContactSection = () => {
       description: "We'll get back to you as soon as possible.",
     });
 
-    // Reset form
     setFormData({
-      fullName: "",
+      firstName: "",
+      lastName: "",
       email: "",
       phone: "",
       message: "",
@@ -67,118 +76,125 @@ export const ContactSection = () => {
   };
 
   return (
-    <section id="contact-section" className="w-full flex items-center justify-center bg-gradient-to-br from-background to-muted/20 px-4 py-16">
-      <div className="w-full max-w-6xl">
-        {/* Section Header */}
-        <div className="text-center mb-8">
-          <h2 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            Get In Touch
-          </h2>
-          <p className="text-muted-foreground text-lg">
-            Have questions? We're here to help you find your dream home.
-          </p>
-        </div>
-
-        {/* Pre-built Questions */}
-        <div className="mb-12 flex flex-wrap items-center justify-center gap-3">
-          {preBuiltQuestions.map((question, index) => (
-            <Button
-              key={index}
-              variant="outline"
-              onClick={() => handleQuestionClick(question)}
-              className="h-auto py-3 px-6 text-sm font-normal whitespace-normal text-center rounded-lg border-2 hover:border-primary/50 hover:bg-primary/5 hover:shadow-md transition-all duration-300 backdrop-blur-sm"
-            >
-              {question}
-            </Button>
-          ))}
-        </div>
-
-        {/* Contact Form */}
-        <form onSubmit={handleSubmit} className="w-full">
-          <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-border/50">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              {/* Left Column */}
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName" className="text-base font-medium flex items-center gap-2">
-                    Full Name
-                  </Label>
-                  <Input
-                    id="fullName"
-                    type="text"
-                    value={formData.fullName}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, fullName: e.target.value }))
-                    }
-                    className="h-12 text-base border-border/50 focus:border-primary transition-colors shadow-sm"
-                    placeholder="John Doe"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-base font-medium flex items-center gap-2">
-                    Email Address
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, email: e.target.value }))
-                    }
-                    className="h-12 text-base border-border/50 focus:border-primary transition-colors shadow-sm"
-                    placeholder="john@example.com"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-base font-medium flex items-center gap-2">
-                    Phone Number
-                  </Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, phone: e.target.value }))
-                    }
-                    className="h-12 text-base border-border/50 focus:border-primary transition-colors shadow-sm"
-                    placeholder="+1 (555) 000-0000"
-                  />
-                </div>
-              </div>
-
-              {/* Right Column */}
-              <div className="space-y-2">
-                <Label htmlFor="message" className="text-base font-medium flex items-center gap-2">
-                  Message
-                </Label>
-                <Textarea
-                  id="message"
-                  value={formData.message}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, message: e.target.value }))
-                  }
-                  className="min-h-[280px] text-base resize-none border-border/50 focus:border-primary transition-colors shadow-sm"
-                  placeholder="Tell us about your real estate needs..."
-                />
-              </div>
+    <section id="contact-section" className="w-full min-h-screen flex items-center justify-center bg-background px-6 py-16 lg:py-24">
+      <div className="w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+          {/* Left Column - Header & Questions */}
+          <div className="space-y-8">
+            {/* Available Now Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 border border-secondary/20">
+              <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+              <span className="text-sm font-medium text-secondary">Available Now</span>
             </div>
 
-            {/* Submit Button */}
-            <div className="flex justify-center pt-4">
-              <Button
-                type="submit"
-                size="lg"
-                className="px-12 py-6 text-base font-semibold rounded-xl bg-gradient-to-r from-primary to-primary/90 text-primary-foreground hover:shadow-xl hover:scale-105 transition-all duration-300 shadow-md"
-              >
-                Send Message
-              </Button>
+            {/* Heading */}
+            <div className="space-y-4">
+              <h2 className="text-4xl lg:text-5xl font-bold text-foreground leading-tight">
+                Let's find your dream home together.
+              </h2>
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                Have questions about a property or need help with your search? Our team of experts is ready to assist you every step of the way.
+              </p>
+            </div>
+
+            {/* Pre-built Questions */}
+            <div className="flex flex-col gap-3">
+              {preBuiltQuestions.map((question, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  onClick={() => handleQuestionClick(question)}
+                  className="w-fit h-auto py-3 px-5 text-base font-normal text-left rounded-lg border border-secondary/30 text-secondary hover:bg-secondary/5 hover:border-secondary/50 transition-all duration-200"
+                >
+                  {question}
+                </Button>
+              ))}
             </div>
           </div>
-        </form>
+
+          {/* Right Column - Form Card */}
+          <div className="bg-card rounded-2xl p-8 shadow-xl border border-border/50">
+            <h3 className="text-2xl font-semibold text-card-foreground mb-6">
+              Send us a message
+            </h3>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Name Fields Row */}
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  id="firstName"
+                  type="text"
+                  label="First Name"
+                  value={formData.firstName}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, firstName: e.target.value }))
+                  }
+                />
+                <Input
+                  id="lastName"
+                  type="text"
+                  label="Last Name"
+                  value={formData.lastName}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, lastName: e.target.value }))
+                  }
+                />
+              </div>
+
+              {/* Email */}
+              <Input
+                id="email"
+                type="email"
+                label="Email Address"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, email: e.target.value }))
+                }
+              />
+
+              {/* Phone */}
+              <Input
+                id="phone"
+                type="tel"
+                label="Phone Number"
+                value={formData.phone}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, phone: e.target.value }))
+                }
+              />
+
+              {/* Message */}
+              <Textarea
+                id="message"
+                label="Message"
+                value={formData.message}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, message: e.target.value }))
+                }
+                className="min-h-[120px] resize-none"
+              />
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                className="w-full h-14 text-base font-semibold rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                Send Message
+                <Send className="ml-2 h-5 w-5" />
+              </Button>
+
+              {/* Privacy Policy */}
+              <p className="text-center text-sm text-muted-foreground pt-2">
+                By submitting this form, you agree to our{" "}
+                <a href="#" className="text-primary hover:underline font-medium">
+                  Privacy Policy
+                </a>
+                .
+              </p>
+            </form>
+          </div>
+        </div>
       </div>
     </section>
   );
 };
-

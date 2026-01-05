@@ -195,7 +195,7 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
       <style>{lightboxStyles}</style>
       <div className="relative w-full">
         {/* Main Image Container */}
-        <div className="relative w-full aspect-[16/10] bg-muted rounded-xl overflow-hidden group">
+        <div className="relative w-full aspect-[16/10] bg-muted rounded-3xl overflow-hidden group">
           <Image
             src={categorizedImages[currentSlideIndex]?.src || property.images.imageUrl}
             alt={categorizedImages[currentSlideIndex]?.alt || 'Property image'}
@@ -258,7 +258,7 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
         </div>
 
         {/* Thumbnail Carousel */}
-        <div className="mt-4 py-1 flex gap-2 overflow-x-auto scrollbar-hide">
+        <div className="mt-4 px-2 py-1 flex gap-2 overflow-x-auto scrollbar-hide">
           {visibleThumbnails.map((image, index) => {
             const actualIndex = thumbnailStartIndex + index
             const isActive = actualIndex === currentSlideIndex

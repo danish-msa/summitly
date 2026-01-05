@@ -522,30 +522,30 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
                     <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
                       {/* Contact Button */}
                       <Button
-                        variant="default"
+                        variant="outline"
                         size="icon"
                         onClick={handleContactClick}
-                        className="h-9 w-9 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
+                        className="h-9 w-9 rounded-lg bg-white transition-all duration-200 text-gray-600 hover:bg-gray-50"
                         aria-label="Contact us"
                       >
                         <MessageCircle className="h-4 w-4" />
                       </Button>
                       {/* Calculator Button */}
                       <Button
-                        variant="default"
+                        variant="outline"
                         size="icon"
                         onClick={handleCalculatorClick}
-                        className="h-9 w-9 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
+                        className="h-9 w-9 rounded-lg bg-white transition-all duration-200 text-gray-600 hover:bg-gray-50"
                         aria-label="Go to calculators"
                       >
                         <Calculator className="h-4 w-4" />
                       </Button>
                       {/* Property Alerts Button */}
                       <Button
-                        variant="default"
+                        variant="outline"
                         size="icon"
                         onClick={() => setIsPropertyAlertsModalOpen(true)}
-                        className="h-9 w-9 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
+                        className="h-9 w-9 rounded-lg bg-white transition-all duration-200 text-gray-600 hover:bg-gray-50"
                         aria-label="Property Alerts"
                       >
                         <Bell className="h-4 w-4" />
