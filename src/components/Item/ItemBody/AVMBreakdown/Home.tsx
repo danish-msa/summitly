@@ -24,8 +24,8 @@ const Home: React.FC<HomeProps> = ({ property, rawProperty }) => {
   // Calculate typical square footage from comparables or use default
   const typicalSqFt = useMemo(() => {
     if (rawProperty?.comparables && rawProperty.comparables.length > 0) {
-      const totalSqft = rawProperty.comparables.reduce((sum, comp: ComparableListing) => {
-        const compSqft = comp?.details?.sqft;
+      const totalSqft = rawProperty.comparables.reduce<number>((sum, comp) => {
+        const compSqft = comp.details?.sqft;
         const sqft = typeof compSqft === 'number' 
           ? compSqft 
           : typeof compSqft === 'string' 

@@ -131,8 +131,11 @@ const ValuationRange: React.FC<ValuationRangeProps> = ({ property, rawProperty }
       },
       extraCssText: 'box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24); backdrop-filter: blur(8px);',
       formatter: (params: unknown) => {
+        interface TooltipParams {
+          dataIndex?: number;
+        }
         const param = Array.isArray(params) ? params[0] : params;
-        const typedParam = param as { dataIndex?: number };
+        const typedParam = param as TooltipParams;
         const dataIndex = typedParam.dataIndex ?? 0;
         const item = chartData[dataIndex];
         const isEstimate = item.isCenter;
