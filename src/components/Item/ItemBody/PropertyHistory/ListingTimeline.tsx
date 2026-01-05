@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
-import { Link2, Camera } from "lucide-react";
+import { Link2, Camera, HistoryIcon } from "lucide-react";
 import { GroupedHistoryRecord } from './types';
+import { Button } from "@/components/ui/button";
 
 interface ListingTimelineProps {
   groupedHistory: GroupedHistoryRecord[];
@@ -107,6 +108,20 @@ export default function ListingTimeline({ groupedHistory, propertyAddress }: Lis
             );
           })}
         </div>
+      </div>
+      {/* Call to Action */}
+      <div className="flex justify-center pt-6 pb-4">
+        <Button 
+          variant="default" 
+          className="px-8 py-6 text-base rounded-lg gap-2"
+          onClick={() => {
+            // Add handler for CTA click
+            console.log('Need more history details about this property');
+          }}
+        >
+          <HistoryIcon className="h-5 w-5" />
+          Need more history details about this property
+        </Button>
       </div>
     </div>
   );

@@ -2,11 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Bed, Bath, Maximize2, MapPin, Building2, User, Layers, Home, Users } from 'lucide-react';
+import { Calendar, Bed, Bath, Maximize2, MapPin, Building2, User, Layers, Home, Users, MessageCircle, Calculator, Bell, Heart, Share2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PropertyListing } from '@/lib/types';
 import ShareModal from './Banner/ShareModal';
 import ScheduleTourModal from './ItemBody/ScheduleTourModal';
+import PropertyAlerts from './ItemBody/PropertyAlerts';
+import AuthModal from '@/components/Auth/AuthModal';
+import { useSession } from 'next-auth/react';
+import { useSavedProperties } from '@/hooks/useSavedProperties';
+import { toast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
 interface StickyPropertyBarProps {
@@ -71,31 +76,43 @@ const _getStatusSlug = (status: string): string => {
 };
 
 const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerRef }) => {
+  const { data: session } = useSession();
+  const { checkIsSaved, saveProperty, unsaveProperty, isSaving, isUnsaving } = useSavedProperties();
+  const isSaved = checkIsSaved(property.mlsNumber);
+  
   const [isVisible, setIsVisible] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isScheduleTourModalOpen, setIsScheduleTourModalOpen] = useState(false);
-  const [sectionNavHeight, setSectionNavHeight] = useState(64); // Default SectionNavigation height
+  const [isPropertyAlertsModalOpen, setIsPropertyAlertsModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [topOffset, setTopOffset] = useState(0); // Offset for main navbar if exists
 
-  // Calculate SectionNavigation height
+  // Calculate top offset (for main navbar/header if it exists)
   useEffect(() => {
-    const calculateSectionNavHeight = () => {
-      const sectionNav = document.querySelector('[data-section-navigation]');
-      if (sectionNav) {
-        setSectionNavHeight(sectionNav.getBoundingClientRect().height);
+    const calculateTopOffset = () => {
+      // Check for main navbar/header - adjust selector based on your actual navbar
+      const mainNav = document.querySelector('header, [data-main-nav], nav[class*="fixed"], nav[class*="sticky"]');
+      if (mainNav) {
+        const navHeight = mainNav.getBoundingClientRect().height;
+        setTopOffset(navHeight);
+      } else {
+        // Default to 0 if no navbar found
+        setTopOffset(0);
       }
     };
 
-    calculateSectionNavHeight();
-    window.addEventListener('resize', calculateSectionNavHeight);
-    // Use MutationObserver to watch for changes in SectionNavigation
-    const observer = new MutationObserver(calculateSectionNavHeight);
-    const sectionNav = document.querySelector('[data-section-navigation]');
-    if (sectionNav) {
-      observer.observe(sectionNav, { childList: true, subtree: true, attributes: true });
+    calculateTopOffset();
+    window.addEventListener('resize', calculateTopOffset);
+    
+    // Use MutationObserver to watch for changes
+    const observer = new MutationObserver(calculateTopOffset);
+    const mainNav = document.querySelector('header, [data-main-nav], nav[class*="fixed"], nav[class*="sticky"]');
+    if (mainNav) {
+      observer.observe(mainNav, { childList: true, subtree: true, attributes: true });
     }
 
     return () => {
-      window.removeEventListener('resize', calculateSectionNavHeight);
+      window.removeEventListener('resize', calculateTopOffset);
       observer.disconnect();
     };
   }, []);
@@ -105,7 +122,7 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
       if (!bannerRef.current) return;
 
       const bannerBottom = bannerRef.current.offsetTop + bannerRef.current.offsetHeight;
-      const scrollPosition = window.scrollY + sectionNavHeight;
+      const scrollPosition = window.scrollY;
       
       // Find the last content section to determine when to hide the sticky bar
       const contactSection = document.getElementById('contact-section');
@@ -166,7 +183,7 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
     };
-  }, [bannerRef, sectionNavHeight]);
+  }, [bannerRef]);
 
   const shortAddress = property.address.city 
     ? `${property.address.city}${property.address.state ? `, ${property.address.state}` : ''}`
@@ -219,6 +236,64 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
     setIsScheduleTourModalOpen(true);
   };
 
+  const handleContactClick = () => {
+    const contactElement = document.getElementById('contact-section');
+    if (contactElement) {
+      const elementPosition = contactElement.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = elementPosition - 100; // Offset for navbar
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const handleCalculatorClick = () => {
+    const calculatorsElement = document.getElementById('calculators');
+    if (calculatorsElement) {
+      const elementPosition = calculatorsElement.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = elementPosition - 100; // Offset for navbar
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const handleSave = async () => {
+    // If not logged in, show auth modal
+    if (!session) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    try {
+      if (isSaved) {
+        await unsaveProperty(property.mlsNumber);
+        toast({
+          title: "Property Removed",
+          description: "Property has been removed from your saved list.",
+          icon: <XCircle className="h-5 w-5 text-gray-600" />,
+        });
+      } else {
+        await saveProperty({ mlsNumber: property.mlsNumber });
+        toast({
+          title: "Property Saved",
+          description: "Property has been added to your saved list.",
+          variant: "success",
+          icon: <Heart className="h-5 w-5 text-green-600 fill-green-600" />,
+        });
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to save property. Please try again."
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <AnimatePresence>
@@ -228,7 +303,7 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -150, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            style={{ top: `${sectionNavHeight}px` }}
+            style={{ top: `${topOffset ?? 0}px` }}
             className="fixed left-0 right-0 z-[9] bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg"
           >
             <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 ">
@@ -445,12 +520,67 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
 
                     {/* Right Side: Action Buttons */}
                     <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
+                      {/* Contact Button */}
+                      <Button
+                        variant="default"
+                        size="icon"
+                        onClick={handleContactClick}
+                        className="h-9 w-9 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
+                        aria-label="Contact us"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                      </Button>
+                      {/* Calculator Button */}
+                      <Button
+                        variant="default"
+                        size="icon"
+                        onClick={handleCalculatorClick}
+                        className="h-9 w-9 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
+                        aria-label="Go to calculators"
+                      >
+                        <Calculator className="h-4 w-4" />
+                      </Button>
+                      {/* Property Alerts Button */}
+                      <Button
+                        variant="default"
+                        size="icon"
+                        onClick={() => setIsPropertyAlertsModalOpen(true)}
+                        className="h-9 w-9 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
+                        aria-label="Property Alerts"
+                      >
+                        <Bell className="h-4 w-4" />
+                      </Button>
+                      {/* Heart Button */}
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={handleSave}
+                        disabled={isSaving || isUnsaving}
+                        className={`h-9 w-9 rounded-lg bg-white transition-all duration-200 ${
+                          isSaved 
+                            ? 'bg-red-50 text-red-600 hover:bg-red-100 border-red-200' 
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-red-600'
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                        aria-label="Save property"
+                      >
+                        <Heart className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+                      </Button>
+                      {/* Share Button */}
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setIsShareModalOpen(true)}
+                        className="h-9 w-9 rounded-lg bg-white text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
+                        aria-label="Share property"
+                      >
+                        <Share2 className="h-4 w-4" />
+                      </Button>
                       {/* Schedule Tour Button */}
                       <Button
                         variant="default"
                         size="default"
                         onClick={handleScheduleTour}
-                        className="gap-2 bg-brand-cb-blue hover:bg-brand-midnight"
+                        className="gap-2 rounded-lg shadow-md"
                       >
                         <Calendar className="h-4 w-4" />
                         <span className="hidden sm:inline">Schedule Tour</span>
@@ -470,6 +600,22 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         property={property}
+      />
+
+      {/* Property Alerts Modal */}
+      <PropertyAlerts
+        open={isPropertyAlertsModalOpen}
+        onOpenChange={setIsPropertyAlertsModalOpen}
+        propertyId={property.mlsNumber}
+        cityName={property.address?.city || 'this area'}
+        propertyType={property.details?.propertyType || 'property'}
+        neighborhood={property.address?.neighborhood || undefined}
+      />
+
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
       />
 
       {/* Schedule Tour Modal - Only show for non-pre-con properties */}

@@ -8,6 +8,7 @@ import Description from '../ItemBody/Description'
 import PropertyHistory from '../ItemBody/PropertyHistory/PropertyHistory'
 import { generatePropertyDetailsData } from '../ItemBody/generatePropertyDetails'
 import PropertyListingDetails from '../ItemBody/PropertyListingDetails'
+import AVMBreakdown from '../ItemBody/AVMBreakdown'
 import Features from './Features'
 import MarketAnalytics from './MarketAnalytics'
 
@@ -26,8 +27,9 @@ const NewItemBody: React.FC<NewItemBodyProps> = ({
 }) => {
   return (
     <div className="w-full">
-      <CurvedTabs defaultValue="listing-details" className="w-full">
+      <CurvedTabs defaultValue="avm-breakdown" className="w-full">
         <CurvedTabsList className="w-full justify-start">
+          {!isRent && <CurvedTabsTrigger value="avm-breakdown">AVM Breakdown</CurvedTabsTrigger>}
           <CurvedTabsTrigger value="listing-details">Listing Details</CurvedTabsTrigger>
           {!isRent && <CurvedTabsTrigger value="history">History</CurvedTabsTrigger>}
           <CurvedTabsTrigger value="features">Features</CurvedTabsTrigger>
@@ -35,6 +37,11 @@ const NewItemBody: React.FC<NewItemBodyProps> = ({
           {!isRent && <CurvedTabsTrigger value="market-analytics">Market Analytics</CurvedTabsTrigger>}
         </CurvedTabsList>
 
+        {!isRent && (
+          <CurvedTabsContent value="avm-breakdown">
+            <AVMBreakdown property={property} rawProperty={rawProperty} />
+          </CurvedTabsContent>
+        )}
 
         <CurvedTabsContent value="listing-details">
           {/* Listing details content will go here */}

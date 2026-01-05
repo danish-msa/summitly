@@ -1,18 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  VerticalTabs, 
-  VerticalTabsList, 
-  VerticalTabsTrigger, 
-  VerticalTabsContent,
-  VerticalTabsContainer
-} from '@/components/ui/vertical-tabs';
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import RequestInfoModal from "./RequestInfoModal";
 import { 
   Home,  
@@ -51,7 +40,8 @@ import {
   Coffee,
   Gamepad2,
   ShoppingBag,
-  CreditCard
+  CreditCard,
+  Bed
 } from "lucide-react";
 import { PropertyListing } from "@/lib/types";
 
@@ -100,6 +90,7 @@ interface ListingDetailsProps {
 
 export default function PropertyListingDetails({ data, property }: ListingDetailsProps) {
   const [isRequestInfoModalOpen, setIsRequestInfoModalOpen] = useState(false);
+  
   // Debug: Check if property has preCon data
   // console.log('Property preCon data:', property?.preCon);
   
@@ -390,9 +381,12 @@ export default function PropertyListingDetails({ data, property }: ListingDetail
 
   // Check if sections have data
   const hasKeyFacts = Object.keys(data.keyFacts).length > 0 || 
-    (property && property.preCon && property.preCon.completion && property.preCon.completion.date);
-  const hasPricePrediction = data.pricePrediction && 
-    (data.pricePrediction.lower > 0 || data.pricePrediction.mid > 0 || data.pricePrediction.higher > 0);
+    (property && property.preCon && property.preCon.completion && property.preCon.completion.date) ||
+    Object.keys(data.propertyDetails.property).length > 0 ||
+    Object.keys(data.propertyDetails.building).length > 0 ||
+    Object.keys(data.propertyDetails.inside).length > 0 ||
+    Object.keys(data.propertyDetails.parking).length > 0 ||
+    Object.keys(data.propertyDetails.highlights).length > 0;
   const hasPropertyDetails = Object.keys(data.propertyDetails.property).length > 0;
   const hasBuildingDetails = Object.keys(data.propertyDetails.building).length > 0;
   const hasInsideDetails = Object.keys(data.propertyDetails.inside).length > 0;
@@ -408,138 +402,114 @@ export default function PropertyListingDetails({ data, property }: ListingDetail
     hasUtilitiesDetails || hasParkingDetails || hasLandDetails || hasHighlights;
   const defaultTab = hasDetailsTab ? 'details' : hasRooms ? 'rooms' : 'comparable';
 
-  // Determine default tab for Key Facts and Price Prediction
-  const keyFactsPricePredictionDefaultTab = hasKeyFacts ? 'key-facts' : 'price-prediction';
-
   return (
-    <div className="w-full">
-      {/* Key Facts and Price Prediction Tabs */}
-      {(hasKeyFacts || hasPricePrediction) && (
-        <VerticalTabs defaultValue={keyFactsPricePredictionDefaultTab} className="w-full">
-          <VerticalTabsContainer>
-            <VerticalTabsList>
-              {hasKeyFacts && (
-                <VerticalTabsTrigger value="key-facts" className="flex items-center gap-3">
-                  <Info className="h-6 w-6 text-secondary" />
-                  <span>Key Facts</span>
-                </VerticalTabsTrigger>
-              )}
-              {hasPricePrediction && (
-                <VerticalTabsTrigger value="price-prediction" className="flex items-center gap-3">
-                  <TrendingUp className="h-6 w-6 text-secondary" />
-                  <span>Price Prediction</span>
-                </VerticalTabsTrigger>
-              )}
-            </VerticalTabsList>
-
-            <div className="flex-1">
-              {/* Key Facts Tab Content */}
-              {hasKeyFacts && (
-                <VerticalTabsContent value="key-facts">
-              <Card variant="transparent">
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {Object.entries(data.keyFacts).map(([key, value]) => {
-                      const Icon = getFactIcon(key);
-                      return (
-                        <div key={key} className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-secondary/20 flex items-center justify-center flex-shrink-0">
-                            <Icon className="h-5 w-5 text-muted-foreground" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs text-muted-foreground">{key}</p>
-                            <p className="font-semibold text-foreground">{value}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    {/* Occupancy / Completion Year for Pre-Construction Properties */}
-                    {property && property.preCon && property.preCon.completion && property.preCon.completion.date && (
-                      <div className="flex items-center gap-3 hover:shadow-sm transition-shadow">
-                        <div className="w-10 h-10 rounded-lg bg-brand-celestial/20 flex items-center justify-center flex-shrink-0">
-                          <Calendar className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1 min-w-0 space-y-1">
-                          <p className="text-sm text-muted-foreground">Occupancy / Completion Year</p>
-                          <p className="font-semibold text-foreground">
-                            {(() => {
-                              const completionDate = property.preCon.completion.date;
-                              // Extract year from completion.date (e.g., "Q4 2025" -> "2025", "2025" -> "2025")
-                              const yearMatch = completionDate.match(/\d{4}/);
-                              if (yearMatch) {
-                                return yearMatch[0];
-                              }
-                              // If no year found, try to parse as date string
-                              try {
-                                const parsedDate = new Date(completionDate);
-                                if (!isNaN(parsedDate.getTime())) {
-                                  return parsedDate.getFullYear().toString();
-                                }
-                              } catch {
-                                // If parsing fails, return the original string
-                              }
-                              return completionDate;
-                            })()}
-                          </p>
-                        </div>
+    <div className="w-full pl-14">
+      {/* Key Facts Section - All Details Combined */}
+      {hasKeyFacts && (
+        <div>
+          <div>
+            <h2 className="text-lg font-semibold text-foreground leading-tight mb-6">Key Facts</h2>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {/* Original Key Facts */}
+              {Object.entries(data.keyFacts).map(([key, value]) => {
+                return (
+                  <div key={key} className="flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-muted-foreground">{key}</p>
+                      <p className="font-semibold text-foreground">{value}</p>
+                    </div>
+                  </div>
+                );
+              })}
+              
+              {/* Property Details */}
+              {hasPropertyDetails && Object.entries(data.propertyDetails.property).map(([key, value]) => (
+                <div key={`property-${key}`} className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-muted-foreground">{key}</p>
+                    <p className="font-semibold text-foreground">{value}</p>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Building Details */}
+              {hasBuildingDetails && Object.entries(data.propertyDetails.building).map(([key, value]) => (
+                <div key={`building-${key}`} className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-muted-foreground">{key}</p>
+                    <p className="font-semibold text-foreground">{value}</p>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Interior Details */}
+              {hasInsideDetails && Object.entries(data.propertyDetails.inside).map(([key, value]) => (
+                <div key={`inside-${key}`} className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-muted-foreground">{key}</p>
+                    <p className="font-semibold text-foreground">{value}</p>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Parking Details */}
+              {hasParkingDetails && Object.entries(data.propertyDetails.parking).map(([key, value]) => (
+                <div key={`parking-${key}`} className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-muted-foreground">{key}</p>
+                    <p className="font-semibold text-foreground">{value}</p>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Amenities/Highlights */}
+              {hasHighlights && Object.entries(data.propertyDetails.highlights).map(([key, value]) => {
+                const Icon = getHighlightIcon(key);
+                return (
+                  <div key={`highlight-${key}`} className="flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Icon className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">{key}</p>
                       </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-                </VerticalTabsContent>
-              )}
-
-              {/* Price Prediction Tab Content */}
-              {hasPricePrediction && (
-                <VerticalTabsContent value="price-prediction">
-              <Card variant="transparent">
-                <CardContent className="pt-6 space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="flex flex-col items-center justify-center text-center p-4 bg-purple-50 rounded-lg">
-                      <p className="text-sm text-purple-500 mb-2">Lower Range</p>
-                      <p className="text-2xl font-bold text-purple-600">
-                        {formatPrice(data.pricePrediction.lower)}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-center justify-center text-center p-4 bg-green-50 rounded-lg">
-                      <p className="text-sm text-green-600 font-medium mb-2">Mid Range</p>
-                      <p className="text-3xl font-bold text-green-600">
-                        {formatPrice(data.pricePrediction.mid)}
-                      </p>
-                      <Badge variant="secondary" className="mt-2">
-                        Confidence: {data.pricePrediction.confidence}%
-                      </Badge>
-                    </div>
-                    <div className="flex flex-col items-center justify-center text-center p-4 bg-red-50 rounded-lg">
-                      <p className="text-sm text-red-600 font-medium mb-2">Higher Range</p>
-                      <p className="text-2xl font-bold text-red-600">
-                        {formatPrice(data.pricePrediction.higher)}
-                      </p>
+                      <p className="font-semibold text-foreground">{value}</p>
                     </div>
                   </div>
-
-                  <div className="flex flex-wrap gap-4 justify-center">
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground">Appreciation Since Last Sold</p>
-                      <p className="text-xl font-bold text-success">
-                        +{data.pricePrediction.appreciation}%
-                      </p>
-                    </div>
-                    <Separator orientation="vertical" className="h-12" />
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground">Est. Monthly Rental Income</p>
-                      <p className="text-xl font-bold">{formatPrice(data.pricePrediction.rentalIncome)}</p>
-                    </div>
+                );
+              })}
+              
+              {/* Occupancy / Completion Year for Pre-Construction Properties */}
+              {property && property.preCon && property.preCon.completion && property.preCon.completion.date && (
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <p className="text-xs text-muted-foreground">Occupancy / Completion Year</p>
+                    <p className="font-semibold text-foreground">
+                      {(() => {
+                        const completionDate = property.preCon.completion.date;
+                        const yearMatch = completionDate.match(/\d{4}/);
+                        if (yearMatch) {
+                          return yearMatch[0];
+                        }
+                        try {
+                          const parsedDate = new Date(completionDate);
+                          if (!isNaN(parsedDate.getTime())) {
+                            return parsedDate.getFullYear().toString();
+                          }
+                        } catch {
+                          // If parsing fails, return the original string
+                        }
+                        return completionDate;
+                      })()}
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
-                </VerticalTabsContent>
+                </div>
               )}
             </div>
-          </VerticalTabsContainer>
-        </VerticalTabs>
+          </div>
+        </div>
       )}
+
+      
 
       {/* Tabbed Content */}
       {/* {(hasPropertyDetails || hasBuildingDetails || hasInsideDetails || hasUtilitiesDetails || hasParkingDetails || hasLandDetails || hasHighlights || hasRooms || hasComparableSales) && (
@@ -767,17 +737,7 @@ export default function PropertyListingDetails({ data, property }: ListingDetail
         </Tabs>
       )} */}
 
-      {/* Call to Action */}
-      <div className="flex justify-center pt-6">
-        <Button 
-          variant="default" 
-          className="bg-gradient-to-r from-brand-celestial to-brand-cb-blue hover:bg-brand-midnight text-white px-8 py-6 text-base rounded-lg gap-2"
-          onClick={() => setIsRequestInfoModalOpen(true)}
-        >
-          <MessageCircle className="h-5 w-5" />
-          I want more info about this home
-        </Button>
-      </div>
+      
       
       <RequestInfoModal 
         open={isRequestInfoModalOpen} 

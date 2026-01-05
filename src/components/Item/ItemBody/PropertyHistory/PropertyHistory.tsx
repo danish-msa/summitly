@@ -1,19 +1,9 @@
 import { PropertyHistoryProps, GroupedHistoryRecord } from './types';
 import { formatDate, getTimeAgo, getDaysOnMarket, getPropertyAddress } from './utils';
-import ListingTimeline from './ListingTimeline';
-import PriceChange from './PriceChange';
+import TransactionHistory from './TransactionHistory';
 import TaxHistory from './TaxHistory';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  VerticalTabs, 
-  VerticalTabsList, 
-  VerticalTabsTrigger, 
-  VerticalTabsContent,
-  VerticalTabsContainer
-} from '@/components/ui/vertical-tabs';
 import EstimateHistorySection from './EstimateHistorySection';
-import { Button } from '@/components/ui/button';
-import { HistoryIcon, Clock, TrendingUp, Receipt } from 'lucide-react';
 
 export default function PropertyHistory({ listingHistory, property, rawProperty }: PropertyHistoryProps) {
   // Get property address
@@ -43,55 +33,23 @@ export default function PropertyHistory({ listingHistory, property, rawProperty 
   });
 
   return (
-    <div className="w-full">
-      <VerticalTabs defaultValue="timeline" className="w-full">
-        <VerticalTabsContainer>
-          <VerticalTabsList>
-            <VerticalTabsTrigger value="timeline" className="flex items-center gap-3">
-              <Clock className="h-6 w-6 text-secondary" />
-              <span>Listing Timeline</span>
-            </VerticalTabsTrigger>
-            <VerticalTabsTrigger value="price" className="flex items-center gap-3">
-              <TrendingUp className="h-6 w-6 text-secondary" />
-              <span>Price Change</span>
-            </VerticalTabsTrigger>
-            <VerticalTabsTrigger value="tax" className="flex items-center gap-3">
-              <Receipt className="h-6 w-6 text-secondary" />
-              <span>Tax History</span>
-            </VerticalTabsTrigger>
-          </VerticalTabsList>
-          
-          <div className="flex-1">
-            <VerticalTabsContent value="timeline">
-              <ListingTimeline groupedHistory={groupedHistory} propertyAddress={propertyAddress} />
-            </VerticalTabsContent>
-            
-            <VerticalTabsContent value="price">
-              <PriceChange groupedHistory={groupedHistory} propertyAddress={propertyAddress} />
-            </VerticalTabsContent>
-            
-            <VerticalTabsContent value="tax">
-              <TaxHistory property={property} propertyAddress={propertyAddress} />
-            </VerticalTabsContent>
-          </div>
-        </VerticalTabsContainer>
-      </VerticalTabs>
-      <EstimateHistorySection propertyAddress={propertyAddress} rawProperty={rawProperty} />
+    <div className="w-full pl-8">
+      <Tabs defaultValue="transactions" className="w-full">
+        <TabsList>
+          <TabsTrigger value="transactions">Transaction History</TabsTrigger>
+          <TabsTrigger value="tax">Tax History</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="transactions">
+          <TransactionHistory groupedHistory={groupedHistory} propertyAddress={propertyAddress} />
+        </TabsContent>
+        
+        <TabsContent value="tax">
+          <TaxHistory property={property} propertyAddress={propertyAddress} />
+        </TabsContent>
+      </Tabs>
       
-      {/* Call to Action */}
-      <div className="flex justify-center pt-6 pb-4">
-        <Button 
-          variant="default" 
-          className="bg-gradient-to-r from-brand-celestial to-brand-cb-blue hover:bg-brand-midnight text-white px-8 py-6 text-base rounded-lg gap-2"
-          onClick={() => {
-            // Add handler for CTA click
-            console.log('Need more history details about this property');
-          }}
-        >
-          <HistoryIcon className="h-5 w-5" />
-          Need more history details about this property
-        </Button>
-      </div>
+      <EstimateHistorySection propertyAddress={propertyAddress} rawProperty={rawProperty} />
     </div>
   );
 }

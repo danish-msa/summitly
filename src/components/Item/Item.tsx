@@ -209,14 +209,19 @@ const Item: React.FC = () => {
       </div> */}
 
       <div className='container-1400 mt-10 mb-4'>
+
+        <StickyPropertyBar property={property} bannerRef={bannerRef} />
         {/* Breadcrumbs */}
         <Breadcrumbs property={property} isPreCon={false} isRent={isRental} />
         <PropertyHeader property={property} />
         
         <div className='flex flex-row gap-8 mt-6 mb-10'>
           <div className='w-[70%] flex flex-col gap-6'>
-            <ModernBannerGallery property={property} />
+            <div ref={bannerRef} data-banner-section>
+              <ModernBannerGallery property={property} />
+            </div>
             <Description property={property} isPreCon={isPreCon} />
+
             {/* <div ref={bannerRef} data-banner-section>
               <Banner property={property} rawProperty={rawProperty} isPreCon={false} isRent={isRental} />
             </div> */}

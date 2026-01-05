@@ -1,6 +1,7 @@
+import { Button } from '@/components/ui/button';
 import { GroupedHistoryRecord } from './types';
 import { formatCurrency } from './utils';
-import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import { ArrowUp, ArrowDown, Minus, TrendingUp } from 'lucide-react';
 
 interface PriceChangeProps {
   groupedHistory: GroupedHistoryRecord[];
@@ -120,6 +121,20 @@ export default function PriceChange({ groupedHistory, propertyAddress }: PriceCh
           </div>
         </div>
       )}
+      {/* Call to Action */}
+      <div className="flex justify-center pt-6 pb-4">
+        <Button 
+          variant="default" 
+          className="px-8 py-6 text-base rounded-lg gap-2"
+          onClick={() => {
+            // Add handler for CTA click
+            console.log('Need more price change details about this property');
+          }}
+        >
+          <TrendingUp className="h-5 w-5" />
+          Need more price change details about this property
+        </Button>
+      </div>
     </div>
   );
 }

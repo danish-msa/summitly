@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { PropertyListing } from '@/lib/types'
-import { Home, Bed, Bath, Maximize2, Heart, Share2, FileText, XCircle, Bell } from 'lucide-react'
+import { Home, Bed, Bath, Maximize2, Heart, Share2, FileText, XCircle, Bell, Calculator, MessageCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useSession } from 'next-auth/react'
@@ -46,6 +46,87 @@ const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property }) => {
   };
 
   const sqftDisplay = formatSqft(property.details?.sqft);
+
+  // Determine property status based on Repliers data
+  const getPropertyStatus = () => {
+    // Check if property is sold
+    const isSold = 
+      (property.soldPrice && property.soldPrice.trim() !== '') ||
+      (property.soldDate && property.soldDate.trim() !== '') ||
+      property.lastStatus?.toLowerCase() === 'sld' ||
+      property.status?.toLowerCase().includes('sold') ||
+      property.status?.toLowerCase().includes('closed');
+    
+    if (isSold) {
+      return {
+        label: 'Sold',
+        variant: 'sold' as const,
+      };
+    }
+    
+    // Check for other statuses
+    const statusLower = property.status?.toLowerCase() || '';
+    const lastStatusLower = property.lastStatus?.toLowerCase() || '';
+    
+    // Active statuses
+    if (
+      statusLower.includes('active') ||
+      lastStatusLower === 'new' ||
+      lastStatusLower === 'sc' ||
+      lastStatusLower === 'pc' ||
+      lastStatusLower === 'hold'
+    ) {
+      return {
+        label: 'Active',
+        variant: 'active' as const,
+      };
+    }
+    
+    // Pending/Under Contract
+    if (
+      statusLower.includes('pending') ||
+      statusLower.includes('contract') ||
+      lastStatusLower === 'pc' ||
+      lastStatusLower === 'sc'
+    ) {
+      return {
+        label: 'Pending',
+        variant: 'secondary' as const,
+      };
+    }
+    
+    // Default to Active
+    return {
+      label: 'Active',
+      variant: 'active' as const,
+    };
+  };
+
+  const propertyStatus = getPropertyStatus();
+
+  const handleContactClick = () => {
+    const contactElement = document.getElementById('contact-section');
+    if (contactElement) {
+      const elementPosition = contactElement.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = elementPosition - 100; // Offset for navbar
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const handleCalculatorClick = () => {
+    const calculatorsElement = document.getElementById('calculators');
+    if (calculatorsElement) {
+      const elementPosition = calculatorsElement.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = elementPosition - 100; // Offset for navbar
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   const handleSave = async () => {
     // If not logged in, show auth modal
@@ -94,15 +175,12 @@ const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property }) => {
             <h1 className="text-2xl font-bold text-gray-900">
               {address}
             </h1>
-            {/* Status Badge */}
-            <Badge variant="active" showDot>
-              Active
-            </Badge>
+            
           </div>
 
           {/* Property Features */}
-          <div className="flex flex-wrap items-center gap-4 mb-4">
-            <span className="text-xs text-gray-500">MLS # {property.mlsNumber}</span>
+          <div className="flex flex-wrap items-center gap-4">
+            <span className="text-sm text-gray-500">MLS # {property.mlsNumber}</span>
 
             {/* Property Type */}
             <div className="flex items-center gap-2">
@@ -139,6 +217,10 @@ const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property }) => {
                 <span className="text-sm text-gray-700">{sqftDisplay}</span>
               </div>
             )}
+            {/* Status Badge */}
+            <Badge variant={propertyStatus.variant} showDot>
+              {propertyStatus.label}
+            </Badge>
           </div>
         </div>
 
@@ -146,6 +228,26 @@ const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property }) => {
         <div className="flex flex-col items-end gap-2">
            {/* Action Buttons */}
            <div className="flex items-center gap-2">
+            {/* Contact Button */}
+            <Button
+              variant="default"
+              size="icon"
+              onClick={handleContactClick}
+              className="h-10 w-10 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
+              aria-label="Contact us"
+            >
+              <MessageCircle className="h-5 w-5" />
+            </Button>
+            {/* Calculator Button */}
+            <Button
+              variant="default"
+              size="icon"
+              onClick={handleCalculatorClick}
+              className="h-10 w-10 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
+              aria-label="Go to calculators"
+            >
+              <Calculator className="h-5 w-5" />
+            </Button>
             {/* Property Alerts Button */}
             <Button
               variant="default"

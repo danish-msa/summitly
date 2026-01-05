@@ -1,5 +1,6 @@
 import { PropertyListing } from '@/lib/types';
 import { FileText, TrendingUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface TaxHistoryProps {
   property?: PropertyListing;
@@ -166,6 +167,20 @@ export default function TaxHistory({ property, propertyAddress }: TaxHistoryProp
           <strong>Note:</strong> Property tax information is based on public records and may vary. 
           Tax rates and assessed values are subject to change. Please verify with your local tax assessor's office.
         </p>
+      </div>
+      {/* Call to Action */}
+      <div className="flex justify-center pt-6 pb-4">
+        <Button 
+          variant="default" 
+          className="px-8 py-6 text-base rounded-lg gap-2"
+          onClick={() => {
+            // Add handler for CTA click
+            console.log('Need more tax history details about this property');
+          }}
+        >
+          <TrendingUp className="h-5 w-5" />
+          Need more tax history details about this property
+        </Button>
       </div>
     </div>
   );

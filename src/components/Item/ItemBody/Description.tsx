@@ -77,7 +77,7 @@ const Description: React.FC<DescriptionProps> = ({ property, isPreCon = false })
           )}
         </div>
         <div className="flex flex-col justify-start rounded-lg w-[50%]">
-          <div className="flex items-center gap-2 py-6 px-4 rounded-t-lg bg-[linear-gradient(112deg,#7e3af2_1.66%,#eb7161)] ">
+          <div className="flex items-center gap-2 py-6 px-4 rounded-t-lg price-card-gradient ">
             <Sparkles className="h-5 w-5 text-white" />
             <h3 className="text-xl font-semibold text-white">
               {isPreCon ? 'AI Summary of this project' : 'AI Summary of this property'}

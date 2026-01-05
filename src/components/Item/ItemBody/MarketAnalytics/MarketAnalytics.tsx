@@ -795,7 +795,7 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
       <div className="flex justify-center pt-6 pb-4">
         <Button 
           variant="default" 
-          className="bg-gradient-to-r from-brand-celestial to-brand-cb-blue hover:bg-brand-midnight text-white px-8 py-6 text-base rounded-lg gap-2"
+          className="px-8 py-6 text-base rounded-lg gap-2"
           onClick={() => {
             // Add handler for CTA click
             console.log('Connect me with a market expert');

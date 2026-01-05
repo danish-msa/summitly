@@ -38,22 +38,22 @@ export const MarketStats: React.FC<MarketStatsProps> = ({ neighborhood, displayC
       
       {/* Stats Grid - Top Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-        <div className="bg-secondary/20 rounded-xl p-6">
+        <div className="bg-muted/20 rounded-xl p-6">
           <p className="text-sm text-muted-foreground mb-1">Active Listings</p>
           <p className="text-2xl font-bold text-foreground">{marketStats.activeListings}</p>
         </div>
         
-        <div className="bg-secondary/20 rounded-xl p-6">
+        <div className="bg-muted/20 rounded-xl p-6">
           <p className="text-sm text-muted-foreground mb-1">New Listings</p>
           <p className="text-2xl font-bold text-foreground">{marketStats.newListings}</p>
         </div>
         
-        <div className="bg-secondary/10 rounded-xl p-6">
+        <div className="bg-muted/10 rounded-xl p-6">
           <p className="text-sm text-muted-foreground mb-1">Sold Properties</p>
           <p className="text-2xl font-bold text-foreground">{marketStats.soldProperties}</p>
         </div>
         
-        <div className="bg-secondary/20 rounded-xl p-6">
+        <div className="bg-muted/20 rounded-xl p-6">
           <p className="text-sm text-muted-foreground mb-1">Total Count</p>
           <p className="text-2xl font-bold text-foreground">{marketStats.activeListings + marketStats.soldProperties}</p>
         </div>
