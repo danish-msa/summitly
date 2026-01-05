@@ -28,6 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getLocationName, getPropertyClassLabel } from './dataGenerators';
 import { RepliersAPI } from '@/lib/api/repliers';
 
@@ -304,6 +305,44 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
     }
   };
 
+  // Chart Skeleton Component
+  const ChartSkeleton = ({ height = "h-[400px]" }: { height?: string }) => (
+    <div className={`w-full ${height} rounded-lg border border-border bg-card p-6`}>
+      <div className="space-y-4">
+        {/* Chart area skeleton */}
+        <Skeleton className="h-full w-full rounded-lg" />
+        {/* Legend skeleton */}
+        <div className="flex gap-4 justify-center">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+      </div>
+    </div>
+  );
+
+  // Table Skeleton Component
+  const TableSkeleton = () => (
+    <div className="w-full overflow-auto max-h-[500px] md:max-h-[600px] rounded-lg border border-border">
+      <div className="p-4 space-y-3">
+        {/* Header skeleton */}
+        <div className="flex gap-4">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-6 w-32 ml-auto" />
+          <Skeleton className="h-6 w-32" />
+        </div>
+        {/* Rows skeleton */}
+        {[...Array(8)].map((_, i) => (
+          <div key={i} className="flex gap-4">
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-32 ml-auto" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   // Separate handlers for each tab
   const handleToggleMarketView = () => {
     setMarketViewMode(prev => prev === "chart" ? "table" : "chart");
@@ -496,11 +535,6 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
                       </span>
                     </div>
                   )}
-                  <div className={`text-xs px-2 py-1 rounded-full ${
-                    apiMarketData ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground'
-                  }`}>
-                    {apiMarketData ? 'Live Data' : 'Sample Data'}
-                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -546,34 +580,41 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
             {/* Main Chart or Table: Median Sold Price & Average Sold Price */}
             {marketViewMode === "chart" ? (
               <div className="w-full h-[500px] md:h-[400px]">
-                <MarketChartSection data={marketData} chartKey={chartKey} />
+                {isLoading ? (
+                  <ChartSkeleton height="h-full" />
+                ) : (
+                  <MarketChartSection data={marketData} chartKey={chartKey} />
+                )}
               </div>
             ) : (
-              <div className="w-full overflow-auto max-h-[500px] md:max-h-[600px] rounded-lg border border-border">
-                <Table>
-                  <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
-                    <TableRow>
-                      <TableHead className="font-semibold">Period</TableHead>
-                      <TableHead className="text-right font-semibold">Median Sold Price</TableHead>
-                      <TableHead className="text-right font-semibold">Average Sold Price</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {marketData.months.map((month, index) => (
-                      <TableRow 
-                        key={index} 
-                        className="hover:bg-muted/50 transition-colors"
-                      >
-                        <TableCell className="font-medium">{month}</TableCell>
-                        <TableCell className="text-right">
-                          <span className="inline-flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-blue-500" />
-                            ${marketData.prices[index]?.toLocaleString('en-US', { maximumFractionDigits: 0 }) || 'N/A'}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <span className="inline-flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-green-500" />
+              isLoading ? (
+                <TableSkeleton />
+              ) : (
+                <div className="w-full overflow-auto max-h-[500px] md:max-h-[600px] rounded-lg border border-border">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
+                      <TableRow>
+                        <TableHead className="font-semibold">Period</TableHead>
+                        <TableHead className="text-right font-semibold">Median Sold Price</TableHead>
+                        <TableHead className="text-right font-semibold">Average Sold Price</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {marketData.months.map((month, index) => (
+                        <TableRow 
+                          key={index} 
+                          className="hover:bg-muted/50 transition-colors"
+                        >
+                          <TableCell className="font-medium">{month}</TableCell>
+                          <TableCell className="text-right">
+                            <span className="inline-flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-blue-500" />
+                              ${marketData.prices[index]?.toLocaleString('en-US', { maximumFractionDigits: 0 }) || 'N/A'}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <span className="inline-flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-green-500" />
                             ${marketData.days[index]?.toLocaleString('en-US', { maximumFractionDigits: 0 }) || 'N/A'}
                           </span>
                         </TableCell>
@@ -582,6 +623,7 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
                   </TableBody>
                 </Table>
               </div>
+              )
             )}
             </VerticalTabsContent>
 
@@ -599,11 +641,6 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
                   <p className="text-sm text-muted-foreground">
                     Track market activity with new listings and closed sales
                   </p>
-                  <div className={`text-xs px-2 py-1 rounded-full ${
-                    apiListingsData ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground'
-                  }`}>
-                    {apiListingsData ? 'Live Data' : 'Sample Data'}
-                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -649,20 +686,27 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
             {/* Second Chart or Table: New/Closed Listings */}
             {listingsViewMode === "chart" ? (
               <div className="w-full h-[400px] md:h-[350px]">
-                <ListingsChartSection data={listingsDataFormatted} chartKey={chartKey} />
+                {isLoading ? (
+                  <ChartSkeleton height="h-full" />
+                ) : (
+                  <ListingsChartSection data={listingsDataFormatted} chartKey={chartKey} />
+                )}
               </div>
             ) : (
-              <div className="w-full overflow-auto max-h-[400px] md:max-h-[500px] rounded-lg border border-border">
-                <Table>
-                  <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
-                    <TableRow>
-                      <TableHead className="font-semibold">Month</TableHead>
-                      <TableHead className="text-right font-semibold">New Listings</TableHead>
-                      <TableHead className="text-right font-semibold">Closed Listings</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {listingsDataFormatted.months.map((month, index) => (
+              isLoading ? (
+                <TableSkeleton />
+              ) : (
+                <div className="w-full overflow-auto max-h-[400px] md:max-h-[500px] rounded-lg border border-border">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
+                      <TableRow>
+                        <TableHead className="font-semibold">Month</TableHead>
+                        <TableHead className="text-right font-semibold">New Listings</TableHead>
+                        <TableHead className="text-right font-semibold">Closed Listings</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {listingsDataFormatted.months.map((month, index) => (
                       <TableRow 
                         key={index} 
                         className="hover:bg-muted/50 transition-colors"
@@ -685,6 +729,7 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
                   </TableBody>
                 </Table>
               </div>
+              )
             )}
             </VerticalTabsContent>
 
@@ -702,11 +747,6 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
                   <p className="text-sm text-muted-foreground">
                     Track median and average sold prices over time
                   </p>
-                  <div className={`text-xs px-2 py-1 rounded-full ${
-                    apiSoldPriceData ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground'
-                  }`}>
-                    {apiSoldPriceData ? 'Live Data' : 'Sample Data'}
-                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -752,39 +792,47 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
             {/* Third Chart or Table: Sold Price Trends */}
             {soldPriceViewMode === "chart" ? (
               <div className="w-full h-[400px] md:h-[350px]">
-                <SoldPriceChartSection data={soldPriceDataFormatted} chartKey={chartKey} />
+                {isLoading ? (
+                  <ChartSkeleton height="h-full" />
+                ) : (
+                  <SoldPriceChartSection data={soldPriceDataFormatted} chartKey={chartKey} />
+                )}
               </div>
             ) : (
-              <div className="w-full overflow-auto max-h-[400px] md:max-h-[500px] rounded-lg border border-border">
-                <Table>
-                  <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
-                    <TableRow>
-                      <TableHead className="font-semibold">Month</TableHead>
-                      <TableHead className="font-semibold text-right">Median Price</TableHead>
-                      <TableHead className="font-semibold text-right">Average Price</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {soldPriceDataFormatted.months.map((month, index) => (
-                      <TableRow key={month} className="hover:bg-muted/50 transition-colors">
-                        <TableCell className="font-medium">{month}</TableCell>
-                        <TableCell className="text-right">
-                          <span className="inline-flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-green-500" />
-                            ${(soldPriceDataFormatted.medianPrices[index] / 1000).toFixed(0)}k
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <span className="inline-flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-purple-500" />
-                            ${(soldPriceDataFormatted.averagePrices[index] / 1000).toFixed(0)}k
-                          </span>
-                        </TableCell>
+              isLoading ? (
+                <TableSkeleton />
+              ) : (
+                <div className="w-full overflow-auto max-h-[400px] md:max-h-[500px] rounded-lg border border-border">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
+                      <TableRow>
+                        <TableHead className="font-semibold">Month</TableHead>
+                        <TableHead className="font-semibold text-right">Median Price</TableHead>
+                        <TableHead className="font-semibold text-right">Average Price</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {soldPriceDataFormatted.months.map((month, index) => (
+                        <TableRow key={month} className="hover:bg-muted/50 transition-colors">
+                          <TableCell className="font-medium">{month}</TableCell>
+                          <TableCell className="text-right">
+                            <span className="inline-flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-green-500" />
+                              ${(soldPriceDataFormatted.medianPrices[index] / 1000).toFixed(0)}k
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <span className="inline-flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-purple-500" />
+                              ${(soldPriceDataFormatted.averagePrices[index] / 1000).toFixed(0)}k
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )
             )}
             </VerticalTabsContent>
           </div>
