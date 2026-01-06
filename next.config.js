@@ -57,6 +57,10 @@ const nextConfig = {
   // Performance optimizations
   compress: true,
   poweredByHeader: false,
+  
+  // Standalone output for API-only deployment
+  // This creates a minimal server.js file that can be deployed separately
+  output: process.env.NEXT_STANDALONE === 'true' ? 'standalone' : undefined,
 }
 
 module.exports = nextConfig

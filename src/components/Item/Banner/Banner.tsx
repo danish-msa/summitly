@@ -577,7 +577,38 @@ const Banner: React.FC<BannerProps> = ({ property, rawProperty, isPreCon = false
                     </div>
                     
                     
-                    
+                    {/* home estimate and CTA Row */}
+                    {!isPreCon && !isRent && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                        <div className="flex flex-col gap-4 p-3 bg-white rounded-lg">
+                            <div className="flex gap-2 flex-1">
+                                <Megaphone className="h-6 w-6 text-red-600 flex-shrink-0" />
+                                <span className="text-lg text-red-900 font-medium flex-1">
+                                    Prices are changing. Get a free home estimate
+                                </span>
+                            </div>
+                            
+                            <Button variant="default" className="w-full sm:w-auto rounded-lg bg-red-600 text-white">
+                                Find Home Estimate
+                            </Button>
+                        </div>
+
+                        <div className="flex flex-col gap-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                            <div className="flex items-center gap-2">
+                                <span className="text-base font-semibold text-gray-900">
+                                    We estimate this home will sell faster than 85% nearby.
+                                </span>
+                            </div>
+                            <Button 
+                                onClick={handleScheduleTour}
+                                className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors"
+                            >
+                                <Calendar className="h-4 w-4 mr-2" />
+                                Schedule Tour
+                            </Button>
+                        </div>
+                    </div>
+                    )}
                     {/* Property Stats Grid */}
                     {/* <PropertyStats property={property} rawProperty={rawProperty} isPreCon={isPreCon} /> */}
                 </div>

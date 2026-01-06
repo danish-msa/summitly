@@ -87,14 +87,14 @@ export default function TransactionHistory({ groupedHistory, propertyAddress }: 
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[120px] py-2">Date</TableHead>
-            <TableHead className="w-[150px] py-2">Status</TableHead>
-            <TableHead className="w-[120px] text-right py-2">Price</TableHead>
-            <TableHead className="w-[130px] text-right py-2">Price Change</TableHead>
-            <TableHead className="w-[120px] text-right py-2">Days on Market</TableHead>
-            <TableHead className="w-[120px] text-right py-2">Appreciation</TableHead>
-            <TableHead className="w-[200px] py-2">Brokerage</TableHead>
-            <TableHead className="w-[100px] text-center py-2">Actions</TableHead>
+            <TableHead className="w-[120px] py-3">Date</TableHead>
+            <TableHead className="w-[150px] py-3">Status</TableHead>
+            <TableHead className="w-[120px] text-right py-3">Price</TableHead>
+            <TableHead className="w-[130px] text-right py-3">Price Change</TableHead>
+            <TableHead className="w-[120px] text-right py-3">Days on Market</TableHead>
+            <TableHead className="w-[120px] text-right py-3">Appreciation</TableHead>
+            <TableHead className="w-[200px] py-3">Brokerage</TableHead>
+            <TableHead className="w-[100px] text-center py-3">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

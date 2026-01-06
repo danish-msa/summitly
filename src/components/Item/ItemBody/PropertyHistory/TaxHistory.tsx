@@ -1,6 +1,15 @@
 import { PropertyListing } from '@/lib/types';
-import { FileText, TrendingUp } from 'lucide-react';
+import { FileText, TrendingUp, ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 
 interface TaxHistoryProps {
   property?: PropertyListing;
@@ -93,73 +102,82 @@ export default function TaxHistory({ property, propertyAddress }: TaxHistoryProp
       </div>
 
       {/* Tax History Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Year</th>
-              <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Assessed Value</th>
-              <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Tax Amount</th>
-              <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Tax Rate</th>
-              <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Change</th>
-              <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {taxHistory.map((tax, index) => {
-              const previousTax = taxHistory[index + 1];
-              const taxChange = previousTax ? tax.taxAmount - previousTax.taxAmount : 0;
-              const taxChangePercent = previousTax ? ((taxChange / previousTax.taxAmount) * 100) : 0;
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[120px] py-3">Year</TableHead>
+            <TableHead className="w-[150px] text-right py-3">Assessed Value</TableHead>
+            <TableHead className="w-[120px] text-right py-3">Tax Amount</TableHead>
+            <TableHead className="w-[120px] text-right py-3">Tax Rate</TableHead>
+            <TableHead className="w-[130px] text-right py-3">Change</TableHead>
+            <TableHead className="w-[150px] text-center py-3">Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {taxHistory.map((tax, index) => {
+            const previousTax = taxHistory[index + 1];
+            const taxChange = previousTax ? tax.taxAmount - previousTax.taxAmount : 0;
+            const taxChangePercent = previousTax ? ((taxChange / previousTax.taxAmount) * 100) : 0;
+            const isIncrease = taxChange > 0;
+            const isDecrease = taxChange < 0;
+            const showChange = previousTax !== undefined;
 
-              return (
-                <tr key={tax.year} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-4 px-4">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-gray-400" />
-                      <span className="font-medium text-gray-900">{tax.year}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-4 text-right text-gray-900">
+            return (
+              <TableRow key={tax.year}>
+                <TableCell className="font-medium">
+                  <span className="text-gray-900">{tax.year}</span>
+                </TableCell>
+                <TableCell className="text-right">
+                  <span className="font-semibold text-gray-900">
                     ${tax.assessedValue.toLocaleString()}
-                  </td>
-                  <td className="py-4 px-4 text-right">
-                    <span className="font-semibold text-gray-900">
-                      ${tax.taxAmount.toLocaleString()}
-                    </span>
-                  </td>
-                  <td className="py-4 px-4 text-right text-gray-600">
+                  </span>
+                </TableCell>
+                <TableCell className="text-right">
+                  <span className="font-semibold text-gray-900">
+                    ${tax.taxAmount.toLocaleString()}
+                  </span>
+                </TableCell>
+                <TableCell className="text-right">
+                  <span className="text-gray-900">
                     {(tax.taxRate * 100).toFixed(2)}%
-                  </td>
-                  <td className="py-4 px-4 text-right">
-                    {previousTax ? (
-                      <span className={`font-medium ${
-                        taxChange > 0 ? 'text-red-600' : taxChange < 0 ? 'text-green-600' : 'text-gray-600'
-                      }`}>
-                        {taxChange > 0 ? '+' : ''}${taxChange.toLocaleString()}
+                  </span>
+                </TableCell>
+                <TableCell className="text-right">
+                  {showChange ? (
+                    <div className={`flex items-center justify-end gap-1 ${
+                      isIncrease ? 'text-red-600' : isDecrease ? 'text-green-600' : 'text-gray-600'
+                    }`}>
+                      {isIncrease && <ArrowUp className="h-3 w-3" />}
+                      {isDecrease && <ArrowDown className="h-3 w-3" />}
+                      {!isIncrease && !isDecrease && <Minus className="h-3 w-3" />}
+                      <span className="font-medium">
+                        {isIncrease ? '+' : ''}${Math.abs(taxChange).toLocaleString()}
                         {' '}
                         <span className="text-xs">
-                          ({taxChangePercent > 0 ? '+' : ''}{taxChangePercent.toFixed(1)}%)
+                          ({isIncrease ? '+' : ''}{taxChangePercent.toFixed(1)}%)
                         </span>
                       </span>
-                    ) : (
-                      <span className="text-gray-400 text-sm">—</span>
-                    )}
-                  </td>
-                  <td className="py-4 px-4 text-center">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                    </div>
+                  ) : (
+                    <span className="text-gray-500">—</span>
+                  )}
+                </TableCell>
+                <TableCell className="text-center">
+                  <Badge 
+                    className={`px-2.5 py-1 ${
                       tax.paymentStatus === 'Paid' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {tax.paymentStatus}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                        ? 'bg-green-100 text-green-700 hover:bg-green-200 border-0' 
+                        : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-0'
+                    }`}
+                  >
+                    {tax.paymentStatus}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
 
       {/* Additional Info */}
       <div className="mt-6 p-4 bg-gray-50 rounded-lg">
