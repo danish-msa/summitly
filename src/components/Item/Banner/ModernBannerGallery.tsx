@@ -239,7 +239,7 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
             <Button
               variant="default"
               size="sm"
-              className="gap-2 bg-gray-900/80 text-white backdrop-blur-md hover:bg-gray-900 shadow-lg rounded-lg h-9 px-3"
+              className="gap-2 backdrop-blur-md rounded-lg h-9 px-3"
               onClick={() => handleModalOpen('all')}
             >
               <Layers className="h-4 w-4" />
@@ -248,7 +248,7 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
             <Button
               variant="default"
               size="sm"
-              className="gap-2 bg-gray-900/80 text-white backdrop-blur-md hover:bg-gray-900 shadow-lg rounded-lg h-9 px-3"
+              className="gap-2 backdrop-blur-md rounded-lg h-9 px-3"
               onClick={() => handleModalOpen('map')}
             >
               <MapIcon className="h-4 w-4" />
