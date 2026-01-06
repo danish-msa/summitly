@@ -176,11 +176,12 @@ export const ContactSection = () => {
 
               {/* Submit Button */}
               <Button
+                variant="secondary"
                 type="submit"
-                className="w-full h-14 text-base font-semibold rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
+                className="w-full h-14 text-base font-semibold rounded-xl hover:shadow-xl transition-all duration-300"
               >
                 Send Message
-                <Send className="ml-2 h-5 w-5" />
+                <Send className="ml-2 h-5 w-5 text-white" />
               </Button>
 
               {/* Privacy Policy */}
