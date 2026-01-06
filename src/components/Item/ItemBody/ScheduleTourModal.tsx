@@ -7,20 +7,12 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { ChevronLeft, ChevronRight, AlertCircle, Info, X, Bed, Bath, Maximize2, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, AlertCircle, X, Bed, Bath, Maximize2, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTours } from '@/hooks/useTours';
 import { useSession } from 'next-auth/react';
@@ -29,9 +21,10 @@ import Image from 'next/image';
 import { PropertyListing } from '@/lib/types';
 
 const formSchema = z.object({
-  tourType: z.enum(['in-person', 'live-video', 'self-guided']),
   date: z.string().min(1, 'Please select a date'),
-  time: z.string().min(1, 'Please select a time'),
+  availability: z.enum(['morning', 'afternoon', 'evening'], {
+    required_error: 'Please select your availability',
+  }),
   name: z.string().min(1, 'Enter your name.'),
   phone: z.string().min(10, 'Enter a valid phone number.'),
   email: z.string().email('Enter a valid email.'),
@@ -49,48 +42,36 @@ interface ScheduleTourModalProps {
   property?: PropertyListing;
 }
 
-// Get ordinal suffix for date
-const getOrdinalSuffix = (day: number): string => {
-  if (day > 3 && day < 21) return 'th';
-  switch (day % 10) {
-    case 1: return 'st';
-    case 2: return 'nd';
-    case 3: return 'rd';
-    default: return 'th';
-  }
-};
-
-// Generate dates for the next 7 days
+// Generate dates for the next 21 days
 const generateDates = () => {
   const dates = [];
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 21; i++) {
     const date = new Date();
     date.setDate(date.getDate() + i);
     const dayNum = date.getDate();
     const dayName = days[date.getDay()];
     const monthName = months[date.getMonth()];
-    const ordinal = getOrdinalSuffix(dayNum);
     
     dates.push({
       day: dayName,
       date: dayNum,
       month: monthName,
-      ordinal: ordinal,
-      formatted: `${dayName} ${monthName} ${dayNum}${ordinal}`,
+      formatted: `${dayName} ${monthName} ${dayNum}`,
       fullDate: date.toISOString().split('T')[0],
     });
   }
   return dates;
 };
 
-const timeSlots = [
-  '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
-  '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM',
-  '3:00 PM', '3:30 PM', '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM',
-];
+// Map availability to default time
+const availabilityToTime: Record<'morning' | 'afternoon' | 'evening', string> = {
+  morning: '10:00 AM',
+  afternoon: '2:00 PM',
+  evening: '5:00 PM',
+};
 
 const ScheduleTourModal: React.FC<ScheduleTourModalProps> = ({
   open,
@@ -109,7 +90,7 @@ const ScheduleTourModal: React.FC<ScheduleTourModalProps> = ({
     setDates(generateDates());
   }, []);
   
-  const visibleDates = dates.slice(dateOffset, dateOffset + 4);
+  const visibleDates = dates.slice(dateOffset, dateOffset + 6);
 
   const {
     register,
@@ -121,15 +102,13 @@ const ScheduleTourModal: React.FC<ScheduleTourModalProps> = ({
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      tourType: 'in-person',
       preApproval: false,
       message: "I'm looking forward to touring with you!",
     },
   });
 
-  const tourType = watch('tourType');
   const selectedDate = watch('date');
-  const selectedTime = watch('time');
+  const selectedAvailability = watch('availability');
   const preApproval = watch('preApproval');
 
   const onSubmit = async (data: FormData) => {
@@ -165,19 +144,16 @@ const ScheduleTourModal: React.FC<ScheduleTourModalProps> = ({
         return `${hour24.toString().padStart(2, '0')}:${minutes}`
       }
       
-      // Combine date and time into a single datetime
-      const time24 = parseTime(data.time)
-      const dateTime = new Date(`${data.date}T${time24}:00`)
+      // Get default time based on availability selection
+      const defaultTime = availabilityToTime[data.availability]
       
-      const tourTypeMap: Record<string, 'IN_PERSON' | 'VIDEO_CHAT' | 'SELF_GUIDED'> = {
-        'in-person': 'IN_PERSON',
-        'live-video': 'VIDEO_CHAT',
-        'self-guided': 'SELF_GUIDED',
-      };
+      // Combine date and time into a single datetime
+      const time24 = parseTime(defaultTime)
+      const dateTime = new Date(`${data.date}T${time24}:00`)
       
       await createTour({
         mlsNumber,
-        tourType: tourTypeMap[data.tourType],
+        tourType: 'IN_PERSON',
         scheduledDate: dateTime.toISOString(),
         name: data.name,
         phone: data.phone,
@@ -194,10 +170,9 @@ const ScheduleTourModal: React.FC<ScheduleTourModalProps> = ({
 
       // Reset form and close modal
       reset({
-        tourType: 'in-person',
         preApproval: false,
         date: '',
-        time: '',
+        availability: undefined,
         name: '',
         phone: '',
         email: '',
@@ -222,17 +197,17 @@ const ScheduleTourModal: React.FC<ScheduleTourModalProps> = ({
   };
 
   const handleNextDates = () => {
-    if (dateOffset + 4 < dates.length) {
+    if (dateOffset + 6 < dates.length) {
       setDateOffset(dateOffset + 1);
     }
   };
 
   const handleNext = () => {
     // Validate step 1 fields before proceeding
-    if (!tourType || !selectedDate || !selectedTime) {
+    if (!selectedDate || !selectedAvailability) {
       toast({
         title: "Please complete all fields",
-        description: "Please select tour type, date, and time before continuing.",
+        description: "Please select date and availability before continuing.",
         variant: "destructive",
       });
       return;
@@ -291,7 +266,7 @@ const ScheduleTourModal: React.FC<ScheduleTourModalProps> = ({
               <>
                 {/* Property Overview */}
                 {property && (
-                  <div className="border rounded-lg p-2 bg-muted/30">
+                  <div className="border rounded-lg p-4 bg-muted/20">
                     <div className="flex gap-4">
                       {propertyImage && (
                         <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden">
@@ -338,93 +313,66 @@ const ScheduleTourModal: React.FC<ScheduleTourModalProps> = ({
                   </div>
                 )}
 
-                {/* Tour Type */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Label className="text-sm text-muted-foreground">Tour Type</Label>
-                    <Info className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setValue('tourType', 'in-person')}
-                      className={cn(
-                        'py-1.5 px-3 rounded-lg border-2 text-sm font-medium transition-all',
-                        tourType === 'in-person'
-                          ? 'border-primary bg-primary/5 text-primary'
-                          : 'border-border bg-background text-foreground hover:border-primary/50'
-                      )}
-                    >
-                      In-Person
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setValue('tourType', 'live-video')}
-                      className={cn(
-                        'py-1.5 px-3 rounded-lg border-2 text-sm font-medium transition-all',
-                        tourType === 'live-video'
-                          ? 'border-primary bg-primary/5 text-primary'
-                          : 'border-border bg-white text-foreground hover:border-primary/50'
-                      )}
-                    >
-                      Live Video
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setValue('tourType', 'self-guided')}
-                      className={cn(
-                        'py-1.5 px-3 rounded-lg border-2 text-sm font-medium transition-all',
-                        tourType === 'self-guided'
-                          ? 'border-primary bg-primary/5 text-primary'
-                          : 'border-border bg-white text-foreground hover:border-primary/50'
-                      )}
-                    >
-                      Self-guided
-                    </button>
-                  </div>
-                </div>
-
                 {/* Date Selection */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={handlePrevDates}
-                      disabled={dateOffset === 0}
-                      className="h-8 w-8"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <div className="flex-1 grid grid-cols-4 gap-2">
-                      {visibleDates.map((dateInfo) => (
+                    <h3 className="text-base font-medium">Select Date</h3>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={handlePrevDates}
+                        disabled={dateOffset === 0}
+                        className="h-8 w-8"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleNextDates}
+                        disabled={dateOffset + 6 >= dates.length}
+                        className="h-8 w-8"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-6 gap-2">
+                    {visibleDates.map((dateInfo) => {
+                      const isSelected = selectedDate === dateInfo.fullDate;
+                      return (
                         <button
                           key={dateInfo.fullDate}
                           type="button"
                           onClick={() => setValue('date', dateInfo.fullDate)}
                           className={cn(
-                            'py-4 px-2 rounded-lg border-2 transition-all',
-                            selectedDate === dateInfo.fullDate
-                              ? 'border-accent bg-accent/10 text-accent'
-                              : 'border-border bg-white hover:border-accent/50'
+                            'relative py-4 px-3 rounded-xl border-2 transition-all',
+                            isSelected
+                              ? 'border-secondary bg-secondary/10'
+                              : 'border-gray-200 bg-white hover:border-gray-300'
                           )}
                         >
-                          <div className="text-2xl font-bold text-center mb-2">{dateInfo.day}</div>
-                          <div className="text-xs text-muted-foreground text-center">{dateInfo.month} {dateInfo.date}{dateInfo.ordinal}</div>
+                          {isSelected && (
+                            <div className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-secondary" />
+                          )}
+                          <div className={cn(
+                            'text-xs font-medium text-center mb-1',
+                            isSelected ? 'text-secondary' : 'text-gray-900'
+                          )}>
+                            {dateInfo.day}
+                          </div>
+                          <div className={cn(
+                            'text-base text-center',
+                            isSelected ? 'text-secondary font-medium' : 'text-gray-600'
+                          )}>
+                            {dateInfo.month} {dateInfo.date}
+                          </div>
                         </button>
-                      ))}
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleNextDates}
-                      disabled={dateOffset + 4 >= dates.length}
-                      className="h-8 w-8"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
+                      );
+                    })}
                   </div>
                   {errors.date && (
                     <div className="flex items-center gap-1 text-destructive text-sm">
@@ -434,31 +382,45 @@ const ScheduleTourModal: React.FC<ScheduleTourModalProps> = ({
                   )}
                 </div>
 
-                {/* Time Selection */}
-                <div className="space-y-1">
-                  <Label htmlFor="time" className="text-sm">Time</Label>
-                  <Select value={selectedTime} onValueChange={(value) => setValue('time', value)}>
-                    <SelectTrigger 
-                      id="time"
-                      className={cn(
-                        'w-full rounded-lg bg-white',
-                        errors.time && 'border-destructive'
-                      )}
-                    >
-                      <SelectValue placeholder="Select time" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background">
-                      {timeSlots.map((time) => (
-                        <SelectItem key={time} value={time}>
-                          {time}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.time && (
+                {/* Availability Selection */}
+                <div className="space-y-3">
+                  <h3 className="text-base font-medium">When are you available?</h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { value: 'morning', label: 'Morning', time: '8am - 12pm' },
+                      { value: 'afternoon', label: 'Afternoon', time: '12pm - 5pm' },
+                      { value: 'evening', label: 'Evening', time: '5pm - 8pm' },
+                    ].map((option) => {
+                      const isSelected = selectedAvailability === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => setValue('availability', option.value as 'morning' | 'afternoon' | 'evening')}
+                          className={cn(
+                            'py-4 px-3 rounded-lg border-2 transition-all text-left',
+                            isSelected
+                              ? 'border-secondary bg-secondary/10'
+                              : 'border-gray-200 bg-white hover:border-gray-300'
+                          )}
+                        >
+                          <div className={cn(
+                            'text-base font-semibold mb-1',
+                            isSelected ? 'text-gray-900' : 'text-gray-900'
+                          )}>
+                            {option.label}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {option.time}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {errors.availability && (
                     <div className="flex items-center gap-1 text-destructive text-sm">
                       <AlertCircle className="h-4 w-4" />
-                      <span>{errors.time.message}</span>
+                      <span>{errors.availability.message}</span>
                     </div>
                   )}
                 </div>
@@ -468,30 +430,29 @@ const ScheduleTourModal: React.FC<ScheduleTourModalProps> = ({
                 {/* Name and Phone */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <Label htmlFor="name" className="text-sm">Full Name</Label>
                     <Input
                       id="name"
-                      placeholder="Name"
+                      label="Full Name"
                       {...register('name')}
-                      className={cn('rounded-lg bg-white', errors.name && 'border-destructive')}
+                      className={cn(errors.name && '!border-destructive')}
                     />
                     {errors.name && (
-                      <div className="flex items-center gap-1 text-destructive text-sm">
+                      <div className="flex items-center gap-1 text-destructive text-sm mt-1">
                         <AlertCircle className="h-4 w-4" />
                         <span>{errors.name.message}</span>
                       </div>
                     )}
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="phone" className="text-sm">Phone</Label>
                     <Input
                       id="phone"
-                      placeholder="Phone"
+                      label="Phone"
+                      type="tel"
                       {...register('phone')}
-                      className={cn('rounded-lg bg-white', errors.phone && 'border-destructive')}
+                      className={cn(errors.phone && '!border-destructive')}
                     />
                     {errors.phone && (
-                      <div className="flex items-center gap-1 text-destructive text-sm">
+                      <div className="flex items-center gap-1 text-destructive text-sm mt-1">
                         <AlertCircle className="h-4 w-4" />
                         <span>{errors.phone.message}</span>
                       </div>
@@ -501,16 +462,15 @@ const ScheduleTourModal: React.FC<ScheduleTourModalProps> = ({
 
                 {/* Email */}
                 <div className="space-y-1">
-                  <Label htmlFor="email" className="text-sm">Email</Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="Email"
+                    label="Email"
                     {...register('email')}
-                    className={cn('rounded-lg bg-white', errors.email && 'border-destructive')}
+                    className={cn(errors.email && '!border-destructive')}
                   />
                   {errors.email && (
-                    <div className="flex items-center gap-1 text-destructive text-sm">
+                    <div className="flex items-center gap-1 text-destructive text-sm mt-1">
                       <AlertCircle className="h-4 w-4" />
                       <span>{errors.email.message}</span>
                     </div>
@@ -519,15 +479,14 @@ const ScheduleTourModal: React.FC<ScheduleTourModalProps> = ({
 
                 {/* Message */}
                 <div className="space-y-1">
-                  <Label htmlFor="message" className="text-sm">Message</Label>
                   <Textarea
                     id="message"
-                    placeholder="Message"
+                    label="Message"
                     {...register('message')}
-                    className={cn('rounded-lg bg-white min-h-[100px]', errors.message && 'border-destructive')}
+                    className={cn('min-h-[100px]', errors.message && '!border-destructive')}
                   />
                   {errors.message && (
-                    <div className="flex items-center gap-1 text-destructive text-sm">
+                    <div className="flex items-center gap-1 text-destructive text-sm mt-1">
                       <AlertCircle className="h-4 w-4" />
                       <span>{errors.message.message}</span>
                     </div>

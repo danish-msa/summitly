@@ -6,7 +6,7 @@ import { Toggle } from '@/components/ui/toggle';
 import { usePropertyAlerts } from '@/hooks/usePropertyAlerts';
 import { useSession } from 'next-auth/react';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Heart, Bell, Home, Tag, Clock, Check } from 'lucide-react';
+import { Loader2, Heart, Bell, Home, Tag, Clock, Check, ShieldCheck } from 'lucide-react';
 
 interface AlertOptions {
   watchProperty: boolean;
@@ -118,10 +118,13 @@ const PropertyAlerts: React.FC<PropertyAlertsProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-gray-900">
-            Notification Preferences
+          <DialogTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <span className="bg-secondary rounded-xl p-2 shadow-lg">
+            <ShieldCheck className="h-6 w-6 text-white" />
+            </span>
+            <span className="text-xl text-gray-900">Why enable property notifications?</span>
           </DialogTitle>
         </DialogHeader>
 
@@ -133,11 +136,11 @@ const PropertyAlerts: React.FC<PropertyAlertsProps> = ({
           <div className="mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Left Column - Benefits */}
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-4 bg-muted/20 p-4 rounded-lg border border-secondary/20">
                 {benefits.map((benefit, index) => (
                   <div key={index} className="flex items-center gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center mt-0.5">
-                      <Check className="h-5 w-5 text-secondary" />
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-secondary/10 flex items-center justify-center mt-0.5">
+                      <Check className="h-4 w-4 text-secondary" />
                     </div>
                     <p className="text-sm text-gray-700 leading-relaxed">
                       {benefit}
@@ -148,9 +151,9 @@ const PropertyAlerts: React.FC<PropertyAlertsProps> = ({
 
               {/* Right Column - Alerts Section */}
               <div className="flex flex-col">
-                <div className="flex flex-col gap-8 bg-muted/20 rounded-lg p-4 border border-secondary/20">
+                <div className="flex flex-col gap-4">
                 {/* Watch Property Toggle */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 p-4 rounded-lg border border-secondary/20">
                   <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
                     <Bell className="h-5 w-5 text-secondary" />
                   </div>
@@ -171,7 +174,7 @@ const PropertyAlerts: React.FC<PropertyAlertsProps> = ({
               </div>
 
               {/* New Properties Toggle */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 p-4 rounded-lg border border-secondary/20">
                 <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
                   <Home className="h-5 w-5 text-secondary" />
                 </div>
@@ -192,7 +195,7 @@ const PropertyAlerts: React.FC<PropertyAlertsProps> = ({
               </div>
 
               {/* Sold Listings Toggle */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 p-4 rounded-lg border border-secondary/20">
                 <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
                   <Tag className="h-5 w-5 text-secondary" />
                 </div>
@@ -213,7 +216,7 @@ const PropertyAlerts: React.FC<PropertyAlertsProps> = ({
               </div>
 
               {/* Expired Listings Toggle */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 p-4 rounded-lg border border-secondary/20">
                 <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
                   <Clock className="h-5 w-5 text-secondary" />
                 </div>

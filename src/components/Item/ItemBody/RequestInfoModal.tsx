@@ -4,12 +4,12 @@ import React from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -54,38 +54,38 @@ const RequestInfoModal: React.FC<RequestInfoModalProps> = ({
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] p-10 overflow-y-auto space-y-4 bg-white">
         <DialogHeader>
           <DialogTitle className="text-4xl font-bold text-center">Request Property Info</DialogTitle>
+          <DialogDescription className="text-sm text-center">Please fill out the form below to request property information.</DialogDescription>
         </DialogHeader>
         
         {/* <AgentCTA />
         <Separator /> */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Name and Phone */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="name" className="text-sm">Name</Label>
               <Input
                 id="name"
-                placeholder="Name"
+                label="Name"
                 {...register('name')}
-                className={cn('rounded-lg bg-white', errors.name && 'border-destructive')}
+                className={cn(errors.name && '!border-destructive')}
               />
               {errors.name && (
-                <div className="flex items-center gap-1 text-destructive text-sm">
+                <div className="flex items-center gap-1 text-destructive text-sm mt-1">
                   <AlertCircle className="h-4 w-4" />
                   <span>{errors.name.message}</span>
                 </div>
               )}
             </div>
             <div className="space-y-1">
-              <Label htmlFor="phone" className="text-sm">Phone</Label>
               <Input
                 id="phone"
-                placeholder="Phone"
+                label="Phone"
+                type="tel"
                 {...register('phone')}
-                className={cn('rounded-lg bg-white', errors.phone && 'border-destructive')}
+                className={cn(errors.phone && '!border-destructive')}
               />
               {errors.phone && (
-                <div className="flex items-center gap-1 text-destructive text-sm">
+                <div className="flex items-center gap-1 text-destructive text-sm mt-1">
                   <AlertCircle className="h-4 w-4" />
                   <span>{errors.phone.message}</span>
                 </div>
@@ -95,16 +95,15 @@ const RequestInfoModal: React.FC<RequestInfoModalProps> = ({
 
           {/* Email */}
           <div className="space-y-1">
-            <Label htmlFor="email" className="text-sm">Email</Label>
             <Input
               id="email"
               type="email"
-              placeholder="Email"
+              label="Email"
               {...register('email')}
-              className={cn('rounded-lg bg-white', errors.email && 'border-destructive')}
+              className={cn(errors.email && '!border-destructive')}
             />
             {errors.email && (
-              <div className="flex items-center gap-1 text-destructive text-sm">
+              <div className="flex items-center gap-1 text-destructive text-sm mt-1">
                 <AlertCircle className="h-4 w-4" />
                 <span>{errors.email.message}</span>
               </div>
@@ -113,15 +112,14 @@ const RequestInfoModal: React.FC<RequestInfoModalProps> = ({
 
           {/* Message */}
           <div className="space-y-1">
-            <Label htmlFor="message" className="text-sm">Message</Label>
             <Textarea
               id="message"
-              placeholder="Enter your message..."
+              label="Message"
               {...register('message')}
-              className={cn('rounded-lg bg-white min-h-[120px]', errors.message && 'border-destructive')}
+              className={cn('min-h-[120px]', errors.message && '!border-destructive')}
             />
             {errors.message && (
-              <div className="flex items-center gap-1 text-destructive text-sm">
+              <div className="flex items-center gap-1 text-destructive text-sm mt-1">
                 <AlertCircle className="h-4 w-4" />
                 <span>{errors.message.message}</span>
               </div>
