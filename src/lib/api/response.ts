@@ -58,14 +58,19 @@ export function errorResponse(
   status: number = 500,
   details?: unknown
 ): NextResponse<ApiResponse> {
+  const error: ApiResponse['error'] = {
+    code,
+    message,
+  }
+  
+  if (details !== undefined) {
+    error.details = details
+  }
+
   return NextResponse.json<ApiResponse>(
     {
       success: false,
-      error: {
-        code,
-        message,
-        ...(details && { details }),
-      },
+      error,
       meta: {
         timestamp: new Date().toISOString(),
         version: 'v1',
