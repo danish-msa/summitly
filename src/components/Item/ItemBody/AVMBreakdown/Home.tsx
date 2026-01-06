@@ -80,7 +80,7 @@ const Home: React.FC<HomeProps> = ({ property, rawProperty }) => {
   };
 
   return (
-    <div ref={containerRef} className="max-w-3xl mx-auto w-full space-y-6">
+    <div ref={containerRef} className="max-w-3xl mx-auto w-full space-y-10">
       {/* Header */}
       <div className="space-y-1">
         <h3 className="text-lg font-bold text-foreground">Home</h3>

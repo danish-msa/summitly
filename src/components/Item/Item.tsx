@@ -209,7 +209,7 @@ const Item: React.FC = () => {
         </div>
       </div> */}
 
-      <div className='container-1400 mt-10 mb-4'>
+      <div className='container-1400 px-4 sm:px-6 lg:px-8 mt-10 mb-4'>
 
         <StickyPropertyBar 
           property={property} 

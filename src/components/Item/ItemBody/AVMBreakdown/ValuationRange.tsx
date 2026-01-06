@@ -227,7 +227,7 @@ const ValuationRange: React.FC<ValuationRangeProps> = ({ property, rawProperty }
   }), [chartData, data.estimatedValue]);
 
   return (
-    <div className="w-full max-w-3xl mx-auto bg-card rounded-2xl p-6 space-y-6">
+    <div className="w-full max-w-3xl mx-auto bg-card rounded-2xl">
       {/* Value Cards */}
       <div className="grid grid-cols-3 gap-4">
         {/* Low Value Card */}

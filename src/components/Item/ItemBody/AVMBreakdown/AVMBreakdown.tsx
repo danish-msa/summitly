@@ -22,7 +22,7 @@ interface AVMBreakdownProps {
 const AVMBreakdown: React.FC<AVMBreakdownProps> = ({ property, rawProperty }) => {
 
   return (
-    <div className="w-full space-y-6 relative z-0">
+    <div className="w-full relative z-0">
       <VerticalTabs defaultValue="valuation-range" className="w-full">
         <VerticalTabsContainer>
           <VerticalTabsList>
