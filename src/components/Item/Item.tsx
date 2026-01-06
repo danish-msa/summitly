@@ -17,7 +17,7 @@ import StickyPropertyBar from './StickyPropertyBar'
 import Breadcrumbs from './Breadcrumbs'
 import { ContactSection } from './ItemBody/ContactSection'
 import { parsePropertyUrl } from '@/lib/utils/propertyUrl'
-import NewItemBody from './NewItemBody/NewItemBody'
+import NewItemBody, { NewItemBodyRef } from './NewItemBody/NewItemBody'
 import PropertyHeader from './NewItemBody/PropertyHeader'
 import ModernBannerGallery from './Banner/ModernBannerGallery'
 import PriceCard from './NewItemBody/PriceCard'
@@ -27,6 +27,7 @@ import Sidebar from './ItemBody/Sidebar'
 const Item: React.FC = () => {
   const params = useParams();
   const router = useRouter();
+  const newItemBodyRef = useRef<NewItemBodyRef>(null);
   // For property pages, citySlug is the city name (without -real-estate suffix)
   const citySlug = (params?.citySlug || params?.cityName) as string; // Support both for backward compatibility
   const cityName = citySlug; // For property pages, citySlug is just the city name (no -real-estate)
@@ -210,10 +211,27 @@ const Item: React.FC = () => {
 
       <div className='container-1400 mt-10 mb-4'>
 
-        <StickyPropertyBar property={property} bannerRef={bannerRef} />
+        <StickyPropertyBar 
+          property={property} 
+          bannerRef={bannerRef}
+          onCalculatorClick={() => {
+            newItemBodyRef.current?.setActiveTab('calculators');
+            setTimeout(() => {
+              newItemBodyRef.current?.scrollToSection();
+            }, 100);
+          }}
+        />
         {/* Breadcrumbs */}
         <Breadcrumbs property={property} isPreCon={false} isRent={isRental} />
-        <PropertyHeader property={property} />
+        <PropertyHeader 
+          property={property}
+          onCalculatorClick={() => {
+            newItemBodyRef.current?.setActiveTab('calculators');
+            setTimeout(() => {
+              newItemBodyRef.current?.scrollToSection();
+            }, 100);
+          }}
+        />
         
         <div className='flex flex-row gap-8 mt-6 mb-10'>
           <div className='w-[70%] flex flex-col gap-6'>
@@ -233,7 +251,13 @@ const Item: React.FC = () => {
             <Sidebar isPreCon={isPreCon} isRent={isRental} property={property} />
           </div>
         </div>
-        <NewItemBody property={property} rawProperty={rawProperty} isPreCon={isPreCon} isRent={isRental} />
+        <NewItemBody 
+          ref={newItemBodyRef}
+          property={property} 
+          rawProperty={rawProperty} 
+          isPreCon={isPreCon} 
+          isRent={isRental} 
+        />
       </div>
 
       <div className='container-1400 mt-20 mb-4'>

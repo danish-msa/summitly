@@ -16,9 +16,10 @@ import { formatCurrency } from '@/lib/utils'
 
 interface PropertyHeaderProps {
   property: PropertyListing;
+  onCalculatorClick?: () => void;
 }
 
-const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property }) => {
+const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property, onCalculatorClick }) => {
   const { data: session } = useSession()
   const { checkIsSaved, saveProperty, unsaveProperty, isSaving, isUnsaving } = useSavedProperties()
   const isSaved = checkIsSaved(property.mlsNumber)
@@ -118,6 +119,11 @@ const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property }) => {
   };
 
   const handleCalculatorClick = () => {
+    if (onCalculatorClick) {
+      onCalculatorClick();
+      return;
+    }
+    // Fallback: try to scroll to calculators section
     const calculatorsElement = document.getElementById('calculators');
     if (calculatorsElement) {
       const elementPosition = calculatorsElement.getBoundingClientRect().top + window.pageYOffset;
@@ -168,7 +174,7 @@ const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property }) => {
       
 
       {/* Main Content */}
-      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         {/* Left Section: Address and Features */}
         <div className="flex-1 gap-4">
           <div className="flex flex-row items-center gap-4 mb-2">

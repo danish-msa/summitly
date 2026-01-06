@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useState, useImperativeHandle, forwardRef } from 'react'
 import { PropertyListing } from '@/lib/types'
 import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/single-listing'
 import { CurvedTabs, CurvedTabsList, CurvedTabsTrigger, CurvedTabsContent } from '@/components/ui/curved-tabs'
@@ -11,23 +11,62 @@ import PropertyListingDetails from '../ItemBody/PropertyListingDetails'
 import AVMBreakdown from '../ItemBody/AVMBreakdown'
 import Features from './Features'
 import MarketAnalytics from './MarketAnalytics'
+import Calculators from './Calculators'
 
 interface NewItemBodyProps {
   property: PropertyListing;
   rawProperty?: SinglePropertyListingResponse | null;
   isPreCon?: boolean;
   isRent?: boolean;
+  activeTab?: string;
+  onTabChange?: (value: string) => void;
 }
 
-const NewItemBody: React.FC<NewItemBodyProps> = ({ 
+export interface NewItemBodyRef {
+  setActiveTab: (value: string) => void;
+  scrollToSection: () => void;
+}
+
+const NewItemBody = forwardRef<NewItemBodyRef, NewItemBodyProps>(({ 
   property,
   rawProperty = null,
   isPreCon = false, 
-  isRent = false 
-}) => {
+  isRent = false,
+  activeTab: externalActiveTab,
+  onTabChange
+}, ref) => {
+  const [internalActiveTab, setInternalActiveTab] = useState("avm-breakdown")
+  const sectionRef = React.useRef<HTMLDivElement>(null)
+  
+  // Use external activeTab if provided, otherwise use internal state
+  const activeTab = externalActiveTab !== undefined ? externalActiveTab : internalActiveTab
+  
+  const handleTabChange = (value: string) => {
+    if (externalActiveTab === undefined) {
+      setInternalActiveTab(value)
+    }
+    onTabChange?.(value)
+  }
+
+  useImperativeHandle(ref, () => ({
+    setActiveTab: (value: string) => {
+      handleTabChange(value)
+    },
+    scrollToSection: () => {
+      if (sectionRef.current) {
+        const elementPosition = sectionRef.current.getBoundingClientRect().top + window.pageYOffset
+        const offsetPosition = elementPosition - 100 // Offset for navbar
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        })
+      }
+    }
+  }))
+
   return (
-    <div className="w-full">
-      <CurvedTabs defaultValue="avm-breakdown" className="w-full">
+    <div ref={sectionRef} className="w-full">
+      <CurvedTabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <CurvedTabsList className="w-full justify-start">
           {!isRent && <CurvedTabsTrigger value="avm-breakdown">AVM Breakdown</CurvedTabsTrigger>}
           <CurvedTabsTrigger value="listing-details">Listing Details</CurvedTabsTrigger>
@@ -35,6 +74,7 @@ const NewItemBody: React.FC<NewItemBodyProps> = ({
           <CurvedTabsTrigger value="features">Features</CurvedTabsTrigger>
           <CurvedTabsTrigger value="location">Location</CurvedTabsTrigger>
           {!isRent && <CurvedTabsTrigger value="market-analytics">Market Analytics</CurvedTabsTrigger>}
+          {!isRent && <CurvedTabsTrigger value="calculators">Calculators</CurvedTabsTrigger>}
         </CurvedTabsList>
 
         {!isRent && (
@@ -71,10 +111,18 @@ const NewItemBody: React.FC<NewItemBodyProps> = ({
             <MarketAnalytics property={property} rawProperty={rawProperty} isPreCon={isPreCon} isRent={isRent} />
           </CurvedTabsContent>
         )}
+
+        {!isRent && (
+          <CurvedTabsContent value="calculators">
+            <Calculators property={property} rawProperty={rawProperty} isPreCon={isPreCon} isRent={isRent} />
+          </CurvedTabsContent>
+        )}
       </CurvedTabs>
     </div>
   )
-}
+})
+
+NewItemBody.displayName = "NewItemBody"
 
 export default NewItemBody
 

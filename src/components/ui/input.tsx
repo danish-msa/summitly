@@ -71,7 +71,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             className={cn(
               "absolute left-4 pointer-events-none text-zinc-500 transition-all duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] origin-left",
               isFloating
-                ? "top-0 -translate-y-1/2 scale-[0.8] bg-background px-2 text-[#3b82f6]"
+                ? "top-0 -translate-y-1/2 scale-[0.8] bg-white px-2 text-[#3b82f6]"
                 : "top-4"
             )}
           >

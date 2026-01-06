@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { HelpCircle, TrendingUp } from "lucide-react";
-import * as Tooltip from '@radix-ui/react-tooltip';
+import { TrendingUp } from "lucide-react";
 
 interface AffordabilityData {
   annualIncome: number;
@@ -173,96 +171,47 @@ const AffordabilityCalculator = ({ propertyPrice = 1999000 }: AffordabilityCalcu
 
         {/* Input Fields */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="annualIncome">Annual Income</Label>
-              <Tooltip.Provider>
-                <Tooltip.Root>
-                  <Tooltip.Trigger asChild>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </Tooltip.Trigger>
-                  <Tooltip.Portal>
-                    <Tooltip.Content className="bg-popover text-popover-foreground p-2 rounded-md shadow-md max-w-xs z-50">
-                      <p>Your total annual gross income</p>
-                    </Tooltip.Content>
-                  </Tooltip.Portal>
-                </Tooltip.Root>
-              </Tooltip.Provider>
-            </div>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-              <Input
-                id="annualIncome"
-                type="number"
-                value={data.annualIncome}
-                onChange={(e) => updateField('annualIncome', e.target.value)}
-                className="pl-7 rounded-lg"
-              />
-            </div>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground z-10">$</span>
+            <Input
+              id="annualIncome"
+              type="number"
+              label="Annual Income"
+              value={data.annualIncome}
+              onChange={(e) => updateField('annualIncome', e.target.value)}
+              className="pl-8"
+            />
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="interestRate">Interest Rate</Label>
-              <Tooltip.Provider>
-                <Tooltip.Root>
-                  <Tooltip.Trigger asChild>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </Tooltip.Trigger>
-                  <Tooltip.Portal>
-                    <Tooltip.Content className="bg-popover text-popover-foreground p-2 rounded-md shadow-md max-w-xs z-50">
-                      <p>Annual interest rate for your mortgage</p>
-                    </Tooltip.Content>
-                  </Tooltip.Portal>
-                </Tooltip.Root>
-              </Tooltip.Provider>
-            </div>
-            <div className="relative">
-              <Input
-                id="interestRate"
-                type="number"
-                step="0.01"
-                value={data.interestRate}
-                onChange={(e) => updateField('interestRate', e.target.value)}
-                className="pr-7 rounded-lg"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
-            </div>
+          <div className="relative">
+            <Input
+              id="interestRate"
+              type="number"
+              label="Interest Rate"
+              step="0.01"
+              value={data.interestRate}
+              onChange={(e) => updateField('interestRate', e.target.value)}
+              className="pr-8"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground z-10">%</span>
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="monthlyDebts">Monthly Debts</Label>
-              <Tooltip.Provider>
-                <Tooltip.Root>
-                  <Tooltip.Trigger asChild>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </Tooltip.Trigger>
-                  <Tooltip.Portal>
-                    <Tooltip.Content className="bg-popover text-popover-foreground p-2 rounded-md shadow-md max-w-xs z-50">
-                      <p>Total monthly debt payments (car loans, credit cards, etc.)</p>
-                    </Tooltip.Content>
-                  </Tooltip.Portal>
-                </Tooltip.Root>
-              </Tooltip.Provider>
-            </div>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-              <Input
-                id="monthlyDebts"
-                type="number"
-                value={data.monthlyDebts}
-                onChange={(e) => updateField('monthlyDebts', e.target.value)}
-                className="pl-7 rounded-lg"
-              />
-            </div>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground z-10">$</span>
+            <Input
+              id="monthlyDebts"
+              type="number"
+              label="Monthly Debts"
+              value={data.monthlyDebts}
+              onChange={(e) => updateField('monthlyDebts', e.target.value)}
+              className="pl-8"
+            />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="mortgageTerm">Mortgage free in</Label>
+          <div>
             <Select
               value={data.mortgageTerm.toString()}
               onValueChange={(value) => updateField('mortgageTerm', value)}
             >
-              <SelectTrigger id="mortgageTerm" className="rounded-lg">
-                <SelectValue />
+              <SelectTrigger id="mortgageTerm" className="rounded-2xl border-[1.5px] border-zinc-400 h-12">
+                <SelectValue placeholder="Mortgage free in" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="15">15 Years</SelectItem>
@@ -272,59 +221,27 @@ const AffordabilityCalculator = ({ propertyPrice = 1999000 }: AffordabilityCalcu
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="downPayment">Down Payment</Label>
-              <Tooltip.Provider>
-                <Tooltip.Root>
-                  <Tooltip.Trigger asChild>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </Tooltip.Trigger>
-                  <Tooltip.Portal>
-                    <Tooltip.Content className="bg-popover text-popover-foreground p-2 rounded-md shadow-md max-w-xs z-50">
-                      <p>Amount you plan to put down</p>
-                    </Tooltip.Content>
-                  </Tooltip.Portal>
-                </Tooltip.Root>
-              </Tooltip.Provider>
-            </div>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-              <Input
-                id="downPayment"
-                type="number"
-                value={data.downPayment}
-                onChange={(e) => updateField('downPayment', e.target.value)}
-                className="pl-7 rounded-lg"
-              />
-            </div>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground z-10">$</span>
+            <Input
+              id="downPayment"
+              type="number"
+              label="Down Payment"
+              value={data.downPayment}
+              onChange={(e) => updateField('downPayment', e.target.value)}
+              className="pl-8"
+            />
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="propertyPrice">Property Price</Label>
-              <Tooltip.Provider>
-                <Tooltip.Root>
-                  <Tooltip.Trigger asChild>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </Tooltip.Trigger>
-                  <Tooltip.Portal>
-                    <Tooltip.Content className="bg-popover text-popover-foreground p-2 rounded-md shadow-md max-w-xs z-50">
-                      <p>The price of this property</p>
-                    </Tooltip.Content>
-                  </Tooltip.Portal>
-                </Tooltip.Root>
-              </Tooltip.Provider>
-            </div>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-              <Input
-                id="propertyPrice"
-                type="number"
-                value={data.propertyPrice}
-                onChange={(e) => updateField('propertyPrice', e.target.value)}
-                className="pl-7 rounded-lg"
-              />
-            </div>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground z-10">$</span>
+            <Input
+              id="propertyPrice"
+              type="number"
+              label="Property Price"
+              value={data.propertyPrice}
+              onChange={(e) => updateField('propertyPrice', e.target.value)}
+              className="pl-8"
+            />
           </div>
         </div>
 

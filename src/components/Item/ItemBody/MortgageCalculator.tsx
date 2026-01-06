@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -242,34 +241,32 @@ export const MortgageCalculator = () => {
     <div className="w-full max-w-6xl mx-auto">
       <div className="flex gap-8">
         {/* Calculator Section - Left */}
-        <div className="w-[60%] p-4">
+        <div className="w-[60%] p-4 pb-12">
           {/* Header */}
           <div>
             <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Mortgage Calculator</h2>
             <p className="text-muted-foreground">Calculate your monthly mortgage payments</p>
           </div>
-          <div className="space-y-6">
+          <div className="space-y-6 pt-4">
             {/* Home Price and Down Payment in One Row */}
             <div className="flex justify-between gap-6">
-              <div className="space-y-2 w-1/2">
-                <Label className="text-sm font-medium">Home Price</Label>
+              <div className="w-1/2">
                 <Input
                   type="number"
+                  label="Home Price"
                   value={homePrice}
                   onChange={(e) => setHomePrice(Number(e.target.value))}
-                  placeholder="Enter home price"
-                  className="w-full rounded-lg"
+                  className="w-full"
                   min="0"
                 />
               </div>
-              <div className="space-y-2 w-1/2">
-                <Label className="text-sm font-medium">Down Payment</Label>
+              <div className="w-1/2">
                 <Input
                   type="number"
+                  label="Down Payment"
                   value={downPayment}
                   onChange={(e) => setDownPayment(Number(e.target.value))}
-                  placeholder="Enter down payment amount"
-                  className="w-full rounded-lg"
+                  className="w-full"
                   min="0"
                 />
               </div>
@@ -278,24 +275,22 @@ export const MortgageCalculator = () => {
             {/* Monthly Property Tax, Loan Length, and Interest Rate in One Row */}
             <div className="flex justify-between gap-2">
               {/* Monthly Property Tax - ~50% */}
-              <div className="space-y-2 w-[48%]">
-                <Label className="text-sm font-medium">Monthly Property Tax</Label>
+              <div className="w-[48%]">
                 <Input
                   type="number"
+                  label="Monthly Property Tax"
                   value={monthlyPropertyTax}
                   onChange={(e) => setMonthlyPropertyTax(Number(e.target.value))}
-                  placeholder="Enter monthly property tax"
-                  className="w-full rounded-lg"
+                  className="w-full"
                   min="0"
                 />
               </div>
               <div className="flex justify-between gap-2 w-[48%]">
                 {/* Loan Length - ~25% */}
-                <div className="space-y-2 w-[50%]">
-                    <Label className="text-sm font-medium">Loan Length</Label>
+                <div className="w-[50%]">
                     <Select value={loanLength.toString()} onValueChange={(value) => setLoanLength(Number(value))}>
-                      <SelectTrigger className="w-full rounded-lg">
-                        <SelectValue placeholder="Select loan length" />
+                      <SelectTrigger className="w-full rounded-2xl border-[1.5px] border-zinc-400 h-12">
+                        <SelectValue placeholder="Loan Length" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="5">5 years</SelectItem>
@@ -308,17 +303,16 @@ export const MortgageCalculator = () => {
                     </Select>
                   </div>
                   {/* Interest Rate - ~25% */}
-                  <div className="space-y-2 w-[50%]">
-                    <Label className="text-sm font-medium">Interest Rate (%)</Label>
+                  <div className="w-[50%]">
                     <Input
                       type="number"
+                      label="Rate (%)"
                       value={interestRate}
                       onChange={(e) => setInterestRate(Number(e.target.value))}
-                      placeholder="Enter interest rate"
                       step="0.1"
                       min="0"
                       max="100"
-                      className="w-full rounded-lg"
+                      className="w-full"
                     />
                   </div>
               </div>
@@ -327,25 +321,23 @@ export const MortgageCalculator = () => {
 
             {/* Monthly Home Insurance and Monthly HOA in One Row */}
             <div className="flex justify-between gap-6">
-              <div className="space-y-2 w-1/2">
-                <Label className="text-sm font-medium">Monthly Home Insurance</Label>
+              <div className="w-1/2">
                 <Input
                   type="number"
+                  label="Monthly Home Insurance"
                   value={monthlyHomeInsurance}
                   onChange={(e) => setMonthlyHomeInsurance(Number(e.target.value))}
-                  placeholder="Enter monthly home insurance"
-                  className="w-full rounded-lg"
+                  className="w-full"
                   min="0"
                 />
               </div>
-              <div className="space-y-2 w-1/2">
-                <Label className="text-sm font-medium">Monthly HOA</Label>
+              <div className="w-1/2">
                 <Input
                   type="number"
+                  label="Monthly HOA"
                   value={monthlyHOA}
                   onChange={(e) => setMonthlyHOA(Number(e.target.value))}
-                  placeholder="Enter monthly HOA"
-                  className="w-full rounded-lg"
+                  className="w-full"
                   min="0"
                 />
               </div>

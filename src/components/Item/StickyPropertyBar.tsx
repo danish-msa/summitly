@@ -17,6 +17,7 @@ import Link from 'next/link';
 interface StickyPropertyBarProps {
   property: PropertyListing;
   bannerRef: React.RefObject<HTMLDivElement | null>;
+  onCalculatorClick?: () => void;
 }
 
 // Helper function to generate slug for property type
@@ -75,7 +76,7 @@ const _getStatusSlug = (status: string): string => {
   return statusMap[normalizedStatus] || normalizedStatus.replace(/\s+/g, '-');
 };
 
-const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerRef }) => {
+const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerRef, onCalculatorClick }) => {
   const { data: session } = useSession();
   const { checkIsSaved, saveProperty, unsaveProperty, isSaving, isUnsaving } = useSavedProperties();
   const isSaved = checkIsSaved(property.mlsNumber);
@@ -249,6 +250,11 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
   };
 
   const handleCalculatorClick = () => {
+    if (onCalculatorClick) {
+      onCalculatorClick();
+      return;
+    }
+    // Fallback: try to scroll to calculators section
     const calculatorsElement = document.getElementById('calculators');
     if (calculatorsElement) {
       const elementPosition = calculatorsElement.getBoundingClientRect().top + window.pageYOffset;
