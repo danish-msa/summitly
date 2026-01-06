@@ -87,14 +87,14 @@ export default function TransactionHistory({ groupedHistory, propertyAddress }: 
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[120px] py-3">Date</TableHead>
-            <TableHead className="w-[150px] py-3">Status</TableHead>
-            <TableHead className="w-[120px] text-right py-3">Price</TableHead>
-            <TableHead className="w-[130px] text-right py-3">Price Change</TableHead>
-            <TableHead className="w-[120px] text-right py-3">Days on Market</TableHead>
-            <TableHead className="w-[120px] text-right py-3">Appreciation</TableHead>
-            <TableHead className="w-[200px] py-3">Brokerage</TableHead>
-            <TableHead className="w-[100px] text-center py-3">Actions</TableHead>
+            <TableHead className="w-[120px]">Date</TableHead>
+            <TableHead className="w-[150px]">Status</TableHead>
+            <TableHead className="w-[120px] text-right">Price</TableHead>
+            <TableHead className="w-[130px] text-right">Price Change</TableHead>
+            <TableHead className="w-[120px] text-right">Days on Market</TableHead>
+            <TableHead className="w-[120px] text-right">Appreciation</TableHead>
+            <TableHead className="w-[200px]">Brokerage</TableHead>
+            <TableHead className="w-[100px] text-center">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -106,24 +106,24 @@ export default function TransactionHistory({ groupedHistory, propertyAddress }: 
             
             return (
               <TableRow key={index} className={record.isActive ? 'bg-green-50/50' : ''}>
-                <TableCell className="font-medium py-2">
+                <TableCell className="font-medium">
                   <span className="text-gray-900">{record.formattedDateShort}</span>
                 </TableCell>
-                <TableCell className="py-2">
+                <TableCell>
                   <Badge {...badgeProps} className={` px-2.5 py-1 ${badgeProps.className}`}>
                     {record.event === 'Listed For Sale' && record.isActive 
                       ? 'Active' 
                       : record.event}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right py-2">
+                <TableCell className="text-right">
                   {hasPrice ? (
                     <span className="font-semibold text-gray-900">{record.price}</span>
                   ) : (
                     <span className="text-gray-500">$—</span>
                   )}
                 </TableCell>
-                <TableCell className="text-right py-2">
+                <TableCell className="text-right">
                   {showPriceChange ? (
                     <div className={`flex items-center justify-end gap-1 ${
                       record.isIncrease ? 'text-green-600' : record.isDecrease ? 'text-red-600' : 'text-gray-600'
@@ -139,7 +139,7 @@ export default function TransactionHistory({ groupedHistory, propertyAddress }: 
                     <span className="text-gray-500">—</span>
                   )}
                 </TableCell>
-                <TableCell className="text-right py-2">
+                <TableCell className="text-right">
                   {record.daysOnMarket > 0 ? (
                     <span className="text-gray-900">
                       {record.daysOnMarket} day{record.daysOnMarket !== 1 ? 's' : ''}
@@ -148,7 +148,7 @@ export default function TransactionHistory({ groupedHistory, propertyAddress }: 
                     <span className="text-gray-500">—</span>
                   )}
                 </TableCell>
-                <TableCell className="text-right py-2">
+                <TableCell className="text-right">
                   {showAppreciation ? (
                     <span className={`font-medium ${
                       record.isIncrease ? 'text-green-600' : record.isDecrease ? 'text-red-600' : 'text-gray-600'
@@ -159,10 +159,10 @@ export default function TransactionHistory({ groupedHistory, propertyAddress }: 
                     <span className="text-gray-500">—</span>
                   )}
                 </TableCell>
-                <TableCell className="py-2">
+                <TableCell>
                   <span className="text-gray-700">{record.brokerage}</span>
                 </TableCell>
-                <TableCell className="text-center py-2">
+                <TableCell className="text-center">
                   <Button
                     variant="ghost"
                     size="sm"

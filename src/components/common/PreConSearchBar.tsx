@@ -108,7 +108,11 @@ const PreConSearchBar: React.FC<PreConSearchBarProps> = ({
           const statusCounts: Record<string, number> = {};
           if (projectsResponse.ok) {
             const projectsData = await projectsResponse.json();
-            const projects = projectsData.projects || [];
+            // Handle v1 API response format: { success, data: { projects }, meta }
+            // or fallback to old format: { projects }
+            const projects = projectsData.success && projectsData.data
+              ? (projectsData.data.projects || [])
+              : (projectsData.projects || []);
             
             // Type for project from API response
             interface ProjectWithPreCon {

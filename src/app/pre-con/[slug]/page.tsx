@@ -94,12 +94,17 @@ const PreConstructionPage: React.FC = () => {
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
           
-          const cityResponse = await fetch(`/api/pre-con-projects?city=${encodeURIComponent(cityName)}`);
+          const cityResponse = await fetch(`/api/v1/pre-con-projects?city=${encodeURIComponent(cityName)}`);
           
           if (cityResponse.ok) {
             const data = await cityResponse.json();
+            // Handle v1 API response format: { success, data: { projects }, meta }
+            // or fallback to old format: { projects }
+            const projects = data.success && data.data
+              ? (data.data.projects || [])
+              : (data.projects || []);
             // If we get projects back, treat it as a location
-            if (data.projects && data.projects.length > 0) {
+            if (projects && projects.length > 0) {
               setPageType('by-location');
             } else {
               // No projects found, but still treat as location (empty location page)

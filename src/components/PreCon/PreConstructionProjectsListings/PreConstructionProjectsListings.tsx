@@ -15,115 +15,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 // Dynamically import the Google Maps component with no SSR to avoid hydration issues
 const GooglePropertyMap = dynamic(() => import('@/components/MapSearch/GooglePropertyMap'), { ssr: false });
 
-// Convert PropertyListing to PreConstructionProperty format
-const convertToPreConProperty = (property: PropertyListing): PreConstructionProperty | null => {
-  if (!property.preCon) return null;
 
-  const preCon = property.preCon;
-  const address = property.address;
-
-  return {
-    id: property.mlsNumber,
-    projectName: preCon.projectName,
-    developer: preCon.developer,
-    startingPrice: preCon.startingPrice,
-    images: property.images?.allImages || [property.images?.imageUrl || '/images/p1.jpg'],
-    address: {
-      street: `${address.streetNumber || ''} ${address.streetName || ''}`.trim() || address.location?.split(',')[0] || '',
-      city: address.city || '',
-      province: address.state || '',
-      latitude: property.map?.latitude ?? undefined,
-      longitude: property.map?.longitude ?? undefined,
-    },
-    details: {
-      propertyType: property.details?.propertyType || 'Condominium',
-      bedroomRange: preCon.details.bedroomRange,
-      bathroomRange: preCon.details.bathroomRange,
-      sqftRange: preCon.details.sqftRange,
-      totalUnits: preCon.details.totalUnits,
-      availableUnits: preCon.details.availableUnits,
-    },
-    completion: {
-      date: preCon.completion.date,
-      progress: typeof preCon.completion.progress === 'string' ? 0 : (preCon.completion.progress || 0),
-    },
-    features: preCon.features || [],
-    depositStructure: preCon.depositStructure,
-    status: preCon.status,
-  };
-};
-
-// Convert PreConstructionProperty to PropertyListing for map component
-const convertToPropertyListing = (project: PreConstructionProperty): PropertyListing => {
-  return {
-    mlsNumber: project.id,
-    status: project.status === 'selling' ? 'A' : project.status === 'sold-out' ? 'S' : 'A',
-    class: 'residential',
-    type: 'Sale',
-    listPrice: project.startingPrice,
-    listDate: new Date().toISOString(),
-    lastStatus: project.status,
-    soldPrice: '',
-    soldDate: '',
-    address: {
-      streetNumber: project.address.street.split(' ')[0] || '',
-      streetName: project.address.street.split(' ').slice(1).join(' ') || '',
-      city: project.address.city,
-      state: project.address.province,
-      location: `${project.address.street}, ${project.address.city}, ${project.address.province}`,
-      neighborhood: project.address.city,
-      area: project.address.city,
-      zip: '',
-      country: 'Canada',
-      district: null,
-      majorIntersection: null,
-      streetDirection: null,
-      streetSuffix: null,
-      unitNumber: null,
-      streetDirectionPrefix: null,
-      addressKey: null,
-      communityCode: null
-    },
-    map: {
-      latitude: project.address.latitude || null,
-      longitude: project.address.longitude || null,
-      point: project.address.latitude && project.address.longitude 
-        ? `${project.address.latitude},${project.address.longitude}` 
-        : null
-    },
-    details: {
-      propertyType: project.details.propertyType,
-      numBedrooms: project.details.bedroomRange ? parseInt(project.details.bedroomRange.split('-')[0]) || 0 : 0,
-      numBedroomsPlus: 0,
-      numBathrooms: project.details.bathroomRange ? parseInt(project.details.bathroomRange.split('-')[0]) || 0 : 0,
-      numBathroomsPlus: 0,
-      sqft: project.details.sqftRange,
-      landSize: ''
-    },
-    images: {
-      imageUrl: project.images[0] || '/images/p1.jpg',
-      allImages: project.images
-    },
-    updatedOn: new Date().toISOString(),
-    lot: {
-      acres: 0,
-      depth: 0,
-      irregular: 0,
-      legalDescription: '',
-      measurement: '',
-      width: 0,
-      size: 0,
-      source: '',
-      dimensionsSource: '',
-      dimensions: '',
-      squareFeet: 0,
-      features: '',
-      taxLot: ''
-    },
-    boardId: 0,
-    preCon: undefined // This will be handled separately
-  } as PropertyListing;
-};
+import { convertToPreConProperty, convertToPropertyListing } from '@/components/PreCon/PreConstructionBasePage/utils';
 
 const PreConstructionProjectsListings: React.FC = () => {
   const [projects, setProjects] = useState<PropertyListing[]>([]);
@@ -132,10 +25,11 @@ const PreConstructionProjectsListings: React.FC = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch('/api/pre-con-projects');
-        if (response.ok) {
-          const data = await response.json();
-          setProjects(data.projects || []);
+        const { api } = await import('@/lib/api/client');
+        const response = await api.get<{ projects: PropertyListing[] }>('/pre-con-projects');
+        
+        if (response.success && response.data) {
+          setProjects(response.data.projects || []);
         }
       } catch (error) {
         console.error('Error fetching pre-con projects:', error);

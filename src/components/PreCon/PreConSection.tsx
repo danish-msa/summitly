@@ -14,44 +14,7 @@ import {
   CarouselItem,
 } from '@/components/ui/carousel';
 import { PreConstructionCardSkeleton } from '@/components/skeletons';
-
-// Convert PropertyListing to PreConstructionProperty format
-const convertToPreConProperty = (property: PropertyListing): PreConstructionProperty | null => {
-  if (!property.preCon) return null;
-
-  const preCon = property.preCon;
-  const address = property.address;
-
-  return {
-    id: property.mlsNumber,
-    projectName: preCon.projectName,
-    developer: preCon.developer,
-    startingPrice: preCon.startingPrice,
-    images: property.images?.allImages || [property.images?.imageUrl || '/images/p1.jpg'],
-    address: {
-      street: `${address.streetNumber || ''} ${address.streetName || ''}`.trim() || address.location?.split(',')[0] || '',
-      city: address.city || '',
-      province: address.state || '',
-      latitude: property.map?.latitude ?? undefined,
-      longitude: property.map?.longitude ?? undefined,
-    },
-    details: {
-      propertyType: property.details?.propertyType || preCon.details?.propertyType || 'Condominium',
-      bedroomRange: preCon.details.bedroomRange,
-      bathroomRange: preCon.details.bathroomRange,
-      sqftRange: preCon.details.sqftRange,
-      totalUnits: preCon.details.totalUnits,
-      availableUnits: preCon.details.availableUnits,
-    },
-    completion: {
-      date: preCon.completion.date,
-      progress: typeof preCon.completion.progress === 'string' ? 0 : (preCon.completion.progress || 0),
-    },
-    features: preCon.features || [],
-    depositStructure: preCon.depositStructure,
-    status: preCon.status,
-  };
-};
+import { convertToPreConProperty } from '@/components/PreCon/PreConstructionBasePage/utils';
 
 
 type FilterType = 
@@ -86,10 +49,11 @@ const PreConSection: React.FC<PreConSectionProps> = ({
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch('/api/pre-con-projects');
-        if (response.ok) {
-          const data = await response.json();
-          setProjects(data.projects || []);
+        const { api } = await import('@/lib/api/client');
+        const response = await api.get<{ projects: PropertyListing[] }>('/pre-con-projects');
+        
+        if (response.success && response.data) {
+          setProjects(response.data.projects || []);
         }
       } catch (error) {
         console.error('Error fetching projects:', error);

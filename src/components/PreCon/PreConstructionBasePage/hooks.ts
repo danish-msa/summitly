@@ -139,7 +139,11 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
         }
 
         const data = await response.json();
-        const fetchedProjects = data.projects || [];
+        // Handle v1 API response format: { success, data: { projects }, meta }
+        // or fallback to old format: { projects }
+        const fetchedProjects = data.success && data.data 
+          ? (data.data.projects || [])
+          : (data.projects || []);
         console.log('[PreConstructionBasePage] Fetched projects:', {
           count: fetchedProjects.length,
           query: buildApiQuery,

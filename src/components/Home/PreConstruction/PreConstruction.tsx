@@ -25,7 +25,7 @@ const PreConstruction: React.FC = () => {
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
 
-  // Fetch pre-construction projects from backend
+  // Fetch pre-construction projects from backend using v1 API
   useEffect(() => {
     const controller = new AbortController();
     let isMounted = true;
@@ -35,26 +35,26 @@ const PreConstruction: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        // Fetch featured projects first, fallback to recent projects
-        const response = await fetch('/api/pre-con-projects?limit=4&featured=true', {
-          signal: controller.signal,
+        // Fetch featured projects first using v1 API
+        const { api } = await import('@/lib/api/client');
+        const featuredResponse = await api.get<{ projects: PropertyListing[] }>('/pre-con-projects', {
+          params: { limit: 4, featured: 'true' },
         });
         
-        if (!response.ok) {
-          throw new Error('Failed to fetch pre-construction projects');
+        let fetchedProjects: PropertyListing[] = [];
+        
+        if (featuredResponse.success && featuredResponse.data) {
+          fetchedProjects = featuredResponse.data.projects || [];
         }
-
-        const data = await response.json();
-        let fetchedProjects = data.projects || [];
 
         // If we don't have enough featured projects, fetch recent ones
         if (fetchedProjects.length < 4 && !controller.signal.aborted && isMounted) {
-          const recentResponse = await fetch('/api/pre-con-projects?limit=4', {
-            signal: controller.signal,
+          const recentResponse = await api.get<{ projects: PropertyListing[] }>('/pre-con-projects', {
+            params: { limit: 4 },
           });
-          if (recentResponse.ok) {
-            const recentData = await recentResponse.json();
-            const recentProjects = recentData.projects || [];
+          
+          if (recentResponse.success && recentResponse.data) {
+            const recentProjects = recentResponse.data.projects || [];
             
             // Merge featured and recent, avoiding duplicates
             const existingMlsNumbers = new Set(fetchedProjects.map((p: PropertyListing) => p.mlsNumber));
