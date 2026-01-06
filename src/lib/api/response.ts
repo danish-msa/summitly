@@ -33,7 +33,7 @@ export interface ApiResponse<T = unknown> {
 export function successResponse<T>(
   data: T,
   status: number = 200,
-  meta?: ApiResponse<T>['meta']
+  meta?: Omit<ApiResponse<T>['meta'], 'timestamp' | 'version'>
 ): NextResponse<ApiResponse<T>> {
   return NextResponse.json<ApiResponse<T>>(
     {
