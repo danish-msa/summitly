@@ -229,15 +229,6 @@ const ComparableSelector = ({
     <div className="flex flex-col md:flex-row gap-6 h-full">
       {/* Property Listings - Left Side */}
       <div className="md:w-1/2 flex flex-col" style={{ maxHeight: 'calc(100vh - 200px)' }}>
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold text-foreground mb-2">
-            Select Properties for Comparison
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Click the checkmark on properties to add them to your comparables.
-          </p>
-        </div>
-        
         <div className="flex-1 overflow-y-auto mb-4" data-listings-container>
           {properties.length === 0 ? (
             <div className="text-center py-10">
