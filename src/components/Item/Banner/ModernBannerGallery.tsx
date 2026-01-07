@@ -55,8 +55,12 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
   const [activeCategory, setActiveCategory] = useState<ImageCategory>('all')
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0)
   const [defaultTab, setDefaultTab] = useState<string>('all')
-  const [thumbnailStartIndex, setThumbnailStartIndex] = useState(0)
   const [gridColumns, setGridColumns] = useState([4]) // Default to 4 columns (xl:grid-cols-4)
+  const thumbnailScrollRef = React.useRef<HTMLDivElement>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [startX, setStartX] = useState(0)
+  const [scrollLeft, setScrollLeft] = useState(0)
+  const [hasDragged, setHasDragged] = useState(false)
 
   // Get image source with fallback
   const getImageSrc = (index: number) => {
@@ -139,56 +143,84 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
   const handlePrevSlide = () => {
     const newIndex = currentSlideIndex === 0 ? categorizedImages.length - 1 : currentSlideIndex - 1
     setCurrentSlideIndex(newIndex)
-    updateThumbnailIndex(newIndex)
+    scrollToThumbnail(newIndex)
   }
 
   const handleNextSlide = () => {
     const newIndex = currentSlideIndex === categorizedImages.length - 1 ? 0 : currentSlideIndex + 1
     setCurrentSlideIndex(newIndex)
-    updateThumbnailIndex(newIndex)
+    scrollToThumbnail(newIndex)
   }
 
-  const updateThumbnailIndex = (mainIndex: number) => {
-    // Show 6 thumbnails, centered around the current image
-    const thumbnailsToShow = 6
-    const totalImages = categorizedImages.length
-    
-    if (totalImages <= thumbnailsToShow) {
-      setThumbnailStartIndex(0)
+  const scrollToThumbnail = (index: number) => {
+    if (thumbnailScrollRef.current) {
+      const thumbnailElement = thumbnailScrollRef.current.children[index] as HTMLElement
+      if (thumbnailElement) {
+        thumbnailElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'center'
+        })
+      }
+    }
+  }
+
+  const handleThumbnailClick = (index: number, e?: React.MouseEvent) => {
+    // Prevent click if user was dragging
+    if (hasDragged) {
+      e?.preventDefault()
+      e?.stopPropagation()
       return
     }
-
-    // Calculate start index to center the current image
-    let start = mainIndex - Math.floor(thumbnailsToShow / 2)
-    
-    // Adjust if we're near the beginning
-    if (start < 0) {
-      start = 0
-    }
-    
-    // Adjust if we're near the end
-    if (start + thumbnailsToShow > totalImages) {
-      start = totalImages - thumbnailsToShow
-    }
-    
-    setThumbnailStartIndex(start)
-  }
-
-  const handleThumbnailClick = (index: number) => {
     setCurrentSlideIndex(index)
-    updateThumbnailIndex(index)
+    scrollToThumbnail(index)
   }
 
-  // Update thumbnail index when main image changes
+  // Scroll to active thumbnail when main image changes
   React.useEffect(() => {
-    updateThumbnailIndex(currentSlideIndex)
+    scrollToThumbnail(currentSlideIndex)
   }, [currentSlideIndex])
 
-  // Get visible thumbnails
-  const visibleThumbnails = categorizedImages.slice(
-    thumbnailStartIndex,
-    thumbnailStartIndex + 6
-  )
+  // Drag to scroll handlers
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!thumbnailScrollRef.current) return
+    setIsDragging(true)
+    setHasDragged(false)
+    setStartX(e.pageX - thumbnailScrollRef.current.offsetLeft)
+    setScrollLeft(thumbnailScrollRef.current.scrollLeft)
+    thumbnailScrollRef.current.style.cursor = 'grabbing'
+    thumbnailScrollRef.current.style.userSelect = 'none'
+  }
+
+  const handleMouseLeave = () => {
+    if (!thumbnailScrollRef.current) return
+    setIsDragging(false)
+    setHasDragged(false)
+    thumbnailScrollRef.current.style.cursor = 'grab'
+    thumbnailScrollRef.current.style.userSelect = 'auto'
+  }
+
+  const handleMouseUp = () => {
+    if (!thumbnailScrollRef.current) return
+    setIsDragging(false)
+    thumbnailScrollRef.current.style.cursor = 'grab'
+    thumbnailScrollRef.current.style.userSelect = 'auto'
+    // Reset hasDragged after a short delay to allow click events
+    setTimeout(() => setHasDragged(false), 100)
+  }
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging || !thumbnailScrollRef.current) return
+    e.preventDefault()
+    const x = e.pageX - thumbnailScrollRef.current.offsetLeft
+    const walk = (x - startX) * 2 // Scroll speed multiplier
+    thumbnailScrollRef.current.scrollLeft = scrollLeft - walk
+    
+    // Mark as dragged if movement is significant
+    if (Math.abs(walk) > 5) {
+      setHasDragged(true)
+    }
+  }
 
   return (
     <>
@@ -258,15 +290,22 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
         </div>
 
         {/* Thumbnail Carousel */}
-        <div className="mt-4 px-2 py-1 flex gap-2 overflow-x-auto scrollbar-hide">
-          {visibleThumbnails.map((image, index) => {
-            const actualIndex = thumbnailStartIndex + index
-            const isActive = actualIndex === currentSlideIndex
+        <div 
+          ref={thumbnailScrollRef}
+          className="mt-4 px-2 py-1 flex gap-2 overflow-x-auto scrollbar-hide scroll-smooth cursor-grab active:cursor-grabbing select-none"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          onMouseDown={handleMouseDown}
+          onMouseLeave={handleMouseLeave}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
+        >
+          {categorizedImages.map((image, index) => {
+            const isActive = index === currentSlideIndex
 
             return (
               <button
-                key={actualIndex}
-                onClick={() => handleThumbnailClick(actualIndex)}
+                key={index}
+                onClick={(e) => handleThumbnailClick(index, e)}
                 className={`relative flex-shrink-0 w-24 h-16 rounded-lg overflow-hidden transition-all duration-200 ${
                   isActive
                     ? 'border-2 border-primary scale-105'
@@ -278,7 +317,7 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
                   alt={image.alt}
                   fill
                   className="object-cover"
-                  onError={() => handleImageError(actualIndex)}
+                  onError={() => handleImageError(index)}
                 />
               </button>
             )

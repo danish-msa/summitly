@@ -23,6 +23,7 @@ import ModernBannerGallery from './Banner/ModernBannerGallery'
 import PriceCard from './NewItemBody/PriceCard'
 import Description from './ItemBody/Description'
 import Sidebar from './ItemBody/Sidebar'
+import PropertiesComparison from './PropertiesComparison/PropertiesComparison'
 
 const Item: React.FC = () => {
   const params = useParams();
@@ -258,6 +259,7 @@ const Item: React.FC = () => {
           isPreCon={isPreCon} 
           isRent={isRental} 
         />
+        <PropertiesComparison currentProperty={property} />
       </div>
 
       <div className='container-1400 mt-20 mb-4'>

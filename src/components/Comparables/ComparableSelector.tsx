@@ -226,10 +226,10 @@ const ComparableSelector = ({
   }
 
   return (
-    <div className="flex flex-col md:flex-row gap-6 h-full">
+    <div className="flex flex-col md:flex-row gap-6 h-full min-h-0">
       {/* Property Listings - Left Side */}
-      <div className="md:w-1/2 flex flex-col" style={{ maxHeight: 'calc(100vh - 200px)' }}>
-        <div className="flex-1 overflow-y-auto mb-4" data-listings-container>
+      <div className="md:w-1/2 flex flex-col min-h-0">
+        <div className="flex-1 overflow-y-auto mb-2 min-h-0" data-listings-container>
           {properties.length === 0 ? (
             <div className="text-center py-10">
               <p className="text-gray-500 text-lg">No properties found in this area.</p>
@@ -283,7 +283,7 @@ const ComparableSelector = ({
       </div>
 
       {/* Map View - Right Side */}
-      <div className="md:w-1/2 bg-gray-100 rounded-lg overflow-hidden" style={{ height: 'calc(100vh - 200px)' }}>
+      <div className="md:w-1/2 bg-gray-100 rounded-lg overflow-hidden min-h-0 flex-shrink-0">
         <GooglePropertyMap 
           properties={properties}
           selectedProperty={selectedProperty}
