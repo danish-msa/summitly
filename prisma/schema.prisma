@@ -50,6 +50,7 @@ model User {
   properties         Property[]
   propertyWatchlists PropertyWatchlist[]
   savedProperties    SavedProperty[]
+  savedComparables   SavedComparable[]
   searches           SearchHistory[]
   sessions           Session[]
   tours              Tour[]
@@ -111,6 +112,19 @@ model SavedProperty {
   mlsNumber String
   notes     String?
   tags      String[] @default([])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, mlsNumber])
+  @@index([userId])
+  @@index([mlsNumber])
+}
+
+model SavedComparable {
+  id        String   @id @default(cuid())
+  userId    String
+  mlsNumber String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)

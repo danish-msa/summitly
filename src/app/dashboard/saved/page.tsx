@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { useSavedProperties } from '@/hooks/useSavedProperties'
+import { useSavedComparables } from '@/hooks/useSavedComparables'
 import { fetchPropertyListings } from '@/lib/api/properties'
 import { useState, useEffect, useMemo } from 'react'
 import { PropertyListing } from '@/lib/types'
@@ -60,7 +61,9 @@ const convertToPreConProperty = (property: PropertyListing): PreConstructionProp
 
 export default function Saved() {
   const { savedProperties, isLoading: isLoadingSaved } = useSavedProperties()
+  const { savedComparables, isLoading: isLoadingComparables } = useSavedComparables()
   const [properties, setProperties] = useState<PropertyListing[]>([])
+  const [comparableProperties, setComparableProperties] = useState<PropertyListing[]>([])
   const { loading: isLoadingProperties, fetchData } = useBackgroundFetch()
 
   // Get saved pre-construction projects
@@ -103,7 +106,33 @@ export default function Saved() {
     fetchProperties()
   }, [savedProperties, isLoadingSaved, fetchData])
 
-  if (isLoadingSaved || isLoadingProperties) {
+  // Fetch comparable properties
+  useEffect(() => {
+    const fetchComparableProperties = async () => {
+      if (savedComparables.length === 0) {
+        setComparableProperties([])
+        return
+      }
+
+      if (!isLoadingComparables) {
+        await fetchData(async () => {
+          const allProperties = await fetchPropertyListings()
+          const comparableMlsNumbers = savedComparables.map((sc) => sc.mlsNumber)
+          const comparablePropertyListings = allProperties.filter((p) =>
+            comparableMlsNumbers.includes(p.mlsNumber)
+          )
+          setComparableProperties(comparablePropertyListings)
+          return comparablePropertyListings
+        }).catch((error) => {
+          console.error('Error fetching comparable properties:', error)
+        })
+      }
+    }
+
+    fetchComparableProperties()
+  }, [savedComparables, isLoadingComparables, fetchData])
+
+  if (isLoadingSaved || isLoadingProperties || isLoadingComparables) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -121,6 +150,7 @@ export default function Saved() {
         <TabsList>
           <TabsTrigger value="homes">Saved Homes</TabsTrigger>
           <TabsTrigger value="projects">Saved Projects</TabsTrigger>
+          <TabsTrigger value="comparables">Saved Comparables</TabsTrigger>
           <TabsTrigger value="searches">Saved Searches</TabsTrigger>
         </TabsList>
         <TabsContent value="homes" className="mt-6">
@@ -163,6 +193,48 @@ export default function Saved() {
                   property={project}
                 />
               ))}
+            </div>
+          )}
+        </TabsContent>
+        <TabsContent value="comparables" className="mt-6">
+          {comparableProperties.length === 0 ? (
+            <div className="bg-card rounded-lg p-12 border border-border text-center">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                No saved comparables yet
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                Select properties from nearby areas to use for comparison. The average price will be calculated automatically.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="bg-card rounded-lg p-6 border border-border">
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  Comparable Value
+                </h3>
+                <p className="text-2xl font-bold text-secondary">
+                  {new Intl.NumberFormat("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  }).format(
+                    comparableProperties.reduce((sum, p) => sum + p.listPrice, 0) / comparableProperties.length
+                  )}
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Average price based on {comparableProperties.length} {comparableProperties.length === 1 ? 'property' : 'properties'}
+                </p>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {comparableProperties.map((property) => (
+                  <PropertyCard
+                    key={property.mlsNumber}
+                    property={property}
+                    onHide={() => {}}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </TabsContent>
