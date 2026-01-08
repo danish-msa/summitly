@@ -36,14 +36,14 @@ const adapter = new PrismaPg(pool)
 const prisma = new PrismaClient({ adapter })
 
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'ca-central-1',
+  region: process.env.S3_REGION || 'ca-central-1',
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+    accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
   },
 })
 
-const BUCKET_NAME = process.env.AWS_S3_BUCKET || 'summitly-storage'
+const BUCKET_NAME = process.env.S3_BUCKET || 'summitly-storage'
 
 function extractS3Path(url: string): string | null {
   // Extract path from https://shared-s3.property.ca/public/images/...

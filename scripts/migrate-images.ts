@@ -26,8 +26,8 @@ import { createHash } from 'crypto'
 // Configuration
 const SUPABASE_BASE_URL = 'https://omsefyactufffyqaxowx.supabase.co/storage/v1/object/public'
 const AWS_PUBLIC_URL = 'https://shared-s3.property.ca/public'
-const AWS_BUCKET = process.env.AWS_S3_BUCKET || 'summitly-storage'
-const AWS_REGION = process.env.AWS_REGION || 'ca-central-1'
+const AWS_BUCKET = process.env.S3_BUCKET || 'summitly-storage'
+const AWS_REGION = process.env.S3_REGION || 'ca-central-1'
 const DOWNLOAD_DIR = path.join(process.cwd(), '.migration-temp')
 const MAX_CONCURRENT = 5 // Number of concurrent downloads/uploads
 
@@ -64,8 +64,8 @@ const prisma = new PrismaClient({ adapter })
 const s3Client = new S3Client({
   region: AWS_REGION,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+    accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
   },
 })
 

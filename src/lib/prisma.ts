@@ -13,6 +13,8 @@ const globalForPool = globalThis as unknown as {
 const connectionString = process.env.DATABASE_URL
 
 if (!connectionString) {
+  console.error('❌ DATABASE_URL is not defined in environment variables')
+  console.error('Please set DATABASE_URL in your AWS Amplify environment variables')
   throw new Error('DATABASE_URL is not defined')
 }
 

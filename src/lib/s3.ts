@@ -4,21 +4,21 @@ import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3
  * AWS S3 Client Configuration
  * 
  * Uses environment variables:
- * - AWS_ACCESS_KEY_ID: AWS access key
- * - AWS_SECRET_ACCESS_KEY: AWS secret key
- * - AWS_REGION: AWS region (default: ca-central-1)
- * - AWS_S3_BUCKET: S3 bucket name (default: summitly-storage)
+ * - S3_ACCESS_KEY_ID: AWS access key
+ * - S3_SECRET_ACCESS_KEY: AWS secret key
+ * - S3_REGION: AWS region (default: ca-central-1)
+ * - S3_BUCKET: S3 bucket name (default: summitly-storage)
  */
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'ca-central-1',
+  region: process.env.S3_REGION || 'ca-central-1',
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+    accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
   },
 })
 
-const BUCKET_NAME = process.env.AWS_S3_BUCKET || 'summitly-storage'
-const REGION = process.env.AWS_REGION || 'ca-central-1'
+const BUCKET_NAME = process.env.S3_BUCKET || 'summitly-storage'
+const REGION = process.env.S3_REGION || 'ca-central-1'
 // AWS S3 Public URL - using custom domain
 const AWS_PUBLIC_URL = 'https://shared-s3.property.ca/public'
 
