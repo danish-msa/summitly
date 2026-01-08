@@ -13,6 +13,7 @@ import { useSession } from 'next-auth/react';
 import { useSavedProperties } from '@/hooks/useSavedProperties';
 import { toast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { getPropertyTypeUrl, getNeighborhoodUrl } from '@/lib/utils/comparisonTableUrls';
 
 interface StickyPropertyBarProps {
   property: PropertyListing;
@@ -483,6 +484,29 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
 
                     {/* Property Stats (Beds, Baths, Sqft) */}
                     <div className="hidden md:flex justify-start items-center gap-4 lg:gap-6 flex-shrink-0">
+                      {/* Property Type - Clickable */}
+                      {property.details?.propertyType && (() => {
+                        const propertyType = property.details.propertyType
+                        const typeUrl = getPropertyTypeUrl(propertyType, property.address?.city)
+                        if (typeUrl) {
+                          return (
+                            <div className="flex items-center gap-1.5 group">
+                              <Home className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-transform duration-300 group-hover:scale-110" />
+                              <Link 
+                                href={typeUrl}
+                                className="relative inline-block text-base text-foreground whitespace-nowrap"
+                              >
+                                <span className="relative z-10 transition-colors duration-300 group-hover:text-primary">
+                                  {propertyType}
+                                </span>
+                                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                              </Link>
+                            </div>
+                          )
+                        }
+                        return null
+                      })()}
+
                       {/* Beds */}
                       {getBedrooms() && (
                         <div className="flex items-center gap-1.5">
@@ -519,7 +543,24 @@ const StickyPropertyBar: React.FC<StickyPropertyBarProps> = ({ property, bannerR
                       <div className="flex flex-col justify-center gap-1 flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0 min-w-0">
                           <MapPin className="h-5 w-5 flex-shrink-0" />
-                          <span className="truncate text-base max-w-[300px] lg:max-w-[400px] xl:max-w-[500px]">{shortAddress}</span>
+                          {(() => {
+                            const neighborhoodUrl = getNeighborhoodUrl(property.address?.neighborhood || undefined, property.address?.city)
+                            if (neighborhoodUrl && property.address?.neighborhood) {
+                              return (
+                                <Link 
+                                  href={neighborhoodUrl}
+                                  className="truncate text-base max-w-[300px] lg:max-w-[400px] xl:max-w-[500px] hover:text-primary hover:underline transition-colors"
+                                >
+                                  {shortAddress}
+                                </Link>
+                              )
+                            }
+                            return (
+                              <span className="truncate text-base max-w-[300px] lg:max-w-[400px] xl:max-w-[500px]">
+                                {shortAddress}
+                              </span>
+                            )
+                          })()}
                         </div>
                       </div>
                     )}

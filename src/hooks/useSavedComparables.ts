@@ -4,20 +4,24 @@ import { useSession } from 'next-auth/react'
 interface SavedComparable {
   id: string
   userId: string
+  basePropertyMlsNumber: string
   mlsNumber: string
   createdAt: Date
   updatedAt: Date
 }
 
-export function useSavedComparables() {
+export function useSavedComparables(basePropertyMlsNumber?: string) {
   const { data: session } = useSession()
   const queryClient = useQueryClient()
 
-  // Get all saved comparables
+  // Get saved comparables (optionally filtered by base property)
   const { data: savedComparables = [], isLoading } = useQuery<SavedComparable[]>({
-    queryKey: ['savedComparables', session?.user?.id],
+    queryKey: ['savedComparables', session?.user?.id, basePropertyMlsNumber],
     queryFn: async () => {
-      const response = await fetch('/api/comparables/saved')
+      const url = basePropertyMlsNumber 
+        ? `/api/comparables/saved?basePropertyMlsNumber=${basePropertyMlsNumber}`
+        : '/api/comparables/saved'
+      const response = await fetch(url)
       if (!response.ok) throw new Error('Failed to fetch saved comparables')
       const data = await response.json()
       return data.savedComparables || []
@@ -27,16 +31,22 @@ export function useSavedComparables() {
 
   // Check if a specific property is saved as comparable
   const checkIsSaved = (mlsNumber: string): boolean => {
-    return savedComparables.some((sc) => sc.mlsNumber === mlsNumber.toString())
+    if (!basePropertyMlsNumber) return false
+    return savedComparables.some(
+      (sc) => sc.mlsNumber === mlsNumber.toString() && sc.basePropertyMlsNumber === basePropertyMlsNumber.toString()
+    )
   }
 
   // Save comparable mutation
   const saveComparableMutation = useMutation({
     mutationFn: async (mlsNumber: string) => {
+      if (!basePropertyMlsNumber) {
+        throw new Error('Base property MLS number is required')
+      }
       const response = await fetch('/api/comparables/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mlsNumber }),
+        body: JSON.stringify({ mlsNumber, basePropertyMlsNumber }),
       })
       if (!response.ok) {
         const error = await response.json()
@@ -45,6 +55,7 @@ export function useSavedComparables() {
       return response.json()
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['savedComparables', session?.user?.id, basePropertyMlsNumber] })
       queryClient.invalidateQueries({ queryKey: ['savedComparables', session?.user?.id] })
     },
   })
@@ -52,7 +63,10 @@ export function useSavedComparables() {
   // Unsave comparable mutation
   const unsaveComparableMutation = useMutation({
     mutationFn: async (mlsNumber: string) => {
-      const response = await fetch(`/api/comparables/unsave?mlsNumber=${mlsNumber}`, {
+      if (!basePropertyMlsNumber) {
+        throw new Error('Base property MLS number is required')
+      }
+      const response = await fetch(`/api/comparables/unsave?mlsNumber=${mlsNumber}&basePropertyMlsNumber=${basePropertyMlsNumber}`, {
         method: 'DELETE',
       })
       if (!response.ok) {
@@ -62,6 +76,7 @@ export function useSavedComparables() {
       return response.json()
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['savedComparables', session?.user?.id, basePropertyMlsNumber] })
       queryClient.invalidateQueries({ queryKey: ['savedComparables', session?.user?.id] })
     },
   })

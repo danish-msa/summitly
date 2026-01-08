@@ -6,6 +6,8 @@ import { PropertyListing } from '@/lib/types'
 import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/single-listing'
 import { Button } from '@/components/ui/button'
 import { useSavedComparables } from '@/hooks/useSavedComparables'
+import { useSession } from 'next-auth/react'
+import AuthModal from '@/components/Auth/AuthModal'
 import { fetchPropertyListings } from '@/lib/api/properties'
 import ComparableSelectorModal from '@/components/Comparables/ComparableSelectorModal'
 
@@ -17,12 +19,14 @@ interface PriceCardProps {
 }
 
 const PriceCard = ({ property, rawProperty, isPreCon = false, isRent = false }: PriceCardProps) => {
+  const { data: session } = useSession()
   const [activeTab, setActiveTab] = useState<"comparable" | "estimated">("estimated")
   const [comparableProperties, setComparableProperties] = useState<PropertyListing[]>([])
   const [isLoadingComparables, setIsLoadingComparables] = useState(false)
   const [isComparableModalOpen, setIsComparableModalOpen] = useState(false)
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
 
-  const { savedComparables } = useSavedComparables()
+  const { savedComparables } = useSavedComparables(property.mlsNumber)
   
   // Create a stable reference for savedComparables to prevent infinite loops
   const savedComparablesRef = useRef<string>('')
@@ -140,7 +144,13 @@ const PriceCard = ({ property, rawProperty, isPreCon = false, isRent = false }: 
         <div className="my-6 flex flex-col gap-3 items-center">
           {activeTab === "comparable" && (
             <Button
-              onClick={() => setIsComparableModalOpen(true)}
+              onClick={() => {
+                if (!session) {
+                  setIsAuthModalOpen(true)
+                } else {
+                  setIsComparableModalOpen(true)
+                }
+              }}
               className="rounded-full px-8 py-3 shadow-md transition-colors flex items-center gap-2 bg-secondary text-secondary-foreground hover:bg-secondary/90 w-full"
               variant="secondary"
             >
@@ -190,20 +200,28 @@ const PriceCard = ({ property, rawProperty, isPreCon = false, isRent = false }: 
         </button>
       </div>
       
-      {/* Comparable Selector Modal */}
-      <ComparableSelectorModal
-        open={isComparableModalOpen}
-        onOpenChange={(open) => {
-          setIsComparableModalOpen(open)
-          // When modal closes, the savedComparables from the hook will automatically update
-          // and trigger the useEffect to refetch comparable properties
-        }}
-        property={property}
-        onComparableValueChange={(averagePrice) => {
-          // The comparable value will be updated automatically via the hook
-          // This callback can be used for additional actions if needed
-        }}
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
       />
+
+      {/* Comparable Selector Modal */}
+      {session && (
+        <ComparableSelectorModal
+          open={isComparableModalOpen}
+          onOpenChange={(open) => {
+            setIsComparableModalOpen(open)
+            // When modal closes, the savedComparables from the hook will automatically update
+            // and trigger the useEffect to refetch comparable properties
+          }}
+          property={property}
+          onComparableValueChange={(averagePrice) => {
+            // The comparable value will be updated automatically via the hook
+            // This callback can be used for additional actions if needed
+          }}
+        />
+      )}
     </div>
   )
 }

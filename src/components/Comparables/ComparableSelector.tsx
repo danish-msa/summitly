@@ -18,6 +18,7 @@ interface ComparableSelectorProps {
   centerLat?: number
   centerLng?: number
   radius?: number // in km
+  basePropertyMlsNumber: string // The property page the user is on
   onComparableValueChange?: (averagePrice: number | null, count: number) => void
 }
 
@@ -25,10 +26,11 @@ const ComparableSelector = ({
   centerLat, 
   centerLng, 
   radius = 5, // Default 5km radius
+  basePropertyMlsNumber,
   onComparableValueChange 
 }: ComparableSelectorProps) => {
   const { data: session } = useSession()
-  const { savedComparables } = useSavedComparables()
+  const { savedComparables, saveComparable, unsaveComparable } = useSavedComparables(basePropertyMlsNumber)
   const [properties, setProperties] = useState<PropertyListing[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedProperty, setSelectedProperty] = useState<PropertyListing | null>(null)
@@ -147,29 +149,41 @@ const ComparableSelector = ({
   }
 
   // Handle property selection for comparison
-  const handlePropertySelect = (property: PropertyListing, isSelected: boolean) => {
+  const handlePropertySelect = async (property: PropertyListing, isSelected: boolean) => {
     if (!session) {
       setIsAuthModalOpen(true)
       return
     }
 
-    const newSelected = new Set(selectedComparables)
-    if (isSelected) {
-      newSelected.add(property.mlsNumber)
-    } else {
-      newSelected.delete(property.mlsNumber)
-    }
-    setSelectedComparables(newSelected)
+    try {
+      if (isSelected) {
+        await saveComparable(property.mlsNumber)
+      } else {
+        await unsaveComparable(property.mlsNumber)
+      }
 
-    // Calculate average price
-    const selectedProperties = properties.filter(p => newSelected.has(p.mlsNumber))
-    const averagePrice = selectedProperties.length > 0
-      ? selectedProperties.reduce((sum, p) => sum + p.listPrice, 0) / selectedProperties.length
-      : null
-    
-    setComparableValue(averagePrice)
-    setSelectedCount(selectedProperties.length)
-    onComparableValueChange?.(averagePrice, selectedProperties.length)
+      // Update local state
+      const newSelected = new Set(selectedComparables)
+      if (isSelected) {
+        newSelected.add(property.mlsNumber)
+      } else {
+        newSelected.delete(property.mlsNumber)
+      }
+      setSelectedComparables(newSelected)
+
+      // Calculate average price
+      const selectedProperties = properties.filter(p => newSelected.has(p.mlsNumber))
+      const averagePrice = selectedProperties.length > 0
+        ? selectedProperties.reduce((sum, p) => sum + p.listPrice, 0) / selectedProperties.length
+        : null
+      
+      setComparableValue(averagePrice)
+      setSelectedCount(selectedProperties.length)
+      onComparableValueChange?.(averagePrice, selectedProperties.length)
+    } catch (error) {
+      console.error('Error saving/unsaving comparable:', error)
+      // Optionally show a toast notification here
+    }
   }
 
   // Handle map property click
@@ -240,6 +254,7 @@ const ComparableSelector = ({
                 <ComparablePropertyCard
                   key={property.mlsNumber}
                   property={property}
+                  basePropertyMlsNumber={basePropertyMlsNumber}
                   onSelect={handlePropertySelect}
                 />
               ))}

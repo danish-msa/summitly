@@ -61,6 +61,7 @@ const ComparableSelectorModal = ({
             centerLat={centerLat}
             centerLng={centerLng}
             radius={5}
+            basePropertyMlsNumber={property.mlsNumber}
             onComparableValueChange={handleComparableValueChange}
           />
         </div>

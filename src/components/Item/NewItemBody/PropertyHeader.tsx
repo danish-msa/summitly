@@ -5,6 +5,7 @@ import { PropertyListing } from '@/lib/types'
 import { Home, Bed, Bath, Maximize2, Heart, Share2, FileText, XCircle, Bell, Calculator, MessageCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { useSavedProperties } from '@/hooks/useSavedProperties'
 import { toast } from '@/hooks/use-toast'
@@ -13,6 +14,7 @@ import AuthModal from '@/components/Auth/AuthModal'
 import ProjectRatingDisplay from '@/components/PreConItem/PreConItemBody/ProjectRatingDisplay'
 import PropertyAlerts from '../ItemBody/PropertyAlerts'
 import { formatCurrency } from '@/lib/utils'
+import { getPropertyTypeUrl, getNeighborhoodUrl } from '@/lib/utils/comparisonTableUrls'
 
 interface PropertyHeaderProps {
   property: PropertyListing;
@@ -196,9 +198,21 @@ const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property, onCalculatorC
             {/* Property Type */}
             <div className="flex items-center gap-2">
               <Home className="h-4 w-4 text-gray-600" />
-              <span className="text-base text-gray-700">
-                {property.details?.propertyType || 'Property'}
-              </span>
+              {(() => {
+                const propertyType = property.details?.propertyType || 'Property'
+                const typeUrl = getPropertyTypeUrl(propertyType, property.address?.city)
+                if (typeUrl) {
+                  return (
+                    <Link 
+                      href={typeUrl}
+                      className="text-base text-gray-700 hover:text-primary hover:underline transition-colors"
+                    >
+                      {propertyType}
+                    </Link>
+                  )
+                }
+                return <span className="text-base text-gray-700">{propertyType}</span>
+              })()}
             </div>
 
             {/* Bedrooms */}

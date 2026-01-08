@@ -11,16 +11,17 @@ import AuthModal from '@/components/Auth/AuthModal'
 
 interface ComparablePropertyCardProps {
   property: PropertyListing
+  basePropertyMlsNumber: string // The property page the user is on
   onSelect?: (property: PropertyListing, isSelected: boolean) => void
 }
 
-const ComparablePropertyCard = ({ property, onSelect }: ComparablePropertyCardProps) => {
+const ComparablePropertyCard = ({ property, basePropertyMlsNumber, onSelect }: ComparablePropertyCardProps) => {
   const [imgError, setImgError] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   
   const { data: session } = useSession()
-  const { checkIsSaved, saveComparable, unsaveComparable, isSaving, isUnsaving } = useSavedComparables()
+  const { checkIsSaved, saveComparable, unsaveComparable, isSaving, isUnsaving } = useSavedComparables(basePropertyMlsNumber)
   const isSelected = checkIsSaved(property.mlsNumber)
   
   // Get images array with proper fallbacks
@@ -65,17 +66,8 @@ const ComparablePropertyCard = ({ property, onSelect }: ComparablePropertyCardPr
       return
     }
 
-    try {
-      if (isSelected) {
-        await unsaveComparable(property.mlsNumber)
-        onSelect?.(property, false)
-      } else {
-        await saveComparable(property.mlsNumber)
-        onSelect?.(property, true)
-      }
-    } catch (error) {
-      console.error('Error toggling comparable:', error)
-    }
+    // Let the parent handle the save/unsave logic
+    onSelect?.(property, !isSelected)
   }
 
   return (

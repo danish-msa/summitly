@@ -16,6 +16,7 @@ export async function DELETE(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const mlsNumber = searchParams.get('mlsNumber')
+    const basePropertyMlsNumber = searchParams.get('basePropertyMlsNumber')
 
     if (!mlsNumber) {
       return NextResponse.json(
@@ -24,11 +25,19 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
+    if (!basePropertyMlsNumber) {
+      return NextResponse.json(
+        { error: 'Base property MLS number is required' },
+        { status: 400 }
+      )
+    }
+
     // Delete the saved comparable
     await prisma.savedComparable.delete({
       where: {
-        userId_mlsNumber: {
+        userId_basePropertyMlsNumber_mlsNumber: {
           userId: session.user.id,
+          basePropertyMlsNumber: basePropertyMlsNumber.toString(),
           mlsNumber: mlsNumber.toString(),
         },
       },

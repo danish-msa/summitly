@@ -122,16 +122,19 @@ model SavedProperty {
 }
 
 model SavedComparable {
-  id        String   @id @default(cuid())
-  userId    String
-  mlsNumber String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                  String   @id @default(cuid())
+  userId              String
+  basePropertyMlsNumber String  // The property page the user is on
+  mlsNumber           String   // The comparable property being saved
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, mlsNumber])
+  @@unique([userId, basePropertyMlsNumber, mlsNumber])
   @@index([userId])
+  @@index([basePropertyMlsNumber])
   @@index([mlsNumber])
+  @@index([userId, basePropertyMlsNumber])
 }
 
 model PropertyView {

@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { mlsNumber } = await request.json()
+    const { mlsNumber, basePropertyMlsNumber } = await request.json()
 
     if (!mlsNumber) {
       return NextResponse.json(
@@ -23,11 +23,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (!basePropertyMlsNumber) {
+      return NextResponse.json(
+        { error: 'Base property MLS number is required' },
+        { status: 400 }
+      )
+    }
+
     // Check if already saved
     const existing = await prisma.savedComparable.findUnique({
       where: {
-        userId_mlsNumber: {
+        userId_basePropertyMlsNumber_mlsNumber: {
           userId: session.user.id,
+          basePropertyMlsNumber: basePropertyMlsNumber.toString(),
           mlsNumber: mlsNumber.toString(),
         },
       },
@@ -44,6 +52,7 @@ export async function POST(request: NextRequest) {
     const savedComparable = await prisma.savedComparable.create({
       data: {
         userId: session.user.id,
+        basePropertyMlsNumber: basePropertyMlsNumber.toString(),
         mlsNumber: mlsNumber.toString(),
       },
     })

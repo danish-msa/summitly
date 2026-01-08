@@ -19,14 +19,16 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
+    const basePropertyMlsNumber = searchParams.get('basePropertyMlsNumber')
     const mlsNumber = searchParams.get('mlsNumber')
 
-    // If mlsNumber is provided, check if specific property is saved as comparable
-    if (mlsNumber) {
+    // If both basePropertyMlsNumber and mlsNumber are provided, check if specific property is saved as comparable
+    if (basePropertyMlsNumber && mlsNumber) {
       const savedComparable = await prisma.savedComparable.findUnique({
         where: {
-          userId_mlsNumber: {
+          userId_basePropertyMlsNumber_mlsNumber: {
             userId: session.user.id,
+            basePropertyMlsNumber: basePropertyMlsNumber.toString(),
             mlsNumber: mlsNumber.toString(),
           },
         },
@@ -38,7 +40,22 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Otherwise, get all saved comparables for the user
+    // If only basePropertyMlsNumber is provided, get all comparables for that property
+    if (basePropertyMlsNumber) {
+      const savedComparables = await prisma.savedComparable.findMany({
+        where: {
+          userId: session.user.id,
+          basePropertyMlsNumber: basePropertyMlsNumber.toString(),
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      })
+
+      return NextResponse.json({ savedComparables })
+    }
+
+    // Otherwise, get all saved comparables for the user (grouped by base property)
     const savedComparables = await prisma.savedComparable.findMany({
       where: {
         userId: session.user.id,

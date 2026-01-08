@@ -61,9 +61,10 @@ const convertToPreConProperty = (property: PropertyListing): PreConstructionProp
 
 export default function Saved() {
   const { savedProperties, isLoading: isLoadingSaved } = useSavedProperties()
-  const { savedComparables, isLoading: isLoadingComparables } = useSavedComparables()
+  const { savedComparables, isLoading: isLoadingComparables } = useSavedComparables() // Get all comparables
   const [properties, setProperties] = useState<PropertyListing[]>([])
-  const [comparableProperties, setComparableProperties] = useState<PropertyListing[]>([])
+  const [comparablePropertiesByBase, setComparablePropertiesByBase] = useState<Record<string, PropertyListing[]>>({})
+  const [baseProperties, setBaseProperties] = useState<PropertyListing[]>([])
   const { loading: isLoadingProperties, fetchData } = useBackgroundFetch()
 
   // Get saved pre-construction projects
@@ -106,23 +107,51 @@ export default function Saved() {
     fetchProperties()
   }, [savedProperties, isLoadingSaved, fetchData])
 
-  // Fetch comparable properties
+  // Fetch comparable properties grouped by base property
   useEffect(() => {
     const fetchComparableProperties = async () => {
       if (savedComparables.length === 0) {
-        setComparableProperties([])
+        setComparablePropertiesByBase({})
+        setBaseProperties([])
         return
       }
 
       if (!isLoadingComparables) {
         await fetchData(async () => {
           const allProperties = await fetchPropertyListings()
-          const comparableMlsNumbers = savedComparables.map((sc) => sc.mlsNumber)
-          const comparablePropertyListings = allProperties.filter((p) =>
-            comparableMlsNumbers.includes(p.mlsNumber)
+          
+          // Group comparables by base property
+          const grouped: Record<string, PropertyListing[]> = {}
+          const basePropertyMlsNumbers = new Set<string>()
+          
+          savedComparables.forEach((sc) => {
+            basePropertyMlsNumbers.add(sc.basePropertyMlsNumber)
+            if (!grouped[sc.basePropertyMlsNumber]) {
+              grouped[sc.basePropertyMlsNumber] = []
+            }
+          })
+          
+          // Fetch base properties
+          const basePropertyListings = allProperties.filter((p) =>
+            Array.from(basePropertyMlsNumbers).includes(p.mlsNumber)
           )
-          setComparableProperties(comparablePropertyListings)
-          return comparablePropertyListings
+          setBaseProperties(basePropertyListings)
+          
+          // Fetch comparable properties for each base property
+          for (const [baseMlsNumber, comparables] of Object.entries(grouped)) {
+            const comparableMlsNumbers = savedComparables
+              .filter(sc => sc.basePropertyMlsNumber === baseMlsNumber)
+              .map(sc => sc.mlsNumber)
+            
+            const comparablePropertyListings = allProperties.filter((p) =>
+              comparableMlsNumbers.includes(p.mlsNumber)
+            )
+            
+            grouped[baseMlsNumber] = comparablePropertyListings
+          }
+          
+          setComparablePropertiesByBase(grouped)
+          return grouped
         }).catch((error) => {
           console.error('Error fetching comparable properties:', error)
         })
@@ -197,7 +226,7 @@ export default function Saved() {
           )}
         </TabsContent>
         <TabsContent value="comparables" className="mt-6">
-          {comparableProperties.length === 0 ? (
+          {Object.keys(comparablePropertiesByBase).length === 0 ? (
             <div className="bg-card rounded-lg p-12 border border-border text-center">
               <h3 className="text-xl font-semibold text-foreground mb-2">
                 No saved comparables yet
@@ -207,34 +236,60 @@ export default function Saved() {
               </p>
             </div>
           ) : (
-            <div className="space-y-6">
-              <div className="bg-card rounded-lg p-6 border border-border">
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  Comparable Value
-                </h3>
-                <p className="text-2xl font-bold text-secondary">
-                  {new Intl.NumberFormat("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                  }).format(
-                    comparableProperties.reduce((sum, p) => sum + p.listPrice, 0) / comparableProperties.length
-                  )}
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Average price based on {comparableProperties.length} {comparableProperties.length === 1 ? 'property' : 'properties'}
-                </p>
-              </div>
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {comparableProperties.map((property) => (
-                  <PropertyCard
-                    key={property.mlsNumber}
-                    property={property}
-                    onHide={() => {}}
-                  />
-                ))}
-              </div>
+            <div className="space-y-8">
+              {Object.entries(comparablePropertiesByBase).map(([baseMlsNumber, comparables]) => {
+                const baseProperty = baseProperties.find(p => p.mlsNumber === baseMlsNumber)
+                const averagePrice = comparables.length > 0
+                  ? comparables.reduce((sum, p) => sum + p.listPrice, 0) / comparables.length
+                  : 0
+                
+                return (
+                  <div key={baseMlsNumber} className="space-y-4">
+                    {/* Base Property Header */}
+                    {baseProperty && (
+                      <div className="bg-card rounded-lg p-4 border border-border">
+                        <h3 className="text-lg font-semibold text-foreground mb-2">
+                          Comparables for: {baseProperty.address?.streetNumber || ''} {baseProperty.address?.streetName || ''} {baseProperty.address?.streetSuffix || ''}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {baseProperty.address?.city || ''}, {baseProperty.address?.state || ''} {baseProperty.address?.zip || ''}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Comparable Value Summary */}
+                    {comparables.length > 0 && (
+                      <div className="bg-card rounded-lg p-6 border border-border">
+                        <h4 className="text-lg font-semibold text-foreground mb-2">
+                          Comparable Value
+                        </h4>
+                        <p className="text-2xl font-bold text-secondary">
+                          {new Intl.NumberFormat("en-US", {
+                            style: "currency",
+                            currency: "USD",
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                          }).format(averagePrice)}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Average price based on {comparables.length} {comparables.length === 1 ? 'property' : 'properties'}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Comparable Properties Grid */}
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      {comparables.map((property) => (
+                        <PropertyCard
+                          key={property.mlsNumber}
+                          property={property}
+                          onHide={() => {}}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
         </TabsContent>

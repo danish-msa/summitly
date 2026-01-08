@@ -13,7 +13,7 @@ interface PropertiesComparisonProps {
 }
 
 const PropertiesComparison: React.FC<PropertiesComparisonProps> = ({ currentProperty }) => {
-  const { savedComparables, isLoading: isLoadingComparables } = useSavedComparables()
+  const { savedComparables, isLoading: isLoadingComparables } = useSavedComparables(currentProperty.mlsNumber)
   const [comparableProperties, setComparableProperties] = useState<PropertyListing[]>([])
   const [isLoadingProperties, setIsLoadingProperties] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -30,7 +30,12 @@ const PropertiesComparison: React.FC<PropertiesComparisonProps> = ({ currentProp
       setError(null)
 
       try {
-        const propertyPromises = savedComparables.map(async (saved) => {
+        // Filter comparables to only those for the current property
+        const relevantComparables = savedComparables.filter(
+          sc => sc.basePropertyMlsNumber === currentProperty.mlsNumber
+        )
+        
+        const propertyPromises = relevantComparables.map(async (saved) => {
           try {
             const property = await getListingDetails(saved.mlsNumber)
             return property
