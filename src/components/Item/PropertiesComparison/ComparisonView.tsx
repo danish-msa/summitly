@@ -78,19 +78,29 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({
   const selectedComparables = comparableProperties.filter(p => selectedIds.has(p.mlsNumber))
   const allProperties = [subjectProperty, ...selectedComparables]
 
+  // Extended property type for dynamic fields
+  type ExtendedPropertyListing = PropertyListing & {
+    currentValue?: number | string
+    marketPrice?: number | string
+    hpiAdjustment?: number | string
+    hcAdjustment?: number | string
+    yourAdjustment?: number | string
+  }
+
   // Calculate comparable value (average of selected comparables)
   const comparableValue = useMemo(() => {
     if (selectedComparables.length === 0) return null
     const total = selectedComparables.reduce((sum, p) => {
-      const price = (p as any).currentValue || p.listPrice || 0
+      const extendedP = p as ExtendedPropertyListing
+      const price = extendedP.currentValue || p.listPrice || 0
       return sum + (typeof price === 'string' ? parseFloat(price) : price)
     }, 0)
     return total / selectedComparables.length
   }, [selectedComparables])
 
   const comparisonRows = [
-    { label: 'Current Value', getValue: (p: PropertyListing) => formatPrice((p as any).currentValue || p.listPrice) },
-    { label: 'Current Value/ft²', getValue: (p: PropertyListing) => formatPricePerSqft((p as any).currentValue || p.listPrice, p.details?.sqft) },
+    { label: 'Current Value', getValue: (p: PropertyListing) => formatPrice((p as ExtendedPropertyListing).currentValue || p.listPrice) },
+    { label: 'Current Value/ft²', getValue: (p: PropertyListing) => formatPricePerSqft((p as ExtendedPropertyListing).currentValue || p.listPrice, p.details?.sqft) },
     { label: 'Listing Status', getValue: (p: PropertyListing) => p.status, isStatus: true },
     { label: 'List Date', getValue: (p: PropertyListing) => formatDate(p.listDate) },
     { label: 'List Price', getValue: (p: PropertyListing) => formatPrice(p.listPrice) },
@@ -98,10 +108,19 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({
     { label: 'Sale Date', getValue: (p: PropertyListing) => formatDate(p.soldDate) },
     { label: 'Sale Price', getValue: (p: PropertyListing) => formatPrice(p.soldPrice) },
     { label: 'Sale Price/ft²', getValue: (p: PropertyListing) => formatPricePerSqft(p.soldPrice, p.details?.sqft) },
-    { label: 'Market Price', getValue: (p: PropertyListing) => formatPrice((p as any).marketPrice || p.listPrice) },
-    { label: 'HPI Adjustment', getValue: (p: PropertyListing) => (p as any).hpiAdjustment ? formatPrice((p as any).hpiAdjustment) : '—', hasTooltip: true, tooltip: 'House Price Index Adjustment' },
-    { label: 'HC Adjustment', getValue: (p: PropertyListing) => (p as any).hcAdjustment ? formatPrice((p as any).hcAdjustment) : '—', hasTooltip: true, tooltip: 'Housing Characteristic Adjustment' },
-    { label: 'Your Adjustment', getValue: (p: PropertyListing) => (p as any).yourAdjustment ? formatPrice((p as any).yourAdjustment) : '—', hasTooltip: true, tooltip: 'Custom adjustment value' },
+    { label: 'Market Price', getValue: (p: PropertyListing) => formatPrice((p as ExtendedPropertyListing).marketPrice || p.listPrice) },
+    { label: 'HPI Adjustment', getValue: (p: PropertyListing) => {
+      const extendedP = p as ExtendedPropertyListing
+      return extendedP.hpiAdjustment ? formatPrice(extendedP.hpiAdjustment) : '—'
+    }, hasTooltip: true, tooltip: 'House Price Index Adjustment' },
+    { label: 'HC Adjustment', getValue: (p: PropertyListing) => {
+      const extendedP = p as ExtendedPropertyListing
+      return extendedP.hcAdjustment ? formatPrice(extendedP.hcAdjustment) : '—'
+    }, hasTooltip: true, tooltip: 'Housing Characteristic Adjustment' },
+    { label: 'Your Adjustment', getValue: (p: PropertyListing) => {
+      const extendedP = p as ExtendedPropertyListing
+      return extendedP.yourAdjustment ? formatPrice(extendedP.yourAdjustment) : '—'
+    }, hasTooltip: true, tooltip: 'Custom adjustment value' },
   ]
 
   return (

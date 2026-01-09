@@ -221,8 +221,8 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({
     if (!sortBy) return rawTableData
 
     return [...rawTableData].sort((a, b) => {
-      let aValue: any
-      let bValue: any
+      let aValue: string | number
+      let bValue: string | number
 
       switch (sortBy) {
         case 'property':
@@ -334,7 +334,7 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({
       if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1
       return 0
     })
-  }, [rawTableData, sortBy, sortOrder, currentProperty])
+  }, [rawTableData, sortBy, sortOrder])
 
   // Define columns
   const columns: Column<PropertyRowData>[] = [
