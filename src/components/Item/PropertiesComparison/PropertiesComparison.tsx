@@ -5,7 +5,10 @@ import { PropertyListing } from '@/lib/types'
 import { getListingDetails } from '@/lib/api/properties'
 import { useSavedComparables } from '@/hooks/useSavedComparables'
 import { CurvedTabs, CurvedTabsList, CurvedTabsTrigger, CurvedTabsContent } from '@/components/ui/curved-tabs'
-import ComparisonTable from './ComparisonTable'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import CardView from './CardView'
+import ListView from './ListView'
+import ComparisonView from './ComparisonView'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 
 interface PropertiesComparisonProps {
@@ -61,6 +64,14 @@ const PropertiesComparison: React.FC<PropertiesComparisonProps> = ({ currentProp
 
   const hasComparables = comparableProperties.length > 0
 
+  // Get selected IDs from saved comparables for ComparisonView
+  const selectedIds = useMemo(() => {
+    const relevantComparables = savedComparables.filter(
+      sc => sc.basePropertyMlsNumber === currentProperty.mlsNumber
+    )
+    return new Set(relevantComparables.map(sc => sc.mlsNumber))
+  }, [savedComparables, currentProperty.mlsNumber])
+
   return (
     <div className="w-full mt-12">
       <CurvedTabs defaultValue="sold-active-comps" className="w-full">
@@ -68,7 +79,7 @@ const PropertiesComparison: React.FC<PropertiesComparisonProps> = ({ currentProp
           <CurvedTabsTrigger value="sold-active-comps">Sold & Active Comps</CurvedTabsTrigger>
         </CurvedTabsList>
 
-        <CurvedTabsContent value="sold-active-comps">
+        <CurvedTabsContent value="sold-active-comps" className="pl-10">
           {isLoadingComparables || isLoadingProperties ? (
             <div className="flex items-center justify-center py-12">
               <LoadingSpinner size="md" message="Loading comparables..." />
@@ -84,10 +95,35 @@ const PropertiesComparison: React.FC<PropertiesComparisonProps> = ({ currentProp
               </p>
             </div>
           ) : (
-            <ComparisonTable 
-              currentProperty={currentProperty}
-              comparableProperties={comparableProperties}
-            />
+            <Tabs defaultValue="card-view" className="w-full">
+              <TabsList>
+                <TabsTrigger value="card-view">Card View</TabsTrigger>
+                <TabsTrigger value="list-view">List View</TabsTrigger>
+                <TabsTrigger value="comparison-view">Comparison View</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="card-view" variant="borderless">
+                <CardView 
+                  currentProperty={currentProperty}
+                  comparableProperties={comparableProperties}
+                />
+              </TabsContent>
+
+              <TabsContent value="list-view" variant="borderless">
+                <ListView 
+                  currentProperty={currentProperty}
+                  comparableProperties={comparableProperties}
+                />
+              </TabsContent>
+
+              <TabsContent value="comparison-view" variant="borderless">
+                <ComparisonView 
+                  subjectProperty={currentProperty}
+                  comparableProperties={comparableProperties}
+                  selectedIds={selectedIds}
+                />
+              </TabsContent>
+            </Tabs>
           )}
         </CurvedTabsContent>
       </CurvedTabs>

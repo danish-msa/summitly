@@ -101,7 +101,7 @@ const ComparablePropertyCard = ({ property, basePropertyMlsNumber, onSelect }: C
         </button>
 
         {/* Image Section */}
-        <div className='relative h-60 w-full overflow-hidden'>
+        <div className='relative h-40 w-full overflow-hidden'>
           <img 
             src={imageSrc} 
             alt={`${property.details.propertyType} in ${property.address.city || 'Unknown City'}`}

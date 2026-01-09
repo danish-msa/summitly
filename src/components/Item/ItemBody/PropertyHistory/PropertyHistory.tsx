@@ -33,7 +33,7 @@ export default function PropertyHistory({ listingHistory, property, rawProperty 
   });
 
   return (
-    <div className="w-full pl-8">
+    <div className="w-full pl-10">
       <Tabs defaultValue="transactions" className="w-full">
         <TabsList>
           <TabsTrigger value="transactions">Transaction History</TabsTrigger>

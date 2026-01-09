@@ -9,6 +9,7 @@ import PropertyHistory from '../ItemBody/PropertyHistory/PropertyHistory'
 import { generatePropertyDetailsData } from '../ItemBody/generatePropertyDetails'
 import PropertyListingDetails from '../ItemBody/PropertyListingDetails'
 import AVMBreakdown from '../ItemBody/AVMBreakdown'
+import Documents from '../ItemBody/Documents'
 import Features from './Features'
 import MarketAnalytics from './MarketAnalytics'
 import Calculators from './Calculators'
@@ -75,6 +76,7 @@ const NewItemBody = forwardRef<NewItemBodyRef, NewItemBodyProps>(({
           <CurvedTabsTrigger value="location">Location</CurvedTabsTrigger>
           {!isRent && <CurvedTabsTrigger value="market-analytics">Market Analytics</CurvedTabsTrigger>}
           {!isRent && <CurvedTabsTrigger value="calculators">Calculators</CurvedTabsTrigger>}
+          <CurvedTabsTrigger value="documents">Documents</CurvedTabsTrigger>
         </CurvedTabsList>
 
         {!isRent && (
@@ -117,6 +119,10 @@ const NewItemBody = forwardRef<NewItemBodyRef, NewItemBodyProps>(({
             <Calculators property={property} rawProperty={rawProperty} isPreCon={isPreCon} isRent={isRent} />
           </CurvedTabsContent>
         )}
+
+        <CurvedTabsContent value="documents">
+          <Documents property={property} rawProperty={rawProperty} />
+        </CurvedTabsContent>
       </CurvedTabs>
     </div>
   )

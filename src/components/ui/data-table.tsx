@@ -15,7 +15,7 @@ import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
 
 export interface Column<T> {
   key: string
-  header: string
+  header: string | ReactNode
   render?: (item: T) => ReactNode
   className?: string
   sortable?: boolean
@@ -88,12 +88,12 @@ export function DataTable<T>({
                 key={column.key} 
                 className={cn(
                   column.className,
-                  column.sortable && "cursor-pointer hover:bg-muted/50 select-none"
+                  column.sortable && "cursor-pointer select-none"
                 )}
                 onClick={() => handleSort(column)}
               >
                 <div className="flex items-center">
-                  {column.header}
+                  {typeof column.header === 'string' ? column.header : column.header}
                   {getSortIcon(column)}
                 </div>
               </TableHead>
