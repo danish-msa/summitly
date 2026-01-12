@@ -1,0 +1,1155 @@
+{
+  "test_summary": {
+    "total": 50,
+    "passed": 50,
+    "failed": 0,
+    "errors": 0,
+    "timeouts": 0,
+    "start_time": "2025-12-31T17:43:54.194483",
+    "end_time": "2025-12-31T17:51:04.330204",
+    "duration_seconds": 430.135721
+  },
+  "results": [
+    {
+      "test_id": 1,
+      "test_name": "Greeting - Hello",
+      "category": "General Chat",
+      "prompt": "Hello!",
+      "status": "passed",
+      "response_time": 3.502856,
+      "response_text": "Hi there! How can I assist you today? Are you looking for information on properties, the market, or something else in the Toronto area?",
+      "properties_count": 0,
+      "suggestions": [
+        "Ask about property market trends",
+        "Inquire about specific neighborhoods",
+        "Learn about property valuations"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:43:54.194625"
+    },
+    {
+      "test_id": 2,
+      "test_name": "Greeting - Good morning",
+      "category": "General Chat",
+      "prompt": "Good morning, I'm looking for some help with real estate",
+      "status": "passed",
+      "response_time": 4.952149,
+      "response_text": "Good morning! I'd be happy to help you with real estate. What specifically are you looking for assistance with? Are you interested in property searches, market information, neighborhood advice, or maybe a property valuation?",
+      "properties_count": 0,
+      "suggestions": [
+        "Tell me more about what you're looking for",
+        "Do you want to know about specific neighborhoods?",
+        "Are you interested in market trends in Toronto?"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:44:00.704746"
+    },
+    {
+      "test_id": 3,
+      "test_name": "About the bot",
+      "category": "General Chat",
+      "prompt": "What can you help me with?",
+      "status": "passed",
+      "response_time": 4.496512,
+      "response_text": "I can assist you with a variety of things related to real estate! Whether you're looking for property searches, market information, neighborhood advice, or property valuations, I'm here to help you navigate the Toronto and GTA real estate landscape. Just let me know what you're interested in!",
+      "properties_count": 0,
+      "suggestions": [
+        "What are the current real estate market trends?",
+        "Can you provide insights on specific neighborhoods?",
+        "How do I get a property valuation?"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:44:08.664945"
+    },
+    {
+      "test_id": 4,
+      "test_name": "Thank you response",
+      "category": "General Chat",
+      "prompt": "Thank you for your help!",
+      "status": "passed",
+      "response_time": 4.001944,
+      "response_text": "You're very welcome! I'm here to assist you with anything you need regarding real estate in Toronto and the GTA. What can I help you with today?",
+      "properties_count": 0,
+      "suggestions": [
+        "Ask about property searches",
+        "Inquire about market information",
+        "Get advice on neighborhoods"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:44:16.168204"
+    },
+    {
+      "test_id": 5,
+      "test_name": "Market overview question",
+      "category": "General Chat",
+      "prompt": "How is the real estate market in Canada right now?",
+      "status": "passed",
+      "response_time": 4.414246,
+      "response_text": "The real estate market in Canada has been quite dynamic lately! In major cities like Toronto, we're seeing a mix of trends. Prices have stabilized a bit after some fluctuations, and there\u2019s a lot of activity in both the buying and renting sectors. It really depends on the specific area and property type you're interested in. Are you looking for insights on a particular city or neighborhood?",
+      "properties_count": 0,
+      "suggestions": [
+        "Ask about specific neighborhoods in Toronto",
+        "Inquire about market trends for buying vs. renting",
+        "Request information on property valuations"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:44:23.175614"
+    },
+    {
+      "test_id": 6,
+      "test_name": "Postal code - Downtown Toronto M5V",
+      "category": "Postal Code",
+      "prompt": "Show me homes for sale in M5V 3L9",
+      "status": "passed",
+      "response_time": 2.719652,
+      "response_text": "I found several properties in postal code M5V 3L9, Toronto. Here are the top 10 listings.",
+      "properties_count": 10,
+      "suggestions": [],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 10 properties",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:44:30.601550"
+    },
+    {
+      "test_id": 7,
+      "test_name": "Postal code - Mississauga L5B",
+      "category": "Postal Code",
+      "prompt": "What properties are available in L5B 1M2?",
+      "status": "passed",
+      "response_time": 1.564547,
+      "response_text": "I found several properties in postal code L5B 1M2, Mississauga. Here are the top 10 listings.",
+      "properties_count": 10,
+      "suggestions": [],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 10 properties",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:44:36.583320"
+    },
+    {
+      "test_id": 8,
+      "test_name": "Postal code - North York M2N",
+      "category": "Postal Code",
+      "prompt": "I'm looking for a condo near M2N 6K8",
+      "status": "passed",
+      "response_time": 2.317057,
+      "response_text": "I found 4 properties in postal code M2N 6K8, Toronto.",
+      "properties_count": 4,
+      "suggestions": [],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 4 properties",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:44:41.159280"
+    },
+    {
+      "test_id": 9,
+      "test_name": "Postal code - Vancouver V6B",
+      "category": "Postal Code",
+      "prompt": "Show me rentals in V6B 1A1",
+      "status": "passed",
+      "response_time": 2.509123,
+      "response_text": "I couldn't find any properties currently listed in postal code V6B 1A1. Try expanding your search to nearby areas.",
+      "properties_count": 0,
+      "suggestions": [],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:44:46.492271"
+    },
+    {
+      "test_id": 10,
+      "test_name": "Postal code with price range",
+      "category": "Postal Code",
+      "prompt": "Find me houses under $800,000 in L4C 3G1",
+      "status": "passed",
+      "response_time": 1.803446,
+      "response_text": "I found several properties in postal code L4C 3G1, Richmond Hill. Here are the top 10 listings.",
+      "properties_count": 10,
+      "suggestions": [],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 10 properties",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:44:52.012040"
+    },
+    {
+      "test_id": 11,
+      "test_name": "Postal code - Ottawa K1P",
+      "category": "Postal Code",
+      "prompt": "What's available in K1P 1J1?",
+      "status": "passed",
+      "response_time": 1.672135,
+      "response_text": "I couldn't find any properties currently listed in postal code K1P 1J1. Try expanding your search to nearby areas.",
+      "properties_count": 0,
+      "suggestions": [],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:44:56.825506"
+    },
+    {
+      "test_id": 12,
+      "test_name": "Postal code with bedroom filter",
+      "category": "Postal Code",
+      "prompt": "3 bedroom homes in M4S 1A1",
+      "status": "passed",
+      "response_time": 1.623926,
+      "response_text": "I found 1 properties in postal code M4S 1A1, Toronto.",
+      "properties_count": 1,
+      "suggestions": [],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 1 properties",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:45:01.509045"
+    },
+    {
+      "test_id": 13,
+      "test_name": "City search - Toronto",
+      "category": "City Search",
+      "prompt": "Show me properties for sale in Toronto",
+      "status": "passed",
+      "response_time": 7.655634,
+      "response_text": "I've found a variety of properties for sale in Toronto, with around 100 options available right now! Here are a few highlights: a stunning 2-bedroom condo at 20 Brin Drive listed for $759,999, a spacious 3-bedroom bungalow at 55 Three Valleys Drive for $1,368,000, and a bright 2-bedroom condo at 83 Borough Drive for $498,000.",
+      "properties_count": 8730,
+      "suggestions": [
+        "Would you like to narrow down your search by price range or specific neighborhoods?",
+        "Let me know if you want more details on any of the properties I mentioned!",
+        "Are you interested in scheduling a viewing for any of these listings?"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 8730 properties",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:45:06.144217"
+    },
+    {
+      "test_id": 14,
+      "test_name": "City search - Mississauga condos",
+      "category": "City Search",
+      "prompt": "I want to see condos in Mississauga",
+      "status": "passed",
+      "response_time": 9.543517,
+      "response_text": "I found quite a few condos in Mississauga, with 100 properties currently available! This gives you a great selection to choose from.",
+      "properties_count": 644,
+      "suggestions": [
+        "Would you like to narrow down your search by price range or specific neighborhoods?",
+        "Let me know if you want to see only new listings or specific features!",
+        "If you're interested, I can provide details on some standout properties."
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 644 properties",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:45:16.834400"
+    },
+    {
+      "test_id": 15,
+      "test_name": "City search - Brampton houses",
+      "category": "City Search",
+      "prompt": "Show me houses for sale in Brampton under $1 million",
+      "status": "passed",
+      "response_time": 9.589238,
+      "response_text": "I've found some great detached houses for sale in Brampton under $1 million! There are currently 100 listings available, including options like a stunning 3-bedroom home with an in-ground pool for $999,900.",
+      "properties_count": 340,
+      "suggestions": [
+        "Would you like to schedule a viewing for any of these properties?",
+        "Do you want to narrow down your search by specific neighborhoods or features?",
+        "Let me know if you need help with financing options or making an offer!"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 340 properties",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:45:29.692034"
+    },
+    {
+      "test_id": 16,
+      "test_name": "City search - Vaughan",
+      "category": "City Search",
+      "prompt": "What's available in Vaughan?",
+      "status": "passed",
+      "response_time": 7.946375,
+      "response_text": "I found a variety of properties available in Vaughan! There are currently 100 listings, including condos and commercial spaces.",
+      "properties_count": 1208,
+      "suggestions": [
+        "Would you like to narrow down your search by price range or property type?",
+        "Let me know if you're interested in specific neighborhoods within Vaughan.",
+        "I can provide more details about any specific properties you're interested in!"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 1208 properties",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:45:42.292024"
+    },
+    {
+      "test_id": 17,
+      "test_name": "City search - Markham townhouses",
+      "category": "City Search",
+      "prompt": "Find townhouses in Markham with 4 bedrooms",
+      "status": "passed",
+      "response_time": 6.988919,
+      "response_text": "I couldn't find any 4-bedroom townhouses in Markham at the moment. Would you like to see properties with fewer bedrooms or perhaps expand your search to nearby areas?",
+      "properties_count": 0,
+      "suggestions": [
+        "Show me townhouses with 3 bedrooms in Markham",
+        "Would you like to explore nearby cities like Richmond Hill or Vaughan?",
+        "Let me know if you're open to different property types"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:45:53.488684"
+    },
+    {
+      "test_id": 18,
+      "test_name": "City search - Richmond Hill",
+      "category": "City Search",
+      "prompt": "Show me detached homes in Richmond Hill",
+      "status": "passed",
+      "response_time": 1.390713,
+      "response_text": "No active listings found on Show me detached in Richmond Hill.",
+      "properties_count": 0,
+      "suggestions": [
+        "Search nearby streets",
+        "Remove filters",
+        "Search the entire city"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:46:03.488894"
+    },
+    {
+      "test_id": 19,
+      "test_name": "City search - Oakville luxury",
+      "category": "City Search",
+      "prompt": "I'm looking for luxury homes in Oakville over $2 million",
+      "status": "passed",
+      "response_time": 13.375271,
+      "response_text": "I found some fantastic luxury homes for sale in Oakville over $2 million! There are currently 100 options available, including stunning properties like a contemporary masterpiece at 468 Saville Crescent listed for $4,788,000 and a beautiful home at 386 Tudor Avenue for $2,950,000.",
+      "properties_count": 211,
+      "suggestions": [
+        "Would you like to schedule a viewing for any of these properties?",
+        "Do you want more details on specific listings?",
+        "Would you like to explore other neighborhoods with luxury homes?"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 211 properties",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:46:07.890438"
+    },
+    {
+      "test_id": 20,
+      "test_name": "City search - Burlington rentals",
+      "category": "City Search",
+      "prompt": "Show me apartments for rent in Burlington",
+      "status": "passed",
+      "response_time": 11.562015,
+      "response_text": "I've found quite a few condos for rent in Burlington\u2014over 100 options! Here are some highlights to consider.",
+      "properties_count": 102,
+      "suggestions": [
+        "Would you like to narrow down your search by price range?",
+        "Are you interested in specific neighborhoods within Burlington?",
+        "Let me know if you want to see properties with different bedroom counts!"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 102 properties",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:46:24.467462"
+    },
+    {
+      "test_id": 21,
+      "test_name": "Intersection - Yonge and Bloor",
+      "category": "Intersection",
+      "prompt": "Show me condos near Yonge and Bloor",
+      "status": "passed",
+      "response_time": 1.474474,
+      "response_text": "I found 2 properties near the intersection of Yonge and Bloor in Toronto!",
+      "properties_count": 0,
+      "suggestions": [
+        "Filter by price range",
+        "Filter by bedrooms",
+        "Show more details"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:46:39.042199"
+    },
+    {
+      "test_id": 22,
+      "test_name": "Intersection - King and Spadina",
+      "category": "Intersection",
+      "prompt": "What's available near King and Spadina in Toronto?",
+      "status": "passed",
+      "response_time": 1.726586,
+      "response_text": "I found 4 properties near the intersection of King and Spadina in Toronto!",
+      "properties_count": 0,
+      "suggestions": [
+        "Filter by price range",
+        "Filter by bedrooms",
+        "Show more details"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:46:43.525510"
+    },
+    {
+      "test_id": 23,
+      "test_name": "Intersection - Dundas and University",
+      "category": "Intersection",
+      "prompt": "I want to live near Dundas and University",
+      "status": "passed",
+      "response_time": 1.846729,
+      "response_text": "I found 1 properties near the intersection of Dundas and University in Toronto!",
+      "properties_count": 0,
+      "suggestions": [
+        "Filter by price range",
+        "Filter by bedrooms",
+        "Show more details"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:46:48.267620"
+    },
+    {
+      "test_id": 24,
+      "test_name": "Neighborhood - Liberty Village",
+      "category": "Neighborhood",
+      "prompt": "Show me listings in Liberty Village",
+      "status": "passed",
+      "response_time": 5.921396,
+      "response_text": "I found quite a few listings in Liberty Village, with over 100 properties available! This area is bustling with options, so to narrow this down, would you like to filter by price range or property type?",
+      "properties_count": 8730,
+      "suggestions": [
+        "Filter by specific price range",
+        "Select a property type, like condos or houses",
+        "Let me know if you're interested in nearby neighborhoods"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 8730 properties",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:46:53.130782"
+    },
+    {
+      "test_id": 25,
+      "test_name": "Neighborhood - The Annex",
+      "category": "Neighborhood",
+      "prompt": "Find me rentals in The Annex Toronto",
+      "status": "passed",
+      "response_time": 6.476287,
+      "response_text": "I found a variety of rental options in Toronto, including several condos. It looks like there are currently 100 listings available, which is quite a broad selection!",
+      "properties_count": 11674,
+      "suggestions": [
+        "Would you like to narrow down your search by price range or number of bedrooms?",
+        "Are you interested in specific amenities or features for your rental?",
+        "Let me know if you'd like to explore other neighborhoods nearby!"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 11674 properties",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:47:02.202528"
+    },
+    {
+      "test_id": 26,
+      "test_name": "Neighborhood - Yorkville",
+      "category": "Neighborhood",
+      "prompt": "Luxury condos in Yorkville please",
+      "status": "passed",
+      "response_time": 7.228009,
+      "response_text": "I couldn't find any luxury condos in Yorkville at the moment. Would you like to consider nearby areas or perhaps adjust your amenities?",
+      "properties_count": 0,
+      "suggestions": [
+        "Would you like to explore luxury condos in nearby neighborhoods like Rosedale or Annex?",
+        "Should I search for condos without the luxury amenities filter?",
+        "Let me know if you're open to different property types or price ranges."
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:47:11.689230"
+    },
+    {
+      "test_id": 27,
+      "test_name": "Intersection - Eglinton and Yonge",
+      "category": "Intersection",
+      "prompt": "Properties near Eglinton and Yonge intersection",
+      "status": "passed",
+      "response_time": 2.212447,
+      "response_text": "I found 1 properties near the intersection of Eglinton and Yonge in Toronto!",
+      "properties_count": 0,
+      "suggestions": [
+        "Filter by price range",
+        "Filter by bedrooms",
+        "Show more details"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:47:21.926988"
+    },
+    {
+      "test_id": 28,
+      "test_name": "Full address - Bay Street",
+      "category": "Address",
+      "prompt": "Show me properties near 100 Bay Street, Toronto",
+      "status": "passed",
+      "response_time": 1.700437,
+      "response_text": "I couldn't find any active listings at 100 Bay. The property might be off-market or the address may need verification.",
+      "properties_count": 0,
+      "suggestions": [
+        "Try searching without the unit number",
+        "Search properties on Bay",
+        "Check if address is correct"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:47:27.150540"
+    },
+    {
+      "test_id": 29,
+      "test_name": "Full address - Bloor West",
+      "category": "Address",
+      "prompt": "What's available near 2300 Bloor Street West?",
+      "status": "passed",
+      "response_time": 1.904807,
+      "response_text": "I couldn't find any active listings at 2300 Bloor. The property might be off-market or the address may need verification.",
+      "properties_count": 0,
+      "suggestions": [
+        "Try searching without the unit number",
+        "Search properties on Bloor",
+        "Check if address is correct"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:47:31.860762"
+    },
+    {
+      "test_id": 30,
+      "test_name": "Full address - Mississauga",
+      "category": "Address",
+      "prompt": "Find condos near 100 City Centre Drive, Mississauga",
+      "status": "passed",
+      "response_time": 2.417005,
+      "response_text": "Found 3 properties at 100 City Centre.",
+      "properties_count": 3,
+      "suggestions": [
+        "Tell me more about this property",
+        "What's the neighborhood like?",
+        "Show similar properties"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 3 properties",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:47:36.775483"
+    },
+    {
+      "test_id": 31,
+      "test_name": "Full address - Scarborough",
+      "category": "Address",
+      "prompt": "Show me houses near 300 Borough Drive, Scarborough",
+      "status": "passed",
+      "response_time": 1.700279,
+      "response_text": "Found 3 properties at 300 Borough.",
+      "properties_count": 3,
+      "suggestions": [
+        "Tell me more about this property",
+        "What's the neighborhood like?",
+        "Show similar properties"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 3 properties",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:47:42.203879"
+    },
+    {
+      "test_id": 32,
+      "test_name": "Full address - North York",
+      "category": "Address",
+      "prompt": "Properties near 5100 Yonge Street, North York",
+      "status": "passed",
+      "response_time": 2.209003,
+      "response_text": "I couldn't find any active listings at 5100 Yonge. The property might be off-market or the address may need verification.",
+      "properties_count": 0,
+      "suggestions": [
+        "Try searching without the unit number",
+        "Search properties on Yonge",
+        "Check if address is correct"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:47:46.914871"
+    },
+    {
+      "test_id": 33,
+      "test_name": "Flow 1: Start condo search",
+      "category": "Conversation Flow",
+      "prompt": "I'm looking for a condo in Toronto",
+      "status": "passed",
+      "response_time": 7.948841,
+      "response_text": "I found quite a few condos for sale in Toronto\u2014over 100 options! Here are some highlights you might like.",
+      "properties_count": 4190,
+      "suggestions": [
+        "Would you like to narrow down your search by price range?",
+        "Are there specific neighborhoods in Toronto you're interested in?",
+        "Let me know if you want to see more details on any specific properties!"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 4190 properties",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:47:52.134820"
+    },
+    {
+      "test_id": 34,
+      "test_name": "Flow 1: Add budget",
+      "category": "Conversation Flow",
+      "prompt": "My budget is around $600,000",
+      "status": "passed",
+      "response_time": 14.54696,
+      "response_text": "I've found some great condos for sale in Toronto within your budget of $600,000! There are currently 100 options available, including a lovely 2-bedroom unit at 83 Borough Drive listed for $498,000 and a renovated 1-bedroom unit at 92 King Street for $599,000.",
+      "properties_count": 2055,
+      "suggestions": [
+        "Would you like to schedule a viewing for any of these properties?",
+        "Do you want to explore more neighborhoods or different property types?",
+        "Let me know if you need help with financing options!"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 2055 properties",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:48:03.094562"
+    },
+    {
+      "test_id": 35,
+      "test_name": "Flow 1: Add bedrooms",
+      "category": "Conversation Flow",
+      "prompt": "I need 2 bedrooms",
+      "status": "passed",
+      "response_time": 1.530985,
+      "response_text": "I'm here to help you find properties and learn about real estate! Let me know if you'd like to search for properties, learn about neighborhoods, or get market insights in any location.",
+      "properties_count": 0,
+      "suggestions": [
+        "Show me properties in Toronto",
+        "Find condos in Vancouver",
+        "Tell me about neighborhoods"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:48:20.701801"
+    },
+    {
+      "test_id": 36,
+      "test_name": "Flow 1: Narrow location",
+      "category": "Conversation Flow",
+      "prompt": "Preferably downtown or near the subway",
+      "status": "passed",
+      "response_time": 7.604432,
+      "response_text": "I've found quite a few properties in Toronto, with over 100 options available! If you're looking for something specific downtown or near the subway, we might want to narrow it down a bit.",
+      "properties_count": 8730,
+      "suggestions": [
+        "Would you like to filter by price range or property type?",
+        "Are there specific neighborhoods you're interested in?",
+        "Let me know if you want to see only condos or houses!"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 8730 properties",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:48:25.245847"
+    },
+    {
+      "test_id": 37,
+      "test_name": "Flow 1: Ask about specific property",
+      "category": "Conversation Flow",
+      "prompt": "Can you tell me more about the first one?",
+      "status": "passed",
+      "response_time": 3.035313,
+      "response_text": "**Property Details**\n\n\ud83d\udccd **Address:** {'area': 'Toronto', 'city': 'Toronto', 'country': None, 'district': 'W08', 'majorIntersection': 'Ackley Hts/Dundas', 'neighborhood': 'Edenbridge-Humber Valley', 'streetDirection': None, 'streetName': 'Brin', 'streetNumber': '20', 'streetSuffix': 'Drive', 'unitNumber': '604', 'zip': 'M8X 0B2', 'state': 'ON', 'communityCode': None, 'streetDirectionPrefix': None, 'addressKey': '60420brindrivetoronto'}\n",
+      "properties_count": 20,
+      "suggestions": [
+        "Tell me about the second property",
+        "Show me similar properties",
+        "Compare this with others"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 20 properties",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:48:36.032813"
+    },
+    {
+      "test_id": 38,
+      "test_name": "Flow 2: First time buyer intro",
+      "category": "First Time Buyer",
+      "prompt": "I'm a first time home buyer and don't know where to start",
+      "status": "passed",
+      "response_time": 3.879497,
+      "response_text": "That's exciting! Buying your first home is a big step, and it's completely normal to feel a bit overwhelmed. A great place to start is by understanding your budget and getting pre-approved for a mortgage. This will give you a clear idea of what you can afford. From there, I can help you explore different neighborhoods, provide insights into the current market trends, and assist with property searches tailored to your needs. What are you most curious about right now?",
+      "properties_count": 0,
+      "suggestions": [
+        "Learn about the home buying process",
+        "Get tips on choosing the right neighborhood",
+        "Understand financing options for first-time buyers"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:48:42.077165"
+    },
+    {
+      "test_id": 39,
+      "test_name": "Flow 2: Budget question",
+      "category": "First Time Buyer",
+      "prompt": "I've been pre-approved for $500,000. What can I get?",
+      "status": "passed",
+      "response_time": 9.381133,
+      "response_text": "Great to hear you've been pre-approved for $500,000! I found around 100 properties available for sale within your budget, including some lovely condos.",
+      "properties_count": 12538,
+      "suggestions": [
+        "Would you like to narrow down your search by specific neighborhoods or features?",
+        "I can provide details on some standout properties that fit your budget.",
+        "Let me know if you're interested in scheduling viewings for any of these options!"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 12538 properties",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:48:48.968018"
+    },
+    {
+      "test_id": 40,
+      "test_name": "Flow 2: Location preference",
+      "category": "First Time Buyer",
+      "prompt": "I work downtown but need something affordable. Maybe outside the city?",
+      "status": "passed",
+      "response_time": 3.866884,
+      "response_text": "I totally understand the need for affordability while still being close to work! There are some great options outside of downtown Toronto that might be more budget-friendly. Areas like Mississauga, Brampton, or even Markham can offer a good balance of price and commute time. Do you have a specific budget or type of property in mind? I can help you find the best options!",
+      "properties_count": 0,
+      "suggestions": [
+        "Explore neighborhoods outside Toronto",
+        "Look into commuting options from nearby areas",
+        "Discuss budget-friendly property types"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:49:01.508938"
+    },
+    {
+      "test_id": 41,
+      "test_name": "Flow 3: Investment inquiry",
+      "category": "Investment",
+      "prompt": "I'm looking for an investment property in the GTA",
+      "status": "passed",
+      "response_time": 11.35971,
+      "response_text": "I found a variety of investment properties in Toronto for you! There are currently 100 options available, including condos and detached homes.",
+      "properties_count": 8730,
+      "suggestions": [
+        "Would you like to narrow down your search by price range or property type?",
+        "Are you interested in exploring properties in nearby areas like Mississauga or Vaughan?",
+        "Let me know if you want more details on specific listings!"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 8730 properties",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:49:08.390076"
+    },
+    {
+      "test_id": 42,
+      "test_name": "Flow 3: Rental income focus",
+      "category": "Investment",
+      "prompt": "I want something that can generate good rental income",
+      "status": "passed",
+      "response_time": 9.42451,
+      "response_text": "That's a great goal! In Toronto and the GTA, there are several factors to consider when looking for properties that can generate good rental income. Areas with high demand, proximity to transit, and amenities can yield better returns. Are you looking for residential properties, or are you considering commercial options as well? I can help you with market insights, neighborhood information, and property valuations to find the right fit for you.",
+      "properties_count": 0,
+      "suggestions": [
+        "Ask about specific neighborhoods in Toronto",
+        "Inquire about property types for rental income",
+        "Learn about current rental market trends"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:49:22.926463"
+    },
+    {
+      "test_id": 43,
+      "test_name": "Flow 3: Specific requirements",
+      "category": "Investment",
+      "prompt": "Show me 1 bedroom condos under $400,000 near universities",
+      "status": "passed",
+      "response_time": 11.425953,
+      "response_text": "I found several 1-bedroom condos under $400,000 in Toronto that are close to universities. Here are some options you might like!",
+      "properties_count": 113,
+      "suggestions": [
+        "Would you like to schedule a viewing for any of these properties?",
+        "Do you want to explore more neighborhoods near universities?",
+        "Let me know if you need help with financing options!"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 113 properties",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:49:35.358390"
+    },
+    {
+      "test_id": 44,
+      "test_name": "Rental - Basic search",
+      "category": "Rental",
+      "prompt": "Show me apartments for rent in Toronto",
+      "status": "passed",
+      "response_time": 10.814597,
+      "response_text": "I've found a variety of condos for rent in Toronto! There are currently 100 options available, including some great choices in popular neighborhoods.",
+      "properties_count": 5776,
+      "suggestions": [
+        "Would you like to narrow down your search by price range or number of bedrooms?",
+        "Are you interested in specific neighborhoods or amenities?",
+        "Let me know if you'd like to see more details on any specific listings!"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 5776 properties",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:49:50.097999"
+    },
+    {
+      "test_id": 45,
+      "test_name": "Rental - With budget",
+      "category": "Rental",
+      "prompt": "I need something under $2500 per month",
+      "status": "passed",
+      "response_time": 9.278722,
+      "response_text": "I've found several condos for rent in Toronto under $2500 per month! There are currently 100 options available, including some great choices in the Henry Farm and Waterfront Communities neighborhoods.",
+      "properties_count": 2810,
+      "suggestions": [
+        "Would you like to narrow down your search by specific neighborhoods?",
+        "Do you want to see more details on any particular properties?",
+        "Let me know if you need help with the application process!"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 2810 properties",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:50:03.920742"
+    },
+    {
+      "test_id": 46,
+      "test_name": "Rental - Pet friendly",
+      "category": "Rental",
+      "prompt": "Does it allow pets?",
+      "status": "passed",
+      "response_time": 2.299603,
+      "response_text": "It depends on the specific property you're considering! Many rental units and condos in Toronto and the GTA have varying pet policies. Some places are pet-friendly, while others may have restrictions or require additional deposits. If you have a particular property in mind, I can help you find its pet policy or suggest some pet-friendly neighborhoods. What else would you like to know?",
+      "properties_count": 0,
+      "suggestions": [
+        "Ask about pet-friendly neighborhoods",
+        "Inquire about specific property policies",
+        "Get tips on renting with pets"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:50:16.211430"
+    },
+    {
+      "test_id": 47,
+      "test_name": "Complex - Multiple filters",
+      "category": "Complex Query",
+      "prompt": "Find me a 3 bedroom house in Mississauga under $900,000 with a garage and backyard",
+      "status": "passed",
+      "response_time": 10.011366,
+      "response_text": "I've found some great options for 3-bedroom detached houses in Mississauga under $900,000 with a garage and backyard! There are currently 9 properties available that fit your criteria.",
+      "properties_count": 9,
+      "suggestions": [
+        "Would you like to schedule a viewing for any of these properties?",
+        "Do you want more details on a specific listing?",
+        "Let me know if you want to adjust your search criteria!"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 9 properties",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:50:21.525380"
+    },
+    {
+      "test_id": 48,
+      "test_name": "Complex - Comparison request",
+      "category": "Complex Query",
+      "prompt": "What's the difference between buying in Toronto vs Mississauga?",
+      "status": "passed",
+      "response_time": 8.340052,
+      "response_text": "Great question! Buying in Toronto versus Mississauga can be quite different in terms of lifestyle, price points, and community vibe. Toronto is a bustling metropolitan area with a lot of cultural diversity, entertainment options, and a fast-paced lifestyle. It generally has higher property prices due to its demand and central location. On the other hand, Mississauga offers a more suburban feel, with larger homes and potentially more green space, often at slightly lower prices. It also has a growing economy and good transit connections to Toronto. \n\nWhat aspects of buying are you most interested in? Are you looking for specifics on neighborhoods, property types, or perhaps market trends?",
+      "properties_count": 0,
+      "suggestions": [
+        "Tell me about specific neighborhoods in Toronto",
+        "What are the average home prices in Mississauga?",
+        "Can you provide market trends for both cities?"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:50:34.552535"
+    },
+    {
+      "test_id": 49,
+      "test_name": "Complex - School district",
+      "category": "Complex Query",
+      "prompt": "I need a family home near good schools in Vaughan",
+      "status": "passed",
+      "response_time": 3.852125,
+      "response_text": "That sounds great! Vaughan is a wonderful area for families, especially with its excellent schools. There are various neighborhoods that have a strong reputation for educational opportunities. Are you looking for specific types of schools, like public or private? Also, do you have any preferences regarding the size or style of the family home?",
+      "properties_count": 0,
+      "suggestions": [
+        "Tell me more about schools in Vaughan",
+        "Discuss neighborhoods that are family-friendly",
+        "Explore types of homes available in Vaughan"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:50:45.901922"
+    },
+    {
+      "test_id": 50,
+      "test_name": "Complex - Commute consideration",
+      "category": "Complex Query",
+      "prompt": "Where can I buy a house with easy commute to downtown Toronto for under $800,000?",
+      "status": "passed",
+      "response_time": 11.546417,
+      "response_text": "I found some great options for condos in Toronto under $800,000 that offer easy access to downtown! Here are a few properties you might like.",
+      "properties_count": 4740,
+      "suggestions": [
+        "Would you like to see more details on any specific properties?",
+        "Are you interested in exploring different neighborhoods?",
+        "Let me know if you want to adjust your budget or criteria!"
+      ],
+      "error_message": "",
+      "validation_notes": [
+        "Response received successfully",
+        "Found 4740 properties",
+        "Got 3 suggestions",
+        "Location state detected",
+        "Filters applied"
+      ],
+      "timestamp": "2025-12-31T17:50:52.765275"
+    }
+  ]
+}

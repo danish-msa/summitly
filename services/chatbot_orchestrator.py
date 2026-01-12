@@ -83,6 +83,15 @@ from services.confirmation_manager import (
 # NEW: Import AtomicTransactionManager for safe state updates with automatic rollback
 from services.atomic_transaction_manager import AtomicTransactionManager, TransactionType
 
+# NEW: Import Residential Search Integration for comprehensive residential property searches
+# This provides extended filter support (90+ filters) for residential properties
+from services.residential_chatbot_integration import (
+    search_residential_properties,
+    get_extended_gpt_prompt,
+    get_residential_integration,
+    RESIDENTIAL_FILTERS_EXTENSION,
+)
+
 logger = logging.getLogger(__name__)
 
 # =============================================================================
@@ -180,7 +189,8 @@ Output: JSON ONLY with keys:
 - intent: one of ["search","refine","details","valuation","compare","general_question","reset","special_query"]
 - filters: {
     location: string or null (Toronto, Mississauga, Milton, Brampton, Vaughan, Markham, Richmond Hill, Oakville, Burlington, Ajax, Whitby, Oshawa, Hamilton, Kitchener, Waterloo, Guelph, Cambridge, Barrie, London, Ottawa, Kingston, Vancouver, Calgary, Edmonton, Montreal, etc. - IMPORTANT: If user says "GTA", use "Toronto" as the default city, or ask which GTA city they prefer),
-    property_type: string or null (condo|detached|townhouse|semi-detached),
+    property_type: string or null (condo|detached|townhouse|semi-detached|house|duplex|triplex|multiplex),
+    property_style: string or null (bungalow|2-storey|3-storey|split-level|raised-bungalow|loft|bachelor),
     bedrooms: number or null,
     bathrooms: number or null,
     min_price: number or null,
@@ -190,7 +200,28 @@ Output: JSON ONLY with keys:
     listing_type: "sale" or "rent" or null (CRITICAL: ONLY set if user explicitly mentions "for sale", "buy", "purchase" OR "rent", "rental", "lease". If user just says "properties" or "condos" without specifying, leave as null to show BOTH sale AND rent),
     amenities: array of strings (pool, gym, parking, balcony, garden, etc.),
     list_date_from: string or null (YYYY-MM-DD format - start of date range),
-    list_date_to: string or null (YYYY-MM-DD format - end of date range)
+    list_date_to: string or null (YYYY-MM-DD format - end of date range),
+    
+    // Extended Residential Filters (set when explicitly mentioned):
+    basement_type: string or null (finished|unfinished|walkout|apartment|separate_entrance|partial|none),
+    year_built_min: number or null,
+    year_built_max: number or null,
+    garage_type: string or null (attached|detached|underground|built-in|carport|none),
+    garage_spaces: number or null,
+    parking_spaces: number or null,
+    heating_type: string or null (forced_air|radiant|geo_thermal|heat_pump|baseboard),
+    cooling_type: string or null (central_air|none|heat_pump|ductless),
+    pool: boolean or null,
+    waterfront: boolean or null,
+    fireplace: boolean or null,
+    maintenance_fee_max: number or null (for condos - monthly fee),
+    condo_exposure: string or null (north|south|east|west),
+    floor_level_min: number or null,
+    floor_level_max: number or null,
+    has_balcony: boolean or null,
+    has_locker: boolean or null,
+    is_new_listing: boolean or null,
+    condo_amenities: array of strings or null (gym, concierge, party_room, rooftop, security, etc.)
   }
 - merge_with_previous: boolean (True = merge with existing filters, False = replace all - SET TO FALSE when user mentions a NEW/DIFFERENT city)
 - clarifying_question: optional string (if you need clarification, ask user)
@@ -298,6 +329,48 @@ Output format for special queries:
     "location": "Toronto" (if applicable),
     "clarifying_question": "..." (if more info needed)
 }
+
+EXTENDED RESIDENTIAL FILTERS:
+You can also extract these additional residential-specific filters when mentioned:
+
+Building Features:
+- basement_type: finished|unfinished|walkout|apartment|separate_entrance|partial|none
+- construction_type: brick|stone|vinyl|stucco|wood|concrete (exterior material)
+- heating_type: forced_air|radiant|geo_thermal|heat_pump|baseboard|electric
+- cooling_type: central_air|window_ac|none|heat_pump|ductless
+- fireplace: true/false
+- year_built_min/year_built_max: year built range
+
+Parking:
+- garage_type: attached|detached|underground|built-in|carport|none
+- garage_spaces: number of garage spaces
+- parking_spaces_min/parking_spaces_max: parking spaces range
+
+Condo Features:
+- maintenance_fee_max: maximum monthly maintenance fee
+- condo_exposure: north|south|east|west|north-east|etc.
+- floor_level_min/floor_level_max: floor level range
+- has_balcony: true/false
+- has_locker: true/false
+- condo_amenities: array of strings (pool, gym, concierge, party_room, etc.)
+
+Outdoor/Lot Features:
+- pool: true/false
+- waterfront: true/false
+- lot_size_min/lot_size_max: lot size range (sqft or acres)
+
+Status & Timing:
+- is_new_listing: true/false (listed in last 7 days)
+- days_on_market_max: maximum days on market
+
+Example Extended Queries:
+- "condo with finished basement under 700k" → property_type: condo, basement_type: finished, max_price: 700000
+- "house with pool and attached garage" → property_type: detached, pool: true, garage_type: attached
+- "waterfront property" → waterfront: true
+- "condo on 15th floor or higher with south exposure" → property_type: condo, floor_level_min: 15, condo_exposure: south
+- "maintenance fee under 500" → maintenance_fee_max: 500
+- "new listings only" → is_new_listing: true
+- "built after 2015 with central air" → year_built_min: 2015, cooling_type: central_air
 
 CRITICAL: Return ONLY valid JSON. No markdown code blocks (```json), no extra text, just pure JSON.
 """
@@ -2772,14 +2845,46 @@ class ChatGPTChatbot:
                             "requires_confirmation": False
                         }
                     
-                    # STEP 11b.2: Standard search using enhanced_mls_service
+                    # STEP 11b.2: Standard search using enhanced_mls_service OR residential search service
                     logger.info("🔍 Executing standard MLS search...")
-                    # Pass user_message for date intent detection
-                    search_results = enhanced_mls_service.search_properties(
-                        state, 
-                        limit=20,
-                        user_message=user_message
-                    )
+                    
+                    # Check if we should use the new residential search service
+                    # The residential service provides extended filter support (90+ filters)
+                    use_residential_service = os.getenv("USE_RESIDENTIAL_SEARCH", "true").lower() == "true"
+                    
+                    if use_residential_service:
+                        # Use new residential search service with extended filters
+                        logger.info("🏠 Using ResidentialPropertySearchService for comprehensive filter support")
+                        
+                        # Extract any extended filters from GPT interpretation
+                        gpt_extended_filters = {}
+                        if 'filters' in locals() and isinstance(filters, dict):
+                            # These are extended filters not normally in ConversationState
+                            extended_keys = [
+                                'basement_type', 'garage_type', 'garage_spaces', 'heating_type',
+                                'cooling_type', 'pool', 'waterfront', 'fireplace', 'maintenance_fee_max',
+                                'condo_exposure', 'floor_level_min', 'floor_level_max', 'has_balcony',
+                                'has_locker', 'is_new_listing', 'condo_amenities', 'property_style'
+                            ]
+                            for key in extended_keys:
+                                if key in filters and filters[key] is not None:
+                                    gpt_extended_filters[key] = filters[key]
+                        
+                        # Call residential search service
+                        search_results = search_residential_properties(
+                            state=state,
+                            user_message=user_message,
+                            gpt_filters=gpt_extended_filters,
+                            limit=20
+                        )
+                    else:
+                        # Use legacy enhanced_mls_service
+                        # Pass user_message for date intent detection
+                        search_results = enhanced_mls_service.search_properties(
+                            state, 
+                            limit=20,
+                            user_message=user_message
+                        )
                     
                     if search_results.get('success'):
                         properties = search_results.get('results', [])

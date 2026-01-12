@@ -1,0 +1,302 @@
+[
+  {
+    "test_number": 1,
+    "category": "Basic Condo Search",
+    "query": "2 bedroom condo in Toronto",
+    "nlp_results": {
+      "query": "2 bedroom condo in Toronto",
+      "extracted": {
+        "city": "Toronto",
+        "property_type": "Condo Apartment",
+        "min_bedrooms": 2
+      },
+      "expected": {
+        "city": "Toronto",
+        "property_type": "Condo",
+        "min_bedrooms": 2
+      },
+      "matches": [
+        "city: Toronto",
+        "property_type: Condo Apartment",
+        "min_bedrooms: 2"
+      ],
+      "mismatches": []
+    },
+    "api_results": {
+      "success": true,
+      "total_found": 0,
+      "properties": [],
+      "validation_summary": {
+        "total_validated": 0,
+        "passed": 0,
+        "failed": 0,
+        "warnings": 0
+      },
+      "error": null
+    },
+    "overall_success": true
+  },
+  {
+    "test_number": 2,
+    "category": "Basic House Search",
+    "query": "3 bedroom detached house in Mississauga",
+    "nlp_results": {
+      "query": "3 bedroom detached house in Mississauga",
+      "extracted": {
+        "city": "Mississauga",
+        "property_type": "Detached",
+        "min_bedrooms": 3
+      },
+      "expected": {
+        "city": "Mississauga",
+        "property_type": "Detached",
+        "min_bedrooms": 3
+      },
+      "matches": [
+        "city: Mississauga",
+        "property_type: Detached",
+        "min_bedrooms: 3"
+      ],
+      "mismatches": []
+    },
+    "api_results": {
+      "success": true,
+      "total_found": 260,
+      "properties": [
+        {
+          "summary": "MLS: W12684600 | $3,750 | 796 Thistle Down, Mississauga L5C 3K6\n       Type: Detached (2-Storey) | 3 bed / 4 bath | 2000-2500 sqft",
+          "mls": null,
+          "price": null,
+          "validation": {
+            "is_valid": true,
+            "checks_passed": [
+              "\u2713 City matches: mississauga"
+            ],
+            "checks_failed": [],
+            "warnings": []
+          },
+          "raw_data": {
+            "address": {
+              "full": "796 Thistle Down Court, Mississauga, ON, L5C 3K6",
+              "street_number": "796",
+              "street_name": "Thistle Down",
+              "street_suffix": "Court",
+              "unit_number": null,
+              "city": "Mississauga",
+              "state": "ON",
+              "postal_code": "L5C 3K6",
+              "neighborhood": "Creditview",
+              "community": null
+            },
+            "details": null,
+            "type": "Lease"
+          }
+        },
+        {
+          "summary": "MLS: W12684214 | $2,888 | 5872 Osprey, Mississauga L5N 8J7\n       Type: Detached (2-Storey) | 3 bed / 2 bath | 1100-1500 sqft",
+          "mls": null,
+          "price": null,
+          "validation": {
+            "is_valid": true,
+            "checks_passed": [
+              "\u2713 City matches: mississauga"
+            ],
+            "checks_failed": [],
+            "warnings": []
+          },
+          "raw_data": {
+            "address": {
+              "full": "5872 Osprey Boulevard Unit Upper, Mississauga, ON, L5N 8J7",
+              "street_number": "5872",
+              "street_name": "Osprey",
+              "street_suffix": "Boulevard",
+              "unit_number": "Upper",
+              "city": "Mississauga",
+              "state": "ON",
+              "postal_code": "L5N 8J7",
+              "neighborhood": "Lisgar",
+              "community": null
+            },
+            "details": null,
+            "type": "Lease"
+          }
+        },
+        {
+          "summary": "MLS: W12684134 | $3,200 | 3079 Lindenlea, Mississauga L5C 2C3\n       Type: Detached (Backsplit 4) | 3 bed / 2 bath | 1500-2000 sqft",
+          "mls": null,
+          "price": null,
+          "validation": {
+            "is_valid": true,
+            "checks_passed": [
+              "\u2713 City matches: mississauga"
+            ],
+            "checks_failed": [],
+            "warnings": []
+          },
+          "raw_data": {
+            "address": {
+              "full": "3079 Lindenlea Drive Unit Upper, Mississauga, ON, L5C 2C3",
+              "street_number": "3079",
+              "street_name": "Lindenlea",
+              "street_suffix": "Drive",
+              "unit_number": "Upper",
+              "city": "Mississauga",
+              "state": "ON",
+              "postal_code": "L5C 2C3",
+              "neighborhood": "Erindale",
+              "community": null
+            },
+            "details": null,
+            "type": "Lease"
+          }
+        }
+      ],
+      "validation_summary": {
+        "total_validated": 3,
+        "passed": 3,
+        "failed": 0,
+        "warnings": 0
+      },
+      "error": null
+    },
+    "overall_success": true
+  },
+  {
+    "test_number": 3,
+    "category": "Townhouse Search",
+    "query": "townhouse in Oakville with 4 bedrooms",
+    "nlp_results": {
+      "query": "townhouse in Oakville with 4 bedrooms",
+      "extracted": {
+        "city": "Oakville",
+        "property_type": "Townhouse",
+        "min_bedrooms": 4
+      },
+      "expected": {
+        "city": "Oakville",
+        "property_type": "Townhouse",
+        "min_bedrooms": 4
+      },
+      "matches": [
+        "city: Oakville",
+        "property_type: Townhouse",
+        "min_bedrooms: 4"
+      ],
+      "mismatches": []
+    },
+    "api_results": {
+      "success": true,
+      "total_found": 0,
+      "properties": [],
+      "validation_summary": {
+        "total_validated": 0,
+        "passed": 0,
+        "failed": 0,
+        "warnings": 0
+      },
+      "error": null
+    },
+    "overall_success": true
+  },
+  {
+    "test_number": 4,
+    "category": "Under Price Limit",
+    "query": "condos in Toronto under 700k",
+    "nlp_results": {
+      "query": "condos in Toronto under 700k",
+      "extracted": {
+        "city": "Toronto",
+        "max_price": 700000.0
+      },
+      "expected": {
+        "city": "Toronto",
+        "max_price": 700000
+      },
+      "matches": [
+        "city: Toronto",
+        "max_price: 700000.0"
+      ],
+      "mismatches": []
+    },
+    "api_results": {
+      "success": true,
+      "total_found": 0,
+      "properties": [],
+      "validation_summary": {
+        "total_validated": 0,
+        "passed": 0,
+        "failed": 0,
+        "warnings": 0
+      },
+      "error": null
+    },
+    "overall_success": true
+  },
+  {
+    "test_number": 5,
+    "category": "Price Range",
+    "query": "houses between 500k and 900k in Vaughan",
+    "nlp_results": {
+      "query": "houses between 500k and 900k in Vaughan",
+      "extracted": {
+        "city": "Vaughan",
+        "min_price": 500000.0,
+        "max_price": 900000.0
+      },
+      "expected": {
+        "city": "Vaughan",
+        "min_price": 500000,
+        "max_price": 900000
+      },
+      "matches": [
+        "city: Vaughan",
+        "min_price: 500000.0",
+        "max_price: 900000.0"
+      ],
+      "mismatches": []
+    },
+    "api_results": {
+      "success": true,
+      "total_found": 1,
+      "properties": [
+        {
+          "summary": "MLS: N12592586 | $899,000 | 61 Mabley, Vaughan L4J 2Z7\n       Type: Detached (2-Storey) | 3 bed / 3 bath | 1100-1500 sqft",
+          "mls": null,
+          "price": null,
+          "validation": {
+            "is_valid": true,
+            "checks_passed": [
+              "\u2713 Price $899,000 in range $500,000-$900,000"
+            ],
+            "checks_failed": [],
+            "warnings": []
+          },
+          "raw_data": {
+            "address": {
+              "full": "61 Mabley Crescent, Vaughan, ON, L4J 2Z7",
+              "street_number": "61",
+              "street_name": "Mabley",
+              "street_suffix": "Crescent",
+              "unit_number": null,
+              "city": "Vaughan",
+              "state": "ON",
+              "postal_code": "L4J 2Z7",
+              "neighborhood": "Lakeview Estates",
+              "community": null
+            },
+            "details": null,
+            "type": "Sale"
+          }
+        }
+      ],
+      "validation_summary": {
+        "total_validated": 1,
+        "passed": 1,
+        "failed": 0,
+        "warnings": 0
+      },
+      "error": null
+    },
+    "overall_success": true
+  }
+]
