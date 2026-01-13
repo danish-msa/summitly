@@ -7,22 +7,27 @@ import SectionHeading from '@/components/Helper/SectionHeading';
 import { PropertyListing } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
-import { convertToPreConProperty } from '@/components/PreCon/PreConstructionBasePage/utils';
+import { convertApiV1ToPreConProperty, type ApiV1Project } from '@/components/PreCon/PreConstructionBasePage/utils';
 
 const FeaturedProjects: React.FC = () => {
-  const [projects, setProjects] = useState<PropertyListing[]>([]);
+  const [projects, setProjects] = useState<PreConstructionProperty[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
         const { api } = await import('@/lib/api/client');
-        const response = await api.get<{ projects: PropertyListing[] }>('/pre-con-projects', {
+        const response = await api.get<{ projects: ApiV1Project[] }>('/pre-con-projects', {
           params: { featured: 'true', limit: 2 },
         });
         
         if (response.success && response.data) {
-          setProjects(response.data.projects || []);
+          const convertedProjects = (response.data.projects || [])
+            .map(convertApiV1ToPreConProperty);
+          setProjects(convertedProjects);
+          console.log('[FeaturedProjects] Loaded featured projects:', convertedProjects.length);
+        } else {
+          console.warn('[FeaturedProjects] API response not successful:', response);
         }
       } catch (error) {
         console.error('Error fetching featured projects:', error);
@@ -34,11 +39,9 @@ const FeaturedProjects: React.FC = () => {
     fetchProjects();
   }, []);
 
-  // Convert featured projects (already filtered by API)
+  // Use projects directly (already converted)
   const featuredProperties = useMemo(() => {
-    return projects
-      .map(convertToPreConProperty)
-      .filter((project): project is PreConstructionProperty => project !== null);
+    return projects;
   }, [projects]);
 
   if (loading) {

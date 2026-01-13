@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { PreConstructionProperty } from '../../PropertyCards/types';
 import { PropertyListing } from '@/lib/types';
-import { convertToPreConProperty, convertToPropertyListing } from '@/components/PreCon/PreConstructionBasePage/utils';
+import { convertApiV1ToPreConProperty, convertToPropertyListing, type ApiV1Project } from '@/components/PreCon/PreConstructionBasePage/utils';
 import { usePreConFilters } from './usePreConFilters';
 import { useGlobalFilters } from '@/hooks/useGlobalFilters';
 
@@ -17,13 +17,17 @@ export const usePreConProjects = () => {
     const fetchProjects = async () => {
       try {
         const { api } = await import('@/lib/api/client');
-        const response = await api.get<{ projects: PropertyListing[] }>('/pre-con-projects');
+        const response = await api.get<{ projects: ApiV1Project[] }>('/pre-con-projects', {
+          params: { limit: 1000 }
+        });
         
         if (response.success && response.data) {
           const projects = (response.data.projects || [])
-            .map(convertToPreConProperty)
-            .filter((project: PreConstructionProperty | null): project is PreConstructionProperty => project !== null);
+            .map(convertApiV1ToPreConProperty);
           setAllProjects(projects);
+          console.log('[usePreConProjects] Loaded projects:', projects.length);
+        } else {
+          console.warn('[usePreConProjects] API response not successful:', response);
         }
       } catch (error) {
         console.error('Error fetching pre-con projects:', error);

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import PreConstructionPropertyCardV3 from '../PropertyCards/PreConstructionPropertyCardV3';
 import type { PreConstructionProperty } from '../PropertyCards/types';
 import { PropertyListing } from '@/lib/types';
@@ -16,36 +16,112 @@ import { Skeleton } from '@/components/ui/skeleton';
 const GooglePropertyMap = dynamic(() => import('@/components/MapSearch/GooglePropertyMap'), { ssr: false });
 
 
-import { convertToPreConProperty, convertToPropertyListing } from '@/components/PreCon/PreConstructionBasePage/utils';
+import { convertApiV1ToPreConProperty, convertToPropertyListing, type ApiV1Project } from '@/components/PreCon/PreConstructionBasePage/utils';
 
 const PreConstructionProjectsListings: React.FC = () => {
-  const [projects, setProjects] = useState<PropertyListing[]>([]);
+  const [projects, setProjects] = useState<PreConstructionProperty[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalProjects, setTotalProjects] = useState(0);
+  const pageSize = 20; // Number of projects per page
+  const isLoadingRef = useRef(false);
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const { api } = await import('@/lib/api/client');
-        const response = await api.get<{ projects: PropertyListing[] }>('/pre-con-projects');
-        
-        if (response.success && response.data) {
-          setProjects(response.data.projects || []);
+  // Initial load and load more function
+  const fetchProjects = useCallback(async (pageNum: number, append: boolean = false) => {
+    if (isLoadingRef.current) return;
+    
+    isLoadingRef.current = true;
+    try {
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+
+      const { api } = await import('@/lib/api/client');
+      const response = await api.get<{ 
+        projects: ApiV1Project[];
+        pagination?: {
+          page: number;
+          limit: number;
+          total: number;
+          totalPages: number;
+        };
+      }>('/pre-con-projects', {
+        params: { 
+          limit: pageSize,
+          page: pageNum
         }
-      } catch (error) {
-        console.error('Error fetching pre-con projects:', error);
-      } finally {
-        setLoading(false);
+      });
+      
+      if (response.success && response.data) {
+        const convertedProjects = (response.data.projects || [])
+          .map(convertApiV1ToPreConProperty);
+        
+        if (append) {
+          setProjects(prev => [...prev, ...convertedProjects]);
+        } else {
+          setProjects(convertedProjects);
+        }
+
+        // Check if there are more projects
+        if (response.data.pagination) {
+          const { page: currentPage, totalPages, total } = response.data.pagination;
+          setTotalProjects(total);
+          setHasMore(currentPage < totalPages);
+        } else {
+          // Fallback: if we got fewer projects than pageSize, no more pages
+          setHasMore(convertedProjects.length === pageSize);
+        }
+
+        console.log('[PreConstructionProjectsListings] Loaded projects:', convertedProjects.length);
+      } else {
+        console.warn('[PreConstructionProjectsListings] API response not successful:', response);
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error('Error fetching pre-con projects:', error);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+      isLoadingRef.current = false;
+    }
+  }, [pageSize]);
+
+  // Initial load
+  useEffect(() => {
+    fetchProjects(1, false);
+  }, [fetchProjects]);
+
+  // Infinite scroll handler
+  useEffect(() => {
+    const handleScroll = () => {
+      // Check if user is near bottom of page (1000px before bottom)
+      if (
+        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 1000 &&
+        !isLoadingRef.current &&
+        !loadingMore &&
+        hasMore &&
+        !loading
+      ) {
+        setPage(prevPage => {
+          const nextPage = prevPage + 1;
+          fetchProjects(nextPage, true);
+          return nextPage;
+        });
       }
     };
 
-    fetchProjects();
-  }, []);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [loadingMore, hasMore, loading, fetchProjects]);
 
-  // Convert projects to PreConstructionProperty format
+  // Use projects directly (already converted)
   const allProjectsData = useMemo(() => {
-    return projects
-      .map(convertToPreConProperty)
-      .filter((project): project is PreConstructionProperty => project !== null);
+    return projects;
   }, [projects]);
 
   const [communities, setCommunities] = useState<string[]>([]);
@@ -302,7 +378,7 @@ const PreConstructionProjectsListings: React.FC = () => {
                 <span className="text-gray-700 font-medium text-sm">
                   {viewMode === 'split'
                     ? `Showing 3 of ${visibleProjects.length} projects`
-                    : `Pre-Construction Projects (${visibleProjects.length} ${visibleProjects.length === 1 ? 'project' : 'projects'})`
+                    : `Pre-Construction Projects (${totalProjects > 0 ? `${visibleProjects.length} of ${totalProjects}` : visibleProjects.length} ${visibleProjects.length === 1 ? 'project' : 'projects'})`
                   }
                 </span>
               </div>
@@ -332,17 +408,35 @@ const PreConstructionProjectsListings: React.FC = () => {
             {/* Project Listings Grid */}
             <div className={`grid grid-cols-1 sm:grid-cols-2 ${viewMode === 'list' ? 'lg:grid-cols-3 xl:grid-cols-4' : 'lg:grid-cols-2'} gap-4 mb-10`}>
               {displayedProjects.length > 0 ? (
-                displayedProjects.map((project) => (
-                  <div 
-                    key={project.id}
-                    className={`transition-all cursor-pointer ${selectedProject?.id === project.id ? 'ring-2 ring-secondary' : ''}`}
-                    onClick={() => handleProjectClick(project)}
-                  >
-                    <PreConstructionPropertyCardV3
-                      property={project}
-                    />
-                  </div>
-                ))
+                <>
+                  {displayedProjects.map((project) => (
+                    <div 
+                      key={project.id}
+                      className={`transition-all cursor-pointer ${selectedProject?.id === project.id ? 'ring-2 ring-secondary' : ''}`}
+                      onClick={() => handleProjectClick(project)}
+                    >
+                      <PreConstructionPropertyCardV3
+                        property={project}
+                      />
+                    </div>
+                  ))}
+                  {/* Loading indicator for infinite scroll */}
+                  {loadingMore && (
+                    <div className="col-span-full flex justify-center py-8">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 w-full">
+                        {[...Array(4)].map((_, index) => (
+                          <PreConstructionCardSkeleton key={`loading-${index}`} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* End of results message */}
+                  {!hasMore && projects.length > 0 && (
+                    <div className="col-span-full text-center py-8">
+                      <p className="text-gray-500 text-sm">You've reached the end of the list.</p>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="col-span-full text-center py-10">
                   <p className="text-gray-500 text-lg">No projects match your current filters.</p>

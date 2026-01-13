@@ -20,7 +20,8 @@ async function handler(request: NextRequest) {
   const featured = searchParams.get('featured')
   const limit = searchParams.get('limit')
   const page = parseInt(searchParams.get('page') || '1')
-  const pageSize = parseInt(searchParams.get('limit') || '20')
+  // Use limit if provided, otherwise default to 20 for pagination
+  const pageSize = limit ? parseInt(limit) : 20
 
   // Build where clause
   const whereConditions: Prisma.PreConstructionProjectWhereInput[] = [
@@ -85,12 +86,46 @@ async function handler(request: NextRequest) {
     ],
   })
 
+  // Fetch developer names for all projects
+  const developerIds = [...new Set(projects.map(p => p.developer).filter(Boolean) as string[])]
+  const developerNamesMap = new Map<string, string>()
+  
+  if (developerIds.length > 0) {
+    try {
+      const developers = await prisma.developmentTeam.findMany({
+        where: {
+          id: { in: developerIds },
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      })
+      
+      developers.forEach(dev => {
+        developerNamesMap.set(dev.id, dev.name)
+      })
+    } catch (error) {
+      console.error('[API v1] Error fetching developer names:', error)
+    }
+  }
+
+  // Helper to get developer name
+  const getDeveloperName = (developerId: string | null): string => {
+    if (!developerId) return ''
+    // Check if it's already a name (not an ID format)
+    if (!developerId.match(/^[a-z0-9]{25}$/)) {
+      return developerId // It's already a name
+    }
+    return developerNamesMap.get(developerId) || developerId
+  }
+
   // Format projects
   const formattedProjects = projects.map((project) => ({
     id: project.id,
     mlsNumber: project.mlsNumber,
     projectName: project.projectName,
-    developer: project.developer,
+    developer: getDeveloperName(project.developer),
     location: {
       address: project.streetNumber && project.streetName
         ? `${project.streetNumber} ${project.streetName}`

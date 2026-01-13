@@ -1,6 +1,90 @@
 import type { PropertyListing } from '@/lib/types';
 import type { PreConstructionProperty } from '@/components/PreCon/PropertyCards/types';
 
+// API v1 response type
+export type ApiV1Project = {
+  id: string;
+  mlsNumber: string;
+  projectName: string;
+  developer: string;
+  location: {
+    address: string | null;
+    city: string;
+    state: string;
+    zip: string;
+    neighborhood: string | null;
+    coordinates: { lat: number; lng: number } | null;
+  };
+  pricing: {
+    starting: number | null;
+    ending: number | null;
+    range: {
+      min: number | null;
+      max: number | null;
+    };
+    avgPricePerSqft: number | null;
+  };
+  status: string;
+  completion: {
+    date: string | null;
+    progress: number | null;
+  };
+  details: {
+    propertyType: string;
+    subPropertyType: string | null;
+    bedroomRange: string | null;
+    bathroomRange: string | null;
+    sqftRange: string | null;
+    totalUnits: number | null;
+    availableUnits: number | null;
+    storeys: number | null;
+    height: number | null;
+  };
+  amenities: string[];
+  features: string[];
+  images: string[];
+  videos: string[];
+  featured: boolean;
+};
+
+// Convert API v1 response to PreConstructionProperty
+export const convertApiV1ToPreConProperty = (apiProject: ApiV1Project): PreConstructionProperty => {
+  // Developer should already be a name from the API, but handle ID fallback
+  const developerName = apiProject.developer && !apiProject.developer.match(/^[a-z0-9]{25}$/)
+    ? apiProject.developer
+    : apiProject.developer || ''
+  
+  return {
+    id: apiProject.mlsNumber,
+    projectName: apiProject.projectName,
+    developer: developerName,
+    startingPrice: apiProject.pricing.starting || 0,
+    images: apiProject.images.length > 0 ? apiProject.images : ['/images/p1.jpg'],
+    address: {
+      street: apiProject.location.address || '',
+      city: apiProject.location.city || '',
+      province: apiProject.location.state || '',
+      latitude: apiProject.location.coordinates?.lat,
+      longitude: apiProject.location.coordinates?.lng,
+    },
+    details: {
+      propertyType: apiProject.details.propertyType || 'Condominium',
+      bedroomRange: apiProject.details.bedroomRange || '',
+      bathroomRange: apiProject.details.bathroomRange || '',
+      sqftRange: apiProject.details.sqftRange || '',
+      totalUnits: apiProject.details.totalUnits || 0,
+      availableUnits: apiProject.details.availableUnits || 0,
+    },
+    completion: {
+      date: apiProject.completion.date || '',
+      progress: apiProject.completion.progress || 0,
+    },
+    features: apiProject.features || [],
+    depositStructure: undefined,
+    status: (apiProject.status as 'selling' | 'coming-soon' | 'sold-out') || 'coming-soon',
+  };
+};
+
 // Helper function to convert slug back to city name
 // Handles cases where slug might include filters (e.g., "toronto/2-beds" -> "Toronto")
 export const unslugifyCityName = (slug: string): string => {
