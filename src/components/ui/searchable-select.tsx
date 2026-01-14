@@ -92,7 +92,8 @@ export function SearchableSelect({
           // Try to extract text from React nodes
           if (React.isValidElement(childProps.children)) {
             // If it's a React element, try to get text content
-            const textContent = (childProps.children as any)?.props?.children || childProps.children
+            const elementProps = childProps.children.props as { children?: React.ReactNode }
+            const textContent = elementProps?.children || childProps.children
             childLabel = typeof textContent === 'string' ? textContent : String(textContent)
           } else {
             childLabel = String(childProps.children)
@@ -114,10 +115,17 @@ export function SearchableSelect({
       console.warn('[SearchableSelect] No items extracted from children. Children count:', React.Children.count(children))
       React.Children.forEach(children, (child, index) => {
         if (React.isValidElement(child)) {
+          const childType = child.type as React.ComponentType | string
+          const typeInfo = typeof childType === 'object' && childType !== null
+            ? {
+                displayName: 'displayName' in childType ? (childType as { displayName?: string }).displayName : undefined,
+                name: 'name' in childType ? (childType as { name?: string }).name : undefined,
+              }
+            : { displayName: undefined, name: undefined }
           console.log(`[SearchableSelect] Child ${index}:`, {
             type: child.type,
-            displayName: (child.type as any)?.displayName,
-            name: (child.type as any)?.name,
+            displayName: typeInfo.displayName,
+            name: typeInfo.name,
             props: child.props
           })
         }
