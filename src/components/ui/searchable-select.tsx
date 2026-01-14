@@ -78,19 +78,54 @@ export function SearchableSelect({
   const items: Array<{ value: string; label: string; children?: React.ReactNode }> = []
   
   React.Children.forEach(children, (child) => {
-    if (React.isValidElement(child) && child.type === SelectItem) {
-      const childProps = child.props as { value: string; children?: React.ReactNode }
+    if (React.isValidElement(child)) {
+      const childProps = child.props as { value?: string; children?: React.ReactNode }
       const childValue = childProps.value
-      const childLabel = typeof childProps.children === 'string' 
-        ? childProps.children 
-        : childValue
-      items.push({
-        value: childValue,
-        label: childLabel,
-        children: childProps.children,
-      })
+      
+      // If it has a value prop, treat it as a valid item
+      if (childValue !== undefined && childValue !== null) {
+        // Extract label from children
+        let childLabel = String(childValue)
+        if (typeof childProps.children === 'string') {
+          childLabel = childProps.children
+        } else if (childProps.children !== null && childProps.children !== undefined) {
+          // Try to extract text from React nodes
+          if (React.isValidElement(childProps.children)) {
+            // If it's a React element, try to get text content
+            const textContent = (childProps.children as any)?.props?.children || childProps.children
+            childLabel = typeof textContent === 'string' ? textContent : String(textContent)
+          } else {
+            childLabel = String(childProps.children)
+          }
+        }
+        
+        items.push({
+          value: childValue,
+          label: childLabel,
+          children: childProps.children,
+        })
+      }
     }
   })
+  
+  // Debug: Log items (only in development)
+  if (process.env.NODE_ENV === 'development') {
+    if (items.length === 0 && React.Children.count(children) > 0) {
+      console.warn('[SearchableSelect] No items extracted from children. Children count:', React.Children.count(children))
+      React.Children.forEach(children, (child, index) => {
+        if (React.isValidElement(child)) {
+          console.log(`[SearchableSelect] Child ${index}:`, {
+            type: child.type,
+            displayName: (child.type as any)?.displayName,
+            name: (child.type as any)?.name,
+            props: child.props
+          })
+        }
+      })
+    } else if (items.length > 0) {
+      console.log('[SearchableSelect] Extracted items:', items.length, items.map(i => ({ value: i.value, label: i.label })))
+    }
+  }
 
   // Filter items based on search query
   const filteredItems = searchQuery
@@ -131,8 +166,19 @@ export function SearchableSelect({
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className={cn("w-full p-0", contentClassName)} align="start">
-        <div className="p-2">
+      <PopoverContent 
+        className={cn("p-0", contentClassName)} 
+        align="start"
+        side="bottom"
+        sideOffset={4}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        style={{ 
+          width: 'var(--radix-popover-trigger-width)',
+          minWidth: '200px',
+          maxWidth: '400px'
+        }}
+      >
+        <div className="p-2 border-b">
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -181,7 +227,7 @@ export function SearchableSelect({
             ))
           ) : (
             <div className="px-2 py-1.5 text-sm text-muted-foreground">
-              No results found.
+              {items.length === 0 ? "No options available." : "No results found."}
             </div>
           )}
         </div>
