@@ -27,8 +27,9 @@ const DepositStructure: React.FC<DepositStructureProps> = ({ property }) => {
     const schedules: DepositSchedule[] = [];
     
     // Try to split by "Standard" and "International" keywords
-    const standardMatch = depositInfo.match(/Standard[:\s]*(.*?)(?=International|$)/is);
-    const internationalMatch = depositInfo.match(/International[:\s]*(.*?)$/is);
+    // Using [\s\S] instead of . with 's' flag for ES2017 compatibility
+    const standardMatch = depositInfo.match(/Standard[:\s]*([\s\S]*?)(?=International|$)/i);
+    const internationalMatch = depositInfo.match(/International[:\s]*([\s\S]*?)$/i);
     
     if (standardMatch) {
       const standardText = standardMatch[1].trim();
