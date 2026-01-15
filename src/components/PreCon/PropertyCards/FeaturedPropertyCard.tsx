@@ -189,7 +189,7 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
         style={{ boxShadow: 'var(--shadow-card)' }}
       >
         {/* Image Section - Left */}
-        <div className="relative overflow-hidden bg-muted flex-shrink-0 w-full md:w-2/5 h-48 sm:h-56 md:h-full">
+        <div className="relative overflow-hidden bg-muted flex-shrink-0 w-full md:w-2/5 h-20 sm:h-56 ">
           <div className="relative h-full">
             <img 
               src={imageSrc}
@@ -200,67 +200,67 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
 
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
-            {/* Property Type Badge */}
-            <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
-              <Badge className="bg-card/95 backdrop-blur-sm text-card-foreground border-0 shadow-lg text-[10px] sm:text-xs">
-                {property.details.propertyType}
-              </Badge>
-            </div>
+              {/* Property Type Badge */}
+              <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
+                <Badge className="bg-card/95 backdrop-blur-sm text-card-foreground border-0 shadow-lg text-[10px] sm:text-xs">
+                  {property.details.propertyType}
+                </Badge>
+              </div>
 
-            {/* Featured Badge */}
-            <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
-              <Badge className="bg-primary/95 backdrop-blur-sm text-white border-0 shadow-lg text-[10px] sm:text-xs font-semibold">
-                Featured
-              </Badge>
-            </div>
+              {/* Featured Badge */}
+              <div className="absolute top-4 left-12 sm:top-12 sm:left-3">
+                <Badge className="bg-secondary backdrop-blur-sm text-white border-0 shadow-lg text-[10px] sm:text-xs font-semibold">
+                  Featured
+                </Badge>
+              </div>
 
-            {/* Actions */}
-            <div className="absolute top-12 right-3 flex flex-col gap-2">
-              <button
-                onClick={handleSave}
-                disabled={isSaving || isUnsaving}
-                className={cn(
-                  "p-1.5 rounded-full bg-card/95 backdrop-blur-sm hover:bg-card transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed",
-                  isSaved && "bg-red-50/95 hover:bg-red-50"
-                )}
-              >
-                <Heart 
+              {/* Actions */}
+              <div className="absolute top-2 right-3 flex flex-col gap-2">
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving || isUnsaving}
                   className={cn(
-                    "w-4 h-4 transition-all duration-200",
-                    isSaved ? "fill-red-500 text-red-500" : "text-muted-foreground"
-                  )} 
-                />
-              </button>
-            </div>
-
-            {/* Carousel Controls */}
-            {totalImages > 1 && (
-              <>
-                <button
-                  onClick={prevImage}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-card/90 backdrop-blur-sm hover:bg-card transition-all duration-200 shadow-lg opacity-0 group-hover:opacity-100"
+                    "p-1.5 rounded-full bg-card/95 backdrop-blur-sm hover:bg-card transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed",
+                    isSaved && "bg-red-50/95 hover:bg-red-50"
+                  )}
                 >
-                  <ChevronLeft className="w-4 h-4 text-foreground" />
+                  <Heart 
+                    className={cn(
+                      "w-4 h-4 transition-all duration-200",
+                      isSaved ? "fill-red-500 text-red-500" : "text-muted-foreground"
+                    )} 
+                  />
                 </button>
-                <button
-                  onClick={nextImage}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-card/90 backdrop-blur-sm hover:bg-card transition-all duration-200 shadow-lg opacity-0 group-hover:opacity-100"
-                >
-                  <ChevronRight className="w-4 h-4 text-foreground" />
-                </button>
-              </>
-            )}
+              </div>
 
-            {/* Address at bottom of image */}
-            <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3 md:p-4 bg-gradient-to-t from-black/70 via-black/50 to-transparent">
-              <div className="flex items-start">
-                <MapPin className="mr-1.5 sm:mr-2 text-white flex-shrink-0 mt-0.5 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <p className="text-xs sm:text-sm text-white line-clamp-2">
-                  {property.address.street}, {property.address.city}, {property.address.province}
-                </p>
+              {/* Carousel Controls */}
+              {totalImages > 1 && (
+                <>
+                  <button
+                    onClick={prevImage}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-card/90 backdrop-blur-sm hover:bg-card transition-all duration-200 shadow-lg opacity-0 group-hover:opacity-100"
+                  >
+                    <ChevronLeft className="w-4 h-4 text-foreground" />
+                  </button>
+                  <button
+                    onClick={nextImage}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-card/90 backdrop-blur-sm hover:bg-card transition-all duration-200 shadow-lg opacity-0 group-hover:opacity-100"
+                  >
+                    <ChevronRight className="w-4 h-4 text-foreground" />
+                  </button>
+                </>
+              )}
+
+              {/* Address at bottom of image */}
+              <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3 md:p-4 bg-gradient-to-t from-black/70 via-black/50 to-transparent">
+                <div className="flex items-start">
+                  <MapPin className="mr-1.5 sm:mr-2 text-white flex-shrink-0 mt-0.5 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <p className="text-xs sm:text-sm text-white line-clamp-2">
+                    {property.address.street}, {property.address.city}, {property.address.province}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
         </div>
 
         {/* Content Section - Right */}

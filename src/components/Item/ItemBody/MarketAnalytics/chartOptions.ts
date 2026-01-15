@@ -127,11 +127,11 @@ export const createMarketChartOption = (data: MarketData) => {
         symbolSize: 6,
         showSymbol: true,
         lineStyle: {
-          color: '#3b82f6',
+          color: '#1AC0EB',
           width: 2,
         },
         itemStyle: {
-          color: '#3b82f6',
+          color: '#1AC0EB',
           borderColor: '#fff',
           borderWidth: 2,
         },
@@ -143,8 +143,8 @@ export const createMarketChartOption = (data: MarketData) => {
             x2: 0,
             y2: 1,
             colorStops: [
-              { offset: 0, color: 'rgba(59, 130, 246, 0.3)' },
-              { offset: 1, color: 'rgba(59, 130, 246, 0.05)' },
+              { offset: 0, color: 'rgba(26, 192, 235, 0.3)' },
+              { offset: 1, color: 'rgba(26, 192, 235, 0.05)' },
             ],
           },
         },
@@ -310,11 +310,11 @@ export const createListingsChartOption = (data: ListingsData) => {
         symbolSize: 6,
         showSymbol: true,
         lineStyle: {
-          color: '#3b82f6',
+          color: '#1AC0EB',
           width: 2,
         },
         itemStyle: {
-          color: '#3b82f6',
+          color: '#1AC0EB',
           borderColor: '#fff',
           borderWidth: 2,
         },
@@ -326,8 +326,8 @@ export const createListingsChartOption = (data: ListingsData) => {
             x2: 0,
             y2: 1,
             colorStops: [
-              { offset: 0, color: 'rgba(59, 130, 246, 0.3)' },
-              { offset: 1, color: 'rgba(59, 130, 246, 0.05)' },
+              { offset: 0, color: 'rgba(26, 192, 235, 0.3)' },
+              { offset: 1, color: 'rgba(26, 192, 235, 0.05)' },
             ],
           },
         },

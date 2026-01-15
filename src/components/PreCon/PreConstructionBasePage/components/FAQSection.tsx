@@ -110,7 +110,7 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ pageType, displayTitle, 
     } else if (pageType === 'completionYear') {
       return `Find answers to common questions about pre-construction projects completing in ${displayTitle}. Get expert guidance on buying new homes with Summitly.`;
     }
-    return "Find answers to common questions about pre-construction projects and buying new homes with Summitly.";
+    return "Find answers to common questions about pre-construction projects";
   };
 
   return (

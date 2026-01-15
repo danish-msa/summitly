@@ -31,7 +31,7 @@ const PreConstructionProjects = () => {
   };
 
   return (
-    <section className="py-16 bg-background">
+    <section className="py-16 bg-white">
       <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading
           heading="All Pre-Construction Projects"

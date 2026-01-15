@@ -118,11 +118,11 @@ const BlogSection: React.FC<BlogSectionProps> = ({
           <div className="flex justify-center mt-10">
             <Link href={finalViewAllLink}>
               <Button 
-                variant="outline" 
-                className="group flex items-center gap-2 px-6 py-3 text-primary border-primary hover:bg-primary hover:text-white transition-all duration-300"
+                variant="default" 
+                className="group flex items-center gap-2 px-6 py-3 transition-all duration-300"
               >
                 View All {category ? `${category} ` : ''}Blogs
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+                <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-1 transition-transform duration-300" />
               </Button>
             </Link>
           </div>

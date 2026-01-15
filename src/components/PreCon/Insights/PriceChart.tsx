@@ -56,11 +56,11 @@ export function PriceChart({ data }: PriceChartProps) {
         symbol: "circle",
         symbolSize: 8,
         lineStyle: {
-          color: "hsl(221, 83%, 53%)",
+          color: "#1AC0EB",
           width: 3,
         },
         itemStyle: {
-          color: "hsl(221, 83%, 53%)",
+          color: "#1AC0EB",
         },
         areaStyle: {
           color: {
@@ -72,11 +72,11 @@ export function PriceChart({ data }: PriceChartProps) {
             colorStops: [
               {
                 offset: 0,
-                color: "rgba(59, 130, 246, 0.3)",
+                color: "rgba(26, 192, 235, 0.3)",
               },
               {
                 offset: 1,
-                color: "rgba(59, 130, 246, 0.05)",
+                color: "rgba(26, 192, 235, 0.05)",
               },
             ],
           },

@@ -36,7 +36,13 @@ import {
   Coffee,
   Gamepad2,
   ShoppingBag,
-  CreditCard
+  CreditCard,
+  User,
+  Users,
+  Briefcase,
+  Palette,
+  Sprout,
+  Megaphone
 } from "lucide-react";
 import { PropertyListing } from "@/lib/types";
 
@@ -90,8 +96,20 @@ export default function PropertyListingDetails({ data, property }: ListingDetail
   // console.log('Property preCon data:', property?.preCon);
   
 
+  // Get icon for development team role
+  const getTeamRoleIcon = (role: string) => {
+    const roleLower = role.toLowerCase();
+    if (roleLower.includes('developer')) return Building2;
+    if (roleLower.includes('architect')) return Home;
+    if (roleLower.includes('builder')) return Briefcase;
+    if (roleLower.includes('interior')) return Palette;
+    if (roleLower.includes('landscape')) return Sprout;
+    if (roleLower.includes('marketing')) return Megaphone;
+    return Users;
+  };
+
   // Get appropriate icon for highlight key
-  const getHighlightIcon = (key: string) => {
+const getHighlightIcon = (key: string) => {
     const keyLower = key.toLowerCase();
     
     // Pool/Swimming
@@ -189,7 +207,7 @@ export default function PropertyListingDetails({ data, property }: ListingDetail
   };
 
   // Get appropriate icon for fact key
-  const _getFactIcon = (key: string) => {
+  const getFactIcon = (key: string) => {
     const keyLower = key.toLowerCase();
     
     // Year/Built related
@@ -396,70 +414,100 @@ export default function PropertyListingDetails({ data, property }: ListingDetail
         <div>
           <div>
             <h2 className="text-lg font-semibold text-foreground leading-tight mb-6">Key Facts</h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Original Key Facts */}
               {Object.entries(data.keyFacts).map(([key, value]) => {
+                const Icon = getFactIcon(key);
                 return (
-                  <div key={key} className="flex items-center gap-3">
+                  <div key={key} className="flex items-center gap-3 bg-muted/20 rounded-lg p-4 shadow-sm">
+                    {/* Icon Container */}
+                    <div className="flex-shrink-0 w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-100">
+                      <Icon className="h-5 w-5 text-secondary" />
+                    </div>
+                    {/* Text Content */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-muted-foreground">{key}</p>
-                      <p className="font-semibold text-foreground">{value}</p>
+                      <p className="text-xs text-gray-500">{key}</p>
+                      <p className="text-sm font-bold text-gray-900">{String(value)}</p>
                     </div>
                   </div>
                 );
               })}
               
               {/* Property Details */}
-              {hasPropertyDetails && Object.entries(data.propertyDetails.property).map(([key, value]) => (
-                <div key={`property-${key}`} className="flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground">{key}</p>
-                    <p className="font-semibold text-foreground">{value}</p>
+              {hasPropertyDetails && Object.entries(data.propertyDetails.property).map(([key, value]) => {
+                const Icon = getFactIcon(key);
+                return (
+                  <div key={`property-${key}`} className="flex items-center gap-3 bg-muted/20 rounded-lg p-4 shadow-sm">
+                    <div className="flex-shrink-0 w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-100">
+                      <Icon className="h-5 w-5 text-secondary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-500">{key}</p>
+                      <p className="text-sm font-bold text-gray-900">{String(value)}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               
               {/* Building Details */}
-              {hasBuildingDetails && Object.entries(data.propertyDetails.building).map(([key, value]) => (
-                <div key={`building-${key}`} className="flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground">{key}</p>
-                    <p className="font-semibold text-foreground">{value}</p>
+              {hasBuildingDetails && Object.entries(data.propertyDetails.building).map(([key, value]) => {
+                const Icon = getFactIcon(key);
+                return (
+                  <div key={`building-${key}`} className="flex items-center gap-3 bg-muted/20 rounded-lg p-4 shadow-sm">
+                    <div className="flex-shrink-0 w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-100">
+                      <Icon className="h-5 w-5 text-secondary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-500">{key}</p>
+                      <p className="text-sm font-bold text-gray-900">{String(value)}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               
               {/* Interior Details */}
-              {hasInsideDetails && Object.entries(data.propertyDetails.inside).map(([key, value]) => (
-                <div key={`inside-${key}`} className="flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground">{key}</p>
-                    <p className="font-semibold text-foreground">{value}</p>
+              {hasInsideDetails && Object.entries(data.propertyDetails.inside).map(([key, value]) => {
+                const Icon = getFactIcon(key);
+                return (
+                  <div key={`inside-${key}`} className="flex items-center gap-3 bg-muted/20 rounded-lg p-4 shadow-sm">
+                    <div className="flex-shrink-0 w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-100">
+                      <Icon className="h-5 w-5 text-secondary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-500">{key}</p>
+                      <p className="text-sm font-bold text-gray-900">{String(value)}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               
               {/* Parking Details */}
-              {hasParkingDetails && Object.entries(data.propertyDetails.parking).map(([key, value]) => (
-                <div key={`parking-${key}`} className="flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground">{key}</p>
-                    <p className="font-semibold text-foreground">{value}</p>
+              {hasParkingDetails && Object.entries(data.propertyDetails.parking).map(([key, value]) => {
+                const Icon = getFactIcon(key);
+                return (
+                  <div key={`parking-${key}`} className="flex items-center gap-3 bg-muted/20 rounded-lg p-4 shadow-sm">
+                    <div className="flex-shrink-0 w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-100">
+                      <Icon className="h-5 w-5 text-secondary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-500">{key}</p>
+                      <p className="text-sm font-bold text-gray-900">{String(value)}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               
               {/* Amenities/Highlights */}
               {hasHighlights && Object.entries(data.propertyDetails.highlights).map(([key, value]) => {
                 const Icon = getHighlightIcon(key);
                 return (
-                  <div key={`highlight-${key}`} className="flex items-center gap-3">
+                  <div key={`highlight-${key}`} className="flex items-center gap-3 bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                    <div className="flex-shrink-0 w-12 h-12 bg-white rounded-xl flex items-center justify-center border border-gray-100">
+                      <Icon className="h-5 w-5 text-primary" />
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <Icon className="h-4 w-4 text-muted-foreground" />
-                        <p className="text-xs text-muted-foreground">{key}</p>
-                      </div>
-                      <p className="font-semibold text-foreground">{value}</p>
+                      <p className="text-xs text-gray-500 mb-1">{key}</p>
+                      <p className="text-sm font-bold text-gray-900">{String(value)}</p>
                     </div>
                   </div>
                 );
@@ -467,10 +515,13 @@ export default function PropertyListingDetails({ data, property }: ListingDetail
               
               {/* Occupancy / Completion Year for Pre-Construction Properties */}
               {property && property.preCon && property.preCon.completion && property.preCon.completion.date && (
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <p className="text-xs text-muted-foreground">Occupancy / Completion Year</p>
-                    <p className="font-semibold text-foreground">
+                <div className="flex items-center gap-3 bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                  <div className="flex-shrink-0 w-12 h-12 bg-white rounded-xl flex items-center justify-center border border-gray-100">
+                    <Calendar className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-500 mb-1">Occupancy / Completion Year</p>
+                    <p className="text-sm font-bold text-gray-900">
                       {(() => {
                         const completionDate = property.preCon.completion.date;
                         const yearMatch = completionDate.match(/\d{4}/);
@@ -492,6 +543,99 @@ export default function PropertyListingDetails({ data, property }: ListingDetail
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Development Team Section - Only for Pre-Con Projects */}
+      {property && property.preCon && property.preCon.developmentTeam && (
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold text-foreground leading-tight mb-6">Development Team</h2>
+          
+          {/* Overview */}
+          {property.preCon.developmentTeam.overview && (
+            <p className="text-sm text-muted-foreground mb-6">{property.preCon.developmentTeam.overview}</p>
+          )}
+
+          {/* Team Members Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Developer */}
+            {property.preCon.developmentTeam.developer && (
+              <div className="flex items-center gap-3 bg-muted/20 rounded-lg p-4 shadow-sm">
+                <div className="flex-shrink-0 w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-100">
+                  <Building2 className="h-5 w-5 text-secondary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500">Developer</p>
+                  <p className="text-sm font-bold text-gray-900">{property.preCon.developmentTeam.developer.name}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Architect */}
+            {property.preCon.developmentTeam.architect && (
+              <div className="flex items-center gap-3 bg-muted/20 rounded-lg p-4 shadow-sm">
+                <div className="flex-shrink-0 w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-100">
+                  <Home className="h-5 w-5 text-secondary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500">Architect</p>
+                  <p className="text-sm font-bold text-gray-900">{property.preCon.developmentTeam.architect.name}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Builder */}
+            {property.preCon.developmentTeam.builder && (
+              <div className="flex items-center gap-3 bg-muted/20 rounded-lg p-4 shadow-sm">
+                <div className="flex-shrink-0 w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-100">
+                  <Briefcase className="h-5 w-5 text-secondary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500">Builder</p>
+                  <p className="text-sm font-bold text-gray-900">{property.preCon.developmentTeam.builder.name}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Interior Designer */}
+            {property.preCon.developmentTeam.interiorDesigner && (
+              <div className="flex items-center gap-3 bg-muted/20 rounded-lg p-4 shadow-sm">
+                <div className="flex-shrink-0 w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-100">
+                  <Palette className="h-5 w-5 text-secondary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500">Interior Designer</p>
+                  <p className="text-sm font-bold text-gray-900">{property.preCon.developmentTeam.interiorDesigner.name}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Landscape Architect */}
+            {property.preCon.developmentTeam.landscapeArchitect && (
+              <div className="flex items-center gap-3 bg-muted/20 rounded-lg p-4 shadow-sm">
+                <div className="flex-shrink-0 w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-100">
+                  <Sprout className="h-5 w-5 text-secondary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500">Landscape Architect</p>
+                  <p className="text-sm font-bold text-gray-900">{property.preCon.developmentTeam.landscapeArchitect.name}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Marketing */}
+            {property.preCon.developmentTeam.marketing && (
+              <div className="flex items-center gap-3 bg-muted/20 rounded-lg p-4 shadow-sm">
+                <div className="flex-shrink-0 w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-100">
+                  <Megaphone className="h-5 w-5 text-secondary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500">Marketing</p>
+                  <p className="text-sm font-bold text-gray-900">{property.preCon.developmentTeam.marketing.name}</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -84,11 +84,11 @@ const PreConCitySlider = ({ cities }: PreConCitySliderProps) => {
         }}
         className="w-full"
       >
-        <CarouselContent className="-ml-2 md:-ml-4">
+        <CarouselContent className="-ml-2 md:-ml-4 pb-10">
           {cities.map((city) => (
             <CarouselItem
               key={city.id}
-              className="pl-2 md:pl-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/5"
+              className="pl-2 md:pl-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4"
             >
               <PreConCityCard city={city} />
             </CarouselItem>

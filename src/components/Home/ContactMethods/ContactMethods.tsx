@@ -47,18 +47,18 @@ export const ContactMethods = () => {
                 key={option.title}
                 className="bg-card rounded-2xl p-6 flex flex-col items-start gap-4 hover:shadow-md transition-shadow hover:border-primary/20 group"
               >
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-brand-celestial transition-colors">
-                  <Icon className="w-6 h-6 text-primary group-hover:text-white" />
+                <div className="w-12 h-12 rounded-lg bg-secondary/10 flex items-center justify-center group-hover:bg-secondary transition-colors">
+                  <Icon className="w-6 h-6 text-secondary group-hover:text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-foreground mb-1">
+                  <h3 className="text-lg font-semibold text-primary mb-1">
                     {option.title}
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     {option.description}
                   </p>
                 </div>
-                <Button variant="outline" className="w-full group-hover:bg-brand-celestial group-hover:text-white" asChild>
+                <Button variant="outline" className="w-full group-hover:bg-secondary group-hover:text-white" asChild>
                   <a href={option.href}>{option.buttonText}</a>
                 </Button>
               </div>

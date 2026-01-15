@@ -2,23 +2,24 @@
 
 import React, { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
-import Banner from '../Item/Banner/Banner'
-import PreConItemBody from './PreConItemBody/PreConItemBody'
 import { PropertyListing } from '@/lib/types'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
-import BannerGallery from '../Item/Banner/BannerGallery'
-import SectionNavigation from '../Item/ItemBody/SectionNavigation'
 import StickyPropertyBar from '../Item/StickyPropertyBar'
-import Breadcrumbs from './Breadcrumbs'
+import Breadcrumbs from '../Item/Breadcrumbs'
+import ModernBannerGallery from '../Item/Banner/ModernBannerGallery'
+import NewItemBody, { NewItemBodyRef } from '../Item/NewItemBody/NewItemBody'
+import PropertyHeader from '../Item/NewItemBody/PropertyHeader'
+import PriceCard from '../Item/NewItemBody/PriceCard'
+import Description from '../Item/ItemBody/Description'
 import RightSidebar from './PreConItemBody/RightSidebar'
-import PreConFAQ from '../PreCon/FAQ/FAQ'
-import { PreConContactSection } from './PreConItemBody/PreConContactSection'
-import { getPreConProject } from '@/data/mockPreConData'
+import { PreConFAQ } from '../PreCon/FAQ/FAQ'
+import ContactSection from '../common/ContactSection'
 
 const PreConItem: React.FC = () => {
   const params = useParams();
   const propertyId = params?.slug as string || '';
   const bannerRef = useRef<HTMLDivElement>(null);
+  const newItemBodyRef = useRef<NewItemBodyRef>(null);
   
   const [property, setProperty] = useState<PropertyListing | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,13 +31,7 @@ const PreConItem: React.FC = () => {
         // Fetch from API using mlsNumber (slug)
         const response = await fetch(`/api/pre-con-projects/${propertyId}`);
         if (!response.ok) {
-          // Fallback to mock data if API fails
-          const mockProperty = getPreConProject(propertyId);
-          if (mockProperty) {
-            setProperty(mockProperty);
-          } else {
-            setError('Property not found');
-          }
+          setError('Property not found');
           return;
         }
         
@@ -48,13 +43,7 @@ const PreConItem: React.FC = () => {
         }
       } catch (err) {
         console.error('Error fetching property:', err);
-        // Fallback to mock data on error
-        const mockProperty = getPreConProject(propertyId);
-        if (mockProperty) {
-          setProperty(mockProperty);
-        } else {
-          setError('Failed to load property details');
-        }
+        setError('Failed to load property details');
       } finally {
         setLoading(false);
       }
@@ -77,48 +66,62 @@ const PreConItem: React.FC = () => {
     return <div className="min-h-screen flex items-center justify-center text-red-500">{error || 'Property not found'}</div>;
   }
 
-  // Define navigation sections for pre-con (different from regular property pages)
-  const navigationSections = [
-    { id: 'description', label: 'Description' },
-    { id: 'project-details', label: 'Details' },
-    { id: 'pricing-incentives', label: 'Pricing & Incentives' },
-    { id: 'deposit-structure', label: 'Deposit Structure' },
-    { id: 'documents', label: 'Documents (PDFs)' },
-    { id: 'available-units', label: 'Available Units' },
-    { id: 'amenities-neighborhood-lifestyle', label: 'Amenities & Lifestyle' }
-  ];
+  // Pre-con specific flags
+  const isPreCon = true;
+  const isRental = false;
 
   return (
-    <div className='bg-background'>
-      {/* Sticky Property Bar */}
-      <StickyPropertyBar property={property} bannerRef={bannerRef} />
-      <div className='container-1400 mx-auto px-4 sm:px-6 lg:px-8 mt-5 mb-4'>
-        {/* Breadcrumbs */}
-        <Breadcrumbs property={property} />
-        <BannerGallery property={property} />
-      </div>
-      {/* Sticky Navigation Panel */}
-      <SectionNavigation sections={navigationSections} property={property} />
-      <div className='container-1400 mx-auto px-4 sm:px-6 lg:px-8'>
-        <div className='flex flex-row gap-8'>
-          <div className='w-[75%] flex flex-col gap-6'>
-            <div ref={bannerRef} data-banner-section>
-              <Banner property={property} rawProperty={null} isPreCon={true} />
-            </div>
-            <PreConItemBody property={property} />
+    
+    <>
+    <div className='container-1400 px-4 sm:px-6 lg:px-8 mt-10 mb-4'>
+      <StickyPropertyBar 
+        property={property} 
+        bannerRef={bannerRef}
+        onCalculatorClick={() => {
+          newItemBodyRef.current?.setActiveTab('calculators');
+          setTimeout(() => {
+            newItemBodyRef.current?.scrollToSection();
+          }, 100);
+        }}
+      />
+      {/* Breadcrumbs */}
+      <Breadcrumbs property={property} isPreCon={isPreCon} isRent={isRental} />
+      
+      <PropertyHeader 
+        property={property}
+        onCalculatorClick={() => {
+          newItemBodyRef.current?.setActiveTab('calculators');
+          setTimeout(() => {
+            newItemBodyRef.current?.scrollToSection();
+          }, 100);
+        }}
+      />
+      
+      <div className='flex flex-row gap-8 mt-6 mb-10'>
+        <div className='w-[70%] flex flex-col gap-6'>
+          <div ref={bannerRef} data-banner-section>
+            <ModernBannerGallery property={property} />
           </div>
-          <div className='w-[25%] flex flex-col gap-4 items-start gap-0 sticky top-[130px] self-start'>
-            <RightSidebar property={property} />
-          </div>
+          <Description property={property} isPreCon={isPreCon} />
+        </div>
+        <div className='w-[30%] flex flex-col gap-4 items-start gap-0 sticky top-2 self-start'>
+          <PriceCard property={property} rawProperty={null} isPreCon={isPreCon} isRent={isRental} />
+          <RightSidebar property={property} />
         </div>
       </div>
-      <div className='container-1400 mx-auto px-4 sm:px-6 lg:px-8 mt-20 mb-4'>
-        <PreConFAQ />
-      </div>
-      <div className='container-1400 mx-auto px-4 sm:px-6 lg:px-8 mt-20 mb-4'>
-        <PreConContactSection />
-      </div>
+      
+      <NewItemBody 
+        ref={newItemBodyRef}
+        property={property} 
+        rawProperty={null} 
+        isPreCon={isPreCon} 
+        isRent={isRental} 
+      />
+      <PreConFAQ />
     </div>
+    <ContactSection property={property} />
+
+    </>
   )
 }
 

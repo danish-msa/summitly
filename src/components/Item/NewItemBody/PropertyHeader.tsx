@@ -193,7 +193,10 @@ const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property, onCalculatorC
 
           {/* Property Features */}
           <div className="flex flex-wrap items-center gap-4">
-            <span className="text-base text-gray-500">MLS # {property.mlsNumber}</span>
+            {/* Only show MLS # for non pre-con properties */}
+            {!preConData && (
+              <span className="text-base text-gray-500">MLS # {property.mlsNumber}</span>
+            )}
 
             {/* Property Type */}
             <div className="flex items-center gap-2">
@@ -252,7 +255,11 @@ const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property, onCalculatorC
           {/* Listed Price Badge */}
             <div className="flex items-end flex-col">
               <span className="text-sm font-medium text-gray-700">Listed Price</span>
-              <span className="text-3xl font-bold text-gray-700">{formatCurrency(property.listPrice || 0)}</span>
+              {preConData && (property.listPrice === 0 || !property.listPrice) ? (
+                <span className="text-3xl font-bold text-gray-700">Coming Soon</span>
+              ) : (
+                <span className="text-3xl font-bold text-gray-700">{formatCurrency(property.listPrice || 0)}</span>
+              )}
             </div>
           {/* Action Buttons */}
           <div className="flex items-center gap-2">

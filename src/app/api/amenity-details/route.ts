@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
+// Cache configuration - place details don't change frequently
+// Cache for 30 days (2592000 seconds) - place details rarely change
+export const revalidate = 2592000; // 30 days
+export const dynamic = 'force-dynamic';
+
 interface GooglePlaceDetail {
   place_id: string;
   name: string;
@@ -198,7 +203,12 @@ export async function GET(request: NextRequest) {
       reviews: reviews,
     };
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, {
+      headers: {
+        // Cache for 30 days - place details rarely change
+        'Cache-Control': 'public, s-maxage=2592000, stale-while-revalidate=604800',
+      },
+    });
   } catch (error) {
     console.error('Error fetching amenity details:', error);
     return NextResponse.json(

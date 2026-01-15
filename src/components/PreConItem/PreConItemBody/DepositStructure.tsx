@@ -1,10 +1,14 @@
 import React from 'react'
 import { PropertyListing } from '@/lib/types'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Calendar, FileText } from 'lucide-react'
+import { Info } from 'lucide-react'
 
 interface DepositStructureProps {
   property: PropertyListing;
+}
+
+interface DepositSchedule {
+  type: 'Standard' | 'International';
+  items: string[];
 }
 
 const DepositStructure: React.FC<DepositStructureProps> = ({ property }) => {
@@ -18,91 +22,132 @@ const DepositStructure: React.FC<DepositStructureProps> = ({ property }) => {
     );
   }
 
-  // Parse deposit structure
-  const parseDepositStructure = (depositInfo: string) => {
-    // Split by bullet points and clean up
-    const parts = depositInfo
-      .split('•')
-      .map(part => part.trim())
-      .filter(part => part.length > 0);
-
-    if (parts.length === 0) return { type: null, schedule: [] };
-
-    // First part might be the type (e.g., "Standard")
-    const firstPart = parts[0];
-    const isType = !firstPart.includes('$') && !firstPart.includes('%') && parts.length > 1;
+  // Parse deposit structure to extract Standard and International schedules
+  const parseDepositStructure = (depositInfo: string): DepositSchedule[] => {
+    const schedules: DepositSchedule[] = [];
     
-    const type = isType ? firstPart : null;
-    const schedule = isType ? parts.slice(1) : parts;
-
-    return { type, schedule };
-  };
-
-  const { type, schedule } = parseDepositStructure(preCon.depositStructure);
-
-  // Extract completion date for incentives expiry (similar to PricingIncentives)
-  const getIncentivesExpiryDate = () => {
-    if (!preCon.completion?.date) return null;
-    const yearMatch = preCon.completion.date.match(/\d{4}/);
-    if (yearMatch) {
-      const year = parseInt(yearMatch[0]);
-      return `Apr 1, ${year}`;
+    // Try to split by "Standard" and "International" keywords
+    const standardMatch = depositInfo.match(/Standard[:\s]*(.*?)(?=International|$)/is);
+    const internationalMatch = depositInfo.match(/International[:\s]*(.*?)$/is);
+    
+    if (standardMatch) {
+      const standardText = standardMatch[1].trim();
+      const items = standardText
+        .split(/[•\n]/)
+        .map(item => item.trim())
+        .filter(item => item.length > 0 && !item.match(/^(Standard|International)/i));
+      if (items.length > 0) {
+        schedules.push({ type: 'Standard', items });
+      }
     }
-    return null;
+    
+    if (internationalMatch) {
+      const internationalText = internationalMatch[1].trim();
+      const items = internationalText
+        .split(/[•\n]/)
+        .map(item => item.trim())
+        .filter(item => item.length > 0);
+      if (items.length > 0) {
+        schedules.push({ type: 'International', items });
+      }
+    }
+    
+    // If no structured format found, try to parse as a single schedule
+    if (schedules.length === 0) {
+      const items = depositInfo
+        .split(/[•\n]/)
+        .map(item => item.trim())
+        .filter(item => item.length > 0 && !item.match(/^(Standard|International)/i));
+      if (items.length > 0) {
+        schedules.push({ type: 'Standard', items });
+      }
+    }
+    
+    return schedules;
   };
+
+  const schedules = parseDepositStructure(preCon.depositStructure);
+
+  // Default schedules if none found
+  const defaultSchedules: DepositSchedule[] = [
+    {
+      type: 'Standard',
+      items: [
+        '$10,000 on Signing',
+        '5% in 30 Days',
+        '5% in 180 Days',
+        '2.5% in 360 Days',
+        '2.5% in 540 Days'
+      ]
+    },
+    {
+      type: 'International',
+      items: [
+        '$10,000 on Signing',
+        'Balance of 10% in 30 Days',
+        '10% in 180 Days',
+        '5% in 360 Days',
+        '5% in 540 Days'
+      ]
+    }
+  ];
+
+  const displaySchedules = schedules.length > 0 ? schedules : defaultSchedules;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Card variant="transparent">
-        <CardContent className="p-0">
-          <div className="space-y-4">
-            <div className="flex items-start gap-4 p-4 rounded-lg">
-              <div className="w-10 h-10 rounded-lg bg-brand-celestial/20 flex items-center justify-center flex-shrink-0">
-                <FileText className="h-5 w-5 text-muted-foreground" />
+    <div className="w-full pl-14">
+      <h2 className="text-2xl font-bold text-foreground mb-6">Payment Schedule</h2>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Section: Deposit Schedules */}
+        <div className=" space-y-6">
+          {displaySchedules.map((schedule, index) => (
+            <div key={index} className="space-y-4">
+              {/* Pill Header */}
+              <div className="inline-block bg-gray-100 rounded-full px-4 py-2 text-sm font-medium text-gray-800">
+                {schedule.type}
               </div>
-              <div className="flex-1">
-                <p className="text-sm text-muted-foreground mb-2">Payment Schedule</p>
-                {type && (
-                  <p className="text-xs font-medium text-primary mb-2">{type}</p>
-                )}
-                <div className="space-y-2">
-                  {schedule.map((item, index) => (
-                    <div key={index} className="flex items-start gap-1">
-                      <span className="text-muted-foreground -mt-1.5">•</span>
-                      <p className="font-semibold text-foreground text-xs">{item}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              
+              {/* Bullet List */}
+              <ul className="space-y-2">
+                {schedule.items.map((item, itemIndex) => (
+                  <li key={itemIndex} className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0"></div>
+                    <span className="text-base text-gray-700">{item}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            {getIncentivesExpiryDate() && (
-              <div className="flex items-start gap-4 p-4 rounded-lg">
-                <div className="w-10 h-10 rounded-lg bg-brand-celestial/20 flex items-center justify-center flex-shrink-0">
-                  <Calendar className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-muted-foreground mb-2">Incentives Valid Until</p>
-                  <p className="font-semibold text-foreground">{getIncentivesExpiryDate()}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+          ))}
+        </div>
 
-      <Card variant="transparent">
-        <CardHeader className="bg-red-100 rounded-t-lg">
-          <CardTitle>Important Information</CardTitle>
-        </CardHeader>
-        <CardContent className="bg-red-50 pt-2">
-          <div className="space-y-3 text-muted-foreground">
-            <p>• Deposit structure may vary by unit type and floor plan</p>
-            <p>• All deposits are held in trust until closing</p>
-            <p>• Please consult with your real estate agent for specific deposit requirements</p>
-            <p>• Terms and conditions apply as per the purchase agreement</p>
+        {/* Right Section: Important Information */}
+        <div className="bg-[#FEF3C7]/40 rounded-lg p-6 shadow-sm ">
+          <div className="flex items-center gap-3 mb-4">
+            <Info className="h-5 w-5 text-[#D97706]" />
+            <h3 className="font-bold text-lg text-[#92400E]">Important Information</h3>
           </div>
-        </CardContent>
-      </Card>
+          
+          <ul className="space-y-3">
+            <li className="flex items-start gap-3">
+              <div className="w-2 h-2 bg-[#D97706] rounded-full mt-2 flex-shrink-0"></div>
+              <span className="text-base text-[#92400E]">Deposit structure may vary by unit type and floor plan</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="w-2 h-2 bg-[#D97706] rounded-full mt-2 flex-shrink-0"></div>
+              <span className="text-base text-[#92400E]">All deposits are held in trust until closing</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="w-2 h-2 bg-[#D97706] rounded-full mt-2 flex-shrink-0"></div>
+              <span className="text-base text-[#92400E]">Please consult with your real estate agent for specific deposit requirements</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="w-2 h-2 bg-[#D97706] rounded-full mt-2 flex-shrink-0"></div>
+              <span className="text-base text-[#92400E]">Terms and conditions apply as per the purchase agreement</span>
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
   );
 };

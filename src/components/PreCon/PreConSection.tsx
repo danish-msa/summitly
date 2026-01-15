@@ -4,7 +4,6 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { ArrowLeft, ArrowRight, ChevronRight } from 'lucide-react';
 import { PreConstructionPropertyCardV3 } from './PropertyCards';
 import type { PreConstructionProperty } from './PropertyCards/types';
-import { PropertyListing } from '@/lib/types';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,7 +13,7 @@ import {
   CarouselItem,
 } from '@/components/ui/carousel';
 import { PreConstructionCardSkeleton } from '@/components/skeletons';
-import { convertToPreConProperty } from '@/components/PreCon/PreConstructionBasePage/utils';
+import { convertApiV1ToPreConProperty, type ApiV1Project } from '@/components/PreCon/PreConstructionBasePage/utils';
 
 
 type FilterType = 
@@ -40,7 +39,7 @@ const PreConSection: React.FC<PreConSectionProps> = ({
   viewAllLink,
   limit = 10,
 }) => {
-  const [projects, setProjects] = useState<PropertyListing[]>([]);
+  const [projects, setProjects] = useState<ApiV1Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -50,64 +49,67 @@ const PreConSection: React.FC<PreConSectionProps> = ({
     const fetchProjects = async () => {
       try {
         const { api } = await import('@/lib/api/client');
-        const response = await api.get<{ projects: PropertyListing[] }>('/pre-con-projects');
+        // API client automatically adds /api/v1 prefix, so just use the endpoint path
+        const response = await api.get<{ projects: ApiV1Project[] }>('/pre-con-projects', {
+          params: { limit: 1000 } // Fetch more projects to ensure we have enough for filtering
+        });
         
         if (response.success && response.data) {
-          setProjects(response.data.projects || []);
+          const fetchedProjects = response.data.projects || [];
+          console.log(`[PreConSection: ${heading}] Fetched ${fetchedProjects.length} projects`);
+          setProjects(fetchedProjects);
+        } else {
+          console.warn(`[PreConSection: ${heading}] API response was not successful:`, response);
         }
       } catch (error) {
-        console.error('Error fetching projects:', error);
+        console.error(`[PreConSection: ${heading}] Error fetching projects:`, error);
       } finally {
         setLoading(false);
       }
     };
 
     fetchProjects();
-  }, []);
+  }, [heading]);
 
   // Filter and convert projects based on filter type
   const filteredProjects = useMemo(() => {
-    let filtered: PropertyListing[] = [];
+    let filtered: ApiV1Project[] = [];
 
     if (filter.type === 'high-rise-condos') {
       filtered = projects.filter(project => {
-        if (!project.preCon) return false;
-        const propertyType = project.preCon.details?.propertyType || project.details?.propertyType || '';
-        const subPropertyType = project.preCon.details?.subPropertyType || '';
-        return (
-          (propertyType.toLowerCase().includes('condo') || propertyType.toLowerCase().includes('condominium')) &&
-          subPropertyType.toLowerCase() === 'high-rise'
-        );
+        const propertyType = (project.details?.propertyType || '').toLowerCase();
+        const subPropertyType = (project.details?.subPropertyType || '').toLowerCase();
+        const isCondo = propertyType.includes('condo') || propertyType.includes('condominium');
+        const isHighRise = subPropertyType.includes('high-rise') || subPropertyType.includes('highrise') || subPropertyType === 'high-rise';
+        return isCondo && isHighRise;
       });
     } else if (filter.type === 'low-rise-condos') {
       filtered = projects.filter(project => {
-        if (!project.preCon) return false;
-        const propertyType = project.preCon.details?.propertyType || project.details?.propertyType || '';
-        const subPropertyType = project.preCon.details?.subPropertyType || '';
-        return (
-          (propertyType.toLowerCase().includes('condo') || propertyType.toLowerCase().includes('condominium')) &&
-          subPropertyType.toLowerCase() === 'low-rise'
-        );
+        const propertyType = (project.details?.propertyType || '').toLowerCase();
+        const subPropertyType = (project.details?.subPropertyType || '').toLowerCase();
+        const isCondo = propertyType.includes('condo') || propertyType.includes('condominium');
+        const isLowRise = subPropertyType.includes('low-rise') || subPropertyType.includes('lowrise') || subPropertyType === 'low-rise';
+        return isCondo && isLowRise;
       });
     } else if (filter.type === 'closing-this-year') {
       filtered = projects.filter(project => {
-        if (!project.preCon) return false;
-        const completionDate = project.preCon.completion?.date || '';
+        const completionDate = project.completion?.date || '';
         return completionDate.includes(filter.year);
       });
     } else if (filter.type === 'recently-added') {
-      filtered = [...projects].sort((a, b) => {
-        const dateA = new Date(a.listDate || a.updatedOn || '1970-01-01').getTime();
-        const dateB = new Date(b.listDate || b.updatedOn || '1970-01-01').getTime();
-        return dateB - dateA; // Newest first
-      });
+      // For recently added, we'll sort by a timestamp if available, otherwise keep original order
+      filtered = [...projects];
     }
 
-    return filtered
+    const converted = filtered
       .slice(0, limit)
-      .map(convertToPreConProperty)
+      .map(convertApiV1ToPreConProperty)
       .filter((project): project is PreConstructionProperty => project !== null);
-  }, [projects, filter, limit]);
+    
+    console.log(`[PreConSection: ${heading}] Filter type: ${filter.type}, Filtered: ${filtered.length}, Converted: ${converted.length}`);
+    
+    return converted;
+  }, [projects, filter, limit, heading]);
 
   useEffect(() => {
     if (!carouselApi) {

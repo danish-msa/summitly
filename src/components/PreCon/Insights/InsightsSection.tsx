@@ -38,7 +38,7 @@ export function InsightsSection() {
         {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mt-6 sm:mt-10">
           {/* Average Price Chart */}
-          <Card className="p-4 sm:p-6 border-border bg-card shadow-lg hover:shadow-xl transition-shadow">
+          <Card variant="light" className="p-4 sm:p-6 bg-card hover:shadow-xl transition-shadow">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4 sm:mb-6">
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm sm:text-base font-semibold text-foreground/80 mb-2">
@@ -69,7 +69,7 @@ export function InsightsSection() {
           </Card>
 
           {/* Completions Chart */}
-          <Card className="p-4 sm:p-6 border-border bg-card shadow-lg hover:shadow-xl transition-shadow">
+          <Card variant="light" className="p-4 sm:p-6 bg-card hover:shadow-xl transition-shadow">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4 sm:mb-6">
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm sm:text-base font-semibold text-foreground/80 mb-2">
@@ -96,7 +96,7 @@ export function InsightsSection() {
 
         {/* Additional Metrics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mt-4 sm:mt-6">
-          <Card className="p-4 sm:p-6 border-none bg-card shadow-lg hover:shadow-xl transition-shadow">
+          <Card variant="light" className="p-4 sm:p-6 bg-card hover:shadow-xl transition-shadow">
             <h4 className="text-xs sm:text-sm font-semibold text-muted-foreground mb-2">
               Peak Year
             </h4>
@@ -106,7 +106,7 @@ export function InsightsSection() {
             </p>
           </Card>
 
-          <Card className="p-4 sm:p-6 border-none bg-card shadow-lg hover:shadow-xl transition-shadow">
+          <Card variant="light" className="p-4 sm:p-6 bg-card hover:shadow-xl transition-shadow">
             <h4 className="text-xs sm:text-sm font-semibold text-muted-foreground mb-2">
               Average Growth
             </h4>
@@ -116,7 +116,7 @@ export function InsightsSection() {
             </p>
           </Card>
 
-          <Card className="p-4 sm:p-6 border-none bg-card shadow-lg hover:shadow-xl transition-shadow sm:col-span-2 md:col-span-1">
+          <Card variant="light" className="p-4 sm:p-6 bg-card hover:shadow-xl transition-shadow sm:col-span-2 md:col-span-1">
             <h4 className="text-xs sm:text-sm font-semibold text-muted-foreground mb-2">
               Market Outlook
             </h4>

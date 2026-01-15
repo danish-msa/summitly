@@ -52,7 +52,7 @@ export function FAQ({
 
   return (
     <section className={`w-full py-8 px-4 sm:px-6 lg:px-8 bg-background ${className}`}>
-      <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading 
           heading={heading}
           subheading={subheading}
@@ -65,7 +65,7 @@ export function FAQ({
               <AccordionItem
                 key={faq.id}
                 value={faq.id}
-                className="border bg-white py-2 px-4 rounded-lg"
+                className="border-muted/50 bg-white py-2 px-4 rounded-lg"
               >
                 <AccordionTrigger className="hover:no-underline py-2 text-left group">
                   <div className="flex items-center gap-4 w-full">

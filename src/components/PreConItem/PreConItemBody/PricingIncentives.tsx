@@ -1,15 +1,7 @@
 import React, { useState } from 'react'
-import { CheckCircle2, DollarSign, TrendingUp, Star, Bed, Calculator, Car, Package, FileText, Home, ChevronRight } from "lucide-react"
+import { DollarSign, Bed, Calculator, Car, Package, Home, Plus, Tag } from "lucide-react"
 import { PropertyListing } from '@/lib/types'
 import RequestFurtherInfoModal from './RequestFurtherInfoModal'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
-interface PriceItem {
-  label: string;
-  value: string | null;
-  icon?: React.ComponentType<{ className?: string }>;
-  show?: boolean;
-}
 
 interface Incentive {
   title: string;
@@ -94,41 +86,6 @@ const PricingIncentives: React.FC<PricingIncentivesProps> = ({ property }) => {
     return null;
   };
 
-  const priceData: PriceItem[] = [
-    { 
-      label: "1 Bed From", 
-      value: preCon.priceRange ? formatPrice(preCon.priceRange.min) : (preCon.startingPrice && preCon.startingPrice > 0 ? formatPrice(preCon.startingPrice) : null), 
-      icon: Bed,
-      show: !!(preCon.priceRange || (preCon.startingPrice && preCon.startingPrice > 0))
-    },
-    { 
-      label: "2 Bed From", 
-      value: getBedroomPricing() || (preCon.priceRange ? formatPrice(preCon.priceRange.max) : null), 
-      icon: Bed,
-      show: !!(getBedroomPricing() || preCon.priceRange)
-    },
-    { 
-      label: "Per Sqft", 
-      value: pricePerSqft ? `$${pricePerSqft.toLocaleString()}` : null, 
-      icon: Calculator,
-      show: !!pricePerSqft
-    },
-  ].filter(item => item.show && item.value);
-
-  const additionalPricing: PriceItem[] = []
-  if (extendedPreCon.parkingPrice) {
-    additionalPricing.push({ label: "Parking", value: formatPrice(extendedPreCon.parkingPrice), icon: Car })
-  }
-  if (extendedPreCon.lockerPrice) {
-    additionalPricing.push({ label: "Locker", value: formatPrice(extendedPreCon.lockerPrice), icon: Package })
-  }
-  if (extendedPreCon.assignmentFee) {
-    additionalPricing.push({ label: "Assignment", value: formatPrice(extendedPreCon.assignmentFee), icon: FileText })
-  }
-  if (extendedPreCon.maintenanceFeesPerSqft) {
-    additionalPricing.push({ label: "Maint./sqft", value: `$${extendedPreCon.maintenanceFeesPerSqft.toLocaleString()}`, icon: Home })
-  }
-
   const parsePromotions = (promotionsString: string | null | undefined): Incentive[] => {
     if (!promotionsString) return []
 
@@ -141,113 +98,128 @@ const PricingIncentives: React.FC<PricingIncentivesProps> = ({ property }) => {
 
   const incentives: Incentive[] = parsePromotions(extendedPreCon.promotions)
 
+  // Get 1 Bed and 2 Bed prices
+  const oneBedPrice = preCon.priceRange ? formatPrice(preCon.priceRange.min) : (preCon.startingPrice && preCon.startingPrice > 0 ? formatPrice(preCon.startingPrice) : null)
+  const twoBedPrice = getBedroomPricing() || (preCon.priceRange ? formatPrice(preCon.priceRange.max) : null)
+
   return (
-    <Card variant="transparent">
-      <div className="grid lg:grid-cols-2 gap-4">
-        {/* Pricing Section */}
-        <div className="rounded-lg space-y-3">
-          <div className="flex items-center gap-2 pb-2">
-            <div className="p-1.5 rounded-md bg-primary/10">
-              <DollarSign className="h-4 w-4 text-primary" />
+    <div className="w-full pl-14">
+      <h2 className="text-2xl font-bold text-foreground mb-6">Pricing & Incentives</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Card 1: Price Range */}
+        <div className="bg-muted/20 rounded-lg p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-white shadow-sm rounded-lg flex items-center justify-center">
+              <DollarSign className="h-5 w-5 text-secondary" />
             </div>
-            <span className="font-semibold text-sm text-foreground">Price Range</span>
+            <span className="font-bold text-foreground">Price Range</span>
           </div>
-
-          {/* Main prices - horizontal compact grid */}
-          <div className="grid grid-cols-3 gap-2">
-            {priceData.map((item, index) => {
-              const IconComponent = item.icon || DollarSign;
-              return (
-                <div key={index} className="rounded-md p-2.5 text-center bg-secondary/10">
-                  <IconComponent className="h-3.5 w-3.5 text-primary mx-auto mb-1" />
-                  <div className="text-xs text-muted-foreground mb-0.5">{item.label}</div>
-                  <div className="font-bold text-sm text-foreground">{item.value}</div>
+          
+          <div className="space-y-4">
+            {oneBedPrice && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Bed className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-500">1 Bed From</span>
                 </div>
-              );
-            })}
-          </div>
-
-          {/* Additional costs - inline */}
-          {additionalPricing.length > 0 && (
-            <div className="pt-2">
-              <div className="text-xs text-muted-foreground mb-2">Additional Costs</div>
-              <div className="flex flex-wrap gap-2">
-                {additionalPricing.map((item, index) => {
-                  const IconComponent = item.icon || DollarSign;
-                  return (
-                    <div key={index} className="flex items-center gap-1.5 bg-card rounded-md px-2 py-1 border border-border/50 text-xs">
-                      <IconComponent className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-muted-foreground">{item.label}:</span>
-                      <span className="font-semibold text-foreground">{item.value}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* CTA */}
-          <button 
-            onClick={() => setIsRequestInfoModalOpen(true)}
-            className="w-full mt-2 flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
-          >
-            <span>Get Consultation</span>
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* Incentives Section */}
-        <Card variant="light">
-          <CardHeader>
-            <CardTitle>
-              <div className="flex items-center gap-2">
-                <Star className="h-4 w-4 text-accent" />
-                Limited Time Incentives
-              </div>
-            </CardTitle>
-          </CardHeader>
-
-          <CardContent>
-            {incentives.length > 0 ? (
-              <div className="space-y-2">
-                {incentives.slice(0, 4).map((incentive, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-start gap-2 p-2 rounded-md transition-colors ${
-                      incentive.highlight 
-                        ? 'bg-accent/10 border border-accent/20' 
-                        : 'bg-card border border-border/50'
-                    }`}
-                  >
-                    <CheckCircle2 className={`h-4 w-4 flex-shrink-0 mt-0.5 ${
-                      incentive.highlight ? 'text-accent' : 'text-muted-foreground'
-                    }`} />
-                    <span className={`text-sm ${incentive.highlight ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
-                      {incentive.title}
-                    </span>
-                  </div>
-                ))}
-
-                {incentives.length > 4 && (
-                  <div className="text-xs text-muted-foreground text-center pt-1">
-                    +{incentives.length - 4} more incentives
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
-                <Star className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">No incentives available</p>
+                <span className="font-bold text-foreground">{oneBedPrice}</span>
               </div>
             )}
+            
+            {twoBedPrice && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Bed className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-500">2 Bed From</span>
+                </div>
+                <span className="font-bold text-foreground">{twoBedPrice}</span>
+              </div>
+            )}
+            
+            {oneBedPrice && twoBedPrice && <div className="border-t border-gray-200 my-4"></div>}
+            
+            {pricePerSqft && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Calculator className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-500">Per Sqft</span>
+                </div>
+                <span className="font-bold text-foreground">${pricePerSqft.toLocaleString()}</span>
+              </div>
+            )}
+          </div>
+        </div>
 
-            {/* Competitive badge */}
-            <div className="flex items-center justify-center gap-2 bg-primary/10 text-primary rounded-md py-2 text-xs font-medium">
-              <TrendingUp className="h-3.5 w-3.5" />
-              <span>Competitive Pre-Construction Pricing</span>
+        {/* Card 2: Additional Costs */}
+        <div className="bg-muted/20 rounded-lg p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-white shadow-sm rounded-lg flex items-center justify-center">
+              <Plus className="h-5 w-5 text-secondary" />
             </div>
-          </CardContent>
-        </Card>
+            <span className="font-bold text-foreground">Additional Costs</span>
+          </div>
+          
+          <div className="space-y-4">
+            {extendedPreCon.parkingPrice && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Car className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-500">Parking</span>
+                </div>
+                <span className="font-bold text-foreground">{formatPrice(extendedPreCon.parkingPrice)}</span>
+              </div>
+            )}
+            
+            {extendedPreCon.lockerPrice && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-500">Locker</span>
+                </div>
+                <span className="font-bold text-foreground">{formatPrice(extendedPreCon.lockerPrice)}</span>
+              </div>
+            )}
+            
+            {extendedPreCon.maintenanceFeesPerSqft && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-500">Maint./sqft</span>
+                </div>
+                <span className="font-bold text-foreground">${extendedPreCon.maintenanceFeesPerSqft.toLocaleString()}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Card 3: Limited Time Incentives */}
+        <div className="bg-muted/20 rounded-lg p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-white shadow-sm rounded-lg flex items-center justify-center">
+              <Tag className="h-5 w-5 text-secondary" />
+            </div>
+            <span className="font-bold text-foreground">Limited Time Incentives</span>
+          </div>
+          
+          <div className="flex flex-col items-center justify-center min-h-[120px]">
+            {incentives.length > 0 ? (
+              <div className="space-y-2 w-full">
+                {incentives.slice(0, 3).map((incentive, index) => (
+                  <div key={index} className="text-sm text-muted-foreground text-center">
+                    {incentive.title}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 text-center mb-4">No incentives available</p>
+            )}
+            
+            <button className="w-full mt-4 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-lg py-2 px-4 text-sm font-medium transition-colors">
+              Competitive Pre-Construction Pricing
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Request Further Info Modal */}
@@ -256,7 +228,7 @@ const PricingIncentives: React.FC<PricingIncentivesProps> = ({ property }) => {
         onOpenChange={setIsRequestInfoModalOpen}
         projectName={preCon.projectName}
       />
-    </Card>
+    </div>
   );
 };
 

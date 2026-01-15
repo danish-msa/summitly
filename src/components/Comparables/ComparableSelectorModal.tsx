@@ -24,7 +24,8 @@ const ComparableSelectorModal = ({
   property,
   onComparableValueChange,
 }: ComparableSelectorModalProps) => {
-  const handleComparableValueChange = (averagePrice: number | null) => {
+  const handleComparableValueChange = (averagePrice: number | null, count: number) => {
+    // Only pass the averagePrice to the parent component
     onComparableValueChange?.(averagePrice)
   }
 
@@ -34,7 +35,7 @@ const ComparableSelectorModal = ({
   if (!centerLat || !centerLng) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-7xl max-h-[90vh] p-6 flex flex-col">
+        <DialogContent className="w-screen h-screen max-w-none max-h-none m-0 p-6 flex flex-col rounded-none">
           <DialogHeader>
             <DialogTitle>Select Comparables</DialogTitle>
             <DialogDescription>
@@ -48,20 +49,22 @@ const ComparableSelectorModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-7xl max-h-[90vh] p-6 flex flex-col overflow-hidden">
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent className="w-screen h-screen max-w-none max-h-none m-0 p-6 flex flex-col overflow-hidden sm:rounded-none">
+        {/* <DialogHeader className="flex-shrink-0 mb-4">
           <DialogTitle className="text-2xl font-bold">Select Properties for Comparison</DialogTitle>
           <DialogDescription>
             Select properties from the nearby area to calculate the comparable value. 
             The average price will be calculated automatically.
           </DialogDescription>
-        </DialogHeader>
-        <div className="mt-4 flex-1 min-h-0 overflow-hidden">
+        </DialogHeader> */}
+        <div className="flex-1 min-h-0 overflow-hidden">
           <ComparableSelector
             centerLat={centerLat}
             centerLng={centerLng}
             radius={5}
             basePropertyMlsNumber={property.mlsNumber}
+            baseProperty={property}
+            city={property.address?.city || undefined}
             onComparableValueChange={handleComparableValueChange}
           />
         </div>

@@ -1,8 +1,10 @@
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Facebook, Instagram, Linkedin, MapPin, Phone, Mail } from "lucide-react"
 import ContactMethods from "../ContactMethods/ContactMethods"
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 const XIcon = () => (
   <svg viewBox="0 0 24 24" className="h-4 w-4 sm:h-5 sm:w-5 fill-current" aria-hidden="true">
@@ -11,27 +13,36 @@ const XIcon = () => (
 )
 
 const Footer = () => {
+  const [email, setEmail] = useState('')
+
+  const handleNewsletterSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    // Handle newsletter subscription
+    console.log('Newsletter subscription:', email)
+    setEmail('')
+  }
+
   return (
     <>
     <ContactMethods />
-    <footer className="hidden md:block w-full bg-primary">
+    <footer className="hidden md:block w-full bg-footer">
       {/* Main Footer */}
-      <div className="container-1400 mx-auto py-6 sm:py-8 px-4 sm:px-6 md:px-8">
+      <div className="container-1400 mx-auto py-6 sm:py-16 px-4 sm:px-6 md:px-8">
         <div className="">
           <div className="flex flex-col lg:flex-row justify-between items-start gap-6 sm:gap-8">
             {/* Logo & Social */}
-            <div className="flex flex-col gap-3 sm:gap-4 w-full lg:w-[30%]">
+            <div className="flex flex-col gap-3 sm:gap-4 w-full lg:w-[28%] lg:max-w-[350px]">
               <Link href="/" className="flex">
                 <Image 
                   src="/images/logo/summitly_logo_white.png" 
                   alt="Summitly Logo" 
                   width={120} 
                   height={40}
-                  className="w-auto h-10 sm:h-12 md:h-16"
+                  className="w-auto h-10"
                   priority
                 />
               </Link>
-              <p className="text-xs sm:text-sm text-white leading-relaxed">
+              <p className="text-xs font-light text-white leading-relaxed">
                 Your trusted partner in real estate. We help you find your perfect home, make informed decisions, and connect with expert real estate professionals across Canada.
               </p>
               <div className="flex items-center gap-3 sm:gap-4">
@@ -57,7 +68,7 @@ const Footer = () => {
                   href="https://x.com/summitlycanada" 
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-foreground hover:text-brand-red hover:scale-110 transition-colors" 
+                  className="text-white hover:text-brand-red hover:scale-110 transition-colors" 
                   aria-label="X"
                 >
                   <XIcon />
@@ -74,61 +85,83 @@ const Footer = () => {
               </div>
             </div>
 
-            {/* Info Section */}
-            <div className="flex flex-col gap-3 sm:gap-4 text-sm w-full lg:w-[50%] lg:border-l lg:pl-8 border-t lg:border-t-0 pt-4 lg:pt-0">
-              <div className="flex flex-col gap-2 sm:gap-3 text-white">
-                <div className="flex items-start gap-2">
-                  <MapPin className="h-4 w-4 text-white flex-shrink-0 mt-0.5" />
-                  <span className="text-xs sm:text-sm leading-relaxed">310-3100 Steeles Ave W, Vaughan, ON, L4K 3R1</span>
-                </div>
-                <a href="tel:+15551234567" className="flex items-center gap-2 hover:text-brand-red transition-colors">
-                  <Phone className="h-4 w-4 text-white flex-shrink-0" />
-                  <span className="text-xs sm:text-sm">+1 (555) 123-4567</span>
-                </a>
-                <a href="mailto:info@summitly.com" className="flex items-center gap-2 hover:text-brand-red transition-colors">
-                  <Mail className="h-4 w-4 text-white flex-shrink-0" />
-                  <span className="text-xs sm:text-sm break-all">info@summitly.com</span>
-                </a>
-              </div>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 text-white">
-                <Link href="/privacy-policy" className="text-xs sm:text-sm hover:text-brand-red transition-colors">
-                  Privacy policy
+            {/* Quick Links Column */}
+            <div className="flex flex-col gap-3 sm:gap-4 w-full lg:w-[22%] lg:max-w-[180px]">
+              <h3 className="text-sm sm:text-base font-bold text-white">Quick Links</h3>
+              <nav className="flex flex-col gap-2 sm:gap-3">
+                <Link href="/about" className="text-xs sm:text-sm text-white/50 hover:text-white transition-colors">
+                  About Us
                 </Link>
-                <span className="text-border hidden sm:inline">|</span>
-                <Link href="/terms" className="text-xs sm:text-sm hover:text-brand-red transition-colors">
+                <Link href="/contact" className="text-xs sm:text-sm text-white/50 hover:text-white transition-colors">
+                  Contact Us
+                </Link>
+                <Link href="/faqs" className="text-xs sm:text-sm text-white/50 hover:text-white transition-colors">
+                  FAQs
+                </Link>
+                <Link href="/privacy-policy" className="text-xs sm:text-sm text-white/50 hover:text-white transition-colors">
+                  Privacy Policy
+                </Link>
+                <Link href="/terms" className="text-xs sm:text-sm text-white/50 hover:text-white transition-colors">
                   Terms of Use
                 </Link>
+              </nav>
+            </div>
+
+            {/* Contact Column */}
+            <div className="flex flex-col gap-3 sm:gap-4 w-full lg:w-[25%] lg:max-w-[250px]">
+              <h3 className="text-sm sm:text-base font-bold text-white">Contact</h3>
+              <div className="flex flex-col gap-2 sm:gap-3">
+                <div className="flex items-start gap-2">
+                  <MapPin className="h-4 w-4 text-white/90 flex-shrink-0 mt-0.5" />
+                  <div className="flex flex-col text-xs sm:text-sm text-white/50 leading-relaxed">
+                    <span>310-3100 Steeles Ave W</span>
+                    <span>Vaughan, ON, L4K 3R1</span>
+                  </div>
+                </div>
+                <a href="tel:+15551234567" className="flex items-center gap-2 text-xs sm:text-sm text-white/50 hover:text-white transition-colors">
+                  <Phone className="h-4 w-4 text-white/90 flex-shrink-0" />
+                  <span>+1 (555) 123-4567</span>
+                </a>
+                <a href="mailto:info@summitly.com" className="flex items-center gap-2 text-xs sm:text-sm text-white/50 hover:text-white transition-colors">
+                  <Mail className="h-4 w-4 text-white/90 flex-shrink-0" />
+                  <span>info@summitly.com</span>
+                </a>
               </div>
             </div>
 
-            {/* Quick Links Section */}
-            <div className="flex flex-col gap-3 sm:gap-4 w-full lg:w-[20%] border-t lg:border-t-0 pt-4 lg:pt-0">
-              <p className="text-xs sm:text-sm font-semibold text-white">Quick Links</p>
-              <nav className="flex flex-col gap-2">
-                <Link href="/about" className="text-xs sm:text-sm text-white hover:text-brand-red transition-colors">
-                  About Us
-                </Link>
-                <Link href="/contact" className="text-xs sm:text-sm text-white hover:text-brand-red transition-colors">
-                  Contact Us
-                </Link>
-                <Link href="/faqs" className="text-xs sm:text-sm text-white hover:text-brand-red transition-colors">
-                  FAQs
-                </Link>
-              </nav>
+            {/* Newsletter Column */}
+            <div className="flex flex-col gap-3 sm:gap-4 w-full lg:w-[25%] lg:max-w-[280px]">
+              <h3 className="text-sm sm:text-base font-bold text-white">Newsletter</h3>
+              <p className="text-xs sm:text-sm text-white/50 leading-relaxed">
+                Subscribe to get the latest property updates.
+              </p>
+              <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
+                <Input
+                  type="email"
+                  placeholder="Email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="flex-1 h-10 px-3 text-xs sm:text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/60 rounded-lg focus:ring-2 focus:ring-secondary focus:border-secondary"
+                />
+                <Button
+                  type="submit"
+                  className="h-10 px-4 sm:px-6 bg-secondary hover:bg-secondary/90 text-white rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap"
+                >
+                  Go
+                </Button>
+              </form>
             </div>
           </div>
         </div>
       </div>
-
-      
-
       {/* Disclaimer */}
-      <div className="bg-primary py-4 sm:py-6 px-4 sm:px-6 md:px-8 lg:px-16">
+      <div className="py-4 sm:py-6 px-4 sm:px-6 md:px-8 lg:px-16">
         <div className="max-w-4xl mx-auto">
-          <p className="text-[10px] sm:text-xs text-white leading-relaxed text-center">
+          <p className="text-[10px] font-light sm:text-xs text-white/50 leading-relaxed text-center">
             For listings in Canada, the trademarks REALTOR®, REALTORS®, and the REALTOR® logo are controlled by The Canadian Real Estate Association (CREA) and identify real estate professionals who are members of CREA. The trademarks MLS®, Multiple Listing Service® and the associated logos are owned by CREA and identify the quality of services provided by real estate professionals who are members of CREA. Used under license.
           </p>
-          <p className="text-[10px] sm:text-xs text-white leading-relaxed text-center mt-3 sm:mt-4">
+          <p className="text-[10px] font-light sm:text-xs text-white/50 leading-relaxed text-center mt-3 sm:mt-4">
             ©2025 Summitly. ALL RIGHTS RESERVED
           </p>
         </div>

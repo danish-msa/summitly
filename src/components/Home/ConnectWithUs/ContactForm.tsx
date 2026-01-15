@@ -1,5 +1,6 @@
 'use client';
 import React, { useState } from 'react';
+import { Send } from 'lucide-react';
 
 const ContactForm = () => {
   const [formData, setFormData] = useState({
@@ -25,90 +26,91 @@ const ContactForm = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-black">Let us know how to reach you</h2>
-      
-      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 text-black">
-        {/* First Name & Last Name */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block font-medium text-sm sm:text-base mb-1 sm:mb-2">First Name</label>
-            <input
-              type="text"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
-              required
-              className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg bg-white text-sm sm:text-base"
-            />
-          </div>
-
-          <div>
-            <label className="block font-medium text-sm sm:text-base mb-1 sm:mb-2">Last Name</label>
-            <input
-              type="text"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-              required
-              className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg bg-white text-sm sm:text-base"
-            />
-          </div>
-        </div>
-
-        {/* Email & Phone Number */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block font-medium text-sm sm:text-base mb-1 sm:mb-2">Email Address</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg bg-white text-sm sm:text-base"
-            />
-          </div>
-
-          <div>
-            <label className="block font-medium text-sm sm:text-base mb-1 sm:mb-2">Phone Number</label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              required
-              className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg bg-white text-sm sm:text-base"
-            />
-          </div>
-        </div>
-
-        {/* Agreement Checkbox */}
-        <div className="flex items-start space-x-2 sm:space-x-3">
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {/* First Name & Last Name */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block font-medium text-sm mb-2 text-foreground">First Name</label>
           <input
-            type="checkbox"
-            name="agreement"
-            checked={formData.agreement}
+            type="text"
+            name="firstName"
+            value={formData.firstName}
             onChange={handleChange}
+            placeholder="John"
             required
-            className="w-4 h-4 sm:w-5 sm:h-5 border-gray-300 rounded mt-0.5 sm:mt-1 flex-shrink-0"
+            className="w-full h-12 px-4 border border-gray-300 rounded-xl bg-white text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
           />
-          <label className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-            I agree to receive promotional content from Justo
-          </label>
         </div>
 
-        {/* Submit Button */}
-        <button type="submit" className="w-full bg-blue-600 text-white py-2.5 sm:py-3 rounded-lg hover:bg-blue-700 text-sm sm:text-base font-medium transition-colors">
-          Submit
-        </button>
+        <div>
+          <label className="block font-medium text-sm mb-2 text-foreground">Last Name</label>
+          <input
+            type="text"
+            name="lastName"
+            value={formData.lastName}
+            onChange={handleChange}
+            placeholder="Doe"
+            required
+            className="w-full h-12 px-4 border border-gray-300 rounded-xl bg-white text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
+          />
+        </div>
+      </div>
 
-        {/* Terms and Privacy Notice */}
-        <p className="text-xs sm:text-sm text-gray-500 text-center leading-relaxed">
-          By submitting, you agree with our <a href="#" className="text-blue-600 underline">Terms of Service</a> and <a href="#" className="text-blue-600 underline">Privacy Policy</a>.
-        </p>
-      </form>
-    </div>
+      {/* Email Address */}
+      <div>
+        <label className="block font-medium text-sm mb-2 text-foreground">Email Address</label>
+        <input
+          type="email"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+          placeholder="john@example.com"
+          required
+          className="w-full h-12 px-4 border border-gray-300 rounded-xl bg-white text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
+        />
+      </div>
+
+      {/* Phone Number */}
+      <div>
+        <label className="block font-medium text-sm mb-2 text-foreground">Phone Number</label>
+        <input
+          type="tel"
+          name="phone"
+          value={formData.phone}
+          onChange={handleChange}
+          placeholder="+1 (555) 000-0000"
+          required
+          className="w-full h-12 px-4 border border-gray-300 rounded-xl bg-white text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
+        />
+      </div>
+
+      {/* Agreement Checkbox */}
+      <div className="flex items-start gap-3">
+        <input
+          type="checkbox"
+          name="agreement"
+          checked={formData.agreement}
+          onChange={handleChange}
+          required
+          className="w-4 h-4 border-gray-300 rounded mt-0.5 flex-shrink-0"
+        />
+        <label className="text-xs text-muted-foreground leading-relaxed">
+          I agree to receive promotional content from Summitly. By submitting, you agree with our Terms of Service.
+        </label>
+      </div>
+
+      {/* Submit Button */}
+      <button 
+        type="submit" 
+        className="w-full h-12 rounded-full text-white font-medium flex items-center justify-center gap-2 transition-all duration-300 hover:opacity-90"
+        style={{ 
+          background: 'linear-gradient(135deg, #06B6D4 0%, #3B82F6 50%, #2563EB 100%)' 
+        }}
+      >
+        Submit Request
+        <Send className="w-4 h-4" />
+      </button>
+    </form>
   );
 };
 

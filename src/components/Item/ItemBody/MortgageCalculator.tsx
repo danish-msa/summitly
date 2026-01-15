@@ -92,22 +92,22 @@ export const MortgageCalculator = () => {
       {
         name: 'P & I (Principal and Interest)',
         value: results.monthlyPrincipalAndInterest,
-        itemStyle: { color: '#6366f1' }
+        itemStyle: { color: '#1AC0EB' }
       },
       {
         name: 'Taxes',
         value: monthlyPropertyTax,
-        itemStyle: { color: '#8b5cf6' }
+        itemStyle: { color: '#3b82f6' }
       },
       {
         name: 'Insurance',
         value: monthlyHomeInsurance,
-        itemStyle: { color: '#ec4899' }
+        itemStyle: { color: '#FB3748' }
       },
       {
         name: 'HOA',
         value: monthlyHOA,
-        itemStyle: { color: '#f59e0b' }
+        itemStyle: { color: '#1FC16B' }
       },
       {
         name: 'PMI',
@@ -347,7 +347,7 @@ export const MortgageCalculator = () => {
             <div className="pt-4">
               <Button 
                 variant="default" 
-                className="w-full bg-gradient-to-r from-brand-celestial to-brand-cb-blue hover:bg-brand-midnight text-white px-8 py-6 text-base rounded-lg gap-2"
+                className="w-full px-8 py-6 text-base rounded-lg gap-2"
                 onClick={() => {
                   // Add handler for CTA click
                   console.log('How quickly can I get a mortgage?');

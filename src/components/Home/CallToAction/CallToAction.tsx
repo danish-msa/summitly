@@ -4,7 +4,10 @@ import Image from 'next/image'
 const CallToAction = () => {
   return (
     <div className='pt-2 pb-6 sm:pb-8 md:pb-10 bg-white relative bg-cover bg-center'>
-      <div className='max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-secondary to-primary rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 relative my-4 sm:my-6 md:my-10'>
+      <div 
+        className='max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 relative my-4 sm:my-6 md:my-10'
+        style={{ background: 'linear-gradient(135deg, #06B6D4 25%, #3B82F6 60.36%, #2563EB 95.71%)' }}
+      >
         <div className='flex flex-col sm:flex-row gap-2 sm:gap-4 md:gap-6 items-center'>
           <div className='flex flex-col sm:flex-row items-center gap-2 sm:gap-3 md:gap-4 w-[20%] sm:w-[10%]'>
             <Image 

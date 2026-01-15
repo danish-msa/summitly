@@ -106,6 +106,30 @@ const filterAmenity = (
   switch (categoryId) {
     case 'schools':
       switch (filterLabel) {
+        case 'Public':
+          return name.includes('public school') || 
+                 name.includes('public elementary') ||
+                 name.includes('public secondary') ||
+                 name.includes('public high') ||
+                 (name.includes('school') && !name.includes('catholic') && !name.includes('private') && !name.includes('alternative'));
+        case 'Catholic':
+          return name.includes('catholic') || 
+                 name.includes('st.') ||
+                 name.includes('saint') ||
+                 name.includes('holy');
+        case 'Private':
+          return name.includes('private school') || 
+                 name.includes('private elementary') ||
+                 name.includes('private secondary') ||
+                 (name.includes('academy') && !name.includes('catholic')) ||
+                 (name.includes('college') && !name.includes('catholic') && !name.includes('public'));
+        case 'Alternative':
+          return name.includes('alternative') || 
+                 name.includes('montessori') ||
+                 name.includes('waldorf') ||
+                 name.includes('steiner') ||
+                 name.includes('charter') ||
+                 name.includes('special education');
         case 'Assigned':
           return hasType('school');
         case 'Elementary':
@@ -268,7 +292,7 @@ export const CategoryContent = ({
     return filterAmenity(item, activeFilter, category.id, activeFilterObj?.types);
   });
 
-  const displayItems = showAll ? filteredItems : filteredItems.slice(0, 5);
+  const displayItems = showAll ? filteredItems : filteredItems.slice(0, 4);
 
   return (
     <div className="space-y-6">
@@ -284,7 +308,7 @@ export const CategoryContent = ({
         </div>
       ) : (
         <>
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {displayItems.map((item) => (
               <AmenityCard 
                 key={item.id} 
@@ -296,7 +320,7 @@ export const CategoryContent = ({
             ))}
           </div>
 
-          {filteredItems.length > 5 && (
+          {filteredItems.length > 4 && (
             <button
               onClick={onToggleShowAll}
               className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"

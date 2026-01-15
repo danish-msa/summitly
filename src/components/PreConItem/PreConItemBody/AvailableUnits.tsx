@@ -211,7 +211,7 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full pl-14">
       {/* Header */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-foreground mb-2">
@@ -336,9 +336,9 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, propertyId }) => {
   
   return (
     <Link href={`/pre-con/${propertyId}/${unitSlug}`} className="block">
-      <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+      <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer p-4">
         <CardContent className="p-0">
-          <div className="flex flex-col md:flex-row gap-4 p-2">
+          <div className="flex flex-col md:flex-row gap-4">
           {/* Floorplan Image */}
           <div className="flex-shrink-0">
             <img
@@ -352,11 +352,11 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, propertyId }) => {
           </div>
 
           {/* Details */}
-          <div className="flex-1 space-y-2">
-            <div className="flex items-center justify-between gap-2 w-full flex-1">
-              <div className="flex flex-col gap-1">
+          <div className="flex-1 space-y-4">
+            <div className="flex items-center justify-between gap-10 w-full flex-1">
+              <div className="flex flex-col gap-2">
                 <h3 className="text-base font-semibold text-foreground">{unit.name}</h3>
-                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <div className="flex items-center gap-6 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Bed className="w-4 h-4" />
                     <span>{unit.beds === 2 && unit.name.includes("+") ? "2+1" : unit.beds}</span>

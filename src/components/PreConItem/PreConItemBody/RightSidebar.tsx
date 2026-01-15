@@ -16,7 +16,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({ property }) => {
   return (
     <div className="w-full flex flex-col gap-4">
       {/* Request Further Info CTA */}
-      <Card variant="light">
+      <Card variant="light" className="bg-white shadow-lg">
         <CardContent className="p-6">
           <div className="space-y-4">
             <div className="text-center">
@@ -41,7 +41,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({ property }) => {
       </Card>
 
       {/* CTA Block */}
-      <Card className="bg-gradient-to-r from-brand-celestial to-brand-cb-blue text-primary-foreground">
+      <Card className="price-card-gradient text-primary-foreground">
         <CardContent className="px-4 py-6">
           <div className="space-y-4">
             <div className="text-center">

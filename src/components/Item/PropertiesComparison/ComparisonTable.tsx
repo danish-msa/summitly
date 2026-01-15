@@ -341,7 +341,7 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({
     {
       key: 'property',
       header: 'Property',
-      className: 'sticky left-0 z-10 bg-white whitespace-nowrap',
+      className: 'sticky left-0 z-10 bg-gray-50 whitespace-nowrap',
       render: (row) => (
         <Link href={getPropertyUrlFromListing(row.property)} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           {row.isCurrent ? (

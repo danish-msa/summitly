@@ -87,37 +87,99 @@ async function handler(request: NextRequest) {
   })
 
   // Fetch developer names for all projects
-  const developerIds = [...new Set(projects.map(p => p.developer).filter(Boolean) as string[])]
+  const developerValues = [...new Set(projects.map(p => p.developer).filter(Boolean) as string[])]
   const developerNamesMap = new Map<string, string>()
   
-  if (developerIds.length > 0) {
+  if (developerValues.length > 0) {
     try {
-      const developers = await prisma.developmentTeam.findMany({
-        where: {
-          id: { in: developerIds },
-        },
-        select: {
-          id: true,
-          name: true,
-        },
+      // Separate IDs from names
+      // CUIDs are typically 25 characters, alphanumeric, lowercase
+      // But they can vary, so we check if it looks like an ID (not a name with spaces/special chars)
+      const potentialIds = developerValues.filter(id => {
+        // Check if it looks like a CUID: 20-30 chars, alphanumeric, lowercase
+        return id.length >= 20 && id.length <= 30 && /^[a-z0-9]+$/.test(id)
       })
+      const potentialNames = developerValues.filter(id => !potentialIds.includes(id))
       
-      developers.forEach(dev => {
-        developerNamesMap.set(dev.id, dev.name)
-      })
+      // Fetch developers by ID
+      if (potentialIds.length > 0) {
+        const developers = await prisma.developmentTeam.findMany({
+          where: {
+            id: { in: potentialIds },
+          },
+          select: {
+            id: true,
+            name: true,
+          },
+        })
+        
+        developers.forEach(dev => {
+          developerNamesMap.set(dev.id, dev.name)
+        })
+        
+        // Log missing developers for debugging
+        const foundIds = new Set(developers.map(d => d.id))
+        const missingIds = potentialIds.filter(id => !foundIds.has(id))
+        if (missingIds.length > 0 && process.env.NODE_ENV === 'development') {
+          console.warn(`[API v1] ${missingIds.length} developer IDs not found in DevelopmentTeam table. Sample:`, missingIds.slice(0, 3))
+        }
+      }
+      
+      // For potential names, check if they exist in the table (case-insensitive)
+      // This handles cases where developer field already contains a name
+      if (potentialNames.length > 0) {
+        const developersByName = await prisma.developmentTeam.findMany({
+          where: {
+            name: {
+              in: potentialNames,
+              mode: 'insensitive',
+            },
+          },
+          select: {
+            id: true,
+            name: true,
+          },
+        })
+        
+        // Create a map from input name to canonical name from DB
+        potentialNames.forEach(inputName => {
+          const found = developersByName.find(d => d.name.toLowerCase() === inputName.toLowerCase())
+          if (found) {
+            developerNamesMap.set(inputName, found.name) // Use canonical name from DB
+          }
+        })
+      }
     } catch (error) {
       console.error('[API v1] Error fetching developer names:', error)
     }
   }
 
   // Helper to get developer name
-  const getDeveloperName = (developerId: string | null): string => {
-    if (!developerId) return ''
-    // Check if it's already a name (not an ID format)
-    if (!developerId.match(/^[a-z0-9]{25}$/)) {
-      return developerId // It's already a name
+  const getDeveloperName = (developerValue: string | null): string => {
+    if (!developerValue) return ''
+    
+    // Check if we already have a mapped name
+    if (developerNamesMap.has(developerValue)) {
+      return developerNamesMap.get(developerValue)!
     }
-    return developerNamesMap.get(developerId) || developerId
+    
+    // Check if it's already a name (contains spaces, special chars, or doesn't look like an ID)
+    const looksLikeName = developerValue.includes(' ') || 
+                          developerValue.includes('-') || 
+                          developerValue.length < 20 ||
+                          !/^[a-z0-9]+$/i.test(developerValue)
+    
+    if (looksLikeName) {
+      return developerValue // It's already a name, use it as-is
+    }
+    
+    // It's an ID that wasn't found in the database
+    // This means the developer doesn't exist in DevelopmentTeam table
+    // Return the ID but log a warning in development
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(`[API v1] Developer ID "${developerValue}" not found in DevelopmentTeam table. Consider adding this developer or updating the project's developer field.`)
+    }
+    return developerValue // Return ID as fallback
   }
 
   // Format projects

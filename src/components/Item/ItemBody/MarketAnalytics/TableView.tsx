@@ -134,7 +134,7 @@ export const TableView = ({
                   <TableCell className="font-medium">{month}</TableCell>
                   <TableCell className="text-right">
                     <span className="inline-flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-blue-500" />
+                      <span className="w-2 h-2 rounded-full bg-secondary" />
                       {listingsData.newListings[index]} listings
                     </span>
                   </TableCell>

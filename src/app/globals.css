@@ -345,6 +345,11 @@
     @apply text-base hover:text-primary hover:underline cursor-pointer opacity-60 mb-3 w-fit
   }
 
+  /* Footer Background */
+  .bg-footer {
+    background-color: #06262F;
+  }
+
   /* Flat Slider Background */
   .flat-slider {
     position: relative;

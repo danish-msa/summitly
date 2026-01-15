@@ -25,6 +25,7 @@ const PriceCard = ({ property, rawProperty, isPreCon = false, isRent = false }: 
   const [isLoadingComparables, setIsLoadingComparables] = useState(false)
   const [isComparableModalOpen, setIsComparableModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const [comparableValueFromModal, setComparableValueFromModal] = useState<number | null>(null)
 
   const { savedComparables } = useSavedComparables(property.mlsNumber)
   
@@ -73,11 +74,17 @@ const PriceCard = ({ property, rawProperty, isPreCon = false, isRent = false }: 
   }, [savedComparablesKey])
 
   // Calculate comparable value (average price of saved comparables)
+  // Use value from modal if available, otherwise calculate from properties
   const comparableValue = useMemo(() => {
+    // If we have a value from the modal, use it (most up-to-date)
+    if (comparableValueFromModal !== null) {
+      return comparableValueFromModal
+    }
+    // Otherwise, calculate from fetched properties
     if (comparableProperties.length === 0) return null
     const sum = comparableProperties.reduce((acc, p) => acc + p.listPrice, 0)
     return sum / comparableProperties.length
-  }, [comparableProperties])
+  }, [comparableProperties, comparableValueFromModal])
 
   // Extract values from props
   const estimatedValue = rawProperty?.estimate?.value || property.listPrice || 650000
@@ -217,8 +224,8 @@ const PriceCard = ({ property, rawProperty, isPreCon = false, isRent = false }: 
           }}
           property={property}
           onComparableValueChange={(averagePrice) => {
-            // The comparable value will be updated automatically via the hook
-            // This callback can be used for additional actions if needed
+            // Update the comparable value directly from the modal
+            setComparableValueFromModal(averagePrice)
           }}
         />
       )}

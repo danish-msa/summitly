@@ -13,6 +13,14 @@ import Documents from '../ItemBody/Documents'
 import Features from './Features'
 import MarketAnalytics from './MarketAnalytics'
 import Calculators from './Calculators'
+import PricingIncentives from '../../PreConItem/PreConItemBody/PricingIncentives'
+import DepositStructure from '../../PreConItem/PreConItemBody/DepositStructure'
+import AvailableUnits from '../../PreConItem/PreConItemBody/AvailableUnits'
+import ProjectAmenities from '../../PreConItem/PreConItemBody/ProjectAmenities'
+import { NeighborhoodAmenities } from '../ItemBody/NeighborhoodAmenities'
+import { LifestyleAmenities } from '../ItemBody/LifestyleAmenities'
+import Demographics from '../ItemBody/Demographics'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface NewItemBodyProps {
   property: PropertyListing;
@@ -36,7 +44,9 @@ const NewItemBody = forwardRef<NewItemBodyRef, NewItemBodyProps>(({
   activeTab: externalActiveTab,
   onTabChange
 }, ref) => {
-  const [internalActiveTab, setInternalActiveTab] = useState("avm-breakdown")
+  // Set default tab based on property type
+  const defaultTab = isPreCon ? "listing-details" : "avm-breakdown"
+  const [internalActiveTab, setInternalActiveTab] = useState(defaultTab)
   const sectionRef = React.useRef<HTMLDivElement>(null)
   
   // Use external activeTab if provided, otherwise use internal state
@@ -65,21 +75,26 @@ const NewItemBody = forwardRef<NewItemBodyRef, NewItemBodyProps>(({
     }
   }))
 
+  // Check if documents exist
+  const hasDocuments = property.preCon?.documents && property.preCon.documents.length > 0
+
   return (
     <div ref={sectionRef} className="w-full">
       <CurvedTabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <CurvedTabsList className="w-full justify-start">
-          {!isRent && <CurvedTabsTrigger value="avm-breakdown">AVM Breakdown</CurvedTabsTrigger>}
+          {!isRent && !isPreCon && <CurvedTabsTrigger value="avm-breakdown">AVM Breakdown</CurvedTabsTrigger>}
           <CurvedTabsTrigger value="listing-details">Listing Details</CurvedTabsTrigger>
-          {!isRent && <CurvedTabsTrigger value="history">History</CurvedTabsTrigger>}
+          {!isRent && !isPreCon && <CurvedTabsTrigger value="history">History</CurvedTabsTrigger>}
+          {isPreCon && <CurvedTabsTrigger value="pricing-incentives">Pricing & Incentives</CurvedTabsTrigger>}
+          {isPreCon && <CurvedTabsTrigger value="deposit-structure">Deposit Structure</CurvedTabsTrigger>}
+          {isPreCon && <CurvedTabsTrigger value="available-units">Available Units</CurvedTabsTrigger>}
           <CurvedTabsTrigger value="features">Features</CurvedTabsTrigger>
-          <CurvedTabsTrigger value="location">Location</CurvedTabsTrigger>
-          {!isRent && <CurvedTabsTrigger value="market-analytics">Market Analytics</CurvedTabsTrigger>}
+          {!isRent && !isPreCon && <CurvedTabsTrigger value="market-analytics">Market Analytics</CurvedTabsTrigger>}
           {!isRent && <CurvedTabsTrigger value="calculators">Calculators</CurvedTabsTrigger>}
-          <CurvedTabsTrigger value="documents">Documents</CurvedTabsTrigger>
+          {hasDocuments && <CurvedTabsTrigger value="documents">Documents</CurvedTabsTrigger>}
         </CurvedTabsList>
 
-        {!isRent && (
+        {!isRent && !isPreCon && (
           <CurvedTabsContent value="avm-breakdown">
             <AVMBreakdown property={property} rawProperty={rawProperty} />
           </CurvedTabsContent>
@@ -90,7 +105,7 @@ const NewItemBody = forwardRef<NewItemBodyRef, NewItemBodyProps>(({
           <PropertyListingDetails data={generatePropertyDetailsData(property)} property={property} />
         </CurvedTabsContent>
 
-        {!isRent && (
+        {!isRent && !isPreCon && (
           <CurvedTabsContent value="history">
             <PropertyHistory 
               listingHistory={generatePropertyDetailsData(property, rawProperty).listingHistory} 
@@ -100,15 +115,31 @@ const NewItemBody = forwardRef<NewItemBodyRef, NewItemBodyProps>(({
           </CurvedTabsContent>
         )}
 
+        {isPreCon && (
+          <CurvedTabsContent value="pricing-incentives">
+            <PricingIncentives property={property} />
+          </CurvedTabsContent>
+        )}
+
+        {isPreCon && (
+          <CurvedTabsContent value="deposit-structure">
+            <DepositStructure property={property} />
+          </CurvedTabsContent>
+        )}
+
+        {isPreCon && (
+          <CurvedTabsContent value="available-units">
+            <AvailableUnits property={property} />
+          </CurvedTabsContent>
+        )}
+
+
         <CurvedTabsContent value="features">
           <Features property={property} rawProperty={rawProperty} isPreCon={isPreCon} isRent={isRent} />
         </CurvedTabsContent>
 
-        <CurvedTabsContent value="location">
-          {/* Location content will go here */}
-        </CurvedTabsContent>
 
-        {!isRent && (
+        {!isRent && !isPreCon && (
           <CurvedTabsContent value="market-analytics">
             <MarketAnalytics property={property} rawProperty={rawProperty} isPreCon={isPreCon} isRent={isRent} />
           </CurvedTabsContent>
@@ -120,9 +151,11 @@ const NewItemBody = forwardRef<NewItemBodyRef, NewItemBodyProps>(({
           </CurvedTabsContent>
         )}
 
-        <CurvedTabsContent value="documents">
-          <Documents property={property} rawProperty={rawProperty} />
-        </CurvedTabsContent>
+        {hasDocuments && (
+          <CurvedTabsContent value="documents">
+            <Documents property={property} rawProperty={rawProperty} />
+          </CurvedTabsContent>
+        )}
       </CurvedTabs>
     </div>
   )

@@ -46,9 +46,9 @@ const CardView: React.FC<CardViewProps> = ({
   }
 
   return (
-    <div className="flex flex-col md:flex-row gap-6 h-full min-h-0">
+    <div className="flex flex-col md:flex-row gap-6 h-[600px] min-h-0 overflow-hidden">
       {/* Map View - Left Side */}
-      <div className="md:w-1/2 bg-gray-100 rounded-lg overflow-hidden min-h-0 flex-shrink-0" style={{ minHeight: '500px' }}>
+      <div className="md:w-1/2 bg-gray-100 rounded-lg overflow-hidden min-h-0 flex-shrink-0 h-full">
         <GooglePropertyMap 
           properties={allProperties}
           selectedProperty={selectedProperty}
@@ -58,8 +58,11 @@ const CardView: React.FC<CardViewProps> = ({
       </div>
 
       {/* Property Cards - Right Side */}
-      <div className="md:w-1/2 flex flex-col min-h-0">
-        <div className="flex-1 overflow-y-auto mb-2 min-h-0" data-listings-container>
+      <div className="md:w-1/2 flex flex-col min-h-0 h-full overflow-hidden">
+        <div 
+          className="flex-1 overflow-y-auto overflow-x-hidden mb-2 min-h-0 pr-2" 
+          data-listings-container
+        >
           {allProperties.length === 0 ? (
             <div className="text-center py-10">
               <p className="text-gray-500 text-lg">No properties to display.</p>

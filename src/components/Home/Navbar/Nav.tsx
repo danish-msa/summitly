@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { ChevronDown, Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { BuyMegaMenu } from './BuyMegaMenu';
 import { RentMegaMenu } from './RentMegaMenu';
 import { ProjectsMegaMenu } from './ProjectsMegaMenu';
@@ -204,11 +205,11 @@ const Nav = ({ openNav }: Props) => {
                     className="relative"
                   >
                     <Image
-                      src="/images/logo/summitly_logo.png"
+                      src="/images/logo/summitly-logo.png"
                       alt="Summitly Logo"
                       width={200}
                       height={60}
-                      className="h-8 lg:h-10 w-auto transition-all duration-300"
+                      className="h-7 w-auto transition-all duration-300"
                       priority
                       quality={75}
                     />
@@ -320,9 +321,7 @@ const Nav = ({ openNav }: Props) => {
             <div className="flex items-center space-x-2 lg:space-x-3">
               {/* AI Button */}
               <div className="hidden lg:flex">
-                <AIButton size="sm">
-                  AI Assistant
-                </AIButton>
+                <AIButton size="sm" />
               </div>
               
               {/* Search Input Field */}
@@ -347,7 +346,7 @@ const Nav = ({ openNav }: Props) => {
                         <X className="h-4 w-4 text-gray-500" />
                       </button>
                     )}
-                    <Search className="h-8 w-8 p-2 rounded-full text-white btn-gradient-dark cursor-pointer transition-colors" />
+                    <Search className="h-8 w-8 p-2 rounded-full text-white price-card-gradient cursor-pointer transition-colors" />
                   </div>
                 </div>
               </div>
@@ -361,19 +360,21 @@ const Nav = ({ openNav }: Props) => {
                   <UserProfileDropdown />
                 </motion.div>
               ) : (
-                <motion.button
-                  onClick={handleLoginClick}
-                  className="flex items-center space-x-2 px-3 py-2 text-sm lg:text-base font-medium bg-primary text-white hover:bg-white hover:text-brand-cb-blue transition-colors rounded-full"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5, delay: 0.4 }}
                 >
-                  <FaUserCircle className="w-4 h-4" />
-                  <span className="hidden sm:inline">Login / Signup</span>
-                  <span className="sm:hidden">Login</span>
-                </motion.button>
+                  <Button
+                    onClick={handleLoginClick}
+                    className="flex items-center space-x-2 rounded-full"
+                    variant="default"
+                  >
+                    <FaUserCircle className="w-4 h-4" />
+                    <span className="hidden sm:inline">Login / Signup</span>
+                    <span className="sm:hidden">Login</span>
+                  </Button>
+                </motion.div>
               )}
 
               {/* Mobile Menu Button (for original mobile nav) */}

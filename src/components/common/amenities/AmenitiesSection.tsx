@@ -25,33 +25,62 @@ export const AmenitiesSection = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Initialize activeFilter state for all categories
+  // For schools, default to "Public"
   useEffect(() => {
     const initialFilters: Record<string, string> = {};
     categoryDefinitions.forEach(cat => {
-      initialFilters[cat.id] = "All";
+      // Schools default to "Public", others default to "All"
+      initialFilters[cat.id] = cat.id === 'schools' ? "Public" : "All";
     });
     setActiveFilter(initialFilters);
   }, [categoryDefinitions]);
 
-  // Fetch amenities for a specific category
-  const fetchCategoryData = async (categoryId: string) => {
+  // Fetch amenities for a specific category with optional filter
+  const fetchCategoryData = async (categoryId: string, filter?: string) => {
     if (!latitude || !longitude) {
       setError('Location coordinates are required');
       return;
     }
 
-    // Check if already loaded
-    if (categories.find(cat => cat.id === categoryId)) {
-      return;
+    // For schools, check if we need to fetch based on filter
+    // Only fetch if filter is selected (lazy loading)
+    if (categoryId === 'schools' && !filter) {
+      return; // Don't fetch until a filter is selected
+    }
+
+    // Check if already loaded for this filter combination
+    if (categoryId === 'schools' && filter) {
+      // For schools, check if we already have data for this specific filter
+      const existing = categories.find(cat => cat.id === categoryId);
+      if (existing && activeFilter[categoryId] === filter) {
+        return; // Already loaded for this filter
+      }
+    } else {
+      // For non-schools, check if category is already loaded
+      if (categories.find(cat => cat.id === categoryId)) {
+        return; // Already loaded
+      }
     }
 
     setLoading(prev => ({ ...prev, [categoryId]: true }));
     setError(null);
 
     try {
-      const response = await fetch(
-        `${apiEndpoint}?lat=${latitude}&lng=${longitude}&category=${categoryId}`
-      );
+      // Build URL with schoolType parameter for schools
+      // Handle both absolute and relative URLs
+      const baseUrl = apiEndpoint.startsWith('http') 
+        ? apiEndpoint 
+        : `${window.location.origin}${apiEndpoint}`;
+      
+      const url = new URL(baseUrl);
+      url.searchParams.set('lat', latitude.toString());
+      url.searchParams.set('lng', longitude.toString());
+      url.searchParams.set('category', categoryId);
+      if (categoryId === 'schools' && filter && filter !== 'All') {
+        url.searchParams.set('schoolType', filter);
+      }
+
+      const response = await fetch(url.toString());
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -66,6 +95,12 @@ export const AmenitiesSection = ({
       }
 
       setCategories(prev => {
+        // For schools, replace existing data when filter changes
+        if (categoryId === 'schools' && filter) {
+          const filtered = prev.filter(cat => cat.id !== categoryId);
+          return [...filtered, data.category];
+        }
+        // For other categories, only add if not exists
         const existing = prev.find(cat => cat.id === categoryId);
         if (existing) return prev;
         return [...prev, data.category];
@@ -81,7 +116,15 @@ export const AmenitiesSection = ({
   // Fetch data when tab changes
   useEffect(() => {
     if (latitude && longitude && activeTab) {
-      fetchCategoryData(activeTab);
+      const currentFilter = activeFilter[activeTab];
+      // For schools, only fetch if filter is selected (default is "Public")
+      if (activeTab === 'schools') {
+        if (currentFilter && currentFilter !== 'All') {
+          fetchCategoryData(activeTab, currentFilter);
+        }
+      } else {
+        fetchCategoryData(activeTab);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, latitude, longitude]);
@@ -89,7 +132,13 @@ export const AmenitiesSection = ({
   // Fetch initial category on mount
   useEffect(() => {
     if (latitude && longitude && categoryDefinitions[0]?.id) {
-      fetchCategoryData(categoryDefinitions[0].id);
+      const categoryId = categoryDefinitions[0].id;
+      // For schools, fetch with default "Public" filter
+      if (categoryId === 'schools') {
+        fetchCategoryData(categoryId, 'Public');
+      } else {
+        fetchCategoryData(categoryId);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latitude, longitude]);
@@ -98,6 +147,11 @@ export const AmenitiesSection = ({
 
   const handleFilterChange = (filter: string) => {
     setActiveFilter({ ...activeFilter, [activeTab]: filter });
+    
+    // For schools, fetch data when filter changes (lazy loading)
+    if (activeTab === 'schools' && latitude && longitude) {
+      fetchCategoryData(activeTab, filter);
+    }
   };
 
   const handleToggleShowAll = () => {

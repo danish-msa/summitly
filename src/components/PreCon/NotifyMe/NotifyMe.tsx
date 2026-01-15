@@ -58,14 +58,14 @@ const NotifyMe: React.FC = () => {
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-12 pl-6 rounded-full rounded-r-none text-[#CBF4FA] placeholder:text-[#CBF4FA] bg-transparent border-[#CBF4FA] focus:border-[#CBF4FA]"
+                  className="pl-8 rounded-full rounded-r-none text-[#CBF4FA] placeholder:text-[#CBF4FA] bg-transparent border-[#CBF4FA] focus:border-[#CBF4FA]"
                   required
                 />
               </div>
               <Button
                 type="submit"
                 disabled={isSubmitting || isSubmitted}
-                className="h-12 px-8 bg-[#CBF4FA] hover:bg-foreground/90 hover:text-[#CBF4FA] text-[#006CAD] font-medium rounded-l-none whitespace-nowrap"
+                className="h-10 px-8 bg-[#CBF4FA] hover:bg-foreground/90 hover:text-[#CBF4FA] text-[#006CAD] font-medium rounded-l-none whitespace-nowrap"
               >
                 {isSubmitting ? (
                   'Submitting...'

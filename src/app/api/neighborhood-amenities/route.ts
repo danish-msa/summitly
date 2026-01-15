@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
+// Cache configuration - amenities don't change frequently
+// Cache for 7 days (604800 seconds) - reduces API calls by ~99%
+export const revalidate = 604800; // 7 days in seconds
+export const dynamic = 'force-dynamic'; // Allow dynamic params but cache responses
+
 // Google Places API types
 interface GooglePlace {
   place_id: string;
@@ -43,6 +48,38 @@ const CATEGORY_CONFIG = {
     radius: 5000, // 5km
     filters: {
       'All': (_place: GooglePlace) => true,
+      'Public': (place: GooglePlace) => {
+        const name = place.name.toLowerCase();
+        return name.includes('public school') || 
+               name.includes('public elementary') ||
+               name.includes('public secondary') ||
+               name.includes('public high') ||
+               (name.includes('school') && !name.includes('catholic') && !name.includes('private') && !name.includes('alternative'));
+      },
+      'Catholic': (place: GooglePlace) => {
+        const name = place.name.toLowerCase();
+        return name.includes('catholic') || 
+               name.includes('st.') ||
+               name.includes('saint') ||
+               name.includes('holy');
+      },
+      'Private': (place: GooglePlace) => {
+        const name = place.name.toLowerCase();
+        return name.includes('private school') || 
+               name.includes('private elementary') ||
+               name.includes('private secondary') ||
+               (name.includes('academy') && !name.includes('catholic')) ||
+               (name.includes('college') && !name.includes('catholic') && !name.includes('public'));
+      },
+      'Alternative': (place: GooglePlace) => {
+        const name = place.name.toLowerCase();
+        return name.includes('alternative') || 
+               name.includes('montessori') ||
+               name.includes('waldorf') ||
+               name.includes('steiner') ||
+               name.includes('charter') ||
+               name.includes('special education');
+      },
       'Assigned': (place: GooglePlace) => place.types.includes('school'),
       'Elementary': (place: GooglePlace) => 
         place.name.toLowerCase().includes('elementary') || 
@@ -271,23 +308,57 @@ async function calculateTravelTimes(
     try {
       const walkUrl = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin.lat},${origin.lng}&destinations=${destString}&mode=walking&key=${GOOGLE_MAPS_API_KEY}`;
       const walkResponse = await fetch(walkUrl);
+      
+      if (!walkResponse.ok) {
+        throw new Error(`Distance Matrix API error: ${walkResponse.statusText}`);
+      }
+      
       const walkData: DistanceMatrixResponse = await walkResponse.json();
+      
+      if (walkData.status !== 'OK') {
+        console.error(`Distance Matrix API error (walking): ${walkData.status}`, walkData);
+        // Don't throw - continue with fallback
+      }
 
       // Get driving time
       const driveUrl = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin.lat},${origin.lng}&destinations=${destString}&mode=driving&key=${GOOGLE_MAPS_API_KEY}`;
       const driveResponse = await fetch(driveUrl);
+      
+      if (!driveResponse.ok) {
+        throw new Error(`Distance Matrix API error: ${driveResponse.statusText}`);
+      }
+      
       const driveData: DistanceMatrixResponse = await driveResponse.json();
+      
+      if (driveData.status !== 'OK') {
+        console.error(`Distance Matrix API error (driving): ${driveData.status}`, driveData);
+        // Don't throw - continue with fallback
+      }
 
       // Process results
-      for (let j = 0; j < batch.length; j++) {
-        const walkElement = walkData.rows[0]?.elements[j];
-        const driveElement = driveData.rows[0]?.elements[j];
+      if (walkData.status === 'OK' && driveData.status === 'OK' && walkData.rows && driveData.rows) {
+        for (let j = 0; j < batch.length; j++) {
+          const walkElement = walkData.rows[0]?.elements[j];
+          const driveElement = driveData.rows[0]?.elements[j];
 
-        const walkTime = walkElement?.duration?.text || 'N/A';
-        const driveTime = driveElement?.duration?.text || 'N/A';
-        const distance = walkElement?.distance?.text || driveElement?.distance?.text || 'N/A';
+          // Check if the element status is OK
+          const walkTime = (walkElement?.status === 'OK' && walkElement?.duration?.text) 
+            ? walkElement.duration.text 
+            : 'N/A';
+          const driveTime = (driveElement?.status === 'OK' && driveElement?.duration?.text) 
+            ? driveElement.duration.text 
+            : 'N/A';
+          const distance = (walkElement?.status === 'OK' && walkElement?.distance?.text) 
+            ? walkElement.distance.text 
+            : (driveElement?.status === 'OK' && driveElement?.distance?.text) 
+              ? driveElement.distance.text 
+              : 'N/A';
 
-        results.push({ walkTime, driveTime, distance });
+          results.push({ walkTime, driveTime, distance });
+        }
+      } else {
+        // If API call failed, use fallback for this batch
+        throw new Error(`Distance Matrix API returned non-OK status`);
       }
     } catch (error) {
       console.error('Error calculating travel times:', error);
@@ -345,6 +416,7 @@ export async function GET(request: NextRequest) {
     const lat = parseFloat(searchParams.get('lat') || '');
     const lng = parseFloat(searchParams.get('lng') || '');
     const category = searchParams.get('category') || 'schools';
+    const schoolType = searchParams.get('schoolType'); // For schools: Public, Catholic, Private, Alternative
 
     if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
       return NextResponse.json(
@@ -369,21 +441,38 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch nearby places
-    const places = await fetchNearbyPlaces(lat, lng, config.types, config.radius);
+    // For schools, we need all places to calculate filter counts, then filter results
+    const allPlaces = await fetchNearbyPlaces(lat, lng, config.types, config.radius);
+    
+    // For schools category, filter by schoolType if provided (but keep allPlaces for filter counts)
+    let places = allPlaces;
+    if (category === 'schools' && schoolType && schoolType !== 'All') {
+      const schoolTypeFilter = config.filters[schoolType as keyof typeof config.filters];
+      if (schoolTypeFilter) {
+        places = allPlaces.filter(schoolTypeFilter);
+      }
+    }
 
     // If no places found, return empty results
     if (places.length === 0) {
-      return NextResponse.json({
-        category: {
-          id: category,
-          label: category.charAt(0).toUpperCase() + category.slice(1),
-          items: [],
-          filters: Object.keys(config.filters).map(filterLabel => ({
-            label: filterLabel,
-            count: 0,
-          })),
+      return NextResponse.json(
+        {
+          category: {
+            id: category,
+            label: category.charAt(0).toUpperCase() + category.slice(1),
+            items: [],
+            filters: Object.keys(config.filters).map(filterLabel => ({
+              label: filterLabel,
+              count: 0,
+            })),
+          },
         },
-      });
+        {
+          headers: {
+            'Cache-Control': 'public, s-maxage=604800, stale-while-revalidate=86400',
+          },
+        }
+      );
     }
 
     // Sort by distance
@@ -450,11 +539,27 @@ export async function GET(request: NextRequest) {
     const amenities = amenitiesWithPlaces.map(item => item.amenity);
 
     // Generate dynamic filters based on actual places found
-    const generateDynamicFilters = (places: GooglePlace[]): Array<{ label: string; count: number }> => {
+    // For schools, use allPlaces to calculate filter counts (not filtered places)
+    const placesForFilterCounts = category === 'schools' ? allPlaces : places;
+    const generateDynamicFilters = (placesForCounts: GooglePlace[]): Array<{ label: string; count: number }> => {
       const mergedFilters = new Map<string, { label: string; count: number }>();
       
-      // Always include "All" filter first
-      mergedFilters.set('All', { label: 'All', count: places.length });
+      // For schools, add school type filters first
+      if (category === 'schools') {
+        // Calculate counts for each school type using all places
+        const publicCount = placesForCounts.filter(config.filters['Public']).length;
+        const catholicCount = placesForCounts.filter(config.filters['Catholic']).length;
+        const privateCount = placesForCounts.filter(config.filters['Private']).length;
+        const alternativeCount = placesForCounts.filter(config.filters['Alternative']).length;
+        
+        if (publicCount > 0) mergedFilters.set('Public', { label: 'Public', count: publicCount });
+        if (catholicCount > 0) mergedFilters.set('Catholic', { label: 'Catholic', count: catholicCount });
+        if (privateCount > 0) mergedFilters.set('Private', { label: 'Private', count: privateCount });
+        if (alternativeCount > 0) mergedFilters.set('Alternative', { label: 'Alternative', count: alternativeCount });
+      }
+      
+      // Always include "All" filter
+      mergedFilters.set('All', { label: 'All', count: placesForCounts.length });
 
       // Calculate predefined filters first (they take priority)
       Object.keys(config.filters).forEach(filterLabel => {
@@ -481,7 +586,7 @@ export async function GET(request: NextRequest) {
       // Collect all unique types from places for dynamic filters
       const typeCounts = new Map<string, Set<string>>(); // Map<type, Set<place_ids>>
 
-      places.forEach(place => {
+      placesForCounts.forEach(place => {
         if (place.types && Array.isArray(place.types)) {
           place.types.forEach(type => {
             // Skip generic types that aren't useful for filtering
@@ -565,7 +670,7 @@ export async function GET(request: NextRequest) {
     };
 
     // Generate dynamic filters
-    const filters = generateDynamicFilters(limitedPlaces);
+    const filters = generateDynamicFilters(placesForFilterCounts);
 
     // Enhance filters with type information for accurate frontend filtering
     const enhancedFilters = filters.map(filter => {
@@ -638,14 +743,23 @@ export async function GET(request: NextRequest) {
       return { ...filter, types: filterTypes, isPredefined: false };
     });
 
-    return NextResponse.json({
-      category: {
-        id: category,
-        label: category.charAt(0).toUpperCase() + category.slice(1),
-        items: amenities,
-        filters: enhancedFilters,
+    return NextResponse.json(
+      {
+        category: {
+          id: category,
+          label: category.charAt(0).toUpperCase() + category.slice(1),
+          items: amenities,
+          filters: enhancedFilters,
+        },
       },
-    });
+      {
+        headers: {
+          // Cache for 7 days (604800 seconds)
+          // This dramatically reduces API costs - same location won't hit Google API again for 7 days
+          'Cache-Control': 'public, s-maxage=604800, stale-while-revalidate=86400',
+        },
+      }
+    );
   } catch (error) {
     console.error('Error fetching neighborhood amenities:', error);
     return NextResponse.json(

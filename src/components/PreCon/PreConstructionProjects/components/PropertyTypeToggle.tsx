@@ -52,11 +52,11 @@ const PropertyTypeToggle: React.FC<PropertyTypeToggleProps> = ({
                 key={type}
                 onClick={() => handleTypeClick(type)}
                 className={cn(
-                  "px-4 py-2 rounded-tl-xl rounded-tr-xl text-sm sm:text-base font-medium transition-all duration-200 shadow-sm flex-shrink-0 whitespace-nowrap",
+                  "border border-muted px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-all duration-200 shadow-sm flex-shrink-0 whitespace-nowrap",
                   "hover:scale-105",
                   isActive
-                    ? "bg-primary text-white border-primary shadow-md"
-                    : "bg-white text-foreground hover:bg-primary/5"
+                    ? "bg-secondary text-white border-secondary shadow-md"
+                    : "bg-white text-foreground hover:bg-secondary/5"
                 )}
               >
                 {type}

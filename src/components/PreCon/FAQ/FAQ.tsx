@@ -75,7 +75,7 @@ export function PreConFAQ() {
       additionalFaqs={additionalFaqs}
       heading="Frequently asked questions"
       subheading="FAQ"
-      description="Find answers to common questions about pre-construction projects and buying new homes with Summitly."
+      description="Find answers to common questions about pre-construction projects"
     />
   );
 }

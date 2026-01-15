@@ -133,7 +133,7 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({
             return (
               <div 
                 key={property.mlsNumber} 
-                className={`bg-white rounded-xl overflow-hidden flex-shrink-0 w-80 ${isSubject ? 'border shadow-sm border-muted' : ''}`}
+                className={`bg-white rounded-xl overflow-hidden flex-shrink-0 w-80 ${isSubject ? 'sticky left-0 z-10 border shadow-sm border-muted' : ''}`}
               >
               {/* Property Image */}
               <div className="relative w-full h-40">
