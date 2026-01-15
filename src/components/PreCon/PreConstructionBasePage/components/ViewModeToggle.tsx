@@ -6,19 +6,17 @@ type ViewMode = 'list' | 'mixed' | 'map';
 interface ViewModeToggleProps {
   viewMode: ViewMode;
   setViewMode: (mode: ViewMode) => void;
-  projectCount: number;
 }
 
 export const ViewModeToggle: React.FC<ViewModeToggleProps> = ({ 
   viewMode, 
-  setViewMode, 
-  projectCount 
+  setViewMode
 }) => {
   return (
     <div className="flex items-center justify-between mb-6">
       <div className="flex gap-4">
         <button className="text-sm font-medium text-primary border-b-2 border-primary pb-2">
-          Projects {projectCount}
+          Projects
         </button>
       </div>
       

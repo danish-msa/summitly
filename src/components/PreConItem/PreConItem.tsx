@@ -13,7 +13,7 @@ import PriceCard from '../Item/NewItemBody/PriceCard'
 import Description from '../Item/ItemBody/Description'
 import RightSidebar from './PreConItemBody/RightSidebar'
 import { PreConFAQ } from '../PreCon/FAQ/FAQ'
-import ContactSection from '../common/ContactSection'
+import { PreConContactSection } from '../PreConItem/PreConItemBody/PreConContactSection'
 
 const PreConItem: React.FC = () => {
   const params = useParams();
@@ -118,8 +118,9 @@ const PreConItem: React.FC = () => {
         isRent={isRental} 
       />
       <PreConFAQ />
+      <PreConContactSection />
     </div>
-    <ContactSection property={property} />
+    
 
     </>
   )

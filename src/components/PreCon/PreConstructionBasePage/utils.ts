@@ -47,6 +47,107 @@ export type ApiV1Project = {
   featured: boolean;
 };
 
+// Convert API v1 response to PropertyListing format
+export const convertApiV1ToPropertyListing = (apiProject: ApiV1Project): PropertyListing => {
+  const addressParts = apiProject.location.address?.split(' ') || [];
+  const streetNumber = addressParts[0] || '';
+  const streetName = addressParts.slice(1).join(' ') || '';
+
+  return {
+    mlsNumber: apiProject.mlsNumber,
+    status: apiProject.status === 'selling' ? 'A' : 'U',
+    class: 'residential',
+    type: 'Sale',
+    listPrice: apiProject.pricing.starting || 0,
+    listDate: new Date().toISOString(),
+    lastStatus: apiProject.status === 'selling' ? 'A' : 'U',
+    soldPrice: '',
+    soldDate: '',
+    updatedOn: new Date().toISOString(),
+    boardId: 0,
+    address: {
+      area: null,
+      city: apiProject.location.city || null,
+      country: 'Canada',
+      district: null,
+      majorIntersection: null,
+      neighborhood: apiProject.location.neighborhood || null,
+      streetDirection: null,
+      streetName: streetName || null,
+      streetNumber: streetNumber || null,
+      streetSuffix: null,
+      unitNumber: null,
+      zip: apiProject.location.zip || null,
+      state: apiProject.location.state || null,
+      communityCode: null,
+      streetDirectionPrefix: null,
+      addressKey: null,
+      location: apiProject.location.address || `${streetNumber} ${streetName}, ${apiProject.location.city}, ${apiProject.location.state}`,
+    },
+    map: {
+      latitude: apiProject.location.coordinates?.lat || null,
+      longitude: apiProject.location.coordinates?.lng || null,
+      point: null,
+    },
+    images: {
+      allImages: apiProject.images.length > 0 ? apiProject.images : ['/images/p1.jpg'],
+      imageUrl: apiProject.images[0] || '/images/p1.jpg',
+    },
+    details: {
+      propertyType: apiProject.details.propertyType || '',
+      numBathrooms: apiProject.details.bathroomRange ? parseInt(apiProject.details.bathroomRange.split('-')[0]) || 1 : 1,
+      numBathroomsPlus: apiProject.details.bathroomRange ? parseInt(apiProject.details.bathroomRange.split('-')[1] || apiProject.details.bathroomRange.split('-')[0]) || 1 : 1,
+      numBedrooms: apiProject.details.bedroomRange ? parseInt(apiProject.details.bedroomRange.split('-')[0]) || 1 : 1,
+      numBedroomsPlus: apiProject.details.bedroomRange ? parseInt(apiProject.details.bedroomRange.split('-')[1] || apiProject.details.bedroomRange.split('-')[0]) || 1 : 1,
+      sqft: apiProject.details.sqftRange || '',
+    },
+    lot: {
+      acres: 0,
+      depth: '',
+      irregular: '',
+      legalDescription: '',
+      measurement: '',
+      width: 0,
+      size: 0,
+      source: '',
+      dimensionsSource: '',
+      dimensions: '',
+      squareFeet: 0,
+      features: '',
+      taxLot: '',
+    },
+    preCon: {
+      projectName: apiProject.projectName,
+      developer: apiProject.developer || '',
+      startingPrice: apiProject.pricing.starting || 0,
+      priceRange: apiProject.pricing.range.min && apiProject.pricing.range.max ? {
+        min: apiProject.pricing.range.min,
+        max: apiProject.pricing.range.max,
+      } : undefined,
+      status: (apiProject.status as 'selling' | 'coming-soon' | 'sold-out') || 'coming-soon',
+      details: {
+        bedroomRange: apiProject.details.bedroomRange || '',
+        bathroomRange: apiProject.details.bathroomRange || '',
+        sqftRange: apiProject.details.sqftRange || '',
+        totalUnits: apiProject.details.totalUnits || 0,
+        availableUnits: apiProject.details.availableUnits || 0,
+        propertyType: apiProject.details.propertyType,
+        subPropertyType: apiProject.details.subPropertyType || undefined,
+        storeys: apiProject.details.storeys || undefined,
+        height: apiProject.details.height || undefined,
+      },
+      completion: {
+        date: apiProject.completion.date || '',
+        progress: apiProject.completion.progress || 0,
+      },
+      features: apiProject.features || [],
+      amenities: apiProject.amenities || [],
+      depositStructure: undefined,
+      description: '',
+    },
+  };
+};
+
 // Convert API v1 response to PreConstructionProperty
 export const convertApiV1ToPreConProperty = (apiProject: ApiV1Project): PreConstructionProperty => {
   // Developer should already be a name from the API, but handle ID fallback

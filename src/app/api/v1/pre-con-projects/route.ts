@@ -35,11 +35,41 @@ async function handler(request: NextRequest) {
     whereConditions.push({ city: { contains: city, mode: 'insensitive' } })
   }
   if (propertyType) {
-    whereConditions.push({
-      propertyType: {
-        in: [propertyType, propertyType.toLowerCase(), propertyType.toUpperCase()],
-      },
-    })
+    // Use case-insensitive matching for propertyType
+    // Check multiple case variations and common alternative names
+    const propertyTypeLower = propertyType.toLowerCase()
+    const propertyTypeCapitalized = propertyType.charAt(0).toUpperCase() + propertyType.slice(1).toLowerCase()
+    const propertyTypeUpper = propertyType.toUpperCase()
+    
+    // Build list of variations to check
+    const variations: string[] = [
+      propertyType, // Exact match
+      propertyTypeCapitalized, // Capitalized
+      propertyTypeUpper, // Uppercase
+      propertyTypeLower, // Lowercase
+    ]
+    
+    // Add common alternative names for specific types
+    if (propertyTypeLower === 'condos' || propertyTypeLower === 'condo') {
+      variations.push('Condominium', 'condominium', 'CONDOMINIUM', 'Condo', 'condo')
+    } else if (propertyTypeLower === 'houses' || propertyTypeLower === 'house') {
+      variations.push('House', 'house', 'HOUSE', 'Houses')
+    } else if (propertyTypeLower === 'lofts' || propertyTypeLower === 'loft') {
+      variations.push('Loft', 'loft', 'LOFT', 'Lofts')
+    } else if (propertyTypeLower === 'master-planned-communities' || propertyTypeLower === 'master planned communities') {
+      variations.push('Master-Planned Communities', 'Master Planned Communities', 'master-planned-communities')
+    } else if (propertyTypeLower === 'multi-family' || propertyTypeLower === 'multi family') {
+      variations.push('Multi Family', 'Multi-Family', 'multi-family', 'multi family')
+    } else if (propertyTypeLower === 'offices' || propertyTypeLower === 'office') {
+      variations.push('Office', 'office', 'OFFICE', 'Offices')
+    }
+    
+    const propertyTypeCondition: Prisma.PreConstructionProjectWhereInput = {
+      OR: variations.map(variation => ({ propertyType: variation }))
+    }
+    whereConditions.push(propertyTypeCondition)
+    
+    console.log('[API v1] PropertyType filter variations:', variations)
   }
   if (subPropertyType) {
     whereConditions.push({

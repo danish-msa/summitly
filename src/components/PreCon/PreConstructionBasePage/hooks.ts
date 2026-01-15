@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import type { PropertyListing } from '@/lib/types';
 import type { PreConstructionProperty } from '@/components/PreCon/PropertyCards/types';
 import type { PageType, PageContent, PageInfo } from './types';
@@ -13,6 +13,8 @@ import {
   formatSubPropertyType,
   convertToPreConProperty,
   convertToPropertyListing,
+  convertApiV1ToPropertyListing,
+  type ApiV1Project,
 } from './utils';
 
 interface UsePreConProjectsDataProps {
@@ -28,6 +30,10 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
   const [projects, setProjects] = useState<PropertyListing[]>([]);
   const [allProjects, setAllProjects] = useState<PropertyListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalProjects, setTotalProjects] = useState(0);
   const [pageInfo, setPageInfo] = useState<PageInfo | null>(null);
   const [pageContent, setPageContent] = useState<PageContent | null>(null);
   const [communities, setCommunities] = useState<string[]>([]);
@@ -58,8 +64,16 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
     return null;
   }, [slug, pageType]);
 
-  // Build API query based on page type
-  const buildApiQuery = useMemo(() => {
+  // Build base API query (without pagination params) based on page type
+  const buildBaseApiQuery = useMemo(() => {
+    // Helper to add city filter if location is provided
+    const addCityFilter = (baseQuery: string): string => {
+      if (locationType === 'city' && locationName) {
+        return `${baseQuery}&city=${encodeURIComponent(locationName)}`;
+      }
+      return baseQuery;
+    };
+
     if (pageType === 'by-location') {
       // Extract city name from slug (handle cases where slug might include filters like "toronto/2-beds")
       // Split by '/' and take the first part (city)
@@ -71,27 +85,31 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
         citySlug,
         cityName,
       });
-      return `/api/pre-con-projects?city=${encodeURIComponent(cityName)}`;
+      return `/api/v1/pre-con-projects?city=${encodeURIComponent(cityName)}`;
     } else if (pageType === 'status') {
       const status = slugToStatus(slug);
-      return `/api/pre-con-projects?status=${encodeURIComponent(status)}`;
+      const baseQuery = `/api/v1/pre-con-projects?status=${encodeURIComponent(status)}`;
+      return addCityFilter(baseQuery);
     } else if (pageType === 'propertyType') {
       const propertyType = slugToPropertyType(slug);
-      return `/api/pre-con-projects?propertyType=${encodeURIComponent(propertyType)}`;
+      const baseQuery = `/api/v1/pre-con-projects?propertyType=${encodeURIComponent(propertyType)}`;
+      return addCityFilter(baseQuery);
     } else if (pageType === 'subPropertyType') {
       const parsed = parseSubPropertyTypeSlug(slug);
       if (parsed) {
-        return `/api/pre-con-projects?propertyType=${encodeURIComponent(parsed.propertyType)}&subPropertyType=${encodeURIComponent(parsed.subPropertyType)}`;
+        const baseQuery = `/api/v1/pre-con-projects?propertyType=${encodeURIComponent(parsed.propertyType)}&subPropertyType=${encodeURIComponent(parsed.subPropertyType)}`;
+        return addCityFilter(baseQuery);
       }
     } else if (pageType === 'completionYear') {
-      return `/api/pre-con-projects?completionYear=${encodeURIComponent(slug)}`;
+      const baseQuery = `/api/v1/pre-con-projects?completionYear=${encodeURIComponent(slug)}`;
+      return addCityFilter(baseQuery);
     } else if (['developer', 'architect', 'interior-designer', 'builder', 'landscape-architect', 'marketing'].includes(pageType)) {
       // For development team pages, fetch by developer name
       const developerName = slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
-      return `/api/pre-con-projects?developer=${encodeURIComponent(developerName)}`;
+      return `/api/v1/pre-con-projects?developer=${encodeURIComponent(developerName)}`;
     }
     return '';
-  }, [slug, pageType]);
+  }, [slug, pageType, locationType, locationName]);
 
   // Fetch page content
   useEffect(() => {
@@ -119,60 +137,70 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
     fetchPageContent();
   }, [pageType, getPageValue]);
 
-  // Fetch pre-construction projects
-  useEffect(() => {
-    const loadData = async () => {
-      try {
+  // Load projects function (supports pagination)
+  const loadProjects = useCallback(async (page: number = 1, append: boolean = false) => {
+    if (!buildBaseApiQuery) return;
+
+    try {
+      if (append) {
+        setLoadingMore(true);
+      } else {
         setLoading(true);
+      }
 
-        if (!buildApiQuery) return;
+      const limit = 12;
+      const apiQuery = `${buildBaseApiQuery}&limit=${limit}&page=${page}`;
+      
+      console.log('[PreConstructionBasePage] Fetching projects with query:', apiQuery);
+      const response = await fetch(apiQuery);
+      
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unknown error');
+        console.error('[PreConstructionBasePage] API error response:', errorText);
+        throw new Error(`Failed to fetch projects: ${response.status} ${response.statusText}`);
+      }
 
-        console.log('[PreConstructionBasePage] Fetching projects with query:', buildApiQuery);
-        const response = await fetch(buildApiQuery);
-        
-        console.log('[PreConstructionBasePage] Response status:', response.status, response.statusText);
-        
-        if (!response.ok) {
-          const errorText = await response.text().catch(() => 'Unknown error');
-          console.error('[PreConstructionBasePage] API error response:', errorText);
-          throw new Error(`Failed to fetch projects: ${response.status} ${response.statusText}`);
-        }
+      const data = await response.json();
+      // Handle v1 API response format: { success, data: { projects }, meta: { pagination } }
+      const apiProjects = data.success && data.data 
+        ? (data.data.projects || [])
+        : (data.projects || []);
+      
+      // Convert v1 API format to PropertyListing format
+      const fetchedProjects = apiProjects.map((apiProject: ApiV1Project) => 
+        convertApiV1ToPropertyListing(apiProject)
+      );
+      
+      const pagination = data.meta?.pagination || data.pagination;
+      const total = pagination?.total || fetchedProjects.length;
+      const totalPages = pagination?.totalPages || Math.ceil(total / limit);
+      
+      console.log('[PreConstructionBasePage] Fetched projects:', {
+        count: fetchedProjects.length,
+        page,
+        total,
+        totalPages,
+        hasMore: page < totalPages,
+      });
 
-        const data = await response.json();
-        // Handle v1 API response format: { success, data: { projects }, meta }
-        // or fallback to old format: { projects }
-        const fetchedProjects = data.success && data.data 
-          ? (data.data.projects || [])
-          : (data.projects || []);
-        console.log('[PreConstructionBasePage] Fetched projects:', {
-          count: fetchedProjects.length,
-          query: buildApiQuery,
-          responseStatus: response.status,
-          hasProjects: !!data.projects,
-          projectsArrayLength: Array.isArray(data.projects) ? data.projects.length : 0,
-          firstProject: fetchedProjects[0] ? {
-            mlsNumber: fetchedProjects[0].mlsNumber,
-            city: fetchedProjects[0].address?.city,
-            hasPreCon: !!fetchedProjects[0].preCon,
-            preConKeys: fetchedProjects[0].preCon ? Object.keys(fetchedProjects[0].preCon) : [],
-            bedroomRange: fetchedProjects[0].preCon?.details?.bedroomRange || fetchedProjects[0].details?.bedroomRange,
-            propertyType: fetchedProjects[0].preCon?.details?.propertyType || fetchedProjects[0].details?.propertyType,
-          } : null,
-        });
-        
-        // Log if projects are missing preCon property
-        const projectsWithoutPreCon = fetchedProjects.filter((p: PropertyListing) => !p.preCon);
-        if (projectsWithoutPreCon.length > 0) {
-          console.warn('[PreConstructionBasePage] Projects missing preCon property:', projectsWithoutPreCon.length);
-          console.warn('[PreConstructionBasePage] Sample project without preCon:', projectsWithoutPreCon[0]);
-        }
+      if (append) {
+        setAllProjects(prev => [...prev, ...fetchedProjects]);
+      } else {
+        setAllProjects(fetchedProjects);
+        setCurrentPage(1);
+      }
+      
+      setTotalProjects(total);
+      setHasMore(page < totalPages);
+      setCurrentPage(page);
 
-        // Extract province from first project (if available)
-        const province = fetchedProjects.length > 0 
-          ? (fetchedProjects[0] as PropertyListing).address?.state || 'ON'
-          : 'ON';
+      // Extract province from first project (if available)
+      const province = fetchedProjects.length > 0 
+        ? (fetchedProjects[0] as PropertyListing).address?.state || 'ON'
+        : 'ON';
 
-        // Build page info based on page type
+      // Build page info based on page type (only on initial load)
+      if (!append) {
         let title = '';
         let description = '';
 
@@ -199,7 +227,6 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
           title = `${slug} Completion Pre-Construction Projects`;
           description = `Discover pre-construction projects completing in ${slug}. Explore upcoming developments, pricing, and availability for projects expected to be ready in ${slug}.`;
         } else if (['developer', 'architect', 'interior-designer', 'builder', 'landscape-architect', 'marketing'].includes(pageType)) {
-          // For development team pages, fetch team member info
           const developerName = slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
           try {
             const teamResponse = await fetch(`/api/development-team/${teamType || pageType}/${slug}`);
@@ -207,7 +234,6 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
               const teamData = await teamResponse.json();
               const teamMember = teamData.teamMember;
               if (teamMember) {
-                // Store team member info for use in HeroSection
                 setTeamMemberInfo({
                   id: teamMember.id,
                   name: teamMember.name,
@@ -246,15 +272,12 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
 
         setPageInfo({
           title,
-          numberOfProjects: fetchedProjects.length,
+          numberOfProjects: total,
           province,
           description,
         });
 
-        setProjects(fetchedProjects);
-        setAllProjects(fetchedProjects);
-        
-        // Extract unique communities from the projects
+        // Extract unique communities from all projects (will be updated as more load)
         const uniqueCommunities = Array.from(
           new Set(
             fetchedProjects
@@ -263,17 +286,49 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
           )
         ).sort();
         setCommunities(uniqueCommunities);
-      } catch (error) {
-        console.error('Error loading data:', error);
-      } finally {
-        setLoading(false);
+      } else {
+        // Update communities when loading more
+        setCommunities(prev => {
+          const newCommunities = Array.from(
+            new Set([
+              ...prev,
+              ...fetchedProjects
+                .map((project: PropertyListing) => project.address?.neighborhood || project.address?.city)
+                .filter(Boolean) as string[]
+            ])
+          ).sort();
+          return newCommunities;
+        });
       }
-    };
-
-    if (slug && buildApiQuery) {
-      loadData();
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
     }
-  }, [slug, buildApiQuery, pageType, teamType]);
+  }, [buildBaseApiQuery, pageType, slug, teamType]);
+
+  // Load more projects function
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    await loadProjects(currentPage + 1, true);
+  }, [loadProjects, currentPage, loadingMore, hasMore]);
+
+  // Initial fetch pre-construction projects
+  useEffect(() => {
+    if (slug && buildBaseApiQuery) {
+      loadProjects(1, false);
+    }
+  }, [slug, buildBaseApiQuery, loadProjects]);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    if (allProjects.length > 0) {
+      // Reset to first page when filters change
+      setCurrentPage(1);
+      setHasMore(true);
+    }
+  }, [filters.bedrooms, filters.bathrooms, filters.propertyType, filters.minPrice, filters.maxPrice, filters.locationArea]);
 
   // Filter projects based on filter state
   useEffect(() => {
@@ -487,6 +542,9 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
     projects,
     allProjects,
     loading,
+    loadingMore,
+    hasMore,
+    loadMore,
     pageInfo,
     pageContent,
     communities,

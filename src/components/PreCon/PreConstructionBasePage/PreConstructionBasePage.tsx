@@ -48,6 +48,9 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({
   // Use custom hook for data fetching and filtering
   const {
     loading,
+    loadingMore,
+    hasMore,
+    loadMore,
     pageInfo,
     pageContent,
     communities,
@@ -130,7 +133,6 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({
         customContent={pageContent?.customContent || null}
         lastUpdatedDate={lastUpdatedDate}
         pageType={pageType}
-        displayCount={displayCount}
         teamMemberInfo={teamMemberInfo}
       />
 
@@ -173,7 +175,6 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({
           <ViewModeToggle 
             viewMode={viewMode} 
             setViewMode={setViewMode} 
-            projectCount={preConProjects.length} 
           />
           
           {/* Show message if no projects but not loading */}
@@ -199,6 +200,9 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({
               onProjectSelect={setSelectedProject}
               displayTitle={displayTitle}
               pageType={pageType}
+              loadingMore={loadingMore}
+              hasMore={hasMore}
+              onLoadMore={loadMore}
             />
 
             {/* Map View */}

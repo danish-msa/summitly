@@ -15,7 +15,6 @@ interface HeroSectionProps {
   customContent?: string | null;
   lastUpdatedDate: string;
   pageType: PageType;
-  displayCount: string;
   teamMemberInfo?: TeamMemberInfo | null;
 }
 
@@ -25,7 +24,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   customContent,
   lastUpdatedDate: _lastUpdatedDate,
   pageType,
-  displayCount,
   teamMemberInfo,
 }) => {
   const isDevelopmentTeamPage = ['developer', 'architect', 'interior-designer', 'builder', 'landscape-architect', 'marketing'].includes(pageType);
@@ -73,7 +71,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     if (pageType === 'by-location') {
       return (
         <>
-          {displayCount} Pre Construction Homes in <span className='text-secondary'>{title}</span>
+          Pre Construction Homes in <span className='text-secondary'>{title}</span>
         </>
       );
     } else if (isDevelopmentTeamPage) {
@@ -86,7 +84,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     } else {
       return (
         <>
-          <span className='text-secondary'>{displayCount}</span> {title}
+          <span className='text-secondary'>{title}</span>
         </>
       );
     }

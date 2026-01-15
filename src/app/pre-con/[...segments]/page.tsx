@@ -8,6 +8,7 @@ import { preConCities } from '@/components/PreCon/Search/preConSearchData';
 import { parseUrlSegments } from '@/lib/utils/urlSegmentParser';
 import { parseUrlSegments as parseLocationSegments } from '@/lib/utils/locationDetection';
 import { parseBedroomSlug, parseBathroomSlug } from '@/components/Properties/PropertyBasePage/utils';
+import { unslugifyCityName } from '@/components/PreCon/PreConstructionBasePage/utils';
 
 const PreConPage: React.FC = () => {
   const params = useParams();
@@ -228,13 +229,53 @@ const PreConPage: React.FC = () => {
 
   // Render appropriate page based on type
   if (pageType === 'by-location' || pageType === 'status' || pageType === 'propertyType' || pageType === 'subPropertyType' || pageType === 'completionYear') {
-    const slug = segments.length > 0 ? segments.join('/') : '';
+    // Build slug based on pageType
+    // Extract city info if first segment is a city
+    const firstSegment = segments[0]?.toLowerCase() || '';
+    const isCityPage = knownCitySlugs.includes(firstSegment);
+    const citySlug = isCityPage ? segments[0] : null;
+    
+    let slug = '';
+    if (pageType === 'propertyType' || pageType === 'subPropertyType') {
+      // For property type pages, extract just the property type segment
+      // If it's a city + propertyType (e.g., toronto/condos), use just the property type part
+      if (isCityPage && segments.length > 1) {
+        // City + propertyType: extract the property type segment
+        slug = segments.slice(1).join('/');
+      } else {
+        // Just propertyType: use all segments
+        slug = segments.join('/');
+      }
+    } else if (pageType === 'status') {
+      // For status pages, extract just the status segment
+      if (isCityPage && segments.length > 1) {
+        slug = segments.slice(1).join('/');
+      } else {
+        slug = segments.join('/');
+      }
+    } else if (pageType === 'completionYear') {
+      // For completion year pages, extract just the year segment
+      if (isCityPage && segments.length > 1) {
+        slug = segments.slice(1).join('/');
+      } else {
+        slug = segments.join('/');
+      }
+    } else {
+      // For by-location, use full slug
+      slug = segments.length > 0 ? segments.join('/') : '';
+    }
+    
+    // Pass city info if available for propertyType/status/completionYear pages
+    // This allows the hook to combine city + propertyType filters
+    const finalLocationType = pageType === 'by-location' ? locationType : (isCityPage ? 'city' : null);
+    const finalLocationName = pageType === 'by-location' ? locationName : (isCityPage ? unslugifyCityName(citySlug || '') : null);
+    
     return (
       <PreConstructionBasePage 
         slug={slug} 
         pageType={pageType}
-        locationType={locationType}
-        locationName={locationName}
+        locationType={finalLocationType}
+        locationName={finalLocationName}
         bedroomFilter={bedroomFilter}
         bathroomFilter={bathroomFilter}
       />
