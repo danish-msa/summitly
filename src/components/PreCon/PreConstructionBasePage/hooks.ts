@@ -102,7 +102,15 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
       }
     } else if (pageType === 'completionYear') {
       const baseQuery = `/api/v1/pre-con-projects?completionYear=${encodeURIComponent(slug)}`;
-      return addCityFilter(baseQuery);
+      const finalQuery = addCityFilter(baseQuery);
+      console.log('[PreConstructionBasePage] Building completionYear API query:', {
+        slug,
+        locationType,
+        locationName,
+        baseQuery,
+        finalQuery,
+      });
+      return finalQuery;
     } else if (['developer', 'architect', 'interior-designer', 'builder', 'landscape-architect', 'marketing'].includes(pageType)) {
       // For development team pages, fetch by developer name
       const developerName = slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
@@ -149,9 +157,49 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
       }
 
       const limit = 12;
-      const apiQuery = `${buildBaseApiQuery}&limit=${limit}&page=${page}`;
       
-      console.log('[PreConstructionBasePage] Fetching projects with query:', apiQuery);
+      // Add filter parameters to API query
+      const filterParams: string[] = [];
+      
+      // Add bedroom filter
+      if (filters.bedrooms) {
+        filterParams.push(`bedrooms=${filters.bedrooms}`);
+      }
+      
+      // Add bathroom filter
+      if (filters.bathrooms) {
+        filterParams.push(`bathrooms=${filters.bathrooms}`);
+      }
+      
+      // Add price range filters
+      if (filters.minPrice) {
+        filterParams.push(`minPrice=${filters.minPrice}`);
+      }
+      if (filters.maxPrice) {
+        filterParams.push(`maxPrice=${filters.maxPrice}`);
+      }
+      
+      // Add sqft filters
+      if (filters.minSquareFeet) {
+        filterParams.push(`minSqft=${filters.minSquareFeet}`);
+      }
+      if (filters.maxSquareFeet) {
+        filterParams.push(`maxSqft=${filters.maxSquareFeet}`);
+      }
+      
+      const filterQuery = filterParams.length > 0 ? `&${filterParams.join('&')}` : '';
+      const apiQuery = `${buildBaseApiQuery}&limit=${limit}&page=${page}${filterQuery}`;
+      
+      console.log('[PreConstructionBasePage] Fetching projects with query:', {
+        apiQuery,
+        pageType,
+        slug,
+        locationType,
+        locationName,
+        page,
+        limit,
+        filters,
+      });
       const response = await fetch(apiQuery);
       
       if (!response.ok) {
@@ -161,15 +209,41 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
       }
 
       const data = await response.json();
+      console.log('[PreConstructionBasePage] API response:', {
+        success: data.success,
+        hasData: !!data.data,
+        projectsCount: data.data?.projects?.length || data.projects?.length || 0,
+        meta: data.meta,
+        rawData: data,
+      });
+      
       // Handle v1 API response format: { success, data: { projects }, meta: { pagination } }
       const apiProjects = data.success && data.data 
         ? (data.data.projects || [])
         : (data.projects || []);
       
+      console.log('[PreConstructionBasePage] Extracted projects:', {
+        count: apiProjects.length,
+        firstProject: apiProjects[0] ? {
+          mlsNumber: apiProjects[0].mlsNumber,
+          projectName: apiProjects[0].projectName,
+          city: apiProjects[0].city,
+          occupancyDate: apiProjects[0].occupancyDate,
+        } : null,
+      });
+      
       // Convert v1 API format to PropertyListing format
       const fetchedProjects = apiProjects.map((apiProject: ApiV1Project) => 
         convertApiV1ToPropertyListing(apiProject)
       );
+      
+      console.log('[PreConstructionBasePage] Converted projects:', {
+        count: fetchedProjects.length,
+        firstProject: fetchedProjects[0] ? {
+          mlsNumber: fetchedProjects[0].mlsNumber,
+          hasPreCon: !!fetchedProjects[0].preCon,
+        } : null,
+      });
       
       const pagination = data.meta?.pagination || data.pagination;
       const total = pagination?.total || fetchedProjects.length;
@@ -237,8 +311,14 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
             description = `Explore ${typeDisplay.toLowerCase()} pre-construction projects. Discover new developments and find your ideal property.`;
           }
         } else if (pageType === 'completionYear') {
-          title = `${slug} Completion Pre-Construction Projects`;
-          description = `Discover pre-construction projects completing in ${slug}. Explore upcoming developments, pricing, and availability for projects expected to be ready in ${slug}.`;
+          // Include city name if available
+          if (locationType === 'city' && locationName) {
+            title = `${slug} Completion Pre-Construction Projects in ${locationName}`;
+            description = `Discover pre-construction projects completing in ${slug} in ${locationName}. Explore upcoming developments, pricing, and availability for projects expected to be ready in ${slug}.`;
+          } else {
+            title = `${slug} Completion Pre-Construction Projects`;
+            description = `Discover pre-construction projects completing in ${slug}. Explore upcoming developments, pricing, and availability for projects expected to be ready in ${slug}.`;
+          }
         } else if (['developer', 'architect', 'interior-designer', 'builder', 'landscape-architect', 'marketing'].includes(pageType)) {
           const developerName = slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
           try {

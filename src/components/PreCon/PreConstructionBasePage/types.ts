@@ -8,6 +8,8 @@ export interface PreConstructionBasePageProps {
   locationName?: string | null; // Neighbourhood or intersection name
   bedroomFilter?: { bedrooms: number; isPlus: boolean } | null;
   bathroomFilter?: { bathrooms: number; isPlus: boolean } | null;
+  priceRangeFilter?: { min?: number; max?: number; label: string } | null;
+  sqftFilter?: { min?: number; max?: number; label: string } | null;
 }
 
 export interface PageContent {

@@ -1,15 +1,33 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import PreConItem from '@/components/PreConItem/PreConItem';
 import PreConstructionBasePage from '@/components/PreCon/PreConstructionBasePage';
 import { preConCities } from '@/components/PreCon/Search/preConSearchData';
 
+// Helper to check if a string is a year (4-digit number)
+const isYear = (str: string): boolean => {
+  const yearRegex = /^\d{4}$/;
+  if (!yearRegex.test(str)) return false;
+  const year = parseInt(str, 10);
+  return year >= 2020 && year <= 2100;
+};
+
 const PreConstructionPage: React.FC = () => {
   const params = useParams();
+  const router = useRouter();
   const slug = params?.slug as string || '';
   const [pageType, setPageType] = useState<'project' | 'by-location' | 'status' | 'propertyType' | 'subPropertyType' | 'completionYear' | 'loading'>('loading');
+  
+  // Check if slug is a year - if so, redirect to catch-all route
+  useEffect(() => {
+    if (slug && isYear(slug)) {
+      console.log('[PreConPage] Slug is a year, redirecting to catch-all route:', slug);
+      router.replace(`/pre-con/${slug}`);
+      return;
+    }
+  }, [slug, router]);
 
   // Known city slugs (from preConCities)
   const knownCitySlugs = preConCities.map(city => city.id);

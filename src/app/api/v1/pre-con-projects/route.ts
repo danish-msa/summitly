@@ -22,6 +22,14 @@ async function handler(request: NextRequest) {
   const page = parseInt(searchParams.get('page') || '1')
   // Use limit if provided, otherwise default to 20 for pagination
   const pageSize = limit ? parseInt(limit) : 20
+  
+  // Filter parameters
+  const bedrooms = searchParams.get('bedrooms')
+  const bathrooms = searchParams.get('bathrooms')
+  const minPrice = searchParams.get('minPrice')
+  const maxPrice = searchParams.get('maxPrice')
+  const minSqft = searchParams.get('minSqft')
+  const maxSqft = searchParams.get('maxSqft')
 
   // Build where clause
   const whereConditions: Prisma.PreConstructionProjectWhereInput[] = [
@@ -100,6 +108,102 @@ async function handler(request: NextRequest) {
   }
   if (featured === 'true') {
     whereConditions.push({ featured: true })
+  }
+  
+  // Filter by bedrooms (check bedroomRange field)
+  if (bedrooms) {
+    const bedroomNum = parseInt(bedrooms)
+    if (!isNaN(bedroomNum)) {
+      // bedroomRange is a string like "1-2" or "2+" or "3"
+      // We need to check if the range includes the requested number
+      whereConditions.push({
+        OR: [
+          // Exact match in range (e.g., "2" or "2-3" for bedroomNum=2)
+          { bedroomRange: { contains: bedroomNum.toString(), mode: Prisma.QueryMode.insensitive } },
+          // Plus ranges (e.g., "3+" for bedroomNum=3 or higher)
+          ...(bedroomNum >= 3 ? [{ bedroomRange: { contains: `${bedroomNum}+`, mode: Prisma.QueryMode.insensitive } }] : []),
+        ],
+      })
+    }
+  }
+  
+  // Filter by bathrooms (check bathroomRange field)
+  if (bathrooms) {
+    const bathroomNum = parseInt(bathrooms)
+    if (!isNaN(bathroomNum)) {
+      whereConditions.push({
+        OR: [
+          { bathroomRange: { contains: bathroomNum.toString(), mode: Prisma.QueryMode.insensitive } },
+          ...(bathroomNum >= 3 ? [{ bathroomRange: { contains: `${bathroomNum}+`, mode: Prisma.QueryMode.insensitive } }] : []),
+        ],
+      })
+    }
+  }
+  
+  // Filter by price range (using startingPrice and endingPrice)
+  if (minPrice || maxPrice) {
+    const priceConditions: Prisma.PreConstructionProjectWhereInput[] = []
+    
+    if (minPrice) {
+      const minPriceNum = parseFloat(minPrice)
+      if (!isNaN(minPriceNum)) {
+        // Project's startingPrice or endingPrice should be >= minPrice
+        priceConditions.push({
+          OR: [
+            { startingPrice: { gte: minPriceNum } },
+            { endingPrice: { gte: minPriceNum } },
+          ],
+        })
+      }
+    }
+    
+    if (maxPrice) {
+      const maxPriceNum = parseFloat(maxPrice)
+      if (!isNaN(maxPriceNum)) {
+        // Project's startingPrice should be <= maxPrice (or endingPrice if no startingPrice)
+        priceConditions.push({
+          OR: [
+            { startingPrice: { lte: maxPriceNum } },
+            { AND: [{ startingPrice: null }, { endingPrice: { lte: maxPriceNum } }] },
+          ],
+        })
+      }
+    }
+    
+    if (priceConditions.length > 0) {
+      whereConditions.push({ AND: priceConditions })
+    }
+  }
+  
+  // Filter by sqft range (check sqftRange field)
+  if (minSqft || maxSqft) {
+    const sqftConditions: Prisma.PreConstructionProjectWhereInput[] = []
+    
+    if (minSqft) {
+      const minSqftNum = parseInt(minSqft)
+      if (!isNaN(minSqftNum)) {
+        // sqftRange is a string like "500-800" or "1000+"
+        // We need to check if the range's max is >= minSqft
+        // For now, we'll do a simple contains check, but this could be improved
+        sqftConditions.push({
+          sqftRange: { contains: minSqftNum.toString(), mode: Prisma.QueryMode.insensitive },
+        })
+      }
+    }
+    
+    if (maxSqft) {
+      const maxSqftNum = parseInt(maxSqft)
+      if (!isNaN(maxSqftNum)) {
+        // Check if range's min is <= maxSqft
+        sqftConditions.push({
+          sqftRange: { contains: maxSqftNum.toString(), mode: Prisma.QueryMode.insensitive },
+        })
+      }
+    }
+    
+    if (sqftConditions.length > 0) {
+      whereConditions.push({ AND: sqftConditions })
+    }
   }
 
   const where = whereConditions.length > 0

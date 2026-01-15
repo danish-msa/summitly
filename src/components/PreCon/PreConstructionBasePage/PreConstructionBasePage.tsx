@@ -26,6 +26,8 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({
   locationName,
   bedroomFilter,
   bathroomFilter,
+  priceRangeFilter,
+  sqftFilter,
 }) => {
   const [viewMode, setViewMode] = useState<'list' | 'mixed' | 'map'>('list');
   const [selectedProject, setSelectedProject] = useState<PreConstructionProperty | null>(null);
@@ -33,7 +35,7 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({
   // Use global filters hook
   const { filters, handleFilterChange, resetFilters, setFilter } = useGlobalFilters();
 
-  // Set bedroom/bathroom filters from URL if provided
+  // Set filters from URL if provided
   React.useEffect(() => {
     if (bedroomFilter) {
       console.log('[PreConstructionBasePage] Setting bedroom filter from URL:', bedroomFilter);
@@ -43,7 +45,25 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({
       console.log('[PreConstructionBasePage] Setting bathroom filter from URL:', bathroomFilter);
       setFilter('bathrooms', bathroomFilter.bathrooms);
     }
-  }, [bedroomFilter, bathroomFilter, setFilter]);
+    if (priceRangeFilter) {
+      console.log('[PreConstructionBasePage] Setting price range filter from URL:', priceRangeFilter);
+      if (priceRangeFilter.min !== undefined) {
+        setFilter('minPrice', priceRangeFilter.min);
+      }
+      if (priceRangeFilter.max !== undefined) {
+        setFilter('maxPrice', priceRangeFilter.max);
+      }
+    }
+    if (sqftFilter) {
+      console.log('[PreConstructionBasePage] Setting sqft filter from URL:', sqftFilter);
+      if (sqftFilter.min !== undefined) {
+        setFilter('minSquareFeet', sqftFilter.min);
+      }
+      if (sqftFilter.max !== undefined) {
+        setFilter('maxSquareFeet', sqftFilter.max);
+      }
+    }
+  }, [bedroomFilter, bathroomFilter, priceRangeFilter, sqftFilter, setFilter]);
 
   // Use custom hook for data fetching and filtering
   const {
@@ -117,8 +137,11 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({
     // Otherwise use default descriptions
     if (pageType === 'by-location') {
       return `${displayCount} Pre construction Homes in ${displayTitle}, ${province} | Explore Floor Plans, Pricing & Availability. Summitly has over ${displayCount.toLowerCase()} pre construction homes from trusted builders in ${displayTitle}, ${province}. If you are looking to buy resale homes, Summitly is your trusted platform to find 1000+ homes for sale in ${displayTitle}. Whether you are looking to downsize to buy townhomes for sale in ${displayTitle} or looking to buy condos in ${displayTitle} for your family or browsing ${displayTitle} detached homes for sale, our platform is updated daily with latest resale listings every hour. For new development homes, easily filter by number of bedrooms (1 to 4+), project type, and construction status from budget-friendly condo to a pre construction homes, contact us to connect you to the most exciting real estate opportunities in ${displayTitle}.`;
-    } else if (pageType === 'subPropertyType' || pageType === 'completionYear') {
+    } else if (pageType === 'subPropertyType') {
       return pageInfo?.description || `Explore ${displayTitle.toLowerCase()} pre-construction projects. Discover new developments and find your ideal property.`;
+    } else if (pageType === 'completionYear') {
+      // Use the description from pageInfo which includes city if available
+      return pageInfo?.description || `Explore pre-construction projects completing in ${displayTitle}. Discover new developments and find your ideal property.`;
     } else {
       return pageInfo?.description || '';
     }

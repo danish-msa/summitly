@@ -7,17 +7,32 @@ import PreConstructionBasePage from '@/components/PreCon/PreConstructionBasePage
 import { preConCities } from '@/components/PreCon/Search/preConSearchData';
 import { parseUrlSegments } from '@/lib/utils/urlSegmentParser';
 import { parseUrlSegments as parseLocationSegments } from '@/lib/utils/locationDetection';
-import { parseBedroomSlug, parseBathroomSlug } from '@/components/Properties/PropertyBasePage/utils';
+import { 
+  parseBedroomSlug, 
+  parseBathroomSlug,
+  parsePriceRangeSlug,
+  parseSqftSlug,
+} from '@/components/Properties/PropertyBasePage/utils';
 import { unslugifyCityName } from '@/components/PreCon/PreConstructionBasePage/utils';
 
 const PreConPage: React.FC = () => {
   const params = useParams();
-  const segments = (params?.segments as string[]) || [];
+  let segments = (params?.segments as string[]) || [];
+  
+  // Handle middleware rewrite: if first segment is "_filter", remove it
+  // This allows middleware to rewrite /pre-con/city/filter to /pre-con/_filter/city/filter
+  // to prevent it from matching [slug]/[unitId]
+  if (segments.length > 0 && segments[0] === '_filter') {
+    segments = segments.slice(1);
+    console.log('[PreConPage] Detected middleware rewrite, removing _filter prefix:', segments);
+  }
   const [pageType, setPageType] = useState<'project' | 'by-location' | 'status' | 'propertyType' | 'subPropertyType' | 'completionYear' | 'loading'>('loading');
   const [locationType, setLocationType] = useState<'city' | 'neighbourhood' | 'intersection' | null>(null);
   const [locationName, setLocationName] = useState<string | null>(null);
   const [bedroomFilter, setBedroomFilter] = useState<{ bedrooms: number; isPlus: boolean } | null>(null);
   const [bathroomFilter, setBathroomFilter] = useState<{ bathrooms: number; isPlus: boolean } | null>(null);
+  const [priceRangeFilter, setPriceRangeFilter] = useState<{ min?: number; max?: number; label: string } | null>(null);
+  const [sqftFilter, setSqftFilter] = useState<{ min?: number; max?: number; label: string } | null>(null);
 
   // Known city slugs (from preConCities)
   const knownCitySlugs = preConCities.map(city => city.id);
@@ -46,16 +61,24 @@ const PreConPage: React.FC = () => {
 
   // Helper to check if slug is a year (4-digit number)
   const isYear = (slug: string): boolean => {
+    if (!slug) return false;
     const yearRegex = /^\d{4}$/;
-    if (!yearRegex.test(slug)) return false;
+    if (!yearRegex.test(slug)) {
+      console.log('[PreConPage] isYear check failed - not 4 digits:', slug);
+      return false;
+    }
     const year = parseInt(slug, 10);
     // Check if it's a reasonable year (e.g., 2020-2100)
-    return year >= 2020 && year <= 2100;
+    const isValid = year >= 2020 && year <= 2100;
+    console.log('[PreConPage] isYear check:', { slug, year, isValid });
+    return isValid;
   };
 
   useEffect(() => {
     const determinePageType = async () => {
       try {
+        console.log('[PreConPage] Determining page type for segments:', segments);
+        
         // If no segments, show base page
         if (segments.length === 0) {
           setPageType('by-location');
@@ -64,6 +87,14 @@ const PreConPage: React.FC = () => {
 
         const parsed = parseUrlSegments(segments);
         const firstSegment = segments[0]?.toLowerCase() || '';
+        const secondSegment = segments[1]?.toLowerCase() || '';
+
+        console.log('[PreConPage] Segments:', {
+          firstSegment,
+          secondSegment,
+          isKnownCity: knownCitySlugs.includes(firstSegment),
+          isYear: isYear(secondSegment),
+        });
 
         // Check if first segment is a known city
         if (knownCitySlugs.includes(firstSegment)) {
@@ -76,17 +107,26 @@ const PreConPage: React.FC = () => {
             setLocationType(locationInfo.locationType);
             setLocationName(locationInfo.locationName);
             
-            // Check if there are filters after the location
+            // Parse all filters from URL segments
             if (parsed.filters.length > 0) {
-              const firstFilter = parsed.filters[0];
-              const bedrooms = parseBedroomSlug(firstFilter);
-              const bathrooms = parseBathroomSlug(firstFilter);
-              
-              if (bedrooms) {
-                setBedroomFilter(bedrooms);
-              }
-              if (bathrooms) {
-                setBathroomFilter(bathrooms);
+              for (const filter of parsed.filters) {
+                const bedrooms = parseBedroomSlug(filter);
+                const bathrooms = parseBathroomSlug(filter);
+                const priceRange = parsePriceRangeSlug(filter);
+                const sqft = parseSqftSlug(filter);
+                
+                if (bedrooms) {
+                  setBedroomFilter(bedrooms);
+                }
+                if (bathrooms) {
+                  setBathroomFilter(bathrooms);
+                }
+                if (priceRange) {
+                  setPriceRangeFilter(priceRange);
+                }
+                if (sqft) {
+                  setSqftFilter(sqft);
+                }
               }
             }
             
@@ -98,29 +138,78 @@ const PreConPage: React.FC = () => {
           if (segments.length > 1) {
             const secondSegment = segments[1]?.toLowerCase() || '';
             
-            // Check if it's a bedroom filter
-            const bedrooms = parseBedroomSlug(secondSegment);
-            if (bedrooms) {
-              setBedroomFilter(bedrooms);
-              setPageType('by-location');
-              return;
-            }
-            
-            // Check if it's a bathroom filter
-            const bathrooms = parseBathroomSlug(secondSegment);
-            if (bathrooms) {
-              setBathroomFilter(bathrooms);
-              setPageType('by-location');
-              return;
-            }
-            
-            // Check if it's a year
+            // PRIORITY: Check if it's a year FIRST (before other filters)
+            // This ensures year pages are detected correctly
             if (isYear(secondSegment)) {
+              console.log('[PreConPage] Detected completionYear page with city:', {
+                city: firstSegment,
+                year: secondSegment,
+                segments,
+              });
               setPageType('completionYear');
               // Set location info for city + completionYear pages
               const cityName = unslugifyCityName(firstSegment);
               setLocationType('city');
               setLocationName(cityName);
+              return;
+            }
+            
+            // Parse all filters from URL segments
+            // Check all filter types in order of priority
+            for (let i = 1; i < segments.length; i++) {
+              const filterSegment = segments[i]?.toLowerCase() || '';
+              
+              // Skip if it's a known property type, status, or sub-property type
+              if (knownPropertyTypeSlugs.includes(filterSegment) || 
+                  knownStatusSlugs.includes(filterSegment) || 
+                  isSubPropertyType(filterSegment)) {
+                continue;
+              }
+              
+              const bedrooms = parseBedroomSlug(filterSegment);
+              const bathrooms = parseBathroomSlug(filterSegment);
+              const priceRange = parsePriceRangeSlug(filterSegment);
+              const sqft = parseSqftSlug(filterSegment);
+              
+              if (bedrooms) {
+                setBedroomFilter(bedrooms);
+              }
+              if (bathrooms) {
+                setBathroomFilter(bathrooms);
+              }
+              if (priceRange) {
+                setPriceRangeFilter(priceRange);
+              }
+              if (sqft) {
+                setSqftFilter(sqft);
+              }
+            }
+            
+            // Check if second segment is a bedroom filter
+            const bedrooms = parseBedroomSlug(secondSegment);
+            if (bedrooms) {
+              setPageType('by-location');
+              return;
+            }
+            
+            // Check if second segment is a bathroom filter
+            const bathrooms = parseBathroomSlug(secondSegment);
+            if (bathrooms) {
+              setPageType('by-location');
+              return;
+            }
+            
+            // Check if second segment is a price range filter
+            const priceRange = parsePriceRangeSlug(secondSegment);
+            if (priceRange) {
+              setPageType('by-location');
+              return;
+            }
+            
+            // Check if second segment is a sqft filter
+            const sqft = parseSqftSlug(secondSegment);
+            if (sqft) {
+              setPageType('by-location');
               return;
             }
 
@@ -150,6 +239,7 @@ const PreConPage: React.FC = () => {
 
         // Check if first segment is a year
         if (isYear(firstSegment)) {
+          console.log('[PreConPage] Detected completionYear page (no city):', firstSegment);
           setPageType('completionYear');
           return;
         }
@@ -173,11 +263,26 @@ const PreConPage: React.FC = () => {
         }
 
         // If not a known filter, try to fetch as a project (by mlsNumber)
+        // BUT first check if second segment could be a year (for unknown cities)
+        if (segments.length > 1 && isYear(segments[1]?.toLowerCase() || '')) {
+          console.log('[PreConPage] Detected completionYear page (unknown city):', {
+            city: firstSegment,
+            year: segments[1],
+          });
+          const cityName = unslugifyCityName(firstSegment);
+          setLocationType('city');
+          setLocationName(cityName);
+          setPageType('completionYear');
+          return;
+        }
+
         const projectSlug = segments.join('/');
+        console.log('[PreConPage] Trying to fetch as project:', projectSlug);
         const projectResponse = await fetch(`/api/pre-con-projects/${projectSlug}`);
         
         if (projectResponse.ok) {
           // It's a project
+          console.log('[PreConPage] Found as project');
           setPageType('project');
         } else {
           // Not found as project, but could still be a city (dynamic city names)
@@ -232,6 +337,8 @@ const PreConPage: React.FC = () => {
   }
 
   // Render appropriate page based on type
+  console.log('[PreConPage] Rendering with pageType:', pageType, 'segments:', segments);
+  
   if (pageType === 'by-location' || pageType === 'status' || pageType === 'propertyType' || pageType === 'subPropertyType' || pageType === 'completionYear') {
     // Build slug based on pageType
     // Extract city info if first segment is a city
@@ -282,11 +389,14 @@ const PreConPage: React.FC = () => {
         locationName={finalLocationName}
         bedroomFilter={bedroomFilter}
         bathroomFilter={bathroomFilter}
+        priceRangeFilter={priceRangeFilter}
+        sqftFilter={sqftFilter}
       />
     );
   }
 
   // Otherwise, it's a project
+  console.log('[PreConPage] Rendering as project page (pageType:', pageType, ')');
   return <PreConItem />;
 };
 
