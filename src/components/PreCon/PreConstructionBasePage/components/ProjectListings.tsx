@@ -38,11 +38,14 @@ export const ProjectListings: React.FC<ProjectListingsProps> = ({
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !loadingMore && hasMore) {
+        if (entries[0].isIntersecting && !loadingMore && hasMore && onLoadMore) {
           onLoadMore();
         }
       },
-      { threshold: 0.1 }
+      { 
+        threshold: 0.1,
+        rootMargin: '100px' // Trigger 100px before the element comes into view
+      }
     );
 
     const currentTarget = observerTarget.current;
@@ -84,7 +87,10 @@ export const ProjectListings: React.FC<ProjectListingsProps> = ({
           
           {/* Load More Trigger */}
           {hasMore && (
-            <div ref={observerTarget} className="flex justify-center items-center py-8">
+            <div 
+              ref={observerTarget} 
+              className="flex justify-center items-center py-8 min-h-[100px]"
+            >
               {loadingMore && (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Loader2 className="h-5 w-5 animate-spin" />

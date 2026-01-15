@@ -80,11 +80,15 @@ async function handler(request: NextRequest) {
     })
   }
   if (completionYear) {
+    // Search for the year in occupancyDate field
+    // The field might contain dates like "2025", "Q1 2025", "Fall 2025", etc.
     whereConditions.push({
       occupancyDate: {
         contains: completionYear,
+        mode: 'insensitive',
       },
     })
+    console.log('[API v1] CompletionYear filter:', completionYear)
   }
   if (developer) {
     whereConditions.push({

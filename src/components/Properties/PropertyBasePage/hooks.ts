@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import type { PropertyListing } from '@/lib/types';
 import type { PropertyPageType, PropertyPageInfo } from './types';
 import type { FilterState } from '@/lib/types/filters';
@@ -38,9 +38,11 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
   const [properties, setProperties] = useState<PropertyListing[]>([]);
   const [allProperties, setAllProperties] = useState<PropertyListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [pageInfo, setPageInfo] = useState<PropertyPageInfo | null>(null);
   const [communities, setCommunities] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
   const resultsPerPage = 24; // Properties per page
@@ -354,19 +356,21 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
     return { cityName, propertyType, priceRange, bedrooms, bathrooms, sqft, lotSize, yearBuilt, ownership, feature, status };
   }, [slug, pageType, citySlug]);
 
-  // Fetch properties
-  useEffect(() => {
-    console.log('[PropertyBasePage] useEffect triggered, filters.listingType:', filters.listingType);
-    const loadData = async () => {
-      try {
+  // Load properties function (supports pagination and infinite scroll)
+  const loadProperties = useCallback(async (page: number = 1, append: boolean = false) => {
+    console.log('[PropertyBasePage] loadProperties called:', { page, append, filters: filters.listingType });
+    try {
+      if (append) {
+        setLoadingMore(true);
+      } else {
         setLoading(true);
-        console.log('[PropertyBasePage] Starting loadData with listingType:', filters.listingType);
+      }
 
         // Build API query parameters
         const apiParams: Record<string, string | number> = {
           status: 'A', // Active listings
           resultsPerPage: resultsPerPage,
-          page: currentPage, // Current page number
+          page: page, // Use the page parameter
         };
 
         // Add city filter if available
@@ -522,8 +526,19 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
         // Update pagination info from API response
         const apiTotalPages = result.numPages || Math.ceil((result.count || 0) / resultsPerPage);
         const apiTotalResults = result.count || fetchedProperties.length;
+        const hasMorePages = page < apiTotalPages;
+        
+        console.log('[PropertyBasePage] Fetched properties:', {
+          count: fetchedProperties.length,
+          page,
+          total: apiTotalResults,
+          totalPages: apiTotalPages,
+          hasMore: hasMorePages,
+        });
+        
         setTotalPages(apiTotalPages);
         setTotalResults(apiTotalResults);
+        setHasMore(hasMorePages);
 
         // Additional client-side filtering for exact matches
         // Note: Don't filter by bathrooms/bedrooms/price/propertyType/sqft/yearBuilt here
@@ -632,23 +647,43 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
           filtered.length
         );
 
-        setPageInfo({
-          title,
-          numberOfProperties: apiTotalResults, // Use total from API, not filtered count
-          province,
-          description,
-          pagination: {
-            currentPage,
-            totalPages: apiTotalPages,
-            totalResults: apiTotalResults,
-            resultsPerPage,
-          },
-        });
+        // Build page info (only on initial load)
+        if (!append) {
+          setPageInfo({
+            title,
+            numberOfProperties: apiTotalResults, // Use total from API, not filtered count
+            province,
+            description,
+            pagination: {
+              currentPage: 1,
+              totalPages: apiTotalPages,
+              totalResults: apiTotalResults,
+              resultsPerPage,
+            },
+          });
+        }
 
-        setAllProperties(filtered);
+        if (append) {
+          // Append new properties to existing ones
+          setAllProperties(prev => [...prev, ...filtered]);
+        } else {
+          // Replace all properties
+          setAllProperties(filtered);
+          setCurrentPage(1); // Reset to 1 for new loads
+        }
+        
+        // Only update currentPage if appending, otherwise it's already set to 1 above
+        if (append) {
+          setCurrentPage(page);
+        }
+        
         // Set properties directly - the global filters effect will apply additional filters if needed
         // But if there are no global filters active, we want to show all filtered properties
-        setProperties(filtered);
+        if (append) {
+          setProperties(prev => [...prev, ...filtered]);
+        } else {
+          setProperties(filtered);
+        }
         
         console.log('[PropertyBasePage] Properties set:', {
           allPropertiesCount: filtered.length,
@@ -661,32 +696,75 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
         });
 
         // Extract unique communities
-        const uniqueCommunities = Array.from(
-          new Set(
-            filtered
-              .map(prop => prop.address?.neighborhood || prop.address?.area)
-              .filter(Boolean) as string[]
-          )
-        ).sort();
-        setCommunities(uniqueCommunities);
+        if (!append) {
+          // Only update communities on initial load
+          const uniqueCommunities = Array.from(
+            new Set(
+              filtered
+                .map(prop => prop.address?.neighborhood || prop.address?.area)
+                .filter(Boolean) as string[]
+            )
+          ).sort();
+          setCommunities(uniqueCommunities);
+        } else {
+          // Update communities when loading more
+          setCommunities(prev => {
+            const newCommunities = Array.from(
+              new Set([
+                ...prev,
+                ...filtered
+                  .map(prop => prop.address?.neighborhood || prop.address?.area)
+                  .filter(Boolean) as string[]
+              ])
+            ).sort();
+            return newCommunities;
+          });
+        }
       } catch (error) {
         console.error('Error loading property data:', error);
-        setProperties([]);
-        setAllProperties([]);
+        if (!append) {
+          setProperties([]);
+          setAllProperties([]);
+        }
       } finally {
         setLoading(false);
+        setLoadingMore(false);
       }
-    };
+    }, [slug, pageType, citySlug, parsedParams, resultsPerPage, filters.location, filters.locationArea, filters.listingType, locationType, locationName, listingType]);
 
-    if (slug) {
-      loadData();
-    }
-  }, [slug, pageType, citySlug, parsedParams, currentPage, resultsPerPage, filters.location, filters.locationArea, filters.listingType, locationType, locationName, listingType]);
-
-  // Reset to page 1 when filters change
+  // Initial fetch properties
   useEffect(() => {
-    setCurrentPage(1);
-  }, [filters]);
+    if (slug) {
+      loadProperties(1, false);
+    }
+  }, [slug, loadProperties]);
+
+  // Load more properties function
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) {
+      console.log('[PropertyBasePage] loadMore blocked:', { loadingMore, hasMore });
+      return;
+    }
+    const nextPage = currentPage + 1;
+    console.log('[PropertyBasePage] Loading more properties, page:', nextPage, 'currentPage:', currentPage);
+    await loadProperties(nextPage, true);
+  }, [loadProperties, currentPage, loadingMore, hasMore]);
+
+  // Reset pagination and reload data when filters change
+  useEffect(() => {
+    // Only trigger if filters actually changed relevant values
+    const filterDeps = [filters.bedrooms, filters.bathrooms, filters.propertyType, filters.minPrice, filters.maxPrice, filters.locationArea, filters.listingType];
+    
+    // Check if filters changed and reload from API
+    if (slug) {
+      console.log('[PropertyBasePage] Filters changed, reloading properties from page 1...');
+      setCurrentPage(1);
+      setHasMore(true);
+      setAllProperties([]); // Clear existing properties
+      setProperties([]);    // Clear filtered properties view
+      loadProperties(1, false); // Reload from API with new filters
+    }
+  }, [filters.bedrooms, filters.bathrooms, filters.propertyType, filters.minPrice, filters.maxPrice, filters.locationArea, filters.listingType, slug, loadProperties]);
 
   // Apply additional filters from filter state
   useEffect(() => {
@@ -782,6 +860,9 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
     properties,
     allProperties,
     loading,
+    loadingMore,
+    hasMore,
+    loadMore,
     pageInfo,
     communities,
     parsedParams,

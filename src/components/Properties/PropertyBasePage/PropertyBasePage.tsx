@@ -34,6 +34,9 @@ const PropertyBasePage: React.FC<PropertyBasePageProps> = ({
   // Use custom hook for data fetching and filtering
   const {
     loading,
+    loadingMore,
+    hasMore,
+    loadMore,
     pageInfo,
     properties,
     communities,
@@ -140,10 +143,13 @@ const PropertyBasePage: React.FC<PropertyBasePageProps> = ({
             properties={properties}
             displayTitle={displayTitle}
             pageType={pageType}
+            loadingMore={loadingMore}
+            hasMore={hasMore}
+            onLoadMore={loadMore}
           />
           
-          {/* Pagination */}
-          {pagination && pagination.totalPages > 1 && (
+          {/* Pagination - Fallback if infinite scroll doesn't work */}
+          {pagination && pagination.totalPages > 1 && !hasMore && (
             <div className="mt-8 flex justify-center">
               <Pagination
                 currentPage={pagination.currentPage}

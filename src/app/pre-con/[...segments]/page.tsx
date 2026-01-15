@@ -117,6 +117,10 @@ const PreConPage: React.FC = () => {
             // Check if it's a year
             if (isYear(secondSegment)) {
               setPageType('completionYear');
+              // Set location info for city + completionYear pages
+              const cityName = unslugifyCityName(firstSegment);
+              setLocationType('city');
+              setLocationName(cityName);
               return;
             }
 

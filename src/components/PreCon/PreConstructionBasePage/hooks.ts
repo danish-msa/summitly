@@ -187,12 +187,25 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
         setAllProjects(prev => [...prev, ...fetchedProjects]);
       } else {
         setAllProjects(fetchedProjects);
-        setCurrentPage(1);
+        setCurrentPage(1); // Reset to 1 for new loads
       }
       
       setTotalProjects(total);
-      setHasMore(page < totalPages);
-      setCurrentPage(page);
+      const hasMorePages = page < totalPages;
+      setHasMore(hasMorePages);
+      // Only update currentPage if appending, otherwise it's already set to 1 above
+      if (append) {
+        setCurrentPage(page);
+      }
+      
+      console.log('[PreConstructionBasePage] Pagination state updated:', {
+        page,
+        totalPages,
+        hasMore: hasMorePages,
+        currentPage: append ? page : 1,
+        append,
+        fetchedCount: fetchedProjects.length,
+      });
 
       // Extract province from first project (if available)
       const province = fetchedProjects.length > 0 
@@ -310,8 +323,13 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
 
   // Load more projects function
   const loadMore = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
-    await loadProjects(currentPage + 1, true);
+    if (loadingMore || !hasMore) {
+      console.log('[PreConstructionBasePage] loadMore blocked:', { loadingMore, hasMore });
+      return;
+    }
+    const nextPage = currentPage + 1;
+    console.log('[PreConstructionBasePage] Loading more projects, page:', nextPage, 'currentPage:', currentPage);
+    await loadProjects(nextPage, true);
   }, [loadProjects, currentPage, loadingMore, hasMore]);
 
   // Initial fetch pre-construction projects
@@ -321,14 +339,18 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
     }
   }, [slug, buildBaseApiQuery, loadProjects]);
 
-  // Reset pagination when filters change
+  // Reset pagination and reload data when filters change
   useEffect(() => {
-    if (allProjects.length > 0) {
-      // Reset to first page when filters change
+    if (allProjects.length > 0 && buildBaseApiQuery) {
+      // Reset pagination state
       setCurrentPage(1);
       setHasMore(true);
+      // Clear existing projects and reload from page 1
+      setAllProjects([]);
+      setProjects([]);
+      loadProjects(1, false);
     }
-  }, [filters.bedrooms, filters.bathrooms, filters.propertyType, filters.minPrice, filters.maxPrice, filters.locationArea]);
+  }, [filters.bedrooms, filters.bathrooms, filters.propertyType, filters.minPrice, filters.maxPrice, filters.locationArea, buildBaseApiQuery, loadProjects]);
 
   // Filter projects based on filter state
   useEffect(() => {
