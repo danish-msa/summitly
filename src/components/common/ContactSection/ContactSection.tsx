@@ -4,12 +4,13 @@ import React from 'react';
 import Image from 'next/image';
 import ContactForm from '../../Home/ConnectWithUs/ContactForm';
 import { Mail, Phone } from 'lucide-react';
+import { PropertyListing } from '@/lib/types';
 
 interface ContactSectionProps {
   title?: string;
   description?: string;
   className?: string;
-  property?: any;
+  property?: PropertyListing;
 }
 
 export const ContactSection: React.FC<ContactSectionProps> = ({
