@@ -547,10 +547,11 @@ export async function GET(request: NextRequest) {
       // For schools, add school type filters first
       if (category === 'schools') {
         // Calculate counts for each school type using all places
-        const publicCount = placesForCounts.filter(config.filters['Public']).length;
-        const catholicCount = placesForCounts.filter(config.filters['Catholic']).length;
-        const privateCount = placesForCounts.filter(config.filters['Private']).length;
-        const alternativeCount = placesForCounts.filter(config.filters['Alternative']).length;
+        const schoolFilters = config.filters as typeof CATEGORY_CONFIG.schools.filters;
+        const publicCount = placesForCounts.filter(schoolFilters['Public']).length;
+        const catholicCount = placesForCounts.filter(schoolFilters['Catholic']).length;
+        const privateCount = placesForCounts.filter(schoolFilters['Private']).length;
+        const alternativeCount = placesForCounts.filter(schoolFilters['Alternative']).length;
         
         if (publicCount > 0) mergedFilters.set('Public', { label: 'Public', count: publicCount });
         if (catholicCount > 0) mergedFilters.set('Catholic', { label: 'Catholic', count: catholicCount });
