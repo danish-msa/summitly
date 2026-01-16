@@ -37,7 +37,6 @@ import {
   Gamepad2,
   ShoppingBag,
   CreditCard,
-  Users,
   Briefcase,
   Palette,
   Sprout,
@@ -398,11 +397,11 @@ const getHighlightIcon = (key: string) => {
   const hasParkingDetails = Object.keys(data.propertyDetails.parking).length > 0;
   const hasLandDetails = Object.keys(data.propertyDetails.land).length > 0;
   const hasHighlights = Object.keys(data.propertyDetails.highlights).length > 0;
-  const hasRooms = data.rooms && data.rooms.length > 0;
+  const _hasRooms = data.rooms && data.rooms.length > 0;
   // const hasComparableSales = data.comparableSales && data.comparableSales.count > 0;
   
   // Determine default tab (first available)
-  const hasDetailsTab = hasPropertyDetails || hasBuildingDetails || hasInsideDetails || 
+  const _hasDetailsTab = hasPropertyDetails || hasBuildingDetails || hasInsideDetails || 
     hasUtilitiesDetails || hasParkingDetails || hasLandDetails || hasHighlights;
   // const defaultTab = hasDetailsTab ? 'details' : hasRooms ? 'rooms' : 'comparable';
 

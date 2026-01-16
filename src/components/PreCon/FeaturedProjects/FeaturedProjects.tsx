@@ -4,7 +4,6 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { FeaturedPropertyCard } from '../PropertyCards';
 import type { PreConstructionProperty } from '../PropertyCards/types';
 import SectionHeading from '@/components/Helper/SectionHeading';
-import { PropertyListing } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
 import { convertApiV1ToPreConProperty, type ApiV1Project } from '@/components/PreCon/PreConstructionBasePage/utils';

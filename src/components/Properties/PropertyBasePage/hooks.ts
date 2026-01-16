@@ -16,8 +16,6 @@ import {
   parseOwnershipSlug,
   parseFeatureSlug,
   parseStatusSlug,
-  formatBedrooms,
-  formatBathrooms,
   buildPropertyPageTitle,
   buildPropertyPageDescription,
   filterProperties,
@@ -729,6 +727,7 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
         setLoading(false);
         setLoadingMore(false);
       }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [slug, pageType, citySlug, parsedParams, resultsPerPage, filters.location, filters.locationArea, filters.listingType, locationType, locationName, listingType]);
 
   // Initial fetch properties

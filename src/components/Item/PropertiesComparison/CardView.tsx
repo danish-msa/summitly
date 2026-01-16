@@ -18,7 +18,7 @@ const CardView: React.FC<CardViewProps> = ({
   currentProperty,
   comparableProperties
 }) => {
-  const { savedComparables } = useSavedComparables(currentProperty.mlsNumber)
+  const { savedComparables: _savedComparables } = useSavedComparables(currentProperty.mlsNumber)
   // const savedMlsNumbers = new Set(savedComparables.map(sc => sc.mlsNumber))
   const [selectedProperty, setSelectedProperty] = useState<PropertyListing | null>(null)
 

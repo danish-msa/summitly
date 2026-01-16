@@ -42,13 +42,15 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, icon: Icon }) =
       {/* Member Info */}
       <div className="flex items-start gap-4">
         {member.image ? (
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={member.image}
-            alt={member.name}
-            className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
-            onError={handleImageError}
-          />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={member.image}
+              alt={member.name}
+              className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+              onError={handleImageError}
+            />
+          </>
         ) : null}
         <div
           className={`w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 ${

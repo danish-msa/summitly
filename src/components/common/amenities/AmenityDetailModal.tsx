@@ -133,7 +133,7 @@ export function AmenityDetailModal({ open, onOpenChange, amenity, categoryId: _c
 
   if (!amenity) return null;
 
-  const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
+  const _today = new Date().toLocaleDateString("en-US", { weekday: "long" });
   // const todayHours = detail?.hours.find((h) => h.day === today);
 
   const getDirectionsUrl = () => {
@@ -203,11 +203,12 @@ export function AmenityDetailModal({ open, onOpenChange, amenity, categoryId: _c
             <div className="relative h-48 bg-teal-100 flex items-center justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {displayDetail.photos.length > 0 ? (
-                <img
-                  src={displayDetail.photos[0]}
-                  alt={displayDetail.name}
-                  className="w-full h-full object-cover"
-                />
+                  <img
+                    src={displayDetail.photos[0]}
+                    alt={displayDetail.name}
+                    className="w-full h-full object-cover"
+                  />
+                </>
               ) : (
                 <span className="text-sm text-gray-500">Main photo</span>
               )}

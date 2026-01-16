@@ -13,7 +13,7 @@ interface BasicInfoProps {
   isRent?: boolean;
 }
 
-const BasicInfo: React.FC<BasicInfoProps> = ({ property, rawProperty }) => {
+const BasicInfo: React.FC<BasicInfoProps> = ({ property, rawProperty: _rawProperty }) => {
   const [isScheduleTourModalOpen, setIsScheduleTourModalOpen] = useState(false);
   const [isRequestInfoModalOpen, setIsRequestInfoModalOpen] = useState(false);
   

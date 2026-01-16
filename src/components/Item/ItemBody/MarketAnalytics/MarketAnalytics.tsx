@@ -17,7 +17,7 @@ import {
   VerticalTabsContent,
   VerticalTabsContainer
 } from '@/components/ui/vertical-tabs';
-import { Download, TrendingUp, RefreshCw, BarChart3, Activity } from "lucide-react";
+import { Download, TrendingUp, RefreshCw, BarChart3, Activity, Table2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -93,7 +93,6 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
     };
     
     findLocationData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propertyAddress, searchLocations]);
   
   // Fetch data from repliers API

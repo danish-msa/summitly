@@ -410,6 +410,7 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
     const nextPage = currentPage + 1;
     console.log('[PreConstructionBasePage] Loading more projects, page:', nextPage, 'currentPage:', currentPage);
     await loadProjects(nextPage, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadProjects, currentPage, loadingMore, hasMore]);
 
   // Initial fetch pre-construction projects
@@ -435,6 +436,7 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
   // Filter projects based on filter state
   useEffect(() => {
     if (allProjects.length === 0) return;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
 
     let filtered = [...allProjects];
     

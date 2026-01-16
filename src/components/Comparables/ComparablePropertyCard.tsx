@@ -41,7 +41,7 @@ const ComparablePropertyCard = ({ property, basePropertyMlsNumber, onSelect }: C
     return validImages
   }, [property.images])
   
-  const totalImages = images.length
+  const _totalImages = images.length
   
   // Format price
   const formattedPrice = new Intl.NumberFormat('en-US', {

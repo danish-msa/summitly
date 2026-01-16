@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useMemo } from 'react'
+import React from 'react'
 import { ArrowRight } from 'lucide-react'
 import { PropertyListing } from '@/lib/types'
 import PropertyImage from './PropertyImage'

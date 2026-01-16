@@ -159,7 +159,8 @@ export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({
     };
 
     fetchMedianListingVsSoldPrice();
-  }, [locationType, locationName, years]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locationName]);
 
   // Process market trends data when it changes
   useEffect(() => {

@@ -52,7 +52,7 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isLightboxOpen, setIsLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
-  const [activeCategory, setActiveCategory] = useState<ImageCategory>('all')
+  const [_activeCategory, setActiveCategory] = useState<ImageCategory>('all')
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0)
   const [defaultTab, setDefaultTab] = useState<string>('all')
   const [gridColumns, setGridColumns] = useState([4]) // Default to 4 columns (xl:grid-cols-4)

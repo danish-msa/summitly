@@ -147,7 +147,7 @@ export function useMarketTrends(params: UseMarketTrendsParams): UseMarketTrendsR
       console.log('[useMarketTrends] Waiting for ongoing request with same parameters');
       try {
         await ongoingRequestRef.current;
-      } catch (err) {
+      } catch (_err) {
         // Ignore errors from the ongoing request, we'll handle our own
       }
       return;

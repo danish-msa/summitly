@@ -3,7 +3,9 @@ import {
   Copy, 
   Mail, 
   CheckIcon,
-  MapPin
+  MapPin,
+  Bed,
+  Bath
 } from "lucide-react";
 import { 
   FaFacebook, 

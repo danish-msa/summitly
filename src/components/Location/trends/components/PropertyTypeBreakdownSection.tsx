@@ -382,7 +382,7 @@ export const PropertyTypeBreakdownSection: React.FC<PropertyTypeBreakdownSection
     toast.success(`Switched to ${salesVolumeViewMode === "chart" ? "table" : "chart"} view`);
   };
 
-  const handleDownload = (type: "salesVolume") => {
+  const handleDownload = (_type: "salesVolume") => {
     toast.success("Sales volume data downloaded!");
   };
 
