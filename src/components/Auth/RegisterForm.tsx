@@ -20,7 +20,6 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   onWelcome: _onWelcome,
   welcomeMessage: _welcomeMessage 
 }) => {
-  const _router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [formData, setFormData] = useState({
