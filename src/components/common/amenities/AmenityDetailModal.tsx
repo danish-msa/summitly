@@ -201,8 +201,9 @@ export function AmenityDetailModal({ open, onOpenChange, amenity, categoryId: _c
           <>
             {/* Photo Placeholder */}
             <div className="relative h-48 bg-teal-100 flex items-center justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               {displayDetail.photos.length > 0 ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={displayDetail.photos[0]}
                     alt={displayDetail.name}
