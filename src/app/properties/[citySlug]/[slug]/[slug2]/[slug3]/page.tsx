@@ -10,6 +10,8 @@ import {
   parseFeatureSlug,
   formatBedrooms,
   formatBathrooms,
+  buildPropertyPageTitle,
+  buildPropertyPageDescription,
 } from '@/components/Properties/PropertyBasePage/utils';
 
 interface PageProps {
