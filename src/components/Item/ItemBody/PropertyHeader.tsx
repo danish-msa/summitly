@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { PropertyListing } from '@/lib/types'
-import { Home, Bed, Bath, Maximize2, Heart, Share2, FileText, XCircle, Bell, Calculator, MessageCircle, Wallet } from 'lucide-react'
+import { Home, Bed, Bath, Maximize2, Heart, Share2, XCircle, Bell, Calculator, MessageCircle, Wallet } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -14,7 +14,7 @@ import AuthModal from '@/components/Auth/AuthModal'
 import ProjectRatingDisplay from '@/components/PreConItem/PreConItemBody/ProjectRatingDisplay'
 import PropertyAlerts from './PropertyAlerts'
 import { formatCurrency } from '@/lib/utils'
-import { getPropertyTypeUrl, getNeighborhoodUrl } from '@/lib/utils/comparisonTableUrls'
+import { getPropertyTypeUrl } from '@/lib/utils/comparisonTableUrls'
 
 interface PropertyHeaderProps {
   property: PropertyListing;

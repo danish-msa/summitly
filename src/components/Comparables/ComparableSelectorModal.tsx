@@ -24,7 +24,7 @@ const ComparableSelectorModal = ({
   property,
   onComparableValueChange,
 }: ComparableSelectorModalProps) => {
-  const handleComparableValueChange = (averagePrice: number | null, count: number) => {
+  const handleComparableValueChange = (averagePrice: number | null, _count: number) => {
     // Only pass the averagePrice to the parent component
     onComparableValueChange?.(averagePrice)
   }

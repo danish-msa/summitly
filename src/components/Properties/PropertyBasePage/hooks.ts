@@ -7,7 +7,8 @@ import { RepliersAPI } from '@/lib/api/repliers';
 import {
   unslugifyCityName,
   slugToPropertyType,
-  formatPropertyType,
+  unslugifyCityName,
+  slugToPropertyType,
   parsePriceRangeSlug,
   parseBedroomSlug,
   parseBathroomSlug,
@@ -753,7 +754,7 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
   // Reset pagination and reload data when filters change
   useEffect(() => {
     // Only trigger if filters actually changed relevant values
-    const filterDeps = [filters.bedrooms, filters.bathrooms, filters.propertyType, filters.minPrice, filters.maxPrice, filters.locationArea, filters.listingType];
+    // const filterDeps = [filters.bedrooms, filters.bathrooms, filters.propertyType, filters.minPrice, filters.maxPrice, filters.locationArea, filters.listingType];
     
     // Check if filters changed and reload from API
     if (slug) {

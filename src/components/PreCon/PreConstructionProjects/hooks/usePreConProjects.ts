@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { PreConstructionProperty } from '../../PropertyCards/types';
-import { PropertyListing } from '@/lib/types';
 import { convertApiV1ToPreConProperty, convertToPropertyListing, type ApiV1Project } from '@/components/PreCon/PreConstructionBasePage/utils';
 import { usePreConFilters } from './usePreConFilters';
 import { useGlobalFilters } from '@/hooks/useGlobalFilters';

@@ -54,7 +54,7 @@ const getEventBadgeVariant = (event: string, isActive: boolean) => {
   return { className: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-0' };
 };
 
-export default function TransactionHistory({ groupedHistory, propertyAddress }: TransactionHistoryProps) {
+export default function TransactionHistory({ groupedHistory, propertyAddress: _propertyAddress }: TransactionHistoryProps) {
   // Calculate price changes and appreciation for each record
   const tableData = groupedHistory.map((record, index) => {
     // Parse price from string (e.g., "$485,000" -> 485000)

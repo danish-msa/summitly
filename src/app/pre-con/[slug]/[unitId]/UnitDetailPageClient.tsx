@@ -63,6 +63,7 @@ const UnitDetailPageClient: React.FC<UnitDetailPageClientProps> = ({ unit, prope
                   {unit.images && unit.images.length > 0 ? (
                     unit.images.map((image, index) => (
                       <div key={index} className="bg-muted rounded-lg p-8 flex items-center justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={image}
                           alt={`${unit.name} floorplan ${index + 1}`}
@@ -75,6 +76,7 @@ const UnitDetailPageClient: React.FC<UnitDetailPageClientProps> = ({ unit, prope
                     ))
                   ) : (
                     <div className="bg-muted rounded-lg p-8 flex items-center justify-center">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src="/images/floorplan-placeholder.jpg"
                         alt={`${unit.name} floorplan`}

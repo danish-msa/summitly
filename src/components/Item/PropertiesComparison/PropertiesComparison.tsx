@@ -60,7 +60,7 @@ const PropertiesComparison: React.FC<PropertiesComparisonProps> = ({ currentProp
     }
 
     fetchComparableProperties()
-  }, [savedComparables])
+  }, [savedComparables, currentProperty.mlsNumber])
 
   const hasComparables = comparableProperties.length > 0
 

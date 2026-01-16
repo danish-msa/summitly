@@ -89,7 +89,7 @@ export default function EstimateHistorySection({ propertyAddress, rawProperty }:
               }
             }
           }
-        } catch (e) {
+        } catch (_e) {
           // If parsing fails, use original values
           formattedMonth = monthKey;
           date = monthKey;
@@ -107,7 +107,7 @@ export default function EstimateHistorySection({ propertyAddress, rawProperty }:
         // Sort by date descending (most recent first)
         return b.sortDate.getTime() - a.sortDate.getTime();
       })
-      .map(({ sortDate, ...rest }) => rest); // Remove sortDate from final data
+      .map(({ sortDate: _sortDate, ...rest }) => rest); // Remove sortDate from final data
   }, [rawProperty]);
 
   // Prepare chart data (reverse to show oldest to newest) - must be before conditional return

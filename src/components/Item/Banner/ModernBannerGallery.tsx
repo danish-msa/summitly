@@ -102,9 +102,9 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
   })
 
   // Filter images by category
-  const filteredImages = activeCategory === 'all'
-    ? categorizedImages
-    : categorizedImages.filter(img => img.category === activeCategory)
+  // const filteredImages = activeCategory === 'all'
+  //   ? categorizedImages
+  //   : categorizedImages.filter(img => img.category === activeCategory)
 
   // Count images by category
   const categoryCounts = {

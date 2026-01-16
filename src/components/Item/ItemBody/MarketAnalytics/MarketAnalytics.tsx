@@ -7,11 +7,9 @@ import { generateMarketData, generateListingsData, generateSoldPriceData } from 
 import { MarketChartSection } from './MarketChartSection';
 import { ListingsChartSection } from './ListingsChartSection';
 import { SoldPriceChartSection } from './SoldPriceChartSection';
-import { TableView } from './TableView';
 import { MarketStats } from './MarketStats';
 import { Button } from "@/components/ui/button";
 import { UserCheck } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { 
   VerticalTabs, 
   VerticalTabsList, 
@@ -19,7 +17,7 @@ import {
   VerticalTabsContent,
   VerticalTabsContainer
 } from '@/components/ui/vertical-tabs';
-import { Download, Table2, TrendingUp, RefreshCw, ArrowDown, BarChart3, Activity } from "lucide-react";
+import { Download, TrendingUp, RefreshCw, BarChart3, Activity } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -61,7 +59,7 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
     last1YearGrowth: number;
     last5YearsGrowth: number;
   } | null>(null);
-  const [apiError, setApiError] = useState<string | null>(null);
+  const [_apiError, setApiError] = useState<string | null>(null);
   
   const { searchLocations } = useLocationData();
   
@@ -95,6 +93,7 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
     };
     
     findLocationData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propertyAddress, searchLocations]);
   
   // Fetch data from repliers API
@@ -204,7 +203,7 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
     };
 
     fetchAnalyticsData();
-  }, [latitude, longitude, propertyClass]);
+  }, [latitude, longitude, propertyClass, propertyAddress, city]);
 
   // Use API data if available, otherwise fall back to mock data
   const chartData = useMemo(() => {
@@ -427,15 +426,6 @@ export const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({
     toast.success("Sold price trends data downloaded!");
   };
 
-  // Format price for display
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
 
   // Extract neighborhood and city from address or location data
   const getNeighborhoodAndCity = () => {

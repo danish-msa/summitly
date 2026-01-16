@@ -19,13 +19,13 @@ const CardView: React.FC<CardViewProps> = ({
   comparableProperties
 }) => {
   const { savedComparables } = useSavedComparables(currentProperty.mlsNumber)
-  const savedMlsNumbers = new Set(savedComparables.map(sc => sc.mlsNumber))
+  // const savedMlsNumbers = new Set(savedComparables.map(sc => sc.mlsNumber))
   const [selectedProperty, setSelectedProperty] = useState<PropertyListing | null>(null)
 
   // Combine all properties for the map
   const allProperties = [currentProperty, ...comparableProperties]
 
-  const handlePropertySelect = async (property: PropertyListing, isSelected: boolean) => {
+  const handlePropertySelect = async (_property: PropertyListing, _isSelected: boolean) => {
     // The ComparablePropertyCard handles the save/unsave logic internally
     // This is just a pass-through for consistency
   }
@@ -36,7 +36,7 @@ const CardView: React.FC<CardViewProps> = ({
   }
 
   // Handle map bounds change
-  const handleMapBoundsChange = (bounds: {
+  const handleMapBoundsChange = (_bounds: {
     north: number
     south: number
     east: number

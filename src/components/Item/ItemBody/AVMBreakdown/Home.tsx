@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { PropertyListing } from '@/lib/types';
-import type { SinglePropertyListingResponse, ComparableListing } from '@/lib/api/repliers/types/single-listing';
+import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/single-listing';
 
 interface HomeProps {
   property: PropertyListing;

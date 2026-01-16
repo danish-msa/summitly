@@ -36,6 +36,7 @@ const LoadingElement = () => {
     <div className="fixed inset-0 bg-white z-50 flex items-center justify-center">
       <div className="flex flex-col items-center">
         {/* Logo */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img 
           src="/images/logo/favicon.png" 
           alt="Summitly Logo" 

@@ -4,6 +4,7 @@ import { successResponse, ApiErrors } from '@/lib/api/response'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 
 const saveComparableSchema = z.object({
@@ -25,7 +26,7 @@ async function handler(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
 
-    const where: any = { userId: session.user.id }
+    const where: Prisma.SavedComparableWhereInput = { userId: session.user.id }
     if (basePropertyMlsNumber) {
       where.basePropertyMlsNumber = basePropertyMlsNumber
     }

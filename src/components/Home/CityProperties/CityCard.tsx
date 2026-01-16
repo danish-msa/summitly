@@ -25,6 +25,7 @@ const CityCard = ({ city }: CityCardProps) => {
               <span className='text-gray-400 text-sm'>{city.cityName}</span>
             </div>
           ) : (
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={city.image}
               alt={city.cityName}

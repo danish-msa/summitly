@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 
 /**
  * AWS S3 Client Configuration
@@ -18,7 +18,7 @@ const s3Client = new S3Client({
 })
 
 const BUCKET_NAME = process.env.S3_BUCKET || 'summitly-storage'
-const REGION = process.env.S3_REGION || 'ca-central-1'
+// const REGION = process.env.S3_REGION || 'ca-central-1'
 // AWS S3 Public URL - using custom domain
 const AWS_PUBLIC_URL = 'https://shared-s3.property.ca/public'
 

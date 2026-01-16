@@ -1,7 +1,7 @@
 import PropertyBasePage from '@/components/Properties/PropertyBasePage/PropertyBasePage';
 import type { Metadata } from 'next';
 import { 
-  unslugifyCityName, 
+  unslugifyCityName,
   formatPropertyType, 
   parsePriceRangeSlug,
   parseBedroomSlug,
@@ -11,7 +11,6 @@ import {
   parseYearBuiltSlug,
   parseOwnershipSlug,
   parseFeatureSlug,
-  parseStatusSlug,
   formatBedrooms,
   formatBathrooms,
   slugToPropertyType,
@@ -91,7 +90,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const cityName = unslugifyCityName(resolvedParams.citySlug);
   const pageInfo = determinePageType(resolvedParams.slug, resolvedParams.slug2);
   
-  const propertyType = slugToPropertyType(resolvedParams.slug);
   const propertyTypeDisplay = formatPropertyType(resolvedParams.slug);
   const priceInfo = parsePriceRangeSlug(resolvedParams.slug);
   const priceInfo2 = parsePriceRangeSlug(resolvedParams.slug2);
@@ -144,19 +142,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title = `${bathroomLabel} Homes for Sale in ${cityName} ${priceLabel}`;
     description = `Find ${bathroomLabel.toLowerCase()} homes for sale in ${cityName} ${priceLabel.toLowerCase()}. Browse listings, view photos, and connect with real estate agents.`;
   } else if (pageInfo.pageType === 'price-sqft') {
-    const priceLabel = priceInfo?.label || resolvedParams.slug;
     title = buildPropertyPageTitle('price-sqft', cityName, undefined, priceInfo ?? undefined, undefined, undefined, sqftInfo ?? undefined);
     description = buildPropertyPageDescription(cityName, undefined, priceInfo ?? undefined, undefined, undefined, sqftInfo ?? undefined);
   } else if (pageInfo.pageType === 'price-lot-size') {
-    const priceLabel = priceInfo?.label || resolvedParams.slug;
     title = buildPropertyPageTitle('price-lot-size', cityName, undefined, priceInfo ?? undefined, undefined, undefined, undefined, lotSizeInfo ?? undefined);
     description = buildPropertyPageDescription(cityName, undefined, priceInfo ?? undefined, undefined, undefined, undefined, lotSizeInfo ?? undefined);
   } else if (pageInfo.pageType === 'price-year-built') {
-    const priceLabel = priceInfo?.label || resolvedParams.slug;
     title = buildPropertyPageTitle('price-year-built', cityName, undefined, priceInfo ?? undefined, undefined, undefined, undefined, undefined, yearBuiltInfo ?? undefined);
     description = buildPropertyPageDescription(cityName, undefined, priceInfo ?? undefined, undefined, undefined, undefined, undefined, yearBuiltInfo ?? undefined);
   } else if (pageInfo.pageType === 'price-feature') {
-    const priceLabel = priceInfo?.label || resolvedParams.slug;
     title = buildPropertyPageTitle('price-feature', cityName, undefined, priceInfo ?? undefined, undefined, undefined, undefined, undefined, undefined, undefined, featureInfo ?? undefined);
     description = buildPropertyPageDescription(cityName, undefined, priceInfo ?? undefined, undefined, undefined, undefined, undefined, undefined, undefined, featureInfo ?? undefined);
   }

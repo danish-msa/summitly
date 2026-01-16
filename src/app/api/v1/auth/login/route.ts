@@ -4,8 +4,6 @@ import { successResponse, ApiErrors } from '@/lib/api/response'
 import { prisma } from '@/lib/prisma'
 import { verifyPassword } from '@/lib/auth-utils'
 import { z } from 'zod'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),

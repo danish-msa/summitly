@@ -341,6 +341,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, propertyId }) => {
           <div className="flex flex-col md:flex-row gap-4">
           {/* Floorplan Image */}
           <div className="flex-shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={unit.images && unit.images.length > 0 ? unit.images[0] : '/images/floorplan-placeholder.jpg'}
               alt={`${unit.name} floorplan`}

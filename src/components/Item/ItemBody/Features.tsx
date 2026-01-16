@@ -23,7 +23,7 @@ interface FeaturesProps {
   isRent?: boolean
 }
 
-const Features: React.FC<FeaturesProps> = ({ property, rawProperty, isPreCon = false, isRent = false }) => {
+const Features: React.FC<FeaturesProps> = ({ property, rawProperty: _rawProperty, isPreCon = false, isRent: _isRent = false }) => {
   // Get property address
   const address = property.address?.location || 
     `${property.address?.streetNumber || ''} ${property.address?.streetName || ''} ${property.address?.streetSuffix || ''}, ${property.address?.city || ''}, ${property.address?.state || ''} ${property.address?.zip || ''}`.trim()

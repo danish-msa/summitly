@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { apiMiddleware } from '@/lib/api/middleware'
-import { successResponse, ApiErrors } from '@/lib/api/response'
+import { successResponse } from '@/lib/api/response'
 import { prisma } from '@/lib/prisma'
 
 /**
@@ -31,6 +31,6 @@ async function handler() {
 }
 
 export async function GET(request: NextRequest) {
-  return apiMiddleware(request, handler)
+  return apiMiddleware(request, async () => handler())
 }
 

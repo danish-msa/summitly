@@ -96,6 +96,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       {!isDevelopmentTeamPage && (
         <div className="w-full h-48 md:h-64 relative">
           <div className="absolute inset-0 overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src={imageSrc} 
               alt={title}

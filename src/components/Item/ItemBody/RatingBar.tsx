@@ -7,7 +7,7 @@ interface RatingBarProps {
   className?: string;
 }
 
-const getRatingConfig = (label: string, rating: number) => {
+const getRatingConfig = (label: string, _rating: number) => {
   const configs: Record<string, { icon: typeof TrendingUp; bgColor: string; iconColor: string; barColor: string; textColor: string }> = {
     "Overall": {
       icon: TrendingUp,

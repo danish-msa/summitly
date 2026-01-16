@@ -112,6 +112,7 @@ export function UnitDialog({ unit, open, onOpenChange, allUnits }: UnitDialogPro
             <div>
               <h3 className="text-xl font-semibold mb-3">Floor Plan</h3>
               <div className="rounded-lg overflow-hidden border">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={getFloorPlanImage(unit.floorPlan)}
                   alt={`Unit ${unit.id} floor plan`}

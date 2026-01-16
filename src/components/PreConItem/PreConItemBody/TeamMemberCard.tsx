@@ -42,6 +42,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, icon: Icon }) =
       {/* Member Info */}
       <div className="flex items-start gap-4">
         {member.image ? (
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={member.image}
             alt={member.name}

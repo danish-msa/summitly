@@ -256,7 +256,7 @@ const ComparableSelector = ({
   }
 
   // Handle map bounds change
-  const handleMapBoundsChange = (bounds: {
+  const handleMapBoundsChange = (_bounds: {
     north: number
     south: number
     east: number

@@ -18,7 +18,7 @@ interface PriceCardProps {
   isRent?: boolean
 }
 
-const PriceCard = ({ property, rawProperty, isPreCon = false, isRent = false }: PriceCardProps) => {
+const PriceCard = ({ property, rawProperty, isPreCon: _isPreCon = false, isRent: _isRent = false }: PriceCardProps) => {
   const { data: session } = useSession()
   const [activeTab, setActiveTab] = useState<"comparable" | "estimated">("estimated")
   const [comparableProperties, setComparableProperties] = useState<PropertyListing[]>([])

@@ -1,5 +1,5 @@
 import { PropertyListing } from '@/lib/types';
-import { FileText, TrendingUp, ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import { TrendingUp, ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,

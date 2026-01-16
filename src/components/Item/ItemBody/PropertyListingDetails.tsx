@@ -37,7 +37,6 @@ import {
   Gamepad2,
   ShoppingBag,
   CreditCard,
-  User,
   Users,
   Briefcase,
   Palette,
@@ -97,7 +96,7 @@ export default function PropertyListingDetails({ data, property }: ListingDetail
   
 
   // Get icon for development team role
-  const getTeamRoleIcon = (role: string) => {
+  // const getTeamRoleIcon = (role: string) => {
     const roleLower = role.toLowerCase();
     if (roleLower.includes('developer')) return Building2;
     if (roleLower.includes('architect')) return Home;
@@ -400,12 +399,12 @@ const getHighlightIcon = (key: string) => {
   const hasLandDetails = Object.keys(data.propertyDetails.land).length > 0;
   const hasHighlights = Object.keys(data.propertyDetails.highlights).length > 0;
   const hasRooms = data.rooms && data.rooms.length > 0;
-  const hasComparableSales = data.comparableSales && data.comparableSales.count > 0;
+  // const hasComparableSales = data.comparableSales && data.comparableSales.count > 0;
   
   // Determine default tab (first available)
   const hasDetailsTab = hasPropertyDetails || hasBuildingDetails || hasInsideDetails || 
     hasUtilitiesDetails || hasParkingDetails || hasLandDetails || hasHighlights;
-  const defaultTab = hasDetailsTab ? 'details' : hasRooms ? 'rooms' : 'comparable';
+  // const defaultTab = hasDetailsTab ? 'details' : hasRooms ? 'rooms' : 'comparable';
 
   return (
     <div className="w-full pl-14">

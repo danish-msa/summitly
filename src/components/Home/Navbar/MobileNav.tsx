@@ -7,7 +7,6 @@ import { CgClose } from 'react-icons/cg';
 import { FaHome, FaMapMarkedAlt, FaBuilding, FaExchangeAlt, FaEllipsisH, FaInfoCircle, FaPhone, FaCalculator, FaUserCircle } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useSession } from 'next-auth/react';
 import AuthModal from '@/components/Auth/AuthModal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';

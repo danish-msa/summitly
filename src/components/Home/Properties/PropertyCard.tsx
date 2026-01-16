@@ -93,6 +93,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
       <div className='bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-gray-100 hover:border-gray-200'>
         {/* Image Section with Carousel */}
         <div className='relative h-64 w-full overflow-hidden p-2'>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
             src={imageSrc} 
             alt={`${property.details.propertyType} in ${property.address.city || 'Unknown City'}`}

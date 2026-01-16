@@ -93,7 +93,7 @@ const Item: React.FC = () => {
         let rawListing: SinglePropertyListingResponse | null = null;
         try {
           rawListing = await getRawListingDetails(mlsNumber);
-        } catch (rawError) {
+        } catch (_rawError) {
           // Continue without raw listing - it's not critical
         }
         
@@ -120,7 +120,6 @@ const Item: React.FC = () => {
       setLoading(false);
       setError('Invalid URL');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cityName, propertyAddress, propertyId, router]);
 
   if (loading) {
@@ -151,28 +150,6 @@ const Item: React.FC = () => {
 
   // Determine if this is a pre-construction property
   const isPreCon = !!property.preCon;
-
-  // Define navigation sections - rentals don't have history section
-  const navigationSections = isRental
-    ? [
-        { id: 'description', label: 'Description' },
-        { id: 'listing-details', label: 'Listing Details' },
-        { id: 'available-units', label: 'Available Units' },
-        { id: 'features', label: 'Neighborhood' },
-        { id: 'lifestyle', label: 'Lifestyle' },
-        { id: 'demographics', label: 'Demographics' },
-        { id: 'calculators', label: 'Calculators' }
-      ]
-    : [
-        { id: 'description', label: 'Description' },
-        { id: 'listing-details', label: 'Listing Details' },
-        { id: 'history', label: 'History' },
-        { id: 'features', label: 'Neighborhood' },
-        { id: 'lifestyle', label: 'Lifestyle' },
-        { id: 'demographics', label: 'Demographics' },
-        { id: 'market-analytics', label: 'Market Analytics' },
-        { id: 'calculators', label: 'Calculators' }
-      ];
 
   return (
     <div>

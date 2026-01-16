@@ -21,7 +21,7 @@ interface CalculatorsProps {
   isRent?: boolean
 }
 
-const Calculators: React.FC<CalculatorsProps> = ({ property, rawProperty, isPreCon = false, isRent = false }) => {
+const Calculators: React.FC<CalculatorsProps> = ({ property, rawProperty, isPreCon: _isPreCon = false, isRent: _isRent = false }) => {
   // Extract property price from property or rawProperty
   const propertyPrice = rawProperty?.estimate?.value || property.listPrice || 0
 

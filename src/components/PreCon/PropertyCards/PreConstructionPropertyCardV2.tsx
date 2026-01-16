@@ -99,6 +99,7 @@ const PreConstructionPropertyCardV2 = ({ property, onHide, className }: PreConst
           {/* Image Section */}
           <div className="relative overflow-hidden bg-gray-100">
             <div className="relative h-64">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
                 src={imageSrc}
                 alt={`${property.projectName}${property.developer ? ` - ${property.developer}` : ''}`}

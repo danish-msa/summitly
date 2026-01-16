@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { PreConstructionPropertyCardV3 } from '@/components/PreCon/PropertyCards';
 import type { PreConstructionProperty } from '@/components/PreCon/PropertyCards/types';
 import SectionHeading from '@/components/Helper/SectionHeading';

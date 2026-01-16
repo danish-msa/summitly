@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Plus, X, MapPin, Upload, Loader2, Waves, Dumbbell, Square, Shield, Sparkles, UtensilsCrossed, Coffee, Car, Lock, Wifi, Tv, Gamepad2, ShoppingBag, TreePine, Mountain, Eye, ArrowUpDown, Flame, Users, Palette, Hammer, Sprout, Megaphone, Building2, Home, Ruler, Bed, Bath, Calendar, DollarSign, Construction, ChevronDown, Search, Check } from "lucide-react"
+import { Plus, X, MapPin, Upload, Loader2, Waves, Dumbbell, Square, Shield, Sparkles, UtensilsCrossed, Coffee, Car, Lock, Wifi, Tv, Gamepad2, ShoppingBag, TreePine, Mountain, Eye, ArrowUpDown, Flame, Users, Palette, Hammer, Sprout, Megaphone, Building2, Home, Ruler, Bed, Bath, Calendar, DollarSign, Construction, ChevronDown, Search } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import GlobalLocationSearch from "@/components/common/GlobalLocationSearch"
 import { getGeocode, getLatLng } from "use-places-autocomplete"
@@ -2144,6 +2144,7 @@ export function PreConProjectForm({
                                 key={index}
                                 className="relative group border rounded-lg overflow-hidden aspect-square"
                               >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={img}
                                   alt={`Project image ${index + 1}`}
@@ -2730,6 +2731,7 @@ export function PreConProjectForm({
                                           key={index}
                                           className="relative group border rounded-lg overflow-hidden aspect-square"
                                         >
+                                          {/* eslint-disable-next-line @next/next/no-img-element */}
                                           <img
                                             src={img}
                                             alt={`Unit image ${index + 1}`}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { handleCors, applyCorsHeaders } from '@/lib/api/cors'
+import { handleCors } from '@/lib/api/cors'
 
 /**
  * API v1 Middleware

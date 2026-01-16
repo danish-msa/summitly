@@ -8,20 +8,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import {
   Star,
   Clock,
   Navigation,
   Phone,
-  Globe,
   MapPin,
   Share2,
   Bookmark,
-  ExternalLink,
-  ThumbsUp,
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -85,7 +80,7 @@ function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "md
   );
 }
 
-export function AmenityDetailModal({ open, onOpenChange, amenity, categoryId }: AmenityDetailModalProps) {
+export function AmenityDetailModal({ open, onOpenChange, amenity, categoryId: _categoryId }: AmenityDetailModalProps) {
   const [detail, setDetail] = useState<AmenityDetail | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -93,6 +88,7 @@ export function AmenityDetailModal({ open, onOpenChange, amenity, categoryId }: 
     if (open && amenity) {
       fetchAmenityDetails();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, amenity]);
 
   const fetchAmenityDetails = async () => {
@@ -138,7 +134,7 @@ export function AmenityDetailModal({ open, onOpenChange, amenity, categoryId }: 
   if (!amenity) return null;
 
   const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
-  const todayHours = detail?.hours.find((h) => h.day === today);
+  // const todayHours = detail?.hours.find((h) => h.day === today);
 
   const getDirectionsUrl = () => {
     if (amenity.latitude && amenity.longitude) {
@@ -206,6 +202,7 @@ export function AmenityDetailModal({ open, onOpenChange, amenity, categoryId }: 
             {/* Photo Placeholder */}
             <div className="relative h-48 bg-teal-100 flex items-center justify-center">
               {displayDetail.photos.length > 0 ? (
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={displayDetail.photos[0]}
                   alt={displayDetail.name}

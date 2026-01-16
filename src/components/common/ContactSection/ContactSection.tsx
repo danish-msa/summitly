@@ -17,7 +17,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
   title = "Connect with Us Today",
   description = "Reach out to our team for any inquiries or assistance you may need. Whether you're looking for your dream home, need guidance on the buying process, or have any other questions, we're here to help. Let's make your real estate journey seamless and enjoyable.",
   className = "",
-  property,
+  property: _property,
 }) => {
   return (
     <div className={`w-full py-16 sm:py-20 lg:py-24 relative overflow-hidden ${className}`}>

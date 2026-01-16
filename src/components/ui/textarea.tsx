@@ -48,7 +48,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
 
     if (label) {
       // Remove placeholder when label is present to avoid overlap
-      const { placeholder, ...textareaProps } = props
+      const { placeholder: _placeholder, ...textareaProps } = props
       
       return (
         <div className="relative">

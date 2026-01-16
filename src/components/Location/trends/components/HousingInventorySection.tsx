@@ -46,15 +46,15 @@ interface HousingInventorySectionProps {
 }
 
 export const HousingInventorySection: React.FC<HousingInventorySectionProps> = ({ 
-  locationType,
+  locationType: _locationType,
   locationName,
-  parentCity,
-  parentArea,
-  parentNeighbourhood,
+  parentCity: _parentCity,
+  parentArea: _parentArea,
+  parentNeighbourhood: _parentNeighbourhood,
   dateRanges,
-  propertyType,
-  community,
-  years = 2,
+  propertyType: _propertyType,
+  community: _community,
+  years: _years = 2,
   marketTrendsData,
   onRefresh,
 }) => {
@@ -67,7 +67,7 @@ export const HousingInventorySection: React.FC<HousingInventorySectionProps> = (
     avgDaysOnMarket: 0,
     saleToListRatio: 0,
   });
-  const [inventoryTableData, setInventoryTableData] = useState(generateInventoryTableData());
+  const [_inventoryTableData, setInventoryTableData] = useState(generateInventoryTableData());
   const [newClosedAvailableData, setNewClosedAvailableData] = useState({
     months: [] as string[],
     new: [] as number[],

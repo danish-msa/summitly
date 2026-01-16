@@ -4,6 +4,7 @@ import { successResponse, ApiErrors } from '@/lib/api/response'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 
 const updateTourSchema = z.object({
@@ -61,7 +62,7 @@ async function handler(
       return ApiErrors.NOT_FOUND('Tour not found')
     }
 
-    const updateData: any = {}
+    const updateData: Prisma.TourUpdateInput = {}
     if (validatedData.scheduledDate) updateData.scheduledDate = new Date(validatedData.scheduledDate)
     if (validatedData.tourType) updateData.tourType = validatedData.tourType
     if (validatedData.name) updateData.name = validatedData.name

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { DollarSign, Bed, Calculator, Car, Package, Home, Plus, Tag } from "lucide-react"
+import { DollarSign, Bed, Calculator, Car, Package, Plus, Tag } from "lucide-react"
 import { PropertyListing } from '@/lib/types'
 import RequestFurtherInfoModal from './RequestFurtherInfoModal'
 

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
-import { ButtonColorful } from '@/components/ui/button-colorful';
 import Image from 'next/image';
 import { useLocationDetection } from '@/hooks/useLocationDetection';
 import { Button } from '@/components/ui/button';
@@ -80,7 +79,7 @@ const PropertyCategories = () => {
   const [categories, setCategories] = useState<PropertyCategory[]>(
     propertyCategoriesConfig.map(cat => ({ ...cat, count: 0 }))
   );
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   
   // Get display location - use detected location or fallback to Henderson, NV
   const displayLocation = location ? location.fullLocation : "Henderson, NV";

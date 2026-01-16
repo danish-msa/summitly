@@ -18,16 +18,8 @@ import { toast } from "sonner";
 import { formatFullPrice } from '../utils/helpers';
 import { 
   getAverageSoldPriceChartOption, 
-  getSalesVolumeChartOption,
-  getColorForPropertyType,
   getMedianListingVsSoldPriceChartOption
 } from '../utils/chartOptions';
-import { 
-  generateSalesVolumeMockData,
-  generateAverageSoldPriceData,
-  generateSalesVolumeData,
-  generatePriceOverviewData
-} from '../utils/dataGenerators';
 import { PropertyListing } from '@/lib/types';
 import { MarketTrendsData } from '@/hooks/useMarketTrends';
 
@@ -98,16 +90,16 @@ const PriceCard = ({ label, value, change, showChange = false, subtitle, dollarC
 };
 
 export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({ 
-  locationType,
+  locationType: _locationType,
   locationName,
-  parentCity,
-  parentArea,
-  parentNeighbourhood,
+  parentCity: _parentCity,
+  parentArea: _parentArea,
+  parentNeighbourhood: _parentNeighbourhood,
   properties,
   dateRanges,
-  propertyType,
-  community,
-  years = 2,
+  propertyType: _propertyType,
+  community: _community,
+  years: _years = 2,
   marketTrendsData,
   onRefresh,
 }) => {
@@ -117,7 +109,7 @@ export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({
   const [medianListingVsSoldViewMode, setMedianListingVsSoldViewMode] = useState<"chart" | "table">("chart");
   const [averageSoldPriceData, setAverageSoldPriceData] = useState<{ months: string[]; prices: number[]; medianPrices?: number[]; counts: number[] }>({ months: [], prices: [], medianPrices: [], counts: [] });
   const [medianListingVsSoldData, setMedianListingVsSoldData] = useState<{ months: string[]; medianListingPrice: number[]; medianSoldPrice: number[] }>({ months: [], medianListingPrice: [], medianSoldPrice: [] });
-  const [salesVolumeTableData, setSalesVolumeTableData] = useState(generateSalesVolumeMockData());
+  const [_salesVolumeTableData, _setSalesVolumeTableData] = useState(generateSalesVolumeMockData());
   const [priceOverviewData, setPriceOverviewData] = useState({
     current: {
       avgPrice: 0,

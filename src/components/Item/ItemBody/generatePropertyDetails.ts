@@ -196,7 +196,7 @@ export function generatePropertyDetailsData(
   };
 
   // Determine if a history record is currently active
-  const isHistoryActive = (history: { lastStatus?: string; timestamps?: { closedDate?: string; terminatedDate?: string; expiryDate?: string } }, isCurrentListing: boolean): boolean => {
+  const isHistoryActive = (_history: { lastStatus?: string; timestamps?: { closedDate?: string; terminatedDate?: string; expiryDate?: string } }, isCurrentListing: boolean): boolean => {
     if (!isCurrentListing) return false;
     
     const lastStatus = history.lastStatus?.toLowerCase();

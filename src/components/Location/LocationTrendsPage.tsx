@@ -166,7 +166,7 @@ const LocationTrendsPage: React.FC<LocationTrendsPageProps> = ({ locationType })
   };
 
   // Calculate date range based on selected years
-  const getDateRangeForYears = (years: number) => {
+  // const getDateRangeForYears = (years: number) => {
     const now = new Date();
     const startDate = new Date(now);
     startDate.setFullYear(now.getFullYear() - years);

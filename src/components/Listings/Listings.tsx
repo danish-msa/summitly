@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { getListings } from '@/lib/api/properties';
 import PropertyCard from '@/components/Helper/PropertyCard';
 import { PropertyListing } from '@/lib/types';
-import ListingFilters from './ListingFilters';
 import { LOCATIONS, REGIONS } from '@/lib/types/filters';
 import SellRentToggle from '@/components/common/filters/SellRentToggle';
 import { useHiddenProperties } from '@/hooks/useHiddenProperties';

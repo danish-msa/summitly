@@ -48,7 +48,7 @@ export async function GET() {
         page: 1,
       });
       landCount = landResult.count || 0;
-    } catch (error) {
+    } catch (_error) {
       // If propertyType filter fails, try to get from property types
       try {
         const propertyTypes = await RepliersAPI.propertyTypes.fetch();

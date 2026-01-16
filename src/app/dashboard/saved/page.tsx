@@ -138,7 +138,7 @@ export default function Saved() {
           setBaseProperties(basePropertyListings)
           
           // Fetch comparable properties for each base property
-          for (const [baseMlsNumber, comparables] of Object.entries(grouped)) {
+          for (const [baseMlsNumber] of Object.entries(grouped)) {
             const comparableMlsNumbers = savedComparables
               .filter(sc => sc.basePropertyMlsNumber === baseMlsNumber)
               .map(sc => sc.mlsNumber)

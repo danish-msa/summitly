@@ -127,6 +127,7 @@ const PreConstructionPropertyCardV3 = ({
         )}
       >
         <div className="aspect-video relative overflow-hidden bg-muted">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
             src={image} 
             alt={property.projectName}

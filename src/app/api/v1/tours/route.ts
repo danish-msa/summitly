@@ -4,6 +4,7 @@ import { successResponse, ApiErrors } from '@/lib/api/response'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 
 const createTourSchema = z.object({
@@ -31,9 +32,9 @@ async function handler(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20')
     const status = searchParams.get('status')
 
-    const where: any = { userId: session.user.id }
+    const where: Prisma.TourWhereInput = { userId: session.user.id }
     if (status) {
-      where.status = status
+      where.status = status as Prisma.TourStatus
     }
 
     const [tours, total] = await Promise.all([

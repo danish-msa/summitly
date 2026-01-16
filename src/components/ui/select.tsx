@@ -26,7 +26,7 @@ export interface SelectWithLabelProps {
 
 function SelectWithLabel({ 
   label, 
-  placeholder, 
+  placeholder: _placeholder, 
   children, 
   value, 
   onValueChange,

@@ -11,7 +11,7 @@ interface DocumentsProps {
   rawProperty?: SinglePropertyListingResponse | null
 }
 
-const Documents: React.FC<DocumentsProps> = ({ property, rawProperty }) => {
+const Documents: React.FC<DocumentsProps> = ({ property, rawProperty: _rawProperty }) => {
   // Get documents from preCon data
   const documents = property.preCon?.documents || []
   
@@ -20,7 +20,7 @@ const Documents: React.FC<DocumentsProps> = ({ property, rawProperty }) => {
     return null
   }
 
-  const handleDownload = (url: string, name: string) => {
+  const handleDownload = (url: string, _name: string) => {
     // Open document in new tab for download
     if (url && url !== '#') {
       window.open(url, '_blank')

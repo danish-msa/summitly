@@ -14,7 +14,6 @@ import {
   BookOpen, 
   FileText, 
   TrendingUp, 
-  Search, 
   DollarSign,
   ChevronRight,
   ArrowUpRight

@@ -320,6 +320,7 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
           >
             <div className="property-info-window" style={{ width: '280px', padding: '0' }}>
               <div className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
                   src={infoWindow.property.images.imageUrl} 
                   alt={infoWindow.property.details.propertyType}

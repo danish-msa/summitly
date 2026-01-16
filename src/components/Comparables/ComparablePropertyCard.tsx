@@ -17,11 +17,11 @@ interface ComparablePropertyCardProps {
 
 const ComparablePropertyCard = ({ property, basePropertyMlsNumber, onSelect }: ComparablePropertyCardProps) => {
   const [imgError, setImgError] = useState(false)
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [currentImageIndex] = useState(0)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   
   const { data: session } = useSession()
-  const { checkIsSaved, saveComparable, unsaveComparable, isSaving, isUnsaving } = useSavedComparables(basePropertyMlsNumber)
+  const { checkIsSaved, isSaving, isUnsaving } = useSavedComparables(basePropertyMlsNumber)
   const isSelected = checkIsSaved(property.mlsNumber)
   
   // Get images array with proper fallbacks
@@ -102,7 +102,8 @@ const ComparablePropertyCard = ({ property, basePropertyMlsNumber, onSelect }: C
 
         {/* Image Section */}
         <div className='relative h-40 w-full overflow-hidden'>
-          <img 
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
             src={imageSrc} 
             alt={`${property.details.propertyType} in ${property.address.city || 'Unknown City'}`}
             className='w-full h-full object-cover group-hover:scale-110 transition-transform duration-700'

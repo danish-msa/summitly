@@ -47,6 +47,7 @@ export function UnitCard({ unit, onClick }: UnitCardProps) {
       <div className="flex flex-row">
         {/* Image Section */}
         <div className="relative w-32 sm:w-36 flex-shrink-0 overflow-hidden bg-muted/30">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={getFloorPlanImage(unit.floorPlan)}
             alt={`Unit ${unit.id} floor plan`}

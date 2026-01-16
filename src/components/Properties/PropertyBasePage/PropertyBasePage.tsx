@@ -81,7 +81,7 @@ const PropertyBasePage: React.FC<PropertyBasePageProps> = ({
   // Use page info or defaults
   const displayTitle = pageInfo?.title || '';
   const propertyCount = pageInfo?.numberOfProperties || 0;
-  const province = pageInfo?.province || 'ON';
+  // const province = pageInfo?.province || 'ON';
   const displayCount = propertyCount > 0 ? `${propertyCount}+` : '100+';
 
   // Get current date for "Last Updated"

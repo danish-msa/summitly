@@ -3,9 +3,6 @@ import {
   Copy, 
   Mail, 
   CheckIcon,
-  Bed,
-  Bath,
-  Maximize2,
   MapPin
 } from "lucide-react";
 import { 
@@ -36,21 +33,7 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, property }) =>
   const propertyTitle = `${property.details.propertyType} in ${property.address.city || 'Unknown Location'}`;
   const propertyDescription = `Check out this ${property.details.propertyType} in ${property.address.city}. ${property.details.numBedrooms} bedrooms, ${property.details.numBathrooms} bathrooms.`;
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
-
   const propertyImage = property?.images?.imageUrl || property?.images?.allImages?.[0] || '';
-  const propertyPrice = property?.listPrice || 0;
-  const propertyAddress = property?.address?.location || '';
-  const bedrooms = property?.details?.numBedrooms || 0;
-  const bathrooms = property?.details?.numBathrooms || 0;
-  const sqft = property?.details?.sqft || property?.lot?.squareFeet || 0;
   const isRental = property?.type === 'Lease' || property?.type?.toLowerCase().includes('lease');
   const propertyTypeTitle = `${property.details.propertyType} in ${property.address.city || 'Unknown Location'}`;
 

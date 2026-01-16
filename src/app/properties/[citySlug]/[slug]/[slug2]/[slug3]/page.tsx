@@ -1,22 +1,15 @@
 import PropertyBasePage from '@/components/Properties/PropertyBasePage/PropertyBasePage';
 import type { Metadata } from 'next';
 import { 
-  unslugifyCityName, 
+  unslugifyCityName,
   formatPropertyType, 
   parsePriceRangeSlug,
   parseBedroomSlug,
   parseBathroomSlug,
   parseSqftSlug,
-  parseLotSizeSlug,
-  parseYearBuiltSlug,
-  parseOwnershipSlug,
   parseFeatureSlug,
-  parseStatusSlug,
   formatBedrooms,
   formatBathrooms,
-  slugToPropertyType,
-  buildPropertyPageTitle,
-  buildPropertyPageDescription,
 } from '@/components/Properties/PropertyBasePage/utils';
 
 interface PageProps {

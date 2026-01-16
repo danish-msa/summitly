@@ -209,6 +209,7 @@ const PropertyCard = ({ property, onHide }: PropertyCardProps) => {
         <div className='bg-card rounded-3xl overflow-hidden transition-all duration-500 hover:shadow-xl' style={{ boxShadow: '0 8px 16px 0 rgba(0, 0, 0, 0.05)' }}>
         {/* Image Section */}
         <div className='relative h-60 w-full overflow-hidden'>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
             src={imageSrc} 
             alt={`${property.details.propertyType} in ${property.address.city || 'Unknown City'}`}

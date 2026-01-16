@@ -48,7 +48,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
     if (label) {
       // Remove placeholder when label is present to avoid overlap
-      const { placeholder, ...inputProps } = props
+      const { placeholder: _placeholder, ...inputProps } = props
       
       return (
         <div className="relative">

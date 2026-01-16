@@ -50,7 +50,7 @@ export const MarketStats: React.FC<MarketStatsProps> = ({
   const [isExpanded, setIsExpanded] = useState(true);
   const [dataView, setDataView] = useState<"sold" | "rented">("sold");
   const [cityViewMode, setCityViewMode] = useState<"chart" | "table">("chart");
-  const [refreshing, setRefreshing] = useState(false);
+  const [_refreshing, setRefreshing] = useState(false);
   const [averageSoldPriceByType, setAverageSoldPriceByType] = useState<{
     months: string[];
     detached: number[];
@@ -73,7 +73,7 @@ export const MarketStats: React.FC<MarketStatsProps> = ({
       yearlyChange: number;
     };
   } | null>(null);
-  const [averageSoldPrice, setAverageSoldPrice] = useState<{
+  const [_averageSoldPrice, setAverageSoldPrice] = useState<{
     months: string[];
     prices: number[];
     medianPrices?: number[];
@@ -81,7 +81,7 @@ export const MarketStats: React.FC<MarketStatsProps> = ({
   } | null>(null);
 
   // Handle refresh - delegate to parent's refresh function
-  const handleRefresh = async () => {
+  const _handleRefresh = async () => {
     if (onRefresh) {
       setRefreshing(true);
       try {

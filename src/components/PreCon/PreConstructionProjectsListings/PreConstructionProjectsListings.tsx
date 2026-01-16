@@ -22,7 +22,7 @@ const PreConstructionProjectsListings: React.FC = () => {
   const [projects, setProjects] = useState<PreConstructionProperty[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [page, setPage] = useState(1);
+  const [_page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [totalProjects, setTotalProjects] = useState(0);
   const pageSize = 20; // Number of projects per page

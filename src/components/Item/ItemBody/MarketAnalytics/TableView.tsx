@@ -7,7 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Table2, TrendingUp, Download, RefreshCw, BarChart3 } from "lucide-react";
+import { TrendingUp, Download, RefreshCw, BarChart3 } from "lucide-react";
 import { MarketData, ListingsData, SoldPriceData } from './types';
 
 interface TableViewProps {

@@ -1124,7 +1124,7 @@ export async function getPriceOverview(
     
     // Extract monthly data for accurate month-over-month comparison
     const historicalMonthly = historicalData?.statistics?.soldPrice?.mth || {};
-    const currentMonthly = currentPeriod?.statistics?.soldPrice?.mth || {};
+    // const currentMonthly = currentPeriod?.statistics?.soldPrice?.mth || {};
     const pastMonthly = pastPeriod?.statistics?.soldPrice?.mth || {};
     
     // Get sorted months from historical data
@@ -1308,7 +1308,7 @@ export interface PriceByBedroomsData {
   }>;
 }
 
-export async function getPriceByBedrooms(params: AnalyticsParams): Promise<PriceByBedroomsData | null> {
+export async function getPriceByBedrooms(_params: AnalyticsParams): Promise<PriceByBedroomsData | null> {
   return null; // Placeholder - requires complex aggregation
 }
 
@@ -1825,7 +1825,7 @@ export interface NewClosedAvailableData {
 
 export async function getNewClosedAvailableData(
   params: AnalyticsParams,
-  dateRanges?: { current: string; past: string }
+  _dateRanges?: { current: string; past: string }
 ): Promise<NewClosedAvailableData | null> {
   try {
     const now = new Date();
@@ -2308,12 +2308,12 @@ export async function getCityRankings(
       highestTurnover: currentCityTurnoverRank,
     });
 
-    const overview: RankingOverviewData = {
-      mostExpensive: currentCityPriceRank,
-      fastestGrowing: currentCityGrowthRank,
-      fastestSelling: currentCityDaysRank,
-      highestTurnover: currentCityTurnoverRank,
-    };
+    // const overview: RankingOverviewData = {
+    //   mostExpensive: currentCityPriceRank,
+    //   fastestGrowing: currentCityGrowthRank,
+    //   fastestSelling: currentCityDaysRank,
+    //   highestTurnover: currentCityTurnoverRank,
+    // };
 
     // Note: overview is no longer returned - it's calculated dynamically per city in the API route
     // This allows the same rankings data to be used for all cities without storing city-specific overview

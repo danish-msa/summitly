@@ -74,7 +74,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ property, rawProperty }) => {
   };
 
   // Get listing provider name
-  const listingProvider = rawProperty?.office?.brokerageName || 'Summitly';
+  // const listingProvider = rawProperty?.office?.brokerageName || 'Summitly';
 
   return (
     <div className="w-full">

@@ -6,13 +6,13 @@ import PreConItem from '@/components/PreConItem/PreConItem';
 import PreConstructionBasePage from '@/components/PreCon/PreConstructionBasePage';
 import { preConCities } from '@/components/PreCon/Search/preConSearchData';
 
-// Helper to check if a string is a year (4-digit number)
-const isYear = (str: string): boolean => {
-  const yearRegex = /^\d{4}$/;
-  if (!yearRegex.test(str)) return false;
-  const year = parseInt(str, 10);
-  return year >= 2020 && year <= 2100;
-};
+// Helper to check if a string is a year (4-digit number) - kept for future use
+// const isYear = (str: string): boolean => {
+//   const yearRegex = /^\d{4}$/;
+//   if (!yearRegex.test(str)) return false;
+//   const year = parseInt(str, 10);
+//   return year >= 2020 && year <= 2100;
+// };
 
 const PreConstructionPage: React.FC = () => {
   const params = useParams();

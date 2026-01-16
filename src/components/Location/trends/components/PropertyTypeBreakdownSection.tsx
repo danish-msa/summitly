@@ -76,7 +76,7 @@ const ChangeIndicator = ({ change }: { change: StatChange }) => {
   );
 };
 
-const PropertyCard = ({ data, isFirst }: { data: PropertyData; isFirst?: boolean }) => {
+const PropertyCard = ({ data, isFirst: _isFirst }: { data: PropertyData; isFirst?: boolean }) => {
   return (
     <div className={`relative flex flex-col bg-white rounded-xl border border-border/50 overflow-hidden transition-all duration-300 hover:border-primary/20 hover:-translate-y-1`}>
       {/* Header */}
@@ -370,6 +370,7 @@ export const PropertyTypeBreakdownSection: React.FC<PropertyTypeBreakdownSection
     if (locationType === 'city') {
       fetchPropertyTypeBreakdown();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locationType, locationName]);
 
   const handleRefresh = () => {
@@ -477,7 +478,7 @@ export const PropertyTypeBreakdownSection: React.FC<PropertyTypeBreakdownSection
                       <div className="sticky top-0">
                         <h4 className="text-sm font-semibold text-foreground mb-3">Property Types</h4>
                         <div className="space-y-1 max-h-[400px] overflow-y-auto">
-                          {propertyTypeTotals.map((item, index) => (
+                          {propertyTypeTotals.map((item) => (
                             <div
                               key={item.name}
                               className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50 transition-colors"

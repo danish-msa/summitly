@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useMemo } from 'react'
-import { ArrowRight, Info } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { PropertyListing } from '@/lib/types'
 import PropertyImage from './PropertyImage'
 import StatusBadge from './StatusBadge'
@@ -88,15 +88,15 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({
   }
 
   // Calculate comparable value (average of selected comparables)
-  const comparableValue = useMemo(() => {
-    if (selectedComparables.length === 0) return null
-    const total = selectedComparables.reduce((sum, p) => {
-      const extendedP = p as ExtendedPropertyListing
-      const price = extendedP.currentValue || p.listPrice || 0
-      return sum + (typeof price === 'string' ? parseFloat(price) : price)
-    }, 0)
-    return total / selectedComparables.length
-  }, [selectedComparables])
+  // const comparableValue = useMemo(() => {
+  //   if (selectedComparables.length === 0) return null
+  //   const total = selectedComparables.reduce((sum, p) => {
+  //     const extendedP = p as ExtendedPropertyListing
+  //     const price = extendedP.currentValue || p.listPrice || 0
+  //     return sum + (typeof price === 'string' ? parseFloat(price) : price)
+  //   }, 0)
+  //   return total / selectedComparables.length
+  // }, [selectedComparables])
 
   const comparisonRows = [
     { label: 'Current Value', getValue: (p: PropertyListing) => formatPrice((p as ExtendedPropertyListing).currentValue || p.listPrice) },
@@ -179,7 +179,7 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({
 
               {/* Property Data Section */}
               <div className="border-t border-border">
-                {comparisonRows.map((row, rowIndex) => (
+                {comparisonRows.map((row) => (
                   <div 
                     key={row.label}
                     className={`flex items-center justify-between px-4 py-3 border-b border-muted/40 last:border-b-0 `}

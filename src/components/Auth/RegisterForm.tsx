@@ -1,9 +1,7 @@
 "use client"
 import React, { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import { toast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
 
 interface RegisterFormProps {
   onLoginClick: () => void;

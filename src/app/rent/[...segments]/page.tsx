@@ -3,15 +3,12 @@ import type { Metadata } from 'next';
 import { parseUrlSegments } from '@/lib/utils/urlSegmentParser';
 import { parseUrlSegments as parseLocationSegments } from '@/lib/utils/locationDetection';
 import { 
-  unslugifyCityName,
   formatPropertyType,
   parsePriceRangeSlug,
   parseBedroomSlug,
   parseBathroomSlug,
   formatBedrooms,
   formatBathrooms,
-  buildPropertyPageTitle,
-  buildPropertyPageDescription,
 } from '@/components/Properties/PropertyBasePage/utils';
 
 interface PageProps {

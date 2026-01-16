@@ -90,6 +90,7 @@ export default function ListingTimeline({ groupedHistory, propertyAddress }: Lis
                       {/* Image thumbnail */}
                       {record.imageUrl && (
                         <div className="relative w-24 h-16 rounded overflow-hidden border border-gray-200">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img 
                             src={record.imageUrl} 
                             alt="Property" 

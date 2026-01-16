@@ -99,6 +99,7 @@ const ListingGrid: React.FC<ItemBodyProps> = ({ property }) => {
       <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
         <div className="md:flex">
           <div className="md:w-1/3 h-48 md:h-auto relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src={getImageUrl()} 
               alt={getPropertyName()}

@@ -191,6 +191,7 @@ const FeaturedPropertyCard = ({ property, className }: PreConstructionPropertyCa
         {/* Image Section - Left */}
         <div className="relative overflow-hidden bg-muted flex-shrink-0 w-full md:w-2/5 h-20 sm:h-56 ">
           <div className="relative h-full">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src={imageSrc}
               alt={`${property.projectName}${property.developer ? ` - ${property.developer}` : ''}`}

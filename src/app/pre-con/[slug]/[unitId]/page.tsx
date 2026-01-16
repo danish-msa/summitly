@@ -1,5 +1,5 @@
 import React from 'react'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import UnitDetailPageClient from './UnitDetailPageClient'
 import { UnitListing } from '@/lib/types/units'

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { PreConstructionPropertyCardV3 } from '@/components/PreCon/PropertyCards';
 import type { PreConstructionProperty } from '@/components/PreCon/PropertyCards/types';
 import { Loader2 } from 'lucide-react';

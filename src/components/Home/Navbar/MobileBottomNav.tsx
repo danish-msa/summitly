@@ -21,23 +21,6 @@ const MobileBottomNav = ({ openNav }: Props) => {
     return null;
   }
 
-  const navItems = [
-    {
-      label: 'Home',
-      href: '/',
-      icon: Home,
-    },
-    {
-      label: 'Listings',
-      href: '/listings',
-      icon: Building2,
-    },
-    {
-      label: 'Pre-Con',
-      href: '/pre-con',
-      icon: Hammer,
-    },
-  ];
 
   const isActive = (href: string) => {
     if (href === '/') {
