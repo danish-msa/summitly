@@ -25,14 +25,16 @@ const CityCard = ({ city }: CityCardProps) => {
               <span className='text-gray-400 text-sm'>{city.cityName}</span>
             </div>
           ) : (
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={city.image}
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={city.image}
               alt={city.cityName}
               className='rounded-2xl w-full h-[250px] object-cover'
               onError={() => setImageError(true)}
               loading="lazy"
-            />
+              />
+            </>
           )}
           <div className='absolute bottom-2 left-2 right-2 rounded-xl px-4 pt-4 pb-4 bg-white text-black flex justify-between items-center'>
             <div className='flex flex-col'>

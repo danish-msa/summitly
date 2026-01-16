@@ -146,9 +146,10 @@ const LocationTrendsPage: React.FC<LocationTrendsPageProps> = ({ locationType })
 
     if (citySlug && (locationType === 'city' || areaSlug)) {
       if (locationType === 'neighbourhood' && !neighbourhoodSlug) {
-        return;
+        // Skip loading if neighbourhood slug is missing
+      } else {
+        loadLocationData();
       }
-      loadLocationData();
     }
   }, [citySlug, areaSlug, neighbourhoodSlug, locationType, cityName, areaName, neighbourhoodName, displayName]);
 
@@ -167,15 +168,15 @@ const LocationTrendsPage: React.FC<LocationTrendsPageProps> = ({ locationType })
 
   // Calculate date range based on selected years
   // const getDateRangeForYears = (years: number) => {
-    const now = new Date();
-    const startDate = new Date(now);
-    startDate.setFullYear(now.getFullYear() - years);
-    
-    return {
-      start: startDate.toISOString().split('T')[0],
-      end: now.toISOString().split('T')[0],
-    };
-  };
+  //   const now = new Date();
+  //   const startDate = new Date(now);
+  //   startDate.setFullYear(now.getFullYear() - years);
+  //   
+  //   return {
+  //     start: startDate.toISOString().split('T')[0],
+  //     end: now.toISOString().split('T')[0],
+  //   };
+  // };
 
   // Map property type filter to API format
   const getPropertyTypeForAPI = (propertyType: string): string | undefined => {

@@ -7,8 +7,6 @@ import { RepliersAPI } from '@/lib/api/repliers';
 import {
   unslugifyCityName,
   slugToPropertyType,
-  unslugifyCityName,
-  slugToPropertyType,
   parsePriceRangeSlug,
   parseBedroomSlug,
   parseBathroomSlug,

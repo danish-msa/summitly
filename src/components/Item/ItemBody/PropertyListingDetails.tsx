@@ -97,15 +97,15 @@ export default function PropertyListingDetails({ data, property }: ListingDetail
 
   // Get icon for development team role
   // const getTeamRoleIcon = (role: string) => {
-    const roleLower = role.toLowerCase();
-    if (roleLower.includes('developer')) return Building2;
-    if (roleLower.includes('architect')) return Home;
-    if (roleLower.includes('builder')) return Briefcase;
-    if (roleLower.includes('interior')) return Palette;
-    if (roleLower.includes('landscape')) return Sprout;
-    if (roleLower.includes('marketing')) return Megaphone;
-    return Users;
-  };
+  //   const roleLower = role.toLowerCase();
+  //   if (roleLower.includes('developer')) return Building2;
+  //   if (roleLower.includes('architect')) return Home;
+  //   if (roleLower.includes('builder')) return Briefcase;
+  //   if (roleLower.includes('interior')) return Palette;
+  //   if (roleLower.includes('landscape')) return Sprout;
+  //   if (roleLower.includes('marketing')) return Megaphone;
+  //   return Users;
+  // };
 
   // Get appropriate icon for highlight key
 const getHighlightIcon = (key: string) => {
