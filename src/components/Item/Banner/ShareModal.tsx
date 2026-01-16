@@ -38,6 +38,13 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, property }) =>
   const propertyImage = property?.images?.imageUrl || property?.images?.allImages?.[0] || '';
   const isRental = property?.type === 'Lease' || property?.type?.toLowerCase().includes('lease');
   const propertyTypeTitle = `${property.details.propertyType} in ${property.address.city || 'Unknown Location'}`;
+  
+  // Extract address, bedrooms, and bathrooms
+  const propertyAddress = property.address?.street 
+    ? `${property.address.street}${property.address.city ? `, ${property.address.city}` : ''}${property.address.province ? `, ${property.address.province}` : ''}`
+    : property.address?.city || null;
+  const bedrooms = property.details?.numBedrooms || 0;
+  const bathrooms = property.details?.numBathrooms || 0;
 
   const shareOptions = [
     {
