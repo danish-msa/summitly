@@ -70,8 +70,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       }
 
       // Show welcome message in the same modal
-      if (onWelcome) {
-        onWelcome(formData.name);
+      if (_onWelcome) {
+        _onWelcome(formData.name);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Something went wrong. Please try again."
