@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { PropertyListing } from '@/lib/types';
 import { ChevronDown, Sparkles, ThumbsUp, ThumbsDown } from 'lucide-react';
 import RatingsOverview from './QualityScore';
+import PreConProjectSpecs from '@/components/PreConItem/PreConItemBody/PreConProjectSpecs';
 
 interface DescriptionProps {
   property: PropertyListing;
@@ -54,10 +55,13 @@ const Description: React.FC<DescriptionProps> = ({ property, isPreCon = false })
 
   return (
     <div className="bg-white rounded-lg py-6 px-8 shadow-sm">
+      {/* Pre-Con Project Specs - Only for pre-con pages */}
+      {isPreCon && <PreConProjectSpecs property={property} />}
+      
       <h2 className="text-2xl font-semibold text-gray-900 mb-4">{isPreCon ? 'About this project' : 'About this property'}</h2>
       {/* Ratings Overview for regular properties */}
       {isPreCon ? null : <RatingsOverview />}
-      <div className="w-full flex flex-col mt-10 md:flex-row gap-4 justify-between">
+      <div className="w-full flex flex-col mt-4 md:flex-row gap-6 justify-between">
         <div className="mb-4 flex-1">
           <p 
             className={`text-gray-500 font-light leading-relaxed whitespace-pre-line ${

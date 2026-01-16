@@ -3,8 +3,8 @@
 import React from 'react'
 import { PropertyListing } from '@/lib/types'
 import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/single-listing'
-import { MortgageCalculator } from '../ItemBody/MortgageCalculator'
-import AffordabilityCalculator from '../ItemBody/AffordabilityCalculator'
+import { MortgageCalculator } from './MortgageCalculator'
+import AffordabilityCalculator from './AffordabilityCalculator'
 import {
   VerticalTabs,
   VerticalTabsList,
@@ -56,4 +56,3 @@ const Calculators: React.FC<CalculatorsProps> = ({ property, rawProperty, isPreC
 }
 
 export default Calculators
-

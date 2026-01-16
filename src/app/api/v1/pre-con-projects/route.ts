@@ -387,9 +387,9 @@ async function handler(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  return apiMiddleware(request, async () => {
+  return apiMiddleware(request, async (context) => {
     try {
-      return await handler(request)
+      return await handler(context.request)
     } catch (error) {
       console.error('[API v1] Error fetching pre-con projects:', error)
       return ApiErrors.INTERNAL_ERROR(

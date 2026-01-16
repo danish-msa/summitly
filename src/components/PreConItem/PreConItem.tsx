@@ -7,11 +7,12 @@ import LoadingSpinner from '@/components/common/LoadingSpinner'
 import StickyPropertyBar from '../Item/StickyPropertyBar'
 import Breadcrumbs from '../Item/Breadcrumbs'
 import ModernBannerGallery from '../Item/Banner/ModernBannerGallery'
-import NewItemBody, { NewItemBodyRef } from '../Item/NewItemBody/NewItemBody'
-import PropertyHeader from '../Item/NewItemBody/PropertyHeader'
-import PriceCard from '../Item/NewItemBody/PriceCard'
+import NewItemBody, { NewItemBodyRef } from '../Item/ItemBody/NewItemBody'
+import PropertyHeader from '../Item/ItemBody/PropertyHeader'
+import PriceCard from '../Item/ItemBody/PriceCard'
 import Description from '../Item/ItemBody/Description'
 import RightSidebar from './PreConItemBody/RightSidebar'
+import StartingPriceCard from './PreConItemBody/StartingPriceCard'
 import { PreConFAQ } from '../PreCon/FAQ/FAQ'
 import { PreConContactSection } from '../PreConItem/PreConItemBody/PreConContactSection'
 
@@ -105,7 +106,21 @@ const PreConItem: React.FC = () => {
           <Description property={property} isPreCon={isPreCon} />
         </div>
         <div className='w-[30%] flex flex-col gap-4 items-start gap-0 sticky top-2 self-start'>
-          <PriceCard property={property} rawProperty={null} isPreCon={isPreCon} isRent={isRental} />
+          <StartingPriceCard 
+            property={property}
+            onGetPreQualified={() => {
+              // Scroll to contact section
+              const contactElement = document.getElementById('contact-section')
+              if (contactElement) {
+                const elementPosition = contactElement.getBoundingClientRect().top + window.pageYOffset
+                const offsetPosition = elementPosition - 100
+                window.scrollTo({
+                  top: offsetPosition,
+                  behavior: 'smooth'
+                })
+              }
+            }}
+          />
           <RightSidebar property={property} />
         </div>
       </div>

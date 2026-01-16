@@ -54,7 +54,7 @@ const UnitDetailPageClient: React.FC<UnitDetailPageClientProps> = ({ unit, prope
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Floorplan */}
-            <Card>
+            <Card variant="light" className="bg-white shadow-lg rounded-2xl">
               <CardHeader>
                 <CardTitle>Floorplan{unit.images && unit.images.length > 1 ? `s (${unit.images.length})` : ''}</CardTitle>
               </CardHeader>
@@ -142,7 +142,7 @@ const UnitDetailPageClient: React.FC<UnitDetailPageClientProps> = ({ unit, prope
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Quick Stats */}
-            <Card>
+            <Card variant="light" className="bg-white shadow-lg rounded-2xl">
               <CardHeader>
                 <CardTitle>Unit Details</CardTitle>
               </CardHeader>
@@ -194,7 +194,7 @@ const UnitDetailPageClient: React.FC<UnitDetailPageClientProps> = ({ unit, prope
             </Card>
 
             {/* Pricing Card */}
-            <Card className="bg-primary text-primary-foreground">
+            <Card variant="light" className="price-card-gradient shadow-lg rounded-2xl text-primary-foreground">
               <CardContent className="pt-6">
                 <div className="text-center space-y-4">
                   <div>
@@ -228,7 +228,7 @@ const UnitDetailPageClient: React.FC<UnitDetailPageClientProps> = ({ unit, prope
             </Card>
 
             {/* Contact Info */}
-            <Card>
+            <Card variant="light" className="bg-white shadow-lg rounded-2xl">
               <CardHeader>
                 <CardTitle>Contact Sales Team</CardTitle>
               </CardHeader>

@@ -8,7 +8,7 @@ interface FeaturedPropertyCardSkeletonProps {
 export const FeaturedPropertyCardSkeleton = ({ className }: FeaturedPropertyCardSkeletonProps) => {
   return (
     <Card
-      className={`group hover:shadow-lg transition-all duration-300 overflow-hidden border-border cursor-pointer h-full w-full flex flex-col md:flex-row ${className || ''}`}
+      className={`group hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer h-full w-full flex flex-col md:flex-row ${className || ''}`}
     >
       {/* Image Section - Left */}
       <div className="relative overflow-hidden bg-muted flex-shrink-0 w-full md:w-2/5 h-48 sm:h-56 md:h-full">

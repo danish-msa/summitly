@@ -234,4 +234,3 @@ const PriceCard = ({ property, rawProperty, isPreCon = false, isRent = false }: 
 }
 
 export default PriceCard
-

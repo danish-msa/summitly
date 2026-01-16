@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { PropertyListing } from '@/lib/types'
-import { Home, Bed, Bath, Maximize2, Heart, Share2, FileText, XCircle, Bell, Calculator, MessageCircle } from 'lucide-react'
+import { Home, Bed, Bath, Maximize2, Heart, Share2, FileText, XCircle, Bell, Calculator, MessageCircle, Wallet } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -12,7 +12,7 @@ import { toast } from '@/hooks/use-toast'
 import ShareModal from '../Banner/ShareModal'
 import AuthModal from '@/components/Auth/AuthModal'
 import ProjectRatingDisplay from '@/components/PreConItem/PreConItemBody/ProjectRatingDisplay'
-import PropertyAlerts from '../ItemBody/PropertyAlerts'
+import PropertyAlerts from './PropertyAlerts'
 import { formatCurrency } from '@/lib/utils'
 import { getPropertyTypeUrl, getNeighborhoodUrl } from '@/lib/utils/comparisonTableUrls'
 
@@ -245,83 +245,166 @@ const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property, onCalculatorC
                 <span className="text-base text-gray-700">{sqftDisplay}</span>
               </div>
             )}
-            {/* Project Rating Display */}
-            <ProjectRatingDisplay propertyId={property.mlsNumber || preConData?.projectName || 'default'} />
+            {/* Project Rating Display - Only for non pre-con properties */}
+            {!preConData && (
+              <ProjectRatingDisplay propertyId={property.mlsNumber || 'default'} />
+            )}
           </div>
         </div>
 
         {/* Right Section: Status, Rating, Actions */}
         <div className="flex flex-col items-end gap-4">
-          {/* Listed Price Badge */}
-            <div className="flex items-end flex-col">
-              <span className="text-sm font-medium text-gray-700">Listed Price</span>
-              {preConData && (property.listPrice === 0 || !property.listPrice) ? (
-                <span className="text-3xl font-bold text-gray-700">Coming Soon</span>
-              ) : (
+          {preConData ? (
+            // Pre-Con Project UI: Action Buttons, Rating, and Get Pre-Qualified Button
+            <>
+              {/* Action Buttons Row */}
+              <div className="flex items-center gap-2">
+                {/* Property Alerts Button */}
+                <Button
+                  variant="default"
+                  size="icon"
+                  onClick={() => setIsPropertyAlertsModalOpen(true)}
+                  className="h-10 w-10 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
+                  aria-label="Property Alerts"
+                >
+                  <Bell className="h-5 w-5" />
+                </Button>
+                {/* Heart Button */}
+                <Button
+                  variant="default"
+                  size="icon"
+                  onClick={handleSave}
+                  disabled={isSaving || isUnsaving}
+                  className={`h-10 w-10 rounded-lg bg-white border border-gray-200 transition-all duration-200 ${
+                    isSaved 
+                      ? 'bg-red-50 text-red-600 hover:bg-red-100 border-red-200' 
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-red-600'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  aria-label="Save property"
+                >
+                  <Heart className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
+                </Button>
+                {/* Calculator Button */}
+                <Button
+                  variant="default"
+                  size="icon"
+                  onClick={handleCalculatorClick}
+                  className="h-10 w-10 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
+                  aria-label="Go to calculators"
+                >
+                  <Calculator className="h-5 w-5" />
+                </Button>
+                {/* Contact Button */}
+                <Button
+                  variant="default"
+                  size="icon"
+                  onClick={handleContactClick}
+                  className="h-10 w-10 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
+                  aria-label="Contact us"
+                >
+                  <MessageCircle className="h-5 w-5" />
+                </Button>
+                {/* Share Button */}
+                <Button
+                  variant="default"
+                  size="icon"
+                  onClick={() => setIsShareModalOpen(true)}
+                  className="h-10 w-10 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
+                  aria-label="Share property"
+                >
+                  <Share2 className="h-5 w-5" />
+                </Button>
+              </div>
+              
+              {/* Rating and Get Pre-Qualified Row */}
+              <div className="flex items-center gap-4 w-full justify-end">
+                {/* Star Rating Display - Using ProjectRatingDisplay component */}
+                <ProjectRatingDisplay propertyId={property.mlsNumber || preConData?.projectName || 'default'} />
+                
+                {/* Get Pre-Qualified Button */}
+                <Button
+                  onClick={() => {
+                    // Scroll to contact section or open a pre-qualification form
+                    handleContactClick();
+                  }}
+                  className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                  aria-label="Get Pre-Qualified"
+                >
+                  <Wallet className="h-5 w-5" />
+                  <span>Get Pre-Qualified</span>
+                </Button>
+              </div>
+            </>
+          ) : (
+            // Regular Property UI: Listed Price and Action Buttons
+            <>
+              {/* Listed Price Badge */}
+              <div className="flex items-end flex-col">
+                <span className="text-sm font-medium text-gray-700">Listed Price</span>
                 <span className="text-3xl font-bold text-gray-700">{formatCurrency(property.listPrice || 0)}</span>
-              )}
-            </div>
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2">
-              {/* Contact Button */}
-              <Button
-                variant="default"
-                size="icon"
-                onClick={handleContactClick}
-                className="h-10 w-10 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
-                aria-label="Contact us"
-              >
-                <MessageCircle className="h-5 w-5" />
-              </Button>
-              {/* Calculator Button */}
-              <Button
-                variant="default"
-                size="icon"
-                onClick={handleCalculatorClick}
-                className="h-10 w-10 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
-                aria-label="Go to calculators"
-              >
-                <Calculator className="h-5 w-5" />
-              </Button>
-              {/* Property Alerts Button */}
-              <Button
-                variant="default"
-                size="icon"
-                onClick={() => setIsPropertyAlertsModalOpen(true)}
-                className="h-10 w-10 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
-                aria-label="Property Alerts"
-              >
-                <Bell className="h-5 w-5" />
-              </Button>
-              {/* Heart Button */}
-              <Button
-                variant="default"
-                size="icon"
-                onClick={handleSave}
-                disabled={isSaving || isUnsaving}
-                className={`h-10 w-10 rounded-lg bg-white border border-gray transition-all duration-200 ${
-                  isSaved 
-                    ? 'bg-red-50 text-red-600 hover:bg-red-100 border-red-200' 
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-red-600'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-                aria-label="Save property"
-              >
-                <Heart className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
-              </Button>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                {/* Contact Button */}
+                <Button
+                  variant="default"
+                  size="icon"
+                  onClick={handleContactClick}
+                  className="h-10 w-10 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
+                  aria-label="Contact us"
+                >
+                  <MessageCircle className="h-5 w-5" />
+                </Button>
+                {/* Calculator Button */}
+                <Button
+                  variant="default"
+                  size="icon"
+                  onClick={handleCalculatorClick}
+                  className="h-10 w-10 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
+                  aria-label="Go to calculators"
+                >
+                  <Calculator className="h-5 w-5" />
+                </Button>
+                {/* Property Alerts Button */}
+                <Button
+                  variant="default"
+                  size="icon"
+                  onClick={() => setIsPropertyAlertsModalOpen(true)}
+                  className="h-10 w-10 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
+                  aria-label="Property Alerts"
+                >
+                  <Bell className="h-5 w-5" />
+                </Button>
+                {/* Heart Button */}
+                <Button
+                  variant="default"
+                  size="icon"
+                  onClick={handleSave}
+                  disabled={isSaving || isUnsaving}
+                  className={`h-10 w-10 rounded-lg bg-white border border-gray transition-all duration-200 ${
+                    isSaved 
+                      ? 'bg-red-50 text-red-600 hover:bg-red-100 border-red-200' 
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-red-600'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  aria-label="Save property"
+                >
+                  <Heart className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
+                </Button>
 
-              {/* Share Button */}
-              <Button
-                variant="default"
-                size="icon"
-                onClick={() => setIsShareModalOpen(true)}
-                className="h-10 w-10 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
-                aria-label="Share property"
-              >
-                <Share2 className="h-5 w-5" />
-              </Button>
-            </div>
-            
-            
+                {/* Share Button */}
+                <Button
+                  variant="default"
+                  size="icon"
+                  onClick={() => setIsShareModalOpen(true)}
+                  className="h-10 w-10 rounded-lg bg-white border border-gray text-gray-600 hover:bg-gray-50 hover:text-primary transition-all duration-200"
+                  aria-label="Share property"
+                >
+                  <Share2 className="h-5 w-5" />
+                </Button>
+              </div>
+            </>
+          )}
          </div>
        </div>
 
@@ -352,4 +435,3 @@ const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property, onCalculatorC
  }
 
 export default PropertyHeader
-

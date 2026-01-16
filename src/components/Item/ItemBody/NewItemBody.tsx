@@ -4,23 +4,17 @@ import React, { useState, useImperativeHandle, forwardRef } from 'react'
 import { PropertyListing } from '@/lib/types'
 import type { SinglePropertyListingResponse } from '@/lib/api/repliers/types/single-listing'
 import { CurvedTabs, CurvedTabsList, CurvedTabsTrigger, CurvedTabsContent } from '@/components/ui/curved-tabs'
-import Description from '../ItemBody/Description'
-import PropertyHistory from '../ItemBody/PropertyHistory/PropertyHistory'
-import { generatePropertyDetailsData } from '../ItemBody/generatePropertyDetails'
-import PropertyListingDetails from '../ItemBody/PropertyListingDetails'
-import AVMBreakdown from '../ItemBody/AVMBreakdown'
-import Documents from '../ItemBody/Documents'
+import PropertyHistory from './PropertyHistory/PropertyHistory'
+import { generatePropertyDetailsData } from './generatePropertyDetails'
+import PropertyListingDetails from './PropertyListingDetails'
+import AVMBreakdown from './AVMBreakdown'
+import Documents from './Documents'
 import Features from './Features'
-import MarketAnalytics from './MarketAnalytics'
+import MarketAnalyticsWrapper from './MarketAnalytics'
 import Calculators from './Calculators'
 import PricingIncentives from '../../PreConItem/PreConItemBody/PricingIncentives'
 import DepositStructure from '../../PreConItem/PreConItemBody/DepositStructure'
 import AvailableUnits from '../../PreConItem/PreConItemBody/AvailableUnits'
-import ProjectAmenities from '../../PreConItem/PreConItemBody/ProjectAmenities'
-import { NeighborhoodAmenities } from '../ItemBody/NeighborhoodAmenities'
-import { LifestyleAmenities } from '../ItemBody/LifestyleAmenities'
-import Demographics from '../ItemBody/Demographics'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface NewItemBodyProps {
   property: PropertyListing;
@@ -141,7 +135,7 @@ const NewItemBody = forwardRef<NewItemBodyRef, NewItemBodyProps>(({
 
         {!isRent && !isPreCon && (
           <CurvedTabsContent value="market-analytics">
-            <MarketAnalytics property={property} rawProperty={rawProperty} isPreCon={isPreCon} isRent={isRent} />
+            <MarketAnalyticsWrapper property={property} rawProperty={rawProperty} isPreCon={isPreCon} isRent={isRent} />
           </CurvedTabsContent>
         )}
 
@@ -164,4 +158,3 @@ const NewItemBody = forwardRef<NewItemBodyRef, NewItemBodyProps>(({
 NewItemBody.displayName = "NewItemBody"
 
 export default NewItemBody
-

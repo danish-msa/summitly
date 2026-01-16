@@ -109,7 +109,7 @@ const CurvedTabsContent = React.forwardRef<
 >(({ className, variant = "default", ...props }, ref) => {
   const variantClasses = {
     default: cn(
-      "bg-white rounded-b-xl rounded-tr-xl rounded-tl-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)]",
+      "bg-white rounded-b-2xl rounded-tr-2xl rounded-tl-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)]",
       "p-8 pt-10 pl-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     ),
     borderless: "mt-4 focus-visible:outline-none",

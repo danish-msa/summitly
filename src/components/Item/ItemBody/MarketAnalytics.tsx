@@ -11,7 +11,7 @@ import {
   VerticalTabsContent,
   VerticalTabsContainer
 } from '@/components/ui/vertical-tabs'
-import { MarketAnalytics as MarketAnalyticsComponent } from '../ItemBody/MarketAnalytics'
+import { MarketAnalytics as MarketAnalyticsComponent } from './MarketAnalytics/MarketAnalytics'
 
 interface MarketAnalyticsProps {
   property: PropertyListing
@@ -20,7 +20,7 @@ interface MarketAnalyticsProps {
   isRent?: boolean
 }
 
-const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({ property, rawProperty, isPreCon = false, isRent = false }) => {
+const MarketAnalyticsWrapper: React.FC<MarketAnalyticsProps> = ({ property, rawProperty, isPreCon = false, isRent = false }) => {
   // Get property address
   const propertyAddress = property.address?.location || 
     `${property.address?.streetNumber || ''} ${property.address?.streetName || ''} ${property.address?.streetSuffix || ''}, ${property.address?.city || ''}, ${property.address?.state || ''} ${property.address?.zip || ''}`.trim()
@@ -53,5 +53,4 @@ const MarketAnalytics: React.FC<MarketAnalyticsProps> = ({ property, rawProperty
   )
 }
 
-export default MarketAnalytics
-
+export default MarketAnalyticsWrapper

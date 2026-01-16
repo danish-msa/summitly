@@ -176,7 +176,7 @@ export const ContactSection = () => {
 
               {/* Submit Button */}
               <Button
-                variant="secondary"
+                variant="default"
                 type="submit"
                 className="w-full h-14 text-base font-semibold rounded-xl hover:shadow-xl transition-all duration-300"
               >
