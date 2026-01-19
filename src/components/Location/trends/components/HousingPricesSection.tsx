@@ -20,6 +20,7 @@ import {
   getAverageSoldPriceChartOption, 
   getMedianListingVsSoldPriceChartOption
 } from '../utils/chartOptions';
+import { generateAverageSoldPriceData } from '../utils/dataGenerators';
 import { PropertyListing } from '@/lib/types';
 import { MarketTrendsData } from '@/hooks/useMarketTrends';
 
@@ -109,7 +110,6 @@ export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({
   const [medianListingVsSoldViewMode, setMedianListingVsSoldViewMode] = useState<"chart" | "table">("chart");
   const [averageSoldPriceData, setAverageSoldPriceData] = useState<{ months: string[]; prices: number[]; medianPrices?: number[]; counts: number[] }>({ months: [], prices: [], medianPrices: [], counts: [] });
   const [medianListingVsSoldData, setMedianListingVsSoldData] = useState<{ months: string[]; medianListingPrice: number[]; medianSoldPrice: number[] }>({ months: [], medianListingPrice: [], medianSoldPrice: [] });
-  const [_salesVolumeTableData, _setSalesVolumeTableData] = useState(generateSalesVolumeMockData());
   const [priceOverviewData, setPriceOverviewData] = useState({
     current: {
       avgPrice: 0,
