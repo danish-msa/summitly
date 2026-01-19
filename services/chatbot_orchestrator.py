@@ -21,7 +21,7 @@ import os
 import logging
 import json
 import re
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any, Union, Tuple
 from datetime import datetime
 
 # Load environment variables from .env file
@@ -92,6 +92,28 @@ from services.residential_chatbot_integration import (
     RESIDENTIAL_FILTERS_EXTENSION,
 )
 
+# NEW: Import Property Type Interpreter for residential/commercial routing
+# Moved to app folder as requested
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent / 'app'))
+from property_type_interpreter import (
+    get_property_type_interpreter,
+    classify_property_type,
+    PropertyType
+)
+
+# NEW: Import Commercial Property Service for commercial property searches
+from services.commercial_property_service import (
+    get_commercial_service,
+    search_commercial_properties
+)
+
+# NEW: Import Condo Property Service for condo property searches
+from services.condo_property_service import (
+    search_condo_properties
+)
+
 logger = logging.getLogger(__name__)
 
 # =============================================================================
@@ -144,18 +166,51 @@ logger.setLevel(logging.INFO)
 
 # ------------- GPT-4 System Prompts -------------
 
-SYSTEM_PROMPT_INTERPRETER = """You are a precise real-estate assistant interpreter for Canadian properties (Toronto/GTA/Vancouver/Canada).
+SYSTEM_PROMPT_INTERPRETER = """You are a precise real-estate assistant interpreter for Canadian RESIDENTIAL AND COMMERCIAL properties (Toronto/GTA/Vancouver/Canada).
 
-Input: user's message + current conversation filters (location, bedrooms, property_type, price_range, listing_type, amenities, etc.) + pending_clarification (if any)
+Input: user's message + current conversation filters (location, bedrooms, property_type, listing_type, amenities, etc.) + pending_clarification (if any)
+
+IMPORTANT - Property Type Classification:
+This assistant handles BOTH:
+1. RESIDENTIAL properties: houses, condos, apartments (may have bedrooms, bathrooms)
+2. COMMERCIAL properties: offices, retail, restaurants, bakeries, warehouses (business types)
+
+When user mentions a BUSINESS TYPE (bakery, restaurant, office, retail store, warehouse, etc.):
+- intent: "search"
+- property_type: "commercial" 
+- business_type: Extract the business type in SINGULAR form (e.g., "bakeries" → "Bakery", "spas" → "Spa")
+- DO NOT extract bedrooms/bathrooms for commercial properties
+
+CRITICAL - Business Type Extraction Rules:
+1. ALWAYS extract business_type when user mentions ANY business/commercial activity
+2. Convert PLURAL to SINGULAR: "bakeries" → "Bakery", "restaurants" → "Restaurant", "gyms" → "Gym"
+3. Recognize business type keywords: bakery, restaurant, cafe, bar, office, retail, store, shop, warehouse, spa, salon, gym, hotel, clinic, gas station, etc.
+4. If unsure, extract the business word as-is (e.g., "pizza place" → "Restaurant", "coffee shop" → "Cafe")
+5. DO NOT leave business_type as null if user mentions ANY business activity
+
+Examples of Commercial Searches:
+- "show me bakeries in toronto" → intent: "search", property_type: "commercial", business_type: "Bakery", location: "Toronto"
+- "bakeries near yonge and bloor" → intent: "search", property_type: "commercial", business_type: "Bakery", location: "Toronto"
+- "office space downtown" → intent: "search", property_type: "commercial", business_type: "Office", location: extract from context
+- "retail stores for sale" → intent: "search", property_type: "commercial", business_type: "Retail", listing_type: "sale"
+- "restaurants in Montreal" → intent: "search", property_type: "commercial", business_type: "Restaurant", location: "Montreal"
+- "warehouse in Toronto" → intent: "search", property_type: "commercial", business_type: "Warehouse", location: "Toronto"
+- "spa properties in ottawa" → intent: "search", property_type: "commercial", business_type: "Spa", location: "Ottawa"
+- "spas in downtown" → intent: "search", property_type: "commercial", business_type: "Spa", location: extract from context
+- "salon for sale" → intent: "search", property_type: "commercial", business_type: "Salon", listing_type: "sale"
+- "gym space in vancouver" → intent: "search", property_type: "commercial", business_type: "Gym", location: "Vancouver"
+- "gyms near me" → intent: "search", property_type: "commercial", business_type: "Gym", location: extract from context
+- "pizza place in toronto" → intent: "search", property_type: "commercial", business_type: "Restaurant", location: "Toronto"
+- "coffee shops downtown" → intent: "search", property_type: "commercial", business_type: "Cafe", location: extract from context
 
 IMPORTANT - Intent Classification System:
 This system now has an INTENT CLASSIFIER that pre-screens messages. Your role is to extract FILTERS ONLY for messages that:
-- Have explicit search criteria (location, bedrooms, price, etc.)
+- Have explicit search criteria (location, bedrooms, price, business_type, etc.)
 - Are refinements of existing searches
 - Are property-related queries
 
 DO NOT try to force search intent on:
-- Off-topic messages (food, sports, weather, etc.) - these are blocked before reaching you
+- Off-topic messages (food recipes, sports, weather, etc.) - these are blocked before reaching you
 - Vague requests without context ("show me more", "other properties") - these require confirmation
 - General greetings or questions - these are handled separately
 
@@ -189,10 +244,11 @@ Output: JSON ONLY with keys:
 - intent: one of ["search","refine","details","valuation","compare","general_question","reset","special_query"]
 - filters: {
     location: string or null (Toronto, Mississauga, Milton, Brampton, Vaughan, Markham, Richmond Hill, Oakville, Burlington, Ajax, Whitby, Oshawa, Hamilton, Kitchener, Waterloo, Guelph, Cambridge, Barrie, London, Ottawa, Kingston, Vancouver, Calgary, Edmonton, Montreal, etc. - IMPORTANT: If user says "GTA", use "Toronto" as the default city, or ask which GTA city they prefer),
-    property_type: string or null (condo|detached|townhouse|semi-detached|house|duplex|triplex|multiplex),
-    property_style: string or null (bungalow|2-storey|3-storey|split-level|raised-bungalow|loft|bachelor),
-    bedrooms: number or null,
-    bathrooms: number or null,
+    property_type: string or null (FOR RESIDENTIAL: condo|detached|townhouse|semi-detached|house|duplex|triplex|multiplex OR FOR COMMERCIAL: commercial),
+    business_type: string or null (FOR COMMERCIAL ONLY - CRITICAL: Extract business type from user query in SINGULAR form. Convert plurals to singular: "bakeries"→"Bakery", "spas"→"Spa", "gyms"→"Gym", "restaurants"→"Restaurant". Extract ANY business/commercial type: Bakery|Restaurant|Cafe|Bar|Pub|Office|Retail|Store|Shop|Warehouse|Industrial|Spa|Salon|Gym|Fitness|Hotel|Motel|Medical|Clinic|Pharmacy|Gas Station|Car Wash|Laundromat|Convenience Store|Grocery|Supermarket|Manufacturing|Workshop|Studio|Theatre|Cinema|Nightclub|etc. If user says "bakeries", "spas", "gyms", etc., extract as "Bakery", "Spa", "Gym". BE FLEXIBLE and ALWAYS extract business_type when user mentions ANY commercial activity.),
+    property_style: string or null (FOR RESIDENTIAL: bungalow|2-storey|3-storey|split-level|raised-bungalow|loft|bachelor),
+    bedrooms: number or null (FOR RESIDENTIAL ONLY),
+    bathrooms: number or null (FOR RESIDENTIAL ONLY),
     min_price: number or null,
     max_price: number or null,
     min_sqft: number or null (minimum square footage),
@@ -1315,20 +1371,218 @@ class ChatGPTChatbot:
         
         # Safely check filters
         if hasattr(state, 'active_filters'):
-            if not state.active_filters.bedrooms:
-                suggestions.append("Find 3 bedroom homes")
-            if not state.active_filters.max_price:
-                suggestions.append("Under $800k")
-        elif hasattr(state, 'filters'):
-            if not getattr(state.filters, 'bedrooms', None):
-                suggestions.append("Find 3 bedroom homes")
-            if not getattr(state.filters, 'price_max', None):
-                suggestions.append("Under $800k")
+            if state.active_filters.bedrooms:
+                suggestions.append(f"Show {state.active_filters.bedrooms} bedroom homes")
         
-        suggestions.append("Start a new search")
+        if not suggestions:
+            suggestions = [
+                "Show me 2 bedroom condos",
+                "Properties under $700K",
+                "Homes with a pool"
+            ]
         
         return suggestions[:3]
+    
+    def _detect_and_route_property_type(
+        self,
+        user_message: str,
+        session_id: str,
+        conversation_history: Optional[List[str]] = None
+    ) -> Tuple[PropertyType, float]:
+        """
+        Detect property type (residential vs commercial) from user message.
+        
+        Args:
+            user_message: User's current message
+            session_id: Session ID for logging
+            conversation_history: Previous messages for context
+        
+        Returns:
+            Tuple of (PropertyType, confidence_score)
+        """
+        try:
+            # Use property type interpreter
+            result = classify_property_type(user_message, conversation_history)
+            
+            property_type = result["property_type"]
+            confidence = result["confidence"]
+            method = result["method"]
+            
+            # Log detection
+            icon = "🏠" if property_type == PropertyType.RESIDENTIAL else "🏢" if property_type == PropertyType.COMMERCIAL else "❓"
+            logger.info(
+                f"{icon} [PROPERTY TYPE] Detected: {property_type.value} "
+                f"(confidence: {confidence:.0%}, method: {method})"
+            )
+            logger.debug(f"  Reasoning: {result['reasoning']}")
+            
+            return property_type, confidence
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Property type detection failed: {e}")
+            # Default to residential
+            return PropertyType.RESIDENTIAL, 0.0
+    
+    def _search_commercial_properties(
+        self,
+        user_message: str,
+        session_id: str,
+        interpreted_filters: Dict
+    ) -> Dict:
+        """
+        Search for commercial properties using commercial service.
+        
+        Args:
+            user_message: User's raw message (passed to commercialapp.py for OpenAI analysis)
+            session_id: Session ID
+            interpreted_filters: Filters from GPT-4 interpretation (used for location only)
+        
+        Returns:
+            Search results in standard format
+        """
+        try:
+            # CRITICAL: Pass raw user_message to commercialapp.py
+            # commercialapp.py has its own OpenAI-powered method to extract business_type, 
+            # street names, and other details from the user query
+            
+            # Only extract location from interpreted_filters
+            location = interpreted_filters.get("location")
+            
+            if not location:
+                return {
+                    "success": False,
+                    "properties": [],
+                    "count": 0,
+                    "message": "Please specify a city or location for commercial property search"
+                }
+            
+            # Build minimal criteria - let commercialapp.py handle the rest
+            criteria = {
+                "location": location,
+                "user_query": user_message,  # Pass raw query for OpenAI analysis
+            }
+            
+            # Optionally include price/sqft if provided (as hints)
+            if interpreted_filters.get("min_price"):
+                criteria["price_min"] = interpreted_filters["min_price"]
+            if interpreted_filters.get("max_price"):
+                criteria["price_max"] = interpreted_filters["max_price"]
+            if interpreted_filters.get("min_sqft"):
+                criteria["square_feet_min"] = interpreted_filters["min_sqft"]
+            if interpreted_filters.get("max_sqft"):
+                criteria["square_feet_max"] = interpreted_filters["max_sqft"]
+            
+            logger.info(f"🏢 [COMMERCIAL SEARCH] Criteria: {criteria}")
+            logger.info(f"🏢 [COMMERCIAL SEARCH] Raw user query: '{user_message}'")
 
+            
+            # Execute commercial search
+            result = search_commercial_properties(criteria)
+            
+            logger.info(
+                f"🏢 [COMMERCIAL SEARCH] "
+                f"{'Success' if result['success'] else 'Failed'}: "
+                f"{result['count']} properties found"
+            )
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"❌ Commercial search error: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            return {
+                "success": False,
+                "properties": [],
+                "count": 0,
+                "message": f"Error searching commercial properties: {str(e)}"
+            }
+    
+    def _search_condo_properties(
+        self,
+        user_message: str,
+        session_id: str,
+        interpreted_filters: Dict
+    ) -> Dict:
+        """
+        Search for condo properties using condo service.
+        
+        Args:
+            user_message: User's raw message (passed to condo.py for OpenAI analysis)
+            session_id: Session ID
+            interpreted_filters: Filters from GPT-4 interpretation (used for location)
+        
+        Returns:
+            Search results in standard format
+        """
+        try:
+            # CRITICAL: Pass raw user_message to condo.py
+            # condo.py has its own OpenAI-powered method to extract condo-specific fields
+            
+            # Only extract location from interpreted_filters
+            location = interpreted_filters.get("location")
+            
+            if not location:
+                return {
+                    "success": False,
+                    "properties": [],
+                    "count": 0,
+                    "message": "Please specify a city or location for condo search"
+                }
+            
+            # Build minimal criteria - let condo.py handle the rest
+            criteria = {
+                "location": location,
+                "user_query": user_message,  # Pass raw query for OpenAI analysis
+            }
+            
+            # Optionally include price if provided (as hints)
+            if interpreted_filters.get("min_price"):
+                criteria["min_price"] = interpreted_filters["min_price"]
+            if interpreted_filters.get("max_price"):
+                criteria["max_price"] = interpreted_filters["max_price"]
+            if interpreted_filters.get("bedrooms"):
+                criteria["bedrooms"] = interpreted_filters["bedrooms"]
+            if interpreted_filters.get("bathrooms"):
+                criteria["bathrooms"] = interpreted_filters["bathrooms"]
+            
+            logger.info(f"🏙️ [CONDO SEARCH] Criteria: {criteria}")
+            logger.info(f"🏙️ [CONDO SEARCH] Raw user query: '{user_message}'")
+
+            
+            # Execute condo search
+            result = search_condo_properties(criteria)
+            
+            # Convert to standard format
+            success = result.get("total", 0) > 0
+            
+            logger.info(
+                f"🏙️ [CONDO SEARCH] "
+                f"{'Success' if success else 'No results'}: "
+                f"{result.get('total', 0)} condos found"
+            )
+            
+            return {
+                "success": success,
+                "properties": result.get("properties", []),
+                "count": result.get("total", 0),
+                "message": result.get("message", "Condo search completed")
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Condo search error: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            return {
+                "success": False,
+                "properties": [],
+                "count": 0,
+                "message": f"Error searching condos: {str(e)}"
+            }
+
+    
     def process_message(
         self,
         user_message: str,
@@ -1350,6 +1604,12 @@ class ChatGPTChatbot:
         8. Call GPT-4 summarizer for final response
         9. Save state via state_manager.save() and return response
         
+        Args:
+            user_message: The user's message
+            session_id: Session ID
+            skip_address_detection: Whether to skip address detection
+            user_context: Optional context dict. Can include 'property_type_hint' from frontend buttons
+        
         Returns:
             {
                 "success": bool,
@@ -1362,6 +1622,12 @@ class ChatGPTChatbot:
             }
         """
         logger.info(f"📨 Processing message for session {session_id}: '{user_message[:60]}...'")
+        
+        # Extract property type hint from button selection (if provided)
+        property_type_hint = None
+        if user_context and 'property_type_hint' in user_context:
+            property_type_hint = user_context['property_type_hint']
+            logger.info(f"🎯 [BUTTON HINT] Property type from frontend button: {property_type_hint}")
         
         # Store checkpoint_id for potential rollback
         checkpoint_id: Optional[str] = None
@@ -1631,21 +1897,30 @@ class ChatGPTChatbot:
                             # Clear street/address context for postal code search
                             unified_state.clear_address_context()
                             # Handle as postal code search instead of address search
+                            # CRITICAL: Pass property_type_hint so postal code handler knows to filter for commercial/residential
                             return self._handle_postal_code_search(
                                 session_id=session_id,
                                 user_message=user_message,
                                 postal_code=extracted_location.postalCode,
                                 city=extracted_location.city,
-                                state=state
+                                state=state,
+                                property_type_hint=property_type_hint  # NEW: Pass button selection
                             )
                         
                         # Handle address search immediately (no confirmation needed)
-                        return self._handle_address_search(
-                            session_id=session_id,
-                            user_message=user_message,
-                            address_result=address_result,
-                            state=state
-                        )
+                        # BUT: Check if commercial button was selected - commercial properties don't use intersection search
+                        if property_type_hint == 'commercial':
+                            logger.info(f"🏢 [COMMERCIAL OVERRIDE] Commercial button selected - skipping address handler, will use commercial search")
+                            # Don't return early - let it fall through to commercial search logic below
+                            pass
+                        else:
+                            # Residential/Condo - use address handler (intersection search works here)
+                            return self._handle_address_search(
+                                session_id=session_id,
+                                user_message=user_message,
+                                address_result=address_result,
+                                state=state
+                            )
                 
                 # STEP 1.5: HYBRID INTENT CLASSIFICATION (LOCAL-FIRST + GPT-4 fallback)
                 # This is the SINGLE source of truth for intent detection
@@ -2591,7 +2866,194 @@ class ChatGPTChatbot:
                 }
             
             if should_search:
-                # STEP 11a: Handle street-only search with specialized service
+                # ═════════════════════════════════════════════════════════════════
+                # STEP 11a: PROPERTY TYPE DETECTION (Residential vs Commercial)
+                # ═════════════════════════════════════════════════════════════════
+                # Use button hint if provided, otherwise detect from message
+                
+                property_type_detected = None
+                confidence = 1.0
+                
+                # Check if user selected property type via button
+                if property_type_hint:
+                    logger.info(f"🎯 [BUTTON OVERRIDE] Using property type from button: {property_type_hint}")
+                    if property_type_hint == 'commercial':
+                        property_type_detected = PropertyType.COMMERCIAL
+                        confidence = 1.0  # 100% confidence from button
+                    elif property_type_hint == 'condo':
+                        property_type_detected = PropertyType.CONDO
+                        confidence = 1.0  # 100% confidence from button
+                        logger.info("🏙️ [CONDO BUTTON] Routing to condo search")
+                    elif property_type_hint == 'residential':
+                        property_type_detected = PropertyType.RESIDENTIAL
+                        confidence = 1.0  # 100% confidence from button
+                else:
+                    # No button hint - use AI detection
+                    conversation_history = [turn.get("content", "") for turn in state.conversation_history[-5:]]
+                    property_type_detected, confidence = self._detect_and_route_property_type(
+                        user_message=user_message,
+                        session_id=session_id,
+                        conversation_history=conversation_history
+                    )
+                
+                # If commercial property detected or selected, use commercial search
+                if property_type_detected == PropertyType.COMMERCIAL and confidence >= 0.5:
+                    logger.info(f"🏢 [COMMERCIAL] Routing to commercial property search (confidence: {confidence:.0%})")
+                    
+                    # Execute commercial search using filters from GPT interpreter
+                    commercial_result = self._search_commercial_properties(
+                        user_message=user_message,
+                        session_id=session_id,
+                        interpreted_filters=filters_from_gpt
+                    )
+                    
+                    if commercial_result["success"]:
+                        properties = commercial_result["properties"]
+                        
+                        # Update state with commercial results (limit to 20 for state storage)
+                        unified_state.last_property_results = properties[:20]
+                        unified_state.set_conversation_stage(ConversationStage.VIEWING)
+                        state.update_search_results(properties, user_message)
+                        
+                        # Generate response
+                        response_text = commercial_result["message"]
+                        if properties:
+                            response_text += f"\n\nWould you like to see different commercial properties or refine your search?"
+                        
+                        unified_state.add_conversation_turn("assistant", response_text)
+                        self._save_state_with_error_handling(unified_state, state, session_id)
+                        
+                        return {
+                            "success": True,
+                            "response": response_text,
+                            "suggestions": [
+                                "Show me retail spaces",
+                                "Find office buildings",
+                                "Properties under $1M"
+                            ],
+                            "properties": properties,
+                            "property_count": len(properties),
+                            "state_summary": unified_state.get_summary(),
+                            "filters": unified_state.get_active_filters(),
+                            "intent": "commercial_search",
+                            "property_type_detected": "commercial"
+                        }
+                    else:
+                        # Commercial search failed, provide helpful message
+                        location = filters_from_gpt.get("location", "the area")
+                        error_response = (
+                            f"I couldn't find commercial properties matching your criteria in {location}. "
+                            f"{commercial_result.get('message', '')}\n\n"
+                            f"Try:\n"
+                            f"• Broadening your search (e.g., remove specific requirements)\n"
+                            f"• Trying a different location\n"
+                            f"• Searching for general commercial spaces\n"
+                            f"• Looking at nearby cities"
+                        )
+                        
+                        unified_state.add_conversation_turn("assistant", error_response)
+                        self._save_state_with_error_handling(unified_state, state, session_id)
+                        
+                        # Generate location-specific suggestions
+                        suggestions = [
+                            f"Show commercial properties in {location}",
+                            "Try a different city",
+                            "Search for retail space",
+                            "Find office buildings",
+                            "Show me residential instead"
+                        ]
+                        
+                        return {
+                            "success": False,
+                            "response": error_response,
+                            "suggestions": suggestions,
+                            "properties": [],
+                            "property_count": 0,
+                            "state_summary": unified_state.get_summary(),
+                            "filters": unified_state.get_active_filters()
+                        }
+                
+                # If condo property detected or selected, use condo search
+                if property_type_detected == PropertyType.CONDO and confidence >= 0.5:
+                    logger.info(f"🏙️ [CONDO] Routing to condo property search (confidence: {confidence:.0%})")
+                    
+                    # Execute condo search using filters from GPT interpreter
+                    condo_result = self._search_condo_properties(
+                        user_message=user_message,
+                        session_id=session_id,
+                        interpreted_filters=filters_from_gpt
+                    )
+                    
+                    if condo_result["success"]:
+                        properties = condo_result["properties"]
+                        
+                        # Update state with condo results (limit to 20 for state storage)
+                        unified_state.last_property_results = properties[:20]
+                        unified_state.set_conversation_stage(ConversationStage.VIEWING)
+                        state.update_search_results(properties, user_message)
+                        
+                        # Generate response
+                        response_text = condo_result["message"]
+                        if properties:
+                            response_text += f"\n\nWould you like to see different condos or refine your search?"
+                        
+                        unified_state.add_conversation_turn("assistant", response_text)
+                        self._save_state_with_error_handling(unified_state, state, session_id)
+                        
+                        return {
+                            "success": True,
+                            "response": response_text,
+                            "suggestions": [
+                                "Show me pet-friendly condos",
+                                "Find condos with balcony",
+                                "Condos with gym and pool"
+                            ],
+                            "properties": properties,
+                            "property_count": len(properties),
+                            "state_summary": unified_state.get_summary(),
+                            "filters": unified_state.get_active_filters(),
+                            "intent": "condo_search",
+                            "property_type_detected": "condo"
+                        }
+                    else:
+                        # Condo search failed, provide helpful message
+                        location = filters_from_gpt.get("location", "the area")
+                        error_response = (
+                            f"I couldn't find condos matching your criteria in {location}. "
+                            f"{condo_result.get('message', '')}\n\n"
+                            f"Try:\n"
+                            f"• Relaxing your requirements (bedrooms, price, amenities)\n"
+                            f"• Expanding to nearby neighborhoods\n"
+                            f"• Searching without specific floor level\n"
+                            f"• Looking at all available condos first"
+                        )
+                        
+                        unified_state.add_conversation_turn("assistant", error_response)
+                        self._save_state_with_error_handling(unified_state, state, session_id)
+                        
+                        # Generate location-specific suggestions
+                        suggestions = [
+                            f"Show all condos in {location}",
+                            "2 bedroom condos under $3000",
+                            "Pet-friendly condos",
+                            "Condos with parking",
+                            "Search residential houses instead"
+                        ]
+                        
+                        return {
+                            "success": False,
+                            "response": error_response,
+                            "suggestions": suggestions,
+                            "properties": [],
+                            "property_count": 0,
+                            "state_summary": unified_state.get_summary(),
+                            "filters": unified_state.get_active_filters()
+                        }
+                
+                # Otherwise, proceed with residential search
+                logger.info(f"🏠 [RESIDENTIAL] Using residential property search")
+                
+                # STEP 11b: Handle street-only search with specialized service
                 if is_street_only_search and state.location_state.city:
                     logger.info(
                         f"🛣️ [STREET SEARCH] Using street search service: "
@@ -3023,7 +3485,14 @@ class ChatGPTChatbot:
                 # Use the existing standardization function (no duplication)
                 formatted_prop = standardize_property_data(prop)
                 formatted_properties.append(formatted_prop)
-                logger.info(f"✅ [DEBUG] Standardized property {i+1}: price={formatted_prop.get('price')}, address={formatted_prop.get('address', '')[:50] if formatted_prop.get('address') else 'N/A'}")
+                
+                # Safe address logging (handle both dict and string)
+                address_val = formatted_prop.get('address', 'N/A')
+                if isinstance(address_val, dict):
+                    address_str = address_val.get('full', str(address_val)[:50])
+                else:
+                    address_str = str(address_val)[:50] if address_val else 'N/A'
+                logger.info(f"✅ [DEBUG] Standardized property {i+1}: price={formatted_prop.get('price')}, address={address_str}")
             
             # Return structured result
             return {
@@ -4005,7 +4474,14 @@ Examples:
             try:
                 formatted_prop = standardize_property_data(prop)
                 formatted_properties.append(formatted_prop)
-                logger.debug(f"✅ Standardized property {i+1}: price={formatted_prop.get('price')}, address={formatted_prop.get('address', '')[:50] if formatted_prop.get('address') else 'N/A'}")
+                
+                # Safe address logging (handle both dict and string)
+                address_val = formatted_prop.get('address', 'N/A')
+                if isinstance(address_val, dict):
+                    address_str = address_val.get('full', str(address_val)[:50])
+                else:
+                    address_str = str(address_val)[:50] if address_val else 'N/A'
+                logger.debug(f"✅ Standardized property {i+1}: price={formatted_prop.get('price')}, address={address_str}")
             except Exception as e:
                 logger.error(f"❌ Failed to standardize property {i+1}: {e}")
                 # Still include the property but log the error
@@ -4321,18 +4797,100 @@ Examples:
                 # Log search results
                 logger.info(f"📊 [ADDRESS_HANDLER] Final results after filtering: {len(properties)}")
                 
-                # Step 4: Handle results - STRICT no-fallback rule
+                # Step 4: Handle results - WITH INTELLIGENT FALLBACK
                 if not properties:
-                    # NO FALLBACK RULE - do not fall back to city search
                     address_description = self._format_address_for_user(address_result.components)
                     search_type = "exact address" if not is_street_search else "street"
+                    city = normalized.components.city or 'Toronto'
                     
+                    logger.info(f"🔄 [ADDRESS_HANDLER] No results on {address_description}, activating fallback system")
+                    
+                    # Get current active filters from state
+                    active_filters = state.get_active_filters()
+                    
+                    # Build fallback filters - try condo search in the same city
+                    fallback_filters = {
+                        "location": city,
+                        "property_type": "condo"  # Default to condos for most searches
+                    }
+                    
+                    # Preserve user's search criteria
+                    if active_filters.get("bedrooms"):
+                        fallback_filters["bedrooms"] = active_filters["bedrooms"]
+                    if active_filters.get("price_max"):
+                        fallback_filters["price_max"] = active_filters["price_max"]
+                    if active_filters.get("price_min"):
+                        fallback_filters["price_min"] = active_filters["price_min"]
+                    
+                    # Try condo search with universal fallback
+                    try:
+                        logger.info(f"🔍 [ADDRESS_HANDLER] Fallback filters: {fallback_filters}")
+                        fallback_result = self._search_condo_properties(
+                            user_message=f"condos in {city}",
+                            session_id=session_id,
+                            interpreted_filters=fallback_filters
+                        )
+                        
+                        if fallback_result.get("success") and fallback_result.get("count", 0) > 0:
+                            fallback_properties = fallback_result.get("properties", [])
+                            
+                            # Generate intelligent response
+                            response_parts = [
+                                f"I couldn't find properties on {address_description}, "
+                                f"but I found {fallback_result['count']} condos available in {city}."
+                            ]
+                            
+                            # Mention preserved filters
+                            kept_filters = []
+                            if active_filters.get("bedrooms"):
+                                kept_filters.append(f"{active_filters['bedrooms']} bedroom")
+                            if active_filters.get("price_max"):
+                                kept_filters.append(f"under ${active_filters['price_max']:,}")
+                            
+                            if kept_filters:
+                                response_parts.append(f" These match your criteria: {', '.join(kept_filters)}.")
+                            
+                            response_parts.append(" Here are some nearby options:")
+                            
+                            # Add to conversation history
+                            state.add_conversation_turn("assistant", "".join(response_parts))
+                            
+                            return {
+                                "success": True,
+                                "response": "".join(response_parts),
+                                "properties": fallback_properties[:20],
+                                "property_count": len(fallback_properties[:20]),
+                                "suggestions": [
+                                    f"Show condos near {address_result.components.street_name or 'this area'}",
+                                    "Filter by neighborhood",
+                                    "Adjust price range",
+                                    f"Search all of {city}"
+                                ],
+                                "filters": state.get_active_filters(),
+                                "address_search": True,
+                                "address_result": "fallback_results",
+                                "search_type": "address_fallback",
+                                "metadata": self._create_metadata_dict(
+                                    intent="address_search_fallback",
+                                    confidence=0.75,
+                                    reason=f"Broadened search from {address_description} to all of {city}",
+                                    cache_hit=False,
+                                    used_gpt_fallback=False,
+                                    requires_confirmation=False
+                                )
+                            }
+                        else:
+                            logger.warning(f"⚠️ [ADDRESS_HANDLER] Fallback search returned no results")
+                    except Exception as fallback_error:
+                        logger.error(f"❌ [ADDRESS_HANDLER] Fallback search error: {fallback_error}", exc_info=True)
+                    
+                    # If fallback also fails, return helpful message
                     response = f"No active listings found on {address_description}."
                     
                     suggestions = [
                         "Search nearby streets",
                         "Remove filters", 
-                        f"Search the entire {normalized.components.city or 'city'}"
+                        f"Search the entire {city}"
                     ]
                     
                     # Add to conversation history
@@ -4484,9 +5042,11 @@ Examples:
             
             logger.info(f"✅ [INTERSECTION_HANDLER] Filtered to {len(filtered_properties)} properties near {street1} & {street2}")
             
-            # If no exact matches, try looser matching on neighborhood or street name
+            # CRITICAL FIX: If no results, fall back to broader condo search in that area
             if len(filtered_properties) == 0:
-                logger.info("🔄 [INTERSECTION_HANDLER] No exact intersection matches, trying street name fallback")
+                logger.info("🔄 [INTERSECTION_HANDLER] No exact intersection matches, trying broader area search")
+                
+                # Try street name fallback first
                 for prop in raw_properties[:50]:  # Check first 50
                     address_data = prop.get('address', {})
                     street_name = (address_data.get('streetName') or '').lower()
@@ -4498,17 +5058,95 @@ Examples:
                     elif street1_lower in neighborhood or street2_lower in neighborhood:
                         filtered_properties.append(prop)
                 
-                # Deduplicate
-                seen_mls = set()
-                unique_properties = []
-                for prop in filtered_properties:
-                    mls = prop.get('mlsNumber', '')
-                    if mls not in seen_mls:
-                        seen_mls.add(mls)
-                        unique_properties.append(prop)
-                filtered_properties = unique_properties
+                logger.info(f"✅ [INTERSECTION_HANDLER] Street name fallback found {len(filtered_properties)} properties")
                 
-                logger.info(f"✅ [INTERSECTION_HANDLER] Fallback found {len(filtered_properties)} properties")
+                # If STILL no results, use condo search for the city
+                if len(filtered_properties) == 0:
+                    logger.info(f"🔄 [INTERSECTION_HANDLER] No street matches, falling back to city-wide condo search in {city}")
+                    
+                    # Get current active filters from state
+                    active_filters = state.get_active_filters()
+                    
+                    # Build fallback filters - include location + any user-specified criteria
+                    fallback_filters = {
+                        "location": city,
+                        "property_type": "condo"  # Ensure we're searching for condos
+                    }
+                    
+                    # Preserve user's search criteria (bedrooms, price, etc.)
+                    if bedrooms:
+                        fallback_filters["bedrooms"] = bedrooms
+                    if active_filters.get("price_max"):
+                        fallback_filters["price_max"] = active_filters["price_max"]
+                    if active_filters.get("price_min"):
+                        fallback_filters["price_min"] = active_filters["price_min"]
+                    
+                    # Use condo search with extracted filters
+                    try:
+                        logger.info(f"🔍 [INTERSECTION_HANDLER] Fallback filters: {fallback_filters}")
+                        fallback_result = self._search_condo_properties(
+                            user_message=f"condos in {city}",
+                            session_id=session_id,
+                            interpreted_filters=fallback_filters
+                        )
+                        
+                        if fallback_result.get("success") and fallback_result.get("count", 0) > 0:
+                            fallback_properties = fallback_result.get("properties", [])
+                            
+                            # Generate intelligent response based on what we found
+                            response_parts = [
+                                f"I couldn't find properties exactly at the intersection of {street1} and {street2}, "
+                                f"but I found {fallback_result['count']} similar condos available in {city}."
+                            ]
+                            
+                            # Mention if we kept any filters
+                            kept_filters = []
+                            if bedrooms:
+                                kept_filters.append(f"{bedrooms} bedroom")
+                            if active_filters.get("price_max"):
+                                kept_filters.append(f"under ${active_filters['price_max']:,}")
+                            
+                            if kept_filters:
+                                response_parts.append(f" These match your criteria: {', '.join(kept_filters)}.")
+                            
+                            response_parts.append(" Here are some nearby options:")
+                            
+                            return {
+                                "success": True,
+                                "response": "".join(response_parts),
+                                "properties": fallback_properties[:20],
+                                "suggestions": [
+                                    f"Show condos near {street1}",
+                                    f"Show condos near {street2}",
+                                    "Filter by neighborhood",
+                                    "Adjust price range"
+                                ],
+                                "filters": state.get_active_filters(),
+                                "metadata": self._create_metadata_dict(
+                                    intent="intersection_search_fallback",
+                                    confidence=0.75,
+                                    reason=f"Broadened search from {street1} & {street2} to all of {city}",
+                                    cache_hit=False,
+                                    used_gpt_fallback=False,
+                                    requires_confirmation=False
+                                )
+                            }
+                        else:
+                            logger.warning(f"⚠️ [INTERSECTION_HANDLER] Fallback search returned no results")
+                    except Exception as fallback_error:
+                        logger.error(f"❌ [INTERSECTION_HANDLER] Fallback search error: {fallback_error}", exc_info=True)
+                
+                # Deduplicate after street fallback
+                if filtered_properties:
+                    seen_mls = set()
+                    unique_properties = []
+                    for prop in filtered_properties:
+                        mls = prop.get('mlsNumber', '')
+                        if mls not in seen_mls:
+                            seen_mls.add(mls)
+                            unique_properties.append(prop)
+                    filtered_properties = unique_properties
+            
             
             # Limit results
             properties = filtered_properties[:20]
@@ -4834,15 +5472,20 @@ Examples:
         user_message: str,
         postal_code: str,
         city: Optional[str],
-        state: Any  # ConversationState type
+        state: Any,  # ConversationState type
+        property_type_hint: Optional[str] = None  # NEW: 'commercial', 'residential', or 'condo'
     ) -> Dict[str, Any]:
         """
         Handle postal code searches with ACTUAL postal code filtering.
         
         RULE: When postal code is detected, search by city and FILTER by postal code FSA.
         This ensures properties returned actually match the postal code area.
+        
+        NEW: Supports property_type_hint from frontend buttons to filter for commercial/residential.
         """
         logger.info(f"📮 [POSTAL_CODE_HANDLER] Processing postal code search: {postal_code}")
+        if property_type_hint:
+            logger.info(f"📮 [POSTAL_CODE_HANDLER] Property type from button: {property_type_hint}")
         
         # Get unified state for context clearing
         unified_state = self.state_manager.get_or_create(session_id)
@@ -4879,9 +5522,20 @@ Examples:
             # For unknown postal codes, search without city restriction
             logger.info(f"📮 [POSTAL_CODE_HANDLER] Unknown postal code region - searching across all cities")
         
-        # Add any existing filters
+        # CRITICAL: Add property type filter from button hint FIRST (highest priority)
+        if property_type_hint == 'commercial':
+            api_params['class'] = 'CommercialProperty'
+            logger.info(f"📮 [POSTAL_CODE_HANDLER] Filtering for COMMERCIAL properties (button selection)")
+        elif property_type_hint == 'condo':
+            api_params['class'] = 'CondoProperty'
+            logger.info(f"📮 [POSTAL_CODE_HANDLER] Filtering for CONDO properties (button selection)")
+        elif property_type_hint == 'residential':
+            api_params['class'] = 'ResidentialProperty'
+            logger.info(f"📮 [POSTAL_CODE_HANDLER] Filtering for RESIDENTIAL properties (button selection)")
+        
+        # Add any existing filters (if no button hint was provided)
         current_filters = state.get_active_filters()
-        if current_filters.get('property_type'):
+        if not property_type_hint and current_filters.get('property_type'):
             api_params['class'] = current_filters['property_type']
         if current_filters.get('bedrooms'):
             api_params['minBeds'] = current_filters['bedrooms']
@@ -4928,31 +5582,74 @@ Examples:
             raw_properties = repliers_response.get('results', repliers_response.get('listings', []))
             logger.info(f"📮 [POSTAL_CODE_HANDLER] Raw results from API: {len(raw_properties)}")
             
-            # CRITICAL: Filter properties by postal code FSA
+            # DEBUG: Log first property structure to understand postal code location
+            if raw_properties and len(raw_properties) > 0:
+                sample_prop = raw_properties[0]
+                logger.info(f"📮 [DEBUG] Sample property keys: {list(sample_prop.keys())}")
+                if 'address' in sample_prop:
+                    logger.info(f"📮 [DEBUG] Address keys: {list(sample_prop['address'].keys())}")
+                    logger.info(f"📮 [DEBUG] Sample postal code: {sample_prop['address'].get('zip', sample_prop['address'].get('postalCode', 'NOT FOUND'))}")
+            
+            # CRITICAL: Filter properties by postal code FSA with MULTIPLE fallback strategies
+            # NEW: Early termination to prevent slow searches
             matched_properties = []
+            no_postal_code_count = 0
+            MAX_RESULTS = 20  # Stop after finding 20 matching properties
+            
             for prop in raw_properties:
-                # Check multiple possible locations for postal code
+                # Early termination check - stop processing if we have enough results
+                if len(matched_properties) >= MAX_RESULTS:
+                    logger.info(f"✅ [EARLY_TERMINATION] Found {len(matched_properties)} properties matching FSA {fsa} - stopping search")
+                    break
+                
+                # Strategy 1: Check multiple possible locations for postal code
+                prop_zip = ''
+                
                 # Top-level fields
-                prop_zip = prop.get('zip', '') or prop.get('postalCode', '') or ''
+                prop_zip = prop.get('zip', '') or prop.get('postalCode', '') or prop.get('postal_code', '') or prop.get('postalcode', '')
                 
                 # Nested in address object
-                address_data = prop.get('address', {})
-                if not prop_zip and address_data:
-                    prop_zip = address_data.get('zip', '') or address_data.get('postalCode', '') or ''
+                if not prop_zip:
+                    address_data = prop.get('address', {})
+                    if address_data:
+                        prop_zip = (address_data.get('zip', '') or 
+                                   address_data.get('postalCode', '') or 
+                                   address_data.get('postal_code', '') or 
+                                   address_data.get('postalcode', '') or
+                                   address_data.get('Zip', '') or
+                                   address_data.get('PostalCode', ''))
                 
-                prop_zip_clean = prop_zip.replace(" ", "").upper()
+                # Clean and normalize
+                prop_zip_clean = prop_zip.replace(" ", "").replace("-", "").upper() if prop_zip else ''
                 
                 # Match if FSA (first 3 chars) matches
-                if prop_zip_clean.startswith(fsa):
+                if prop_zip_clean and prop_zip_clean.startswith(fsa):
                     matched_properties.append(prop)
                     logger.debug(f"📮 [POSTAL_CODE_HANDLER] ✅ Match: {prop_zip_clean} starts with {fsa}")
+                elif not prop_zip_clean:
+                    no_postal_code_count += 1
+                    logger.debug(f"📮 [POSTAL_CODE_HANDLER] ⚠️ Property missing postal code")
                 else:
                     logger.debug(f"📮 [POSTAL_CODE_HANDLER] ❌ No match: {prop_zip_clean} does not start with {fsa}")
             
             logger.info(f"📮 [POSTAL_CODE_HANDLER] Filtered to {len(matched_properties)} properties matching FSA {fsa}")
+            logger.info(f"📮 [POSTAL_CODE_HANDLER] {no_postal_code_count} properties missing postal code data")
+            
+            # FALLBACK: If no exact matches, find CLOSEST properties by sorting by distance or return first 10-15
+            if len(matched_properties) == 0 and len(raw_properties) > 0:
+                logger.warning(f"📮 [POSTAL_CODE_HANDLER] No exact FSA matches found. Using fallback: returning closest 15 properties in {search_city}")
+                matched_properties = raw_properties[:15]  # Return first 15 as fallback
+                logger.info(f"📮 [POSTAL_CODE_HANDLER] FALLBACK: Showing {len(matched_properties)} closest properties")
+            
+            # Determine if we're using fallback results
+            using_fallback = (len(matched_properties) > 0 and 
+                            no_postal_code_count == len(raw_properties))  # All properties lacked postal codes
             
             # Limit to reasonable number
-            matched_properties = matched_properties[:10]
+            if not using_fallback:
+                matched_properties = matched_properties[:10]
+            else:
+                matched_properties = matched_properties[:15]  # Show more when using fallback
             
             # Standardize properties
             standardize_func = get_standardize_property_data()
@@ -4973,11 +5670,15 @@ Examples:
             self.state_manager.save(state)
             self.unified_state_manager.save(unified_state)
             
-            # Generate response
+            # Generate response with context about fallback
             if matched_properties:
-                response_text = f"I found {len(matched_properties)} properties in postal code {postal_code}, {search_city}."
-                if len(matched_properties) >= 10:
-                    response_text = f"I found several properties in postal code {postal_code}, {search_city}. Here are the top 10 listings."
+                if using_fallback:
+                    response_text = (f"I found {len(matched_properties)} properties near postal code {postal_code} in {search_city}. "
+                                   f"Note: Exact postal code data wasn't available, so I'm showing nearby properties in the area.")
+                else:
+                    response_text = f"I found {len(matched_properties)} properties in postal code {postal_code}, {search_city}."
+                    if len(matched_properties) >= 10:
+                        response_text = f"I found several properties in postal code {postal_code}, {search_city}. Here are the top 10 listings."
             else:
                 response_text = f"I couldn't find any properties currently listed in postal code {postal_code}. Try expanding your search to nearby areas."
             
@@ -5453,12 +6154,24 @@ logger.info(
 def process_user_message(
     message: str,
     session_id: str,
-    context: Optional[Dict] = None
+    context: Optional[Dict] = None,
+    property_type_hint: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Convenience function to process a user message using the global chatbot instance.
+    
+    Args:
+        message: User's message
+        session_id: Session ID
+        context: Optional context dictionary
+        property_type_hint: Optional property type from frontend buttons ('residential', 'commercial', 'condo')
     """
-    return chatbot_instance.process_message(message, session_id, context)
+    if property_type_hint:
+        context = context or {}
+        context['property_type_hint'] = property_type_hint
+        logger.info(f"🎯 [BUTTON SELECTION] User selected property type: {property_type_hint}")
+    
+    return chatbot_instance.process_message(message, session_id, user_context=context)
 
 
 # =============================================================================

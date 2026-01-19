@@ -24,9 +24,9 @@ logger = logging.getLogger(__name__)
 try:
     import spacy
     SPACY_AVAILABLE = True
-except ImportError:
+except (ImportError, OSError) as e:
     SPACY_AVAILABLE = False
-    logger.warning("spaCy not available - deterministic NER disabled")
+    logger.warning(f"spaCy not available - deterministic NER disabled. Error: {type(e).__name__}")
 
 try:
     from rapidfuzz import fuzz, process

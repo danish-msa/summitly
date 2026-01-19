@@ -4490,10 +4490,15 @@ def process_conversation_stage(session, user_text):
 
 @app.route('/', methods=['GET'])
 def index():
-    """Root endpoint - Serve production frontend"""
+    """Root endpoint - Serve production frontend with no-cache headers"""
     # Serve the main Summitly frontend application
     frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'Frontend', 'legacy')
-    return send_from_directory(frontend_path, 'Summitly_main.html')
+    response = send_from_directory(frontend_path, 'Summitly_main.html')
+    # Force browser to always fetch fresh version
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -5651,17 +5656,18 @@ def chat_gpt4():
         data = request.json
         message = data.get('message', '').strip()
         session_id = data.get('user_id', data.get('session_id', str(uuid.uuid4())))
+        property_type = data.get('property_type', '').lower()  # NEW: Get property type from frontend buttons
         
         if not message:
             return jsonify({"success": False, "error": "Message required"}), 400
         
-        print(f"🤖 GPT-4 Chat: session={session_id}, msg='{message[:60]}...'")
+        print(f"🤖 GPT-4 Chat: session={session_id}, msg='{message[:60]}...', property_type={property_type}")
         
         # Import enhanced orchestrator
         from services.chatbot_orchestrator import process_user_message
         
-        # Process through GPT-4 pipeline
-        result = process_user_message(message, session_id)
+        # Process through GPT-4 pipeline with property type hint
+        result = process_user_message(message, session_id, property_type_hint=property_type)
         
         # Return in format expected by Summitly_main.html
         response_data = {
@@ -6785,13 +6791,15 @@ except Exception as e:
     print(f"⚠️ Qwen2.5-Omni service not available: {e}")
 
 # Initialize Canadian Real Estate Chatbot
-try:
-    from services.canadian_re_chatbot import canadian_re_chatbot
-    CANADIAN_RE_CHATBOT_AVAILABLE = True
-    print("🏠 Canadian Real Estate Chatbot service imported successfully!")
-except Exception as e:
-    CANADIAN_RE_CHATBOT_AVAILABLE = False
-    print(f"⚠️ Canadian Real Estate Chatbot service not available: {e}")
+# DISABLED: Causes CUDA errors on systems without proper PyTorch/CUDA setup
+CANADIAN_RE_CHATBOT_AVAILABLE = False
+# try:
+#     from services.canadian_re_chatbot import canadian_re_chatbot
+#     CANADIAN_RE_CHATBOT_AVAILABLE = True
+#     print("🏠 Canadian Real Estate Chatbot service imported successfully!")
+# except Exception as e:
+#     CANADIAN_RE_CHATBOT_AVAILABLE = False
+#     print(f"⚠️ Canadian Real Estate Chatbot service not available: {e}")
 
 @app.route('/api/multimodal-chat', methods=['POST'])
 def multimodal_chat():
@@ -9438,6 +9446,14 @@ def property_details_api():
                 "error": "MLS number is required"
             }), 400
         
+        # Check if this is a fallback ID (generated, not real MLS)
+        if mls_number.startswith("PROP-"):
+            print(f"⚠️ [PROPERTY DETAILS] Fallback ID detected: {mls_number} - cannot fetch details")
+            return jsonify({
+                "success": False,
+                "error": "This property does not have a valid MLS number. Details are unavailable."
+            }), 404
+        
         print(f"🏠 [PROPERTY DETAILS] Fetching details for MLS: {mls_number}")
         
         if not REPLIERS_INTEGRATION_AVAILABLE:
@@ -9887,13 +9903,18 @@ if __name__ == '__main__':
         print("⚠️  Repliers MLS API not available - check .env configuration")
     print("="*70 + "\n")
     
-    # Check HuggingFace service status on startup
-    hf_status = hf_bridge.get_health_status()
-    if hf_status["available"]:
-        print("✅ HuggingFace FastAPI service is available and ready!")
-    else:
-        print("⚠️  HuggingFace FastAPI service not available - using fallback responses")
-        print(f"   Error: {hf_status.get('error', 'Unknown error')}")
+    # Check HuggingFace service status on startup (DISABLED - optional service)
+    # Temporarily disabled due to connection issues
+    # try:
+    #     hf_status = hf_bridge.get_health_status()
+    #     if hf_status["available"]:
+    #         print("✅ HuggingFace FastAPI service is available and ready!")
+    #     else:
+    #         print("⚠️  HuggingFace FastAPI service not available - using fallback responses")
+    #         print(f"   Error: {hf_status.get('error', 'Unknown error')}")
+    # except Exception as e:
+    #     print("⚠️  HuggingFace health check skipped (optional service)")
+    print("⚠️  HuggingFace health check disabled (optional service)")
     print()
     
     app.run(debug=True, host='0.0.0.0', port=5050, use_reloader=False, threaded=True)

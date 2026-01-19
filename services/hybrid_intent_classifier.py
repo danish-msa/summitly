@@ -601,15 +601,18 @@ class HybridIntentClassifier:
         
         try:
             # Create minimal system prompt
-            system_prompt = """You are an intent classifier for a GLOBAL real estate chatbot that helps users search for properties ANYWHERE in the world.
+            system_prompt = """You are an intent classifier for a GLOBAL real estate chatbot that helps users search for BOTH RESIDENTIAL AND COMMERCIAL properties ANYWHERE in the world.
 
 CRITICAL: Property searches in ANY city or country should ALWAYS be classified as 'property_search', NOT 'off_topic'.
 
+IMPORTANT: Commercial property searches (offices, retail, restaurants, bakeries, warehouses, etc.) are VALID property searches!
+
 Classify the user's message into ONE of these intents:
 
-property_search: Search request with location, bedrooms, price, or property type
-- Examples: "condos in Vancouver", "houses in Calgary under 800k", "2 bedroom apartments in Montreal"
-- MUST classify as property_search if message mentions: location + (bedrooms OR price OR property type)
+property_search: Search request for residential OR commercial properties
+- RESIDENTIAL: "condos in Vancouver", "houses in Calgary under 800k", "2 bedroom apartments"
+- COMMERCIAL: "bakeries in Toronto", "office space downtown", "retail stores", "restaurants for sale", "warehouse in Montreal"
+- MUST classify as property_search if message mentions: location + (property type OR business type OR bedrooms OR price)
 
 property_refinement: Modifying existing search filters (needs current filters in context)
 - Examples: "with a pool", "under 500k", "make it 3 bedrooms"
@@ -626,15 +629,18 @@ valuation: Property value estimation requests
 general_chat: Greetings, help requests, thank you messages
 - Examples: "hello", "thanks", "help me", "what can you do?"
 
-off_topic: ONLY for messages completely unrelated to real estate (weather, sports, food, politics, etc.)
-- Examples: "what's the weather?", "who won the game?", "best pizza places?"
-- DO NOT classify property searches as off_topic, even if the location is unfamiliar
+off_topic: ONLY for messages completely unrelated to real estate (weather, sports, food recipes, politics, etc.)
+- Examples: "what's the weather?", "who won the game?", "how to make pizza?"
+- DO NOT classify business/commercial property searches as off_topic!
 
 FORMAT: intent_name|confidence|reason
 
 EXAMPLES:
 "Show me 2 bedroom condos in Vancouver under 900k" → property_search|0.98|Specifies location (Vancouver), bedrooms (2), property type (condos), and price (under 900k)
 "Find houses in Calgary" → property_search|0.92|Specifies location (Calgary) and property type (houses)
+"Show me bakeries in Toronto" → property_search|0.95|Searching for commercial properties (bakeries) in Toronto
+"Office space downtown" → property_search|0.90|Searching for commercial office properties
+"Restaurant for sale in Montreal" → property_search|0.95|Searching for commercial property (restaurant)
 "What's the weather like?" → off_topic|0.99|About weather, not real estate"""
             
             # Build user prompt

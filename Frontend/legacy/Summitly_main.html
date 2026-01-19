@@ -4879,6 +4879,34 @@
 
             <!-- Input Area -->
             <div class="input-area">
+                <!-- Property Type Selector -->
+                <div style="display: flex; gap: 8px; padding: 12px 16px; background: rgba(255,255,255,0.95); border-bottom: 1px solid #e0e0e0; justify-content: center; flex-wrap: wrap;">
+                    <button 
+                        id="btnResidential" 
+                        class="property-type-btn active" 
+                        onclick="setPropertyType('residential')"
+                        style="padding: 8px 20px; border: 2px solid #1976D2; background: #1976D2; color: white; border-radius: 20px; font-weight: 600; cursor: pointer; transition: all 0.3s; font-size: 14px;"
+                    >
+                        🏠 Residential
+                    </button>
+                    <button 
+                        id="btnCommercial" 
+                        class="property-type-btn" 
+                        onclick="setPropertyType('commercial')"
+                        style="padding: 8px 20px; border: 2px solid #1976D2; background: white; color: #1976D2; border-radius: 20px; font-weight: 600; cursor: pointer; transition: all 0.3s; font-size: 14px;"
+                    >
+                        🏢 Commercial
+                    </button>
+                    <button 
+                        id="btnCondo" 
+                        class="property-type-btn" 
+                        onclick="setPropertyType('condo')"
+                        style="padding: 8px 20px; border: 2px solid #1976D2; background: white; color: #1976D2; border-radius: 20px; font-weight: 600; cursor: pointer; transition: all 0.3s; font-size: 14px;"
+                    >
+                        🏙️ Condo
+                    </button>
+                </div>
+                
                 <div class="input-container">
                     <div class="input-wrapper">
                         <!-- Autocomplete Suggestions -->
@@ -7049,6 +7077,9 @@
         const fileManager = new FileUploadManager();
         const voiceManager = new VoiceManager();
         
+        // Property Type Selection
+        let selectedPropertyType = 'residential'; // Default: residential
+        
         // Legacy compatibility
         let chatHistory = appState.chatHistory;
         let isRecording = false;
@@ -7621,6 +7652,48 @@
         // ==================== ENHANCED MESSAGE HANDLING ====================
 
         /**
+         * Set Property Type (Button Selection)
+         */
+        function setPropertyType(type) {
+            selectedPropertyType = type;
+            console.log('🏠 Property type selected:', type);
+            
+            // Update button styles
+            const buttons = document.querySelectorAll('.property-type-btn');
+            buttons.forEach(btn => {
+                btn.style.background = 'white';
+                btn.style.color = '#1976D2';
+            });
+            
+            // Highlight selected button
+            const selectedBtn = document.getElementById(`btn${type.charAt(0).toUpperCase() + type.slice(1)}`);
+            if (selectedBtn) {
+                selectedBtn.style.background = '#1976D2';
+                selectedBtn.style.color = 'white';
+            }
+            
+            // Update placeholder text
+            const input = document.getElementById('chatInput');
+            if (input) {
+                if (type === 'commercial') {
+                    input.placeholder = 'Search for commercial properties... e.g., "bakeries in Ottawa", "office space for sale"';
+                } else if (type === 'condo') {
+                    input.placeholder = 'Search for condos... e.g., "2 bedroom condo in Toronto under $700k"';
+                } else {
+                    input.placeholder = 'Ask about properties, market trends, neighborhoods, or anything real estate...';
+                }
+            }
+            
+            // Show toast notification
+            const typeNames = {
+                'residential': '🏠 Residential',
+                'commercial': '🏢 Commercial', 
+                'condo': '🏙️ Condo'
+            };
+            showToast(`Searching for ${typeNames[type]} properties`, 'info');
+        }
+
+        /**
          * Send User Message (with file support)
          */
         function sendUserMessage() {
@@ -7957,7 +8030,8 @@
                     },
                     body: JSON.stringify({
                         user_id: getUserId(),
-                        message: userMessage
+                        message: userMessage,
+                        property_type: selectedPropertyType // Add selected property type
                     })
                 });
 
@@ -8094,6 +8168,15 @@
                     // Check if this is a property search response with properties array
                     else if (data.properties && Array.isArray(data.properties) && data.properties.length > 0) {
                         console.log('🏠 Rendering property search results');
+                        console.log('🔍 [MLS DEBUG] First 3 properties MLS fields:', 
+                            data.properties.slice(0, 3).map(p => ({
+                                mls: p.mls,
+                                mlsNumber: p.mlsNumber,
+                                mls_number: p.mls_number,
+                                id: p.id,
+                                keys: Object.keys(p).filter(k => k.toLowerCase().includes('mls') || k === 'id')
+                            }))
+                        );
                         const suggestions = data.suggestions || data.quick_replies || data.predicted_questions || [];
                         const totalCount = data.total_count || data.count || data.total || null;
                         const searchCity = data.city || data.location || data.filters?.city || null;
@@ -10346,7 +10429,7 @@
                     bathroomsTotalInteger: prop.bathrooms || prop.baths,
                     sqft: prop.sqft || prop.square_footage,
                     images: prop.images || [prop.image_url],
-                    mlsNumber: prop.mls_number || prop.mls_id
+                    mlsNumber: prop.mls || prop.mlsNumber || prop.mls_number || prop.mls_id  // ✅ FIX: Check all possible MLS field names
                 });
             });
             
@@ -10515,10 +10598,25 @@
         }
 
         function generatePropertyCards(properties) {
-            return properties.map(prop => {
+            return properties.map((prop, index) => {
+                // DEBUG: Log property object for first 3 properties
+                if (index < 3) {
+                    console.log(`🔍 [PROPERTY ${index + 1}] Full object:`, prop);
+                    console.log(`🔍 [PROPERTY ${index + 1}] MLS fields:`, {
+                        mls: prop.mls,
+                        mlsNumber: prop.mlsNumber,
+                        mls_number: prop.mls_number,
+                        id: prop.id
+                    });
+                }
+                
                 // Format price properly
                 let formattedPrice = 'Price on Request';
-                if (prop.price || prop.listPrice) {
+                
+                // Check if price_text is already formatted (for commercial properties)
+                if (prop.price_text) {
+                    formattedPrice = prop.price_text;
+                } else if (prop.price || prop.listPrice) {
                     const priceValue = prop.price || prop.listPrice;
                     formattedPrice = typeof priceValue === 'number' ? 
                         `$${priceValue.toLocaleString()}` : 
@@ -10541,8 +10639,30 @@
                 // Get image URL
                 const imageUrl = prop.image || prop.image_url || 'https://via.placeholder.com/400x300?text=Property+Image';
                 
-                // Get property ID
-                const propertyId = prop.mlsNumber || prop.mls_number || prop.id || '';
+                // Get property ID - check multiple possible field names
+                const propertyId = prop.mls || prop.mlsNumber || prop.mls_number || prop.id || '';
+                const mlsNumber = prop.mls || prop.mlsNumber || prop.mls_number || prop.id || '';
+                
+                // STRONG DEBUG: Log EVERYTHING for first property
+                if (index === 0) {
+                    console.log('🚨 [FIRST PROPERTY] COMPLETE OBJECT:', JSON.stringify(prop, null, 2));
+                    console.log('🚨 [FIRST PROPERTY] ALL KEYS:', Object.keys(prop));
+                    console.log('🚨 [FIRST PROPERTY] MLS EXTRACTION:', {
+                        'prop.mls': prop.mls,
+                        'prop.mlsNumber': prop.mlsNumber,
+                        'prop.mls_number': prop.mls_number,
+                        'prop.id': prop.id,
+                        'final_propertyId': propertyId,
+                        'final_mlsNumber': mlsNumber
+                    });
+                }
+                
+                // Log for debugging
+                if (!propertyId) {
+                    console.warn('⚠️ Property missing MLS:', prop);
+                } else {
+                    console.log('✅ Property MLS:', propertyId, 'mlsNumber:', mlsNumber);
+                }
                 
                 return `
                 <div class="property-card">
@@ -10556,7 +10676,7 @@
                             ${sqft ? `<span class="property-spec">📐 ${sqft}</span>` : ''}
                         </div>
                         <div class="property-actions">
-                            <button class="btn-small" onclick="viewProperty('${propertyId}')">🏠 View Details</button>
+                            <button class="btn-small" onclick="viewPropertyDetails('${propertyId}', '${mlsNumber}')">🏠 View Details</button>
                             <button class="btn-small" onclick="analyzeProperty('${propertyId}', '${address.replace(/'/g, '\\\'').replace(/"/g, '&quot;')}')">🤖 AI Analysis</button>
                             <button class="btn-small" onclick="showMarketAnalysis('${address.replace(/'/g, '\\\'').replace(/"/g, '&quot;')}')">📊 Market Analysis</button>
                         </div>
@@ -12386,6 +12506,8 @@
             // Use MLS number if available, otherwise use property ID
             const mls = mlsNumber || propertyId;
             
+            console.log('🏠 [VIEW PROPERTY] propertyId:', propertyId, 'mlsNumber:', mlsNumber, 'using:', mls);
+            
             if (!mls) {
                 showToast('No MLS number available', 'error');
                 return;
@@ -12419,10 +12541,13 @@
                 if (data.success && data.property) {
                     displayPropertyDetails(data.property);
                 } else {
+                    // Show error message from API or default message
+                    const errorMsg = data.error || "Unable to load property details.";
                     document.querySelector('.property-loading').innerHTML = `
                         <div style="text-align: center; padding: 40px;">
                             <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
-                            <p>Unable to load property details.</p>
+                            <h3 style="margin-bottom: 12px;">Property Not Found</h3>
+                            <p style="color: var(--color-text-secondary);">${errorMsg}</p>
                             <button class="btn-small btn-primary" onclick="closePropertyDetails()" style="margin-top: 16px;">Close</button>
                         </div>
                     `;
@@ -12432,7 +12557,8 @@
                 document.querySelector('.property-loading').innerHTML = `
                     <div style="text-align: center; padding: 40px;">
                         <div style="font-size: 48px; margin-bottom: 16px;">❌</div>
-                        <p>Error: ${error.message}</p>
+                        <h3 style="margin-bottom: 12px;">Error Loading Property</h3>
+                        <p style="color: var(--color-text-secondary);">${error.message}</p>
                         <button class="btn-small btn-primary" onclick="closePropertyDetails()" style="margin-top: 16px;">Close</button>
                     </div>
                 `;

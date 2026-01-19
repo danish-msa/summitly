@@ -327,13 +327,17 @@ class StateToFiltersConverter:
     def _normalize_property_type(self, property_type: str) -> str:
         """Normalize property type to API-compatible format."""
         type_mapping = {
-            'condo': 'Condo Apt',
-            'apartment': 'Condo Apt',
+            'condo': 'Condo Apartment',
+            'apartment': 'Condo Apartment',
+            'condominium': 'Condo Apartment',
+            'apt': 'Condo Apartment',
             'house': 'Detached',
             'detached': 'Detached',
-            'townhouse': 'Att/Row/Twnhouse',
-            'town': 'Att/Row/Twnhouse',
-            'row': 'Att/Row/Twnhouse',
+            'single family': 'Detached',
+            'townhouse': 'Townhouse',
+            'town': 'Townhouse',
+            'row': 'Townhouse',
+            'rowhouse': 'Townhouse',
             'semi': 'Semi-Detached',
             'semi-detached': 'Semi-Detached',
             'duplex': 'Duplex',
