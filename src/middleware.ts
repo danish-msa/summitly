@@ -63,59 +63,55 @@ function isFilterPattern(segment: string): boolean {
   return false;
 }
 
-function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+export default withAuth(
+  function middleware(req) {
+    const { pathname } = req.nextUrl;
 
-  // Handle pre-con routes: detect filter patterns and rewrite to catch-all format
-  if (pathname.startsWith('/pre-con/')) {
-    const segments = pathname.replace('/pre-con/', '').split('/').filter(Boolean);
-    
-    // If we have exactly 2 segments, check if it's a city + filter pattern
-    if (segments.length === 2) {
-      const [firstSegment, secondSegment] = segments;
-      const isKnownCity = preConCitySlugs.includes(firstSegment.toLowerCase());
-      const isFilter = isFilterPattern(secondSegment);
+    // Handle pre-con routes: detect filter patterns and rewrite to catch-all format
+    if (pathname.startsWith('/pre-con/')) {
+      const segments = pathname.replace('/pre-con/', '').split('/').filter(Boolean);
       
-      // BULLETPROOF SOLUTION: Rewrite filter URLs to a format that won't match [slug]/[unitId]
-      // We'll rewrite /pre-con/city/filter to /pre-con/_filter/city/filter internally
-      // The catch-all route will handle _filter as a special prefix and process it correctly
-      if (isKnownCity && isFilter) {
-        console.log('[Middleware] Detected city + filter pattern, rewriting URL:', {
-          original: pathname,
-          city: firstSegment,
-          filter: secondSegment,
-        });
+      // If we have exactly 2 segments, check if it's a city + filter pattern
+      if (segments.length === 2) {
+        const [firstSegment, secondSegment] = segments;
+        const isKnownCity = preConCitySlugs.includes(firstSegment.toLowerCase());
+        const isFilter = isFilterPattern(secondSegment);
         
-        // Rewrite internally to /pre-con/_filter/city/filter
-        // This has 3 segments, so it won't match [slug]/[unitId] (which only matches 2 segments)
-        // The catch-all route [...segments] will handle it
-        const newPath = `/pre-con/_filter/${firstSegment}/${secondSegment}`;
-        const url = request.nextUrl.clone();
-        url.pathname = newPath;
-        return NextResponse.rewrite(url);
+        // BULLETPROOF SOLUTION: Rewrite filter URLs to a format that won't match [slug]/[unitId]
+        // We'll rewrite /pre-con/city/filter to /pre-con/_filter/city/filter internally
+        // The catch-all route will handle _filter as a special prefix and process it correctly
+        if (isKnownCity && isFilter) {
+          console.log('[Middleware] Detected city + filter pattern, rewriting URL:', {
+            original: pathname,
+            city: firstSegment,
+            filter: secondSegment,
+          });
+          
+          // Rewrite internally to /pre-con/_filter/city/filter
+          // This has 3 segments, so it won't match [slug]/[unitId] (which only matches 2 segments)
+          // The catch-all route [...segments] will handle it
+          const newPath = `/pre-con/_filter/${firstSegment}/${secondSegment}`;
+          const url = req.nextUrl.clone();
+          url.pathname = newPath;
+          return NextResponse.rewrite(url);
+        }
       }
     }
-  }
 
-  // Continue with auth middleware for dashboard routes
-  return withAuth(
-    function authMiddleware() {
-      return NextResponse.next();
-    },
-    {
-      callbacks: {
-        authorized: ({ token, req }) => {
-          if (req.nextUrl.pathname.startsWith('/dashboard')) {
-            return !!token;
-          }
-          return true;
-        },
+    // For all other routes, continue normally
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: ({ token, req }) => {
+        if (req.nextUrl.pathname.startsWith('/dashboard')) {
+          return !!token;
+        }
+        return true;
       },
-    }
-  )(request);
-}
-
-export default middleware;
+    },
+  }
+);
 
 export const config = {
   matcher: [
