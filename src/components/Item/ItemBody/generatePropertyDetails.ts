@@ -199,8 +199,8 @@ export function generatePropertyDetailsData(
   const _isHistoryActive = (_history: { lastStatus?: string; timestamps?: { closedDate?: string; terminatedDate?: string; expiryDate?: string } }, isCurrentListing: boolean): boolean => {
     if (!isCurrentListing) return false;
     
-    const lastStatus = history.lastStatus?.toLowerCase();
-    const timestamps = history.timestamps;
+    const lastStatus = _history.lastStatus?.toLowerCase();
+    const timestamps = _history.timestamps;
     
     // Check if listing has been closed/terminated/expired
     if (timestamps?.closedDate || timestamps?.terminatedDate || timestamps?.expiryDate) {
