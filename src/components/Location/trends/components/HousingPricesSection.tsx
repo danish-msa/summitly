@@ -143,8 +143,8 @@ export const HousingPricesSection: React.FC<HousingPricesSectionProps> = ({
   useEffect(() => {
     const fetchMedianListingVsSoldPrice = async () => {
       try {
-        const url = new URL(`/api/market-trends/${locationType}/${encodeURIComponent(locationName)}`, window.location.origin);
-        url.searchParams.set('years', years.toString());
+        const url = new URL(`/api/market-trends/${_locationType}/${encodeURIComponent(locationName)}`, window.location.origin);
+        url.searchParams.set('years', _years.toString());
         
         const response = await fetch(url.toString());
         if (response.ok) {
