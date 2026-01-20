@@ -155,7 +155,7 @@ const UnitDetailPageClient: React.FC<UnitDetailPageClientProps> = ({ unit, prope
                     <span>Bedrooms</span>
                   </div>
                   <span className="font-semibold text-foreground">
-                    {unit.beds === 2 && unit.name.includes("+") ? "2+1" : unit.beds}
+                    {unit.beds}
                   </span>
                 </div>
 
