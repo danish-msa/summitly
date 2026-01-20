@@ -379,7 +379,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, propertyId }) => {
                 <div className="flex items-center gap-6 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Bed className="w-4 h-4" />
-                    <span>{unit.beds === 2 && unit.name.includes("+") ? "2+1" : unit.beds}</span>
+                    <span>{unit.beds}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Bath className="w-4 h-4" />
