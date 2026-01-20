@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaChevronDown, FaHome } from 'react-icons/fa';
 import { IndividualFilterProps, FilterChangeEvent, PROPERTY_TYPES } from '@/lib/types/filters';
+import { HomeIcon } from 'lucide-react';
 
 // House type options (for Houses property type)
 const HOUSE_TYPES = [
@@ -124,7 +125,7 @@ const PropertyTypeFilter: React.FC<IndividualFilterProps> = ({
   return (
     <div className="relative w-full sm:w-auto">
       <button 
-        className={`w-full sm:w-auto bg-white flex items-center gap-2 px-4 py-2 rounded-lg border ${activeDropdown ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
+        className={`w-full sm:w-auto flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all ${activeDropdown ? 'border-2 border-secondary text-primary' : 'border border-gray-300 text-primary'} hover:border-secondary`}
         onClick={() => {
           setActiveDropdown(!activeDropdown);
           // If property type is house/condo and has a selected subtype, show subfilter
@@ -137,8 +138,8 @@ const PropertyTypeFilter: React.FC<IndividualFilterProps> = ({
           }
         }}
       >
-        <FaHome className="text-secondary" />
-        <span className="font-base text-sm md:text-sm">{getPropertyTypeText()}</span>
+        <HomeIcon className="w-4 h-4" />
+        <span>{getPropertyTypeText()}</span>
         {filters.propertyType !== 'all' && (
           <button
             onClick={(e) => {
@@ -157,7 +158,7 @@ const PropertyTypeFilter: React.FC<IndividualFilterProps> = ({
       </button>
       
       {activeDropdown && (
-        <div className="absolute z-10 mt-2 w-full sm:w-[600px] bg-white rounded-lg shadow-lg p-4">
+        <div className="absolute z-[100] mt-2 w-full sm:w-[600px] bg-white rounded-lg shadow-lg p-4">
           {!showSubFilter ? (
             <>
               <p className="font-semibold mb-3">Property Type</p>

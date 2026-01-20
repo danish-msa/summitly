@@ -459,10 +459,13 @@ const PreConstructionProjectsListings: React.FC = () => {
               properties={mapProperties}
               selectedProperty={selectedPropertyListing}
               onPropertySelect={(property) => {
-                const project = visibleProjects.find(p => p.id === property.mlsNumber);
-                if (project) {
-                  handleProjectClick(project);
+                if (property) {
+                  const project = visibleProjects.find(p => p.id === property.mlsNumber);
+                  if (project) {
+                    handleProjectClick(project);
+                  }
                 }
+                // Handle null case - property deselected (no action needed here)
               }}
               onBoundsChange={handleMapBoundsChange}
             />

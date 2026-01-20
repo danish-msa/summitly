@@ -347,8 +347,8 @@ export default function NewProjectPage() {
           isPublished: false, // Always save as draft
           units: formData.units?.map((unit) => ({
             unitName: unit.unitName,
-            beds: parseInt(unit.beds) || 0,
-            baths: parseInt(unit.baths) || 0,
+            beds: String(unit.beds || ''),
+            baths: String(unit.baths || ''),
             sqft: parseInt(unit.sqft) || 0,
             price: parseFloat(unit.price) || 0,
             maintenanceFee: unit.maintenanceFee ? parseFloat(unit.maintenanceFee) : null,
@@ -500,8 +500,8 @@ export default function NewProjectPage() {
         isPublished: formData.isPublished === true,
         units: formData.units?.map((unit) => ({
           unitName: unit.unitName,
-          beds: parseInt(unit.beds) || 0,
-          baths: parseInt(unit.baths) || 0,
+          beds: String(unit.beds || ''),
+          baths: String(unit.baths || ''),
           sqft: parseInt(unit.sqft) || 0,
           price: parseFloat(unit.price) || 0,
           maintenanceFee: unit.maintenanceFee ? parseFloat(unit.maintenanceFee) : null,

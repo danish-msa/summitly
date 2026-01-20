@@ -106,9 +106,7 @@ const BlogSection: React.FC<BlogSectionProps> = ({
               data-aos-delay={`${i * 50}`} 
               data-aos-anchor-placement="top-center"
             >
-              <Link href={`/blogs${category ? `?category=${encodeURIComponent(category)}` : ''}`}>
-                <BlogCard blog={blog} />
-              </Link>
+              <BlogCard blog={blog} />
             </div>
           ))}
         </div>

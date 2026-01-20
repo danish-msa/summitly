@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Bell, ChevronRight } from 'lucide-react';
+import { Bell, ChevronRight, Sparkles } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useSession } from 'next-auth/react';
 import PreConSearchBar from '@/components/common/PreConSearchBar';
@@ -8,6 +8,7 @@ import PropertyAlertsDialog from '@/components/common/PropertyAlertsDialog';
 import { usePropertyAlerts } from '@/hooks/usePropertyAlerts';
 import type { PageType, TeamMemberInfo } from '../types';
 import Image from 'next/image';
+import { Button } from '@/components/ui/button';
 
 interface HeroSectionProps {
   heroImage: string | null;
@@ -27,7 +28,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   teamMemberInfo,
 }) => {
   const isDevelopmentTeamPage = ['developer', 'architect', 'interior-designer', 'builder', 'landscape-architect', 'marketing'].includes(pageType);
-  const imageSrc = heroImage || '/images/HeroBackImage-3.jpg';
   const { data: session } = useSession();
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [alertOptions, setAlertOptions] = useState<Record<string, boolean>>({
@@ -91,35 +91,24 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   };
 
   return (
-    <div className="w-full relative">
-      {/* Hero Image with Overlays - Only show background if not a development team page */}
-      {!isDevelopmentTeamPage && (
-        <div className="w-full h-48 md:h-64 relative">
-          <div className="absolute inset-0 overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src={imageSrc} 
-              alt={title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        </div>
-      )}
-      
+    <div className="w-full relative bg-white" style={{ background: 'white' }}>
       {/* Content Section - Two Column Layout */}
-      <div className={`w-full ${isDevelopmentTeamPage ? 'bg-card py-8 md:py-12' : 'absolute inset-0 flex items-center'} px-4 z-10`}>
+      <div 
+        className="w-full bg-white py-8 md:py-12 px-4 z-10"
+        style={{ background: 'white' }}
+      >
           <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 w-full">
             {/* Breadcrumb Navigation */}
             <div className="mb-4 relative z-20">
-              <nav className={`flex items-center gap-2 text-sm ${isDevelopmentTeamPage ? 'text-foreground' : 'text-white/90 drop-shadow-md'}`} aria-label="Breadcrumb">
+              <nav className="flex items-center gap-2 text-sm text-foreground" aria-label="Breadcrumb">
                 <Link 
                   href="/pre-con" 
-                  className={`${isDevelopmentTeamPage ? 'text-primary hover:text-primary/80' : 'text-primary'} transition-colors font-medium`}
+                  className="text-primary hover:text-primary/80 transition-colors font-medium"
                 >
                   Pre-Construction
                 </Link>
-                <ChevronRight className={`h-4 w-4 ${isDevelopmentTeamPage ? 'text-foreground' : 'text-primary'}`} />
-                <span className={`${isDevelopmentTeamPage ? 'text-foreground' : 'text-primary'} font-medium`}>{title}</span>
+                <ChevronRight className="h-4 w-4 text-foreground" />
+                <span className="text-foreground font-medium">{title}</span>
               </nav>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
@@ -136,12 +125,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                         sizes="(max-width: 768px) 100vw, 400px"
                       />
                     </div>
-                    <h1 className={`text-2xl md:text-3xl font-bold ${isDevelopmentTeamPage ? 'text-foreground' : 'drop-shadow-lg'}`}>
+                    <h1 className="text-2xl md:text-3xl font-bold text-foreground">
                       {buildHeading()}
                     </h1>
                   </div>
                 ) : (
-                  <h1 className="text-2xl md:text-3xl font-bold drop-shadow-lg">
+                  <h1 className="text-2xl md:text-3xl font-bold text-foreground">
                     {buildHeading()}
                   </h1>
                 )}
@@ -156,18 +145,28 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 </div>
               </div>
 
-              {/* Right Column: Alert Button */}
-              <div className="flex flex-col items-start md:items-end gap-2">
-                <p className="text-sm text-right drop-shadow-md">
-                  Be the first to hear about new properties
-                </p>
-                <button 
+              {/* Right Column: Alert Card */}
+              <div className="flex flex-col items-start md:items-end">
+                <div 
                   onClick={() => setAlertsOpen(true)}
-                  className="flex items-center gap-2 px-6 py-3 bg-secondary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors shadow-lg font-medium whitespace-nowrap"
+                  className="bg-secondary/10 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer w-full md:w-auto max-w-sm"
                 >
-                  <Bell className="w-5 h-5" />
-                  <span>Alert Me of New Properties</span>
-                </button>
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="flex-shrink-0 w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                      <Sparkles className="w-5 h-5 text-secondary" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-foreground mb-1">Never Miss Out</h4>
+                      <p className="text-sm font-light text-muted-foreground">
+                        Get instant alerts when new pre-construction criteria  properties match your search criteria
+                      </p>
+                    </div>
+                  </div>
+                  <Button variant="default" className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-secondary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium text-sm">
+                    <Bell className="w-4 h-4" />
+                    <span>Enable Property Alerts</span>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -175,7 +174,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
       {/* Additional Content Section (if customContent exists) */}
       {customContent && (
-        <header className="border-b bg-card pt-6 pb-4">
+        <header className="border-b bg-white pt-6 pb-4">
           <div className="container-1400 mx-auto px-4">
             <div className="space-y-3">
               <div 

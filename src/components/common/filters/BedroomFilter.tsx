@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from 'react';
-import { FaChevronDown, FaBed } from 'react-icons/fa';
+import { FaChevronDown } from 'react-icons/fa';
 import { IndividualFilterProps, FilterChangeEvent } from '@/lib/types/filters';
+import { BedIcon } from 'lucide-react';
 
 const BedroomFilter: React.FC<IndividualFilterProps> = ({ 
   filters, 
@@ -43,11 +44,11 @@ const BedroomFilter: React.FC<IndividualFilterProps> = ({
   return (
     <div className="relative w-full sm:w-auto">
       <button 
-        className={`w-full bg-white flex items-center gap-2 px-4 py-2 rounded-lg border ${activeDropdown ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
+        className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all ${activeDropdown ? 'border-2 border-secondary text-primary' : 'border border-gray-300 text-primary'} hover:border-secondary`}
         onClick={() => setActiveDropdown(!activeDropdown)}
       >
-        <FaBed className="text-secondary" />
-        <span className="text-sm">{getBedroomText()}</span>
+        <BedIcon className="w-4 h-4" />
+        <span>{getBedroomText()}</span>
         {filters.bedrooms !== 0 && (
           <span
             onClick={(e) => {
@@ -75,7 +76,7 @@ const BedroomFilter: React.FC<IndividualFilterProps> = ({
       </button>
       
       {activeDropdown && (
-        <div className="absolute z-10 mt-2 left-0 w-auto min-w-fit bg-white rounded-lg shadow-lg p-4">
+        <div className="absolute z-[100] mt-2 left-0 w-auto min-w-fit bg-white rounded-lg shadow-lg p-4">
           <p className="font-semibold mb-3">Bedrooms</p>
           <div className="flex gap-0">
             {['Any', '1', '2', '3', '4', '5+'].map((value, index) => {

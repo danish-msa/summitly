@@ -2499,10 +2499,12 @@ export function PreConProjectForm({
                                   <Input
                                     id={`unit-beds-${unit.id}`}
                                     type="text"
+                                    inputMode="text"
                                     label="Beds"
-                                    placeholder="e.g., 2"
+                                    placeholder="e.g., 2 or 1+1"
                                     value={unit.beds}
                                     onChange={(e) => {
+                                      // Allow all characters including +, -, and other special characters
                                       setFormData((prev) => ({
                                         ...prev,
                                         units: prev.units?.map((u) =>
@@ -2516,10 +2518,12 @@ export function PreConProjectForm({
                                   <Input
                                     id={`unit-baths-${unit.id}`}
                                     type="text"
+                                    inputMode="text"
                                     label="Baths"
-                                    placeholder="e.g., 2"
+                                    placeholder="e.g., 2 or 1+1"
                                     value={unit.baths}
                                     onChange={(e) => {
+                                      // Allow all characters including +, -, and other special characters
                                       setFormData((prev) => ({
                                         ...prev,
                                         units: prev.units?.map((u) =>

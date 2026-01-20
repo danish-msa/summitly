@@ -416,8 +416,8 @@ export default function EditProjectPage() {
           units: formData.units?.map((unit) => ({
             id: unit.id.startsWith('unit-') ? undefined : unit.id, // Don't send ID for new units
             unitName: unit.unitName,
-            beds: parseInt(unit.beds) || 0,
-            baths: parseInt(unit.baths) || 0,
+            beds: String(unit.beds || ''),
+            baths: String(unit.baths || ''),
             sqft: parseInt(unit.sqft) || 0,
             price: parseFloat(unit.price) || 0,
             maintenanceFee: unit.maintenanceFee ? parseFloat(unit.maintenanceFee) : null,
@@ -564,8 +564,8 @@ export default function EditProjectPage() {
         units: formData.units?.map((unit) => ({
           id: unit.id.startsWith('unit-') ? undefined : unit.id, // Don't send ID for new units
           unitName: unit.unitName,
-          beds: parseInt(unit.beds) || 0,
-          baths: parseInt(unit.baths) || 0,
+          beds: String(unit.beds || ''),
+          baths: String(unit.baths || ''),
           sqft: parseInt(unit.sqft) || 0,
           price: parseFloat(unit.price) || 0,
           maintenanceFee: unit.maintenanceFee ? parseFloat(unit.maintenanceFee) : null,

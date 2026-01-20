@@ -33,6 +33,7 @@ export const MapView: React.FC<MapViewProps> = ({
     <div className={`${viewMode === 'mixed' ? 'md:w-1/2' : 'w-full'} bg-gray-100 rounded-lg overflow-hidden`} 
          style={{ height: viewMode === 'mixed' ? 'calc(100vh - 200px)' : '70vh' }}>
       <GooglePropertyMap
+        theme="default"
         properties={mapProperties}
         selectedProperty={selectedProperty}
         onPropertySelect={(property) => {
@@ -41,8 +42,11 @@ export const MapView: React.FC<MapViewProps> = ({
             if (project) {
               onProjectSelect(project);
             }
+            onPropertySelect(property);
+          } else {
+            // Handle deselection
+            onPropertySelect(null);
           }
-          onPropertySelect(property);
         }}
         onBoundsChange={() => {}}
       />

@@ -333,8 +333,8 @@ model PreConstructionUnit {
   id             String                 @id @default(cuid())
   projectId      String
   unitName       String
-  beds           Int
-  baths          Int
+  beds           String
+  baths          String
   sqft           Int
   price          Float
   maintenanceFee Float?

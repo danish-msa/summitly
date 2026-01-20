@@ -51,11 +51,11 @@ const PreConStatusFilter: React.FC<IndividualFilterProps> = ({
   return (
     <div className="relative w-full sm:w-auto">
       <button 
-        className={`w-full sm:w-auto bg-white flex items-center gap-2 px-4 py-2 rounded-lg border ${activeDropdown ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
+        className={`w-full sm:w-auto flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all ${activeDropdown ? 'border-2 border-secondary text-primary' : 'border border-gray-300 text-primary'} hover:border-secondary`}
         onClick={() => setActiveDropdown(!activeDropdown)}
       >
         <FaTag className="text-secondary" />
-        <span className="font-base text-sm md:text-sm">{getStatusText()}</span>
+        <span>{getStatusText()}</span>
         {filters.preConStatus && filters.preConStatus !== 'all' && filters.preConStatus !== undefined && (
           <button
             onClick={(e) => {
@@ -74,7 +74,7 @@ const PreConStatusFilter: React.FC<IndividualFilterProps> = ({
       </button>
       
       {activeDropdown && (
-        <div className="absolute z-10 mt-2 w-full sm:w-64 bg-white rounded-lg shadow-lg p-4">
+        <div className="absolute z-[100] mt-2 w-full sm:w-64 bg-white rounded-lg shadow-lg p-4">
           <p className="font-semibold mb-3">Status</p>
           <div className="grid grid-cols-2 gap-2">
             {PRECON_STATUSES.map((status) => {

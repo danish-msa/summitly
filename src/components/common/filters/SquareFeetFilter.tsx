@@ -52,8 +52,8 @@ const SquareFeetFilter: React.FC<IndividualFilterProps> = ({
         className={`w-full sm:w-auto bg-white flex items-center gap-2 px-4 py-2 rounded-lg border ${activeDropdown ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
         onClick={() => setActiveDropdown(!activeDropdown)}
       >
-        <Maximize2 className="w-4 h-4 text-secondary" />
-        <span className="text-sm">{getSquareFeetText()}</span>
+        <Maximize2 className="w-4 h-4" />
+        <span>{getSquareFeetText()}</span>
         {hasActiveFilter && (
           <button
             onClick={(e) => {

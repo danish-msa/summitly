@@ -4,15 +4,48 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { GoogleMap, useJsApiLoader, InfoWindow } from '@react-google-maps/api';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { useRouter } from 'next/navigation';
+import { Plus, Minus } from 'lucide-react';
 import { PropertyListing } from '@/lib/types';
-import MapSearchBox from './MapSearchBox';
 import { getPropertyUrl } from '@/lib/utils/propertyUrl';
+import { getThemeStyles, type MapTheme, activeTheme } from '@/lib/constants/mapThemes';
+import { MapFilterPanel } from './MapFilterPanel';
+import { FilterComponentProps } from '@/lib/types/filters';
+import { LOCATIONS } from '@/lib/types/filters';
 
 interface GooglePropertyMapProps {
   properties: PropertyListing[];
   selectedProperty: PropertyListing | null;
-  onPropertySelect: (property: PropertyListing) => void;
+  onPropertySelect: (property: PropertyListing | null) => void;
   onBoundsChange: (bounds: {north: number; south: number; east: number; west: number}) => void;
+  theme?: MapTheme; // Optional theme prop, defaults to activeTheme
+  initialCenter?: {lat: number; lng: number}; // Initial map center
+  initialZoom?: number; // Initial map zoom level
+  showFilters?: boolean; // Show/hide filter panel
+  isPreCon?: boolean; // Is this for pre-construction projects
+  showPreConStatus?: boolean; // Show pre-construction status filter
+  // Filter props (optional - only needed if showFilters is true)
+  filters?: FilterComponentProps['filters'];
+  handleFilterChange?: FilterComponentProps['handleFilterChange'];
+  resetFilters?: FilterComponentProps['resetFilters'];
+  communities?: FilterComponentProps['communities'];
+  locations?: FilterComponentProps['locations'];
+  // Subject property for relative filtering (optional)
+  subjectProperty?: {
+    bedrooms?: number;
+    bathrooms?: number;
+    squareFeet?: number;
+    sqftAboveGrade?: number;
+    sqftBelowGrade?: number;
+    lotSize?: number;
+    propertyType?: string;
+    yearBuilt?: number;
+    listPrice?: number;
+    salePrice?: number;
+    listDate?: string;
+    saleDate?: string;
+    status?: string;
+    location?: { lat: number; lng: number };
+  };
 }
 
 // Map container styles
@@ -27,28 +60,33 @@ const defaultCenter = {
   lng: -79.3832
 };
 
-// Map options
-const mapOptions = {
-  disableDefaultUI: false,
-  zoomControl: true,
-  streetViewControl: false,
-  mapTypeControl: false,
-  fullscreenControl: true,
-  styles: [
-    {
-      featureType: 'poi',
-      elementType: 'labels',
-      stylers: [{ visibility: 'off' }]
-    }
-  ]
-};
-
 const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({ 
   properties, 
   selectedProperty, 
   onPropertySelect,
-  onBoundsChange
+  onBoundsChange,
+  theme = activeTheme,
+  initialCenter,
+  initialZoom = 10,
+  showFilters = false,
+  isPreCon = false,
+  showPreConStatus = false,
+  filters,
+  handleFilterChange,
+  resetFilters,
+  communities = [],
+  locations = LOCATIONS,
+  subjectProperty
 }) => {
+  // Get map options with theme styles
+  const mapOptions = React.useMemo(() => ({
+    disableDefaultUI: false,
+    zoomControl: false, // Disable default zoom controls - we'll use custom ones
+    streetViewControl: false,
+    mapTypeControl: false,
+    fullscreenControl: true,
+    styles: getThemeStyles(theme)
+  }), [theme]);
   const mapRef = useRef<google.maps.Map | null>(null);
   const clustererRef = useRef<MarkerClusterer | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
@@ -57,6 +95,8 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
     property: PropertyListing;
     position: google.maps.LatLng;
   } | null>(null);
+  const isInitialFitRef = useRef<boolean>(false);
+  const isProgrammaticUpdateRef = useRef<boolean>(false);
 
   // Load Google Maps API
   const { isLoaded } = useJsApiLoader({
@@ -93,27 +133,14 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
     validProperties.forEach(property => {
       if (!property.map.latitude || !property.map.longitude) return;
 
-      // Create custom marker element
-      const markerElement = document.createElement('div');
-      markerElement.className = 'property-marker';
-      markerElement.innerHTML = `
-        <div style="
-          background: ${selectedProperty?.mlsNumber === property.mlsNumber ? '#e74c3c' : '#4a60a1'};
-          color: white;
-          padding: 8px 12px;
-          border-radius: 20px;
-          font-weight: bold;
-          font-size: 12px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-          border: 2px solid white;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          white-space: nowrap;
-        ">
-          $${(property.listPrice / 1000).toFixed(0)}k
-        </div>
-      `;
-
+      // Format price for display
+      const priceText = `$${(property.listPrice / 1000).toFixed(0)}K`;
+      
+      // Calculate width based on price text length
+      const textWidth = priceText.length * 7 + 20; // Approximate width calculation
+      const markerWidth = Math.max(60, textWidth);
+      const markerHeight = 28;
+      
       const marker = new google.maps.Marker({
         position: {
           lat: property.map.latitude,
@@ -122,19 +149,41 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
         map,
         icon: {
           url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-            <svg width="40" height="40" viewBox="0 0 40 40">
-              <circle cx="20" cy="20" r="18" fill="${selectedProperty?.mlsNumber === property.mlsNumber ? '#e74c3c' : '#4a60a1'}" stroke="white" stroke-width="2"/>
-              <text x="20" y="25" text-anchor="middle" fill="white" font-size="10" font-weight="bold">$${(property.listPrice / 1000).toFixed(0)}k</text>
+            <svg width="${markerWidth}" height="${markerHeight}" viewBox="0 0 ${markerWidth} ${markerHeight}" xmlns="http://www.w3.org/2000/svg">
+              <rect 
+                x="0" 
+                y="0" 
+                width="${markerWidth}" 
+                height="${markerHeight}" 
+                rx="6" 
+                ry="6" 
+                fill="white" 
+                stroke="${selectedProperty?.mlsNumber === property.mlsNumber ? '#e74c3c' : '#e5e7eb'}" 
+                stroke-width="${selectedProperty?.mlsNumber === property.mlsNumber ? '2' : '1'}"
+              />
+              <text 
+                x="${markerWidth / 2}" 
+                y="${markerHeight / 2 + 4}" 
+                text-anchor="middle" 
+                fill="#000000" 
+                font-size="12" 
+                font-weight="600" 
+                font-family="Arial, sans-serif"
+              >${priceText}</text>
             </svg>
           `),
-          scaledSize: new google.maps.Size(40, 40),
-          anchor: new google.maps.Point(20, 20)
+          scaledSize: new google.maps.Size(markerWidth, markerHeight),
+          anchor: new google.maps.Point(markerWidth / 2, markerHeight / 2)
         },
         title: `${property.details.propertyType} - $${property.listPrice.toLocaleString()}`
       });
 
       // Add click event to marker
-      marker.addListener('click', () => {
+      marker.addListener('click', (e: google.maps.MapMouseEvent) => {
+        // Stop event propagation to prevent map click handler from firing
+        if (e.domEvent) {
+          e.domEvent.stopPropagation();
+        }
         onPropertySelect(property);
         setInfoWindow({
           property,
@@ -149,9 +198,39 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
     initializeClusterer(map);
   }, [properties, selectedProperty, onPropertySelect, initializeClusterer]);
 
+  // Handle map click to deselect property (like onTap in Flutter)
+  const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
+    // Only deselect if clicking directly on the map (not on a marker)
+    // Markers will stop propagation in their click handlers
+    if (e.latLng) {
+      onPropertySelect(null);
+      setInfoWindow(null);
+    }
+  }, [onPropertySelect]);
+
+
   // Handle map load
   const onMapLoad = useCallback((map: google.maps.Map) => {
     mapRef.current = map;
+    
+    // Set initial center and zoom if provided
+    if (initialCenter) {
+      map.setCenter(initialCenter);
+      map.setZoom(initialZoom);
+    }
+    
+    // Trigger initial bounds change after a short delay
+    setTimeout(() => {
+      const bounds = map.getBounds();
+      if (bounds) {
+        onBoundsChange({
+          north: bounds.getNorthEast().lat(),
+          south: bounds.getSouthWest().lat(),
+          east: bounds.getNorthEast().lng(),
+          west: bounds.getSouthWest().lng()
+        });
+      }
+    }, 100);
     
     // Add bounds change listener
     map.addListener('bounds_changed', () => {
@@ -166,9 +245,12 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
       }
     });
 
+    // Add map click listener to deselect property
+    map.addListener('click', handleMapClick);
+
     // Create initial markers
     createMarkers(map);
-  }, [createMarkers, onBoundsChange]);
+  }, [createMarkers, onBoundsChange, handleMapClick, initialCenter, initialZoom]);
 
   // Update markers when properties change
   useEffect(() => {
@@ -181,10 +263,11 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
   useEffect(() => {
     if (!mapRef.current || !selectedProperty || !selectedProperty.map.latitude || !selectedProperty.map.longitude) return;
 
-        const position = {
-          lat: selectedProperty.map.latitude!,
-          lng: selectedProperty.map.longitude!
-        };
+    isProgrammaticUpdateRef.current = true;
+    const position = {
+      lat: selectedProperty.map.latitude!,
+      lng: selectedProperty.map.longitude!
+    };
 
     mapRef.current.panTo(position);
     mapRef.current.setZoom(Math.max(mapRef.current.getZoom() || 10, 12));
@@ -194,11 +277,16 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
       property: selectedProperty,
       position: new google.maps.LatLng(position.lat, position.lng)
     });
+
+    // Reset flag after a short delay
+    setTimeout(() => {
+      isProgrammaticUpdateRef.current = false;
+    }, 100);
   }, [selectedProperty]);
 
-  // Fit map to show all properties
+  // Fit map to show all properties (only if no initial center is provided)
   useEffect(() => {
-    if (!mapRef.current || properties.length === 0) return;
+    if (!mapRef.current || properties.length === 0 || initialCenter) return;
 
     const validProperties = properties.filter(
       p => p.map.latitude && p.map.longitude
@@ -206,21 +294,32 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
 
     if (validProperties.length === 0) return;
 
-    const bounds = new google.maps.LatLngBounds();
-    validProperties.forEach(property => {
-      bounds.extend({
-        lat: property.map.latitude!,
-        lng: property.map.longitude!
+    // Only auto-fit bounds on initial load if no initial center was provided
+    if (!isInitialFitRef.current) {
+      const bounds = new google.maps.LatLngBounds();
+      validProperties.forEach(property => {
+        bounds.extend({
+          lat: property.map.latitude!,
+          lng: property.map.longitude!
+        });
       });
-    });
 
-    mapRef.current.fitBounds(bounds, {
-      top: 50,
-      right: 50,
-      bottom: 50,
-      left: 50
-    });
-  }, [properties]);
+      isProgrammaticUpdateRef.current = true;
+      mapRef.current.fitBounds(bounds, {
+        top: 50,
+        right: 50,
+        bottom: 50,
+        left: 50
+      });
+
+      // Reset flag after fitBounds completes
+      setTimeout(() => {
+        isProgrammaticUpdateRef.current = false;
+      }, 200);
+
+      isInitialFitRef.current = true;
+    }
+  }, [properties, initialCenter]);
 
   const handleInfoWindowClose = () => {
     setInfoWindow(null);
@@ -230,58 +329,23 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
     router.push(getPropertyUrl(property));
   };
 
+  // Handle zoom in
+  const handleZoomIn = () => {
+    if (mapRef.current) {
+      const currentZoom = mapRef.current.getZoom() || 10;
+      mapRef.current.setZoom(Math.min(currentZoom + 1, 20));
+    }
+  };
+
+  // Handle zoom out
+  const handleZoomOut = () => {
+    if (mapRef.current) {
+      const currentZoom = mapRef.current.getZoom() || 10;
+      mapRef.current.setZoom(Math.max(currentZoom - 1, 1));
+    }
+  };
+
   // Handle search place selection
-  const handlePlaceSelect = useCallback((place: google.maps.places.PlaceResult) => {
-    if (!mapRef.current || !place.geometry?.location) return;
-
-    const location = place.geometry.location;
-    const position = {
-      lat: location.lat(),
-      lng: location.lng()
-    };
-
-    // Pan to the selected place
-    mapRef.current.panTo(position);
-    mapRef.current.setZoom(15);
-
-    // Update bounds
-    const bounds = mapRef.current.getBounds();
-    if (bounds) {
-      onBoundsChange({
-        north: bounds.getNorthEast().lat(),
-        south: bounds.getSouthWest().lat(),
-        east: bounds.getNorthEast().lng(),
-        west: bounds.getSouthWest().lng()
-      });
-    }
-  }, [onBoundsChange]);
-
-  // Handle search clear
-  const handleSearchClear = useCallback(() => {
-    // Reset to show all properties
-    if (mapRef.current && properties.length > 0) {
-      const validProperties = properties.filter(
-        p => p.map.latitude && p.map.longitude
-      );
-
-      if (validProperties.length > 0) {
-        const bounds = new google.maps.LatLngBounds();
-        validProperties.forEach(property => {
-          bounds.extend({
-            lat: property.map.latitude!,
-            lng: property.map.longitude!
-          });
-        });
-
-        mapRef.current.fitBounds(bounds, {
-          top: 50,
-          right: 50,
-          bottom: 50,
-          left: 50
-        });
-      }
-    }
-  }, [properties]);
 
   if (!isLoaded) {
     return (
@@ -296,19 +360,44 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
 
   return (
     <div className="relative w-full h-full">
-      {/* Search Box */}
-      <div className="absolute top-4 left-4 right-4 z-10">
-        <MapSearchBox
-          onPlaceSelect={handlePlaceSelect}
-          onClear={handleSearchClear}
-          className="max-w-md"
+      {/* Filter Panel - Left Side */}
+      {showFilters && filters && handleFilterChange && resetFilters && (
+        <MapFilterPanel
+          filters={filters}
+          handleFilterChange={handleFilterChange}
+          resetFilters={resetFilters}
+          communities={communities}
+          locations={locations}
+          isPreCon={isPreCon}
+          showPreConStatus={showPreConStatus}
+          subjectProperty={subjectProperty}
         />
+      )}
+
+      {/* Custom Zoom Controls */}
+      <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-2">
+        <button
+          onClick={handleZoomIn}
+          className="w-10 h-10 bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center cursor-pointer border-none"
+          title="Zoom in"
+          aria-label="Zoom in"
+        >
+          <Plus className="w-5 h-5 text-gray-700" />
+        </button>
+        <button
+          onClick={handleZoomOut}
+          className="w-10 h-10 bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center cursor-pointer border-none"
+          title="Zoom out"
+          aria-label="Zoom out"
+        >
+          <Minus className="w-5 h-5 text-gray-700" />
+        </button>
       </div>
 
       <GoogleMap
         mapContainerStyle={mapContainerStyle}
-        center={defaultCenter}
-        zoom={10}
+        center={initialCenter || defaultCenter}
+        zoom={initialZoom}
         onLoad={onMapLoad}
         options={mapOptions}
       >

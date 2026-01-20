@@ -110,11 +110,11 @@ const LocationFilter: React.FC<IndividualFilterProps> = ({
   return (
     <div className="relative w-full sm:w-auto" ref={dropdownRef}>
       <button 
-        className={`w-full bg-white flex items-center gap-2 px-4 py-2 rounded-lg border ${activeDropdown ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
+        className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all ${activeDropdown ? 'border-2 border-secondary text-primary' : 'border border-gray-300 text-primary'} hover:border-secondary`}
         onClick={() => setActiveDropdown(!activeDropdown)}
       >
         <FaMapMarkerAlt className="text-secondary" />
-        <span className="font-base text-sm md:text-sm">{getLocationText()}</span>
+        <span>{getLocationText()}</span>
         {filters.location !== 'all' && (
           <button
             onClick={(e) => {
@@ -133,7 +133,7 @@ const LocationFilter: React.FC<IndividualFilterProps> = ({
       </button>
       
       {activeDropdown && (
-        <div className="absolute z-10 mt-2 w-full sm:w-[500px] bg-white rounded-lg shadow-lg overflow-hidden">
+        <div className="absolute z-[100] mt-2 w-full sm:w-[500px] bg-white rounded-lg shadow-lg overflow-hidden">
           {/* Header */}
           <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
             <div className="flex items-center justify-between mb-2">

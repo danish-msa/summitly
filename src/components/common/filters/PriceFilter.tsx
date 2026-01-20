@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { FaChevronDown, FaDollarSign } from 'react-icons/fa';
 import { IndividualFilterProps, FilterChangeEvent } from '@/lib/types/filters';
+import { DollarSign } from 'lucide-react';
 
 const PriceFilter: React.FC<IndividualFilterProps> = ({ 
   filters, 
@@ -158,16 +159,16 @@ const PriceFilter: React.FC<IndividualFilterProps> = ({
   return (
     <div className="relative w-full sm:w-auto">
       <button 
-        className={`w-full sm:w-auto bg-white flex items-center gap-2 px-4 py-2 rounded-lg border ${activeDropdown ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
+        className={`w-full sm:w-auto flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all ${activeDropdown ? 'border-2 border-secondary text-primary' : 'border border-gray-300 text-primary'} hover:border-secondary`}
         onClick={() => setActiveDropdown(!activeDropdown)}
       >
-        <FaDollarSign className="text-secondary" />
-        <span className="text-sm">{formatPrice(filters.minPrice)} - {formatPrice(filters.maxPrice)}</span>
+        <DollarSign className="w-4 h-4" />
+        <span>{formatPrice(filters.minPrice)} - {formatPrice(filters.maxPrice)}</span>
         <FaChevronDown className={`ml-1 transition-transform ${activeDropdown ? 'rotate-180' : ''}`} />
       </button>
       
       {activeDropdown && (
-        <div className="absolute z-10 mt-2 w-full sm:w-72 bg-white rounded-lg shadow-lg p-4">
+        <div className="absolute z-[100] mt-2 w-full sm:w-72 bg-white rounded-lg shadow-lg p-4">
           <div className="flex items-center justify-between mb-3">
             <p className="font-semibold">Price Range</p>
             {(filters.minPrice > MIN_PRICE || filters.maxPrice < MAX_PRICE) && (

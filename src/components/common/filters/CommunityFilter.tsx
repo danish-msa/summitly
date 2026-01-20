@@ -43,13 +43,13 @@ const CommunityFilter: React.FC<IndividualFilterProps> = ({
   return (
     <div className="relative w-full sm:w-auto filter-dropdown">
       <button 
-        className={`w-full bg-white flex items-center gap-2 px-4 py-2 rounded-lg border ${activeDropdown ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
+        className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all ${activeDropdown ? 'border-2 border-secondary text-primary' : 'border border-gray-300 text-primary'} hover:border-secondary`}
         onClick={() => setActiveDropdown(!activeDropdown)}
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
         </svg>
-        <span className="font-base text-sm md:text-sm">{getCommunityText()}</span>
+        <span>{getCommunityText()}</span>
         {filters.community !== 'all' && (
           <button
             onClick={(e) => {
@@ -68,7 +68,7 @@ const CommunityFilter: React.FC<IndividualFilterProps> = ({
       </button>
       
       {activeDropdown && (
-        <div className="absolute z-10 mt-2 w-full sm:w-64 bg-white rounded-lg shadow-lg p-4 max-h-80 overflow-y-auto">
+        <div className="absolute z-[100] mt-2 w-full sm:w-64 bg-white rounded-lg shadow-lg p-4 max-h-80 overflow-y-auto">
           <p className="font-semibold mb-3">Community</p>
           <div className="space-y-2">
             <div 

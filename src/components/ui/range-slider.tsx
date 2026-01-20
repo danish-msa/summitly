@@ -147,7 +147,7 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({
           >
             {/* Active Range */}
             <div
-              className="absolute h-full bg-primary rounded-full"
+              className="absolute h-full bg-secondary rounded-full"
               style={{
                 left: `${minPercent}%`,
                 width: `${maxPercent - minPercent}%`,
@@ -162,7 +162,7 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({
             >
               <div className="range-badge">{formatValue(minValue)}</div>
               <div className={cn(
-                "w-5 h-5 rounded-full bg-primary border-2 border-background shadow-md transition-transform",
+                "w-5 h-5 rounded-full bg-secondary border-2 border-background shadow-md transition-transform",
                 isDragging === 'min' && "scale-110"
               )} />
             </div>
@@ -175,7 +175,7 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({
             >
               <div className="range-badge">{formatValue(maxValue)}</div>
               <div className={cn(
-                "w-5 h-5 rounded-full bg-primary border-2 border-background shadow-md transition-transform",
+                "w-5 h-5 rounded-full bg-secondary border-2 border-background shadow-md transition-transform",
                 isDragging === 'max' && "scale-110"
               )} />
             </div>

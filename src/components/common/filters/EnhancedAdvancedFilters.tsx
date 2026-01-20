@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Filter, X, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +16,7 @@ import {
   Warehouse, 
   Briefcase 
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface EnhancedAdvancedFiltersProps {
   open: boolean;
@@ -222,14 +222,13 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
     <>
       {/* Advanced Filters Button */}
       <div className="relative w-full sm:w-auto">
-        <Button
+        <button
           ref={buttonRef}
-          variant="outline"
           onClick={() => onOpenChange(!open)}
-          className="relative flex items-center gap-2 px-4 py-2 rounded-lg border-gray-300 hover:border-secondary transition-all group"
+          className={`relative flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all ${open ? 'border-2 border-secondary text-primary' : 'border border-gray-300 text-primary'} hover:border-secondary`}
         >
-          <Filter className="h-4 w-4 group-hover:rotate-12 transition-transform" />
-          <span className="text-sm">Advanced</span>
+          <Filter className="h-4 w-4" />
+          <span>Advanced</span>
           {activeFiltersCount > 0 && (
             <Badge 
               variant="destructive" 
@@ -241,7 +240,7 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
           <ChevronDown 
             className={`h-4 w-4 transition-transform duration-300 ${open ? 'rotate-180' : ''}`} 
           />
-        </Button>
+        </button>
       </div>
 
       {/* Overlay */}
@@ -281,30 +280,9 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
               )}
             </div>
             <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                onClick={onResetAdvanced}
-                className="h-9"
-              >
-                Reset Filters
-              </Button>
-              <Button
-                onClick={() => {
-                  onApplyFilters();
-                  onOpenChange(false);
-                }}
-                className="h-9"
-              >
-                Apply Filters
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onOpenChange(false)}
-                className="h-8 w-8"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <Button variant="default" className="h-9 px-4 py-2 rounded-lg bg-secondary text-primary-foreground hover:bg-secondary/90 transition-colors font-medium text-sm">Reset Filters</Button>
+              <Button variant="default" className="h-9 px-4 py-2 rounded-lg bg-secondary text-primary-foreground hover:bg-secondary/90 transition-colors font-medium text-sm">Apply Filters</Button>
+              <Button variant="default" className="h-9 px-4 py-2 rounded-lg bg-secondary text-primary-foreground hover:bg-secondary/90 transition-colors font-medium text-sm">Close</Button>
             </div>
           </div>
 
@@ -359,7 +337,7 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">Occupancy Date</Label>
                   <select
-                    className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full h-10 rounded-lg border border-input px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     value={filters.occupancyDate || 'all'}
                     onChange={(e) => onFilterChange({ target: { name: 'occupancyDate', value: e.target.value } })}
                   >
@@ -371,7 +349,7 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">Developer</Label>
                   <select
-                    className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full h-10 rounded-lg border border-input px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     value={filters.developer || 'all'}
                     onChange={(e) => onFilterChange({ target: { name: 'developer', value: e.target.value } })}
                   >

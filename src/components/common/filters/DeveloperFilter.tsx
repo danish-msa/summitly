@@ -70,11 +70,11 @@ const DeveloperFilter: React.FC<IndividualFilterProps> = ({
   return (
     <div className="relative w-full sm:w-auto">
       <button 
-        className={`w-full sm:w-auto bg-white flex items-center gap-2 px-4 py-2 rounded-lg border ${activeDropdown ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
+        className={`w-full sm:w-auto flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all ${activeDropdown ? 'border-2 border-secondary text-primary' : 'border border-gray-300 text-primary'} hover:border-secondary`}
         onClick={() => setActiveDropdown(!activeDropdown)}
       >
         <FaBuilding className="text-secondary" />
-        <span className="font-base text-sm md:text-sm">{getDeveloperText()}</span>
+        <span>{getDeveloperText()}</span>
         {filters.developer && filters.developer !== 'all' && filters.developer !== undefined && (
           <button
             onClick={(e) => {
@@ -93,7 +93,7 @@ const DeveloperFilter: React.FC<IndividualFilterProps> = ({
       </button>
       
       {activeDropdown && (
-        <div className="absolute z-10 mt-2 w-full sm:w-64 bg-white rounded-lg shadow-lg p-4 max-h-80 overflow-y-auto">
+        <div className="absolute z-[100] mt-2 w-full sm:w-64 bg-white rounded-lg shadow-lg p-4 max-h-80 overflow-y-auto">
           <p className="font-semibold mb-3">Developer</p>
           <div className="space-y-2">
             {developers.map((developer) => {

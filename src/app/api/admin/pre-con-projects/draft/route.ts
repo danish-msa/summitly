@@ -328,8 +328,8 @@ export async function POST(request: NextRequest) {
             }) => ({
               projectId: draftId,
               unitName: unit.unitName,
-              beds: typeof unit.beds === 'number' ? unit.beds : parseInt(String(unit.beds), 10),
-              baths: typeof unit.baths === 'number' ? unit.baths : parseInt(String(unit.baths), 10),
+              beds: String(unit.beds || ''),
+              baths: String(unit.baths || ''),
               sqft: typeof unit.sqft === 'number' ? unit.sqft : parseInt(String(unit.sqft), 10),
               price: typeof unit.price === 'number' ? unit.price : parseFloat(String(unit.price)),
               maintenanceFee: unit.maintenanceFee ? (typeof unit.maintenanceFee === 'number' ? unit.maintenanceFee : parseFloat(String(unit.maintenanceFee))) : null,
@@ -475,8 +475,8 @@ export async function POST(request: NextRequest) {
         }) => ({
           projectId: newDraft.id,
           unitName: unit.unitName,
-          beds: typeof unit.beds === 'number' ? unit.beds : parseInt(String(unit.beds), 10),
-          baths: typeof unit.baths === 'number' ? unit.baths : parseInt(String(unit.baths), 10),
+          beds: String(unit.beds || ''),
+          baths: String(unit.baths || ''),
           sqft: typeof unit.sqft === 'number' ? unit.sqft : parseInt(String(unit.sqft), 10),
           price: typeof unit.price === 'number' ? unit.price : parseFloat(String(unit.price)),
           maintenanceFee: unit.maintenanceFee ? (typeof unit.maintenanceFee === 'number' ? unit.maintenanceFee : parseFloat(String(unit.maintenanceFee))) : null,

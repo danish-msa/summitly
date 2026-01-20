@@ -11,7 +11,7 @@ import { usePreConProjectsData } from './hooks';
 import { LoadingState } from './components/LoadingState';
 import { HeroSection } from './components/HeroSection';
 import { NavigationButtons } from './components/NavigationButtons';
-import { ViewModeToggle } from './components/ViewModeToggle';
+import { ViewModeToggle, type ViewMode } from './components/ViewModeToggle';
 import { ProjectListings } from './components/ProjectListings';
 import { MapView } from './components/MapView';
 import { BlogSectionWrapper } from './components/BlogSectionWrapper';
@@ -29,7 +29,7 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({
   priceRangeFilter,
   sqftFilter,
 }) => {
-  const [viewMode, setViewMode] = useState<'list' | 'mixed' | 'map'>('list');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedProject, setSelectedProject] = useState<PreConstructionProperty | null>(null);
   
   // Use global filters hook
@@ -148,7 +148,7 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({
   };
 
   return (
-    <div className="min-h-screen pt-16">
+    <div className="">
       {/* Hero Section with Header */}
       <HeroSection
         heroImage={pageContent?.heroImage || teamMemberInfo?.image || null}
@@ -171,34 +171,34 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({
         {/* Filters */}
         <section>
           <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <GlobalFilters
-                filters={filters}
-                handleFilterChange={handleFilterChange}
-                resetFilters={resetFilters}
-                communities={communities}
-                locations={LOCATIONS}
-                showLocation={false}
-                showPropertyType={true}
-                showCommunity={false}
-                showPrice={true}
-                showBedrooms={false}
-                showBathrooms={false}
-                showAdvanced={true}
-                showSellRentToggle={false}
-                layout="horizontal"
-                className="w-full"
-              />
-            </div>
+            <GlobalFilters
+              filters={filters}
+              handleFilterChange={handleFilterChange}
+              resetFilters={resetFilters}
+              communities={communities}
+              locations={LOCATIONS}
+              showLocation={false}
+              showPropertyType={true}
+              showCommunity={false}
+              showPrice={true}
+              showBedrooms={false}
+              showBathrooms={false}
+              showAdvanced={true}
+              showSellRentToggle={false}
+              showResetButton={false}
+              layout="horizontal"
+              className="w-full"
+            />
+            <ViewModeToggle 
+              viewMode={viewMode} 
+              setViewMode={setViewMode} 
+            />
           </div>
         </section>
 
         {/* Project Listings */}
         <section className="pb-8">
-          <ViewModeToggle 
-            viewMode={viewMode} 
-            setViewMode={setViewMode} 
-          />
+          
           
           {/* Show message if no projects but not loading */}
           {!loading && preConProjects.length === 0 && (

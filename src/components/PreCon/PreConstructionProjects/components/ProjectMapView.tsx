@@ -31,10 +31,13 @@ const ProjectMapView: React.FC<ProjectMapViewProps> = ({
         properties={mapProperties}
         selectedProperty={selectedPropertyForMap}
         onPropertySelect={(property) => {
-          const project = visibleProjects.find(p => p.id === property.mlsNumber);
-          if (project) {
-            onProjectClick(project);
+          if (property) {
+            const project = visibleProjects.find(p => p.id === property.mlsNumber);
+            if (project) {
+              onProjectClick(project);
+            }
           }
+          // Handle null case - property deselected (no action needed here)
         }}
         onBoundsChange={onBoundsChange}
       />
