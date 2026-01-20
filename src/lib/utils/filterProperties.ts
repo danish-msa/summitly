@@ -178,7 +178,10 @@ export function filterPropertiesByState(
       filtered = filtered.filter(property => {
         const propYear = property.details?.yearBuilt;
         if (!propYear) return false;
-        return propYear >= yearBuilt;
+        // Parse yearBuilt string to number for comparison
+        const propYearNum = typeof propYear === 'string' ? parseInt(propYear, 10) : propYear;
+        if (isNaN(propYearNum)) return false;
+        return propYearNum >= yearBuilt;
       });
     }
   }
