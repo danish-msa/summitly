@@ -2,8 +2,8 @@
 export interface UnitListing {
   id: string;
   name: string;
-  beds: number;
-  baths: number;
+  beds: string;
+  baths: string;
   sqft?: number;
   images: string[]; // Array of image URLs (replaces single floorplanImage)
   status: 'for-sale' | 'sold-out';

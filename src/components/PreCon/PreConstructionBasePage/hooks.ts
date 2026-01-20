@@ -528,7 +528,10 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
           if (units.length > 0) {
             // Check if any unit has the required bedrooms
             return units.some((unit) => {
-              const unitBedrooms = unit.beds || 0;
+              // Parse beds string to number (e.g., "1+1" -> 1, "2" -> 2)
+              const bedsStr = unit.beds?.toString() || '0';
+              const match = bedsStr.match(/^(\d+)/);
+              const unitBedrooms = match ? parseInt(match[1], 10) : 0;
               return unitBedrooms >= filters.bedrooms;
             });
           }
@@ -597,7 +600,10 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
           if (units.length > 0) {
             // Check if any unit has the required bathrooms
             return units.some(unit => {
-              const unitBathrooms = unit.baths || 0;
+              // Parse baths string to number (e.g., "1+1" -> 1, "2" -> 2)
+              const bathsStr = unit.baths?.toString() || '0';
+              const match = bathsStr.match(/^(\d+)/);
+              const unitBathrooms = match ? parseInt(match[1], 10) : 0;
               return unitBathrooms >= filters.bathrooms;
             });
           }

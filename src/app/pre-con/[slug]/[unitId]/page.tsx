@@ -172,8 +172,8 @@ const UnitDetailPage: React.FC<UnitDetailPageProps> = async ({ params }) => {
     const formattedUnit: UnitListing = {
       id: foundUnit.id,
       name: foundUnit.unitName,
-      beds: foundUnit.beds,
-      baths: foundUnit.baths,
+      beds: String(foundUnit.beds || ''),
+      baths: String(foundUnit.baths || ''),
       sqft: foundUnit.sqft,
       price: foundUnit.price,
       maintenanceFee: foundUnit.maintenanceFee || 0,

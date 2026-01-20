@@ -80,8 +80,8 @@ interface PreConProject {
   units?: Array<{
     id: string
     unitName: string
-    beds: number
-    baths: number
+    beds: string
+    baths: string
     sqft: number
     price: number
     maintenanceFee: number | null

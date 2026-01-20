@@ -58,8 +58,8 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
         return {
           id: unit.id,
           name: unit.name || '',
-          beds: unit.beds || 0,
-          baths: unit.baths || 0,
+          beds: unit.beds || '',
+          baths: unit.baths || '',
           sqft: unit.sqft || undefined,
           price: unit.price || undefined,
           maintenanceFee: unit.maintenanceFee || 0,
@@ -108,13 +108,20 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
       maxSquareFeet,
     });
 
+    // Helper function to parse beds string to number (e.g., "1+1" -> 1, "2" -> 2)
+    const parseBeds = (beds: string): number => {
+      if (!beds) return 0;
+      const match = beds.toString().match(/^(\d+)/);
+      return match ? parseInt(match[1], 10) : 0;
+    };
+
     // Apply bedroom filter
     if (bedrooms > 0) {
       if (bedrooms === 5) {
         // 5+ means 5 or more bedrooms
-        filtered = filtered.filter(unit => unit.beds >= 5);
+        filtered = filtered.filter(unit => parseBeds(unit.beds) >= 5);
       } else {
-        filtered = filtered.filter(unit => unit.beds === bedrooms);
+        filtered = filtered.filter(unit => parseBeds(unit.beds) === bedrooms);
       }
     }
 
@@ -147,10 +154,22 @@ const AvailableUnits: React.FC<AvailableUnitsProps> = ({ property }) => {
           return (a.price || 0) - (b.price || 0);
         case "price-high":
           return (b.price || 0) - (a.price || 0);
-        case "beds-low":
-          return a.beds - b.beds;
-        case "beds-high":
-          return b.beds - a.beds;
+        case "beds-low": {
+          const parseBeds = (beds: string): number => {
+            if (!beds) return 0;
+            const match = beds.toString().match(/^(\d+)/);
+            return match ? parseInt(match[1], 10) : 0;
+          };
+          return parseBeds(a.beds) - parseBeds(b.beds);
+        }
+        case "beds-high": {
+          const parseBeds = (beds: string): number => {
+            if (!beds) return 0;
+            const match = beds.toString().match(/^(\d+)/);
+            return match ? parseInt(match[1], 10) : 0;
+          };
+          return parseBeds(b.beds) - parseBeds(a.beds);
+        }
         default:
           return 0;
       }

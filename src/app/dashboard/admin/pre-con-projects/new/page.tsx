@@ -212,8 +212,8 @@ export default function NewProjectPage() {
                 units: project.units?.map((unit: {
                   id: string
                   unitName: string
-                  beds: number
-                  baths: number
+                  beds: string
+                  baths: string
                   sqft: number
                   price: number
                   maintenanceFee: number | null
