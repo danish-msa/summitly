@@ -201,7 +201,7 @@ const Listings = () => {
   }, []);
 
   // Handle property card click
-  const handlePropertyClick = (property: PropertyListing) => {
+  const handlePropertyClick = (property: PropertyListing | null) => {
     setSelectedProperty(property);
   };
 

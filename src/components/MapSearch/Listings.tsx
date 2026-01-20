@@ -110,7 +110,7 @@ const Listings = () => {
   }, [filters, pagination.currentPage, pagination.resultsPerPage]);
 
   // Handle property card click
-  const handlePropertyClick = (property: PropertyListing) => {
+  const handlePropertyClick = (property: PropertyListing | null) => {
     setSelectedProperty(property);
   };
 
