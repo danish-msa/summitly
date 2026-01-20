@@ -2484,13 +2484,13 @@ export function PreConProjectForm({
                                     id={`unit-name-${unit.id}`}
                                     label="Unit Name"
                                     placeholder="e.g., 101, 202"
-                                    value={unit.unitName}
+                                    value={unit.unitName || ""}
                                     onChange={(e) => {
                                       setFormData((prev) => ({
                                         ...prev,
-                                        units: prev.units?.map((u) =>
+                                        units: (prev.units || []).map((u) =>
                                           u.id === unit.id ? { ...u, unitName: e.target.value } : u
-                                        ) || [],
+                                        ),
                                       }))
                                     }}
                                   />
@@ -2502,14 +2502,20 @@ export function PreConProjectForm({
                                     inputMode="text"
                                     label="Beds"
                                     placeholder="e.g., 2 or 1+1"
-                                    value={unit.beds}
+                                    value={unit.beds || ""}
                                     onChange={(e) => {
                                       // Allow all characters including +, -, and other special characters
+                                      // Preserve all other unit data when updating beds
                                       setFormData((prev) => ({
                                         ...prev,
-                                        units: prev.units?.map((u) =>
-                                          u.id === unit.id ? { ...u, beds: e.target.value } : u
-                                        ) || [],
+                                        units: (prev.units || []).map((u) =>
+                                          u.id === unit.id 
+                                            ? { 
+                                                ...u, 
+                                                beds: e.target.value 
+                                              } 
+                                            : u
+                                        ),
                                       }))
                                     }}
                                   />
@@ -2521,14 +2527,20 @@ export function PreConProjectForm({
                                     inputMode="text"
                                     label="Baths"
                                     placeholder="e.g., 2 or 1+1"
-                                    value={unit.baths}
+                                    value={unit.baths || ""}
                                     onChange={(e) => {
                                       // Allow all characters including +, -, and other special characters
+                                      // Preserve all other unit data when updating baths
                                       setFormData((prev) => ({
                                         ...prev,
-                                        units: prev.units?.map((u) =>
-                                          u.id === unit.id ? { ...u, baths: e.target.value } : u
-                                        ) || [],
+                                        units: (prev.units || []).map((u) =>
+                                          u.id === unit.id 
+                                            ? { 
+                                                ...u, 
+                                                baths: e.target.value 
+                                              } 
+                                            : u
+                                        ),
                                       }))
                                     }}
                                   />
@@ -2539,13 +2551,13 @@ export function PreConProjectForm({
                                     type="number"
                                     label="Sqft"
                                     placeholder="e.g., 1200"
-                                    value={unit.sqft}
+                                    value={unit.sqft || ""}
                                     onChange={(e) => {
                                       setFormData((prev) => ({
                                         ...prev,
-                                        units: prev.units?.map((u) =>
+                                        units: (prev.units || []).map((u) =>
                                           u.id === unit.id ? { ...u, sqft: e.target.value } : u
-                                        ) || [],
+                                        ),
                                       }))
                                     }}
                                   />
@@ -2561,13 +2573,13 @@ export function PreConProjectForm({
                                     step="0.01"
                                     label="Price"
                                     placeholder="e.g., 500000"
-                                    value={unit.price}
+                                    value={unit.price || ""}
                                     onChange={(e) => {
                                       setFormData((prev) => ({
                                         ...prev,
-                                        units: prev.units?.map((u) =>
+                                        units: (prev.units || []).map((u) =>
                                           u.id === unit.id ? { ...u, price: e.target.value } : u
-                                        ) || [],
+                                        ),
                                       }))
                                     }}
                                   />
@@ -2579,13 +2591,13 @@ export function PreConProjectForm({
                                     step="0.01"
                                     label="Maintenance Fee"
                                     placeholder="e.g., 500"
-                                    value={unit.maintenanceFee}
+                                    value={unit.maintenanceFee || ""}
                                     onChange={(e) => {
                                       setFormData((prev) => ({
                                         ...prev,
-                                        units: prev.units?.map((u) =>
+                                        units: (prev.units || []).map((u) =>
                                           u.id === unit.id ? { ...u, maintenanceFee: e.target.value } : u
-                                        ) || [],
+                                        ),
                                       }))
                                     }}
                                   />
@@ -2597,9 +2609,9 @@ export function PreConProjectForm({
                                     onValueChange={(value) => {
                                       setFormData((prev) => ({
                                         ...prev,
-                                        units: prev.units?.map((u) =>
+                                        units: (prev.units || []).map((u) =>
                                           u.id === unit.id ? { ...u, status: value } : u
-                                        ) || [],
+                                        ),
                                       }))
                                     }}
                                   >
@@ -2768,13 +2780,13 @@ export function PreConProjectForm({
                                   id={`unit-description-${unit.id}`}
                                   label="Description"
                                   rows={3}
-                                  value={unit.description}
+                                  value={unit.description || ""}
                                   onChange={(e) => {
                                     setFormData((prev) => ({
                                       ...prev,
-                                      units: prev.units?.map((u) =>
+                                      units: (prev.units || []).map((u) =>
                                         u.id === unit.id ? { ...u, description: e.target.value } : u
-                                      ) || [],
+                                      ),
                                     }))
                                   }}
                                 />

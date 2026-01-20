@@ -226,8 +226,9 @@ export default function NewProjectPage() {
                 }) => ({
                   id: unit.id,
                   unitName: unit.unitName || "",
-                  beds: unit.beds?.toString() || "",
-                  baths: unit.baths?.toString() || "",
+                  // Ensure beds and baths are strings - handle both string and number types from DB
+                  beds: typeof unit.beds === 'string' ? unit.beds : (unit.beds !== null && unit.beds !== undefined ? String(unit.beds) : ""),
+                  baths: typeof unit.baths === 'string' ? unit.baths : (unit.baths !== null && unit.baths !== undefined ? String(unit.baths) : ""),
                   sqft: unit.sqft?.toString() || "",
                   price: unit.price?.toString() || "",
                   maintenanceFee: unit.maintenanceFee?.toString() || "",
