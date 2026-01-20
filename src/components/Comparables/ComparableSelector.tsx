@@ -251,7 +251,7 @@ const ComparableSelector = ({
   }
 
   // Handle map property click
-  const handleMapPropertyClick = (property: PropertyListing) => {
+  const handleMapPropertyClick = (property: PropertyListing | null) => {
     setSelectedProperty(property)
   }
 
