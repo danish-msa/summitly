@@ -111,15 +111,48 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
     libraries: ['places']
   });
 
-  // Initialize marker clusterer
+  // Initialize marker clusterer with custom secondary color
   const initializeClusterer = useCallback((map: google.maps.Map) => {
     if (clustererRef.current) {
       clustererRef.current.clearMarkers();
     }
 
+    // Secondary color: #1AC0EB
+    const secondaryColor = '#1AC0EB';
+    
+    // Custom renderer for clusters with secondary color
+    const renderer = {
+      render: ({ count, position }: { count: number; position: google.maps.LatLng }) => {
+        // Calculate cluster size based on count
+        const size = count < 10 ? 40 : count < 100 ? 50 : 60;
+        const fontSize = count < 10 ? '12px' : count < 100 ? '14px' : '16px';
+        
+        // Create SVG icon with secondary color
+        const svg = `
+          <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="${size/2}" cy="${size/2}" r="${size/2 - 2}" fill="${secondaryColor}" stroke="white" stroke-width="2"/>
+            <text x="${size/2}" y="${size/2 + (size * 0.15)}" text-anchor="middle" fill="white" font-size="${fontSize}" font-weight="bold" font-family="Arial, sans-serif">${count}</text>
+          </svg>
+        `;
+        
+        const encodedSvg = encodeURIComponent(svg);
+        
+        return new google.maps.Marker({
+          position,
+          icon: {
+            url: `data:image/svg+xml;charset=UTF-8,${encodedSvg}`,
+            scaledSize: new google.maps.Size(size, size),
+            anchor: new google.maps.Point(size / 2, size / 2)
+          },
+          zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count,
+        });
+      },
+    };
+
     clustererRef.current = new MarkerClusterer({
       map,
-      markers: markersRef.current
+      markers: markersRef.current,
+      renderer
     });
   }, []);
 
