@@ -20,6 +20,7 @@ interface GooglePropertyMapProps {
   theme?: MapTheme; // Optional theme prop, defaults to activeTheme
   initialCenter?: {lat: number; lng: number}; // Initial map center
   initialZoom?: number; // Initial map zoom level
+  locationCenter?: {lat: number; lng: number} | null; // Location-based center (updates map when filter changes)
   showFilters?: boolean; // Show/hide filter panel
   isPreCon?: boolean; // Is this for pre-construction projects
   showPreConStatus?: boolean; // Show pre-construction status filter
@@ -68,6 +69,7 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
   theme = activeTheme,
   initialCenter,
   initialZoom = 10,
+  locationCenter,
   showFilters = false,
   isPreCon = false,
   showPreConStatus = false,
@@ -78,6 +80,10 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
   locations = LOCATIONS,
   subjectProperty
 }) => {
+  // Debug: Log when locationCenter prop changes
+  useEffect(() => {
+    console.log('[GooglePropertyMap] Component received locationCenter prop:', locationCenter);
+  }, [locationCenter]);
   // Get map options with theme styles
   const mapOptions = React.useMemo(() => ({
     disableDefaultUI: false,
@@ -213,8 +219,11 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
   const onMapLoad = useCallback((map: google.maps.Map) => {
     mapRef.current = map;
     
-    // Set initial center and zoom if provided
-    if (initialCenter) {
+    // Set initial center and zoom - prioritize locationCenter over initialCenter
+    if (locationCenterRef.current) {
+      map.setCenter(locationCenterRef.current);
+      map.setZoom(12);
+    } else if (initialCenter) {
       map.setCenter(initialCenter);
       map.setZoom(initialZoom);
     }
@@ -283,6 +292,69 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
       isProgrammaticUpdateRef.current = false;
     }, 100);
   }, [selectedProperty]);
+
+  // Store locationCenter in a ref to access it in onMapLoad
+  const locationCenterRef = useRef(locationCenter);
+  useEffect(() => {
+    locationCenterRef.current = locationCenter;
+  }, [locationCenter]);
+
+  // Update map center when location filter changes
+  useEffect(() => {
+    console.log('[GooglePropertyMap] locationCenter effect triggered, locationCenter:', locationCenter);
+    console.log('[GooglePropertyMap] mapRef.current:', !!mapRef.current);
+    
+    if (!locationCenter) {
+      console.log('[GooglePropertyMap] No location center provided, skipping update');
+      return;
+    }
+
+    // Function to update map center
+    const updateMapCenter = () => {
+      if (!mapRef.current) {
+        console.log('[GooglePropertyMap] Map not ready in updateMapCenter');
+        return false;
+      }
+
+      console.log('[GooglePropertyMap] Updating map center to:', locationCenter);
+      isProgrammaticUpdateRef.current = true;
+      
+      // Always update the map center when locationCenter changes
+      const newPosition = new google.maps.LatLng(locationCenter.lat, locationCenter.lng);
+      
+      // Use setCenter for immediate update
+      mapRef.current.setCenter(newPosition);
+      mapRef.current.setZoom(12);
+      
+      // Also use panTo for smooth transition
+      setTimeout(() => {
+        if (mapRef.current && locationCenter) {
+          mapRef.current.panTo(newPosition);
+          console.log('[GooglePropertyMap] Map center updated and zoom set to 12');
+        }
+      }, 100);
+
+      // Reset flag after a delay
+      setTimeout(() => {
+        isProgrammaticUpdateRef.current = false;
+      }, 500);
+      
+      return true;
+    };
+
+    // Try to update immediately
+    if (!updateMapCenter()) {
+      // If map isn't ready, retry after a delay
+      console.log('[GooglePropertyMap] Map not ready yet, will retry when map loads');
+      const retryTimeout = setTimeout(() => {
+        if (mapRef.current && locationCenter) {
+          console.log('[GooglePropertyMap] Retrying map center update after map load');
+          updateMapCenter();
+        }
+      }, 500);
+      return () => clearTimeout(retryTimeout);
+    }
+  }, [locationCenter]);
 
   // Fit map to show all properties (only if no initial center is provided)
   useEffect(() => {

@@ -53,7 +53,8 @@ const LocationFilter: React.FC<IndividualFilterProps> = ({
     if (filters.location === 'all') return 'All Locations';
     const region = REGIONS.find(reg => reg.id === filters.location);
     if (region && filters.locationArea && filters.locationArea !== 'all') {
-      return `${region.name} - ${filters.locationArea}`;
+      // Show only the city name when a specific city is selected
+      return filters.locationArea;
     }
     return region?.name || 'All Locations';
   };
@@ -116,18 +117,27 @@ const LocationFilter: React.FC<IndividualFilterProps> = ({
         <FaMapMarkerAlt className="text-secondary" />
         <span>{getLocationText()}</span>
         {filters.location !== 'all' && (
-          <button
+          <span
             onClick={(e) => {
               e.stopPropagation();
               handleIndividualReset();
             }}
-            className="ml-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full p-0.5 transition-all"
+            className="ml-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full p-0.5 transition-all cursor-pointer"
             title="Clear location filter"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                handleIndividualReset();
+              }
+            }}
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
+          </span>
         )}
         <FaChevronDown className={`ml-1 transition-transform ${activeDropdown ? 'rotate-180' : ''}`} />
       </button>

@@ -12,6 +12,7 @@ import { PropertyCardSkeleton } from '@/components/skeletons';
 import { ViewModeToggle, type ViewMode } from '@/components/common/ViewModeToggle';
 import dynamic from 'next/dynamic';
 import { filterPropertiesByState } from '@/lib/utils/filterProperties';
+import { getCoordinates } from '@/utils/locationUtils';
 
 // Dynamically import the Google Maps component with no SSR
 const GooglePropertyMap = dynamic(() => import('@/components/MapSearch/GooglePropertyMap'), { ssr: false });
@@ -45,8 +46,11 @@ const Listings = () => {
   });
   const [mapBounds, setMapBounds] = useState<{north: number; south: number; east: number; west: number} | null>(null);
   const [userLocation, setUserLocation] = useState<{lat: number; lng: number} | null>(null);
+  const [locationCenter, setLocationCenter] = useState<{lat: number; lng: number} | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const boundsChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const previousLocationRef = useRef<{location: string; area: string} | null>(null);
+  const geocodingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Use hidden properties hook
   const { hideProperty, getVisibleProperties } = useHiddenProperties();
@@ -56,6 +60,27 @@ const Listings = () => {
 
   // Get visible properties (filtered properties minus hidden ones)
   const visibleProperties = getVisibleProperties(filteredProperties);
+  
+  // Debug logging
+  useEffect(() => {
+    console.log('[Listings] Properties count:', {
+      total: properties.length,
+      filtered: filteredProperties.length,
+      visible: visibleProperties.length,
+      locationCenter: locationCenter,
+      filters: { location: filters.location, locationArea: filters.locationArea },
+      viewMode: viewMode
+    });
+    
+    // Log sample properties to see what's being filtered
+    if (filteredProperties.length > 0) {
+      console.log('[Listings] Sample filtered property:', {
+        city: filteredProperties[0].address?.city,
+        neighborhood: filteredProperties[0].address?.neighborhood,
+        area: filteredProperties[0].address?.area
+      });
+    }
+  }, [properties.length, filteredProperties.length, visibleProperties.length, locationCenter, filters.location, filters.locationArea, viewMode]);
 
   // Get user's current location
   useEffect(() => {
@@ -83,6 +108,97 @@ const Listings = () => {
       setUserLocation(defaultCenter);
     }
   }, []);
+
+  // Geocode selected location and update map center
+  // This effect runs whenever location filters change
+  useEffect(() => {
+    // Clear any pending geocoding
+    if (geocodingTimeoutRef.current) {
+      clearTimeout(geocodingTimeoutRef.current);
+    }
+
+    // Check if location actually changed
+    const currentLocation = {
+      location: filters.location,
+      area: filters.locationArea
+    };
+
+    console.log('[Listings] Geocoding effect - Current location:', currentLocation);
+    console.log('[Listings] Geocoding effect - Previous location:', previousLocationRef.current);
+
+    // If location hasn't changed, don't re-geocode
+    if (
+      previousLocationRef.current &&
+      previousLocationRef.current.location === currentLocation.location &&
+      previousLocationRef.current.area === currentLocation.area
+    ) {
+      console.log('[Listings] Location unchanged, skipping geocoding');
+      return;
+    }
+
+    // Update previous location BEFORE geocoding to prevent duplicate calls
+    previousLocationRef.current = currentLocation;
+    console.log('[Listings] Location changed, will geocode');
+
+    const geocodeLocation = async () => {
+      // If location is reset to 'all', clear location center
+      if (filters.location === 'all' || filters.locationArea === 'all') {
+        setLocationCenter(null);
+        return;
+      }
+
+      // Get the city name from the selected location
+      const region = REGIONS.find(reg => reg.id === filters.location);
+      if (!region) {
+        console.warn('Region not found for:', filters.location);
+        return;
+      }
+
+      // Use the selected city/area
+      const cityName = filters.locationArea;
+      if (!cityName || cityName === 'all') {
+        console.warn('City name is invalid:', cityName);
+        return;
+      }
+
+      // Geocode the city name to get coordinates
+      try {
+        // Add "Ontario, Canada" for better geocoding accuracy
+        const address = `${cityName}, Ontario, Canada`;
+        console.log('[LocationFilter] Geocoding address:', address);
+        const coordinates = await getCoordinates(address);
+        
+        if (coordinates) {
+          console.log('[LocationFilter] Geocoded coordinates:', coordinates);
+          // Always create a new object with a unique key to force React update
+          const newCenter = { 
+            lat: coordinates.lat, 
+            lng: coordinates.lng 
+          };
+          console.log('[LocationFilter] Setting location center:', newCenter);
+          setLocationCenter(newCenter);
+        } else {
+          console.warn(`[LocationFilter] Could not geocode location: ${cityName}`);
+          setLocationCenter(null);
+        }
+      } catch (error) {
+        console.error('[LocationFilter] Error geocoding location:', error);
+        setLocationCenter(null);
+      }
+    };
+
+    // Small delay to debounce rapid filter changes
+    geocodingTimeoutRef.current = setTimeout(() => {
+      geocodeLocation();
+    }, 100);
+
+    // Cleanup
+    return () => {
+      if (geocodingTimeoutRef.current) {
+        clearTimeout(geocodingTimeoutRef.current);
+      }
+    };
+  }, [filters.location, filters.locationArea]);
 
   // Load properties based on map bounds and filters
   const loadPropertiesByBounds = useCallback(async (bounds: {north: number; south: number; east: number; west: number}) => {
@@ -211,6 +327,12 @@ const Listings = () => {
     
     // Handle location and area updates together
     if (name === 'locationAndArea' && typeof value === 'object' && 'location' in value && 'area' in value) {
+      console.log('[Listings] Location filter changed:', { location: value.location, area: value.area });
+      
+      // Reset previous location ref to force geocoding
+      previousLocationRef.current = null;
+      
+      // Update filters - this will trigger the useEffect
       setFilters({
         ...filters,
         location: value.location,
@@ -299,6 +421,7 @@ const Listings = () => {
         // Map View Only
         <div className="w-full bg-gray-100 rounded-lg overflow-hidden mb-10" style={{ height: '70vh' }}>
           <GooglePropertyMap
+            key={`map-${locationCenter?.lat}-${locationCenter?.lng}`}
             theme="custom"
             properties={visibleProperties}
             selectedProperty={selectedProperty}
@@ -308,6 +431,7 @@ const Listings = () => {
             onBoundsChange={handleBoundsChange}
             initialCenter={userLocation || defaultCenter}
             initialZoom={12}
+            locationCenter={locationCenter}
             showFilters={true}
             filters={filters}
             handleFilterChange={handleFilterChange}
@@ -354,6 +478,7 @@ const Listings = () => {
           {/* Map View - Right Side */}
           <div className={`${viewMode === 'mixed' ? 'md:w-1/2' : 'w-full'} bg-gray-100 rounded-lg overflow-hidden flex-shrink-0`} style={{ height: '100%' }}>
             <GooglePropertyMap
+              key={`map-mixed-${locationCenter?.lat}-${locationCenter?.lng}`}
               theme="custom"
               properties={visibleProperties}
               selectedProperty={selectedProperty}
@@ -363,6 +488,7 @@ const Listings = () => {
               onBoundsChange={handleBoundsChange}
               initialCenter={userLocation || defaultCenter}
               initialZoom={12}
+              locationCenter={locationCenter}
               showFilters={true}
               filters={filters}
               handleFilterChange={handleFilterChange}
