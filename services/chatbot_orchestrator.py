@@ -1462,6 +1462,12 @@ class ChatGPTChatbot:
                 "user_query": user_message,  # Pass raw query for OpenAI analysis
             }
             
+            # CRITICAL: Pass business_type from GPT interpretation to commercial search
+            # This is the key filter for finding spa/restaurant/salon/etc.
+            if interpreted_filters.get("business_type"):
+                criteria["business_type"] = interpreted_filters["business_type"]
+                logger.info(f"🏢 [COMMERCIAL SEARCH] Business type: {criteria['business_type']}")
+            
             # Optionally include price/sqft if provided (as hints)
             if interpreted_filters.get("min_price"):
                 criteria["price_min"] = interpreted_filters["min_price"]
@@ -1471,6 +1477,10 @@ class ChatGPTChatbot:
                 criteria["square_feet_min"] = interpreted_filters["min_sqft"]
             if interpreted_filters.get("max_sqft"):
                 criteria["square_feet_max"] = interpreted_filters["max_sqft"]
+            
+            # Pass listing type (sale/lease) if provided
+            if interpreted_filters.get("listing_type"):
+                criteria["listing_type"] = interpreted_filters["listing_type"]
             
             logger.info(f"🏢 [COMMERCIAL SEARCH] Criteria: {criteria}")
             logger.info(f"🏢 [COMMERCIAL SEARCH] Raw user query: '{user_message}'")
@@ -1686,6 +1696,57 @@ class ChatGPTChatbot:
             # STEP 1.3: Sync unified state → legacy state if needed
             # This ensures legacy code paths still work
             self._sync_unified_to_legacy(unified_state, state)
+            
+            # ─────────────────────────────────────────────────────────────────
+            # STEP 1.3.2: PROPERTY TYPE CHANGE DETECTION
+            # ─────────────────────────────────────────────────────────────────
+            # When user switches property type (e.g., commercial → residential),
+            # clear irrelevant filters like bedrooms that don't make sense for new type
+            if property_type_hint:
+                current_property_type = unified_state.active_filters.property_type
+                # Normalize property types for comparison
+                current_type_lower = (current_property_type or "").lower()
+                new_type_lower = property_type_hint.lower()
+                
+                # Map hint to normalized property type for comparison
+                property_type_mapping = {
+                    'commercial': 'commercial',
+                    'residential': 'residential',
+                    'condo': 'condo'
+                }
+                new_type_normalized = property_type_mapping.get(new_type_lower, new_type_lower)
+                
+                # Check if property type is changing
+                if current_type_lower and new_type_normalized and current_type_lower != new_type_normalized:
+                    logger.info(f"🔄 [PROPERTY TYPE CHANGE] Detected: {current_type_lower} → {new_type_normalized}")
+                    
+                    # Clear filters that don't carry over between property types
+                    # Bedrooms from condo/commercial should not persist to residential search
+                    # unless user explicitly mentions them in the new query
+                    message_lower = user_message.lower()
+                    bedroom_mentioned = any(kw in message_lower for kw in ['bedroom', 'bed', 'br', '1br', '2br', '3br', '4br', '5br'])
+                    bathroom_mentioned = any(kw in message_lower for kw in ['bathroom', 'bath', 'ba'])
+                    
+                    if not bedroom_mentioned and unified_state.active_filters.bedrooms is not None:
+                        logger.info(f"🧹 [FILTER CLEAR] Clearing bedrooms filter ({unified_state.active_filters.bedrooms}) on property type change (not mentioned in new query)")
+                        unified_state.active_filters.bedrooms = None
+                        state.bedrooms = None
+                    
+                    if not bathroom_mentioned and unified_state.active_filters.bathrooms is not None:
+                        logger.info(f"🧹 [FILTER CLEAR] Clearing bathrooms filter ({unified_state.active_filters.bathrooms}) on property type change (not mentioned in new query)")
+                        unified_state.active_filters.bathrooms = None
+                        state.bathrooms = None
+                    
+                    # Clear business_type when switching FROM commercial
+                    if current_type_lower == 'commercial' and new_type_normalized != 'commercial':
+                        if hasattr(unified_state.active_filters, 'business_type') and unified_state.active_filters.business_type:
+                            logger.info(f"🧹 [FILTER CLEAR] Clearing business_type ({unified_state.active_filters.business_type}) when switching from commercial")
+                            unified_state.active_filters.business_type = None
+                    
+                    # Update property type
+                    unified_state.active_filters.property_type = new_type_normalized.title()
+                    state.property_type = new_type_normalized.title()
+                    logger.info(f"✅ [PROPERTY TYPE CHANGE] Updated to: {new_type_normalized.title()}")
             
             # ─────────────────────────────────────────────────────────────────
             # STEP 1.3.5: ZERO RESULTS UX - View Results / Cached Results Check
@@ -2111,99 +2172,48 @@ class ChatGPTChatbot:
                     "requires_confirmation": True
                 }
             
-            # Handle PROPERTY_CHANGE_REQUEST - Location change confirmation
+            # Handle PROPERTY_CHANGE_REQUEST - SEAMLESS Location change (NO confirmation prompts)
+            # User requested: "if one query is of ottawa...and another is of toronto...
+            # it should give properties accordingly no need to ask 'are you switching from ottawa to toronto'"
             if classified_intent == UserIntent.PROPERTY_CHANGE_REQUEST:
-                logger.info("🌆 [LOCATION CHANGE] Detected location change, asking for confirmation")
+                logger.info("🌆 [LOCATION CHANGE] Detected location change - switching SEAMLESSLY (no confirmation)")
                 
                 old_location = intent_metadata.get('old_location', 'previous location')
                 new_location = intent_metadata.get('new_location', 'new location')
                 current_filters = state.get_active_filters()
                 
-                # 🔧 FIX: Extract the NEW location NOW (before confirmation) and store it
+                # Extract the NEW location
                 logger.info(f"📍 [LOCATION CHANGE] Extracting NEW location from: '{user_message}'")
                 previous_location = state.location_state if hasattr(state, 'location_state') else LocationState()
                 new_location_state = location_extractor.extract_location_entities(
                     user_message,
                     previous_location=previous_location
                 )
-                logger.info(f"✅ [LOCATION CHANGE] Extracted new location state: {new_location_state.get_summary()}")
+                logger.info(f"✅ [LOCATION CHANGE] Switching: {old_location} → {new_location} (seamless, no prompt)")
                 
-                # Build list of current criteria (excluding location)
-                other_criteria = []
-                if current_filters.get('bedrooms'):
-                    other_criteria.append(f"{current_filters['bedrooms']} bedrooms")
-                if current_filters.get('property_type'):
-                    other_criteria.append(current_filters['property_type'])
-                if current_filters.get('max_price'):
-                    price_str = f"under ${current_filters['max_price']:,}"
-                    other_criteria.append(price_str)
-                if current_filters.get('listing_type'):
-                    other_criteria.append(f"for {current_filters['listing_type']}")
+                # SEAMLESS SWITCH: Update location immediately and execute search
+                # Clear previous results but keep other filters
+                state.location_state = new_location_state
+                state.location = new_location_state.city if new_location_state.city else new_location
+                state.last_property_results = []  # Clear old results
                 
-                if other_criteria:
-                    criteria_str = ", ".join(other_criteria)
-                    response = (
-                        f"Sure! I can search in {new_location}. Would you like me to keep "
-                        f"your current criteria ({criteria_str}), or start fresh?"
-                    )
-                    suggestions = [
-                        f"Yes, keep {criteria_str}",
-                        "Show me any properties",
-                        "Let me specify new criteria"
-                    ]
-                    
-                    # CONFIRMATION QUESTION - user must answer yes/no
-                    # Set pending confirmation with STORED LocationState using ConfirmationManager
-                    confirmation_id = self.confirmation_manager.create_confirmation(
-                        session_id=session_id,
-                        confirmation_type=ConfirmationType.LOCATION_CHANGE,
-                        message=response,
-                        payload={
-                            "old_location": old_location,
-                            "new_location": new_location,
-                            "new_location_state": new_location_state.to_dict(),
-                            "keep_filters": other_criteria
-                        }
-                    )
-                    response_mode = "awaiting_confirmation"
-                    requires_confirmation = True
-                    
-                else:
-                    # REQUIREMENTS QUESTION - user can provide filters OR say "no" to proceed
-                    # This is NOT a confirmation - don't set pending_confirmation
-                    response = f"Got it! I'll show you available properties in {new_location}.\nWould you like to add any filters like price range, bedrooms, or property type?"
-                    suggestions = [
-                        "No filters needed",
-                        "2 bedroom condos", 
-                        "Houses under 800k"
-                    ]
-                    
-                    # 🔧 CRITICAL FIX: Set mode to awaiting_requirements, NOT awaiting_confirmation
-                    # "no" here means "no filters, proceed" NOT "reject location change"
-                    state.conversation_mode = "awaiting_requirements"
-                    state.pending_requirements_context = {
-                        "new_location": new_location,
-                        "new_location_state": new_location_state.to_dict()
-                    }
-                    response_mode = "awaiting_requirements"
-                    requires_confirmation = False
+                # Also update unified state
+                unified_state.location_state.city = new_location_state.city if new_location_state.city else new_location
+                unified_state.active_filters.location = new_location_state.city if new_location_state.city else new_location
+                unified_state.last_property_results = []  # Clear old results
                 
-                state.add_conversation_turn("assistant", response)
-                self.state_manager.save(state)
-                return {
-                    "success": True,
-                    "response": response,
-                    "suggestions": suggestions,
-                    "properties": [],
-                    "property_count": 0,
-                    "state_summary": state.get_summary(),
-                    "filters": state.get_active_filters(),
-                    "intent": "location_change_confirmation" if requires_confirmation else "location_change_requirements",
-                    "requires_confirmation": requires_confirmation,
-                    "mode": response_mode,
-                    "confirmation_result": None,
-                    "action": "none"
-                }
+                # Save state
+                self._save_state_with_error_handling(unified_state, state)
+                
+                # Execute search immediately with new location (keeping other filters)
+                logger.info(f"🔍 [SEAMLESS SEARCH] Executing search in new location: {new_location}")
+                return self._execute_property_search(
+                    state=unified_state,
+                    user_message=user_message,
+                    session_id=session_id,
+                    intent_reason=f"Seamless location switch: {old_location} → {new_location}",
+                    confirmation_result="location_switched_seamlessly"
+                )
             
             # STEP 2: Build session summary for interpreter (with clarification context)
             # FIX #2: Check if the last assistant message was a clarifying question
@@ -2233,7 +2243,62 @@ class ChatGPTChatbot:
                     logger.info(f"✅ [CONFIRMATION] '{user_message}' is confirmation word in awaiting_confirmation mode - using existing location")
                     extracted_location = state.location_state
                 else:
-                    # Confirmation word WITHOUT pending confirmation = treat as general chat
+                    # ═══════════════════════════════════════════════════════════════
+                    # SMART CONTEXT: Check if user is confirming a zero-results suggestion
+                    # ═══════════════════════════════════════════════════════════════
+                    # If last assistant message suggested broadening filters, "sure" should
+                    # trigger a broader search, not be treated as general chat
+                    
+                    last_assistant_msg = ""
+                    if len(state.conversation_history) >= 2:
+                        for turn in reversed(state.conversation_history[:-1]):  # Exclude current user msg
+                            if turn.get('role') == 'assistant':
+                                last_assistant_msg = turn.get('content', '').lower()
+                                break
+                    
+                    # Patterns that indicate assistant suggested broadening the search
+                    broaden_patterns = [
+                        'different bedroom', 'any bedroom', 'remove bedroom',
+                        'different bathroom', 'any bathroom',
+                        'different price', 'any price', 'flexible budget',
+                        'broader search', 'expand', 'widen',
+                        'any properties', 'all properties', 'without filter',
+                        'couldn\'t find', 'no results', 'no properties',
+                        'would you like to see', 'would you prefer'
+                    ]
+                    
+                    is_broadening_response = any(p in last_assistant_msg for p in broaden_patterns)
+                    
+                    logger.info(f"🔍 [BROADEN CHECK] last_assistant_msg: '{last_assistant_msg[:100]}...' | is_broadening_response={is_broadening_response} | zero_results_count={unified_state.zero_results_count}")
+                    
+                    if is_broadening_response and unified_state.zero_results_count >= 1:
+                        logger.info(f"✅ [ZERO RESULTS CONFIRMATION] User said '{user_message}' to broaden search - clearing restrictive filters")
+                        
+                        # Clear restrictive filters to broaden search
+                        current_location = unified_state.active_filters.location or state.location
+                        current_property_type = unified_state.active_filters.property_type
+                        
+                        # Clear bedrooms/bathrooms
+                        unified_state.active_filters.bedrooms = None
+                        unified_state.active_filters.bathrooms = None
+                        state.bedrooms = None
+                        state.bathrooms = None
+                        
+                        # Reset zero results count since we're trying broader search
+                        unified_state.zero_results_count = 0
+                        
+                        logger.info(f"🔍 [BROADER SEARCH] Executing search with cleared filters in: {current_location}")
+                        
+                        # Execute search with broader filters
+                        return self._execute_property_search(
+                            state=unified_state,
+                            user_message=f"show me any {current_property_type or 'residential'} properties in {current_location}",
+                            session_id=session_id,
+                            intent_reason="User confirmed to broaden search after zero results",
+                            confirmation_result="filters_broadened"
+                        )
+                    
+                    # Original behavior: confirmation word without pending confirmation = general chat
                     logger.info(f"💬 [GENERAL CHAT] '{user_message}' is confirmation word with no pending confirmation - treating as chat")
                     response = "I'm here to help! What would you like to know about real estate in Toronto and the GTA?"
                     state.add_conversation_turn("assistant", response)
@@ -2460,7 +2525,8 @@ class ChatGPTChatbot:
                 # If no nested filters, check for flat format
                 flat_filters = {}
                 filter_keys = ["location", "property_type", "bedrooms", "bathrooms", "min_price", "max_price", 
-                              "min_sqft", "max_sqft", "listing_type", "amenities", "list_date_from", "list_date_to"]
+                              "min_sqft", "max_sqft", "listing_type", "amenities", "list_date_from", "list_date_to",
+                              "business_type", "street_name", "area", "postal_code"]  # Added commercial fields
                 for key in filter_keys:
                     if key in interpreter_out:
                         flat_filters[key] = interpreter_out[key]
@@ -2628,86 +2694,31 @@ class ChatGPTChatbot:
                     new_location = updates['location']
                 
                 # Get the current location from state
+                # ==================== SEAMLESS LOCATION SWITCHING ====================
+                # Instead of asking for confirmation, we switch locations automatically
+                # This provides a smooth user experience without interruptions
+                
                 current_location = None
                 if hasattr(state, 'location_state') and state.location_state and state.location_state.city:
                     current_location = state.location_state.city
                 elif state.location:
                     current_location = state.location
                 
-                # Check if this is a location change (not initial search)
-                # Only trigger if:
-                # 1. User has done at least one search (search_count > 0)
-                # 2. There's conversation history (not first message in session)
-                # 3. Locations are different
-                has_conversation_history = len(state.conversation_history) > 1 if hasattr(state, 'conversation_history') else state.search_count > 0
-                
+                # Check if this is a location change
                 if (new_location and current_location and 
-                    new_location.lower() != current_location.lower() and
-                    has_conversation_history):  # Has prior conversation context
+                    new_location.lower() != current_location.lower()):
                     
-                    logger.info(f"🔄 [LOCATION CHANGE DETECTED] {current_location} → {new_location}")
+                    logger.info(f"🔄 [SEAMLESS LOCATION SWITCH] {current_location} → {new_location} (no confirmation needed)")
                     
-                    # Build new_location_state dict for ConfirmationManager
-                    new_location_state_dict = {}
-                    if new_location_state:
-                        # Use the LocationState object from updates
-                        new_location_state_dict = {
-                            'location': new_location,
-                            'location_state': new_location_state
-                        }
-                    else:
-                        # Just the location string
-                        new_location_state_dict = {'location': new_location}
+                    # Clear previous search results for the new location search
+                    if hasattr(state, 'last_search_results'):
+                        state.last_search_results = []
+                    if hasattr(unified_state, 'cached_results'):
+                        unified_state.cached_results = []
                     
-                    # Add all other filter updates (bedrooms, price, etc.)
-                    for key, value in updates.items():
-                        if key not in ['location', 'location_state']:
-                            new_location_state_dict[key] = value
-                    
-                    # Build previous_location_state dict to revert to
-                    previous_location_state_dict = {
-                        'location': current_location
-                    }
-                    if hasattr(state, 'location_state') and state.location_state:
-                        previous_location_state_dict['location_state'] = state.location_state
-                    
-                    # Create location change confirmation with proper context structure
-                    confirmation_id = self.confirmation_manager.create_confirmation(
-                        session_id=session_id,
-                        confirmation_type=ConfirmationType.LOCATION_CHANGE,
-                        question=f"You're currently searching in {current_location}. Would you like to switch to {new_location}?",
-                        payload={
-                            'old_location': current_location,
-                            'new_location': new_location,
-                            'new_location_state': new_location_state_dict,  # For YES
-                            'previous_location_state': previous_location_state_dict  # For NO
-                        }
-                    )
-                    
-                    logger.info(f"✅ [LOCATION CHANGE] Created confirmation {confirmation_id[:8]}... - awaiting user response")
-                    
-                    # Return early with confirmation question
-                    state.add_conversation_turn("assistant", f"You're currently searching in {current_location}. Would you like to switch to {new_location}?")
-                    self.state_manager.save(state)
-                    
-                    return {
-                        "success": True,
-                        "response": f"You're currently searching in {current_location}. Would you like to switch to {new_location}?",
-                        "suggestions": ["Yes, switch locations", "No, keep current location"],
-                        "properties": [],
-                        "property_count": 0,
-                        "requires_confirmation": True,
-                        "confirmation_id": confirmation_id,
-                        "confirmation_type": "location_change",
-                        "state_summary": state.get_summary(),
-                        "filters": state.get_active_filters(),
-                        "metadata": {
-                            "intent": classified_intent.value,
-                            "confidence": intent_metadata.get("confidence", 0.0),
-                            "reason": intent_metadata.get("reason", ""),
-                            "used_gpt_fallback": intent_metadata.get("used_gpt_fallback", False)
-                        }
-                    }
+                    # Reset search count to start fresh in new location
+                    # (Optional: keep for analytics, or reset for fresh start)
+                    logger.info(f"✅ [LOCATION SWITCH] Cleared previous results, proceeding with {new_location} search")
             
             # STEP 8.6: Apply filter updates through AtomicTransactionManager
             if updates:
@@ -3831,6 +3842,10 @@ class ChatGPTChatbot:
             updates["location"] = filters_from_gpt["location"]
         if filters_from_gpt.get("property_type"):
             updates["property_type"] = filters_from_gpt["property_type"]
+        # CRITICAL: Pass business_type for commercial property searches
+        if filters_from_gpt.get("business_type"):
+            updates["business_type"] = filters_from_gpt["business_type"]
+            logger.info(f"🏢 [COMMERCIAL] Adding business_type to updates: {filters_from_gpt['business_type']}")
         if filters_from_gpt.get("bedrooms") is not None:
             updates["bedrooms"] = filters_from_gpt["bedrooms"]
         if filters_from_gpt.get("bathrooms") is not None:

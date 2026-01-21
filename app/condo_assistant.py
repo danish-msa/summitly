@@ -1299,12 +1299,30 @@ def search_condo_properties(
                 logger.error(f"Error processing condo: {e}")
                 continue
         
-        logger.info(f"✅ [CONDO SEARCH] Returning {len(properties)} filtered condos")
+        logger.info(f"✅ [CONDO SEARCH] Found {len(properties)} filtered condos, now ordering...")
+        
+        # ORDER RESULTS: exact matches first, then nearby, then convertible
+        search_criteria = {
+            'bedrooms': bedrooms,
+            'bathrooms': bathrooms,
+            'min_price': min_price,
+            'max_price': max_price,
+            'amenities': amenities,
+            'pets_permitted': pets_permitted,
+            'parking_spaces': parking_spaces
+        }
+        ordered_properties = order_condo_search_results(
+            properties=properties,
+            target_city=city,
+            criteria=search_criteria
+        )
+        
+        logger.info(f"✅ [CONDO SEARCH] Returning {len(ordered_properties)} ordered condos")
         
         return {
             "success": True,
-            "properties": properties[:limit],
-            "total": len(properties),
+            "properties": ordered_properties[:limit],
+            "total": len(ordered_properties),
             "raw_count": total,
             "filters_applied": [
                 k for k, v in {
@@ -1333,6 +1351,159 @@ def search_condo_properties(
 
 
 # ==================== CONDO-SPECIFIC FILTERS ====================
+
+def order_condo_search_results(
+    properties: List[Dict],
+    target_city: str,
+    criteria: Dict = None
+) -> List[Dict]:
+    """
+    Order search results by relevance following user requirement:
+    1. Exact matches from target location
+    2. Nearby locations (within 5km conceptually)
+    3. Properties that can be converted/adapted (close match)
+    4. Matches from other locations
+    
+    Args:
+        properties: List of property dicts
+        target_city: Target city for search
+        criteria: Search criteria dict (bedrooms, price, etc.)
+    
+    Returns:
+        Ordered list of properties
+    """
+    if not properties:
+        return []
+    
+    criteria = criteria or {}
+    target_lower = target_city.lower() if target_city else ""
+    
+    # Nearby cities mapping
+    nearby_cities_map = {
+        "toronto": ["north york", "scarborough", "etobicoke", "mississauga", "markham", "vaughan", "richmond hill", "brampton"],
+        "vancouver": ["burnaby", "richmond", "north vancouver", "west vancouver", "surrey", "coquitlam", "new westminster"],
+        "ottawa": ["gatineau", "kanata", "orleans", "nepean", "gloucester"],
+        "montreal": ["laval", "longueuil", "brossard", "saint-laurent", "westmount"],
+        "calgary": ["airdrie", "cochrane", "chestermere", "okotoks"],
+        "edmonton": ["sherwood park", "st. albert", "spruce grove", "leduc"]
+    }
+    nearby_cities = [c.lower() for c in nearby_cities_map.get(target_lower, [])]
+    
+    # Categories
+    exact_matches = []
+    nearby_matches = []
+    convertible_matches = []
+    other_matches = []
+    
+    for prop in properties:
+        # Get property city
+        prop_city = ""
+        address = prop.get("address", {})
+        if isinstance(address, dict):
+            prop_city = address.get("city", "").lower()
+        elif isinstance(prop.get("city"), str):
+            prop_city = prop["city"].lower()
+        
+        # Calculate match score
+        match_score = _calculate_condo_match_score(prop, criteria)
+        prop["_match_score"] = match_score
+        prop["_match_type"] = "other"
+        
+        # Categorize
+        if prop_city == target_lower:
+            if match_score >= 80:
+                prop["_match_type"] = "exact"
+                exact_matches.append(prop)
+            elif match_score >= 50:
+                prop["_match_type"] = "convertible"
+                convertible_matches.append(prop)
+            else:
+                other_matches.append(prop)
+        elif prop_city in nearby_cities:
+            prop["_match_type"] = "nearby"
+            nearby_matches.append(prop)
+        else:
+            other_matches.append(prop)
+    
+    # Sort each category by match score (descending)
+    exact_matches.sort(key=lambda x: x.get("_match_score", 0), reverse=True)
+    nearby_matches.sort(key=lambda x: x.get("_match_score", 0), reverse=True)
+    convertible_matches.sort(key=lambda x: x.get("_match_score", 0), reverse=True)
+    other_matches.sort(key=lambda x: x.get("_match_score", 0), reverse=True)
+    
+    # Combine in priority order
+    ordered = exact_matches + nearby_matches + convertible_matches + other_matches
+    
+    logger.info(f"📊 [ORDERING] Results: {len(exact_matches)} exact, {len(nearby_matches)} nearby, "
+                f"{len(convertible_matches)} convertible, {len(other_matches)} other")
+    
+    return ordered
+
+
+def _calculate_condo_match_score(prop: Dict, criteria: Dict) -> int:
+    """
+    Calculate how well a condo property matches criteria (0-100).
+    
+    Args:
+        prop: Property dict
+        criteria: Search criteria
+    
+    Returns:
+        Score 0-100 (100 = perfect match)
+    """
+    if not criteria:
+        return 50  # Default when no criteria
+    
+    score = 100
+    
+    # Bedrooms (strict match is important)
+    if criteria.get("bedrooms"):
+        prop_beds = prop.get("bedrooms", 0)
+        if prop_beds != criteria["bedrooms"]:
+            if abs(prop_beds - criteria["bedrooms"]) == 1:
+                score -= 15  # Close but not exact
+            else:
+                score -= 30  # Wrong bedroom count
+    
+    # Bathrooms
+    if criteria.get("bathrooms"):
+        prop_baths = prop.get("bathrooms", 0)
+        if prop_baths < criteria["bathrooms"]:
+            score -= 10
+    
+    # Price range
+    prop_price = prop.get("listPrice", 0) or prop.get("price", 0)
+    if isinstance(prop_price, str):
+        prop_price = int(prop_price.replace("$", "").replace(",", "").strip() or 0)
+    
+    if criteria.get("max_price") and prop_price > criteria["max_price"]:
+        over_percent = (prop_price - criteria["max_price"]) / criteria["max_price"]
+        score -= min(30, int(over_percent * 100))
+    
+    # Amenities
+    if criteria.get("amenities"):
+        prop_amenities = prop.get("condoAmenities", []) or []
+        if isinstance(prop_amenities, str):
+            prop_amenities = [prop_amenities]
+        prop_amenities_lower = [a.lower() for a in prop_amenities if a]
+        
+        for amenity in criteria["amenities"]:
+            if not any(amenity.lower() in pa for pa in prop_amenities_lower):
+                score -= 5
+    
+    # Pet-friendly
+    if criteria.get("pets_permitted") is True:
+        if prop.get("petsPermitted") is not True:
+            score -= 15
+    
+    # Parking
+    if criteria.get("parking_spaces"):
+        prop_parking = prop.get("totalParking", 0) or 0
+        if prop_parking < criteria["parking_spaces"]:
+            score -= 10
+    
+    return max(0, score)
+
 
 def filter_by_floor_level(properties: List[Dict], min_level: int) -> List[Dict]:
     """Filter condos by minimum floor level"""

@@ -54,10 +54,11 @@ class IntentClassifier:
     
     def __init__(self):
         # Off-topic patterns (food, sports, politics, etc.)
+        # NOTE: Do NOT include business types like 'restaurant' - these are valid commercial searches!
         self.off_topic_patterns = [
-            # Food and dining
-            r'\b(paneer|biryani|pizza|burger|pasta|sushi|curry|noodles|restaurant|food|menu|recipe|cooking|chef)\b',
-            r'\b(breakfast|lunch|dinner|meal|dessert|drink|coffee|tea|wine|beer)\b',
+            # Food recipes and cooking (NOT restaurant as a business)
+            r'\b(paneer|biryani|burger|pasta|sushi|curry|noodles|recipe|cooking|chef)\b',
+            r'\b(breakfast|lunch|dinner|meal|dessert|drink|wine|beer)\b',
             
             # Sports and entertainment
             r'\b(football|basketball|soccer|hockey|baseball|cricket|tennis|golf)\b',
@@ -74,6 +75,17 @@ class IntentClassifier:
             
             # Politics and news
             r'\b(election|vote|president|minister|parliament|government|politics)\b'
+        ]
+        
+        # ✅ Commercial business types that are VALID property searches (NOT off-topic)
+        self.commercial_business_types = [
+            'restaurant', 'bakery', 'cafe', 'coffee shop', 'bar', 'pub', 'pizzeria',
+            'salon', 'spa', 'barber', 'gym', 'fitness', 'yoga',
+            'office', 'retail', 'store', 'shop', 'boutique', 'showroom',
+            'warehouse', 'industrial', 'manufacturing',
+            'medical', 'dental', 'clinic', 'pharmacy',
+            'hotel', 'motel', 'inn', 'car wash', 'gas station',
+            'daycare', 'florist', 'laundry', 'dry cleaning', 'grocery', 'supermarket'
         ]
         
         # Vague request patterns (need confirmation)
@@ -278,12 +290,27 @@ class IntentClassifier:
         
         CRITICAL: Handles edge cases where postal codes appear in off-topic messages
         Example: "paneer chilli M5V" should be OFF-TOPIC, not a property search
+        
+        BUT: Commercial searches like "restaurant on King Street" are VALID!
         """
+        # ✅ FIRST: Check if this is a commercial property search (NOT off-topic!)
+        has_commercial_business = any(btype in message for btype in self.commercial_business_types)
+        if has_commercial_business:
+            # Check if it has location or property context
+            location_terms = ['in ', 'on ', 'near ', 'at ', 'street', 'road', 'avenue', 
+                            'toronto', 'ottawa', 'vancouver', 'mississauga', 'calgary',
+                            'downtown', 'midtown', 'for sale', 'for lease', 'property',
+                            'space', 'commercial', 'business']
+            has_location_context = any(term in message for term in location_terms)
+            if has_location_context:
+                logger.info(f"✅ [OFF_TOPIC CHECK] Commercial search detected, NOT off-topic: '{message[:50]}...'")
+                return False  # This is a VALID commercial property search
+        
         # Check against off-topic patterns
         for pattern in self.off_topic_patterns:
             if re.search(pattern, message, re.IGNORECASE):
                 # Make sure it's not combined with property terms
-                property_terms = r'\b(property|properties|house|condo|apartment|listing|real estate|mls|home|homes|rent|sale|buy|search|find|show|looking)\b'
+                property_terms = r'\b(property|properties|house|condo|apartment|listing|real estate|mls|home|homes|rent|sale|buy|search|find|show|looking|commercial|business|space|lease)\b'
                 if not re.search(property_terms, message, re.IGNORECASE):
                     # POSTAL CODE SAFETY CHECK
                     # If message contains postal code BUT also contains off-topic keywords,

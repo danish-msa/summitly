@@ -7653,10 +7653,12 @@
 
         /**
          * Set Property Type (Button Selection)
+         * Clears chat and starts fresh when switching property types
          */
         function setPropertyType(type) {
+            const previousType = selectedPropertyType;
             selectedPropertyType = type;
-            console.log('🏠 Property type selected:', type);
+            console.log('🏠 Property type selected:', type, '(was:', previousType, ')');
             
             // Update button styles
             const buttons = document.querySelectorAll('.property-type-btn');
@@ -7684,13 +7686,58 @@
                 }
             }
             
+            // ★★★ CLEAR PAGE AND START FRESH WHEN SWITCHING PROPERTY TYPES ★★★
+            if (previousType && previousType !== type) {
+                console.log('🔄 Switching property type from', previousType, 'to', type, '- clearing chat');
+                
+                // Clear chat history
+                appState.clearHistory();
+                chatHistory = [];
+                
+                // Get welcome icon and message based on property type
+                const typeConfig = {
+                    'residential': { icon: '🏠', title: 'Residential Properties', desc: 'Search for houses, townhomes, and residential properties' },
+                    'commercial': { icon: '🏢', title: 'Commercial Properties', desc: 'Search for businesses, offices, retail spaces, and commercial real estate' },
+                    'condo': { icon: '🏙️', title: 'Condo Properties', desc: 'Search for condos, apartments, and condo units' }
+                };
+                const config = typeConfig[type] || typeConfig['residential'];
+                
+                // Reset chat container with fresh welcome screen
+                document.getElementById('chatContainer').innerHTML = `
+                    <div class="welcome-screen" id="welcomeScreen">
+                        <div class="welcome-icon">${config.icon}</div>
+                        <h1 class="welcome-title">Welcome to Summitly AI</h1>
+                        <p class="welcome-subtitle">
+                            ${config.desc}<br>
+                            Powered by Llama 3.2, Exa AI, and live MLS data.
+                        </p>
+                    </div>
+                `;
+                
+                // Generate new session ID for fresh context
+                appState.sessionId = appState.generateSessionId();
+                currentSessionId = appState.sessionId;
+                
+                // Clear right panel properties
+                clearRightPanelProperties();
+                
+                // Hide right panel if open
+                hideRightPanel();
+                
+                // Clear input field
+                if (input) {
+                    input.value = '';
+                }
+            }
+            
             // Show toast notification
             const typeNames = {
                 'residential': '🏠 Residential',
                 'commercial': '🏢 Commercial', 
                 'condo': '🏙️ Condo'
             };
-            showToast(`Searching for ${typeNames[type]} properties`, 'info');
+            const actionText = (previousType && previousType !== type) ? 'Switched to' : 'Searching for';
+            showToast(`${actionText} ${typeNames[type]} properties`, 'info');
         }
 
         /**

@@ -174,12 +174,25 @@ class HybridIntentClassifier:
         self.confirmation_patterns = CONFIRMATION_REGEX_PATTERNS
         
         # Off-topic keywords (95% confidence)
+        # NOTE: Do NOT include business types like 'restaurant', 'bakery', 'cafe' etc.
+        # These are valid commercial property searches!
         self.off_topic_keywords = [
             'weather', 'sports', 'news', 'cooking', 'music', 'movie', 'film',
-            'food', 'restaurant', 'recipe', 'paneer', 'biryani', 'pizza',
+            'recipe', 'paneer', 'biryani',  # Food recipes (NOT restaurant as business)
             'football', 'basketball', 'soccer', 'hockey', 'game', 'gaming',
             'birthday', 'anniversary', 'wedding', 'vacation', 'travel',
             'politics', 'election', 'vote', 'president'
+        ]
+        
+        # ✅ NEW: Commercial business types that are VALID property searches (NOT off-topic)
+        self.commercial_business_types = [
+            'restaurant', 'bakery', 'cafe', 'coffee shop', 'bar', 'pub', 'pizzeria',
+            'salon', 'spa', 'barber', 'gym', 'fitness', 'yoga',
+            'office', 'retail', 'store', 'shop', 'boutique', 'showroom',
+            'warehouse', 'industrial', 'manufacturing',
+            'medical', 'dental', 'clinic', 'pharmacy',
+            'hotel', 'motel', 'inn', 'car wash', 'gas station',
+            'daycare', 'florist', 'laundry', 'dry cleaning', 'grocery', 'supermarket'
         ]
         
         # Valuation patterns (98% confidence)
@@ -337,6 +350,20 @@ class HybridIntentClassifier:
             metadata["suggested_action"] = "Provide market insights"
             logger.info(f"📊 [LOCAL] GENERAL_QUESTION (market) detected: '{user_message[:50]}...'")
             return UserIntent.GENERAL_QUESTION, metadata
+        
+        # 3C. ✅ COMMERCIAL PROPERTY SEARCH detection (96% confidence)
+        # Check BEFORE generic property search - commercial uses business_type, not bedrooms
+        has_commercial_business = any(btype in user_message_lower for btype in self.commercial_business_types)
+        has_location = any(word in user_message_lower for word in ['in ', 'on ', 'near ', 'at ', 'toronto', 'mississauga', 'ottawa', 'vancouver', 'calgary', 'montreal', 'street', 'road', 'avenue', 'downtown'])
+        
+        if has_commercial_business and has_location:
+            # Get the matched business type for logging
+            matched_business = next((btype for btype in self.commercial_business_types if btype in user_message_lower), None)
+            metadata["reason"] = f"Commercial property search: {matched_business}"
+            metadata["confidence"] = 0.96
+            metadata["suggested_action"] = "Execute commercial property search"
+            logger.info(f"🏢 [LOCAL] COMMERCIAL PROPERTY_SEARCH detected: '{user_message[:50]}...' (business: {matched_business})")
+            return UserIntent.PROPERTY_SEARCH, metadata
         
         # 4. PROPERTY SEARCH detection (96% confidence)
         criteria = self.extract_property_criteria(user_message_lower)
@@ -543,6 +570,21 @@ class HybridIntentClassifier:
     
     def _detect_off_topic(self, message: str) -> bool:
         """Detect off-topic messages (non-real-estate)."""
+        
+        # ✅ FIRST: Check if this is a commercial property search (NOT off-topic!)
+        # Commercial business types like "restaurant", "bakery", "spa" are VALID property searches
+        has_commercial_business = any(btype in message for btype in self.commercial_business_types)
+        if has_commercial_business:
+            # Check if it has location or property context
+            location_terms = ['in ', 'on ', 'near ', 'at ', 'street', 'road', 'avenue', 
+                            'toronto', 'ottawa', 'vancouver', 'mississauga', 'calgary',
+                            'downtown', 'midtown', 'for sale', 'for lease', 'property',
+                            'space', 'commercial', 'business']
+            has_location_context = any(term in message for term in location_terms)
+            if has_location_context:
+                logger.info(f"✅ [OFF_TOPIC] Commercial search detected, NOT off-topic: '{message[:50]}...'")
+                return False  # This is a VALID commercial property search
+        
         # Check for off-topic keywords
         for keyword in self.off_topic_keywords:
             if keyword in message:
@@ -552,7 +594,8 @@ class HybridIntentClassifier:
                                  'home', 'homes', 'rent', 'buy', 'sale', 'near', 'show me', 'find',
                                  'neighborhood', 'neighbourhood', 'area', 'location', 'district',
                                  'families', 'family', 'schools', 'school', 'kids', 'children',
-                                 'community', 'amenities', 'safe', 'safety', 'walkable']
+                                 'community', 'amenities', 'safe', 'safety', 'walkable',
+                                 'commercial', 'business', 'space', 'office', 'retail', 'lease']
                 has_property_term = any(term in message for term in property_terms)
                 logger.debug(f"🔍 Off-topic check: keyword='{keyword}', has_property_term={has_property_term}")
                 if not has_property_term:

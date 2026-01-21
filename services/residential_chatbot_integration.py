@@ -324,8 +324,29 @@ class StateToFiltersConverter:
         
         return filters
     
-    def _normalize_property_type(self, property_type: str) -> str:
-        """Normalize property type to API-compatible format."""
+    def _normalize_property_type(self, property_type: str) -> Optional[str]:
+        """
+        Normalize property type to API-compatible format.
+        
+        IMPORTANT: 'Residential' is NOT a valid Repliers API property type!
+        When user selects the 'residential' button, we should NOT send propertyType at all.
+        The class=residential is what indicates we're searching residential properties.
+        
+        Returns:
+            API-compatible property type string, or None if should not be filtered
+        """
+        if not property_type:
+            return None
+            
+        property_type_lower = property_type.lower()
+        
+        # ★★★ CRITICAL FIX ★★★
+        # 'residential' is a CLASS, not a propertyType!
+        # When user clicks the 'residential' button, don't filter by propertyType
+        # This allows ALL residential property types (Detached, Condo, Townhouse, etc.)
+        if property_type_lower in ['residential', 'any', 'all']:
+            return None  # Don't filter - let all residential property types through
+        
         type_mapping = {
             'condo': 'Condo Apartment',
             'apartment': 'Condo Apartment',
@@ -346,7 +367,22 @@ class StateToFiltersConverter:
             'bungalow': 'Detached',  # Style, not type
             'cottage': 'Detached',
         }
-        return type_mapping.get(property_type.lower(), property_type)
+        
+        # Return mapped value, or None if not a valid specific type
+        result = type_mapping.get(property_type_lower)
+        if result:
+            return result
+        
+        # If the input is already a valid API type, use it
+        valid_api_types = ['Detached', 'Semi-Detached', 'Townhouse', 'Condo Apartment', 
+                          'Condo Townhouse', 'Duplex', 'Triplex', 'Multiplex', 'Link',
+                          'Vacant Land', 'Farm', 'Mobile/Trailer']
+        if property_type in valid_api_types:
+            return property_type
+            
+        # Unknown type - don't filter
+        logger.warning(f"⚠️ Unknown property type '{property_type}' - not filtering by propertyType")
+        return None
     
     def _apply_gpt_filters(self, filters: ResidentialFilters, gpt_filters: Dict[str, Any]) -> None:
         """Apply GPT-extracted extended filters to ResidentialFilters."""

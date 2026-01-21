@@ -441,8 +441,13 @@ class ActiveFilters(BaseModel):
     )
     property_type: Optional[str] = Field(
         default=None,
-        description="Property type (condo, detached, townhouse, etc.)",
+        description="Property type (condo, detached, townhouse, commercial, etc.)",
         max_length=50,
+    )
+    business_type: Optional[str] = Field(
+        default=None,
+        description="Business type for commercial properties (Spa, Restaurant, Salon, Car Wash, etc.)",
+        max_length=100,
     )
     bedrooms: Optional[int] = Field(
         default=None,

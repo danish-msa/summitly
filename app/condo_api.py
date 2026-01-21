@@ -3,6 +3,12 @@
 Condo Assistant Flask API
 Flask endpoints for condo property search and management
 Integrates with voice_assistant_clean.py architecture
+
+ENHANCED FEATURES:
+✅ Session management with fresh start on page refresh
+✅ Seamless location switching (no confirmation prompts)
+✅ AI-powered chatbot endpoint
+✅ Smart search ordering (exact → nearby → convertible)
 """
 
 from flask import Flask, request, jsonify, Blueprint
@@ -10,6 +16,11 @@ from flask_cors import CORS
 import logging
 import os
 import sys
+import uuid
+import json
+import hashlib
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Any, Tuple
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -28,8 +39,453 @@ from app.condo_assistant import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# ==================== SESSION MANAGEMENT ====================
+
+class CondoConversationContext:
+    """
+    Session management for condo chatbot with:
+    - Fresh start on page refresh (no cache)
+    - Seamless location switching (no confirmation prompts)
+    - Smart search result ordering
+    """
+    
+    def __init__(self):
+        self.sessions: Dict[str, Dict] = {}
+    
+    def get_or_create_session(self, session_id: str, force_new: bool = False) -> Dict:
+        """
+        Get existing session or create new one.
+        
+        Args:
+            session_id: Unique session identifier
+            force_new: If True, always create fresh session (for page refresh)
+        """
+        if force_new or session_id not in self.sessions:
+            self.sessions[session_id] = {
+                "session_id": session_id,
+                "created_at": datetime.now().isoformat(),
+                "last_active": datetime.now().isoformat(),
+                "location": None,
+                "criteria": {},
+                "search_results": [],
+                "chat_history": [],
+                "search_count": 0
+            }
+            logger.info(f"🆕 New condo session created: {session_id[:8]}...")
+        else:
+            self.sessions[session_id]["last_active"] = datetime.now().isoformat()
+        
+        return self.sessions[session_id]
+    
+    def update_session(self, session_id: str, updates: Dict) -> Dict:
+        """Update session with new data, handling location changes seamlessly."""
+        session = self.get_or_create_session(session_id)
+        
+        # Check for location change - switch seamlessly without prompts
+        new_location = updates.get("location")
+        old_location = session.get("location")
+        
+        if new_location and old_location and new_location.lower() != old_location.lower():
+            logger.info(f"📍 Location switch: {old_location} → {new_location} (seamless)")
+            # Clear previous results but keep chat history
+            session["search_results"] = []
+            session["criteria"] = {}
+        
+        # Apply updates
+        for key, value in updates.items():
+            if value is not None:
+                session[key] = value
+        
+        return session
+    
+    def clear_session(self, session_id: str):
+        """Clear a session completely."""
+        if session_id in self.sessions:
+            del self.sessions[session_id]
+            logger.info(f"🗑️ Session cleared: {session_id[:8]}...")
+    
+    def add_to_history(self, session_id: str, role: str, content: str):
+        """Add message to chat history."""
+        session = self.get_or_create_session(session_id)
+        session["chat_history"].append({
+            "role": role,
+            "content": content,
+            "timestamp": datetime.now().isoformat()
+        })
+
+
+# Global session manager
+session_manager = CondoConversationContext()
+
 # Create Blueprint
 condo_api = Blueprint('condo_api', __name__, url_prefix='/api/condo')
+
+# ==================== CHAT ENDPOINT ====================
+
+@condo_api.route('/chat', methods=['POST'])
+def condo_chat():
+    """
+    AI-powered condo chatbot endpoint with session management.
+    
+    POST /api/condo/chat
+    Body:
+    {
+        "message": "Show me 2 bedroom condos in Toronto with a gym",
+        "session_id": "optional-session-id",
+        "force_new": false  // Set true on page refresh to start fresh
+    }
+    
+    Features:
+    - Fresh session on page refresh (force_new=true)
+    - Seamless location switching (no confirmation prompts)
+    - Smart search ordering: exact matches → nearby → convertible
+    """
+    try:
+        data = request.json or {}
+        user_message = data.get("message", "").strip()
+        session_id = data.get("session_id") or str(uuid.uuid4())
+        force_new = data.get("force_new", False)
+        
+        if not user_message:
+            return jsonify({
+                "success": False,
+                "error": "Message is required",
+                "session_id": session_id
+            }), 400
+        
+        logger.info(f"💬 Chat message: '{user_message[:50]}...' | session: {session_id[:8]}...")
+        
+        # Get or create session (force_new for page refresh)
+        session = session_manager.get_or_create_session(session_id, force_new=force_new)
+        
+        # Add user message to history
+        session_manager.add_to_history(session_id, "user", user_message)
+        
+        # Extract criteria from natural language using AI
+        extracted_criteria = extract_condo_criteria_with_ai(user_message)
+        logger.info(f"🤖 Extracted criteria: {extracted_criteria}")
+        
+        # Check for location in extracted criteria
+        new_location = extracted_criteria.get("city") or extracted_criteria.get("location")
+        
+        # Update session with new criteria (handles location switching seamlessly)
+        session = session_manager.update_session(session_id, {
+            "location": new_location,
+            "criteria": {**session.get("criteria", {}), **extracted_criteria}
+        })
+        
+        # Determine search location
+        search_location = new_location or session.get("location")
+        
+        if not search_location:
+            response_text = "I'd love to help you find a condo! Which city would you like to search in? For example: Toronto, Vancouver, Ottawa, or Montreal."
+            session_manager.add_to_history(session_id, "assistant", response_text)
+            
+            return jsonify({
+                "success": True,
+                "response": response_text,
+                "properties": [],
+                "total": 0,
+                "suggestions": ["Toronto", "Vancouver", "Ottawa", "Montreal"],
+                "session_id": session_id,
+                "needs_location": True
+            })
+        
+        # Build search criteria
+        search_criteria = session.get("criteria", {})
+        
+        # Execute search
+        result = search_condo_properties(
+            city=search_location,
+            bedrooms=search_criteria.get("bedrooms"),
+            bathrooms=search_criteria.get("bathrooms"),
+            min_price=search_criteria.get("min_price"),
+            max_price=search_criteria.get("max_price"),
+            min_sqft=search_criteria.get("min_sqft"),
+            max_sqft=search_criteria.get("max_sqft"),
+            floor_level_min=search_criteria.get("floor_level_min"),
+            pets_permitted=search_criteria.get("pets_permitted"),
+            amenities=search_criteria.get("amenities", []),
+            listing_type=search_criteria.get("listing_type", "sale"),
+            limit=50
+        )
+        
+        properties = result.get("properties", [])
+        total = result.get("total", 0)
+        
+        # Order results: exact matches first, then nearby, then convertible
+        ordered_properties = order_search_results(
+            properties=properties,
+            target_location=search_location,
+            criteria=search_criteria
+        )
+        
+        # Store results in session
+        session_manager.update_session(session_id, {
+            "search_results": ordered_properties,
+            "search_count": session.get("search_count", 0) + 1
+        })
+        
+        # Build response
+        if total > 0:
+            criteria_parts = []
+            if search_criteria.get("bedrooms"):
+                criteria_parts.append(f"{search_criteria['bedrooms']} bedroom")
+            if search_criteria.get("max_price"):
+                criteria_parts.append(f"under ${search_criteria['max_price']:,}")
+            if search_criteria.get("amenities"):
+                criteria_parts.append(f"with {', '.join(search_criteria['amenities'])}")
+            
+            criteria_str = " ".join(criteria_parts) if criteria_parts else ""
+            response_text = f"I found {total} {criteria_str} condos in {search_location}! Here are the best matches."
+        else:
+            response_text = f"I couldn't find condos matching your criteria in {search_location}. Would you like me to expand the search or adjust the filters?"
+        
+        session_manager.add_to_history(session_id, "assistant", response_text)
+        
+        # Generate suggestions
+        suggestions = generate_suggestions(search_criteria, total, search_location)
+        
+        return jsonify({
+            "success": True,
+            "response": response_text,
+            "properties": ordered_properties[:20],  # Return first 20
+            "total": total,
+            "suggestions": suggestions,
+            "session_id": session_id,
+            "criteria_used": search_criteria,
+            "location": search_location
+        })
+    
+    except Exception as e:
+        logger.error(f"Chat error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "properties": []
+        }), 500
+
+
+@condo_api.route('/reset', methods=['POST'])
+def reset_session():
+    """
+    Reset/clear a session completely.
+    
+    POST /api/condo/reset
+    Body:
+    {
+        "session_id": "session-id-to-reset"
+    }
+    """
+    try:
+        data = request.json or {}
+        session_id = data.get("session_id")
+        
+        if session_id:
+            session_manager.clear_session(session_id)
+            return jsonify({
+                "success": True,
+                "message": "Session cleared successfully"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "error": "session_id is required"
+            }), 400
+    
+    except Exception as e:
+        logger.error(f"Reset error: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@condo_api.route('/results', methods=['GET'])
+def get_results():
+    """
+    Get cached search results for a session.
+    
+    GET /api/condo/results?session_id=xxx&page=1&limit=20
+    """
+    try:
+        session_id = request.args.get("session_id")
+        page = int(request.args.get("page", 1))
+        limit = int(request.args.get("limit", 20))
+        
+        if not session_id:
+            return jsonify({
+                "success": False,
+                "error": "session_id is required"
+            }), 400
+        
+        session = session_manager.get_or_create_session(session_id)
+        all_results = session.get("search_results", [])
+        
+        # Paginate
+        start_idx = (page - 1) * limit
+        end_idx = start_idx + limit
+        page_results = all_results[start_idx:end_idx]
+        
+        return jsonify({
+            "success": True,
+            "properties": page_results,
+            "total": len(all_results),
+            "page": page,
+            "limit": limit,
+            "has_more": end_idx < len(all_results)
+        })
+    
+    except Exception as e:
+        logger.error(f"Results error: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+# ==================== HELPER FUNCTIONS ====================
+
+def order_search_results(properties: List[Dict], target_location: str, criteria: Dict) -> List[Dict]:
+    """
+    Order search results by relevance:
+    1. Exact matches from target location
+    2. Nearby locations (within 5km if available)
+    3. Properties that can be converted/adapted
+    4. Matches from other locations
+    """
+    if not properties:
+        return []
+    
+    exact_matches = []
+    nearby_matches = []
+    convertible_matches = []
+    other_matches = []
+    
+    target_lower = target_location.lower() if target_location else ""
+    
+    for prop in properties:
+        # Get property location
+        prop_city = ""
+        if isinstance(prop.get("address"), dict):
+            prop_city = prop["address"].get("city", "").lower()
+        elif isinstance(prop.get("city"), str):
+            prop_city = prop["city"].lower()
+        
+        # Check criteria match
+        criteria_match_score = calculate_match_score(prop, criteria)
+        prop["_match_score"] = criteria_match_score
+        
+        # Categorize by location and match quality
+        if prop_city == target_lower:
+            if criteria_match_score >= 80:
+                exact_matches.append(prop)
+            elif criteria_match_score >= 50:
+                convertible_matches.append(prop)
+            else:
+                other_matches.append(prop)
+        else:
+            # Check if nearby (simplified - in reality would use geo distance)
+            nearby_cities = get_nearby_cities(target_location)
+            if prop_city in [c.lower() for c in nearby_cities]:
+                nearby_matches.append(prop)
+            else:
+                other_matches.append(prop)
+    
+    # Sort each category by match score
+    exact_matches.sort(key=lambda x: x.get("_match_score", 0), reverse=True)
+    nearby_matches.sort(key=lambda x: x.get("_match_score", 0), reverse=True)
+    convertible_matches.sort(key=lambda x: x.get("_match_score", 0), reverse=True)
+    other_matches.sort(key=lambda x: x.get("_match_score", 0), reverse=True)
+    
+    # Combine in priority order
+    ordered = exact_matches + nearby_matches + convertible_matches + other_matches
+    
+    logger.info(f"📊 Ordered results: {len(exact_matches)} exact, {len(nearby_matches)} nearby, {len(convertible_matches)} convertible, {len(other_matches)} other")
+    
+    return ordered
+
+
+def calculate_match_score(property_data: Dict, criteria: Dict) -> int:
+    """Calculate how well a property matches the search criteria (0-100)."""
+    if not criteria:
+        return 50  # Default score when no criteria
+    
+    score = 100
+    penalties = 0
+    
+    # Check bedrooms
+    if criteria.get("bedrooms"):
+        prop_beds = property_data.get("bedrooms", 0)
+        if prop_beds != criteria["bedrooms"]:
+            penalties += 20
+    
+    # Check bathrooms
+    if criteria.get("bathrooms"):
+        prop_baths = property_data.get("bathrooms", 0)
+        if prop_baths != criteria["bathrooms"]:
+            penalties += 15
+    
+    # Check price range
+    prop_price = property_data.get("listPrice") or property_data.get("price", 0)
+    if isinstance(prop_price, str):
+        prop_price = int(prop_price.replace("$", "").replace(",", "").strip() or 0)
+    
+    if criteria.get("max_price") and prop_price > criteria["max_price"]:
+        over_budget = (prop_price - criteria["max_price"]) / criteria["max_price"]
+        penalties += min(30, int(over_budget * 100))
+    
+    if criteria.get("min_price") and prop_price < criteria["min_price"]:
+        penalties += 10
+    
+    # Check amenities
+    if criteria.get("amenities"):
+        prop_amenities = property_data.get("condoAmenities", []) or []
+        if isinstance(prop_amenities, str):
+            prop_amenities = [prop_amenities]
+        prop_amenities_lower = [a.lower() for a in prop_amenities]
+        
+        for amenity in criteria["amenities"]:
+            if amenity.lower() not in prop_amenities_lower:
+                penalties += 5
+    
+    return max(0, score - penalties)
+
+
+def get_nearby_cities(city: str) -> List[str]:
+    """Get list of cities near the target city."""
+    nearby_map = {
+        "toronto": ["North York", "Scarborough", "Etobicoke", "Mississauga", "Markham", "Vaughan", "Richmond Hill"],
+        "vancouver": ["Burnaby", "Richmond", "North Vancouver", "West Vancouver", "Surrey", "Coquitlam"],
+        "ottawa": ["Gatineau", "Kanata", "Orleans", "Nepean"],
+        "montreal": ["Laval", "Longueuil", "Brossard", "Saint-Laurent"],
+        "calgary": ["Airdrie", "Cochrane", "Chestermere"],
+        "edmonton": ["Sherwood Park", "St. Albert", "Spruce Grove"]
+    }
+    return nearby_map.get(city.lower(), [])
+
+
+def generate_suggestions(criteria: Dict, result_count: int, location: str) -> List[str]:
+    """Generate contextual suggestions based on search results."""
+    suggestions = []
+    
+    if result_count == 0:
+        suggestions.append("Try expanding the price range")
+        suggestions.append("Search nearby areas")
+        if criteria.get("bedrooms"):
+            suggestions.append(f"Try {criteria['bedrooms'] - 1} or {criteria['bedrooms'] + 1} bedrooms")
+    else:
+        if not criteria.get("amenities"):
+            suggestions.append("Add amenity filters (gym, pool, concierge)")
+        if not criteria.get("max_price"):
+            suggestions.append("Set a budget range")
+        suggestions.append("Show me pet-friendly options")
+        suggestions.append(f"What's available for rent in {location}?")
+    
+    return suggestions[:4]
+
 
 # ==================== ENDPOINTS ====================
 

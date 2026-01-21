@@ -237,28 +237,40 @@ class PropertyTypeInterpreter:
             if context:
                 context_str = "Previous messages:\n" + "\n".join(f"- {msg}" for msg in context[-3:])
             
-            prompt = f"""Analyze this real estate query and determine if the user is looking for RESIDENTIAL or COMMERCIAL properties.
+            prompt = f"""Analyze this real estate query and determine the property type the user is looking for.
 
 Current message: "{message}"
 {context_str}
 
 Respond with ONLY a JSON object:
 {{
-    "property_type": "residential" | "commercial" | "mixed" | "unknown",
+    "property_type": "residential" | "commercial" | "condo" | "mixed" | "unknown",
     "confidence": 0.0 to 1.0,
     "reasoning": "brief explanation"
 }}
 
-Guidelines:
-- "residential": Houses, condos, apartments for living
-- "commercial": Offices, retail, industrial, business properties
-- "mixed": User wants both types
+CRITICAL CLASSIFICATION RULES:
+- "condo": User explicitly says "condo", "condominium", "condo apartment", or "apartment condo". THIS IS HIGHEST PRIORITY - if user says "condo", ALWAYS return "condo" NOT "residential".
+- "residential": Houses, detached homes, semi-detached, townhouses, bungalows, cottages - but NOT condos
+- "commercial": Offices, retail, industrial, business properties, restaurants, spas, salons, clinics, shops, stores
+- "mixed": User wants multiple types
 - "unknown": Not enough information
 
+IMPORTANT:
+- Words "condo" or "condominium" in the query → ALWAYS return "condo" (confidence 0.95+)
+- Bedrooms + condo → "condo" 
+- Bedrooms without condo → "residential"
+- Spa, salon, restaurant, retail, office, shop, store → "commercial"
+
 Examples:
-- "2 bedroom condo in Toronto" → residential (bedrooms = residential)
+- "2 bedroom condo in Toronto" → condo (explicit "condo" mentioned)
+- "condos under $700K" → condo (explicit "condo" mentioned)  
+- "condo with gym and pool" → condo (explicit "condo" mentioned)
+- "3 bedroom house in Ottawa" → residential (house, not condo)
+- "townhouse with backyard" → residential (townhouse is residential)
+- "spa space in Toronto" → commercial (spa = business)
 - "office space downtown" → commercial (office = commercial)
-- "retail store with apartment above" → mixed
+- "retail store" → commercial (retail = commercial)
 - "property in Ottawa" → unknown (need more info)
 """
             

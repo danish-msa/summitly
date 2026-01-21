@@ -502,11 +502,30 @@ class ResidentialPropertySearchService:
         """
         # Normalize property type
         if filters.property_type:
-            normalized = RESIDENTIAL_PROPERTY_TYPE_MAPPING.get(
-                filters.property_type.lower(),
-                filters.property_type
-            )
-            filters.property_type = normalized
+            prop_type_lower = filters.property_type.lower()
+            
+            # ★★★ CRITICAL FIX ★★★
+            # 'residential' is a CLASS, not a propertyType!
+            # When user clicks the 'residential' button, don't filter by propertyType
+            if prop_type_lower in ['residential', 'any', 'all']:
+                logger.info(f"🔧 [NORMALIZE] Clearing invalid propertyType='{filters.property_type}' (not a valid API value)")
+                filters.property_type = None
+            else:
+                # Try to normalize to API-compatible format
+                normalized = RESIDENTIAL_PROPERTY_TYPE_MAPPING.get(
+                    prop_type_lower,
+                    None  # Don't fallback to unknown types
+                )
+                if normalized:
+                    filters.property_type = normalized
+                else:
+                    # Check if already a valid API type
+                    valid_api_types = ['Detached', 'Semi-Detached', 'Townhouse', 'Condo Apartment', 
+                                      'Condo Townhouse', 'Duplex', 'Triplex', 'Multiplex', 'Link',
+                                      'Vacant Land', 'Farm', 'Mobile/Trailer']
+                    if filters.property_type not in valid_api_types:
+                        logger.warning(f"⚠️ [NORMALIZE] Unknown propertyType='{filters.property_type}' - clearing to avoid API error")
+                        filters.property_type = None
         
         # Ensure price range is valid
         if filters.min_price and filters.max_price:
