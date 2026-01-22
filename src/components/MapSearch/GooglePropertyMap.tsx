@@ -157,13 +157,24 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
       },
     };
 
-    // Create clusterer - it will automatically handle zoom-based clustering
-    // Clusters will break apart as you zoom in, and individual markers will appear
-    clustererRef.current = new MarkerClusterer({
+    // Create clusterer with aggressive clustering at lower zoom levels
+    // Configuration ensures all markers are clustered at wide zoom levels
+    // Individual markers only appear when zoomed in close enough
+    const clustererOptions: any = {
       map,
       markers: markersRef.current,
       renderer,
-    });
+      algorithmOptions: {
+        // Higher maxZoom means clustering happens at more zoom levels
+        // Set to 15 so clustering continues until very close zoom (individual markers only at zoom 16+)
+        maxZoom: 15,
+        // Larger maxDistance means markers further apart still get clustered
+        // This ensures at wide zoom levels, all markers are in clusters
+        maxDistance: 40000, // Increased from default (10000) to cluster markers that are further apart at low zoom
+      },
+    };
+    
+    clustererRef.current = new MarkerClusterer(clustererOptions);
   }, []);
 
   // Memoize marker icon creation
