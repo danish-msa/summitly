@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { GoogleMap, useJsApiLoader, InfoWindow } from '@react-google-maps/api';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { useRouter } from 'next/navigation';
@@ -101,7 +101,6 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
   const isProgrammaticUpdateRef = useRef<boolean>(false);
   const boundsChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const markerIconCacheRef = useRef<Map<string, google.maps.Icon>>(new Map());
-  const previousPropertiesRef = useRef<Set<string>>(new Set());
 
   // Load Google Maps API
   const { isLoaded } = useJsApiLoader({
@@ -160,7 +159,17 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
     // Create clusterer with aggressive clustering at lower zoom levels
     // Configuration ensures all markers are clustered at wide zoom levels
     // Individual markers only appear when zoomed in close enough
-    const clustererOptions: any = {
+    const clustererOptions: {
+      map: google.maps.Map;
+      markers: google.maps.Marker[];
+      renderer: {
+        render: (options: { count: number; position: google.maps.LatLng }) => google.maps.Marker;
+      };
+      algorithmOptions?: {
+        maxZoom?: number;
+        maxDistance?: number;
+      };
+    } = {
       map,
       markers: markersRef.current,
       renderer,
