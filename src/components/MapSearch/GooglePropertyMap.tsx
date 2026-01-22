@@ -12,7 +12,7 @@ import { MapFilterPanel } from './MapFilterPanel';
 import { FilterComponentProps } from '@/lib/types/filters';
 import { LOCATIONS } from '@/lib/types/filters';
 
-interface GooglePropertyMapProps {
+export interface GooglePropertyMapProps {
   properties: PropertyListing[];
   selectedProperty: PropertyListing | null;
   onPropertySelect: (property: PropertyListing | null) => void;
