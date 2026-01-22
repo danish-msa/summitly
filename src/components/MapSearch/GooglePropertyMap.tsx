@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { GoogleMap, useJsApiLoader, InfoWindow } from '@react-google-maps/api';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { useRouter } from 'next/navigation';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, X } from 'lucide-react';
 import { PropertyListing } from '@/lib/types';
 import { getPropertyUrl } from '@/lib/utils/propertyUrl';
 import { getThemeStyles, type MapTheme, activeTheme } from '@/lib/constants/mapThemes';
@@ -80,10 +80,6 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
   locations = LOCATIONS,
   subjectProperty
 }) => {
-  // Debug: Log when locationCenter prop changes
-  useEffect(() => {
-    console.log('[GooglePropertyMap] Component received locationCenter prop:', locationCenter);
-  }, [locationCenter]);
   // Get map options with theme styles
   const mapOptions = React.useMemo(() => ({
     disableDefaultUI: false,
@@ -103,6 +99,9 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
   } | null>(null);
   const isInitialFitRef = useRef<boolean>(false);
   const isProgrammaticUpdateRef = useRef<boolean>(false);
+  const boundsChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const markerIconCacheRef = useRef<Map<string, google.maps.Icon>>(new Map());
+  const previousPropertiesRef = useRef<Set<string>>(new Set());
 
   // Load Google Maps API
   const { isLoaded } = useJsApiLoader({
@@ -111,10 +110,16 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
     libraries: ['places']
   });
 
+  // Clustering configuration
+  // MarkerClusterer automatically handles dynamic clustering based on zoom level
+  // As you zoom in, clusters break apart naturally into smaller clusters or individual markers
+  
   // Initialize marker clusterer with custom secondary color
+  // The clusterer will automatically adjust clusters based on zoom level
   const initializeClusterer = useCallback((map: google.maps.Map) => {
     if (clustererRef.current) {
       clustererRef.current.clearMarkers();
+      clustererRef.current = null;
     }
 
     // Secondary color: #1AC0EB
@@ -127,11 +132,14 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
         const size = count < 10 ? 40 : count < 100 ? 50 : 60;
         const fontSize = count < 10 ? '12px' : count < 100 ? '14px' : '16px';
         
+        // Format large numbers (e.g., 1000 -> 1K)
+        const displayCount = count >= 1000 ? `${(count / 1000).toFixed(0)}K` : count.toString();
+        
         // Create SVG icon with secondary color
         const svg = `
           <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
             <circle cx="${size/2}" cy="${size/2}" r="${size/2 - 2}" fill="${secondaryColor}" stroke="white" stroke-width="2"/>
-            <text x="${size/2}" y="${size/2 + (size * 0.15)}" text-anchor="middle" fill="white" font-size="${fontSize}" font-weight="bold" font-family="Arial, sans-serif">${count}</text>
+            <text x="${size/2}" y="${size/2 + (size * 0.15)}" text-anchor="middle" fill="white" font-size="${fontSize}" font-weight="bold" font-family="Arial, sans-serif">${displayCount}</text>
           </svg>
         `;
         
@@ -149,93 +157,198 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
       },
     };
 
+    // Create clusterer - it will automatically handle zoom-based clustering
+    // Clusters will break apart as you zoom in, and individual markers will appear
     clustererRef.current = new MarkerClusterer({
       map,
       markers: markersRef.current,
-      renderer
+      renderer,
     });
   }, []);
 
-  // Create property markers
-  const createMarkers = useCallback((map: google.maps.Map) => {
-    // Clear existing markers
-    markersRef.current.forEach(marker => marker.setMap(null));
-    markersRef.current = [];
+  // Memoize marker icon creation
+  const createMarkerIcon = useCallback((priceText: string, isSelected: boolean): google.maps.Icon => {
+    const cacheKey = `${priceText}-${isSelected}`;
+    
+    // Check cache first
+    if (markerIconCacheRef.current.has(cacheKey)) {
+      return markerIconCacheRef.current.get(cacheKey)!;
+    }
 
+    // Calculate width based on price text length
+    const textWidth = priceText.length * 7 + 20;
+    const markerWidth = Math.max(60, textWidth);
+    const markerHeight = 28;
+    // Use half of height for rounded-full effect
+    const borderRadius = markerHeight / 2;
+    
+    const icon: google.maps.Icon = {
+      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+        <svg width="${markerWidth}" height="${markerHeight}" viewBox="0 0 ${markerWidth} ${markerHeight}" xmlns="http://www.w3.org/2000/svg">
+          <rect 
+            x="0" 
+            y="0" 
+            width="${markerWidth}" 
+            height="${markerHeight}" 
+            rx="${borderRadius}" 
+            ry="${borderRadius}" 
+            fill="white" 
+            stroke="${isSelected ? '#e74c3c' : '#e5e7eb'}" 
+            stroke-width="${isSelected ? '2' : '1'}"
+          />
+          <text 
+            x="${markerWidth / 2}" 
+            y="${markerHeight / 2 + 4}" 
+            text-anchor="middle" 
+            fill="#000000" 
+            font-size="12" 
+            font-weight="600" 
+            font-family="Arial, sans-serif"
+          >${priceText}</text>
+        </svg>
+      `),
+      scaledSize: new google.maps.Size(markerWidth, markerHeight),
+      anchor: new google.maps.Point(markerWidth / 2, markerHeight / 2)
+    };
+
+    // Cache the icon (limit cache size to prevent memory issues)
+    if (markerIconCacheRef.current.size > 100) {
+      const firstKey = markerIconCacheRef.current.keys().next().value;
+      if (firstKey) {
+        markerIconCacheRef.current.delete(firstKey);
+      }
+    }
+    markerIconCacheRef.current.set(cacheKey, icon);
+    
+    return icon;
+  }, []);
+
+  // Create property markers with incremental updates
+  const createMarkers = useCallback((map: google.maps.Map) => {
     const validProperties = properties.filter(
       p => p.map.latitude && p.map.longitude
     );
 
-    if (validProperties.length === 0) return;
+    if (validProperties.length === 0) {
+      // Clear all markers if no valid properties
+      markersRef.current.forEach(marker => marker.setMap(null));
+      markersRef.current = [];
+      if (clustererRef.current) {
+        clustererRef.current.clearMarkers();
+      }
+      return;
+    }
 
-    // Create markers for each property
+    // Create a map of current property IDs for quick lookup
+    const currentPropertyIds = new Set(validProperties.map(p => p.mlsNumber));
+    const markerMap = new Map(markersRef.current.map(m => {
+      // Try to find the property for this marker by position
+      const pos = m.getPosition();
+      if (!pos) return null;
+      const prop = validProperties.find(p => 
+        Math.abs(p.map.latitude! - pos.lat()) < 0.0001 &&
+        Math.abs(p.map.longitude! - pos.lng()) < 0.0001
+      );
+      return prop ? [prop.mlsNumber, { marker: m, property: prop }] : null;
+    }).filter(Boolean) as Array<[string, { marker: google.maps.Marker; property: PropertyListing }]>);
+
+    // Remove markers for properties that no longer exist
+    const markersToRemove: google.maps.Marker[] = [];
+    markerMap.forEach(({ marker }, mlsNumber) => {
+      if (!currentPropertyIds.has(mlsNumber)) {
+        markersToRemove.push(marker);
+        markerMap.delete(mlsNumber);
+      }
+    });
+    markersToRemove.forEach(marker => {
+      marker.setMap(null);
+      const index = markersRef.current.indexOf(marker);
+      if (index > -1) markersRef.current.splice(index, 1);
+    });
+
+    // Update existing markers or create new ones
     validProperties.forEach(property => {
       if (!property.map.latitude || !property.map.longitude) return;
 
-      // Format price for display
       const priceText = `$${(property.listPrice / 1000).toFixed(0)}K`;
+      const isSelected = selectedProperty?.mlsNumber === property.mlsNumber;
       
-      // Calculate width based on price text length
-      const textWidth = priceText.length * 7 + 20; // Approximate width calculation
-      const markerWidth = Math.max(60, textWidth);
-      const markerHeight = 28;
+      const existing = markerMap.get(property.mlsNumber);
       
-      const marker = new google.maps.Marker({
-        position: {
-          lat: property.map.latitude,
-          lng: property.map.longitude
-        },
-        map,
-        icon: {
-          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-            <svg width="${markerWidth}" height="${markerHeight}" viewBox="0 0 ${markerWidth} ${markerHeight}" xmlns="http://www.w3.org/2000/svg">
-              <rect 
-                x="0" 
-                y="0" 
-                width="${markerWidth}" 
-                height="${markerHeight}" 
-                rx="6" 
-                ry="6" 
-                fill="white" 
-                stroke="${selectedProperty?.mlsNumber === property.mlsNumber ? '#e74c3c' : '#e5e7eb'}" 
-                stroke-width="${selectedProperty?.mlsNumber === property.mlsNumber ? '2' : '1'}"
-              />
-              <text 
-                x="${markerWidth / 2}" 
-                y="${markerHeight / 2 + 4}" 
-                text-anchor="middle" 
-                fill="#000000" 
-                font-size="12" 
-                font-weight="600" 
-                font-family="Arial, sans-serif"
-              >${priceText}</text>
-            </svg>
-          `),
-          scaledSize: new google.maps.Size(markerWidth, markerHeight),
-          anchor: new google.maps.Point(markerWidth / 2, markerHeight / 2)
-        },
-        title: `${property.details.propertyType} - $${property.listPrice.toLocaleString()}`
-      });
-
-      // Add click event to marker
-      marker.addListener('click', (e: google.maps.MapMouseEvent) => {
-        // Stop event propagation to prevent map click handler from firing
-        if (e.domEvent) {
-          e.domEvent.stopPropagation();
+      if (existing) {
+        // Update existing marker icon if selection changed
+        if (existing.property.mlsNumber !== property.mlsNumber || 
+            (selectedProperty?.mlsNumber === property.mlsNumber) !== (selectedProperty?.mlsNumber === existing.property.mlsNumber)) {
+          const icon = createMarkerIcon(priceText, isSelected);
+          existing.marker.setIcon(icon);
         }
-        onPropertySelect(property);
-        setInfoWindow({
-          property,
-          position: marker.getPosition()!
+        // Update position if it changed
+        const pos = existing.marker.getPosition();
+        if (!pos || 
+            Math.abs(pos.lat() - property.map.latitude!) > 0.0001 ||
+            Math.abs(pos.lng() - property.map.longitude!) > 0.0001) {
+          existing.marker.setPosition({
+            lat: property.map.latitude!,
+            lng: property.map.longitude!
+          });
+        }
+        existing.property = property;
+      } else {
+        // Create new marker
+        // Don't set map directly - let the clusterer manage marker visibility
+        const icon = createMarkerIcon(priceText, isSelected);
+        const marker = new google.maps.Marker({
+          position: {
+            lat: property.map.latitude!,
+            lng: property.map.longitude!
+          },
+          map: null, // Clusterer will manage visibility
+          icon,
+          title: `${property.details.propertyType} - $${property.listPrice.toLocaleString()}`
         });
-      });
 
-      markersRef.current.push(marker);
+        // Add click event to marker
+        marker.addListener('click', (e: google.maps.MapMouseEvent) => {
+          if (e.domEvent) {
+            e.domEvent.stopPropagation();
+          }
+          onPropertySelect(property);
+          setInfoWindow({
+            property,
+            position: marker.getPosition()!
+          });
+        });
+
+        markersRef.current.push(marker);
+        markerMap.set(property.mlsNumber, { marker, property });
+      }
     });
 
-    // Initialize clusterer with new markers
-    initializeClusterer(map);
-  }, [properties, selectedProperty, onPropertySelect, initializeClusterer]);
+    // Update clusterer with current markers
+    // MarkerClusterer automatically handles dynamic clustering:
+    // - At low zoom: Large clusters (e.g., 1K, 419, 286)
+    // - As you zoom in: Clusters break into smaller clusters (e.g., 410, 113, 30)
+    // - At high zoom: Individual price tags appear alongside small clusters
+    
+    // Ensure all markers are properly managed by the clusterer
+    // Remove markers from map if they were added directly (shouldn't happen, but safety check)
+    markersRef.current.forEach(marker => {
+      if (marker.getMap() && !clustererRef.current) {
+        // Only remove if clusterer doesn't exist yet
+        marker.setMap(null);
+      }
+    });
+    
+    if (clustererRef.current) {
+      clustererRef.current.clearMarkers();
+      clustererRef.current.addMarkers(markersRef.current);
+    } else {
+      initializeClusterer(map);
+    }
+    
+    // Debug: Log marker count
+    console.log(`[GooglePropertyMap] Total markers: ${markersRef.current.length}, Properties: ${validProperties.length}`);
+  }, [properties, selectedProperty, onPropertySelect, initializeClusterer, createMarkerIcon]);
 
   // Handle map click to deselect property (like onTap in Flutter)
   const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
@@ -247,6 +360,24 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
     }
   }, [onPropertySelect]);
 
+
+  // Throttled bounds change handler
+  const throttledBoundsChange = useCallback((bounds: google.maps.LatLngBounds) => {
+    if (boundsChangeTimeoutRef.current) {
+      clearTimeout(boundsChangeTimeoutRef.current);
+    }
+    
+    boundsChangeTimeoutRef.current = setTimeout(() => {
+      if (!isProgrammaticUpdateRef.current && mapRef.current) {
+        onBoundsChange({
+          north: bounds.getNorthEast().lat(),
+          south: bounds.getSouthWest().lat(),
+          east: bounds.getNorthEast().lng(),
+          west: bounds.getSouthWest().lng()
+        });
+      }
+    }, 150); // Throttle to 150ms
+  }, [onBoundsChange]);
 
   // Handle map load
   const onMapLoad = useCallback((map: google.maps.Map) => {
@@ -261,38 +392,35 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
       map.setZoom(initialZoom);
     }
     
-    // Trigger initial bounds change after a short delay
-    setTimeout(() => {
-      const bounds = map.getBounds();
-      if (bounds) {
-        onBoundsChange({
-          north: bounds.getNorthEast().lat(),
-          south: bounds.getSouthWest().lat(),
-          east: bounds.getNorthEast().lng(),
-          west: bounds.getSouthWest().lng()
-        });
-      }
-    }, 100);
+    // Trigger initial bounds change
+    const initialBounds = map.getBounds();
+    if (initialBounds) {
+      onBoundsChange({
+        north: initialBounds.getNorthEast().lat(),
+        south: initialBounds.getSouthWest().lat(),
+        east: initialBounds.getNorthEast().lng(),
+        west: initialBounds.getSouthWest().lng()
+      });
+    }
     
-    // Add bounds change listener
+    // Add throttled bounds change listener
     map.addListener('bounds_changed', () => {
       const bounds = map.getBounds();
       if (bounds) {
-        onBoundsChange({
-          north: bounds.getNorthEast().lat(),
-          south: bounds.getSouthWest().lat(),
-          east: bounds.getNorthEast().lng(),
-          west: bounds.getSouthWest().lng()
-        });
+        throttledBoundsChange(bounds);
       }
     });
+
+    // Note: MarkerClusterer automatically handles zoom changes internally
+    // It will re-cluster markers as you zoom in/out, breaking clusters apart naturally
+    // No manual zoom listener needed - the clusterer does this automatically
 
     // Add map click listener to deselect property
     map.addListener('click', handleMapClick);
 
     // Create initial markers
     createMarkers(map);
-  }, [createMarkers, onBoundsChange, handleMapClick, initialCenter, initialZoom]);
+  }, [createMarkers, onBoundsChange, handleMapClick, initialCenter, initialZoom, throttledBoundsChange, initializeClusterer]);
 
   // Update markers when properties change
   useEffect(() => {
@@ -312,7 +440,10 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
     };
 
     mapRef.current.panTo(position);
-    mapRef.current.setZoom(Math.max(mapRef.current.getZoom() || 10, 12));
+    const currentZoom = mapRef.current.getZoom() || 10;
+    if (currentZoom < 12) {
+      mapRef.current.setZoom(12);
+    }
 
     // Show info window for selected property
     setInfoWindow({
@@ -320,10 +451,10 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
       position: new google.maps.LatLng(position.lat, position.lng)
     });
 
-    // Reset flag after a short delay
-    setTimeout(() => {
+    // Reset flag immediately (no delay needed)
+    requestAnimationFrame(() => {
       isProgrammaticUpdateRef.current = false;
-    }, 100);
+    });
   }, [selectedProperty]);
 
   // Store locationCenter in a ref to access it in onMapLoad
@@ -332,66 +463,26 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
     locationCenterRef.current = locationCenter;
   }, [locationCenter]);
 
-  // Update map center when location filter changes
+  // Update map center when location filter changes (optimized)
   useEffect(() => {
-    console.log('[GooglePropertyMap] locationCenter effect triggered, locationCenter:', locationCenter);
-    console.log('[GooglePropertyMap] mapRef.current:', !!mapRef.current);
+    if (!locationCenter || !mapRef.current) return;
+
+    isProgrammaticUpdateRef.current = true;
+    const newPosition = new google.maps.LatLng(locationCenter.lat, locationCenter.lng);
     
-    if (!locationCenter) {
-      console.log('[GooglePropertyMap] No location center provided, skipping update');
-      return;
-    }
-
-    // Function to update map center
-    const updateMapCenter = () => {
-      if (!mapRef.current) {
-        console.log('[GooglePropertyMap] Map not ready in updateMapCenter');
-        return false;
-      }
-
-      console.log('[GooglePropertyMap] Updating map center to:', locationCenter);
-      isProgrammaticUpdateRef.current = true;
-      
-      // Always update the map center when locationCenter changes
-      const newPosition = new google.maps.LatLng(locationCenter.lat, locationCenter.lng);
-      
-      // Use setCenter for immediate update
-      mapRef.current.setCenter(newPosition);
-      mapRef.current.setZoom(12);
-      
-      // Also use panTo for smooth transition
-      setTimeout(() => {
-        if (mapRef.current && locationCenter) {
-          mapRef.current.panTo(newPosition);
-          console.log('[GooglePropertyMap] Map center updated and zoom set to 12');
-        }
-      }, 100);
-
-      // Reset flag after a delay
-      setTimeout(() => {
-        isProgrammaticUpdateRef.current = false;
-      }, 500);
-      
-      return true;
-    };
-
-    // Try to update immediately
-    if (!updateMapCenter()) {
-      // If map isn't ready, retry after a delay
-      console.log('[GooglePropertyMap] Map not ready yet, will retry when map loads');
-      const retryTimeout = setTimeout(() => {
-        if (mapRef.current && locationCenter) {
-          console.log('[GooglePropertyMap] Retrying map center update after map load');
-          updateMapCenter();
-        }
-      }, 500);
-      return () => clearTimeout(retryTimeout);
-    }
+    // Use panTo for smooth transition (no setTimeout needed)
+    mapRef.current.panTo(newPosition);
+    mapRef.current.setZoom(12);
+    
+    // Reset flag on next frame
+    requestAnimationFrame(() => {
+      isProgrammaticUpdateRef.current = false;
+    });
   }, [locationCenter]);
 
   // Fit map to show all properties (only if no initial center is provided)
   useEffect(() => {
-    if (!mapRef.current || properties.length === 0 || initialCenter) return;
+    if (!mapRef.current || properties.length === 0 || initialCenter || locationCenter) return;
 
     const validProperties = properties.filter(
       p => p.map.latitude && p.map.longitude
@@ -417,14 +508,14 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
         left: 50
       });
 
-      // Reset flag after fitBounds completes
-      setTimeout(() => {
+      // Reset flag on next frame
+      requestAnimationFrame(() => {
         isProgrammaticUpdateRef.current = false;
-      }, 200);
+      });
 
       isInitialFitRef.current = true;
     }
-  }, [properties, initialCenter]);
+  }, [properties, initialCenter, locationCenter]);
 
   const handleInfoWindowClose = () => {
     setInfoWindow(null);
@@ -507,50 +598,84 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
         options={mapOptions}
       >
         {/* Info Window */}
-        {infoWindow && (
-          <InfoWindow
-            position={infoWindow.position}
-            onCloseClick={handleInfoWindowClose}
-          >
-            <div className="property-info-window" style={{ width: '280px', padding: '0' }}>
-              <div className="relative">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
-                  src={infoWindow.property.images.imageUrl} 
-                  alt={infoWindow.property.details.propertyType}
-                  style={{
-                    width: '100%',
-                    height: '160px',
-                    objectFit: 'cover',
-                    borderRadius: '8px 8px 0 0'
-                  }}
-                />
-                <div className="p-4">
-                  <h3 className="font-bold text-lg mb-2 text-gray-800">
-                    {infoWindow.property.details.propertyType} in {infoWindow.property.address.city}
-                  </h3>
-                  <p className="text-gray-600 text-sm mb-2">
-                    {infoWindow.property.address.location}
-                  </p>
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-xl font-bold text-primary">
-                      ${infoWindow.property.listPrice.toLocaleString()}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      {infoWindow.property.details.numBedrooms} bd | {infoWindow.property.details.numBathrooms} ba | {infoWindow.property.details.sqft} sqft
-                    </span>
+        {infoWindow && (() => {
+          const property = infoWindow.property;
+          const isRental = property.type === 'Lease';
+          const priceText = isRental 
+            ? `$${property.listPrice.toLocaleString()} / month`
+            : `$${property.listPrice.toLocaleString()}`;
+          const bedrooms = property.details.numBedrooms || 0;
+          const bathrooms = property.details.numBathrooms || 0;
+          const sqft = typeof property.details.sqft === 'number' 
+            ? property.details.sqft 
+            : typeof property.details.sqft === 'string' 
+              ? parseInt(property.details.sqft.replace(/,/g, '')) || 0 
+              : 0;
+          // Build location from streetNumber, streetName, and streetSuffix
+          const locationParts = [
+            property.address.streetNumber,
+            property.address.streetName,
+            property.address.streetSuffix
+          ].filter(Boolean);
+          const location = locationParts.join(' ') || '';
+
+          return (
+            <InfoWindow
+              position={infoWindow.position}
+              onCloseClick={handleInfoWindowClose}
+              options={{
+                pixelOffset: new google.maps.Size(0, -10),
+                disableAutoPan: false,
+                maxWidth: 260,
+                minWidth: 260,
+              }}
+            >
+              <div className="property-info-window bg-white rounded-xl shadow-lg overflow-hidden relative" style={{ width: '220px', padding: '0', margin: '0' }}>
+                {/* Close Button */}
+                <button
+                  onClick={handleInfoWindowClose}
+                  className="absolute top-2 right-2 z-10 w-6 h-6 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200"
+                  aria-label="Close"
+                  title="Close"
+                >
+                  <X className="w-4 h-4 text-zinc-700" />
+                </button>
+                
+                {/* Image Section */}
+                <div className="relative w-full h-20 overflow-hidden rounded-t-xl">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img 
+                    src={property.images.imageUrl} 
+                    alt={property.details.propertyType || 'Property'}
+                    className="w-full h-full object-cover"
+                    style={{ borderRadius: '12px 12px 0 0' }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/images/p1.jpg';
+                    }}
+                  />
+                </div>
+                
+                {/* Content Section */}
+                <div className="p-3 space-y-1">
+                  {/* Price - Largest, Boldest */}
+                  <div className="text-base font-bold leading-tight">
+                    {priceText}
                   </div>
-                  <button
-                    onClick={() => handleViewProperty(infoWindow.property)}
-                    className="w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-secondary transition-colors font-medium"
-                  >
-                    View Details
-                  </button>
+                  
+                  {/* Property Metrics - Medium size */}
+                  <div className="text-xs text-primary">
+                    {bedrooms} Bed{bedrooms !== 1 ? 's' : ''}, {bathrooms} Bath{bathrooms !== 1 ? 's' : ''}, {sqft.toLocaleString()} sqft
+                  </div>
+                  
+                  {/* Location - Smallest, Lighter */}
+                  <div className="text-xs">
+                    {location}
+                  </div>
                 </div>
               </div>
-            </div>
-          </InfoWindow>
-        )}
+            </InfoWindow>
+          );
+        })()}
       </GoogleMap>
     </div>
   );

@@ -421,7 +421,6 @@ const Listings = () => {
         // Map View Only
         <div className="w-full bg-gray-100 rounded-lg overflow-hidden mb-10" style={{ height: '70vh' }}>
           <GooglePropertyMap
-            key={`map-${locationCenter?.lat}-${locationCenter?.lng}`}
             theme="custom"
             properties={visibleProperties}
             selectedProperty={selectedProperty}
@@ -478,7 +477,6 @@ const Listings = () => {
           {/* Map View - Right Side */}
           <div className={`${viewMode === 'mixed' ? 'md:w-1/2' : 'w-full'} bg-gray-100 rounded-lg overflow-hidden flex-shrink-0`} style={{ height: '100%' }}>
             <GooglePropertyMap
-              key={`map-mixed-${locationCenter?.lat}-${locationCenter?.lng}`}
               theme="custom"
               properties={visibleProperties}
               selectedProperty={selectedProperty}
