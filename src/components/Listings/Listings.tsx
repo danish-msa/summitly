@@ -60,6 +60,8 @@ const Listings = () => {
   const geocodingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const splitContainerRef = useRef<HTMLDivElement>(null);
   const propertiesContainerRef = useRef<HTMLDivElement>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapResizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Use hidden properties hook
   const { hideProperty, getVisibleProperties } = useHiddenProperties();
@@ -411,10 +413,41 @@ const Listings = () => {
     setListingType(type);
   };
 
+  // Track if we're currently dragging for performance optimizations
+  const isDraggingRef = useRef(false);
+  
   // Handle split position change from draggable divider
   const handleSplitPositionChange = (newPosition: number) => {
+    // Update position immediately for smooth visual feedback
     setSplitPosition(newPosition);
+    
+    // Mark that we're dragging
+    isDraggingRef.current = true;
+    
+    // Throttle expensive map resize operations
+    // Clear any pending resize
+    if (mapResizeTimeoutRef.current) {
+      clearTimeout(mapResizeTimeoutRef.current);
+    }
+    
+    // Debounce map resize - only trigger after user stops dragging
+    mapResizeTimeoutRef.current = setTimeout(() => {
+      isDraggingRef.current = false;
+      // Trigger window resize event to help maps detect size change
+      // This is a backup in case ResizeObserver doesn't catch it
+      window.dispatchEvent(new Event('resize'));
+      mapResizeTimeoutRef.current = null;
+    }, 100); // Reduced from 150ms for faster response
   };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (mapResizeTimeoutRef.current) {
+        clearTimeout(mapResizeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Calculate grid columns based on container width
   useEffect(() => {
@@ -515,7 +548,12 @@ const Listings = () => {
         <div 
           ref={splitContainerRef}
           className="flex flex-col md:flex-row mb-10 relative" 
-          style={{ height: 'calc(100vh - 200px)' }}
+          style={{ 
+            height: 'calc(100vh - 200px)',
+            // Optimize container for smooth dragging
+            contain: 'layout style',
+            willChange: 'contents'
+          } as React.CSSProperties}
         >
           {/* Property Listings - Left Side with Scroll */}
           <div 
@@ -523,8 +561,14 @@ const Listings = () => {
             className="overflow-y-auto pr-2 flex-shrink-0" 
             style={{ 
               width: `calc(${splitPosition}% - 4px)`,
-              maxHeight: '100%'
-            }}
+              maxHeight: '100%',
+              // Advanced CSS optimizations for smooth resizing
+              willChange: 'width',
+              contain: 'layout style paint', // Limit reflow scope
+              transition: 'none', // Disable transitions during drag
+              backfaceVisibility: 'hidden', // Force hardware acceleration
+              transform: 'translateZ(0)' // Create new layer for GPU acceleration
+            } as React.CSSProperties}
           >
             {loading && isInitialLoad ? (
               <div 
@@ -577,11 +621,19 @@ const Listings = () => {
 
           {/* Map View - Right Side */}
           <div 
+            ref={mapContainerRef}
             className="bg-gray-100 rounded-lg overflow-hidden flex-shrink-0" 
             style={{ 
               width: `calc(${100 - splitPosition}% - 4px)`,
-              height: '100%'
-            }}
+              height: '100%',
+              minWidth: 0,
+              // Advanced CSS optimizations for smooth resizing
+              willChange: 'width',
+              contain: 'layout style paint', // Limit reflow scope
+              transition: 'none', // Disable transitions during drag
+              backfaceVisibility: 'hidden', // Force hardware acceleration
+              transform: 'translateZ(0)' // Create new layer for GPU acceleration
+            } as React.CSSProperties}
           >
             <PropertyMap
               theme="custom"

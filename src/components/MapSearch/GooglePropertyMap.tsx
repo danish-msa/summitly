@@ -542,21 +542,32 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
-    const resizeObserver = new ResizeObserver(() => {
-      // Trigger Google Maps resize when container size changes
-      // Use setTimeout to ensure DOM has updated
-      setTimeout(() => {
-        const map = mapRef.current;
-        if (map) {
-          google.maps.event.trigger(map, 'resize');
-        }
-      }, 0);
+    let resizeTimeout: NodeJS.Timeout;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      // Debounce resize calls
+      if (resizeTimeout) clearTimeout(resizeTimeout);
+      
+      resizeTimeout = setTimeout(() => {
+        // Trigger Google Maps resize when container size changes
+        requestAnimationFrame(() => {
+          const map = mapRef.current;
+          if (map) {
+            try {
+              google.maps.event.trigger(map, 'resize');
+            } catch (error) {
+              console.warn('Google Maps resize error:', error);
+            }
+          }
+        });
+      }, 100);
     });
 
     resizeObserver.observe(mapContainerRef.current);
 
     return () => {
       resizeObserver.disconnect();
+      if (resizeTimeout) clearTimeout(resizeTimeout);
     };
   }, []);
 
@@ -598,7 +609,7 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
   }
 
   return (
-    <div ref={mapContainerRef} className="relative w-full h-full">
+    <div ref={mapContainerRef} className="relative w-full h-full" style={{ minWidth: 0, minHeight: 0 }}>
       {/* Filter Panel - Left Side */}
       {showFilters && filters && handleFilterChange && resetFilters && (
         <MapFilterPanel

@@ -349,13 +349,37 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
 
   // Resize map when container size changes (e.g., when divider is dragged)
   useEffect(() => {
-    if (!mapContainerRef.current || !mapRef.current) return;
+    if (!mapContainerRef.current) return;
 
-    const resizeObserver = new ResizeObserver(() => {
-      // Trigger map resize when container size changes
-      if (mapRef.current) {
-        const map = mapRef.current.getMap();
-        map.resize();
+    let resizeTimeout: NodeJS.Timeout;
+
+    const handleResize = () => {
+      // Clear any pending resize
+      if (resizeTimeout) clearTimeout(resizeTimeout);
+      
+      resizeTimeout = setTimeout(() => {
+        // Trigger map resize when container size changes
+        requestAnimationFrame(() => {
+          if (mapRef.current) {
+            const map = mapRef.current.getMap();
+            try {
+              // Force resize - this tells Mapbox to recalculate its dimensions
+              map.resize();
+            } catch (error) {
+              console.warn('Map resize error:', error);
+            }
+          }
+        });
+      }, 150);
+    };
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      // Check if size actually changed
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+          handleResize();
+          break;
+        }
       }
     });
 
@@ -363,6 +387,7 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
 
     return () => {
       resizeObserver.disconnect();
+      if (resizeTimeout) clearTimeout(resizeTimeout);
     };
   }, []);
 
@@ -430,7 +455,7 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
   }
 
   return (
-    <div ref={mapContainerRef} className="relative w-full h-full">
+    <div ref={mapContainerRef} className="relative w-full h-full" style={{ minWidth: 0, minHeight: 0 }}>
       {/* Filter Panel - Left Side */}
       {showFilters && filters && handleFilterChange && resetFilters && (
         <MapFilterPanel
@@ -473,7 +498,7 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
           latitude: initialCenter?.lat || defaultCenter.lat,
           zoom: initialZoom
         }}
-        style={{ width: '100%', height: '100%' }}
+        style={{ width: '100%', height: '100%', minWidth: 0, minHeight: 0 }}
         mapStyle={themeStyle}
         onLoad={onMapLoad}
         onMove={onMove}

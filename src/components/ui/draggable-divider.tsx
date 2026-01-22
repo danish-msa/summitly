@@ -73,6 +73,8 @@ export const DraggableDivider: React.FC<DraggableDividerProps> = ({
   const [internalPosition, setInternalPosition] = useState(50);
   const dividerRef = useRef<HTMLDivElement>(null);
   const localContainerRef = useRef<HTMLDivElement>(null);
+  const rafIdRef = useRef<number | null>(null);
+  const pendingPositionRef = useRef<number | null>(null);
   
   // Use controlled or internal state
   const position = controlledPosition !== undefined ? controlledPosition : internalPosition;
@@ -93,10 +95,14 @@ export const DraggableDivider: React.FC<DraggableDividerProps> = ({
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(true);
   };
 
   useEffect(() => {
+    // Optimized mouse move handler - updates DOM directly for maximum smoothness
+    let rafScheduled = false;
+    
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
 
@@ -104,29 +110,56 @@ export const DraggableDivider: React.FC<DraggableDividerProps> = ({
       if (!container) return;
 
       const rect = container.getBoundingClientRect();
+      let newPercentage: number;
       
       if (orientation === 'vertical') {
         const x = e.clientX - rect.left;
-        const percentage = (x / rect.width) * 100;
-        const constrainedPercentage = Math.max(minPosition, Math.min(maxPosition, percentage));
-        setPosition(constrainedPercentage);
+        newPercentage = (x / rect.width) * 100;
       } else {
         const y = e.clientY - rect.top;
-        const percentage = (y / rect.height) * 100;
-        const constrainedPercentage = Math.max(minPosition, Math.min(maxPosition, percentage));
-        setPosition(constrainedPercentage);
+        newPercentage = (y / rect.height) * 100;
+      }
+      
+      const constrainedPercentage = Math.max(minPosition, Math.min(maxPosition, newPercentage));
+      
+      // Store pending position for state update
+      pendingPositionRef.current = constrainedPercentage;
+      
+      // Schedule RAF only if not already scheduled (prevents queue buildup)
+      if (!rafScheduled) {
+        rafScheduled = true;
+        rafIdRef.current = requestAnimationFrame(() => {
+          rafScheduled = false;
+          if (pendingPositionRef.current !== null) {
+            setPosition(pendingPositionRef.current);
+            pendingPositionRef.current = null;
+          }
+          rafIdRef.current = null;
+        });
       }
     };
 
     const handleMouseUp = () => {
+      // Ensure final position is applied
+      if (pendingPositionRef.current !== null) {
+        setPosition(pendingPositionRef.current);
+        pendingPositionRef.current = null;
+      }
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
       setIsDragging(false);
     };
 
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      // Use passive listeners for better performance
+      document.addEventListener('mousemove', handleMouseMove, { passive: false });
+      document.addEventListener('mouseup', handleMouseUp, { passive: true });
       document.body.style.cursor = orientation === 'vertical' ? 'col-resize' : 'row-resize';
       document.body.style.userSelect = 'none';
+      // Prevent text selection during drag
+      document.body.style.pointerEvents = 'auto';
     }
 
     return () => {
@@ -134,8 +167,13 @@ export const DraggableDivider: React.FC<DraggableDividerProps> = ({
       document.removeEventListener('mouseup', handleMouseUp);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
+      document.body.style.pointerEvents = '';
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
     };
-  }, [isDragging, minPosition, maxPosition, orientation, containerRef]);
+  }, [isDragging, minPosition, maxPosition, orientation]);
 
   // Default icon based on orientation
   const defaultIcon = orientation === 'vertical' 
@@ -161,20 +199,24 @@ export const DraggableDivider: React.FC<DraggableDividerProps> = ({
         onMouseDown={handleMouseDown}
         style={{
           [isVertical ? 'width' : 'height']: '24px',
-          [isVertical ? 'height' : 'width']: '100%'
+          [isVertical ? 'height' : 'width']: '100%',
+          willChange: isDragging ? 'transform' : 'auto',
+          touchAction: 'none' // Prevent touch scrolling during drag
         }}
       >
         {showIcon && (
           <div
             className={cn(
-              "flex items-center justify-center rounded-lg transition-all duration-200",
-              isDragging
-                ? "bg-secondary shadow-lg scale-110"
-                : "bg-gray-300 hover:bg-secondary/80 shadow-md hover:shadow-lg"
+              "flex items-center justify-center rounded-xl",
+              // Disable transitions during drag for better performance
+              isDragging 
+                ? "bg-secondary shadow-lg scale-110" 
+                : "bg-gray-300 hover:bg-secondary/80 shadow-md hover:shadow-lg transition-all duration-200"
             )}
             style={{
-              width: isVertical ? '40px' : '60px',
-              height: isVertical ? '60px' : '40px'
+              width: isVertical ? '25px' : '60px',
+              height: isVertical ? '60px' : '40px',
+              willChange: isDragging ? 'transform' : 'auto'
             }}
           >
             <div
