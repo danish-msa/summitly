@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import MapboxMap from "react-map-gl/mapbox";
+import MapboxMapComponent from "react-map-gl/mapbox";
 import { Marker, Popup } from "react-map-gl/mapbox";
 import type { MapRef } from "react-map-gl/mapbox";
 import { Navigation, Maximize2, Minimize2, ExternalLink, Loader2 } from "lucide-react";
@@ -275,7 +275,7 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
         )}
 
         {/* Mapbox Map */}
-        <MapboxMap
+        <MapboxMapComponent
           ref={mapRef}
           mapboxAccessToken={mapboxAccessToken}
           initialViewState={{
@@ -351,7 +351,7 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
               </div>
             </Popup>
           )}
-        </MapboxMap>
+        </MapboxMapComponent>
 
         {/* Map Controls Overlay */}
         {showControls && (
