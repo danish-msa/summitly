@@ -9,7 +9,7 @@ import { PropertyListing } from "@/lib/types";
 import { getListings } from "@/lib/api/repliers/services/listings";
 import { getPropertyUrl } from "@/lib/utils/propertyUrl";
 
-interface MapProps {
+export interface MapProps {
   // Location data
   latitude?: number;
   longitude?: number;
