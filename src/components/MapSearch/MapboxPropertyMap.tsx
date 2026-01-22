@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import MapboxMap from 'react-map-gl/mapbox';
 import { Marker, Popup } from 'react-map-gl/mapbox';
 import type { MapRef } from 'react-map-gl/mapbox';
-import Supercluster from 'supercluster';
 import { useRouter } from 'next/navigation';
 import { Plus, Minus, X } from 'lucide-react';
 import { PropertyListing } from '@/lib/types';
@@ -14,6 +13,8 @@ import { MapFilterPanel } from './MapFilterPanel';
 import { FilterComponentProps } from '@/lib/types/filters';
 import { LOCATIONS } from '@/lib/types/filters';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import type { GeoJSONSource } from 'mapbox-gl';
+import mapboxgl from 'mapbox-gl';
 
 interface MapboxPropertyMapProps {
   properties: PropertyListing[];
@@ -77,79 +78,57 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
 }) => {
   const mapRef = useRef<MapRef>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const clustererRef = useRef<Supercluster | null>(null);
-  const markersRef = useRef<Map<string, PropertyListing>>(new Map());
   const router = useRouter();
   const [popupInfo, setPopupInfo] = useState<{
     property: PropertyListing;
     lngLat: [number, number];
   } | null>(null);
-  const [clusters, setClusters] = useState<any[]>([]);
-  const [bounds, setBounds] = useState<[number, number, number, number] | null>(null);
+  const [unclusteredProperties, setUnclusteredProperties] = useState<PropertyListing[]>([]);
   const [zoom, setZoom] = useState(initialZoom);
   const isInitialFitRef = useRef<boolean>(false);
   const isProgrammaticUpdateRef = useRef<boolean>(false);
   const boundsChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const markerIconCacheRef = useRef<Map<string, string>>(new Map());
+  const sourceLoadedRef = useRef<boolean>(false);
 
   const mapboxAccessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
 
-  // Initialize clusterer
-  const initializeClusterer = useCallback(() => {
+  // Convert properties to GeoJSON format
+  const propertiesGeoJSON = useMemo(() => {
     const validProperties = properties.filter(
       p => p.map.latitude && p.map.longitude
     );
 
-    if (validProperties.length === 0) {
-      clustererRef.current = null;
-      setClusters([]);
-      return;
-    }
+    return {
+      type: 'FeatureCollection' as const,
+      features: validProperties.map(property => ({
+        type: 'Feature' as const,
+        id: property.mlsNumber,
+        properties: {
+          propertyId: property.mlsNumber,
+          price: property.listPrice,
+          // Store property data in properties for popup access
+          propertyData: JSON.stringify(property)
+        },
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [property.map.longitude!, property.map.latitude!]
+        }
+      }))
+    };
+  }, [properties]);
 
-    // Create points for clustering
-    const points = validProperties.map(property => ({
-      type: 'Feature' as const,
-      properties: {
-        cluster: false,
-        propertyId: property.mlsNumber,
-        property: property
-      },
-      geometry: {
-        type: 'Point' as const,
-        coordinates: [property.map.longitude!, property.map.latitude!]
-      }
-    }));
-
-    // Initialize Supercluster
-    const clusterer = new Supercluster({
-      radius: 50,
-      maxZoom: 15,
-      minZoom: 0,
-      minPoints: 2
-    });
-
-    clusterer.load(points);
-    clustererRef.current = clusterer;
-
-    // Update clusters based on current bounds and zoom
-    if (bounds) {
-      const newClusters = clusterer.getClusters(bounds, Math.floor(zoom));
-      setClusters(newClusters);
-    }
-  }, [properties, bounds, zoom]);
-
-  // Update clusters when map moves
+  // Update GeoJSON source when properties change
   useEffect(() => {
-    if (clustererRef.current && bounds) {
-      const newClusters = clustererRef.current.getClusters(bounds, Math.floor(zoom));
-      setClusters(newClusters);
-    }
-  }, [bounds, zoom]);
+    if (!mapRef.current || !sourceLoadedRef.current) return;
 
-  // Initialize clusterer when properties change
-  useEffect(() => {
-    initializeClusterer();
-  }, [initializeClusterer]);
+    const map = mapRef.current.getMap();
+    const source = map.getSource('properties') as GeoJSONSource;
+    
+    if (source) {
+      source.setData(propertiesGeoJSON);
+    }
+  }, [propertiesGeoJSON]);
 
   // Create marker icon (SVG data URL)
   const createMarkerIcon = useCallback((priceText: string, isSelected: boolean): string => {
@@ -203,9 +182,152 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
     return dataUrl;
   }, []);
 
-  // Handle map load
+  // Handle map load and setup native clustering
   const onMapLoad = useCallback(() => {
     if (!mapRef.current) return;
+
+    const map = mapRef.current.getMap();
+
+    // Add GeoJSON source with clustering enabled
+    map.addSource('properties', {
+      type: 'geojson',
+      generateId: true,
+      data: propertiesGeoJSON,
+      cluster: true,
+      clusterMaxZoom: 14, // Max zoom to cluster points on
+      clusterRadius: 50 // Radius of each cluster when clustering points
+    });
+
+    // Add cluster circles layer
+    map.addLayer({
+      id: 'clusters',
+      type: 'circle',
+      source: 'properties',
+      filter: ['has', 'point_count'],
+      paint: {
+        // Use step expressions for different cluster sizes
+        'circle-color': [
+          'step',
+          ['get', 'point_count'],
+          '#1AC0EB', // Default color for small clusters
+          10,
+          '#1AC0EB', // Same color for medium clusters
+          100,
+          '#1AC0EB'  // Same color for large clusters
+        ],
+        'circle-radius': [
+          'step',
+          ['get', 'point_count'],
+          20,  // Small clusters
+          10,
+          30,  // Medium clusters
+          100,
+          40   // Large clusters
+        ],
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#fff',
+        'circle-emissive-strength': 1
+      }
+    });
+
+    // Add cluster count labels
+    map.addLayer({
+      id: 'cluster-count',
+      type: 'symbol',
+      source: 'properties',
+      filter: ['has', 'point_count'],
+      layout: {
+        'text-field': ['get', 'point_count_abbreviated'],
+        'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+        'text-size': 12
+      },
+      paint: {
+        'text-color': '#ffffff'
+      }
+    });
+
+    // Add unclustered points layer (hidden - we'll use React Markers instead)
+    map.addLayer({
+      id: 'unclustered-point',
+      type: 'circle',
+      source: 'properties',
+      filter: ['!', ['has', 'point_count']],
+      paint: {
+        'circle-opacity': 0 // Hide native circles, we'll use React Markers
+      }
+    });
+
+    // Handle cluster clicks - zoom to expansion zoom
+    map.on('click', 'clusters', (e) => {
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: ['clusters']
+      });
+      if (features.length === 0 || !features[0]) return;
+      
+      const firstFeature = features[0];
+      if (!firstFeature || !firstFeature.properties) return;
+      
+      const clusterId = firstFeature.properties.cluster_id;
+      const source = map.getSource('properties') as GeoJSONSource | null;
+      
+      if (!source) return;
+      
+      source.getClusterExpansionZoom(clusterId, (err, zoom) => {
+        if (err || zoom === null || zoom === undefined) return;
+
+        const geometry = firstFeature.geometry;
+        if (geometry.type === 'Point') {
+          map.easeTo({
+            center: geometry.coordinates as [number, number],
+            zoom: zoom
+          });
+        }
+      });
+    });
+
+    // Handle unclustered point clicks - show popup (fallback if React Marker doesn't catch it)
+    map.on('click', 'unclustered-point', (e) => {
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: ['unclustered-point']
+      });
+      if (features.length === 0 || !features[0]) return;
+      
+      const geometry = features[0].geometry;
+      if (geometry.type !== 'Point') return;
+      
+      const coordinates = [...geometry.coordinates] as [number, number];
+      const propertyData = JSON.parse(features[0].properties?.propertyData || '{}');
+      
+      if (propertyData && propertyData.mlsNumber) {
+        const property = properties.find(p => p.mlsNumber === propertyData.mlsNumber);
+        if (property) {
+          onPropertySelect(property);
+          setPopupInfo({
+            property,
+            lngLat: coordinates
+          });
+        }
+      }
+    });
+
+    // Change cursor on hover
+    map.on('mouseenter', 'clusters', () => {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+
+    map.on('mouseleave', 'clusters', () => {
+      map.getCanvas().style.cursor = '';
+    });
+
+    map.on('mouseenter', 'unclustered-point', () => {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+
+    map.on('mouseleave', 'unclustered-point', () => {
+      map.getCanvas().style.cursor = '';
+    });
+
+    sourceLoadedRef.current = true;
 
     // Set initial center and zoom
     if (locationCenter) {
@@ -223,7 +345,6 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
     }
 
     // Trigger initial bounds change
-    const map = mapRef.current.getMap();
     const mapBounds = map.getBounds();
     if (mapBounds) {
       const ne = mapBounds.getNorthEast();
@@ -235,7 +356,63 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
         west: sw.lng
       });
     }
-  }, [initialCenter, initialZoom, locationCenter, onBoundsChange]);
+  }, [initialCenter, initialZoom, locationCenter, onBoundsChange, properties, propertiesGeoJSON, onPropertySelect]);
+
+  // Update unclustered properties when map moves or properties change
+  useEffect(() => {
+    if (!mapRef.current || !sourceLoadedRef.current) return;
+
+    const map = mapRef.current.getMap();
+    const source = map.getSource('properties') as GeoJSONSource;
+    
+    if (!source) return;
+
+    // Query source for unclustered features in current viewport
+    const updateUnclustered = () => {
+      try {
+        const bounds = map.getBounds();
+        if (!bounds) return;
+        
+        // Query all rendered features in the viewport
+        const unclusteredFeatures = map.queryRenderedFeatures(
+          [
+            [bounds.getWest(), bounds.getSouth()],
+            [bounds.getEast(), bounds.getNorth()]
+          ],
+          {
+            layers: ['unclustered-point']
+          }
+        );
+
+        const unclustered = unclusteredFeatures
+          .map(feature => {
+            try {
+              const propertyData = JSON.parse(feature.properties?.propertyData || '{}');
+              return properties.find(p => p.mlsNumber === propertyData.mlsNumber);
+            } catch {
+              return null;
+            }
+          })
+          .filter((p): p is PropertyListing => p !== null && p !== undefined);
+
+        setUnclusteredProperties(unclustered);
+      } catch (error) {
+        // Ignore errors during query
+      }
+    };
+
+    // Update on move
+    map.on('moveend', updateUnclustered);
+    map.on('zoomend', updateUnclustered);
+    
+    // Initial update
+    updateUnclustered();
+
+    return () => {
+      map.off('moveend', updateUnclustered);
+      map.off('zoomend', updateUnclustered);
+    };
+  }, [properties, sourceLoadedRef]);
 
   // Handle map move/zoom
   const onMove = useCallback(() => {
@@ -250,13 +427,6 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
     if (mapBounds) {
       const ne = mapBounds.getNorthEast();
       const sw = mapBounds.getSouthWest();
-      const newBounds: [number, number, number, number] = [
-        sw.lng, // west
-        sw.lat, // south
-        ne.lng, // east
-        ne.lat  // north
-      ];
-      setBounds(newBounds);
 
       // Throttle bounds change callback
       if (boundsChangeTimeoutRef.current) {
@@ -334,7 +504,14 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
 
     if (coordinates.length > 0) {
       isProgrammaticUpdateRef.current = true;
-      mapRef.current.fitBounds(coordinates as [number, number][], {
+      // Create bounds from coordinates using the map's LngLatBounds
+      const map = mapRef.current.getMap();
+      const bounds = new mapboxgl.LngLatBounds(coordinates[0] as [number, number], coordinates[0] as [number, number]);
+      coordinates.forEach(coord => {
+        bounds.extend(coord as [number, number]);
+      });
+      
+      mapRef.current.fitBounds(bounds, {
         padding: 50,
         duration: 0
       });
@@ -407,21 +584,24 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
     }
   };
 
-  // Handle cluster click
-  const handleClusterClick = (cluster: any) => {
-    if (!mapRef.current) return;
-
-    const expansionZoom = Math.min(
-      (clustererRef.current?.getClusterExpansionZoom(cluster.id) || 0) + 1,
-      20
-    );
-
-    mapRef.current.flyTo({
-      center: cluster.geometry.coordinates as [number, number],
-      zoom: expansionZoom,
-      duration: 500
-    });
-  };
+  // Cleanup map layers on unmount
+  useEffect(() => {
+    return () => {
+      if (mapRef.current) {
+        const map = mapRef.current.getMap();
+        try {
+          // Remove layers
+          if (map.getLayer('clusters')) map.removeLayer('clusters');
+          if (map.getLayer('cluster-count')) map.removeLayer('cluster-count');
+          if (map.getLayer('unclustered-point')) map.removeLayer('unclustered-point');
+          // Remove source
+          if (map.getSource('properties')) map.removeSource('properties');
+        } catch (error) {
+          // Ignore errors during cleanup
+        }
+      }
+    };
+  }, []);
 
   // Handle marker click
   const handleMarkerClick = (property: PropertyListing, lngLat: [number, number]) => {
@@ -438,9 +618,6 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
     setPopupInfo(null);
   };
 
-  const handleViewProperty = (property: PropertyListing) => {
-    router.push(getPropertyUrl(property));
-  };
 
   const themeStyle = useMemo(() => getMapboxThemeStyle(theme), [theme]);
 
@@ -503,87 +680,41 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
         onLoad={onMapLoad}
         onMove={onMove}
         onClick={handleMapClick}
-        interactiveLayerIds={[]}
+        interactiveLayerIds={['clusters', 'unclustered-point']}
       >
-        {/* Render clusters and markers */}
-        {clusters.map((cluster) => {
-          const { cluster: isCluster, point_count } = cluster.properties;
-          const [longitude, latitude] = cluster.geometry.coordinates;
+        {/* Render custom price markers for unclustered properties */}
+        {unclusteredProperties.map((property) => {
+          if (!property.map.latitude || !property.map.longitude) return null;
 
-          if (isCluster) {
-            // Render cluster marker
-            const size = point_count < 10 ? 40 : point_count < 100 ? 50 : 60;
-            const fontSize = point_count < 10 ? '12px' : point_count < 100 ? '14px' : '16px';
-            const displayCount = point_count >= 1000 ? `${(point_count / 1000).toFixed(0)}K` : point_count.toString();
-            const secondaryColor = '#1AC0EB';
+          const priceText = `$${(property.listPrice / 1000).toFixed(0)}K`;
+          const isSelected = selectedProperty?.mlsNumber === property.mlsNumber;
+          const iconUrl = createMarkerIcon(priceText, isSelected);
 
-            return (
-              <Marker
-                key={`cluster-${cluster.id}`}
-                longitude={longitude}
-                latitude={latitude}
-                anchor="center"
-              >
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleClusterClick(cluster);
-                  }}
-                  className="cursor-pointer"
-                  style={{
-                    width: size,
-                    height: size,
-                    borderRadius: '50%',
-                    backgroundColor: secondaryColor,
-                    border: '2px solid white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    fontSize: fontSize,
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                  }}
-                >
-                  {displayCount}
-                </div>
-              </Marker>
-            );
-          } else {
-            // Render individual property marker
-            const property = cluster.properties.property as PropertyListing;
-            if (!property) return null;
-
-            const priceText = `$${(property.listPrice / 1000).toFixed(0)}K`;
-            const isSelected = selectedProperty?.mlsNumber === property.mlsNumber;
-            const iconUrl = createMarkerIcon(priceText, isSelected);
-
-            return (
-              <Marker
-                key={`marker-${property.mlsNumber}`}
-                longitude={longitude}
-                latitude={latitude}
-                anchor="center"
-              >
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleMarkerClick(property, [longitude, latitude]);
-                  }}
-                  className="cursor-pointer"
-                  style={{
-                    backgroundImage: `url(${iconUrl})`,
-                    backgroundSize: 'contain',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'center',
-                    width: 'auto',
-                    height: '28px',
-                    minWidth: '60px'
-                  }}
-                />
-              </Marker>
-            );
-          }
+          return (
+            <Marker
+              key={`marker-${property.mlsNumber}`}
+              longitude={property.map.longitude}
+              latitude={property.map.latitude}
+              anchor="center"
+            >
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMarkerClick(property, [property.map.longitude!, property.map.latitude!]);
+                }}
+                className="cursor-pointer"
+                style={{
+                  backgroundImage: `url(${iconUrl})`,
+                  backgroundSize: 'contain',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'center',
+                  width: 'auto',
+                  height: '28px',
+                  minWidth: '60px'
+                }}
+              />
+            </Marker>
+          );
         })}
 
         {/* Popup for selected property */}
