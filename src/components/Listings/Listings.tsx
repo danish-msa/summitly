@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import { getListings } from '@/lib/api/properties';
 import PropertyCard from '@/components/Helper/PropertyCard';
 import { PropertyListing } from '@/lib/types';
@@ -13,9 +13,10 @@ import { ViewModeToggle, type ViewMode } from '@/components/common/ViewModeToggl
 import dynamic from 'next/dynamic';
 import { filterPropertiesByState } from '@/lib/utils/filterProperties';
 import { getCoordinates } from '@/utils/locationUtils';
+import DraggableDivider from '@/components/ui/draggable-divider';
 
-// Dynamically import the Google Maps component with no SSR
-const GooglePropertyMap = dynamic(() => import('@/components/MapSearch/GooglePropertyMap'), { ssr: false });
+// Dynamically import the universal map component (switches between Google Maps and Mapbox)
+const PropertyMap = dynamic(() => import('@/components/MapSearch/PropertyMap'), { ssr: false });
 
 // Default center (Toronto area) - fallback if geolocation fails
 const defaultCenter = {
@@ -29,7 +30,11 @@ const Listings = () => {
   const [selectedProperty, setSelectedProperty] = useState<PropertyListing | null>(null);
   const [communities, setCommunities] = useState<string[]>([]);
   const [listingType, setListingType] = useState<'sell' | 'rent'>('sell');
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  // Initialize viewMode to 'list' - this is the grid view (LayoutGrid icon)
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    // Always return 'list' on initial mount, ignore any potential localStorage
+    return 'list';
+  });
   const [filters, setFilters] = useState<FilterState>({
     location: 'all',
     locationArea: 'all',
@@ -48,9 +53,13 @@ const Listings = () => {
   const [userLocation, setUserLocation] = useState<{lat: number; lng: number} | null>(null);
   const [locationCenter, setLocationCenter] = useState<{lat: number; lng: number} | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [splitPosition, setSplitPosition] = useState(50); // Percentage: 0-100, default 50% (equal split)
+  const [gridColumns, setGridColumns] = useState(2); // Dynamic grid columns based on container width
   const boundsChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const previousLocationRef = useRef<{location: string; area: string} | null>(null);
   const geocodingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const splitContainerRef = useRef<HTMLDivElement>(null);
+  const propertiesContainerRef = useRef<HTMLDivElement>(null);
 
   // Use hidden properties hook
   const { hideProperty, getVisibleProperties } = useHiddenProperties();
@@ -81,6 +90,36 @@ const Listings = () => {
       });
     }
   }, [properties.length, filteredProperties.length, visibleProperties.length, locationCenter, filters.location, filters.locationArea, viewMode]);
+
+  // Track if we've initialized the view mode
+  const viewModeInitializedRef = useRef(false);
+
+  // Ensure list view is selected on page load and clear any persisted state
+  // Use useLayoutEffect to set it synchronously before paint
+  useLayoutEffect(() => {
+    // Only run once on mount
+    if (viewModeInitializedRef.current) return;
+    viewModeInitializedRef.current = true;
+
+    // Clear any localStorage that might be persisting viewMode
+    if (typeof window !== 'undefined') {
+      // Clear all possible localStorage keys related to viewMode
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        const lowerKey = key.toLowerCase();
+        if (lowerKey.includes('viewmode') || lowerKey.includes('view-mode') || lowerKey.includes('view_mode')) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
+    
+    // Force set to 'list' view immediately - this activates the LayoutGrid button (Grid View)
+    // Note: 'list' viewMode = Grid View button (LayoutGrid icon)
+    setViewMode('list');
+    
+    // Log for debugging
+    console.log('[Listings] Initialized viewMode to:', 'list');
+  }, []);
 
   // Get user's current location
   useEffect(() => {
@@ -372,8 +411,50 @@ const Listings = () => {
     setListingType(type);
   };
 
+  // Handle split position change from draggable divider
+  const handleSplitPositionChange = (newPosition: number) => {
+    setSplitPosition(newPosition);
+  };
+
+  // Calculate grid columns based on container width
+  useEffect(() => {
+    if (!propertiesContainerRef.current || viewMode !== 'mixed') return;
+
+    const calculateColumns = () => {
+      const container = propertiesContainerRef.current;
+      if (!container) return;
+
+      const containerWidth = container.offsetWidth;
+      // Minimum card width: ~280px (including gap)
+      // Gap: 16px (gap-4 = 1rem = 16px)
+      const minCardWidth = 280;
+      const gap = 16;
+      
+      // Calculate how many columns can fit
+      // Formula: (containerWidth + gap) / (minCardWidth + gap)
+      const columns = Math.max(1, Math.floor((containerWidth + gap) / (minCardWidth + gap)));
+      
+      // Cap at 4 columns max for better UX
+      setGridColumns(Math.min(columns, 4));
+    };
+
+    // Calculate on mount and when split position changes
+    calculateColumns();
+
+    // Use ResizeObserver to recalculate when container resizes
+    const resizeObserver = new ResizeObserver(() => {
+      calculateColumns();
+    });
+
+    resizeObserver.observe(propertiesContainerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [splitPosition, viewMode]);
+
   return (
-    <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 mt-20">
+    <div className="px-4 sm:px-6 lg:px-8 mt-20">
       <div className="flex flex-col md:flex-row justify-between items-center mb-4">
       {/* Use the separated filter component */}
         <GlobalFilters
@@ -403,18 +484,18 @@ const Listings = () => {
               setViewMode={setViewMode}
             />
           </div>
-        </div>
+      </div>
       
       
       {/* Property Listings and Map View */}
       {viewMode === 'map' ? (
         // Map View Only
         <div className="w-full bg-gray-100 rounded-lg overflow-hidden mb-10" style={{ height: '70vh' }}>
-          <GooglePropertyMap
+          <PropertyMap
             theme="custom"
             properties={visibleProperties}
             selectedProperty={selectedProperty}
-            onPropertySelect={(property) => {
+            onPropertySelect={(property: PropertyListing | null) => {
               setSelectedProperty(property);
             }}
             onBoundsChange={handleBoundsChange}
@@ -431,17 +512,34 @@ const Listings = () => {
         </div>
       ) : viewMode === 'mixed' ? (
         // Mixed View (List + Map Side by Side)
-        <div className="flex flex-col md:flex-row gap-4 mb-10" style={{ height: 'calc(100vh - 200px)' }}>
+        <div 
+          ref={splitContainerRef}
+          className="flex flex-col md:flex-row mb-10 relative" 
+          style={{ height: 'calc(100vh - 200px)' }}
+        >
           {/* Property Listings - Left Side with Scroll */}
-          <div className={`${viewMode === 'mixed' ? 'md:w-1/2' : 'w-full'} overflow-y-auto pr-2`} style={{ maxHeight: '100%' }}>
+          <div 
+            ref={propertiesContainerRef}
+            className="overflow-y-auto pr-2 flex-shrink-0" 
+            style={{ 
+              width: `calc(${splitPosition}% - 4px)`,
+              maxHeight: '100%'
+            }}
+          >
             {loading && isInitialLoad ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div 
+                className="grid gap-4"
+                style={{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }}
+              >
                 {[...Array(6)].map((_, index) => (
                   <PropertyCardSkeleton key={index} />
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div 
+                className="grid gap-4"
+                style={{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }}
+              >
                 {visibleProperties.length > 0 ? (
                   visibleProperties.map((property, index) => (
                     <div 
@@ -464,13 +562,32 @@ const Listings = () => {
               </div>
             )}
           </div>
+
+          {/* Draggable Divider */}
+          <div className="hidden md:flex flex-shrink-0">
+            <DraggableDivider
+              position={splitPosition}
+              onPositionChange={handleSplitPositionChange}
+              minPosition={25}
+              maxPosition={75}
+              orientation="vertical"
+              containerRef={splitContainerRef as React.RefObject<HTMLElement>}
+            />
+          </div>
+
           {/* Map View - Right Side */}
-          <div className={`${viewMode === 'mixed' ? 'md:w-1/2' : 'w-full'} bg-gray-100 rounded-lg overflow-hidden flex-shrink-0`} style={{ height: '100%' }}>
-            <GooglePropertyMap
+          <div 
+            className="bg-gray-100 rounded-lg overflow-hidden flex-shrink-0" 
+            style={{ 
+              width: `calc(${100 - splitPosition}% - 4px)`,
+              height: '100%'
+            }}
+          >
+            <PropertyMap
               theme="custom"
               properties={visibleProperties}
               selectedProperty={selectedProperty}
-              onPropertySelect={(property) => {
+              onPropertySelect={(property: PropertyListing | null) => {
                 setSelectedProperty(property);
               }}
               onBoundsChange={handleBoundsChange}
@@ -487,7 +604,7 @@ const Listings = () => {
           </div>
         </div>
       ) : (
-        // List View Only (Grid)
+        // List View Only (Grid) - Responsive columns based on container width
         <>
           {loading && isInitialLoad ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-10">

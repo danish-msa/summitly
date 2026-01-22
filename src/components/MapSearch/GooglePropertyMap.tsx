@@ -90,6 +90,7 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
     styles: getThemeStyles(theme)
   }), [theme]);
   const mapRef = useRef<google.maps.Map | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
   const clustererRef = useRef<MarkerClusterer | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const router = useRouter();
@@ -537,6 +538,28 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
     }
   }, [properties, initialCenter, locationCenter]);
 
+  // Resize map when container size changes (e.g., when divider is dragged)
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      // Trigger Google Maps resize when container size changes
+      // Use setTimeout to ensure DOM has updated
+      setTimeout(() => {
+        const map = mapRef.current;
+        if (map) {
+          google.maps.event.trigger(map, 'resize');
+        }
+      }, 0);
+    });
+
+    resizeObserver.observe(mapContainerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   const handleInfoWindowClose = () => {
     setInfoWindow(null);
   };
@@ -575,7 +598,7 @@ const GooglePropertyMap: React.FC<GooglePropertyMapProps> = ({
   }
 
   return (
-    <div className="relative w-full h-full">
+    <div ref={mapContainerRef} className="relative w-full h-full">
       {/* Filter Panel - Left Side */}
       {showFilters && filters && handleFilterChange && resetFilters && (
         <MapFilterPanel

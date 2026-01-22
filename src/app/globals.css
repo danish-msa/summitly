@@ -461,6 +461,17 @@
   border-radius: 8px;
 }
 
+.mapbox-popup .mapboxgl-popup-content {
+  padding: 0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  background: transparent !important;
+}
+
+.mapbox-popup .mapboxgl-popup-close-button {
+  display: none; /* We use custom close button */
+}
+
 .property-popup {
   padding: 12px;
 }
