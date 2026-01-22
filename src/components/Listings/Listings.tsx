@@ -226,17 +226,9 @@ const Listings = () => {
         params.type = 'Lease';
       }
       
-      // Add location filter if specified
-      if (filters.location !== 'all') {
-        if (filters.locationArea && filters.locationArea !== 'all') {
-          params.city = filters.locationArea;
-        } else {
-          const selectedRegion = REGIONS.find(reg => reg.id === filters.location);
-          if (selectedRegion) {
-            params.city = selectedRegion.name;
-          }
-        }
-      }
+      // Note: Location filter is NOT added here - it's only used to move the map center
+      // The map should show properties for any area the user navigates to, not just the selected location
+      // Location filter is handled separately via locationCenter to move the map view
       
       // Call the API
       const data = await getListings(params);
@@ -384,7 +376,7 @@ const Listings = () => {
     <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 mt-20">
       <div className="flex flex-col md:flex-row justify-between items-center mb-4">
       {/* Use the separated filter component */}
-      <GlobalFilters
+        <GlobalFilters
           filters={filters}
           handleFilterChange={handleFilterChange}
           resetFilters={resetFilters}
@@ -392,18 +384,16 @@ const Listings = () => {
           locations={LOCATIONS}
           showLocation={true}
           showPropertyType={true}
-          showCommunity={true}
+          showCommunity={false}
           showPrice={false}
           showBedrooms={false}
           showBathrooms={false}
+          showResetButton={false}
           layout="horizontal"
           className="w-full md:w-auto"
         />
 
         <div className="flex items-center gap-2">
-          <span className="text-gray-700 font-medium text-sm">
-            {visibleProperties.length > 0 ? `${visibleProperties.length.toLocaleString()} properties` : 'No properties'}
-          </span>
           <SellRentToggle 
               listingType={listingType}
               onListingTypeChange={handleListingTypeChange}
