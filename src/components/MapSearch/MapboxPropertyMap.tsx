@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import MapboxMap from 'react-map-gl/mapbox';
-import { Marker, Popup } from 'react-map-gl/mapbox';
 import type { MapRef } from 'react-map-gl/mapbox';
 import { useRouter } from 'next/navigation';
 import { Plus, Minus, X } from 'lucide-react';
@@ -83,17 +82,134 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
     property: PropertyListing;
     lngLat: [number, number];
   } | null>(null);
-  const [unclusteredProperties, setUnclusteredProperties] = useState<PropertyListing[]>([]);
   const [zoom, setZoom] = useState(initialZoom);
   const isInitialFitRef = useRef<boolean>(false);
   const isProgrammaticUpdateRef = useRef<boolean>(false);
   const boundsChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const markerIconCacheRef = useRef<Map<string, string>>(new Map());
+  const markerImageCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
   const sourceLoadedRef = useRef<boolean>(false);
+  const popupRef = useRef<mapboxgl.Popup | null>(null);
 
   const mapboxAccessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
 
-  // Convert properties to GeoJSON format
+  // Create marker image for Mapbox (returns HTMLImageElement) - using SVG for reliability
+  const createMarkerImage = useCallback((priceText: string, isSelected: boolean, map: mapboxgl.Map): Promise<HTMLImageElement> => {
+    return new Promise((resolve) => {
+      const cacheKey = `${priceText}-${isSelected}`;
+      
+      if (markerImageCacheRef.current.has(cacheKey)) {
+        resolve(markerImageCacheRef.current.get(cacheKey)!);
+        return;
+      }
+
+      const textWidth = priceText.length * 7 + 20;
+      const markerWidth = Math.max(60, textWidth);
+      const markerHeight = 28;
+      const borderRadius = markerHeight / 2;
+      const strokeColor = isSelected ? '#e74c3c' : '#e5e7eb';
+      const strokeWidth = isSelected ? '2' : '1';
+      
+      // Create SVG as data URL (more reliable than canvas)
+      const svg = `
+        <svg width="${markerWidth}" height="${markerHeight}" viewBox="0 0 ${markerWidth} ${markerHeight}" xmlns="http://www.w3.org/2000/svg">
+          <rect 
+            x="0" 
+            y="0" 
+            width="${markerWidth}" 
+            height="${markerHeight}" 
+            rx="${borderRadius}" 
+            ry="${borderRadius}" 
+            fill="white" 
+            stroke="${strokeColor}" 
+            stroke-width="${strokeWidth}"
+          />
+          <text 
+            x="${markerWidth / 2}" 
+            y="${markerHeight / 2 + 4}" 
+            text-anchor="middle" 
+            fill="#000000" 
+            font-size="12" 
+            font-weight="600" 
+            font-family="Arial, sans-serif"
+          >${priceText}</text>
+        </svg>
+      `;
+
+      const dataUrl = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+      
+      const img = new Image();
+      img.onload = () => {
+        // Cache the image
+        if (markerImageCacheRef.current.size > 100) {
+          const firstKey = markerImageCacheRef.current.keys().next().value;
+          if (firstKey) {
+            markerImageCacheRef.current.delete(firstKey);
+          }
+        }
+        markerImageCacheRef.current.set(cacheKey, img);
+        resolve(img);
+      };
+      img.onerror = () => {
+        // Fallback to simple image if SVG fails
+        const fallbackImg = new Image();
+        fallbackImg.onload = () => resolve(fallbackImg);
+        fallbackImg.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iMjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjI4IiByeD0iMTQiIGZpbGw9IndoaXRlIiBzdHJva2U9IiNlNWU3ZWIiLz48L3N2Zz4=';
+      };
+      img.src = dataUrl;
+    });
+  }, []);
+
+  // Helper function to create popup HTML (used by native Mapbox popup)
+  const createPopupHTML = useCallback((property: PropertyListing): string => {
+    const price = property.type === 'Lease' 
+      ? `$${property.listPrice.toLocaleString()} / month`
+      : `$${property.listPrice.toLocaleString()}`;
+    
+    const beds = property.details.numBedrooms || 0;
+    const baths = property.details.numBathrooms || 0;
+    const sqft = typeof property.details.sqft === 'number' 
+      ? property.details.sqft.toLocaleString() 
+      : (typeof property.details.sqft === 'string' 
+        ? parseInt(property.details.sqft.replace(/,/g, '')).toLocaleString() 
+        : '0');
+    
+    const address = [
+      property.address.streetNumber,
+      property.address.streetName,
+      property.address.streetSuffix
+    ].filter(Boolean).join(' ');
+
+    return `
+      <div class="property-info-window bg-white rounded-xl shadow-lg overflow-hidden relative" style="width: 220px; padding: 0; margin: 0;">
+        <button
+          onclick="this.closest('.mapboxgl-popup-content').querySelector('.close-popup')?.click()"
+          class="absolute top-2 right-2 z-10 w-6 h-6 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200"
+          aria-label="Close"
+          title="Close"
+        >
+          <svg class="w-4 h-4 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+        <div class="relative w-full h-20 overflow-hidden rounded-t-xl">
+          <img 
+            src="${property.images.imageUrl}" 
+            alt="${property.details.propertyType || 'Property'}"
+            class="w-full h-full object-cover"
+            style="border-radius: 12px 12px 0 0"
+            onerror="this.src='/images/p1.jpg'"
+          />
+        </div>
+        <div class="p-3 space-y-1">
+          <div class="text-base font-bold leading-tight">${price}</div>
+          <div class="text-xs text-primary">${beds} Bed${beds !== 1 ? 's' : ''}, ${baths} Bath${baths !== 1 ? 's' : ''}, ${sqft} sqft</div>
+          <div class="text-xs">${address}</div>
+        </div>
+      </div>
+    `;
+  }, []);
+
+  // Convert properties to GeoJSON format (Mapbox native format)
   const propertiesGeoJSON = useMemo(() => {
     const validProperties = properties.filter(
       p => p.map.latitude && p.map.longitude
@@ -107,8 +223,27 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
         properties: {
           propertyId: property.mlsNumber,
           price: property.listPrice,
-          // Store property data in properties for popup access
-          propertyData: JSON.stringify(property)
+          priceText: `$${(property.listPrice / 1000).toFixed(0)}K`,
+          // Store minimal property data for popup
+          propertyData: JSON.stringify({
+            mlsNumber: property.mlsNumber,
+            listPrice: property.listPrice,
+            type: property.type,
+            details: {
+              propertyType: property.details.propertyType,
+              numBedrooms: property.details.numBedrooms,
+              numBathrooms: property.details.numBathrooms,
+              sqft: property.details.sqft
+            },
+            address: {
+              streetNumber: property.address.streetNumber,
+              streetName: property.address.streetName,
+              streetSuffix: property.address.streetSuffix
+            },
+            images: {
+              imageUrl: property.images.imageUrl
+            }
+          })
         },
         geometry: {
           type: 'Point' as const,
@@ -118,102 +253,86 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
     };
   }, [properties]);
 
-  // Update GeoJSON source when properties change
+  // Update GeoJSON source when properties change (Mapbox native method)
   useEffect(() => {
     if (!mapRef.current || !sourceLoadedRef.current) return;
 
     const map = mapRef.current.getMap();
-    const source = map.getSource('properties') as GeoJSONSource;
+    const source = map.getSource('properties') as GeoJSONSource | null;
     
     if (source) {
+      // Update source data (Mapbox native method)
       source.setData(propertiesGeoJSON);
+      
+      // Reload marker images if new properties are added
+      const loadNewMarkerImages = async () => {
+        const uniquePrices = new Set<string>();
+        properties.forEach(prop => {
+          if (prop.map.latitude && prop.map.longitude) {
+            const priceText = `$${(prop.listPrice / 1000).toFixed(0)}K`;
+            uniquePrices.add(priceText);
+          }
+        });
+
+        const loadPromises: Promise<void>[] = [];
+        uniquePrices.forEach(priceText => {
+          if (!map.hasImage(`marker-${priceText}`)) {
+            loadPromises.push(
+              createMarkerImage(priceText, false, map).then(img => {
+                map.addImage(`marker-${priceText}`, img);
+              })
+            );
+          }
+          if (!map.hasImage(`marker-${priceText}-selected`)) {
+            loadPromises.push(
+              createMarkerImage(priceText, true, map).then(img => {
+                map.addImage(`marker-${priceText}-selected`, img);
+              })
+            );
+          }
+        });
+
+        await Promise.all(loadPromises);
+      };
+
+      loadNewMarkerImages().catch(console.error);
     }
-  }, [propertiesGeoJSON]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propertiesGeoJSON, properties]);
 
-  // Create marker icon (SVG data URL)
-  const createMarkerIcon = useCallback((priceText: string, isSelected: boolean): string => {
-    const cacheKey = `${priceText}-${isSelected}`;
-    
-    if (markerIconCacheRef.current.has(cacheKey)) {
-      return markerIconCacheRef.current.get(cacheKey)!;
-    }
 
-    const textWidth = priceText.length * 7 + 20;
-    const markerWidth = Math.max(60, textWidth);
-    const markerHeight = 28;
-    const borderRadius = markerHeight / 2;
-    
-    const svg = `
-      <svg width="${markerWidth}" height="${markerHeight}" viewBox="0 0 ${markerWidth} ${markerHeight}" xmlns="http://www.w3.org/2000/svg">
-        <rect 
-          x="0" 
-          y="0" 
-          width="${markerWidth}" 
-          height="${markerHeight}" 
-          rx="${borderRadius}" 
-          ry="${borderRadius}" 
-          fill="white" 
-          stroke="${isSelected ? '#e74c3c' : '#e5e7eb'}" 
-          stroke-width="${isSelected ? '2' : '1'}"
-        />
-        <text 
-          x="${markerWidth / 2}" 
-          y="${markerHeight / 2 + 4}" 
-          text-anchor="middle" 
-          fill="#000000" 
-          font-size="12" 
-          font-weight="600" 
-          font-family="Arial, sans-serif"
-        >${priceText}</text>
-      </svg>
-    `;
-
-    const dataUrl = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
-
-    // Cache the icon
-    if (markerIconCacheRef.current.size > 100) {
-      const firstKey = markerIconCacheRef.current.keys().next().value;
-      if (firstKey) {
-        markerIconCacheRef.current.delete(firstKey);
-      }
-    }
-    markerIconCacheRef.current.set(cacheKey, dataUrl);
-    
-    return dataUrl;
-  }, []);
-
-  // Handle map load and setup native clustering
-  const onMapLoad = useCallback(() => {
+  // Handle map load and setup native clustering (following Mapbox official docs)
+  const onMapLoad = useCallback(async () => {
     if (!mapRef.current) return;
 
     const map = mapRef.current.getMap();
 
-    // Add GeoJSON source with clustering enabled
+    // Add GeoJSON source with clustering enabled (Mapbox native)
     map.addSource('properties', {
       type: 'geojson',
       generateId: true,
       data: propertiesGeoJSON,
       cluster: true,
       clusterMaxZoom: 14, // Max zoom to cluster points on
-      clusterRadius: 50 // Radius of each cluster when clustering points
+      clusterRadius: 50 // Radius of each cluster when clustering points (defaults to 50)
     });
 
-    // Add cluster circles layer
+    // Add cluster circles layer (Mapbox native)
     map.addLayer({
       id: 'clusters',
       type: 'circle',
       source: 'properties',
       filter: ['has', 'point_count'],
       paint: {
-        // Use step expressions for different cluster sizes
+        // Use step expressions for different cluster sizes (Mapbox recommended)
         'circle-color': [
           'step',
           ['get', 'point_count'],
-          '#1AC0EB', // Default color for small clusters
+          '#1AC0EB', // Small clusters (< 10)
           10,
-          '#1AC0EB', // Same color for medium clusters
+          '#1AC0EB', // Medium clusters (10-100)
           100,
-          '#1AC0EB'  // Same color for large clusters
+          '#1AC0EB'  // Large clusters (>= 100)
         ],
         'circle-radius': [
           'step',
@@ -230,7 +349,7 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
       }
     });
 
-    // Add cluster count labels
+    // Add cluster count labels (Mapbox native)
     map.addLayer({
       id: 'cluster-count',
       type: 'symbol',
@@ -246,18 +365,73 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
       }
     });
 
-    // Add unclustered points layer (hidden - we'll use React Markers instead)
-    map.addLayer({
-      id: 'unclustered-point',
-      type: 'circle',
-      source: 'properties',
-      filter: ['!', ['has', 'point_count']],
-      paint: {
-        'circle-opacity': 0 // Hide native circles, we'll use React Markers
-      }
-    });
+    // Load custom marker images for unclustered points
+    const loadMarkerImages = async () => {
+      const uniquePrices = new Set<string>();
+      properties.forEach(prop => {
+        if (prop.map.latitude && prop.map.longitude) {
+          const priceText = `$${(prop.listPrice / 1000).toFixed(0)}K`;
+          uniquePrices.add(priceText);
+        }
+      });
 
-    // Handle cluster clicks - zoom to expansion zoom
+      // Load images for all unique prices (selected and unselected)
+      const loadPromises: Promise<void>[] = [];
+      uniquePrices.forEach(priceText => {
+        loadPromises.push(
+          createMarkerImage(priceText, false, map).then(img => {
+            if (!map.hasImage(`marker-${priceText}`)) {
+              map.addImage(`marker-${priceText}`, img);
+            }
+          })
+        );
+        loadPromises.push(
+          createMarkerImage(priceText, true, map).then(img => {
+            if (!map.hasImage(`marker-${priceText}-selected`)) {
+              map.addImage(`marker-${priceText}-selected`, img);
+            }
+          })
+        );
+      });
+
+      await Promise.all(loadPromises);
+
+      // Add unclustered points layer with custom images (Mapbox native)
+      // For now, use simple circles - we'll enhance with custom images after they load
+      map.addLayer({
+        id: 'unclustered-point',
+        type: 'circle',
+        source: 'properties',
+        filter: ['!', ['has', 'point_count']],
+        paint: {
+          'circle-opacity': 0 // Hidden initially, will be replaced with symbol layer
+        }
+      });
+      
+      // After images load, replace circle layer with symbol layer
+      setTimeout(() => {
+        if (map.getLayer('unclustered-point')) {
+          map.removeLayer('unclustered-point');
+        }
+        
+        map.addLayer({
+          id: 'unclustered-point',
+          type: 'symbol',
+          source: 'properties',
+          filter: ['!', ['has', 'point_count']],
+          layout: {
+            'icon-image': ['concat', 'marker-', ['get', 'priceText']],
+            'icon-size': 1,
+            'icon-allow-overlap': true,
+            'icon-ignore-placement': true
+          }
+        });
+      }, 500); // Small delay to ensure images are loaded
+    };
+
+    await loadMarkerImages();
+
+    // Handle cluster clicks - zoom to expansion zoom (Mapbox native method)
     map.on('click', 'clusters', (e) => {
       const features = map.queryRenderedFeatures(e.point, {
         layers: ['clusters']
@@ -272,6 +446,7 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
       
       if (!source) return;
       
+      // Use Mapbox's native getClusterExpansionZoom (per official docs)
       source.getClusterExpansionZoom(clusterId, (err, zoom) => {
         if (err || zoom === null || zoom === undefined) return;
 
@@ -285,7 +460,7 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
       });
     });
 
-    // Handle unclustered point clicks - show popup (fallback if React Marker doesn't catch it)
+    // Handle unclustered point clicks - show popup (Mapbox native)
     map.on('click', 'unclustered-point', (e) => {
       const features = map.queryRenderedFeatures(e.point, {
         layers: ['unclustered-point']
@@ -302,9 +477,36 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
         const property = properties.find(p => p.mlsNumber === propertyData.mlsNumber);
         if (property) {
           onPropertySelect(property);
+          
+          // Close existing popup
+          if (popupRef.current) {
+            popupRef.current.remove();
+            popupRef.current = null;
+          }
+          
+          // Create native Mapbox popup (per official docs)
+          const popup = new mapboxgl.Popup({ 
+            closeOnClick: true, 
+            closeButton: true,
+            className: 'mapbox-popup'
+          })
+            .setLngLat(coordinates)
+            .setHTML(createPopupHTML(property))
+            .addTo(map);
+          
+          popupRef.current = popup;
+          
+          // Also update state for React component tracking
           setPopupInfo({
             property,
             lngLat: coordinates
+          });
+          
+          // Handle popup close
+          popup.on('close', () => {
+            popupRef.current = null;
+            setPopupInfo(null);
+            onPropertySelect(null);
           });
         }
       }
@@ -356,63 +558,28 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
         west: sw.lng
       });
     }
-  }, [initialCenter, initialZoom, locationCenter, onBoundsChange, properties, propertiesGeoJSON, onPropertySelect]);
+  }, [initialCenter, initialZoom, locationCenter, onBoundsChange, properties, propertiesGeoJSON, onPropertySelect, selectedProperty, createMarkerImage]);
 
-  // Update unclustered properties when map moves or properties change
+
+  // Update marker images when selected property changes (Mapbox native)
   useEffect(() => {
     if (!mapRef.current || !sourceLoadedRef.current) return;
 
     const map = mapRef.current.getMap();
-    const source = map.getSource('properties') as GeoJSONSource;
     
-    if (!source) return;
-
-    // Query source for unclustered features in current viewport
-    const updateUnclustered = () => {
-      try {
-        const bounds = map.getBounds();
-        if (!bounds) return;
-        
-        // Query all rendered features in the viewport
-        const unclusteredFeatures = map.queryRenderedFeatures(
-          [
-            [bounds.getWest(), bounds.getSouth()],
-            [bounds.getEast(), bounds.getNorth()]
-          ],
-          {
-            layers: ['unclustered-point']
-          }
-        );
-
-        const unclustered = unclusteredFeatures
-          .map(feature => {
-            try {
-              const propertyData = JSON.parse(feature.properties?.propertyData || '{}');
-              return properties.find(p => p.mlsNumber === propertyData.mlsNumber);
-            } catch {
-              return null;
-            }
-          })
-          .filter((p): p is PropertyListing => p !== null && p !== undefined);
-
-        setUnclusteredProperties(unclustered);
-      } catch (error) {
-        // Ignore errors during query
-      }
-    };
-
-    // Update on move
-    map.on('moveend', updateUnclustered);
-    map.on('zoomend', updateUnclustered);
-    
-    // Initial update
-    updateUnclustered();
-
-    return () => {
-      map.off('moveend', updateUnclustered);
-      map.off('zoomend', updateUnclustered);
-    };
-  }, [properties, sourceLoadedRef]);
+    // Update unclustered-point layer icon-image to show selected state
+    if (map.getLayer('unclustered-point')) {
+      const selectedId = selectedProperty?.mlsNumber || '';
+      
+      // Update layout property to use selected image for selected property
+      map.setLayoutProperty('unclustered-point', 'icon-image', [
+        'case',
+        ['==', ['get', 'propertyId'], selectedId],
+        ['concat', 'marker-', ['get', 'priceText'], '-selected'],
+        ['concat', 'marker-', ['get', 'priceText']]
+      ]);
+    }
+  }, [selectedProperty, sourceLoadedRef]);
 
   // Handle map move/zoom
   const onMove = useCallback(() => {
@@ -460,7 +627,28 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
       duration: 500
     });
 
-    // Show popup for selected property
+    // Show native Mapbox popup for selected property
+    if (popupRef.current) {
+      popupRef.current.remove();
+    }
+    
+    const popup = new mapboxgl.Popup({ 
+      closeOnClick: true, 
+      closeButton: true,
+      className: 'mapbox-popup'
+    })
+      .setLngLat([position.lng, position.lat])
+      .setHTML(createPopupHTML(selectedProperty))
+      .addTo(mapRef.current.getMap());
+    
+    popupRef.current = popup;
+    
+    popup.on('close', () => {
+      popupRef.current = null;
+      setPopupInfo(null);
+      onPropertySelect(null);
+    });
+    
     setPopupInfo({
       property: selectedProperty,
       lngLat: [position.lng, position.lat]
@@ -612,8 +800,12 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
     });
   };
 
-  // Handle map click to deselect
+  // Handle map click to deselect (close native popup)
   const handleMapClick = () => {
+    if (popupRef.current) {
+      popupRef.current.remove();
+      popupRef.current = null;
+    }
     onPropertySelect(null);
     setPopupInfo(null);
   };
@@ -682,104 +874,8 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
         onClick={handleMapClick}
         interactiveLayerIds={['clusters', 'unclustered-point']}
       >
-        {/* Render custom price markers for unclustered properties */}
-        {unclusteredProperties.map((property) => {
-          if (!property.map.latitude || !property.map.longitude) return null;
-
-          const priceText = `$${(property.listPrice / 1000).toFixed(0)}K`;
-          const isSelected = selectedProperty?.mlsNumber === property.mlsNumber;
-          const iconUrl = createMarkerIcon(priceText, isSelected);
-
-          return (
-            <Marker
-              key={`marker-${property.mlsNumber}`}
-              longitude={property.map.longitude}
-              latitude={property.map.latitude}
-              anchor="center"
-            >
-              <div
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleMarkerClick(property, [property.map.longitude!, property.map.latitude!]);
-                }}
-                className="cursor-pointer"
-                style={{
-                  backgroundImage: `url(${iconUrl})`,
-                  backgroundSize: 'contain',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'center',
-                  width: 'auto',
-                  height: '28px',
-                  minWidth: '60px'
-                }}
-              />
-            </Marker>
-          );
-        })}
-
-        {/* Popup for selected property */}
-        {popupInfo && (
-          <Popup
-            longitude={popupInfo.lngLat[0]}
-            latitude={popupInfo.lngLat[1]}
-            anchor="bottom"
-            onClose={() => {
-              setPopupInfo(null);
-              onPropertySelect(null);
-            }}
-            closeButton={false}
-            className="mapbox-popup"
-          >
-            <div className="property-info-window bg-white rounded-xl shadow-lg overflow-hidden relative" style={{ width: '220px', padding: '0', margin: '0' }}>
-              {/* Close Button */}
-              <button
-                onClick={() => {
-                  setPopupInfo(null);
-                  onPropertySelect(null);
-                }}
-                className="absolute top-2 right-2 z-10 w-6 h-6 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200"
-                aria-label="Close"
-                title="Close"
-              >
-                <X className="w-4 h-4 text-zinc-700" />
-              </button>
-              
-              {/* Image Section */}
-              <div className="relative w-full h-20 overflow-hidden rounded-t-xl">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
-                  src={popupInfo.property.images.imageUrl} 
-                  alt={popupInfo.property.details.propertyType || 'Property'}
-                  className="w-full h-full object-cover"
-                  style={{ borderRadius: '12px 12px 0 0' }}
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/images/p1.jpg';
-                  }}
-                />
-              </div>
-              
-              {/* Content Section */}
-              <div className="p-3 space-y-1">
-                {/* Price */}
-                <div className="text-base font-bold leading-tight">
-                  {popupInfo.property.type === 'Lease' 
-                    ? `$${popupInfo.property.listPrice.toLocaleString()} / month`
-                    : `$${popupInfo.property.listPrice.toLocaleString()}`}
-                </div>
-                
-                {/* Property Metrics */}
-                <div className="text-xs text-primary">
-                  {popupInfo.property.details.numBedrooms || 0} Bed{(popupInfo.property.details.numBedrooms || 0) !== 1 ? 's' : ''}, {popupInfo.property.details.numBathrooms || 0} Bath{(popupInfo.property.details.numBathrooms || 0) !== 1 ? 's' : ''}, {typeof popupInfo.property.details.sqft === 'number' ? popupInfo.property.details.sqft.toLocaleString() : (typeof popupInfo.property.details.sqft === 'string' ? parseInt(popupInfo.property.details.sqft.replace(/,/g, '')).toLocaleString() : '0')} sqft
-                </div>
-                
-                {/* Location */}
-                <div className="text-xs">
-                  {[popupInfo.property.address.streetNumber, popupInfo.property.address.streetName, popupInfo.property.address.streetSuffix].filter(Boolean).join(' ')}
-                </div>
-              </div>
-            </div>
-          </Popup>
-        )}
+        {/* All markers and popups are now handled by native Mapbox layers and popups */}
+        {/* No React Markers or Popups needed - everything is native Mapbox */}
       </MapboxMap>
     </div>
   );
