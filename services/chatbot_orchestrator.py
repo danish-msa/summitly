@@ -114,6 +114,15 @@ from services.condo_property_service import (
     search_condo_properties
 )
 
+# NEW: Import Scalability Manager for high-performance concurrent request handling
+from services.scalability_manager import (
+    get_scalability_manager,
+    RequestContext,
+    with_request_context,
+    with_performance_tracking,
+    with_session_lock
+)
+
 logger = logging.getLogger(__name__)
 
 # =============================================================================
@@ -124,6 +133,13 @@ logger = logging.getLogger(__name__)
 # This is the SINGLE source of truth for all conversation state
 _redis_url = os.getenv("REDIS_URL")
 state_manager = UnifiedStateManager(redis_url=_redis_url)
+
+# Initialize global ScalabilityManager for high-performance concurrent operations
+# Provides: request context isolation, distributed locking, caching, performance monitoring
+scalability_manager = get_scalability_manager(
+    redis_url=_redis_url,
+    cache_size=10000  # Cache up to 10,000 sessions in memory
+)
 
 # Log which backend is being used on startup
 try:
@@ -168,7 +184,16 @@ logger.setLevel(logging.INFO)
 
 SYSTEM_PROMPT_INTERPRETER = """You are a precise real-estate assistant interpreter for Canadian RESIDENTIAL AND COMMERCIAL properties (Toronto/GTA/Vancouver/Canada).
 
-Input: user's message + current conversation filters (location, bedrooms, property_type, listing_type, amenities, etc.) + pending_clarification (if any)
+Input: user's message + current conversation filters (location, bedrooms, property_type, listing_type, amenities, etc.) + pending_clarification (if any) + recent_user_messages (conversation history)
+
+CRITICAL - Conversation Context:
+When "recent_user_messages" is provided, you MUST consider the context from previous messages:
+1. If a location (city, neighborhood, street) was mentioned in a recent message, remember it
+2. When user asks a follow-up question without mentioning location, use the location from recent context
+3. Example conversation:
+   - User (previous): "show me office places in brampton"
+   - User (current): "I need a small office for my startup"
+   - ACTION: Extract location as "Brampton" from recent context (the user is still talking about Brampton)
 
 IMPORTANT - Property Type Classification:
 This assistant handles BOTH:
@@ -187,6 +212,19 @@ CRITICAL - Business Type Extraction Rules:
 3. Recognize business type keywords: bakery, restaurant, cafe, bar, office, retail, store, shop, warehouse, spa, salon, gym, hotel, clinic, gas station, etc.
 4. If unsure, extract the business word as-is (e.g., "pizza place" → "Restaurant", "coffee shop" → "Cafe")
 5. DO NOT leave business_type as null if user mentions ANY business activity
+
+CRITICAL - Typo Correction Rules (IMPORTANT):
+- PRESERVE the user's exact search term whenever possible
+- Only fix OBVIOUS, COMMON typos: "flouriest" → "Florist", "restarant" → "Restaurant", "ofice" → "Office"
+- DO NOT make wild guesses or semantic conversions (e.g., "flouriest" should be "Florist" NOT "Bakery")
+- If you're unsure, extract the term AS-IS and let the search engine handle fuzzy matching
+- Common typos to fix:
+  * "flouriest" → "Florist" (flower shop)
+  * "restarant" → "Restaurant"
+  * "ofice" → "Office"
+  * "coffe shop" → "Cafe"
+  * "saloon" → "Salon"
+- DO NOT convert between different business types (Florist ≠ Bakery, Cafe ≠ Restaurant, etc.)
 
 Examples of Commercial Searches:
 - "show me bakeries in toronto" → intent: "search", property_type: "commercial", business_type: "Bakery", location: "Toronto"
@@ -234,7 +272,11 @@ IMPORTANT - Clarifying Questions:
   Examples: "condos in M5B" → SEARCH IMMEDIATELY, don't ask clarification
             "properties in M5V" → SEARCH IMMEDIATELY, don't ask clarification
             "3 bedroom homes in Toronto" → SEARCH IMMEDIATELY, don't ask clarification
-- ONLY ask clarifying questions when REQUIRED data is MISSING (e.g., no location at all)
+- DO NOT ask clarifying questions for COMMERCIAL queries with business type + location
+  Examples: "I want to open a QSR restaurant near University of Toronto, budget $40-$55/sqft, min 1000 sqft" → SEARCH IMMEDIATELY
+            "bakery in Mississauga under $50/sqft" → SEARCH IMMEDIATELY
+            "office space downtown Toronto" → SEARCH IMMEDIATELY
+- ONLY ask clarifying questions when REQUIRED data is MISSING (e.g., no location at all AND no landmarks)
 - Examples:
   - Previous: "Are you looking for specific schools or general information?" User: "yes" → intent: "refine" (user confirming)
   - Previous: "Are you looking for specific schools?" User: "general information" → intent: "general_question"
@@ -278,9 +320,62 @@ Output: JSON ONLY with keys:
     has_locker: boolean or null,
     is_new_listing: boolean or null,
     condo_amenities: array of strings or null (gym, concierge, party_room, rooftop, security, etc.)
+    
+    // Extended Commercial Filters (FOR COMMERCIAL ONLY - set when mentioned):
+    intersection: string or null (e.g., "Yonge & Eglinton", "King & Bay", "401 & Kennedy"),
+    landmark: string or null (e.g., "Pearson Airport", "University of Toronto", "Square One", "CN Tower"),
+    proximity: string or null (e.g., "5 km", "walkable", "near", "close to"),
+    postal_code: string or null (e.g., "M5J 2N8", "M5V", "K1A"),
+    exclude_streets: array of strings or null (e.g., ["Yonge Street"] if "not on Yonge Street"),
+    exclude_areas: array of strings or null (e.g., ["Scarborough"] if "remove Scarborough"),
+    business_use: string or null (e.g., "cloud kitchen", "QSR restaurant", "cannabis retail", "daycare", "medical clinic"),
+    price_per_sqft_max: number or null (e.g., 45 for "under $45/sqft", 55 for "$40-$55/sqft"),
+    ground_floor: boolean or null (true if "ground floor" or "ground-level" mentioned),
+    food_use_allowed: boolean or null (true if "food use" mentioned),
+    alcohol_allowed: boolean or null (true if "alcohol" mentioned),
+    near_transit: boolean or null (true if "near subway", "near TTC", "near transit" mentioned),
+    clear_height_min: number or null (warehouse ceiling height in feet, e.g., 28),
+    loading_docks: boolean or null (true if "dock loading" or "loading docks" mentioned),
+    property_class: string or null ("Class A", "Class B", "Class C" if mentioned),
+    parking_included: boolean or null (true if "parking included" mentioned),
+    no_lease: boolean or null (true if "not lease", "no lease", "for sale not lease"),
+    no_automotive: boolean or null (true if "no automotive use", "no car dealership"),
+    high_foot_traffic: boolean or null (true if "high foot traffic", "busy area" mentioned)
   }
 - merge_with_previous: boolean (True = merge with existing filters, False = replace all - SET TO FALSE when user mentions a NEW/DIFFERENT city)
 - clarifying_question: optional string (if you need clarification, ask user)
+
+CRITICAL COMMERCIAL EXTRACTION EXAMPLES:
+1. "I want to open a QSR restaurant near University of Toronto, budget $40-$55/sqft, min 1000 sqft, high foot traffic, alcohol optional"
+   → intent: "search", property_type: "commercial", business_type: "Restaurant", business_use: "QSR restaurant", 
+     location: "Toronto", landmark: "University of Toronto", price_per_sqft_max: 55, min_sqft: 1000, 
+     high_foot_traffic: true, alcohol_allowed: true
+
+2. "Show me commercial properties near Yonge & Eglinton, but not directly on Yonge Street"
+   → intent: "search", property_type: "commercial", location: "Toronto", intersection: "Yonge & Eglinton", 
+     exclude_streets: ["Yonge Street"]
+
+3. "Anything available around Pearson Airport, within 5 km"
+   → intent: "search", landmark: "Pearson Airport", location: "Mississauga", proximity: "5 km"
+
+4. "Office spaces near M5V, walkable to TTC"
+   → intent: "search", business_type: "Office", postal_code: "M5V", location: "Toronto", near_transit: true
+
+5. "ground-floor retail Toronto, under $45/sqft, min 1200 sqft, food use, near subway"
+   → intent: "search", business_type: "Retail", ground_floor: true, location: "Toronto", 
+     price_per_sqft_max: 45, min_sqft: 1200, food_use_allowed: true, near_transit: true
+
+6. "warehouse in Mississauga, clear height above 28 ft, dock loading, close to 401"
+   → intent: "search", business_type: "Warehouse", location: "Mississauga", clear_height_min: 28, 
+     loading_docks: true, landmark: "Highway 401"
+
+7. "Class A office downtown Toronto, built after 2015, parking included"
+   → intent: "search", business_type: "Office", property_class: "Class A", area: "Downtown", 
+     location: "Toronto", year_built_min: 2015, parking_included: true
+
+8. "commercial condo for sale in Vaughan, not lease, under 2.5M, no automotive"
+   → intent: "search", property_type: "commercial", listing_type: "sale", no_lease: true, 
+     location: "Vaughan", max_price: 2500000, no_automotive: true
 
 CRITICAL LISTING_TYPE RULES:
 - DO NOT set listing_type to "sale" by default
@@ -337,6 +432,31 @@ Standard Examples:
 - "listed in the last 3 days" -> intent: "search", list_date_from: "{today - 3 days}", list_date_to: "{today}"
 - "show me new listings from last week" -> intent: "search", list_date_from: "{today - 7 days}", list_date_to: "{today}"
 
+CRITICAL - Commercial Follow-up Refinement Queries:
+When user refines a commercial search with price/size filters WITHOUT re-stating business type:
+1. Set intent: "refine" 
+2. Set merge_with_previous: true (to preserve business_type and location from previous search)
+3. Extract ONLY the new filter (max_price, min_price, sqft, etc.)
+4. DO NOT clear business_type or location
+
+Examples of Commercial Follow-ups:
+- Previous search: "restaurants in Mississauga" (business_type: Restaurant, location: Mississauga)
+  User now says: "under 300K" or "show me under $300,000"
+  → intent: "refine", max_price: 300000, merge_with_previous: true
+  (DO NOT extract business_type again - it will be preserved from session)
+
+- Previous search: "spa properties in Toronto" (business_type: Spa, location: Toronto)  
+  User now says: "can you show under $500K" or "please show under 500K"
+  → intent: "refine", max_price: 500000, merge_with_previous: true
+
+- Previous search: "offices downtown" (business_type: Office)
+  User now says: "at least 1000 sqft"
+  → intent: "refine", min_sqft: 1000, merge_with_previous: true
+
+- Previous search: "retail in Brampton"
+  User now says: "for lease only" 
+  → intent: "refine", listing_type: "rent", merge_with_previous: true
+
 CRITICAL - Follow-up Questions:
 When the search returns 0 results AND the user has multiple restrictive filters (e.g., 4 beds + 2 baths + specific neighborhood), ask a clarifying question:
 - clarifying_question: "I couldn't find any properties matching those exact criteria in [location]. Would you like me to show you properties with different bedroom/bathroom counts, or expand the search to nearby areas?"
@@ -370,6 +490,22 @@ When user asks about "properties near [address/location]", this is a PROPERTY SE
 - "properties near 151 Dan Leckie Way Toronto" -> intent: "search", location: "Toronto" (extract street + city for radius search)
 - "condos near King Street" -> intent: "search", location: "Toronto" (street-based search with radius)
 - "homes near M5V 4B2" -> intent: "search", location: "Toronto" (postal code + radius search)
+
+CRITICAL - Commercial Property Queries with Business Type:
+When user mentions ANY business type or commercial use, this is ALWAYS a PROPERTY SEARCH, NOT a special query.
+- "I want to open a QSR restaurant near University of Toronto" -> intent: "search", business_type: "Restaurant", location: "Toronto", landmark: "University of Toronto"
+- "bakery in Mississauga" -> intent: "search", business_type: "Bakery", location: "Mississauga"
+- "office space downtown Toronto" -> intent: "search", business_type: "Office", location: "Toronto", area: "Downtown"
+- "warehouse near Highway 401" -> intent: "search", business_type: "Warehouse", landmark: "Highway 401"
+- "retail near Pearson Airport" -> intent: "search", business_type: "Retail", landmark: "Pearson Airport"
+- "commercial properties near Yonge & Eglinton" -> intent: "search", property_type: "commercial", intersection: "Yonge & Eglinton", location: "Toronto"
+
+IMPORTANT - Location Extraction Rules:
+- Landmarks like "University of Toronto", "Pearson Airport", "Square One", "CN Tower" should be extracted as landmarks
+- When landmark is mentioned, ALWAYS infer the city (e.g., University of Toronto = Toronto)
+- Intersections like "Yonge & Eglinton", "King & Bay", "401 & Kennedy" should extract as intersection + infer city
+- DO NOT ask for clarification when location is clear from landmarks or intersections
+- Extract ALL criteria from the query (price, sqft, features) WITHOUT asking clarifying questions
 
 ONLY use "special_query" for NON-PROPERTY information requests:
 - "schools near MLS C12633118" -> intent: "special_query", query_type: "schools", mls_number: "C12633118"
@@ -864,6 +1000,9 @@ class ChatGPTChatbot:
         # Atomic transaction manager for safe state updates with automatic rollback
         self.transaction_manager = AtomicTransactionManager(state_manager=state_manager)
         
+        # Scalability manager for high-performance concurrent operations
+        self.scalability_manager = scalability_manager
+        
         # Log initialization with backend info
         logger.info(
             f"✅ ChatGPTChatbot orchestrator loaded | "
@@ -992,6 +1131,55 @@ class ChatGPTChatbot:
                 f"Checkpoint restore failed | session_id={session_id} | "
                 f"checkpoint_id={checkpoint_id} | error={str(e)}"
             )
+            return None
+
+    def _resolve_postal_code_to_city(self, postal_code: str) -> Optional[str]:
+        """
+        🗺️  AI-POWERED LOCATION RESOLVER
+        Uses OpenAI to resolve postal codes, landmarks, or street names to Ontario cities.
+        
+        Examples:
+        - "M1A 2B6" → "Toronto"
+        - "K1A 0A6" → "Ottawa"
+        - "L5B 1M2" → "Mississauga"
+        """
+        try:
+            prompt = f"""You are a geography expert for Ontario, Canada. The user mentioned a postal code: "{postal_code}"
+
+Your task: Identify which Ontario CITY this postal code belongs to for MLS property searches.
+
+Rules:
+1. Return ONLY the city name (e.g., "Toronto", "Ottawa", "Mississauga")
+2. No province, no explanation, just the city name
+3. Must be a real Ontario city
+4. M postal codes are typically Toronto or GTA cities
+5. K postal codes are typically Ottawa
+
+Examples:
+- "M1A" → "Toronto"
+- "M5V" → "Toronto"  
+- "K1A" → "Ottawa"
+- "L5B" → "Mississauga"
+- "L4L" → "Vaughan"
+
+Now resolve "{postal_code}":"""
+
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are a geography expert. Return only the Ontario city name, nothing else."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.1,
+                max_tokens=20
+            )
+            
+            resolved_city = response.choices[0].message.content.strip()
+            logger.info(f"🗺️  [AI RESOLVER] Postal code '{postal_code}' → '{resolved_city}'")
+            return resolved_city
+            
+        except Exception as e:
+            logger.error(f"❌ [AI RESOLVER] Error resolving postal code '{postal_code}': {e}")
             return None
 
     def _create_metadata_dict(
@@ -1435,7 +1623,7 @@ class ChatGPTChatbot:
         Args:
             user_message: User's raw message (passed to commercialapp.py for OpenAI analysis)
             session_id: Session ID
-            interpreted_filters: Filters from GPT-4 interpretation (used for location only)
+            interpreted_filters: Filters from GPT-4 interpretation
         
         Returns:
             Search results in standard format
@@ -1481,6 +1669,22 @@ class ChatGPTChatbot:
             # Pass listing type (sale/lease) if provided
             if interpreted_filters.get("listing_type"):
                 criteria["listing_type"] = interpreted_filters["listing_type"]
+            
+            # CRITICAL: Pass all commercial-specific filters to commercialapp.py
+            # These are extracted by GPT-4 in chatbot_orchestrator
+            commercial_filters = [
+                "intersection", "landmark", "proximity", "postal_code",
+                "exclude_streets", "exclude_areas", "business_use",
+                "price_per_sqft_max", "ground_floor", "food_use_allowed",
+                "alcohol_allowed", "near_transit", "clear_height_min",
+                "loading_docks", "property_class", "parking_included",
+                "no_lease", "no_automotive", "high_foot_traffic"
+            ]
+            
+            for filter_name in commercial_filters:
+                if interpreted_filters.get(filter_name) is not None:
+                    criteria[filter_name] = interpreted_filters[filter_name]
+                    logger.info(f"🏢 [COMMERCIAL FILTER] {filter_name}: {criteria[filter_name]}")
             
             logger.info(f"🏢 [COMMERCIAL SEARCH] Criteria: {criteria}")
             logger.info(f"🏢 [COMMERCIAL SEARCH] Raw user query: '{user_message}'")
@@ -1593,6 +1797,7 @@ class ChatGPTChatbot:
             }
 
     
+    @with_performance_tracking
     def process_message(
         self,
         user_message: str,
@@ -1614,6 +1819,12 @@ class ChatGPTChatbot:
         8. Call GPT-4 summarizer for final response
         9. Save state via state_manager.save() and return response
         
+        SCALABILITY FEATURES:
+        - Request context isolation (thread-safe)
+        - Distributed session locking (prevents concurrent modifications)
+        - Performance tracking (monitors response times)
+        - State caching (reduces Redis/DB load)
+        
         Args:
             user_message: The user's message
             session_id: Session ID
@@ -1628,21 +1839,86 @@ class ChatGPTChatbot:
                 "properties": [dict] (search results),
                 "property_count": int,
                 "state_summary": dict,
-                "filters": dict
+                "filters": dict,
+                "request_id": str (unique request identifier)
             }
         """
-        logger.info(f"📨 Processing message for session {session_id}: '{user_message[:60]}...'")
+        # Create isolated request context for thread-safety
+        with RequestContext.create(session_id=session_id) as ctx:
+            request_id = ctx['request_id']
+            logger.info(
+                f"📨 Processing message | "
+                f"session={session_id} | "
+                f"request={request_id} | "
+                f"message='{user_message[:60]}...'"
+            )
+            
+            # Extract property type hint from button selection (if provided)
+            property_type_hint = None
+            if user_context and 'property_type_hint' in user_context:
+                property_type_hint = user_context['property_type_hint']
+                logger.info(f"🎯 [BUTTON HINT] Property type from frontend button: {property_type_hint}")
+            
+            # Store checkpoint_id for potential rollback
+            checkpoint_id: Optional[str] = None
+            
+            # Initialize intent classification variables
+            classified_intent = None
+            intent_metadata = {}
+            
+            try:
+                # ★★★ SCALABILITY: Acquire distributed session lock ★★★
+                # Prevents concurrent modifications to same session across server instances
+                with self.scalability_manager.acquire_session_lock(session_id):
+                    logger.debug(f"🔒 Acquired session lock | session={session_id} | request={request_id}")
+                    
+                    return self._process_message_locked(
+                        user_message=user_message,
+                        session_id=session_id,
+                        request_id=request_id,
+                        skip_address_detection=skip_address_detection,
+                        user_context=user_context,
+                        property_type_hint=property_type_hint
+                    )
+            
+            except Exception as e:
+                logger.exception(f"❌ Error processing message | session={session_id} | request={request_id}")
+                return {
+                    "success": False,
+                    "response": "I encountered an error processing your request. Please try again.",
+                    "suggestions": ["Try rephrasing your question", "Start a new search"],
+                    "properties": [],
+                    "property_count": 0,
+                    "filters": {},
+                    "request_id": request_id,
+                    "error": str(e)
+                }
+    
+    def _process_message_locked(
+        self,
+        user_message: str,
+        session_id: str,
+        request_id: str,
+        skip_address_detection: bool,
+        user_context: Optional[Dict],
+        property_type_hint: Optional[str]
+    ) -> Dict[str, Any]:
+        """
+        Internal method that processes message with session lock already acquired.
+        This ensures no concurrent modifications to the same session.
         
-        # Extract property type hint from button selection (if provided)
-        property_type_hint = None
-        if user_context and 'property_type_hint' in user_context:
-            property_type_hint = user_context['property_type_hint']
-            logger.info(f"🎯 [BUTTON HINT] Property type from frontend button: {property_type_hint}")
+        Args:
+            user_message: User's message
+            session_id: Session ID
+            request_id: Unique request ID
+            skip_address_detection: Whether to skip address detection
+            user_context: Optional context dict
+            property_type_hint: Property type hint from frontend
         
-        # Store checkpoint_id for potential rollback
+        Returns:
+            Response dictionary
+        """
         checkpoint_id: Optional[str] = None
-        
-        # Initialize intent classification variables
         classified_intent = None
         intent_metadata = {}
         
@@ -2154,7 +2430,7 @@ class ChatGPTChatbot:
                 confirmation_id = self.confirmation_manager.create_confirmation(
                     session_id=session_id,
                     confirmation_type=ConfirmationType.VAGUE_REQUEST,
-                    message=response,
+                    question=response,
                     payload={"original_message": user_message, "current_filters": current_filters}
                 )
                 
@@ -2224,12 +2500,22 @@ class ChatGPTChatbot:
                 if '?' in last_content:
                     pending_clarification = last_content
             
+            # 🔧 FIX: Include recent conversation turns for location context
+            # Get last 2 user messages to preserve location mentioned in previous turn
+            recent_conversation = []
+            for turn in reversed(state.conversation_history[-4:]):  # Last 4 turns (2 user + 2 assistant)
+                if turn.get('role') == 'user':
+                    recent_conversation.insert(0, turn.get('content', ''))
+                    if len(recent_conversation) >= 2:  # Keep last 2 user messages
+                        break
+            
             session_summary = {
                 "filters": state.get_active_filters(),
                 "last_search_count": len(state.last_property_results),
                 "search_count": state.search_count,
                 "last_search_results": state.last_property_results[:3] if state.last_property_results else [],
-                "pending_clarification": pending_clarification  # NEW: helps interpreter understand context
+                "pending_clarification": pending_clarification,  # NEW: helps interpreter understand context
+                "recent_user_messages": recent_conversation  # 🔧 FIX: Include recent messages for location context
             }
             
             # STEP 3: Extract location entities FIRST (before GPT interpreter)
@@ -2363,7 +2649,7 @@ class ChatGPTChatbot:
                         confirmation_id = self.confirmation_manager.create_confirmation(
                             session_id=session_id,
                             confirmation_type=ConfirmationType.POSTAL_CODE_CITY,
-                            message=response,
+                            question=response,
                             payload={
                                 "postal_code": extracted_location.postalCode,
                                 "original_message": user_message
@@ -2399,46 +2685,27 @@ class ChatGPTChatbot:
                         extracted_location.city = suggested_city
                         # No confirmation needed - continue with GPT interpreter
                     else:
-                        # Ask user to confirm city (postal code not in our map)
-                        logger.info(f"📮 [POSTAL CODE CONFIRMATION] Postal code '{extracted_location.postalCode}' provided without city")
-                        response = (
-                            f"I found postal code {extracted_location.postalCode}. Which city would you like to search in?"
-                        )
-                        suggestions = [
-                            "Toronto",
-                            "Mississauga",
-                            "Vaughan",
-                            "Markham"
-                        ]
-                        
-                        confirmation_id = self.confirmation_manager.create_confirmation(
-                            session_id=session_id,
-                            confirmation_type=ConfirmationType.POSTAL_CODE_CITY,
-                            message=response,
-                            payload={
-                                "postal_code": extracted_location.postalCode,
-                                "original_message": user_message
-                            }
-                        )
-                        
-                        state.add_conversation_turn("assistant", response)
-                        self.state_manager.save(state)
-                        return {
-                            "success": True,
-                            "response": response,
-                            "suggestions": suggestions,
-                            "properties": [],
-                            "property_count": 0,
-                            "state_summary": state.get_summary(),
-                            "filters": state.get_active_filters(),
-                            "requires_confirmation": True,
-                            "metadata": self._create_metadata_dict(
-                                intent="postal_code_confirmation",
-                                confidence=0.80,
-                                reason="Unknown postal code, asking for city confirmation",
-                                requires_confirmation=True
-                            )
-                        }
+                        # 🗺️  Use AI to resolve postal code to city automatically
+                        logger.info(f"🤖 [AI LOCATION RESOLVER] Using OpenAI to resolve postal code '{extracted_location.postalCode}' to city")
+                        try:
+                            ai_resolved_city = self._resolve_postal_code_to_city(extracted_location.postalCode)
+                            if ai_resolved_city:
+                                logger.info(f"✅ [AI RESOLVED] Postal code {extracted_location.postalCode} → {ai_resolved_city}")
+                                extracted_location.city = ai_resolved_city
+                                # Continue with GPT interpreter - no confirmation needed
+                            else:
+                                # Fallback: use Toronto as default for GTA postal codes starting with M
+                                if extracted_location.postalCode.upper().startswith('M'):
+                                    logger.info(f"⚠️  [FALLBACK] Using Toronto as default for postal code {extracted_location.postalCode}")
+                                    extracted_location.city = "Toronto"
+                                else:
+                                    logger.warning(f"⚠️  [AI RESOLVER FAILED] Could not resolve {extracted_location.postalCode}, using as-is")
+                        except Exception as e:
+                            logger.error(f"❌ [AI RESOLVER ERROR] {e}")
+                            # Fallback for GTA postal codes
+                            if extracted_location.postalCode.upper().startswith('M'):
+                                extracted_location.city = "Toronto"
+                                logger.info(f"⚠️  [FALLBACK] Using Toronto for postal code {extracted_location.postalCode}")
             
             # STEP 3.9: Handle awaiting_requirements mode
             # If bot asked "Any specific requirements?" and user responded
@@ -2911,11 +3178,38 @@ class ChatGPTChatbot:
                 if property_type_detected == PropertyType.COMMERCIAL and confidence >= 0.5:
                     logger.info(f"🏢 [COMMERCIAL] Routing to commercial property search (confidence: {confidence:.0%})")
                     
-                    # Execute commercial search using filters from GPT interpreter
+                    # ═══════════════════════════════════════════════════════════════
+                    # CRITICAL FIX: Merge with existing session state for follow-up queries
+                    # When user says "under 300K" after "restaurants in Mississauga",
+                    # we need to preserve business_type and location from previous search
+                    # ═══════════════════════════════════════════════════════════════
+                    merged_filters = dict(filters_from_gpt)  # Start with GPT-extracted filters
+                    
+                    # Get existing filters from state
+                    existing_filters = unified_state.get_active_filters()
+                    
+                    # CRITICAL: Preserve business_type from previous search if not in new message
+                    if not merged_filters.get("business_type") and existing_filters.get("business_type"):
+                        merged_filters["business_type"] = existing_filters["business_type"]
+                        logger.info(f"🔄 [COMMERCIAL CONTEXT] Preserved business_type from session: {merged_filters['business_type']}")
+                    
+                    # Preserve location if not in new message
+                    if not merged_filters.get("location") and existing_filters.get("location"):
+                        merged_filters["location"] = existing_filters["location"]
+                        logger.info(f"🔄 [COMMERCIAL CONTEXT] Preserved location from session: {merged_filters['location']}")
+                    
+                    # Preserve property_type if not in new message  
+                    if not merged_filters.get("property_type") and existing_filters.get("property_type"):
+                        merged_filters["property_type"] = existing_filters["property_type"]
+                    
+                    # Log merged filters for debugging
+                    logger.info(f"🏢 [COMMERCIAL] Merged filters: {merged_filters}")
+                    
+                    # Execute commercial search using merged filters
                     commercial_result = self._search_commercial_properties(
                         user_message=user_message,
                         session_id=session_id,
-                        interpreted_filters=filters_from_gpt
+                        interpreted_filters=merged_filters
                     )
                     
                     if commercial_result["success"]:
@@ -2925,6 +3219,23 @@ class ChatGPTChatbot:
                         unified_state.last_property_results = properties[:20]
                         unified_state.set_conversation_stage(ConversationStage.VIEWING)
                         state.update_search_results(properties, user_message)
+                        
+                        # ═══════════════════════════════════════════════════════════════
+                        # CRITICAL: Save commercial context for follow-up queries
+                        # This allows "under 300K" to work after "restaurants in Mississauga"
+                        # ═══════════════════════════════════════════════════════════════
+                        if merged_filters.get("business_type"):
+                            unified_state.active_filters.business_type = merged_filters["business_type"]
+                            logger.info(f"💾 [COMMERCIAL STATE] Saved business_type: {merged_filters['business_type']}")
+                        if merged_filters.get("location"):
+                            unified_state.active_filters.location = merged_filters["location"]
+                            logger.info(f"💾 [COMMERCIAL STATE] Saved location: {merged_filters['location']}")
+                        if merged_filters.get("property_type"):
+                            unified_state.active_filters.property_type = merged_filters["property_type"]
+                        if merged_filters.get("max_price"):
+                            unified_state.active_filters.max_price = merged_filters["max_price"]
+                        if merged_filters.get("min_price"):
+                            unified_state.active_filters.min_price = merged_filters["min_price"]
                         
                         # Generate response
                         response_text = commercial_result["message"]

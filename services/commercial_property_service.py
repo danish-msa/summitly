@@ -100,6 +100,10 @@ class CommercialPropertyService:
             sale_count = sum(1 for p in formatted if p.get('property_type') == 'Sale')
             lease_count = sum(1 for p in formatted if p.get('property_type') == 'Lease')
             
+            # ✅ FIX: Count alternative/convertible properties
+            alternative_count = sum(1 for p in formatted if p.get('match_type') == 'CONVERTIBLE' or p.get('_is_alternative'))
+            exact_count = sum(1 for p in formatted if p.get('match_type') == 'EXACT')
+            
             # DEBUG: Check prices and types AND MLS fields
             if formatted:
                 sample_info = []
@@ -129,13 +133,24 @@ class CommercialPropertyService:
             else:
                 type_msg = ""
             
+            # ✅ FIX: Add note about alternative properties
+            business_type = criteria.get('business_type', '')
+            if alternative_count > 0 and exact_count == 0 and business_type:
+                alt_note = f"\n\n💡 *No exact {business_type} listings found. Showing {alternative_count} convertible commercial spaces that could work for your needs.*"
+            elif alternative_count > 0 and exact_count > 0:
+                alt_note = f" ({exact_count} exact matches, {alternative_count} alternatives)"
+            else:
+                alt_note = ""
+            
             log(f"✅ [COMMERCIAL] Returning {len(formatted)} properties", "SUCCESS")
             
             return {
                 "success": True,
                 "properties": formatted,
                 "count": len(formatted),
-                "message": f"Found {len(formatted)} commercial properties {type_msg} in {location}"
+                "message": f"Found {len(formatted)} commercial properties {type_msg} in {location}{alt_note}",
+                "exact_matches": exact_count,
+                "alternative_matches": alternative_count
             }
             
         except Exception as e:
