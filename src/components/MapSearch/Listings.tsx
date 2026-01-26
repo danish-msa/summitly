@@ -11,8 +11,8 @@ import { LOCATIONS } from '@/lib/types/filters';
 import dynamic from 'next/dynamic';
 import { PropertyListing } from '@/lib/types';
 
-// Dynamically import the Google Maps component with no SSR to avoid hydration issues
-const GooglePropertyMap = dynamic(() => import('@/components/MapSearch/GooglePropertyMap'), { ssr: false });
+// Dynamically import the Mapbox component with no SSR to avoid hydration issues
+const MapboxPropertyMap = dynamic(() => import('@/components/MapSearch/MapboxPropertyMap'), { ssr: false });
 
 // Remove the local PropertyListing interface since we're importing it from types.ts
 
@@ -42,6 +42,10 @@ const Listings = () => {
   // Use hidden properties hook
   const { hideProperty, getVisibleProperties } = useHiddenProperties();
 
+  // Note: Map view now uses server-side clustering via MapboxPropertyMap
+  // The map component handles fetching clusters based on bounds automatically
+  // We only need to fetch full listings for list view
+
   // Load properties with filters applied
   useEffect(() => {
     const loadProperties = async () => {
@@ -51,54 +55,66 @@ const Listings = () => {
       }
       
       try {
-        // Build API parameters based on filters
-        const params: Record<string, string | number> = {
-          resultsPerPage: pagination.resultsPerPage,
-          pageNum: pagination.currentPage,
+        // Build base API parameters based on filters
+        const baseParams: Record<string, string | number> = {
           status: "A" // Active listings
         };
         
         // Only add filters if they have values
-        if (filters.minPrice > 0) params.minPrice = filters.minPrice;
-        if (filters.maxPrice < 2000000) params.maxPrice = filters.maxPrice;
-        if (filters.bedrooms > 0) params.minBedrooms = filters.bedrooms;
-        if (filters.bathrooms > 0) params.minBaths = filters.bathrooms;
-        if (filters.propertyType !== 'all') params.propertyType = filters.propertyType;
-        if (filters.community !== 'all') params.community = filters.community;
-        if (filters.listingType !== 'all') params.listingType = filters.listingType;
+        if (filters.minPrice > 0) baseParams.minPrice = filters.minPrice;
+        if (filters.maxPrice < 2000000) baseParams.maxPrice = filters.maxPrice;
+        if (filters.bedrooms > 0) baseParams.minBedrooms = filters.bedrooms;
+        if (filters.bathrooms > 0) baseParams.minBaths = filters.bathrooms;
+        if (filters.propertyType !== 'all') baseParams.propertyType = filters.propertyType;
+        if (filters.community !== 'all') baseParams.community = filters.community;
+        if (filters.listingType !== 'all') baseParams.listingType = filters.listingType;
         
-        console.log('Fetching with params:', params);
+        console.log('🔍 [MapSearch] Fetching properties with params:', baseParams);
         
-        // Call the API with the parameters
-        const data = await getListings(params);
-        console.log('API response:', data);
-        
-        if (data && data.listings) {
-          setProperties(data.listings);
+        // For map view, MapboxPropertyMap handles server-side clustering automatically
+        // We only need to fetch listings for list view
+        if (viewMode === 'list' || viewMode === 'split') {
+          // For list/split view, fetch listings with pagination
+          const params = {
+            ...baseParams,
+            resultsPerPage: pagination.resultsPerPage,
+            pageNum: pagination.currentPage,
+          };
           
-          // Update pagination info
-          setPagination({
-            ...pagination,
-            totalPages: data.numPages || 1,
-            totalResults: data.count || data.listings.length
-          });
+          const data = await getListings(params);
+          console.log('📋 [MapSearch] List view API response:', data);
           
-          // Extract unique communities from the data
-          if (communities.length === 0) {
-            const uniqueCommunities = Array.from(
-              new Set(
-                data.listings
-                  .map(listing => listing.address.neighborhood)
-                  .filter(Boolean) as string[]
-              )
-            ).sort();
-            setCommunities(uniqueCommunities);
+          if (data && data.listings) {
+            setProperties(data.listings);
+            
+            // Update pagination info
+            setPagination({
+              ...pagination,
+              totalPages: data.numPages || 1,
+              totalResults: data.count || data.listings.length
+            });
+            
+            // Extract unique communities from the data
+            if (communities.length === 0) {
+              const uniqueCommunities = Array.from(
+                new Set(
+                  data.listings
+                    .map(listing => listing.address.neighborhood)
+                    .filter(Boolean) as string[]
+                )
+              ).sort();
+              setCommunities(uniqueCommunities);
+            }
+          } else {
+            setProperties([]);
           }
-        } else {
+        } else if (viewMode === 'map') {
+          // Map-only view - MapboxPropertyMap handles everything
+          // Just clear properties to avoid confusion
           setProperties([]);
         }
       } catch (error) {
-        console.error('Error loading properties:', error);
+        console.error('❌ [MapSearch] Error loading properties:', error);
         setProperties([]);
       } finally {
         setLoading(false);
@@ -107,7 +123,7 @@ const Listings = () => {
 
     loadProperties();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, pagination.currentPage, pagination.resultsPerPage]);
+  }, [filters, viewMode, pagination.currentPage, pagination.resultsPerPage]);
 
   // Handle property card click
   const handlePropertyClick = (property: PropertyListing | null) => {
@@ -224,14 +240,20 @@ const Listings = () => {
           </div>
         )}
 
-        {/* Map View */}
+        {/* Map View - Uses server-side clustering */}
         {(viewMode === 'map' || viewMode === 'split') && (
           <div className={`${viewMode === 'split' ? 'md:w-1/2' : 'w-full'} bg-gray-100 rounded-lg overflow-hidden`} style={{ height: viewMode === 'split' ? 'calc(100vh - 200px)' : '70vh' }}>
-            <GooglePropertyMap 
-              properties={visibleProperties}
+            <MapboxPropertyMap 
+              properties={properties}
               selectedProperty={selectedProperty}
               onPropertySelect={handlePropertyClick}
               onBoundsChange={handleMapBoundsChange}
+              filters={filters}
+              handleFilterChange={handleFilterChange}
+              resetFilters={resetFilters}
+              communities={communities}
+              locations={locations}
+              showFilters={false}
             />
           </div>
         )}

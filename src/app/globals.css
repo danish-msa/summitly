@@ -455,21 +455,53 @@
   align-items: center;
 }
 
+
 .mapboxgl-popup-content {
-  padding: 0;
-  overflow: hidden;
-  border-radius: 8px;
+  pointer-events: auto;
+  background: transparent !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  position: relative;
+  box-shadow: none !important;
 }
 
 .mapbox-popup .mapboxgl-popup-content {
   padding: 0 !important;
-  border-radius: 12px !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
   background: transparent !important;
 }
 
-.mapbox-popup .mapboxgl-popup-close-button {
-  display: none; /* We use custom close button */
+.mapboxgl-popup-close-button {
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  width: 24px !important;
+  height: 24px !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: none !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  color: #374151 !important;
+  z-index: 10 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.2s ease !important;
+}
+
+.mapboxgl-popup-close-button:hover {
+  background: rgba(255, 255, 255, 1) !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15) !important;
+  transform: scale(1.05) !important;
+}
+
+.mapboxgl-popup-close-button:active {
+  transform: scale(0.95) !important;
 }
 
 .property-popup {

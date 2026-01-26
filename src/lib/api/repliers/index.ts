@@ -43,8 +43,10 @@ export const RepliersAPI = {
     getSimilar: ListingsService.getSimilarListings,
     getDetails: ListingsService.getListingDetails,
     getRawDetails: ListingsService.getRawListingDetails,
+    getClusters: ListingsService.getClusters,
     transformImageUrl: ListingsService.transformImageUrl,
     transformListing: ListingsService.transformListing,
+    formatMapBounds: ListingsService.formatMapBounds,
   },
 
   // Property Types
@@ -107,6 +109,14 @@ export type {
   // Listings
   ListingsParams,
   ListingsResult,
+  // Clusters
+  ClusterParams,
+  ClustersResult,
+  Cluster,
+  ClusterLocation,
+  ClusterBounds,
+  ClusterListing,
+  MapBounds,
 } from './services/listings';
 
 export type {

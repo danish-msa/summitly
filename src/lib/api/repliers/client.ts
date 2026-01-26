@@ -211,9 +211,10 @@ class RepliersAPIClient {
   private async executeRequest<T>(queuedRequest: QueuedRequest): Promise<ApiResponse<T>> {
     const { config } = queuedRequest;
     const startTime = Date.now();
+    let url = '';
 
     try {
-      const url = this.buildUrl(config);
+      url = this.buildUrl(config);
       const headers = this.buildHeaders(config);
       
       // Log all API requests to terminal
@@ -259,15 +260,37 @@ class RepliersAPIClient {
         const errorText = await response.text();
         const responseTime = Date.now() - startTime;
         
-        // Log error response
+        // Try to parse error as JSON
+        let errorData: unknown = null;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = errorText;
+        }
+        
+        // Log error response with full details
         console.error('❌ [Repliers API Error]', {
           endpoint: config.endpoint,
           status: response.status,
           statusText: response.statusText,
           responseTime: `${responseTime}ms`,
           url: url.replace(API_CONFIG.apiKey, '***'),
-          errorBody: errorText.substring(0, 500), // Limit error body length
+          errorBody: typeof errorData === 'object' ? errorData : errorText.substring(0, 500),
+          errorText: errorText, // Always include raw error text
+          errorTextFull: errorText, // Full error text for debugging
+          params: config.params,
         });
+        
+        // Also log the error text directly for easier debugging
+        if (errorText) {
+          console.error('❌ [Repliers API Error Body (Raw)]:', errorText);
+          try {
+            const parsedError = JSON.parse(errorText);
+            console.error('❌ [Repliers API Error Body (Parsed)]:', parsedError);
+          } catch {
+            // Not JSON, that's fine
+          }
+        }
         
         throw this.createHttpError(response.status, response.statusText);
       }
@@ -309,11 +332,18 @@ class RepliersAPIClient {
         throw this.createErrorResponse('TIMEOUT', 'Request timed out', true);
       }
 
-      // Log network/other errors
+      // Log network/other errors with full details
+      const errorUrl = url || this.buildUrl(config);
       console.error('💥 [Repliers API Exception]', {
         endpoint: config.endpoint,
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? {
+          message: error.message,
+          name: error.name,
+          stack: error.stack,
+        } : String(error),
         responseTime: `${responseTime}ms`,
+        params: config.params,
+        url: errorUrl.replace(API_CONFIG.apiKey, '***'),
       });
 
       throw this.handleError(error);
@@ -336,7 +366,12 @@ class RepliersAPIClient {
     if (config.params) {
       Object.entries(config.params).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          if (Array.isArray(value)) {
+          // Handle nested arrays (like GeoJSON polygons for map parameter)
+          if (Array.isArray(value) && Array.isArray(value[0])) {
+            // This is a nested array (GeoJSON polygon) - stringify it
+            url.searchParams.append(key, JSON.stringify(value));
+          } else if (Array.isArray(value)) {
+            // Simple array - append each value
             value.forEach(v => url.searchParams.append(key, v.toString()));
           } else {
             url.searchParams.append(key, value.toString());

@@ -51,8 +51,101 @@ export interface ListingsResult {
 }
 
 // ============================================================================
+// CLUSTER TYPES (Server-side clustering)
+// ============================================================================
+
+export interface ClusterLocation {
+  latitude: number;
+  longitude: number;
+}
+
+export interface ClusterBounds {
+  bottom_right: ClusterLocation;
+  top_left: ClusterLocation;
+}
+
+export interface ClusterListing {
+  mlsNumber?: string;
+  listPrice?: string | number;
+  address?: {
+    city?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+export interface Cluster {
+  count: number;
+  location: ClusterLocation;
+  bounds: ClusterBounds;
+  map: number[][][]; // Polygon coordinates
+  listing?: ClusterListing; // Present when count === 1
+  listings?: ClusterListing[]; // Present when count <= clusterListingsThreshold
+  statistics?: {
+    [key: string]: {
+      avg?: number;
+      [key: string]: unknown;
+    };
+  };
+}
+
+export interface ClustersResponse {
+  aggregates?: {
+    map?: {
+      clusters?: Cluster[];
+    };
+  };
+  listings?: ApiListing[];
+  count?: number;
+}
+
+export interface MapBounds {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+}
+
+export interface ClusterParams extends Omit<ListingsParams, 'page' | 'resultsPerPage'> {
+  // Map bounds - can be GeoJSON polygon array or MapBounds object
+  map?: string | number[][][] | MapBounds;
+  // Cluster parameters
+  cluster?: boolean;
+  clusterPrecision?: number; // 1-29, typically matches zoom level
+  clusterLimit?: number; // 1-200
+  clusterFields?: string; // Comma-separated fields for single-listing clusters
+  clusterListingsThreshold?: number; // Include listings array for clusters <= this count
+  clusterStatistics?: boolean;
+  // For map-only view, set listings to false
+  listings?: boolean;
+}
+
+export interface ClustersResult {
+  clusters: Cluster[];
+  listings: PropertyListing[]; // Individual listings (if requested)
+  count: number;
+}
+
+// ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
+
+/**
+ * Format map bounds as GeoJSON polygon for Repliers API
+ * The map parameter expects: [[[lng, lat], [lng, lat], [lng, lat], [lng, lat], [lng, lat]]]
+ * Coordinates are in [longitude, latitude] format
+ */
+export function formatMapBounds(bounds: MapBounds): number[][][] {
+  // Create a rectangle polygon with 5 points (4 corners + closing point)
+  // Coordinates must be [longitude, latitude] format
+  return [[
+    [bounds.west, bounds.north],   // Top-left (NW)
+    [bounds.west, bounds.south],    // Bottom-left (SW)
+    [bounds.east, bounds.south],    // Bottom-right (SE)
+    [bounds.east, bounds.north],    // Top-right (NE)
+    [bounds.west, bounds.north],    // Close polygon (back to start)
+  ]];
+}
 
 /**
  * Transform CDN image URLs
@@ -618,5 +711,105 @@ export async function getRawListingDetails(mlsNumber: string, boardId?: number):
     // Return null instead of throwing to prevent unhandled promise rejection
     return null;
   }
+}
+
+/**
+ * Fetch clusters with map bounds and zoom-based precision
+ * This is the recommended approach for map views - uses server-side clustering
+ * 
+ * @param params - Cluster parameters including map bounds and zoom
+ * @returns Clusters and optionally individual listings
+ */
+export async function getClusters(params: ClusterParams): Promise<ClustersResult> {
+  console.log('🗺️ [Clusters Service] Fetching clusters with params:', {
+    ...params,
+    map: params.map ? '***' : undefined, // Don't log full bounds
+  });
+  
+  // Build API parameters - keep it simple: cluster=true&listings=false
+  const apiParams: Record<string, unknown> = {
+    cluster: true,
+    listings: false,
+  };
+  
+  // Only add map bounds if provided (GeoJSON polygon format)
+  if (params.map) {
+    if (Array.isArray(params.map)) {
+      // Already in GeoJSON format
+      apiParams.map = params.map;
+    } else if (typeof params.map === 'object' && 'west' in params.map) {
+      // Convert MapBounds to GeoJSON polygon
+      apiParams.map = formatMapBounds(params.map as MapBounds);
+    } else if (typeof params.map === 'string') {
+      // Legacy string format - try to parse or use as-is
+      // Some APIs might accept string format, but GeoJSON is preferred
+      console.warn('⚠️ [Clusters Service] Map parameter is a string. Consider using GeoJSON polygon format.');
+      apiParams.map = params.map;
+    }
+  }
+  
+  // Add status filter if provided (for active listings)
+  if (params.status) {
+    apiParams.status = params.status;
+  }
+  
+  // Cluster precision is optional - only add if explicitly provided
+  // (Some API versions might not support it)
+  if (params.clusterPrecision !== undefined) {
+    apiParams.clusterPrecision = Math.max(1, Math.min(29, Math.round(params.clusterPrecision)));
+  }
+  
+  // Log the exact parameters being sent (for debugging)
+  console.log('🔍 [Clusters Service] API Request Details:', {
+    endpoint: '/listings',
+    paramCount: Object.keys(apiParams).length,
+    hasMap: !!apiParams.map,
+    hasCluster: !!apiParams.cluster,
+    clusterPrecision: apiParams.clusterPrecision,
+    clusterLimit: apiParams.clusterLimit,
+    listings: apiParams.listings,
+    // Don't log full params to avoid console spam
+  });
+
+  const response = await repliersClient.request<ClustersResponse>({
+    endpoint: '/listings',
+    params: apiParams,
+    authMethod: 'header',
+    cache: false, // Don't cache clusters - they change with map position
+    priority: 'high',
+  });
+
+  if (response.error || !response.data) {
+    console.error('❌ [Clusters Service] Failed to fetch clusters:', {
+      error: response.error,
+      errorMessage: response.error?.message,
+      errorCode: response.error?.code,
+      errorStatus: response.error?.status,
+      hasData: !!response.data,
+      params: {
+        ...apiParams,
+        map: apiParams.map ? '***' : undefined, // Don't log full bounds
+      },
+    });
+    return { clusters: [], listings: [], count: 0 };
+  }
+
+  const clusters = response.data.aggregates?.map?.clusters || [];
+  const listings = response.data.listings 
+    ? response.data.listings.map(transformListing)
+    : [];
+
+  console.log('✅ [Clusters Service] Successfully fetched clusters:', {
+    clusterCount: clusters.length,
+    listingCount: listings.length,
+    totalCount: response.data.count || 0,
+    clusterPrecision: apiParams.clusterPrecision,
+  });
+
+  return {
+    clusters,
+    listings,
+    count: response.data.count || 0,
+  };
 }
 
