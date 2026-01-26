@@ -252,7 +252,7 @@ const Listings = () => {
               handleFilterChange={handleFilterChange}
               resetFilters={resetFilters}
               communities={communities}
-              locations={locations}
+              locations={LOCATIONS}
               showFilters={false}
             />
           </div>
