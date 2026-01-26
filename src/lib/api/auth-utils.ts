@@ -45,19 +45,22 @@ export async function getAuthenticatedUser(request: NextRequest) {
         })
 
         if (decoded && decoded.sub) {
+          const exp = typeof decoded.exp === 'number' ? decoded.exp : null
+          const currentTime = Math.floor(Date.now() / 1000)
+          
           console.log('[Auth Utils] Decoded JWT using NextAuth decode:', {
             hasSub: !!decoded.sub,
             sub: decoded.sub,
-            exp: decoded.exp,
-            currentTime: Math.floor(Date.now() / 1000),
-            isExpired: decoded.exp ? decoded.exp < Date.now() / 1000 : false,
+            exp: exp,
+            currentTime: currentTime,
+            isExpired: exp ? exp < currentTime : false,
           })
 
           // Verify token hasn't expired
-          if (decoded.exp && decoded.exp < Date.now() / 1000) {
+          if (exp && exp < currentTime) {
             console.error('[Auth Utils] Token expired:', {
-              exp: decoded.exp,
-              current: Math.floor(Date.now() / 1000),
+              exp: exp,
+              current: currentTime,
             })
             return null
           }
