@@ -531,7 +531,7 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
       property.address?.streetSuffix
     ].filter(Boolean);
     const fullAddress = addressParts.length > 0
-      ? `${addressParts.join(' ')}, ${property.address?.city || ''}${property.address?.state ? `, ${property.address.state}` : ''}${property.address?.postalCode ? ` ${property.address.postalCode}` : ''}`
+      ? `${addressParts.join(' ')}, ${property.address?.city || ''}${property.address?.state ? `, ${property.address.state}` : ''}${property.address?.zip ? ` ${property.address.zip}` : ''}`
       : property.address?.location || 'Address not available';
     
     // Create popup content with property information using Tailwind classes
