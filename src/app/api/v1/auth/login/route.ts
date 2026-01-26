@@ -3,6 +3,7 @@ import { apiMiddleware } from '@/lib/api/middleware'
 import { successResponse, ApiErrors } from '@/lib/api/response'
 import { prisma } from '@/lib/prisma'
 import { verifyPassword } from '@/lib/auth-utils'
+import { encode } from 'next-auth/jwt'
 import { z } from 'zod'
 
 const loginSchema = z.object({
@@ -38,7 +39,27 @@ async function handler(request: NextRequest) {
     return ApiErrors.UNAUTHORIZED('Invalid email or password')
   }
 
-  // Return user info (session will be handled by NextAuth)
+  // Generate JWT token for mobile apps (Bearer token)
+  const secret = process.env.NEXTAUTH_SECRET
+  if (!secret) {
+    throw new Error('NEXTAUTH_SECRET is not set')
+  }
+
+  // Create JWT token (expires in 30 days)
+  const token = await encode({
+    token: {
+      sub: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30, // 30 days
+    },
+    secret,
+  })
+
+  // Return user info with token for mobile apps
+  // Note: For web, NextAuth will handle session via cookies automatically
   return successResponse({
     user: {
       id: user.id,
@@ -48,7 +69,8 @@ async function handler(request: NextRequest) {
       role: user.role,
       image: user.image,
     },
-    message: 'Login successful. Use NextAuth session for authentication.',
+    token, // JWT token for mobile apps (use as Bearer token)
+    message: 'Login successful. Use NextAuth session for web or Bearer token for mobile apps.',
   })
 }
 

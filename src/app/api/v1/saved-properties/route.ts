@@ -1,8 +1,7 @@
 import { NextRequest } from 'next/server'
 import { apiMiddleware } from '@/lib/api/middleware'
 import { successResponse, ApiErrors } from '@/lib/api/response'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api/auth-utils'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
@@ -13,11 +12,13 @@ const savePropertySchema = z.object({
 })
 
 async function handler(request: NextRequest) {
-  const session = await getServerSession(authOptions)
+  const auth = await getAuthenticatedUser(request)
 
-  if (!session || !session.user) {
+  if (!auth || !auth.user) {
     return ApiErrors.UNAUTHORIZED('You must be logged in to save properties')
   }
+
+  const user = auth.user
 
   if (request.method === 'GET') {
     // Get all saved properties for user
@@ -27,13 +28,13 @@ async function handler(request: NextRequest) {
 
     const [savedProperties, total] = await Promise.all([
       prisma.savedProperty.findMany({
-        where: { userId: session.user.id },
+        where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
         take: limit,
         skip: (page - 1) * limit,
       }),
       prisma.savedProperty.count({
-        where: { userId: session.user.id },
+        where: { userId: user.id },
       }),
     ])
 
@@ -60,7 +61,7 @@ async function handler(request: NextRequest) {
     const existing = await prisma.savedProperty.findUnique({
       where: {
         userId_mlsNumber: {
-          userId: session.user.id,
+          userId: user.id,
           mlsNumber: validatedData.mlsNumber,
         },
       },
@@ -81,7 +82,7 @@ async function handler(request: NextRequest) {
     // Create new
     const savedProperty = await prisma.savedProperty.create({
       data: {
-        userId: session.user.id,
+        userId: user.id,
         mlsNumber: validatedData.mlsNumber,
         notes: validatedData.notes || null,
         tags: validatedData.tags || [],
