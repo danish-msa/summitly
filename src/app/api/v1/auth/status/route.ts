@@ -1,13 +1,12 @@
 import { NextRequest } from 'next/server'
 import { apiMiddleware } from '@/lib/api/middleware'
 import { successResponse } from '@/lib/api/response'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api/auth-utils'
 
-async function handler(_request: NextRequest) {
-  const session = await getServerSession(authOptions)
+async function handler(request: NextRequest) {
+  const auth = await getAuthenticatedUser(request)
 
-  if (!session || !session.user) {
+  if (!auth || !auth.user) {
     return successResponse({
       authenticated: false,
       user: null,
@@ -17,12 +16,13 @@ async function handler(_request: NextRequest) {
   return successResponse({
     authenticated: true,
     user: {
-      id: session.user.id,
-      name: session.user.name,
-      email: session.user.email,
-      role: session.user.role,
-      image: session.user.image,
+      id: auth.user.id,
+      name: auth.user.name,
+      email: auth.user.email,
+      role: auth.user.role,
+      image: auth.user.image,
     },
+    method: auth.method, // Include auth method for debugging
   })
 }
 

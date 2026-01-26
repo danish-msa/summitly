@@ -296,6 +296,20 @@ const Nav = ({ openNav }: Props) => {
                   </motion.div>
                 </a>
 
+                {/* My Home Link */}
+                <Link href="/homeowner">
+                  <motion.div
+                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.45 }}
+                  >
+                    My Home
+                  </motion.div>
+                </Link>
+
                 {/* More Mega Menu */}
                 <MoreMegaMenu
                   isOpen={showMoreDropdown}

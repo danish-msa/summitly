@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { decode } from 'next-auth/jwt'
 import { prisma } from '@/lib/prisma'
 
 /**
@@ -19,25 +20,110 @@ export async function getAuthenticatedUser(request: NextRequest) {
   }
 
   // If no session, try Bearer token (mobile app)
-  const authHeader = request.headers.get('authorization')
+  const authHeader = request.headers.get('authorization') || request.headers.get('Authorization')
   
-  if (authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.substring(7) // Remove 'Bearer ' prefix
+  if (authHeader?.startsWith('Bearer ') || authHeader?.startsWith('bearer ')) {
+    const token = authHeader.substring(7).trim() // Remove 'Bearer ' prefix and trim whitespace
+    
+    if (!token) {
+      console.error('[Auth Utils] Bearer token is empty')
+      return null
+    }
     
     try {
-      // Decode JWT token manually (NextAuth JWT format)
-      // Split JWT token (header.payload.signature)
-      const parts = token.split('.')
-      if (parts.length === 3) {
+      const secret = process.env.NEXTAUTH_SECRET
+      if (!secret) {
+        console.error('[Auth Utils] NEXTAUTH_SECRET is not set')
+        return null
+      }
+
+      // Try using NextAuth's decode function first (verifies signature)
+      try {
+        const decoded = await decode({
+          token,
+          secret,
+        })
+
+        if (decoded && decoded.sub) {
+          console.log('[Auth Utils] Decoded JWT using NextAuth decode:', {
+            hasSub: !!decoded.sub,
+            sub: decoded.sub,
+            exp: decoded.exp,
+            currentTime: Math.floor(Date.now() / 1000),
+            isExpired: decoded.exp ? decoded.exp < Date.now() / 1000 : false,
+          })
+
+          // Verify token hasn't expired
+          if (decoded.exp && decoded.exp < Date.now() / 1000) {
+            console.error('[Auth Utils] Token expired:', {
+              exp: decoded.exp,
+              current: Math.floor(Date.now() / 1000),
+            })
+            return null
+          }
+
+          // Fetch user from database
+          const user = await prisma.user.findUnique({
+            where: { id: decoded.sub },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+              image: true,
+            },
+          })
+
+          if (user) {
+            console.log('[Auth Utils] Successfully authenticated user via Bearer token:', user.id)
+            return {
+              user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                image: user.image,
+              },
+              method: 'bearer' as const,
+            }
+          } else {
+            console.error('[Auth Utils] User not found in database:', decoded.sub)
+          }
+        }
+      } catch (decodeError) {
+        // If NextAuth decode fails, try manual decoding as fallback
+        console.warn('[Auth Utils] NextAuth decode failed, trying manual decode:', decodeError)
+        
+        // Manual decode fallback
+        const parts = token.split('.')
+        if (parts.length !== 3) {
+          console.error('[Auth Utils] Invalid JWT format - expected 3 parts, got:', parts.length)
+          return null
+        }
+
         // Decode payload (base64url)
+        let base64Payload = parts[1]
+        // Add padding if needed
+        while (base64Payload.length % 4) {
+          base64Payload += '='
+        }
+        base64Payload = base64Payload.replace(/-/g, '+').replace(/_/g, '/')
+        
         const payload = JSON.parse(
-          Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString()
+          Buffer.from(base64Payload, 'base64').toString()
         )
+
+        console.log('[Auth Utils] Manually decoded JWT payload:', {
+          hasSub: !!payload.sub,
+          sub: payload.sub,
+          exp: payload.exp,
+        })
 
         if (payload && payload.sub) {
           // Verify token hasn't expired
           if (payload.exp && payload.exp < Date.now() / 1000) {
-            return null // Token expired
+            console.error('[Auth Utils] Token expired')
+            return null
           }
 
           // Fetch user from database
@@ -53,6 +139,7 @@ export async function getAuthenticatedUser(request: NextRequest) {
           })
 
           if (user) {
+            console.log('[Auth Utils] Successfully authenticated user via Bearer token (manual decode):', user.id)
             return {
               user: {
                 id: user.id,
@@ -67,9 +154,17 @@ export async function getAuthenticatedUser(request: NextRequest) {
         }
       }
     } catch (error) {
-      console.error('[Auth Utils] Error decoding Bearer token:', error)
+      console.error('[Auth Utils] Error processing Bearer token:', error)
+      if (error instanceof Error) {
+        console.error('[Auth Utils] Error details:', {
+          message: error.message,
+          stack: error.stack,
+        })
+      }
       return null
     }
+  } else if (authHeader) {
+    console.error('[Auth Utils] Authorization header present but not Bearer token:', authHeader.substring(0, 20))
   }
 
   return null

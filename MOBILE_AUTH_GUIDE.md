@@ -321,7 +321,8 @@ curl -H "Authorization: Bearer YOUR_TOKEN" \
       "name": "John Doe",
       "email": "user@example.com",
       "role": "SUBSCRIBER"
-    }
+    },
+    "method": "bearer"
   }
 }
 ```
@@ -336,6 +337,65 @@ curl -H "Authorization: Bearer YOUR_TOKEN" \
   }
 }
 ```
+
+## Troubleshooting
+
+### Issue: Getting 401 Unauthorized even with valid token
+
+**Common causes and solutions:**
+
+1. **Token not being sent correctly:**
+   - In Postman: Make sure you're using the **Authorization** tab, not manually adding headers
+   - Select **Type: Bearer Token** (not "No Auth" or "API Key")
+   - Paste the token WITHOUT the word "Bearer" (Postman adds it automatically)
+   - Check the **Headers** tab to verify: `Authorization: Bearer YOUR_TOKEN`
+
+2. **Token format issues:**
+   - Make sure you copied the ENTIRE token from the login response
+   - Token should be a long string starting with `eyJ...`
+   - No spaces or line breaks in the token
+   - Token should be in the `data.token` field from login response
+
+3. **Token expired:**
+   - Tokens expire after 30 days
+   - Check token expiration: Decode the JWT at https://jwt.io
+   - If expired, login again to get a new token
+
+4. **Verify token is valid:**
+   ```bash
+   # Test with curl
+   curl -X GET "https://summitly.vercel.app/api/v1/auth/status" \
+     -H "Authorization: Bearer YOUR_TOKEN_HERE"
+   ```
+
+5. **Check server logs:**
+   - Look for `[Auth Utils]` log messages in your server console
+   - These will show what's happening during token validation
+
+6. **Common Postman mistakes:**
+   - ❌ Adding token in "Headers" tab manually (use Authorization tab instead)
+   - ❌ Including "Bearer " prefix when pasting token (Postman adds it)
+   - ❌ Using wrong token (make sure it's from `/api/v1/auth/login` response)
+   - ❌ Token has extra spaces or newlines
+
+**Step-by-step Postman verification:**
+
+1. **Login:**
+   - POST to `/api/v1/auth/login`
+   - Copy the token from `data.token` field
+
+2. **Verify token format:**
+   - Token should be a long string like: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c`
+   - Should have 3 parts separated by dots (.)
+
+3. **Set Authorization:**
+   - Go to **Authorization** tab
+   - Type: **Bearer Token**
+   - Token: Paste ONLY the token (no "Bearer" prefix)
+
+4. **Test:**
+   - GET `/api/v1/auth/status` - Should return `authenticated: true`
+   - GET `/api/v1/saved-properties` - Should return your saved properties
 
 ## Migration from Web to Mobile
 
