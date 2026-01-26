@@ -28,7 +28,7 @@ const PreConCityProperties = () => {
         setLoading(true);
         setError(null);
         
-        const response = await fetch('/api/pre-con-cities');
+        const response = await fetch('/api/pre-con-cities?limit=20');
         
         if (!response.ok) {
           throw new Error('Failed to fetch cities');

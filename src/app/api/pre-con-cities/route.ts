@@ -10,8 +10,12 @@ function slugifyCityName(cityName: string): string {
 }
 
 // GET - Fetch cities with project counts for the city slider
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const limitParam = searchParams.get('limit')
+    const limit = limitParam ? parseInt(limitParam, 10) : undefined
+
     // Fetch all published projects with city and image data
     const projects = await prisma.preConstructionProject.findMany({
       where: {
@@ -50,7 +54,7 @@ export async function GET(_request: NextRequest) {
     })
 
     // Convert to array format and sort by project count (descending)
-    const cities = Object.entries(cityData)
+    let cities = Object.entries(cityData)
       .map(([cityName, data]) => ({
         id: slugifyCityName(cityName),
         name: cityName,
@@ -60,7 +64,11 @@ export async function GET(_request: NextRequest) {
           : '/images/default-city.jpg', // Fallback image
       }))
       .sort((a, b) => b.numberOfProjects - a.numberOfProjects) // Sort by project count descending
-      .slice(0, 20) // Limit to top 20 cities
+    
+    // Apply limit if provided, otherwise show all cities
+    if (limit !== undefined && limit > 0) {
+      cities = cities.slice(0, limit)
+    }
 
     return NextResponse.json({
       cities,

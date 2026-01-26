@@ -14,6 +14,7 @@ import { LOCATIONS } from '@/lib/types/filters';
 import { RepliersAPI, type Cluster, type MapBounds } from '@/lib/api/repliers';
 import { formatMapBounds } from '@/lib/api/repliers/services/listings';
 import { getPropertyUrl } from '@/lib/utils/propertyUrl';
+import { useMapVisibleProperties, getGlobalCallback } from './MapVisiblePropertiesContext';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import type { GeoJSONSource } from 'mapbox-gl';
 import mapboxgl from 'mapbox-gl';
@@ -23,6 +24,7 @@ interface MapboxPropertyMapProps {
   selectedProperty: PropertyListing | null;
   onPropertySelect: (property: PropertyListing | null) => void;
   onBoundsChange: (bounds: MapBounds) => void;
+  onVisiblePropertiesChange?: (properties: PropertyListing[]) => void; // Callback for visible properties in map view
   theme?: MapboxTheme;
   initialCenter?: {lat: number; lng: number};
   initialZoom?: number;
@@ -64,6 +66,7 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
   selectedProperty, 
   onPropertySelect,
   onBoundsChange,
+  onVisiblePropertiesChange,
   theme = activeMapboxTheme,
   initialCenter,
   initialZoom = 10,
@@ -78,7 +81,54 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
   locations = LOCATIONS,
   subjectProperty
 }) => {
+  // Debug: Log received callback prop
+  useEffect(() => {
+    console.log('🔍 [MapboxPropertyMap] Component received onVisiblePropertiesChange prop:', {
+      type: typeof onVisiblePropertiesChange,
+      value: onVisiblePropertiesChange,
+      isFunction: typeof onVisiblePropertiesChange === 'function',
+      isUndefined: onVisiblePropertiesChange === undefined,
+      isNull: onVisiblePropertiesChange === null,
+    });
+  }, [onVisiblePropertiesChange]);
+  
   const mapRef = useRef<MapRef>(null);
+  
+  // Get callback from context (primary method due to dynamic import prop issues)
+  const contextCallback = useMapVisibleProperties();
+  
+  // Store callback in ref to ensure it's always available
+  const onVisiblePropertiesChangeRef = useRef<((properties: PropertyListing[]) => void) | null>(null);
+  const lastVisiblePropertiesRef = useRef<PropertyListing[]>([]);
+  
+  // Update ref when callback changes - check global callback first (most reliable)
+  useEffect(() => {
+    const globalCallback = getGlobalCallback();
+    const callback = globalCallback || contextCallback.onVisiblePropertiesChange || onVisiblePropertiesChange;
+    onVisiblePropertiesChangeRef.current = callback;
+    console.log('🔍 [MapboxPropertyMap] Component mounted/updated, callback sources:', {
+      propType: typeof onVisiblePropertiesChange,
+      propValue: onVisiblePropertiesChange,
+      globalCallbackValue: globalCallback,
+      globalCallbackType: typeof globalCallback,
+      contextCallbackValue: contextCallback.onVisiblePropertiesChange,
+      contextCallbackType: typeof contextCallback.onVisiblePropertiesChange,
+      effectiveCallback: callback,
+      effectiveType: typeof callback,
+      storedInRef: typeof onVisiblePropertiesChangeRef.current,
+      contextObject: contextCallback,
+    });
+    
+    // If callback just became available and we have visible properties, call it immediately
+    if (callback && typeof callback === 'function' && lastVisiblePropertiesRef.current.length > 0) {
+      console.log('🔄 [MapboxPropertyMap] Callback just became available, calling with existing properties:', lastVisiblePropertiesRef.current.length);
+      try {
+        callback(lastVisiblePropertiesRef.current);
+      } catch (error) {
+        console.error('❌ [MapboxPropertyMap] Error calling callback on availability:', error);
+      }
+    }
+  }, [onVisiblePropertiesChange, contextCallback]);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const [zoom, setZoom] = useState(initialZoom);
@@ -87,7 +137,7 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
   const [loading, setLoading] = useState(false);
   
   // Max zoom threshold - above this, show individual listings instead of clusters
-  // At zoom 14 and above, show property tags instead of clusters
+  // At zoom 15 and above, show property tags instead of clusters
   const MAX_ZOOM_FOR_CLUSTERS = 15;
   const isInitialLoadRef = useRef<boolean>(false);
   const isProgrammaticUpdateRef = useRef<boolean>(false);
@@ -307,8 +357,80 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
               console.log(`✅ [MapboxPropertyMap] No duplicate properties found - all ${mlsNumbers.size} properties are unique`);
             }
             
-            // Clear individual listings completely when showing clusters (strict threshold)
-            setIndividualListings([]);
+            // Also fetch individual listings within bounds for the left panel
+            // This ensures we have all properties visible in the map viewport
+            const mapPolygon = formatMapBounds(bounds);
+            const listingParams: Record<string, unknown> = {
+              status: 'A',
+              listings: true,
+              resultsPerPage: 1000, // Fetch enough listings to cover all clusters
+              map: mapPolygon,
+            };
+
+            // Add filters if available
+            if (filters) {
+              if (filters.minPrice) listingParams.minPrice = filters.minPrice;
+              if (filters.maxPrice) listingParams.maxPrice = filters.maxPrice;
+              if (filters.bedrooms) listingParams.minBedrooms = filters.bedrooms;
+              if (filters.propertyType && filters.propertyType !== 'all') {
+                listingParams.propertyType = filters.propertyType;
+              }
+              if (filters.listingType && filters.listingType !== 'all') {
+                const listingType = filters.listingType.toLowerCase();
+                if (listingType === 'lease' || listingType === 'sale') {
+                  listingParams.type = listingType;
+                }
+              } else {
+                listingParams.type = 'sale';
+              }
+            } else {
+              listingParams.type = 'sale';
+            }
+
+            console.log('📋 [MapboxPropertyMap] Fetching listings for clusters view:', {
+              bounds: `${bounds.west.toFixed(4)},${bounds.south.toFixed(4)},${bounds.east.toFixed(4)},${bounds.north.toFixed(4)}`,
+              params: listingParams,
+            });
+
+            try {
+              const listingsResult = await RepliersAPI.listings.getFiltered(listingParams);
+              
+              console.log(`📦 [MapboxPropertyMap] API returned ${listingsResult.listings?.length || 0} listings before filtering`);
+              
+              // Filter listings to ensure they're within bounds
+              const filteredListings = (listingsResult.listings || []).filter(listing => {
+                if (!listing.map?.latitude || !listing.map?.longitude) {
+                  return false;
+                }
+                const lat = listing.map.latitude;
+                const lng = listing.map.longitude;
+                // Add small buffer for edge cases
+                const latBuffer = (bounds.north - bounds.south) * 0.05;
+                const lngBuffer = (bounds.east - bounds.west) * 0.05;
+                return lat >= (bounds.south - latBuffer) && lat <= (bounds.north + latBuffer) && 
+                       lng >= (bounds.west - lngBuffer) && lng <= (bounds.east + lngBuffer);
+              });
+
+              console.log(`✅ [MapboxPropertyMap] Loaded ${filteredListings.length} listings for clusters view (after filtering)`);
+              console.log(`📊 [MapboxPropertyMap] Total cluster count: ${result.count || 0}, Clusters: ${result.clusters?.length || 0}`);
+              
+              // Store listings for the left panel (these represent all properties in visible clusters)
+              setIndividualListings(filteredListings);
+              
+              // Log if we have clusters but no listings (potential issue)
+              if ((result.count || 0) > 0 && filteredListings.length === 0) {
+                console.warn('⚠️ [MapboxPropertyMap] WARNING: Clusters show properties exist but no listings were fetched!');
+              }
+            } catch (listingsError) {
+              console.error('❌ [MapboxPropertyMap] Error fetching listings for clusters view:', listingsError);
+              console.error('❌ [MapboxPropertyMap] Error details:', {
+                message: listingsError instanceof Error ? listingsError.message : String(listingsError),
+                stack: listingsError instanceof Error ? listingsError.stack : undefined,
+              });
+              // Still set clusters even if listings fetch fails
+              setIndividualListings([]);
+            }
+            
             setClusters(result.clusters);
             console.log(`✅ [MapboxPropertyMap] Loaded ${result.clusters.length} clusters at zoom ${currentZoom}`);
           }
@@ -342,6 +464,160 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
       );
     });
   }, [clusters, currentBounds]);
+
+  // Extract all visible properties from clusters and individual listings
+  const visibleProperties = useMemo(() => {
+    const allProperties: PropertyListing[] = [];
+
+    // When showing clusters (zoom < MAX_ZOOM_FOR_CLUSTERS)
+    // We fetch individual listings alongside clusters, so use those for the left panel
+    if (zoom < MAX_ZOOM_FOR_CLUSTERS) {
+      // Use the individual listings we fetched (they represent all properties in visible clusters)
+      individualListings.forEach(listing => {
+        if (listing.mlsNumber) {
+          allProperties.push(listing);
+        }
+      });
+      
+      // Also extract from clusters that have listing/listings data (for completeness)
+      visibleClusters.forEach(cluster => {
+        // Single listing in cluster
+        if (cluster.count === 1 && cluster.listing) {
+          const listing = cluster.listing as unknown as PropertyListing;
+          if (listing.mlsNumber && !allProperties.find(p => p.mlsNumber === listing.mlsNumber)) {
+            allProperties.push(listing);
+          }
+        }
+        // Multiple listings in cluster
+        else if (cluster.listings && Array.isArray(cluster.listings)) {
+          cluster.listings.forEach(listing => {
+            const propertyListing = listing as unknown as PropertyListing;
+            if (propertyListing.mlsNumber && !allProperties.find(p => p.mlsNumber === propertyListing.mlsNumber)) {
+              allProperties.push(propertyListing);
+            }
+          });
+        }
+      });
+      
+      console.log(`🔍 [MapboxPropertyMap] visibleProperties calculation (clusters view):`, {
+        zoom,
+        individualListingsCount: individualListings.length,
+        visibleClustersCount: visibleClusters.length,
+        extractedFromListings: individualListings.length,
+        extractedFromClusters: allProperties.length - individualListings.length,
+        totalProperties: allProperties.length,
+      });
+    }
+    // When showing individual listings (zoom >= MAX_ZOOM_FOR_CLUSTERS)
+    else {
+      // Add all individual listings that are visible
+      individualListings.forEach(listing => {
+        if (listing.mlsNumber) {
+          allProperties.push(listing);
+        }
+      });
+      
+      console.log(`🔍 [MapboxPropertyMap] visibleProperties calculation (individual listings view):`, {
+        zoom,
+        individualListingsCount: individualListings.length,
+        totalProperties: allProperties.length,
+      });
+    }
+
+    // Remove duplicates based on MLS number
+    const uniqueProperties = Array.from(
+      new Map(allProperties.map(prop => [prop.mlsNumber, prop])).values()
+    );
+
+    console.log(`✅ [MapboxPropertyMap] Final visibleProperties count: ${uniqueProperties.length} (from ${allProperties.length} total, removed ${allProperties.length - uniqueProperties.length} duplicates)`);
+
+    return uniqueProperties;
+  }, [visibleClusters, individualListings, zoom]);
+
+  // Store last visible properties for retry mechanism
+  useEffect(() => {
+    lastVisiblePropertiesRef.current = visibleProperties;
+  }, [visibleProperties]);
+
+  // Track last callback time to avoid spam
+  const lastCallbackTimeRef = useRef<number>(0);
+  
+  // Function to notify parent - extracted for reuse
+  const notifyParent = useCallback((props: PropertyListing[]) => {
+    const globalCallback = getGlobalCallback();
+    const callback = globalCallback || contextCallback.onVisiblePropertiesChange || onVisiblePropertiesChange || onVisiblePropertiesChangeRef.current;
+    
+    if (callback && typeof callback === 'function') {
+      console.log(`📤 [MapboxPropertyMap] Calling callback with ${props.length} visible properties`);
+      try {
+        callback(props);
+        console.log(`✅ [MapboxPropertyMap] Successfully called callback with ${props.length} properties`);
+        return true;
+      } catch (error) {
+        console.error('❌ [MapboxPropertyMap] Error calling onVisiblePropertiesChange:', error);
+        return false;
+      }
+    }
+    return false;
+  }, [onVisiblePropertiesChange, contextCallback]);
+  
+  // Update last callback time when we successfully call
+  const notifyParentWithTracking = useCallback((props: PropertyListing[]) => {
+    const success = notifyParent(props);
+    if (success) {
+      lastCallbackTimeRef.current = Date.now();
+    }
+    return success;
+  }, [notifyParent]);
+
+  // Notify parent component when visible properties change
+  useEffect(() => {
+    console.log('🔔 [MapboxPropertyMap] visibleProperties changed:', {
+      propertiesCount: visibleProperties.length,
+      sampleProperties: visibleProperties.slice(0, 3).map(p => ({ mls: p.mlsNumber, address: p.address?.street })),
+    });
+    
+    const success = notifyParentWithTracking(visibleProperties);
+    
+    if (!success) {
+      console.warn('⚠️ [MapboxPropertyMap] Callback not available, will retry in 500ms...', {
+        propertiesCount: visibleProperties.length,
+      });
+      
+      // Retry after a short delay in case callback gets set later
+      const retryTimeout = setTimeout(() => {
+        const retrySuccess = notifyParentWithTracking(visibleProperties);
+        if (!retrySuccess) {
+          console.warn('⚠️ [MapboxPropertyMap] Retry failed - callback still not available');
+        }
+      }, 500);
+      return () => clearTimeout(retryTimeout);
+    }
+  }, [visibleProperties, notifyParentWithTracking]);
+  
+  // Periodic check to ensure callback is called (fallback mechanism)
+  useEffect(() => {
+    if (visibleProperties.length === 0) return;
+    
+    const interval = setInterval(() => {
+      const globalCallback = getGlobalCallback();
+      if (globalCallback && typeof globalCallback === 'function' && lastVisiblePropertiesRef.current.length > 0) {
+        // Only call if we haven't called recently (avoid spam)
+        const timeSinceLastCall = Date.now() - lastCallbackTimeRef.current;
+        if (timeSinceLastCall > 2000) { // Only if last call was more than 2 seconds ago
+          console.log('🔄 [MapboxPropertyMap] Periodic check: Calling callback with', lastVisiblePropertiesRef.current.length, 'properties');
+          try {
+            globalCallback(lastVisiblePropertiesRef.current);
+            lastCallbackTimeRef.current = Date.now();
+          } catch (error) {
+            console.error('❌ [MapboxPropertyMap] Periodic check error:', error);
+          }
+        }
+      }
+    }, 2000); // Check every 2 seconds
+    
+    return () => clearInterval(interval);
+  }, [visibleProperties.length]);
 
   // Convert filtered clusters and individual listings to GeoJSON for Mapbox
   const clustersGeoJSON = useMemo(() => {
@@ -723,17 +999,23 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
     const map = mapRef.current.getMap();
     const currentZoom = map.getZoom();
 
-    // Strict threshold: clusters below threshold, property tags (Marker components) at or above threshold
+    // Strict threshold: clusters below threshold, property tags at or above threshold
     if (currentZoom < MAX_ZOOM_FOR_CLUSTERS) {
-      // Show clusters
+      // Show clusters, hide property tags
       if (map.getLayer('cluster-markers')) {
         map.setLayoutProperty('cluster-markers', 'visibility', 'visible');
       }
+      if (map.getLayer('single-listings')) {
+        map.setLayoutProperty('single-listings', 'visibility', 'none');
+      }
       console.log(`👁️ [MapboxPropertyMap] Showing clusters (zoom ${currentZoom.toFixed(2)} < ${MAX_ZOOM_FOR_CLUSTERS})`);
     } else {
-      // Hide clusters (property tags are rendered as Marker components, not a layer)
+      // Hide clusters, show property tags (both layer and React Marker components)
       if (map.getLayer('cluster-markers')) {
         map.setLayoutProperty('cluster-markers', 'visibility', 'none');
+      }
+      if (map.getLayer('single-listings')) {
+        map.setLayoutProperty('single-listings', 'visibility', 'visible');
       }
       console.log(`👁️ [MapboxPropertyMap] Hiding clusters, showing property tags (zoom ${currentZoom.toFixed(2)} >= ${MAX_ZOOM_FOR_CLUSTERS})`);
     }
