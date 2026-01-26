@@ -55,6 +55,13 @@ interface FilterData {
   cities: string[];
 }
 
+interface City {
+  id: string;
+  name: string;
+  image: string;
+  numberOfProjects?: number;
+}
+
 interface DevelopmentTeamMember {
   id: string;
   name: string;
@@ -161,14 +168,26 @@ const slugifyCityName = (cityName: string): string => {
 const getContentForCategory = (
   category: CategoryType, 
   developers: string[],
-  cities: string[] = [],
-  developmentTeams: DevelopmentTeamGroup[] = []
+  citiesFromFilter: string[] = [],
+  developmentTeams: DevelopmentTeamGroup[] = [],
+  citiesFromDb: City[] = []
 ): ContentItem[] => {
   switch (category) {
     case 'property-type': 
       return propertyTypes;
     case 'top-cities':
-      return cities.map((city) => ({
+      // Use cities from database if available, otherwise fall back to filter cities
+      if (citiesFromDb.length > 0) {
+        return citiesFromDb.map((city) => ({
+          id: city.id,
+          label: city.name,
+          description: `View ${city.numberOfProjects || 0} pre-construction project${city.numberOfProjects !== 1 ? 's' : ''} in ${city.name}`,
+          href: `/pre-con/${city.id}`,
+          icon: MapPin
+        }));
+      }
+      // Fallback to filter cities if database cities not loaded yet
+      return citiesFromFilter.map((city) => ({
         id: slugifyCityName(city),
         label: city,
         description: `View pre-construction projects in ${city}`,
@@ -212,6 +231,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
     occupancyYears: [],
     cities: [],
   });
+  const [cities, setCities] = useState<City[]>([]);
   const [developmentTeams, setDevelopmentTeams] = useState<DevelopmentTeamGroup[]>([]);
   const [loading, setLoading] = useState(false);
   const [dataFetched, setDataFetched] = useState(false);
@@ -243,6 +263,16 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
       if (filterResponse.ok) {
         const filterData = await filterResponse.json();
         setFilterData(filterData);
+      }
+      
+      // Fetch cities from database
+      const citiesResponse = await fetch('/api/pre-con-cities?limit=12');
+      if (citiesResponse.ok) {
+        const citiesData = await citiesResponse.json();
+        setCities(citiesData.cities || []);
+      } else {
+        console.error('Failed to fetch cities:', citiesResponse.status);
+        setCities([]);
       }
       
       // Fetch development teams
@@ -290,7 +320,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
     ? getBlogPosts({ search: 'construction' }).slice(0, 2)
     : preConBlogs;
 
-  const contentItems = getContentForCategory(activeCategory, filterData.developers, filterData.cities, developmentTeams);
+  const contentItems = getContentForCategory(activeCategory, filterData.developers, filterData.cities, developmentTeams, cities);
 
   const menuContent = (
     <AnimatePresence>
@@ -605,7 +635,7 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                     )}
                     {activeCategory !== 'developer' && (
                       <Link
-                        href="/pre-con/projects"
+                        href={activeCategory === 'top-cities' ? '/pre-con/cities' : '/pre-con/projects'}
                         className="inline-flex items-center gap-1 mt-4 text-xs font-semibold text-primary hover:underline"
                       >
                         View all {activeCategory === 'top-cities' ? 'cities' : activeCategory.replace('-', ' ')}
