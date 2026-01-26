@@ -105,7 +105,7 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
   useEffect(() => {
     const globalCallback = getGlobalCallback();
     const callback = globalCallback || contextCallback.onVisiblePropertiesChange || onVisiblePropertiesChange;
-    onVisiblePropertiesChangeRef.current = callback;
+    onVisiblePropertiesChangeRef.current = callback || null;
     console.log('🔍 [MapboxPropertyMap] Component mounted/updated, callback sources:', {
       propType: typeof onVisiblePropertiesChange,
       propValue: onVisiblePropertiesChange,
