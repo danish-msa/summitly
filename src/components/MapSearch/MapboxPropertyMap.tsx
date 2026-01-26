@@ -574,7 +574,7 @@ const MapboxPropertyMap: React.FC<MapboxPropertyMapProps> = ({
   useEffect(() => {
     console.log('🔔 [MapboxPropertyMap] visibleProperties changed:', {
       propertiesCount: visibleProperties.length,
-      sampleProperties: visibleProperties.slice(0, 3).map(p => ({ mls: p.mlsNumber, address: p.address?.street })),
+      sampleProperties: visibleProperties.slice(0, 3).map(p => ({ mls: p.mlsNumber, address: p.address?.location || `${p.address?.streetNumber || ''} ${p.address?.streetName || ''}`.trim() })),
     });
     
     const success = notifyParentWithTracking(visibleProperties);
