@@ -11,9 +11,9 @@ import { useSession } from 'next-auth/react';
 // import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import { ChevronDown, Search, X } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AutocompleteSearch } from '@/components/common/AutocompleteSearch';
 import { BuyMegaMenu } from './BuyMegaMenu';
 import { RentMegaMenu } from './RentMegaMenu';
 import { ProjectsMegaMenu } from './ProjectsMegaMenu';
@@ -121,14 +121,9 @@ const Nav = ({ openNav }: Props) => {
   const [showRentDropdown, setShowRentDropdown] = useState(false);
   const [showProjectsDropdown, setShowProjectsDropdown] = useState(false);
   const [showMoreDropdown, setShowMoreDropdown] = useState(false);
-  const [searchValue, setSearchValue] = useState('');
 
   const handleLoginClick = () => {
     setShowLoginModal(true);
-  };
-
-  const handleSearchClear = () => {
-    setSearchValue('');
   };
 
   // Scroll detection for navbar background only (disabled on property pages)
@@ -332,7 +327,7 @@ const Nav = ({ openNav }: Props) => {
             </div>
 
             {/* Right Side: AI Button, Search, Login, Mobile Menu Button */}
-            <div className="flex items-center space-x-2 lg:space-x-3">
+            <div className="flex flex-1 min-w-0 justify-end items-center space-x-2 lg:space-x-3 lg:min-w-[420px]">
               {/* AI Button */}
               <div className="hidden lg:flex">
                 <Link
@@ -344,31 +339,13 @@ const Nav = ({ openNav }: Props) => {
                 </Link>
               </div>
               
-              {/* Search Input Field */}
-              <div className="hidden lg:flex">
-                <div className="relative w-64">
-                  <Input
-                    type="text"
-                    value={searchValue}
-                    onChange={(e) => setSearchValue(e.target.value)}
-                    placeholder="Search ..."
-                    className="pl-3 rounded-full pr-12 h-10 text-base bg-white/50 z-10"
-                  />
-                  {/* Clear and Search buttons */}
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-1 space-x-1">
-                    {searchValue && (
-                      <button
-                        type="button"
-                        onClick={handleSearchClear}
-                        className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors"
-                        title="Clear search"
-                      >
-                        <X className="h-4 w-4 text-gray-500" />
-                      </button>
-                    )}
-                    <Search className="h-8 w-8 p-2 rounded-full text-white price-card-gradient cursor-pointer transition-colors" />
-                  </div>
-                </div>
+              {/* Search: same behavior as AutocompleteSearch (properties + locations) */}
+              <div className="hidden lg:flex flex-1 min-w-[260px] max-w-[420px]">
+                <AutocompleteSearch
+                  placeholder="Search properties or locations..."
+                  className="w-full"
+                  inputClassName="h-10 text-sm bg-white/80 border-slate-200 focus:ring-sky-500/40 focus:border-sky-500"
+                />
               </div>
               {/* Login / Signup Button or User Profile */}
               {session ? (

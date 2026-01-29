@@ -1,25 +1,14 @@
 import React from 'react';
 import { BiCalculator } from 'react-icons/bi';
 import 'rc-slider/assets/index.css';
-import LocationInput from './LocationInput';
+import { AutocompleteSearch } from '@/components/common/AutocompleteSearch';
 
 const SellForm = () => {
-  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    // Handle search logic for Sell
-  };
-
-  const handleLocationSelect = (location: string) => {
-    console.log('Selected location:', location);
-  };
-
   return (
     <>
-      <form onSubmit={handleSearch}>
-        <div className='field-box'>
-          <LocationInput onSelect={handleLocationSelect} placeholder="Where do you want to sell?" />
-        </div>
-      </form>
+      <div className="field-box">
+        <AutocompleteSearch placeholder="Where do you want to sell?" />
+      </div>
       <div className='flex flex-col md:flex-row gap-2 justify-between bg-gradient-brand text-white text-white p-4 sm:p-6 rounded-2xl mt-2'>
         <div className='flex flex-col gap-2'>
           <div className='flex gap-2 items-center'>
