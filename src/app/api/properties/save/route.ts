@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     const existing = await prisma.savedProperty.findUnique({
       where: {
         userId_mlsNumber: {
-          userId: session.user.id,
+          userId: auth.user.id,
           mlsNumber: mlsNumber.toString(),
         },
       },
