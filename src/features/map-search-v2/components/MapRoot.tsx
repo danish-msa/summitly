@@ -64,12 +64,14 @@ export default function MapRoot({ zoom, center, polygon, onMove, onLoad }: MapRo
     MapService.setMap(map);
 
     map.on("load", () => {
-      onLoadRef.current(map.getBounds(), map.getCenter(), map.getZoom());
+      const bounds = map.getBounds();
+      if (bounds) onLoadRef.current(bounds, map.getCenter(), map.getZoom());
       upsertPolygon(map, polygon);
     });
 
     map.on("moveend", () => {
-      onMoveRef.current(map.getBounds(), map.getCenter(), map.getZoom());
+      const bounds = map.getBounds();
+      if (bounds) onMoveRef.current(bounds, map.getCenter(), map.getZoom());
     });
 
     map.on("dragstart", onUserInteractionStart);
