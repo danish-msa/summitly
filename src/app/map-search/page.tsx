@@ -1,10 +1,5 @@
-import Listings from '@/components/MapSearch/Listings';
-import React from 'react';
+import MapSearchV2 from "./v2";
 
-const ListingsPage: React.FC = () => {
-  return (
-    <Listings />
-  );
-};
-
-export default ListingsPage;
+export default function MapSearchPage() {
+  return <MapSearchV2 />;
+}

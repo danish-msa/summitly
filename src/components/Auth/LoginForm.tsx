@@ -7,9 +7,10 @@ import { toast } from '@/hooks/use-toast';
 interface LoginFormProps {
   onRegisterClick: () => void;
   onClose?: () => void;
+  redirectTo?: string | false;
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ onRegisterClick, onClose }) => {
+const LoginForm: React.FC<LoginFormProps> = ({ onRegisterClick, onClose, redirectTo = '/dashboard' }) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -73,9 +74,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onRegisterClick, onClose }) => {
         onClose();
       }
 
-      // Redirect to dashboard
-      router.push('/dashboard');
-      router.refresh();
+      // Optional redirect after login
+      if (redirectTo !== false) {
+        router.push(redirectTo);
+        router.refresh();
+      }
     } catch {
       toast({
         title: "Login Failed",
@@ -101,7 +104,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onRegisterClick, onClose }) => {
     try {
       // Google OAuth will redirect to Google's page, then back to our callback
       await signIn('google', {
-        callbackUrl: '/dashboard',
+        callbackUrl: redirectTo === false ? '/dashboard' : redirectTo,
       });
       // Note: We won't reach here because of redirect, but this handles the click
     } catch {

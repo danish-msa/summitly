@@ -41,6 +41,7 @@ export const RepliersAPI = {
     fetch: ListingsService.fetchListings,
     getFiltered: ListingsService.getListings,
     getSimilar: ListingsService.getSimilarListings,
+    searchAutocomplete: ListingsService.searchListingsAutocomplete,
     getDetails: ListingsService.getListingDetails,
     getRawDetails: ListingsService.getRawListingDetails,
     getClusters: ListingsService.getClusters,

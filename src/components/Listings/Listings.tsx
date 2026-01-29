@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
-import { getListings } from '@/lib/api/properties';
+import React, { useMemo, useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import PropertyCard from '@/components/Helper/PropertyCard';
 import { PropertyListing } from '@/lib/types';
 import { LOCATIONS, REGIONS, FilterState } from '@/lib/types/filters';
@@ -10,18 +9,142 @@ import { useHiddenProperties } from '@/hooks/useHiddenProperties';
 import GlobalFilters from '../common/filters/GlobalFilters';
 import { PropertyCardSkeleton } from '@/components/skeletons';
 import { ViewModeToggle, type ViewMode } from '@/components/common/ViewModeToggle';
-import dynamic from 'next/dynamic';
 import { filterPropertiesByState } from '@/lib/utils/filterProperties';
 import { getCoordinates } from '@/utils/locationUtils';
 import DraggableDivider from '@/components/ui/draggable-divider';
+import type { Cluster } from '@/lib/api/repliers';
+import type { LngLat, LngLatBounds } from 'mapbox-gl';
+import { LngLat as LngLatCtor, LngLatBounds as LngLatBoundsCtor } from 'mapbox-gl';
 
-// Dynamically import the universal map component (switches between Google Maps and Mapbox)
-const PropertyMap = dynamic(() => import('@/components/MapSearch/PropertyMap'), { ssr: false });
+import { MapOptionsProvider, useMapOptions } from '@/features/map-search-v2/providers/MapOptionsProvider';
+import MapRoot from '@/features/map-search-v2/components/MapRoot';
+import MapService from '@/features/map-search-v2/services/map/MapService';
+import SearchService from '@/features/map-search-v2/services/search/SearchService';
+import MapboxDraw from '@mapbox/mapbox-gl-draw';
+import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
+import { Pencil, PencilOff, X } from 'lucide-react';
 
 // Default center (Toronto area) - fallback if geolocation fails
 const defaultCenter = {
   lat: 43.6532,
   lng: -79.3832
+};
+
+const ListingsMapDrawButton = ({
+  polygon,
+  setPolygon,
+}: {
+  polygon: Array<[number, number]> | null;
+  setPolygon: React.Dispatch<React.SetStateAction<Array<[number, number]> | null>>;
+}) => {
+  const { mapRef } = useMapOptions();
+  const [editMode, setEditMode] = useState<'draw' | null>(null);
+  const drawRef = useRef<MapboxDraw | null>(null);
+
+  const map = mapRef.current;
+
+  const updatePolygonFromDraw = useCallback(() => {
+    const data = drawRef.current?.getAll()?.features;
+    if (!data?.length) return;
+    const feature = data[0];
+    if (feature.geometry.type !== 'Polygon') return;
+    const coords = (feature.geometry.coordinates?.[0] ?? []) as Array<[number, number]>;
+    if (coords.length < 3) return;
+
+    // Remove last coordinate if it closes the ring
+    const last = coords.at(-1);
+    const first = coords[0];
+    const cleaned =
+      last && first && last[0] === first[0] && last[1] === first[1]
+        ? coords.slice(0, -1)
+        : coords;
+    setPolygon(cleaned);
+  }, [setPolygon]);
+
+  useEffect(() => {
+    if (!map) return;
+
+    if (editMode === 'draw') {
+      if (!drawRef.current) {
+        const draw = new MapboxDraw({
+          displayControlsDefault: false,
+          defaultMode: 'draw_polygon',
+          controls: { polygon: false, trash: false },
+        });
+        drawRef.current = draw;
+        map.addControl(draw);
+        map.on('draw.create', updatePolygonFromDraw);
+        map.on('draw.update', updatePolygonFromDraw);
+        map.on('draw.delete', () => setPolygon(null));
+      } else {
+        drawRef.current.changeMode('draw_polygon');
+      }
+    } else {
+      if (drawRef.current) {
+        map.off('draw.create', updatePolygonFromDraw);
+        map.off('draw.update', updatePolygonFromDraw);
+        map.removeControl(drawRef.current);
+        drawRef.current = null;
+      }
+    }
+
+    return () => {
+      if (!map) return;
+      if (drawRef.current) {
+        map.off('draw.create', updatePolygonFromDraw);
+        map.off('draw.update', updatePolygonFromDraw);
+        map.removeControl(drawRef.current);
+        drawRef.current = null;
+      }
+    };
+  }, [map, editMode, updatePolygonFromDraw, setPolygon]);
+
+  const toggleDraw = () => {
+    if (editMode === 'draw') {
+      setEditMode(null);
+    } else {
+      setPolygon(null);
+      setEditMode('draw');
+    }
+  };
+
+  const clear = () => {
+    setPolygon(null);
+    setEditMode(null);
+    drawRef.current?.deleteAll();
+  };
+
+  return (
+    <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
+      <button
+        type="button"
+        onClick={toggleDraw}
+        className={`h-10 w-10 rounded-lg shadow-md border border-white/60 backdrop-blur bg-white/80 flex items-center justify-center ${
+          editMode === 'draw' ? 'ring-2 ring-primary' : ''
+        }`}
+        aria-label={editMode === 'draw' ? 'Exit draw mode' : 'Draw polygon'}
+        title={editMode === 'draw' ? 'Exit draw mode' : 'Draw polygon'}
+      >
+        {editMode === 'draw' ? (
+          <PencilOff className="h-5 w-5 text-primary" />
+        ) : (
+          <Pencil className="h-5 w-5 text-primary" />
+        )}
+      </button>
+
+      {polygon && polygon.length > 0 && (
+        <button
+          type="button"
+          onClick={clear}
+          className="h-10 w-10 rounded-lg shadow-md border border-white/60 backdrop-blur bg-white/80 flex items-center justify-center"
+          aria-label="Clear polygon"
+          title="Clear polygon"
+        >
+          <X className="h-5 w-5 text-gray-700" />
+        </button>
+      )}
+    </div>
+  );
 };
 
 const Listings = () => {
@@ -49,13 +172,19 @@ const Listings = () => {
     maxSquareFeet: 0,
     yearBuilt: 'all'
   });
-  const [mapBounds, setMapBounds] = useState<{north: number; south: number; east: number; west: number} | null>(null);
   const [userLocation, setUserLocation] = useState<{lat: number; lng: number} | null>(null);
   const [locationCenter, setLocationCenter] = useState<{lat: number; lng: number} | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapPosition, setMapPosition] = useState<{
+    bounds: LngLatBounds | null;
+    center: LngLat | null;
+    zoom: number;
+  }>({ bounds: null, center: null, zoom: 12 });
+  const [clusters, setClusters] = useState<Cluster[]>([]);
+  const [polygon, setPolygon] = useState<Array<[number, number]> | null>(null); // [lng,lat]
   const [splitPosition, setSplitPosition] = useState(50); // Percentage: 0-100, default 50% (equal split)
   const [gridColumns, setGridColumns] = useState(2); // Dynamic grid columns based on container width
-  const boundsChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const previousLocationRef = useRef<{location: string; area: string} | null>(null);
   const geocodingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const splitContainerRef = useRef<HTMLDivElement>(null);
@@ -71,6 +200,10 @@ const Listings = () => {
 
   // Get visible properties (filtered properties minus hidden ones)
   const visibleProperties = getVisibleProperties(filteredProperties);
+
+  const effectiveFilters = useMemo<FilterState>(() => {
+    return { ...filters, listingType };
+  }, [filters, listingType]);
   
   // Debug logging
   useEffect(() => {
@@ -241,118 +374,169 @@ const Listings = () => {
     };
   }, [filters.location, filters.locationArea]);
 
-  // Load properties based on map bounds and filters
-  const loadPropertiesByBounds = useCallback(async (bounds: {north: number; south: number; east: number; west: number}) => {
-    setLoading(true);
-    
-    try {
-      // Build API parameters based on filters
-      const params: Record<string, string | number> = {
-        status: "A", // Active listings
-        resultsPerPage: 500 // Get more results for map view
-      };
-      
-      // Only add filters if they have values
-      if (filters.minPrice > 0) params.minPrice = filters.minPrice;
-      if (filters.maxPrice < 1000000) params.maxPrice = filters.maxPrice;
-      if (filters.bedrooms > 0) params.minBedrooms = filters.bedrooms;
-      if (filters.bathrooms > 0) params.minBaths = filters.bathrooms;
-      if (filters.propertyType !== 'all') params.propertyType = filters.propertyType;
-      if (filters.community !== 'all') params.community = filters.community;
-      
-      // Add listing type filter (Sale or Lease)
-      if (listingType === 'sell') {
-        params.type = 'Sale';
-      } else if (listingType === 'rent') {
-        params.type = 'Lease';
-      }
-      
-      // Note: Location filter is NOT added here - it's only used to move the map center
-      // The map should show properties for any area the user navigates to, not just the selected location
-      // Location filter is handled separately via locationCenter to move the map view
-      
-      // Call the API
-      const data = await getListings(params);
-      
-      if (data && data.listings) {
-        // Filter by listing type
-        let filteredListings = data.listings.filter(listing => 
-          listingType === 'rent' ? listing.type === 'Lease' : listing.type === 'Sale'
-        );
-        
-        // Filter by map bounds (client-side filtering)
-        filteredListings = filteredListings.filter(listing => {
-          if (!listing.map.latitude || !listing.map.longitude) return false;
-          const lat = listing.map.latitude;
-          const lng = listing.map.longitude;
-          return lat >= bounds.south && lat <= bounds.north && 
-                 lng >= bounds.west && lng <= bounds.east;
+  // List-only view still needs results even without a map mounted.
+  // We approximate a viewport around the current center and reuse the same v2 search pipeline.
+  useEffect(() => {
+    if (viewMode !== 'list') return;
+
+    const center = locationCenter || userLocation || defaultCenter;
+    const delta = 0.2; // ~20km-ish depending on latitude; good enough as a default viewport
+    const bounds = new LngLatBoundsCtor(
+      [center.lng - delta, center.lat - delta],
+      [center.lng + delta, center.lat + delta]
+    );
+
+    let cancelled = false;
+
+    const run = async () => {
+      setLoading(true);
+      try {
+        const resp = await SearchService.fetch({
+          bounds,
+          polygon: null,
+          zoom: 12,
+          pageNum: 1,
+          resultsPerPage: 200,
+          status: 'A',
+          filters: effectiveFilters,
+          city: null,
         });
-        
-        setProperties(filteredListings);
-        
-        // Extract unique communities from the data
+
+        if (!resp || cancelled) return;
+        setProperties(resp.list);
+        setClusters(resp.clusters);
         const uniqueCommunities = Array.from(
-          new Set(
-            data.listings
-              .map(listing => listing.address.neighborhood)
-              .filter(Boolean) as string[]
-          )
+          new Set(resp.list.map((l) => l.address?.neighborhood).filter(Boolean) as string[])
         ).sort();
         setCommunities(uniqueCommunities);
-      } else {
+      } catch (error) {
+        console.error('[Listings] List-mode fetch failed:', error);
         setProperties([]);
-      }
-    } catch (error) {
-      console.error('Error loading properties:', error);
-      setProperties([]);
-    } finally {
-      setLoading(false);
-      setIsInitialLoad(false);
-    }
-  }, [filters, listingType]);
-
-  // Handle map bounds change (debounced)
-  const handleBoundsChange = useCallback((bounds: {north: number; south: number; east: number; west: number}) => {
-    setMapBounds(bounds);
-    
-    // Debounce the API call to avoid too many requests
-    if (boundsChangeTimeoutRef.current) {
-      clearTimeout(boundsChangeTimeoutRef.current);
-    }
-    
-    boundsChangeTimeoutRef.current = setTimeout(() => {
-      loadPropertiesByBounds(bounds);
-    }, 500); // 500ms debounce
-  }, [loadPropertiesByBounds]);
-
-  // Initial load when user location is available
-  useEffect(() => {
-    if (userLocation && isInitialLoad && mapBounds) {
-      loadPropertiesByBounds(mapBounds);
-    }
-  }, [userLocation, isInitialLoad, mapBounds, loadPropertiesByBounds]);
-
-  // Reload when filters change
-  useEffect(() => {
-    if (mapBounds && !isInitialLoad) {
-      loadPropertiesByBounds(mapBounds);
-    }
-  }, [filters, listingType]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (boundsChangeTimeoutRef.current) {
-        clearTimeout(boundsChangeTimeoutRef.current);
+        setClusters([]);
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+          setIsInitialLoad(false);
+        }
       }
     };
-  }, []);
+
+    const t = setTimeout(run, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [viewMode, locationCenter, userLocation, effectiveFilters]);
+
+  // New v2 pipeline (map-driven):
+  // map position | filters | polygon -> fetch -> save -> MapService.update()
+  useEffect(() => {
+    const shouldFetch = viewMode === 'map' || viewMode === 'mixed';
+    if (!shouldFetch) return;
+    if (!mapLoaded) return;
+    if (!mapPosition.bounds) return;
+
+    let cancelled = false;
+
+    const run = async () => {
+      setLoading(true);
+      try {
+        const resp = await SearchService.fetch({
+          bounds: mapPosition.bounds,
+          polygon,
+          zoom: mapPosition.zoom,
+          pageNum: 1,
+          resultsPerPage: 200,
+          status: 'A',
+          filters: effectiveFilters,
+          city: null,
+        });
+
+        if (!resp || cancelled) return;
+
+        setProperties(resp.list);
+        setClusters(resp.clusters);
+        MapService.update(resp.list, resp.clusters, resp.count);
+
+        const uniqueCommunities = Array.from(
+          new Set(resp.list.map((l) => l.address?.neighborhood).filter(Boolean) as string[])
+        ).sort();
+        setCommunities(uniqueCommunities);
+      } catch (error) {
+        console.error('[Listings] Map search fetch failed:', error);
+        setProperties([]);
+        setClusters([]);
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+          setIsInitialLoad(false);
+        }
+      }
+    };
+
+    const t = setTimeout(run, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [viewMode, mapLoaded, mapPosition, polygon, effectiveFilters]);
 
   // Handle property card click
   const handlePropertyClick = (property: PropertyListing | null) => {
     setSelectedProperty(property);
   };
+
+  const handleMapLoad = useCallback((bounds: LngLatBounds, center: LngLat, zoom: number) => {
+    setMapLoaded(true);
+    setMapPosition({ bounds, center, zoom });
+  }, []);
+
+  const handleMapMove = useCallback((bounds: LngLatBounds, center: LngLat, zoom: number) => {
+    setMapPosition({ bounds, center, zoom });
+  }, []);
+
+  const mapCenterLngLat = useMemo(() => {
+    const c = locationCenter || userLocation || defaultCenter;
+    return new LngLatCtor(c.lng, c.lat);
+  }, [locationCenter, userLocation]);
+
+  // Keep markers/clusters in sync with fetched + client-filtered data
+  useEffect(() => {
+    if (viewMode !== 'map' && viewMode !== 'mixed') return;
+    MapService.showMarkers({
+      properties: visibleProperties,
+      onClick: (_e, p) => {
+        setSelectedProperty(p);
+        // If user is in map-only mode, switch to split so they can see the highlighted card
+        if (viewMode === 'map') setViewMode('mixed');
+      },
+      onTap: (p) => {
+        setSelectedProperty(p);
+        if (viewMode === 'map') setViewMode('mixed');
+      },
+    });
+  }, [viewMode, visibleProperties]);
+
+  useEffect(() => {
+    if (viewMode !== 'map' && viewMode !== 'mixed') return;
+    MapService.showClusterMarkers({ clusters });
+  }, [viewMode, clusters]);
+
+  // When a marker is selected, scroll the corresponding card into view
+  useEffect(() => {
+    if (!selectedProperty?.mlsNumber) return;
+    if (viewMode !== 'mixed' && viewMode !== 'list') return;
+
+    const id = `listing-card-${selectedProperty.mlsNumber}`;
+
+    // Wait a tick so the DOM exists (especially after switching view modes)
+    const t = window.setTimeout(() => {
+      const el = document.getElementById(id);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+
+    return () => window.clearTimeout(t);
+  }, [selectedProperty?.mlsNumber, viewMode]);
 
   // Update filters
   const handleFilterChange = (e: { target: { name: string; value: string | number | string[] | { location: string; area: string } } }) => {
@@ -433,9 +617,8 @@ const Listings = () => {
     // Debounce map resize - only trigger after user stops dragging
     mapResizeTimeoutRef.current = setTimeout(() => {
       isDraggingRef.current = false;
-      // Trigger window resize event to help maps detect size change
-      // This is a backup in case ResizeObserver doesn't catch it
-      window.dispatchEvent(new Event('resize'));
+      // Resize Mapbox map after dragging ends
+      MapService.map?.resize();
       mapResizeTimeoutRef.current = null;
     }, 100); // Reduced from 150ms for faster response
   };
@@ -448,6 +631,15 @@ const Listings = () => {
       }
     };
   }, []);
+
+  // Ensure Mapbox map resizes when layout changes
+  useEffect(() => {
+    if (viewMode !== 'map' && viewMode !== 'mixed') return;
+    const t = setTimeout(() => {
+      MapService.map?.resize();
+    }, 50);
+    return () => clearTimeout(t);
+  }, [viewMode, splitPosition]);
 
   // Calculate grid columns based on container width
   useEffect(() => {
@@ -487,6 +679,7 @@ const Listings = () => {
   }, [splitPosition, viewMode]);
 
   return (
+    <MapOptionsProvider initialLayout="split">
     <div className="px-4 sm:px-6 lg:px-8 mt-20">
       <div className="flex flex-col md:flex-row justify-between items-center mb-4">
       {/* Use the separated filter component */}
@@ -523,25 +716,17 @@ const Listings = () => {
       {/* Property Listings and Map View */}
       {viewMode === 'map' ? (
         // Map View Only
-        <div className="w-full bg-gray-100 rounded-lg overflow-hidden mb-10" style={{ height: '70vh' }}>
-          <PropertyMap
-            theme="custom"
-            properties={visibleProperties}
-            selectedProperty={selectedProperty}
-            onPropertySelect={(property: PropertyListing | null) => {
-              setSelectedProperty(property);
-            }}
-            onBoundsChange={handleBoundsChange}
-            initialCenter={userLocation || defaultCenter}
-            initialZoom={12}
-            locationCenter={locationCenter}
-            showFilters={true}
-            filters={filters}
-            handleFilterChange={handleFilterChange}
-            resetFilters={resetFilters}
-            communities={communities}
-            locations={LOCATIONS}
-          />
+        <div className="w-full bg-gray-100 rounded-lg overflow-hidden" style={{ height: '70vh' }}>
+          <div className="relative w-full h-full">
+            <MapRoot
+              zoom={mapPosition.zoom}
+              center={mapCenterLngLat}
+              polygon={polygon}
+              onMove={handleMapMove}
+              onLoad={handleMapLoad}
+            />
+            <ListingsMapDrawButton polygon={polygon} setPolygon={setPolygon} />
+          </div>
         </div>
       ) : viewMode === 'mixed' ? (
         // Mixed View (List + Map Side by Side)
@@ -587,6 +772,7 @@ const Listings = () => {
                 {visibleProperties.length > 0 ? (
                   visibleProperties.map((property, index) => (
                     <div 
+                      id={`listing-card-${property.mlsNumber}`}
                       key={`${property.mlsNumber}-${index}`}
                       className={`cursor-pointer transition-all ${selectedProperty?.mlsNumber === property.mlsNumber ? 'ring-2 ring-secondary' : ''}`}
                       onClick={() => handlePropertyClick(property)}
@@ -635,24 +821,16 @@ const Listings = () => {
               transform: 'translateZ(0)' // Create new layer for GPU acceleration
             } as React.CSSProperties}
           >
-            <PropertyMap
-              theme="custom"
-              properties={visibleProperties}
-              selectedProperty={selectedProperty}
-              onPropertySelect={(property: PropertyListing | null) => {
-                setSelectedProperty(property);
-              }}
-              onBoundsChange={handleBoundsChange}
-              initialCenter={userLocation || defaultCenter}
-              initialZoom={12}
-              locationCenter={locationCenter}
-              showFilters={true}
-              filters={filters}
-              handleFilterChange={handleFilterChange}
-              resetFilters={resetFilters}
-              communities={communities}
-              locations={LOCATIONS}
-            />
+            <div className="relative w-full h-full">
+              <MapRoot
+                zoom={mapPosition.zoom}
+                center={mapCenterLngLat}
+                polygon={polygon}
+                onMove={handleMapMove}
+                onLoad={handleMapLoad}
+              />
+              <ListingsMapDrawButton polygon={polygon} setPolygon={setPolygon} />
+            </div>
           </div>
         </div>
       ) : (
@@ -669,6 +847,7 @@ const Listings = () => {
               {visibleProperties.length > 0 ? (
                 visibleProperties.map((property, index) => (
                   <div 
+                      id={`listing-card-${property.mlsNumber}`}
                     key={`${property.mlsNumber}-${index}`}
                     className={`cursor-pointer transition-all ${selectedProperty?.mlsNumber === property.mlsNumber ? 'ring-2 ring-secondary' : ''}`}
                     onClick={() => handlePropertyClick(property)}
@@ -690,6 +869,7 @@ const Listings = () => {
         </>
       )}
     </div>
+    </MapOptionsProvider>
   );
 };
 

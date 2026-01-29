@@ -15,10 +15,15 @@
 // CONFIGURATION
 // ============================================================================
 
+// Repliers API uses .io (not .ai). Normalize env base URL if set wrong.
+const rawBaseUrl =
+  process.env.REPLIERS_BASE_URL ||
+  process.env.NEXT_PUBLIC_REPLIERS_BASE_URL ||
+  'https://api.repliers.io';
 const API_CONFIG = {
-  baseUrl: 'https://api.repliers.io',
+  baseUrl: rawBaseUrl.replace('repliers.ai', 'repliers.io'),
   cdnUrl: 'https://cdn.repliers.io',
-  apiKey: process.env.NEXT_PUBLIC_REPLIERS_API_KEY || '',
+  apiKey: process.env.NEXT_PUBLIC_REPLIERS_API_KEY || process.env.REPLIERS_API_KEY || '',
   
   // Performance settings
   maxConcurrentRequests: 5,

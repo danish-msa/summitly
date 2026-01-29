@@ -4,10 +4,7 @@ import React, { useState } from 'react'
 import { PropertyListing } from '@/lib/types'
 import ComparablePropertyCard from '@/components/Comparables/ComparablePropertyCard'
 import { useSavedComparables } from '@/hooks/useSavedComparables'
-import dynamic from 'next/dynamic'
-
-// Dynamically import the Google Maps component with no SSR
-const GooglePropertyMap = dynamic(() => import('@/components/MapSearch/GooglePropertyMap'), { ssr: false })
+import StaticPropertyMap from '@/features/map-search-v2/components/StaticPropertyMap'
 
 interface CardViewProps {
   currentProperty: PropertyListing
@@ -49,11 +46,11 @@ const CardView: React.FC<CardViewProps> = ({
     <div className="flex flex-col md:flex-row gap-6 h-[600px] min-h-0 overflow-hidden">
       {/* Map View - Left Side */}
       <div className="md:w-1/2 bg-gray-100 rounded-lg overflow-hidden min-h-0 flex-shrink-0 h-full">
-        <GooglePropertyMap 
+        <StaticPropertyMap
           properties={allProperties}
           selectedProperty={selectedProperty}
           onPropertySelect={handleMapPropertyClick}
-          onBoundsChange={handleMapBoundsChange}
+          initialZoom={12}
         />
       </div>
 

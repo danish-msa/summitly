@@ -54,6 +54,49 @@ model User {
   searches           SearchHistory[]
   sessions           Session[]
   tours              Tour[]
+  homes              UserHome[]
+}
+
+model UserHome {
+  id                 String   @id @default(cuid())
+  userId             String
+  slug               String
+  addressLine        String
+  streetNumber       String?
+  streetName         String?
+  city               String?
+  state              String?
+  zip                String?
+
+  // Home details (editable)
+  bedrooms           Int?
+  fullBathrooms      Float?
+  partialBathrooms   Float?
+  totalRooms         Int?
+  livingAreaSqft     Int?
+  lotSize            String?
+  basement           String?
+  pool               Boolean?
+  garageType         String?
+  condition          String?
+  yearBuilt          Int?
+
+  // Verification (optional)
+  deedName           String?
+  verifiedFirstName  String?
+  verifiedLastName   String?
+  verifiedEmail      String?
+  verifiedPhone      String?
+  verifiedAt         DateTime?
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, slug], name: "userId_slug")
+  @@index([userId])
+  @@index([slug])
 }
 
 model VerificationToken {

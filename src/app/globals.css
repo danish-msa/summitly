@@ -46,6 +46,36 @@
   }
 }
 
+@layer components {
+  .map-marker {
+    @apply select-none shadow-md border border-white/70 font-semibold;
+    @apply text-xs leading-none;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .map-marker:hover {
+    @apply shadow-lg;
+  }
+
+  .map-marker--cluster {
+    /* Circular count badge */
+    @apply bg-secondary text-white border-white;
+    @apply rounded-full;
+    @apply w-10 h-10;
+    @apply flex items-center justify-center;
+    @apply text-xs;
+    @apply px-0 py-0;
+  }
+
+  .map-marker--single {
+    /* Price tag */
+    @apply bg-white text-gray-900;
+    @apply rounded-lg;
+    @apply px-2.5 py-1.5;
+  }
+}
+
 /* Font CSS Variables */
 :root {
   --font-geometos-neue: var(--font-geometos-neue);

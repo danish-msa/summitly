@@ -10,7 +10,7 @@ import {
   Heart,
   Bell,
   TrendingUp,
-  Home,
+  Home as HomeIcon,
   Calendar,
   FileText,
   Settings,
@@ -64,7 +64,8 @@ const subscriberMenuItems: MenuItem[] = [
   { title: "Saved", url: "/dashboard/saved", icon: Heart },
   { title: "Alerts", url: "/dashboard/alerts", icon: Bell },
   { title: "My Property Value", url: "/dashboard/property-value", icon: TrendingUp },
-  { title: "Assignments", url: "/dashboard/assignments", icon: Home },
+  { title: "My Home", url: "/dashboard/my-home", icon: HomeIcon },
+  { title: "Assignments", url: "/dashboard/assignments", icon: HomeIcon },
   { title: "Tours & Appointments", url: "/dashboard/tours", icon: Calendar },
   { title: "Market Reports", url: "/dashboard/market-reports", icon: FileText },
 ]

@@ -131,20 +131,22 @@ export interface ClustersResult {
 // ============================================================================
 
 /**
- * Format map bounds as GeoJSON polygon for Repliers API
- * The map parameter expects: [[[lng, lat], [lng, lat], [lng, lat], [lng, lat], [lng, lat]]]
- * Coordinates are in [longitude, latitude] format
+ * Format map bounds for Repliers API.
+ *
+ * IMPORTANT: Repliers expects the `map` query param as a *single string* that looks like:
+ * `[[[lng,lat],[lng,lat],[lng,lat],[lng,lat],[lng,lat]]]`
+ * (coordinates are in [longitude, latitude] format)
  */
-export function formatMapBounds(bounds: MapBounds): number[][][] {
-  // Create a rectangle polygon with 5 points (4 corners + closing point)
-  // Coordinates must be [longitude, latitude] format
-  return [[
-    [bounds.west, bounds.north],   // Top-left (NW)
-    [bounds.west, bounds.south],    // Bottom-left (SW)
-    [bounds.east, bounds.south],    // Bottom-right (SE)
-    [bounds.east, bounds.north],    // Top-right (NE)
-    [bounds.west, bounds.north],    // Close polygon (back to start)
-  ]];
+export function formatMapBounds(bounds: MapBounds): string {
+  const ring: Array<[number, number]> = [
+    [bounds.east, bounds.north], // NE
+    [bounds.west, bounds.north], // NW
+    [bounds.west, bounds.south], // SW
+    [bounds.east, bounds.south], // SE
+    [bounds.east, bounds.north], // close
+  ];
+
+  return `[[${ring.map(([lng, lat]) => `[${lng},${lat}]`).join(',')}]]`;
 }
 
 /**
@@ -412,9 +414,23 @@ export async function fetchListings(): Promise<PropertyListing[]> {
 export async function getListings(params: ListingsParams): Promise<ListingsResult> {
   console.log('🔍 [Listings Service] Fetching listings with params:', params);
   
+  // Normalize map param to Repliers string format (critical for proper bounds filtering)
+  const apiParams: Record<string, unknown> = { ...params };
+  if (apiParams.map) {
+    if (typeof apiParams.map === 'string') {
+      // already correct
+    } else if (typeof apiParams.map === 'object' && apiParams.map !== null && 'west' in (apiParams.map as object)) {
+      apiParams.map = formatMapBounds(apiParams.map as MapBounds);
+    } else if (Array.isArray(apiParams.map)) {
+      // Back-compat: nested ring array -> string
+      const ring = (apiParams.map as unknown as number[][][])[0] as unknown as Array<[number, number]>;
+      apiParams.map = `[[${ring.map(([lng, lat]) => `[${lng},${lat}]`).join(',')}]]`;
+    }
+  }
+
   const response = await repliersClient.request<ListingsResponse>({
     endpoint: '/listings',
-    params,
+    params: apiParams,
     authMethod: 'header',
     cache: true,
     cacheDuration: API_CONFIG.cacheDurations.listings,
@@ -441,6 +457,54 @@ export async function getListings(params: ListingsParams): Promise<ListingsResul
     listings: transformedListings,
     count: response.data.count || transformedListings.length,
     numPages: response.data.numPages || Math.ceil(transformedListings.length / (params.resultsPerPage || 10)),
+  };
+}
+
+/**
+ * Autocomplete search for listings (Repliers docs: search by address, MLS, city).
+ * Used with locations/autocomplete for combined autocomplete UI.
+ */
+const AUTOCOMPLETE_LISTINGS_FIELDS =
+  'address.*,mlsNumber,listPrice,details.numBedrooms,details.numBedroomsPlus,details.numBathrooms,details.numBathroomsPlus,details.numGarageSpaces,details.propertyType,type,lastStatus,images';
+const AUTOCOMPLETE_LISTINGS_SEARCH_FIELDS =
+  'address.streetNumber,address.streetName,mlsNumber,address.city';
+
+export async function searchListingsAutocomplete(params: {
+  search: string;
+  resultsPerPage?: number;
+}): Promise<ListingsResult> {
+  const { search, resultsPerPage = 10 } = params;
+  const trimmed = search?.trim() || '';
+  if (trimmed.length < 3) {
+    return { listings: [], count: 0, numPages: 0 };
+  }
+
+  const response = await repliersClient.request<ListingsResponse>({
+    endpoint: '/listings',
+    params: {
+      search: trimmed,
+      searchFields: AUTOCOMPLETE_LISTINGS_SEARCH_FIELDS,
+      fields: AUTOCOMPLETE_LISTINGS_FIELDS,
+      status: ['A', 'U'],
+      fuzzysearch: true,
+      resultsPerPage,
+    },
+    authMethod: 'header',
+    cache: true,
+    cacheDuration: 60 * 1000, // 1 min for autocomplete
+    priority: 'high',
+  });
+
+  if (response.error || !response.data) {
+    return { listings: [], count: 0, numPages: 0 };
+  }
+
+  const listings = (response.data.listings || []).map(transformListing);
+  const count = response.data.count ?? listings.length;
+  return {
+    listings,
+    count,
+    numPages: Math.ceil(count / resultsPerPage) || 1,
   };
 }
 
@@ -726,38 +790,51 @@ export async function getClusters(params: ClusterParams): Promise<ClustersResult
     map: params.map ? '***' : undefined, // Don't log full bounds
   });
   
-  // Build API parameters - keep it simple: cluster=true&listings=false
-  const apiParams: Record<string, unknown> = {
-    cluster: true,
-    listings: false,
-  };
+  // Build API parameters - clusters come from aggregates.map.clusters
+  // (Without aggregates=map the API may not return map clusters.)
+  const apiParams: Record<string, unknown> = { cluster: true, listings: false, aggregates: 'map' };
   
-  // Only add map bounds if provided (GeoJSON polygon format)
+  // Normalize map param to Repliers string format
   if (params.map) {
-    if (Array.isArray(params.map)) {
-      // Already in GeoJSON format
+    if (typeof params.map === 'string') {
       apiParams.map = params.map;
+    } else if (Array.isArray(params.map)) {
+      const ring = (params.map as number[][][])[0] as unknown as Array<[number, number]>;
+      apiParams.map = `[[${ring.map(([lng, lat]) => `[${lng},${lat}]`).join(',')}]]`;
     } else if (typeof params.map === 'object' && 'west' in params.map) {
-      // Convert MapBounds to GeoJSON polygon
       apiParams.map = formatMapBounds(params.map as MapBounds);
-    } else if (typeof params.map === 'string') {
-      // Legacy string format - try to parse or use as-is
-      // Some APIs might accept string format, but GeoJSON is preferred
-      console.warn('⚠️ [Clusters Service] Map parameter is a string. Consider using GeoJSON polygon format.');
-      apiParams.map = params.map;
     }
   }
-  
-  // Add status filter if provided (for active listings)
-  if (params.status) {
-    apiParams.status = params.status;
-  }
-  
-  // Cluster precision is optional - only add if explicitly provided
-  // (Some API versions might not support it)
-  if (params.clusterPrecision !== undefined) {
-    apiParams.clusterPrecision = Math.max(1, Math.min(29, Math.round(params.clusterPrecision)));
-  }
+
+  // Pass-through all provided filters/params (except map and cluster toggles)
+  Object.entries(params as Record<string, unknown>).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    if (key === 'map' || key === 'cluster' || key === 'listings') return;
+
+    if (key === 'clusterPrecision') {
+      apiParams.clusterPrecision = Math.max(1, Math.min(29, Math.round(Number(value))));
+      return;
+    }
+
+    // Repliers supports this; we previously forgot to actually send it
+    if (key === 'clusterLimit') {
+      apiParams.clusterLimit = Number(value);
+      return;
+    }
+
+    // Other cluster-specific options (pass-through as-is)
+    if (
+      key === 'clusterFields' ||
+      key === 'clusterListingsThreshold' ||
+      key === 'clusterStatistics'
+    ) {
+      apiParams[key] = value;
+      return;
+    }
+
+    // Everything else is treated as a normal listing filter (status, lastStatus, city, neighborhood, type, etc.)
+    apiParams[key] = value;
+  });
   
   // Log the exact parameters being sent (for debugging)
   console.log('🔍 [Clusters Service] API Request Details:', {

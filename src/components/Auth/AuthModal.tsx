@@ -17,6 +17,7 @@ import {
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  redirectTo?: string | false;
   welcomeMessage?: {
     title?: string;
     description?: string;
@@ -24,7 +25,7 @@ interface AuthModalProps {
   };
 }
 
-const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, welcomeMessage }) => {
+const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, welcomeMessage, redirectTo = '/dashboard' }) => {
   const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
@@ -53,8 +54,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, welcomeMessage }
     setShowWelcome(false);
     setUserName('');
     onClose();
-    router.push('/dashboard');
-    router.refresh();
+    if (redirectTo !== false) {
+      router.push(redirectTo);
+      router.refresh();
+    }
   };
 
   // Default welcome messages
@@ -140,7 +143,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, welcomeMessage }
                   Get started on your real estate journey today.
                 </p>
               </div>
-              <LoginForm onRegisterClick={() => setIsLogin(false)} onClose={onClose} />
+              <LoginForm
+                onRegisterClick={() => setIsLogin(false)}
+                onClose={onClose}
+                redirectTo={redirectTo}
+              />
             </>
           ) : (
             <div className="flex flex-col md:flex-row min-h-[600px]">
@@ -232,6 +239,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, welcomeMessage }
                   onLoginClick={() => setIsLogin(true)} 
                   onClose={onClose}
                   onWelcome={handleWelcome}
+                  redirectTo={redirectTo}
                   welcomeMessage={welcomeMessage}
                 />
               </div>

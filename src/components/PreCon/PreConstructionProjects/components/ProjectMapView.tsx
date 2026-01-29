@@ -1,10 +1,7 @@
 import React from 'react';
-import dynamic from 'next/dynamic';
 import { PropertyListing } from '@/lib/types';
 import type { PreConstructionProperty } from '../../PropertyCards/types';
-
-// Dynamically import the map component with no SSR
-const GooglePropertyMap = dynamic(() => import('@/components/MapSearch/GooglePropertyMap'), { ssr: false });
+import StaticPropertyMap from '@/features/map-search-v2/components/StaticPropertyMap';
 
 type ViewMode = 'list' | 'split' | 'map';
 
@@ -23,23 +20,20 @@ const ProjectMapView: React.FC<ProjectMapViewProps> = ({
   visibleProjects,
   viewMode,
   onProjectClick,
-  onBoundsChange
+  onBoundsChange: _onBoundsChange
 }) => {
   return (
     <div className={`${viewMode === 'split' ? 'md:w-1/2' : 'w-full'} bg-gray-100 rounded-lg overflow-hidden`} style={{ height: viewMode === 'split' ? 'calc(100vh - 300px)' : '70vh' }}>
-      <GooglePropertyMap 
+      <StaticPropertyMap
         properties={mapProperties}
         selectedProperty={selectedPropertyForMap}
         onPropertySelect={(property) => {
           if (property) {
-            const project = visibleProjects.find(p => p.id === property.mlsNumber);
-            if (project) {
-              onProjectClick(project);
-            }
+            const project = visibleProjects.find((p) => p.id === property.mlsNumber);
+            if (project) onProjectClick(project);
           }
-          // Handle null case - property deselected (no action needed here)
         }}
-        onBoundsChange={onBoundsChange}
+        initialZoom={12}
       />
     </div>
   );

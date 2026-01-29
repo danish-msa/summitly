@@ -7,6 +7,7 @@ interface RegisterFormProps {
   onLoginClick: () => void;
   onClose?: () => void;
   onWelcome?: (username: string) => void;
+  redirectTo?: string | false;
   welcomeMessage?: {
     title?: string; // Default: "Welcome {username}!"
     description?: string; // Default: "You've unlocked access to exclusive listings, price trends, and market insights."
@@ -18,7 +19,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   onLoginClick, 
   onClose: _onClose,
   onWelcome: _onWelcome,
-  welcomeMessage: _welcomeMessage 
+  welcomeMessage: _welcomeMessage,
+  redirectTo = '/dashboard',
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -95,7 +97,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     try {
       // Google OAuth will redirect to Google's page, then back to our callback
       await signIn('google', {
-        callbackUrl: '/dashboard',
+        callbackUrl: redirectTo === false ? '/dashboard' : redirectTo,
       });
       // Note: We won't reach here because of redirect, but this handles the click
     } catch {

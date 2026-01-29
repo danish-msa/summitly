@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { PropertyListing } from '@/lib/types'
 import { getListings } from '@/lib/api/properties'
-import dynamic from 'next/dynamic'
 import ComparablePropertyCard from './ComparablePropertyCard'
 import { Loader2, Info, Grid3x3, List, LayoutGrid } from 'lucide-react'
 import { useSession } from 'next-auth/react'
@@ -13,9 +12,7 @@ import * as Tooltip from '@radix-ui/react-tooltip'
 import ComparisonView from '@/components/Item/PropertiesComparison/ComparisonView'
 import ComparisonTable from '@/components/Item/PropertiesComparison/ComparisonTable'
 import Image from 'next/image'
-
-// Dynamically import the Google Maps component with no SSR
-const GooglePropertyMap = dynamic(() => import('@/components/MapSearch/GooglePropertyMap'), { ssr: false })
+import StaticPropertyMap from '@/features/map-search-v2/components/StaticPropertyMap'
 
 type ViewType = 'card' | 'list' | 'comparison'
 
@@ -347,11 +344,11 @@ const ComparableSelector = ({
     <div className="flex flex-col md:flex-row gap-6 h-full overflow-hidden">
       {/* Map View - left Side */}
       <div className="md:w-1/2 bg-gray-100 rounded-lg overflow-hidden min-h-0 flex-shrink-0">
-        <GooglePropertyMap 
+        <StaticPropertyMap
           properties={properties}
           selectedProperty={selectedProperty}
           onPropertySelect={handleMapPropertyClick}
-          onBoundsChange={handleMapBoundsChange}
+          initialZoom={12}
         />
       </div>
 

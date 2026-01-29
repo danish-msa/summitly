@@ -335,7 +335,13 @@ const Nav = ({ openNav }: Props) => {
             <div className="flex items-center space-x-2 lg:space-x-3">
               {/* AI Button */}
               <div className="hidden lg:flex">
-                <AIButton size="sm" />
+                <Link
+                  href="/ai"
+                  aria-label="Open AI chat"
+                  className="inline-flex items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                >
+                  <AIButton size="sm" className="cursor-pointer" />
+                </Link>
               </div>
               
               {/* Search Input Field */}

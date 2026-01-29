@@ -11,9 +11,9 @@ import { useHiddenProperties } from '@/hooks/useHiddenProperties';
 import dynamic from 'next/dynamic';
 import { PreConstructionCardSkeleton } from '@/components/skeletons';
 import { Skeleton } from '@/components/ui/skeleton';
+import StaticPropertyMap from '@/features/map-search-v2/components/StaticPropertyMap';
 
-// Dynamically import the Google Maps component with no SSR to avoid hydration issues
-const GooglePropertyMap = dynamic(() => import('@/components/MapSearch/GooglePropertyMap'), { ssr: false });
+// NOTE: Map is now powered by v2 Mapbox map (StaticPropertyMap).
 
 
 import { convertApiV1ToPreConProperty, convertToPropertyListing, type ApiV1Project } from '@/components/PreCon/PreConstructionBasePage/utils';
@@ -455,19 +455,16 @@ const PreConstructionProjectsListings: React.FC = () => {
         {/* Map View */}
         {(viewMode === 'map' || viewMode === 'split') && (
           <div className={`${viewMode === 'split' ? 'md:w-1/2' : 'w-full'} bg-gray-100 rounded-lg overflow-hidden`} style={{ height: viewMode === 'split' ? 'calc(100vh - 200px)' : '70vh' }}>
-            <GooglePropertyMap 
+            <StaticPropertyMap
               properties={mapProperties}
               selectedProperty={selectedPropertyListing}
               onPropertySelect={(property) => {
                 if (property) {
                   const project = visibleProjects.find(p => p.id === property.mlsNumber);
-                  if (project) {
-                    handleProjectClick(project);
-                  }
+                  if (project) handleProjectClick(project);
                 }
-                // Handle null case - property deselected (no action needed here)
               }}
-              onBoundsChange={handleMapBoundsChange}
+              initialZoom={12}
             />
           </div>
         )}
