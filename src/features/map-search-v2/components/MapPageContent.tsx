@@ -22,8 +22,8 @@ export default function MapPageContent() {
   const { search, save, filters, polygon, list, clusters, count, loading } = useSearch();
   const { layout, setLayout, position, setPosition } = useMapOptions();
 
-  const query = searchParams.get("q");
-  const page = searchParams.get("page");
+  const query = searchParams?.get("q") ?? null;
+  const page = searchParams?.get("page") ?? null;
 
   const [communities, setCommunities] = useState<string[]>([]);
 
