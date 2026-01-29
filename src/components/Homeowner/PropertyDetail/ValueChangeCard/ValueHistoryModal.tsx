@@ -2,7 +2,7 @@
 
 import React from "react";
 import ReactECharts from "echarts-for-react";
-import { X } from "lucide-react";
+import { X, Home } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -116,7 +116,7 @@ export default function ValueHistoryModal({
         },
         axisPointer: {
           type: "line",
-          lineStyle: { color: "#4F46E5", width: 2, opacity: 0.25 },
+          lineStyle: { color: "#1AC0EB", width: 2, opacity: 0.25 },
         },
       },
       series: [
@@ -126,7 +126,7 @@ export default function ValueHistoryModal({
           data: visible.map((p) => p.value),
           smooth: 0.6,
           showSymbol: false,
-          lineStyle: { width: 3, color: "#4F46E5" },
+          lineStyle: { width: 3, color: "#1AC0EB" },
         },
       ],
     };
@@ -135,23 +135,31 @@ export default function ValueHistoryModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[980px] max-h-[90vh] p-0 overflow-hidden bg-white flex flex-col [&>button[class*='absolute']]:hidden">
-        <div className="flex items-start justify-between gap-4 p-6 border-b">
-          <div>
-            <div className="text-4xl font-extrabold text-gray-900">
-              {formatCurrency(currentValue)}
+        <div className="flex items-start justify-between gap-4 p-6 bg-secondary text-white rounded-t-lg">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <Home className="h-5 w-5 shrink-0" aria-hidden />
+              <span className="text-sm font-semibold uppercase tracking-wide">
+                I AM THE HOMEOWNER
+              </span>
             </div>
-            <div className="mt-1 text-sm text-gray-600">
-              Up <span className="font-semibold text-gray-900">{formatCurrency(delta)}</span>{" "}
-              ({((delta / Math.max(currentValue - delta, 1)) * 100).toFixed(4)}%) since{" "}
-              {points.length ? points[Math.max(0, points.length - 12)]?.label : ""}
-            </div>
+            <p className="mt-2 text-sm text-white/95">
+              We estimate that your home value will increase by{" "}
+              <span className="font-bold text-white">
+                {delta >= 0 ? "+" : ""}{formatCurrency(delta)}
+              </span>{" "}
+              within the next year — bringing your estimated home worth{" "}
+              <span className="font-bold text-white">
+                {formatCurrency(currentValue)}
+              </span>
+            </p>
           </div>
 
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            className="h-9 w-9 text-gray-500 hover:bg-gray-100"
+            className="h-9 w-9 shrink-0 text-white hover:bg-white/20 hover:text-white"
             onClick={() => onOpenChange(false)}
             aria-label="Close"
           >

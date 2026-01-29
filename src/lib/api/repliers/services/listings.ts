@@ -373,7 +373,7 @@ export function transformListing(listing: ApiListing): PropertyListing {
       taxLot: listing.lot?.taxLot || 0,
     },
     
-    boardId: listing.boardId || 0,
+    boardId: listing.boardId && listing.boardId > 0 ? listing.boardId : undefined,
     
     images: {
       imageUrl: images[0] || '',
@@ -465,7 +465,7 @@ export async function getListings(params: ListingsParams): Promise<ListingsResul
  * Used with locations/autocomplete for combined autocomplete UI.
  */
 const AUTOCOMPLETE_LISTINGS_FIELDS =
-  'address.*,mlsNumber,listPrice,details.numBedrooms,details.numBedroomsPlus,details.numBathrooms,details.numBathroomsPlus,details.numGarageSpaces,details.propertyType,type,lastStatus,images';
+  'address.*,mlsNumber,boardId,listPrice,details.numBedrooms,details.numBedroomsPlus,details.numBathrooms,details.numBathroomsPlus,details.numGarageSpaces,details.propertyType,type,lastStatus,images';
 const AUTOCOMPLETE_LISTINGS_SEARCH_FIELDS =
   'address.streetNumber,address.streetName,mlsNumber,address.city';
 
@@ -556,37 +556,41 @@ export async function getSimilarListings(params: {
  * Helper function to get boardId for a listing by searching for it first
  */
 async function getBoardIdForListing(mlsNumber: string): Promise<number | null> {
-  try {
-    console.log('[Repliers API] Searching for listing to get boardId:', mlsNumber);
-    
-    // Search for the listing to get its boardId
-    // Try searching with mlsNumber as a filter
+  const trySearch = async (params: Record<string, unknown>): Promise<number | null> => {
     const searchResult = await repliersClient.request<ListingsResponse>({
       endpoint: '/listings',
-      params: {
-        mlsNumber: mlsNumber,
-        resultsPerPage: 10,
-      },
+      params: { resultsPerPage: 10, ...params },
       authMethod: 'header',
       cache: true,
       cacheDuration: 5 * 60 * 1000, // 5 minutes
       priority: 'high',
     });
+    if (searchResult.error || !searchResult.data?.listings?.length) return null;
+    const listing = searchResult.data.listings.find((l) => l.mlsNumber === mlsNumber);
+    return listing?.boardId && listing.boardId > 0 ? listing.boardId : null;
+  };
 
-    if (searchResult.error) {
-      console.error('[Repliers API] Error searching for boardId:', searchResult.error);
-      return null;
+  try {
+    console.log('[Repliers API] Searching for listing to get boardId:', mlsNumber);
+
+    // 1) Try filter by mlsNumber if the API supports it
+    let boardId = await trySearch({ mlsNumber });
+    if (boardId != null) {
+      console.log('[Repliers API] Found boardId:', boardId, 'for listing:', mlsNumber);
+      return boardId;
     }
 
-    if (searchResult.data?.listings && searchResult.data.listings.length > 0) {
-      // Find the exact match by mlsNumber
-      const listing = searchResult.data.listings.find(l => l.mlsNumber === mlsNumber);
-      if (listing && listing.boardId) {
-        console.log('[Repliers API] Found boardId:', listing.boardId, 'for listing:', mlsNumber);
-        return listing.boardId;
-      }
+    // 2) Fallback: free-text search (e.g. user pasted MLS number; search by MLS)
+    boardId = await trySearch({
+      search: mlsNumber,
+      searchFields: 'mlsNumber',
+      fields: 'mlsNumber,boardId',
+    });
+    if (boardId != null) {
+      console.log('[Repliers API] Found boardId via search:', boardId, 'for listing:', mlsNumber);
+      return boardId;
     }
-    
+
     console.warn('[Repliers API] Could not find boardId for listing:', mlsNumber);
     return null;
   } catch (error) {
@@ -601,9 +605,10 @@ async function getBoardIdForListing(mlsNumber: string): Promise<number | null> {
  * If boardId is not provided, it will be fetched automatically
  */
 export async function getListingDetails(mlsNumber: string, boardId?: number): Promise<PropertyListing | null> {
-  let finalBoardId: number | undefined = boardId;
+  // Repliers API rejects boardId 0 – treat 0 as missing so we try without boardId or look it up
+  let finalBoardId: number | undefined =
+    boardId != null && boardId > 0 ? boardId : undefined;
   try {
-    
     // If boardId is not provided, try to get it by searching for the listing
     if (finalBoardId === undefined) {
       console.log('[Repliers API] BoardId not provided, searching for listing to get boardId...');
@@ -622,7 +627,7 @@ export async function getListingDetails(mlsNumber: string, boardId?: number): Pr
     console.log('[Repliers API] Requesting listing:', { mlsNumber, boardId: finalBoardId });
     
     const params: Record<string, string | number> = {};
-    if (finalBoardId !== undefined && finalBoardId !== null) {
+    if (finalBoardId != null && finalBoardId > 0) {
       params.boardId = finalBoardId;
     }
     
@@ -720,9 +725,10 @@ export async function getListingDetails(mlsNumber: string, boardId?: number): Pr
  * If boardId is not provided, it will be fetched automatically
  */
 export async function getRawListingDetails(mlsNumber: string, boardId?: number): Promise<SinglePropertyListingResponse | null> {
-  let finalBoardId: number | undefined = boardId;
+  // Repliers API rejects boardId 0 – treat 0 as missing
+  let finalBoardId: number | undefined =
+    boardId != null && boardId > 0 ? boardId : undefined;
   try {
-    
     // If boardId is not provided, try to get it by searching for the listing
     if (finalBoardId === undefined) {
       const foundBoardId = await getBoardIdForListing(mlsNumber);
@@ -730,7 +736,7 @@ export async function getRawListingDetails(mlsNumber: string, boardId?: number):
     }
     
     const params: Record<string, string | number> = {};
-    if (finalBoardId !== undefined && finalBoardId !== null) {
+    if (finalBoardId != null && finalBoardId > 0) {
       params.boardId = finalBoardId;
     }
     

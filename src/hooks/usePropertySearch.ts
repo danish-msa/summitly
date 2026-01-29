@@ -11,6 +11,8 @@ export interface PropertySuggestion {
   sqft: number;
   propertyType: string;
   yearBuilt: number;
+  /** Repliers boardId – pass to property page for reliable API lookup */
+  boardId?: number;
 }
 
 // Define the shape of the suggestions state

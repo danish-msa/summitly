@@ -64,6 +64,15 @@ export function getHomeownerPropertyUrl(property: {
 }
 
 /**
+ * Detect if the slug is an MLS number (e.g. X9308540, C1234567).
+ * MLS numbers are typically alphanumeric, 6+ chars, no hyphens.
+ */
+export function isSlugMlsNumber(slug: string): boolean {
+  if (!slug || slug.length < 6) return false;
+  return /^[A-Za-z0-9]+$/.test(slug) && !slug.includes("-");
+}
+
+/**
  * Parse homeowner property slug back to address components
  */
 export function parseHomeownerPropertySlug(slug: string): {

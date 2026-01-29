@@ -1,7 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { parseHomeownerPropertySlug } from '@/lib/utils/homeownerUrl';
+import { parseHomeownerPropertySlug, isSlugMlsNumber } from '@/lib/utils/homeownerUrl';
 import { PropertyDetailContent } from '@/components/Homeowner';
 import { fetchPropertyListings } from '@/data/data';
 import { RepliersAPI } from '@/lib/api/repliers';
@@ -12,16 +12,19 @@ interface HomeownerPropertyPageProps {
   }>;
   searchParams?: Promise<{
     mls?: string;
+    boardId?: string;
   }>;
 }
 
 export async function generateMetadata({ params }: HomeownerPropertyPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const parsed = parseHomeownerPropertySlug(slug);
-  
-  const address = parsed 
+  const isMls = isSlugMlsNumber(slug);
+  const parsed = isMls ? null : parseHomeownerPropertySlug(slug);
+  const address = parsed
     ? `${parsed.streetNumber || ''} ${parsed.streetName || ''}, ${parsed.city || ''}, ${parsed.state || ''}`.trim()
-    : 'Property';
+    : isMls
+      ? `Property ${slug}`
+      : 'Property';
 
   return {
     title: `${address} | My Home`,
@@ -39,22 +42,35 @@ export async function generateMetadata({ params }: HomeownerPropertyPageProps): 
 
 const HomeownerPropertyPage: React.FC<HomeownerPropertyPageProps> = async ({ params, searchParams }) => {
   const { slug } = await params;
-  const mlsFromQuery = (await searchParams)?.mls;
-  const parsed = parseHomeownerPropertySlug(slug);
+  const resolvedSearchParams = await searchParams;
+  const mlsFromQuery = resolvedSearchParams?.mls;
+  const rawBoardId = resolvedSearchParams?.boardId
+    ? parseInt(resolvedSearchParams.boardId, 10)
+    : undefined;
+  // Repliers API rejects boardId 0 – only pass when positive
+  const boardIdFromQuery =
+    rawBoardId != null && Number.isFinite(rawBoardId) && rawBoardId > 0
+      ? rawBoardId
+      : undefined;
+  const isMlsSlug = isSlugMlsNumber(slug);
+  const parsed = isMlsSlug ? null : parseHomeownerPropertySlug(slug);
 
-  if (!parsed) {
+  // When slug is not MLS and doesn't parse as address, 404.
+  if (!isMlsSlug && !parsed) {
     notFound();
   }
 
-  // Fetch property primarily by MLS id (passed from homeowner search).
-  // Fall back to address matching only if MLS is missing (e.g., old links).
+  // MLS number to fetch: slug (when it's MLS) or mls query param.
+  const mlsToFetch = isMlsSlug ? slug : mlsFromQuery;
+
+  // Fetch property by MLS (from Banner search) or fall back to address matching for legacy links.
   let property = null as Awaited<ReturnType<typeof RepliersAPI.listings.getDetails>> | null;
   try {
-    if (mlsFromQuery) {
-      property = await RepliersAPI.listings.getDetails(mlsFromQuery);
+    if (mlsToFetch) {
+      property = await RepliersAPI.listings.getDetails(mlsToFetch, boardIdFromQuery);
     }
 
-    if (!property) {
+    if (!property && parsed) {
       const allProperties = await fetchPropertyListings();
 
       const normalize = (str: string | null | undefined): string =>
@@ -66,10 +82,10 @@ const HomeownerPropertyPage: React.FC<HomeownerPropertyPageProps> = async ({ par
         const propCity = normalize(p.address?.city);
         const propState = normalize(p.address?.state);
 
-        const parsedStreetNum = normalize(parsed.streetNumber);
-        const parsedStreetName = normalize(parsed.streetName);
-        const parsedCity = normalize(parsed.city);
-        const parsedState = normalize(parsed.state);
+        const parsedStreetNum = normalize(parsed?.streetNumber);
+        const parsedStreetName = normalize(parsed?.streetName);
+        const parsedCity = normalize(parsed?.city);
+        const parsedState = normalize(parsed?.state);
 
         const streetNumMatch = !parsedStreetNum || propStreetNum === parsedStreetNum;
         const streetNameMatch = !parsedStreetName ||
@@ -93,39 +109,55 @@ const HomeownerPropertyPage: React.FC<HomeownerPropertyPageProps> = async ({ par
     console.error('Error fetching property data:', error);
   }
 
-  // Extract property details
+  // When we came by MLS slug but fetch failed, still render the page so the URL works;
+  // show minimal content and a "couldn't load" message instead of 404.
+  const loadFailed = isMlsSlug && !property;
+
+  // Extract property details (may be undefined when loadFailed)
   const beds = property?.details?.numBedrooms;
   const baths = property?.details?.numBathrooms;
   const sqft = property?.details?.sqft;
   const latitude = property?.map?.latitude ?? undefined;
   const longitude = property?.map?.longitude ?? undefined;
-  
   const yearBuilt =
     property?.details?.yearBuilt != null ? String(property.details.yearBuilt) : undefined;
   const garage = property?.details?.numGarageSpaces ?? undefined;
-  
   const lotSize = property?.lot?.acres ? `${property.lot.acres} acre` : undefined;
   const propertyImage = property?.images?.imageUrl || property?.images?.allImages?.[0] || undefined;
 
   return (
-    <PropertyDetailContent
-      propertySlug={slug}
-      streetNumber={property?.address?.streetNumber || parsed.streetNumber || undefined}
-      streetName={property?.address?.streetName || parsed.streetName || undefined}
-      city={property?.address?.city || parsed.city || undefined}
-      state={property?.address?.state || parsed.state || undefined}
-      zip={property?.address?.zip || parsed.zip || undefined}
-      neighborhood={property?.address?.neighborhood || undefined}
-      beds={beds}
-      baths={baths}
-      sqft={sqft}
-      lotSize={lotSize}
-      garage={garage}
-      yearBuilt={yearBuilt}
-      latitude={latitude ?? undefined}
-      longitude={longitude ?? undefined}
-      propertyImage={propertyImage}
-    />
+    <>
+      {loadFailed && (
+        <div
+          className="bg-amber-50 border-b border-amber-200 px-4 py-3 text-center text-sm text-amber-800"
+          role="alert"
+        >
+          We couldn&apos;t load this property&apos;s details. It may be off-market or the listing may have changed. Try searching again from{" "}
+          <a href="/homeowner" className="font-medium underline hover:no-underline">
+            My Home
+          </a>
+          .
+        </div>
+      )}
+      <PropertyDetailContent
+        propertySlug={slug}
+        streetNumber={property?.address?.streetNumber || parsed?.streetNumber || undefined}
+        streetName={property?.address?.streetName || parsed?.streetName || undefined}
+        city={property?.address?.city || parsed?.city || undefined}
+        state={property?.address?.state || parsed?.state || undefined}
+        zip={property?.address?.zip || parsed?.zip || undefined}
+        neighborhood={property?.address?.neighborhood || undefined}
+        beds={beds}
+        baths={baths}
+        sqft={sqft}
+        lotSize={lotSize}
+        garage={garage}
+        yearBuilt={yearBuilt}
+        latitude={latitude ?? undefined}
+        longitude={longitude ?? undefined}
+        propertyImage={propertyImage}
+      />
+    </>
   );
 };
 

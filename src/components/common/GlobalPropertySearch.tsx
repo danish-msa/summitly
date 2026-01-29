@@ -19,6 +19,7 @@ function listingToPropertySuggestion(listing: PropertyListing): PropertySuggesti
     sqft: typeof sqft === "number" ? sqft : typeof sqft === "string" ? parseInt(sqft, 10) || 0 : 0,
     propertyType: details?.propertyType ?? "",
     yearBuilt: 0,
+    boardId: listing.boardId && listing.boardId > 0 ? listing.boardId : undefined,
   };
 }
 

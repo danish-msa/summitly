@@ -204,7 +204,7 @@ const Nav = ({ openNav }: Props) => {
                       alt="Summitly Logo"
                       width={200}
                       height={60}
-                      className="h-7 w-auto transition-all duration-300"
+                      className="h-8 w-auto transition-all duration-300"
                       priority
                       quality={75}
                     />
@@ -344,7 +344,7 @@ const Nav = ({ openNav }: Props) => {
                 <AutocompleteSearch
                   placeholder="Search properties or locations..."
                   className="w-full"
-                  inputClassName="h-10 text-sm bg-white/80 border-slate-200 focus:ring-sky-500/40 focus:border-sky-500"
+                  inputClassName=" text-sm bg-white/80 border-slate-200 focus:ring-secondary/40 focus:border-secondary"
                 />
               </div>
               {/* Login / Signup Button or User Profile */}
