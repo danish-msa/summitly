@@ -1,8 +1,7 @@
 import { NextRequest } from 'next/server'
 import { apiMiddleware } from '@/lib/api/middleware'
 import { successResponse, ApiErrors } from '@/lib/api/response'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api/auth-utils'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import { z } from 'zod'
@@ -22,9 +21,9 @@ async function handler(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions)
+  const auth = await getAuthenticatedUser(request)
 
-  if (!session || !session.user) {
+  if (!auth || !auth.user) {
     return ApiErrors.UNAUTHORIZED('You must be logged in')
   }
 
@@ -35,7 +34,7 @@ async function handler(
     const tour = await prisma.tour.findFirst({
       where: {
         id,
-        userId: session.user.id,
+        userId: auth.user.id,
       },
     })
 
@@ -54,7 +53,7 @@ async function handler(
     const tour = await prisma.tour.findFirst({
       where: {
         id,
-        userId: session.user.id,
+        userId: auth.user.id,
       },
     })
 
@@ -85,7 +84,7 @@ async function handler(
     const tour = await prisma.tour.findFirst({
       where: {
         id,
-        userId: session.user.id,
+        userId: auth.user.id,
       },
     })
 

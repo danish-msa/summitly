@@ -1,17 +1,16 @@
 import { NextRequest } from 'next/server'
 import { apiMiddleware } from '@/lib/api/middleware'
 import { successResponse, ApiErrors } from '@/lib/api/response'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api/auth-utils'
 import { prisma } from '@/lib/prisma'
 
 async function handler(
   request: NextRequest,
   { params }: { params: Promise<{ baseMlsNumber: string; mlsNumber: string }> }
 ) {
-  const session = await getServerSession(authOptions)
+  const auth = await getAuthenticatedUser(request)
 
-  if (!session || !session.user) {
+  if (!auth || !auth.user) {
     return ApiErrors.UNAUTHORIZED('You must be logged in')
   }
 
@@ -22,7 +21,7 @@ async function handler(
     const comparable = await prisma.savedComparable.findUnique({
       where: {
         userId_basePropertyMlsNumber_mlsNumber: {
-          userId: session.user.id,
+          userId: auth.user.id,
           basePropertyMlsNumber: baseMlsNumber,
           mlsNumber: mlsNumber,
         },
@@ -41,7 +40,7 @@ async function handler(
     const comparable = await prisma.savedComparable.findUnique({
       where: {
         userId_basePropertyMlsNumber_mlsNumber: {
-          userId: session.user.id,
+          userId: auth.user.id,
           basePropertyMlsNumber: baseMlsNumber,
           mlsNumber: mlsNumber,
         },

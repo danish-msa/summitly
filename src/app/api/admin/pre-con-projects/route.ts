@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api/auth-utils'
 import { prisma } from '@/lib/prisma'
 import { isAdmin } from '@/lib/roles'
 import { Prisma } from '@prisma/client'
@@ -31,16 +30,16 @@ async function fetchDeveloperData(developerId: string): Promise<string | null> {
 // GET - List all pre-con projects (with pagination and filters)
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser(request)
     
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    if (!isAdmin(session.user.role)) {
+    if (!isAdmin(auth.user.role)) {
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },
         { status: 403 }
@@ -229,16 +228,16 @@ export async function GET(request: NextRequest) {
 // POST - Create a new pre-con project
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser(request)
     
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    if (!isAdmin(session.user.role)) {
+    if (!isAdmin(auth.user.role)) {
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },
         { status: 403 }
@@ -430,7 +429,7 @@ export async function POST(request: NextRequest) {
       data: {
         mlsNumber,
         projectName,
-        createdBy: session.user.id, // Track who created the project
+        createdBy: auth.user.id, // Track who created the project
         developer: normalizeField(developer),
         startingPrice: startingPrice && startingPrice !== '' ? (typeof startingPrice === 'number' ? startingPrice : parseFloat(String(startingPrice))) : null,
         endingPrice: endingPrice && endingPrice !== '' ? (typeof endingPrice === 'number' ? endingPrice : parseFloat(String(endingPrice))) : null,

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/api/auth-utils";
 import { prisma } from "@/lib/prisma";
 
 function toInt(value: unknown): number | undefined {
@@ -32,9 +31,9 @@ function toBooleanOrUndef(value: unknown): boolean | undefined {
   return undefined;
 }
 
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  const userId = session?.user?.id;
+export async function GET(request: NextRequest) {
+  const auth = await getAuthenticatedUser(request);
+  const userId = auth?.user?.id;
 
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -49,8 +48,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-  const userId = session?.user?.id;
+  const auth = await getAuthenticatedUser(request);
+  const userId = auth?.user?.id;
 
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

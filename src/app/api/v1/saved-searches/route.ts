@@ -1,8 +1,7 @@
 import { NextRequest } from 'next/server'
 import { apiMiddleware } from '@/lib/api/middleware'
 import { successResponse, ApiErrors } from '@/lib/api/response'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api/auth-utils'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
@@ -17,9 +16,9 @@ const createSearchSchema = z.object({
 })
 
 async function handler(request: NextRequest) {
-  const session = await getServerSession(authOptions)
+  const auth = await getAuthenticatedUser(request)
 
-  if (!session || !session.user) {
+  if (!auth || !auth.user) {
     return ApiErrors.UNAUTHORIZED('You must be logged in to save searches')
   }
 
@@ -31,13 +30,13 @@ async function handler(request: NextRequest) {
 
     const [searches, total] = await Promise.all([
       prisma.searchHistory.findMany({
-        where: { userId: session.user.id },
+        where: { userId: auth.user.id },
         orderBy: { searchedAt: 'desc' },
         take: limit,
         skip: (page - 1) * limit,
       }),
       prisma.searchHistory.count({
-        where: { userId: session.user.id },
+        where: { userId: auth.user.id },
       }),
     ])
 
@@ -62,7 +61,7 @@ async function handler(request: NextRequest) {
 
     const search = await prisma.searchHistory.create({
       data: {
-        userId: session.user.id,
+        userId: auth.user.id,
         query: validatedData.query || null,
         location: validatedData.location || null,
         minPrice: validatedData.minPrice || null,

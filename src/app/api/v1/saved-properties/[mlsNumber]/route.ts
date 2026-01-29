@@ -1,8 +1,7 @@
 import { NextRequest } from 'next/server'
 import { apiMiddleware } from '@/lib/api/middleware'
 import { successResponse, ApiErrors } from '@/lib/api/response'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api/auth-utils'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
@@ -15,9 +14,9 @@ async function handler(
   request: NextRequest,
   { params }: { params: Promise<{ mlsNumber: string }> }
 ) {
-  const session = await getServerSession(authOptions)
+  const auth = await getAuthenticatedUser(request)
 
-  if (!session || !session.user) {
+  if (!auth || !auth.user) {
     return ApiErrors.UNAUTHORIZED('You must be logged in')
   }
 
@@ -28,7 +27,7 @@ async function handler(
     const savedProperty = await prisma.savedProperty.findUnique({
       where: {
         userId_mlsNumber: {
-          userId: session.user.id,
+          userId: auth.user.id,
           mlsNumber,
         },
       },
@@ -49,7 +48,7 @@ async function handler(
     const savedProperty = await prisma.savedProperty.findUnique({
       where: {
         userId_mlsNumber: {
-          userId: session.user.id,
+          userId: auth.user.id,
           mlsNumber,
         },
       },
@@ -75,7 +74,7 @@ async function handler(
     const savedProperty = await prisma.savedProperty.findUnique({
       where: {
         userId_mlsNumber: {
-          userId: session.user.id,
+          userId: auth.user.id,
           mlsNumber,
         },
       },

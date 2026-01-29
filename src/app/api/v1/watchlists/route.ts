@@ -1,8 +1,7 @@
 import { NextRequest } from 'next/server'
 import { apiMiddleware } from '@/lib/api/middleware'
 import { successResponse, ApiErrors } from '@/lib/api/response'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api/auth-utils'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
@@ -18,9 +17,9 @@ const createWatchlistSchema = z.object({
 })
 
 async function handler(request: NextRequest) {
-  const session = await getServerSession(authOptions)
+  const auth = await getAuthenticatedUser(request)
 
-  if (!session || !session.user) {
+  if (!auth || !auth.user) {
     return ApiErrors.UNAUTHORIZED('You must be logged in to manage watchlists')
   }
 
@@ -32,13 +31,13 @@ async function handler(request: NextRequest) {
 
     const [watchlists, total] = await Promise.all([
       prisma.propertyWatchlist.findMany({
-        where: { userId: session.user.id },
+        where: { userId: auth.user.id },
         orderBy: { createdAt: 'desc' },
         take: limit,
         skip: (page - 1) * limit,
       }),
       prisma.propertyWatchlist.count({
-        where: { userId: session.user.id },
+        where: { userId: auth.user.id },
       }),
     ])
 
@@ -63,7 +62,7 @@ async function handler(request: NextRequest) {
 
     const watchlist = await prisma.propertyWatchlist.create({
       data: {
-        userId: session.user.id,
+        userId: auth.user.id,
         mlsNumber: validatedData.mlsNumber || null,
         cityName: validatedData.cityName || null,
         neighborhood: validatedData.neighborhood || null,

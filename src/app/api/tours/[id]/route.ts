@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api/auth-utils'
 import { prisma } from '@/lib/prisma'
 
 export async function DELETE(
@@ -8,9 +7,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser(request)
     
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -23,7 +22,7 @@ export async function DELETE(
     const tour = await prisma.tour.findFirst({
       where: {
         id,
-        userId: session.user.id,
+        userId: auth.user.id,
       },
     })
 
@@ -55,9 +54,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser(request)
     
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -71,7 +70,7 @@ export async function PATCH(
     const existingTour = await prisma.tour.findFirst({
       where: {
         id,
-        userId: session.user.id,
+        userId: auth.user.id,
       },
     })
 

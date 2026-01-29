@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api/auth-utils'
 import { prisma } from '@/lib/prisma'
 
 // Force dynamic rendering to ensure fresh Prisma client with SSL config
@@ -9,9 +8,9 @@ export const runtime = 'nodejs'
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser(request)
     
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -27,7 +26,7 @@ export async function GET(request: NextRequest) {
       const savedComparable = await prisma.savedComparable.findUnique({
         where: {
           userId_basePropertyMlsNumber_mlsNumber: {
-            userId: session.user.id,
+            userId: auth.user.id,
             basePropertyMlsNumber: basePropertyMlsNumber.toString(),
             mlsNumber: mlsNumber.toString(),
           },
@@ -44,7 +43,7 @@ export async function GET(request: NextRequest) {
     if (basePropertyMlsNumber) {
       const savedComparables = await prisma.savedComparable.findMany({
         where: {
-          userId: session.user.id,
+          userId: auth.user.id,
           basePropertyMlsNumber: basePropertyMlsNumber.toString(),
         },
         orderBy: {
@@ -58,7 +57,7 @@ export async function GET(request: NextRequest) {
     // Otherwise, get all saved comparables for the user (grouped by base property)
     const savedComparables = await prisma.savedComparable.findMany({
       where: {
-        userId: session.user.id,
+        userId: auth.user.id,
       },
       orderBy: {
         createdAt: 'desc',

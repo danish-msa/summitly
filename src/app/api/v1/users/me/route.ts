@@ -1,8 +1,7 @@
 import { NextRequest } from 'next/server'
 import { apiMiddleware } from '@/lib/api/middleware'
 import { successResponse, ApiErrors } from '@/lib/api/response'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api/auth-utils'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
@@ -13,16 +12,16 @@ const updateUserSchema = z.object({
 })
 
 async function handler(request: NextRequest) {
-  const session = await getServerSession(authOptions)
+  const auth = await getAuthenticatedUser(request)
 
-  if (!session || !session.user) {
+  if (!auth || !auth.user) {
     return ApiErrors.UNAUTHORIZED('You must be logged in to update your profile')
   }
 
   if (request.method === 'GET') {
     // Get user profile
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: auth.user.id },
       select: {
         id: true,
         name: true,
@@ -61,7 +60,7 @@ async function handler(request: NextRequest) {
     const validatedData = updateUserSchema.parse(body)
 
     const user = await prisma.user.update({
-      where: { id: session.user.id },
+      where: { id: auth.user.id },
       data: {
         ...validatedData,
       },

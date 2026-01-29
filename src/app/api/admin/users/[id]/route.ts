@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api/auth-utils'
 import { prisma } from '@/lib/prisma'
 import { isSuperAdmin } from '@/lib/roles'
 
@@ -10,16 +9,16 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser(request)
     
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    if (!isSuperAdmin(session.user.role)) {
+    if (!isSuperAdmin(auth.user.role)) {
       return NextResponse.json(
         { error: 'Forbidden - Super Admin access required' },
         { status: 403 }
@@ -64,16 +63,16 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser(request)
     
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    if (!isSuperAdmin(session.user.role)) {
+    if (!isSuperAdmin(auth.user.role)) {
       return NextResponse.json(
         { error: 'Forbidden - Super Admin access required' },
         { status: 403 }
@@ -94,7 +93,7 @@ export async function PUT(
     }
 
     // Prevent changing own role
-    if (id === session.user.id) {
+    if (id === auth.user.id) {
       return NextResponse.json(
         { error: 'Cannot change your own role' },
         { status: 400 }
@@ -144,16 +143,16 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser(request)
     
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    if (!isSuperAdmin(session.user.role)) {
+    if (!isSuperAdmin(auth.user.role)) {
       return NextResponse.json(
         { error: 'Forbidden - Super Admin access required' },
         { status: 403 }
@@ -163,7 +162,7 @@ export async function DELETE(
     const { id } = await params
 
     // Prevent deleting self
-    if (id === session.user.id) {
+    if (id === auth.user.id) {
       return NextResponse.json(
         { error: 'Cannot delete your own account' },
         { status: 400 }

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api/auth-utils'
 import { prisma } from '@/lib/prisma'
 import { isAdmin } from '@/lib/roles'
 import { Prisma } from '@prisma/client'
@@ -8,16 +7,16 @@ import { Prisma } from '@prisma/client'
 // GET - List all pages (with pagination and filters)
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser(request)
     
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    if (!isAdmin(session.user.role)) {
+    if (!isAdmin(auth.user.role)) {
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },
         { status: 403 }
@@ -139,16 +138,16 @@ export async function GET(request: NextRequest) {
 // POST - Create a new page
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser(request)
     
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    if (!isAdmin(session.user.role)) {
+    if (!isAdmin(auth.user.role)) {
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },
         { status: 403 }
@@ -227,7 +226,7 @@ export async function POST(request: NextRequest) {
         status: status || 'DRAFT',
         parentId: parentId || null,
         categoryId: categoryId || null,
-        createdBy: session.user.id,
+        createdBy: auth.user.id,
       },
       include: {
         parent: {

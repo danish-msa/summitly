@@ -1,19 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { getAuthenticatedUser } from "@/lib/api/auth-utils"
 import { prisma } from "@/lib/prisma"
 import { isAdmin } from "@/lib/roles"
 
 // GET - Fetch page contents
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser(request)
     
-    if (!session?.user) {
+    if (!auth?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    if (!isAdmin(session.user.role)) {
+    if (!isAdmin(auth.user.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -78,13 +77,13 @@ export async function GET(request: NextRequest) {
 // PUT - Create or update page content
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser(request)
     
-    if (!session?.user) {
+    if (!auth?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    if (!isAdmin(session.user.role)) {
+    if (!isAdmin(auth.user.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -239,13 +238,13 @@ export async function PUT(request: NextRequest) {
 // DELETE - Delete page content
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser(request)
     
-    if (!session?.user) {
+    if (!auth?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    if (!isAdmin(session.user.role)) {
+    if (!isAdmin(auth.user.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 

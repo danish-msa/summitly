@@ -1,8 +1,7 @@
 import { NextRequest } from 'next/server'
 import { apiMiddleware } from '@/lib/api/middleware'
 import { successResponse, ApiErrors } from '@/lib/api/response'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api/auth-utils'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import { z } from 'zod'
@@ -13,9 +12,9 @@ const saveComparableSchema = z.object({
 })
 
 async function handler(request: NextRequest) {
-  const session = await getServerSession(authOptions)
+  const auth = await getAuthenticatedUser(request)
 
-  if (!session || !session.user) {
+  if (!auth || !auth.user) {
     return ApiErrors.UNAUTHORIZED('You must be logged in to save comparables')
   }
 
@@ -26,7 +25,7 @@ async function handler(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
 
-    const where: Prisma.SavedComparableWhereInput = { userId: session.user.id }
+    const where: Prisma.SavedComparableWhereInput = { userId: auth.user.id }
     if (basePropertyMlsNumber) {
       where.basePropertyMlsNumber = basePropertyMlsNumber
     }
@@ -64,7 +63,7 @@ async function handler(request: NextRequest) {
     const existing = await prisma.savedComparable.findUnique({
       where: {
         userId_basePropertyMlsNumber_mlsNumber: {
-          userId: session.user.id,
+          userId: auth.user.id,
           basePropertyMlsNumber: validatedData.basePropertyMlsNumber,
           mlsNumber: validatedData.mlsNumber,
         },
@@ -78,7 +77,7 @@ async function handler(request: NextRequest) {
     // Create new
     const comparable = await prisma.savedComparable.create({
       data: {
-        userId: session.user.id,
+        userId: auth.user.id,
         basePropertyMlsNumber: validatedData.basePropertyMlsNumber,
         mlsNumber: validatedData.mlsNumber,
       },

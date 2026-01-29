@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api/auth-utils'
 import { prisma } from '@/lib/prisma'
 import { isAdmin } from '@/lib/roles'
 import { Prisma } from '@prisma/client'
@@ -8,16 +7,16 @@ import { Prisma } from '@prisma/client'
 // POST - Create or update a draft project
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser(request)
     
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    if (!isAdmin(session.user.role)) {
+    if (!isAdmin(auth.user.role)) {
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },
         { status: 403 }
@@ -218,7 +217,7 @@ export async function POST(request: NextRequest) {
       // Update existing draft (preserve createdBy if it exists, otherwise set it)
       const updateData: Prisma.PreConstructionProjectUncheckedUpdateInput = {
         projectName: projectName || existingDraft.projectName,
-        createdBy: existingDraft.createdBy || session.user.id, // Set createdBy if not already set
+        createdBy: existingDraft.createdBy || auth.user.id, // Set createdBy if not already set
         developer: normalizeField(developer),
         startingPrice: startingPrice && startingPrice !== '' ? (typeof startingPrice === 'number' ? startingPrice : parseFloat(String(startingPrice))) : null,
         endingPrice: endingPrice && endingPrice !== '' ? (typeof endingPrice === 'number' ? endingPrice : parseFloat(String(endingPrice))) : null,
@@ -376,7 +375,7 @@ export async function POST(request: NextRequest) {
       data: {
         mlsNumber,
         projectName: projectName || 'Untitled Project',
-        createdBy: session.user.id, // Track who created the draft
+        createdBy: auth.user.id, // Track who created the draft
         developer: normalizeField(developer),
         startingPrice: startingPrice && startingPrice !== '' ? (typeof startingPrice === 'number' ? startingPrice : parseFloat(String(startingPrice))) : null,
         endingPrice: endingPrice && endingPrice !== '' ? (typeof endingPrice === 'number' ? endingPrice : parseFloat(String(endingPrice))) : null,

@@ -1,20 +1,19 @@
 import { NextRequest } from 'next/server'
 import { apiMiddleware } from '@/lib/api/middleware'
 import { successResponse, ApiErrors } from '@/lib/api/response'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api/auth-utils'
 import { prisma } from '@/lib/prisma'
 
-async function handler(_request: NextRequest) {
-  const session = await getServerSession(authOptions)
+async function handler(request: NextRequest) {
+  const auth = await getAuthenticatedUser(request)
 
-  if (!session || !session.user) {
+  if (!auth || !auth.user) {
     return ApiErrors.UNAUTHORIZED('You must be logged in to access this resource')
   }
 
   // Get full user data
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: auth.user.id },
     select: {
       id: true,
       name: true,

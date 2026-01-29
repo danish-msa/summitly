@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthenticatedUser } from '@/lib/api/auth-utils';
 
 // GET - Get rating statistics for a property (works for all property types)
 export async function GET(
@@ -38,16 +37,16 @@ export async function GET(
     const sum = ratings.reduce((acc, r) => acc + r.rating, 0);
     const average = Math.round((sum / total) * 10) / 10;
 
-    // Get user's rating if logged in
-    const session = await getServerSession(authOptions);
+    // Get user's rating if logged in (session or Bearer)
+    const auth = await getAuthenticatedUser(request);
     let userRating = null;
     
-    if (session?.user?.id) {
+    if (auth?.user?.id) {
       const userRatingRecord = await prisma.propertyRating.findFirst({
         where: {
           propertyId: projectId,
           propertyType: propertyType,
-          userId: session.user.id
+          userId: auth.user.id
         },
         select: { rating: true }
       });
@@ -118,9 +117,9 @@ export async function POST(
       );
     }
 
-    // Get session (optional - allows anonymous ratings)
-    const session = await getServerSession(authOptions);
-    const userId = session?.user?.id || null;
+    // Get auth (optional - allows anonymous ratings)
+    const auth = await getAuthenticatedUser(request);
+    const userId = auth?.user?.id || null;
     
     // For anonymous users, use session ID or generate one
     // Get session ID from cookies

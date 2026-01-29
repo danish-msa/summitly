@@ -18,14 +18,64 @@ function formatPrice(price: number): string {
   }).format(price);
 }
 
+// Repliers lastStatus abbreviations → human-readable labels
+const LAST_STATUS_LABELS: Record<string, string> = {
+  Sus: "Suspended",
+  Exp: "Expired",
+  Sld: "Sold",
+  Ter: "Terminated",
+  Dft: "Deal Fell Through",
+  Lsd: "Leased",
+  Sc: "Sold Conditionally",
+  Sce: "Sold Conditionally (Escape Clause)",
+  Lc: "Leased Conditionally",
+  Pc: "Price Change",
+  Ext: "Extension",
+  New: "New",
+  Cs: "Coming Soon",
+};
+
+function getLastStatusLabel(status: string): string {
+  if (!status) return "Active";
+  const key = status.trim();
+  return LAST_STATUS_LABELS[key] ?? status;
+}
+
+// Distinct color per lastStatus (abbrev → Tailwind bg/text classes)
+const LAST_STATUS_COLORS: Record<string, string> = {
+  New: "bg-emerald-100 text-emerald-800",
+  Cs: "bg-teal-100 text-teal-800",
+  Pc: "bg-amber-100 text-amber-800",
+  Ext: "bg-sky-100 text-sky-800",
+  Sld: "bg-blue-100 text-blue-800",
+  Lsd: "bg-indigo-100 text-indigo-800",
+  Sc: "bg-violet-100 text-violet-800",
+  Sce: "bg-yellow-100 text-yellow-800",
+  Lc: "bg-orange-100 text-orange-800",
+  Ter: "bg-red-100 text-red-800",
+  Exp: "bg-slate-200 text-slate-700",
+  Sus: "bg-rose-100 text-rose-800",
+  Dft: "bg-red-100 text-red-800",
+};
+
 function getStatusTagClass(status: string): string {
-  const s = (status || "").toLowerCase();
-  if (s.includes("sold conditionally") || s.includes("pending") || s.includes("active under contract"))
-    return "bg-amber-100 text-amber-800";
-  if (s.includes("sold") || s.includes("closed")) return "bg-sky-100 text-sky-800";
-  if (s.includes("terminated") || s.includes("expired") || s.includes("withdrawn"))
-    return "bg-red-100 text-red-800";
-  return "bg-emerald-100 text-emerald-800"; // For Sale / Active
+  const key = (status || "").trim();
+  if (LAST_STATUS_COLORS[key]) return LAST_STATUS_COLORS[key];
+  const s = key.toLowerCase();
+  if (s.includes("sold conditionally") && !s.includes("escape")) return LAST_STATUS_COLORS.Sc;
+  if (s.includes("sold conditionally") && s.includes("escape")) return LAST_STATUS_COLORS.Sce;
+  if (s.includes("leased conditionally")) return LAST_STATUS_COLORS.Lc;
+  if (s.includes("sold") || s.includes("closed")) return LAST_STATUS_COLORS.Sld;
+  if (s.includes("leased")) return LAST_STATUS_COLORS.Lsd;
+  if (s.includes("price change")) return LAST_STATUS_COLORS.Pc;
+  if (s.includes("extension")) return LAST_STATUS_COLORS.Ext;
+  if (s.includes("coming soon")) return LAST_STATUS_COLORS.Cs;
+  if (s.includes("terminated") || s.includes("withdrawn")) return LAST_STATUS_COLORS.Ter;
+  if (s.includes("expired")) return LAST_STATUS_COLORS.Exp;
+  if (s.includes("suspended")) return LAST_STATUS_COLORS.Sus;
+  if (s.includes("deal fell through")) return LAST_STATUS_COLORS.Dft;
+  if (s.includes("new")) return LAST_STATUS_COLORS.New;
+  return "bg-emerald-100 text-emerald-800"; // Active / default
 }
 
 function getListingImageUrl(listing: PropertyListing): string {
@@ -46,6 +96,59 @@ function getLocationSecondaryText(loc: Location): string {
   if (addr?.city && addr?.state) return `${type} in ${addr.city}, ${addr.state}`;
   if (addr?.state) return `${type} in ${addr.state}`;
   return type;
+}
+
+const PROPERTY_SKELETON_COUNT = 3;
+const LOCATION_SKELETON_COUNT = 4;
+
+function AutocompleteLoadingSkeleton() {
+  return (
+    <div className="py-2 animate-in fade-in duration-200">
+      <section className="px-4 py-2 border-b border-slate-100">
+        <div className="flex items-center justify-between mb-2">
+          <div className="h-3.5 w-20 rounded bg-slate-200 animate-pulse" />
+          <div className="h-3 w-8 rounded bg-slate-100 animate-pulse" />
+        </div>
+        <ul className="space-y-0">
+          {Array.from({ length: PROPERTY_SKELETON_COUNT }).map((_, i) => (
+            <li
+              key={i}
+              className="flex items-start gap-3 px-4 py-3 border-b border-slate-100 last:border-b-0"
+            >
+              <div className="h-[70px] w-[70px] shrink-0 rounded bg-slate-200 animate-pulse" />
+              <div className="flex-1 min-w-0 py-1 space-y-2">
+                <div className="h-4 w-3/4 max-w-[200px] rounded bg-slate-200 animate-pulse" />
+                <div className="h-3 w-full max-w-[180px] rounded bg-slate-100 animate-pulse" />
+                <div className="flex flex-wrap gap-x-2 gap-y-1">
+                  {[1, 2, 3, 4].map((j) => (
+                    <div key={j} className="h-3 w-14 rounded bg-slate-100 animate-pulse" />
+                  ))}
+                </div>
+              </div>
+              <div className="h-6 w-16 shrink-0 rounded-full bg-slate-200 animate-pulse" />
+            </li>
+          ))}
+        </ul>
+      </section>
+      <section className="px-4 py-2">
+        <div className="h-3.5 w-24 rounded bg-slate-200 animate-pulse mb-2" />
+        <ul className="space-y-0">
+          {Array.from({ length: LOCATION_SKELETON_COUNT }).map((_, i) => (
+            <li
+              key={i}
+              className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 last:border-b-0"
+            >
+              <div className="h-8 w-8 shrink-0 rounded bg-slate-200 animate-pulse" />
+              <div className="flex-1 min-w-0 space-y-1.5">
+                <div className="h-4 w-32 rounded bg-slate-200 animate-pulse" />
+                <div className="h-3 w-24 rounded bg-slate-100 animate-pulse" />
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  );
 }
 
 export interface AutocompleteSearchProps {
@@ -137,11 +240,7 @@ export function AutocompleteSearch({
           role="listbox"
           className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden max-h-[70vh] overflow-y-auto"
         >
-          {loading && (
-            <div className="px-4 py-6 text-center text-sm text-slate-500">
-              Loading...
-            </div>
-          )}
+          {loading && <AutocompleteLoadingSkeleton />}
 
           {!loading && error && (
             <div className="px-4 py-3 text-sm text-red-600">{error}</div>
@@ -161,8 +260,67 @@ export function AutocompleteSearch({
 
           {!loading && !error && (listings.length > 0 || locations.length > 0) && (
             <div className="py-2">
+              {locations.length > 0 && (
+                <section
+                  className={cn(
+                    "px-4 py-2",
+                    listings.length > 0 && "border-b border-slate-100"
+                  )}
+                >
+                  <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-2">
+                    LOCATIONS
+                  </h3>
+                  <ul className="space-y-0" role="list">
+                    {locations.map((loc, idx) => (
+                      <li key={`${loc.locationId}-${idx}`} role="option">
+                        {onSelectLocation ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onSelectLocation(loc);
+                              setIsOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 text-left border-b border-slate-100 last:border-b-0 transition-colors"
+                          >
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-slate-100 text-slate-600">
+                              <MapPin className="h-4 w-4" aria-hidden="true" />
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-slate-900 truncate">
+                                {loc.name}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                {getLocationSecondaryText(loc)}
+                              </p>
+                            </div>
+                          </button>
+                        ) : (
+                          <Link
+                            href={`/listings?location=${encodeURIComponent(loc.name)}`}
+                            onClick={() => setIsOpen(false)}
+                            className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-b-0 transition-colors"
+                          >
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-slate-100 text-slate-600">
+                              <MapPin className="h-4 w-4" aria-hidden="true" />
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-slate-900 truncate">
+                                {loc.name}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                {getLocationSecondaryText(loc)}
+                              </p>
+                            </div>
+                          </Link>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
               {listings.length > 0 && (
-                <section className="px-4 py-2 border-b border-slate-100">
+                <section className="px-4 py-2 border-b border-slate-100 last:border-b-0">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
                       PROPERTIES
@@ -217,7 +375,7 @@ export function AutocompleteSearch({
                               getStatusTagClass(listing.lastStatus || listing.status)
                             )}
                           >
-                            {listing.lastStatus || listing.status || "Active"}
+                            {getLastStatusLabel(listing.lastStatus || listing.status)}
                           </span>
                         </>
                       );
@@ -246,60 +404,6 @@ export function AutocompleteSearch({
                         </li>
                       );
                     })}
-                  </ul>
-                </section>
-              )}
-
-              {locations.length > 0 && (
-                <section className="px-4 py-2">
-                  <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-2">
-                    LOCATIONS
-                  </h3>
-                  <ul className="space-y-0" role="list">
-                    {locations.map((loc, idx) => (
-                      <li key={`${loc.locationId}-${idx}`} role="option">
-                        {onSelectLocation ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onSelectLocation(loc);
-                              setIsOpen(false);
-                            }}
-                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 text-left border-b border-slate-100 last:border-b-0 transition-colors"
-                          >
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-slate-100 text-slate-600">
-                              <MapPin className="h-4 w-4" aria-hidden="true" />
-                            </span>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-slate-900 truncate">
-                                {loc.name}
-                              </p>
-                              <p className="text-xs text-slate-500">
-                                {getLocationSecondaryText(loc)}
-                              </p>
-                            </div>
-                          </button>
-                        ) : (
-                          <Link
-                            href={`/listings?location=${encodeURIComponent(loc.name)}`}
-                            onClick={() => setIsOpen(false)}
-                            className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-b-0 transition-colors"
-                          >
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-slate-100 text-slate-600">
-                              <MapPin className="h-4 w-4" aria-hidden="true" />
-                            </span>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-slate-900 truncate">
-                                {loc.name}
-                              </p>
-                              <p className="text-xs text-slate-500">
-                                {getLocationSecondaryText(loc)}
-                              </p>
-                            </div>
-                          </Link>
-                        )}
-                      </li>
-                    ))}
                   </ul>
                 </section>
               )}

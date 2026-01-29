@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api/auth-utils'
 import { prisma } from '@/lib/prisma'
 import { isSuperAdmin } from '@/lib/roles'
 import { Prisma, UserRole } from '@prisma/client'
@@ -12,16 +11,16 @@ export const runtime = 'nodejs'
 // GET - List all users (with pagination and filters)
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser(request)
     
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    if (!isSuperAdmin(session.user.role)) {
+    if (!isSuperAdmin(auth.user.role)) {
       return NextResponse.json(
         { error: 'Forbidden - Super Admin access required' },
         { status: 403 }

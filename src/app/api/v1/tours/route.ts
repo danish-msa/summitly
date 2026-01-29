@@ -1,8 +1,7 @@
 import { NextRequest } from 'next/server'
 import { apiMiddleware } from '@/lib/api/middleware'
 import { successResponse, ApiErrors } from '@/lib/api/response'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api/auth-utils'
 import { prisma } from '@/lib/prisma'
 import { Prisma, TourStatus } from '@prisma/client'
 import { z } from 'zod'
@@ -19,9 +18,9 @@ const createTourSchema = z.object({
 })
 
 async function handler(request: NextRequest) {
-  const session = await getServerSession(authOptions)
+  const auth = await getAuthenticatedUser(request)
 
-  if (!session || !session.user) {
+  if (!auth || !auth.user) {
     return ApiErrors.UNAUTHORIZED('You must be logged in to schedule tours')
   }
 
@@ -32,7 +31,7 @@ async function handler(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20')
     const status = searchParams.get('status')
 
-    const where: Prisma.TourWhereInput = { userId: session.user.id }
+    const where: Prisma.TourWhereInput = { userId: auth.user.id }
     if (status) {
       where.status = status as TourStatus
     }
@@ -68,7 +67,7 @@ async function handler(request: NextRequest) {
 
     const tour = await prisma.tour.create({
       data: {
-        userId: session.user.id,
+        userId: auth.user.id,
         mlsNumber: validatedData.mlsNumber,
         tourType: validatedData.tourType,
         scheduledDate: new Date(validatedData.scheduledDate),

@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api/auth-utils'
 import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser(request)
     
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -43,7 +42,7 @@ export async function POST(request: NextRequest) {
     // Save the property
     const savedProperty = await prisma.savedProperty.create({
       data: {
-        userId: session.user.id,
+        userId: auth.user.id,
         mlsNumber: mlsNumber.toString(),
         notes: notes || null,
         tags: tags || [],

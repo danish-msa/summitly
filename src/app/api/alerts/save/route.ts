@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api/auth-utils'
 import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser(request)
     
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -29,7 +28,7 @@ export async function POST(request: NextRequest) {
     // Check if alert already exists for this property/area
     const existingAlert = await prisma.propertyWatchlist.findFirst({
       where: {
-        userId: session.user.id,
+        userId: auth.user.id,
         ...(mlsNumber ? { mlsNumber } : {}),
         ...(cityName ? { cityName } : {}),
         ...(neighborhood ? { neighborhood } : {}),
@@ -53,7 +52,7 @@ export async function POST(request: NextRequest) {
       // Create new alert
       alert = await prisma.propertyWatchlist.create({
         data: {
-          userId: session.user.id,
+          userId: auth.user.id,
           mlsNumber: mlsNumber || null,
           cityName: cityName || null,
           neighborhood: neighborhood || null,
