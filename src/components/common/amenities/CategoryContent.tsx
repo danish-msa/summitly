@@ -295,7 +295,7 @@ export const CategoryContent = ({
   const displayItems = showAll ? filteredItems : filteredItems.slice(0, 4);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 min-w-0">
       <FiltersSection
         category={category}
         activeFilter={activeFilter}
@@ -303,12 +303,12 @@ export const CategoryContent = ({
       />
 
       {filteredItems.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
-          <p>No {category.label.toLowerCase()} found for the selected filter</p>
+        <div className="text-center py-8 sm:py-12 text-gray-500">
+          <p className="text-sm sm:text-base">No {category.label.toLowerCase()} found for the selected filter</p>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
             {displayItems.map((item) => (
               <AmenityCard 
                 key={item.id} 
@@ -323,13 +323,14 @@ export const CategoryContent = ({
           {filteredItems.length > 4 && (
             <button
               onClick={onToggleShowAll}
-              className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+              className="flex items-center gap-1 text-xs sm:text-sm font-medium text-primary hover:underline"
             >
               {showAll ? "Show less" : `Show all ${filteredItems.length} ${category.label.toLowerCase()}`}
               <ChevronDown
-                className={`h-4 w-4 transition-transform ${
+                className={`h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0 transition-transform ${
                   showAll ? "rotate-180" : ""
                 }`}
+                aria-hidden
               />
             </button>
           )}

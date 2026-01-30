@@ -74,22 +74,22 @@ const PreConProjectSpecs: React.FC<PreConProjectSpecsProps> = ({ property }) => 
   ]
 
   return (
-    <div className="flex flex-row gap-4 mb-6">
+    <div className="grid grid-cols-2 md:flex md:flex-row gap-3 sm:gap-4 mb-4 sm:mb-6">
       {specs.map((spec, index) => {
         const Icon = spec.icon
         return (
-          <div key={index} className="flex items-center gap-3 flex-1">
+          <div key={index} className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
             {/* Icon with light blue background */}
-            <div className="flex-shrink-0 w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center">
-              <Icon className="h-6 w-6 text-secondary" />
+            <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-secondary/10 rounded-lg flex items-center justify-center">
+              <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-secondary" />
             </div>
             
             {/* Label and Value */}
-            <div className="flex flex-col min-w-0">
-              <span className="text-xs text-gray-500 font-medium mb-1">
+            <div className="flex flex-col min-w-0 overflow-hidden">
+              <span className="text-[10px] sm:text-xs text-gray-500 font-medium mb-0.5 sm:mb-1">
                 {spec.label}
               </span>
-              <span className="text-sm font-bold text-gray-900 truncate">
+              <span className="text-xs sm:text-sm font-bold text-gray-900 truncate">
                 {spec.value}
               </span>
             </div>

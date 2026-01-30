@@ -70,31 +70,31 @@ export default function TaxHistory({ property, propertyAddress }: TaxHistoryProp
     : 0;
 
   return (
-    <div className="bg-white py-4">
-      <p className="text-sm text-gray-600 mt-1 mb-6">Property tax history for {propertyAddress}</p>
+    <div className="bg-white py-3 sm:py-4 min-w-0">
+      <p className="text-xs sm:text-sm text-gray-600 mt-1 mb-4 sm:mb-6">Property tax history for {propertyAddress}</p>
       
       {/* Summary Card */}
-      <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+      <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
         <div className="flex items-center gap-2 mb-2">
-          <TrendingUp className="h-5 w-5 text-blue-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Tax Overview</h3>
+          <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 flex-shrink-0" />
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900">Tax Overview</h3>
         </div>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           <div>
-            <p className="text-xs text-gray-600 mb-1">Current Year Tax</p>
-            <p className="text-xl font-bold text-gray-900">
+            <p className="text-[10px] sm:text-xs text-gray-600 mb-0.5 sm:mb-1">Current Year Tax</p>
+            <p className="text-lg sm:text-xl font-bold text-gray-900">
               ${taxHistory[0]?.taxAmount.toLocaleString() || 'N/A'}
             </p>
           </div>
           <div>
-            <p className="text-xs text-gray-600 mb-1">Assessed Value</p>
-            <p className="text-xl font-bold text-gray-900">
+            <p className="text-[10px] sm:text-xs text-gray-600 mb-0.5 sm:mb-1">Assessed Value</p>
+            <p className="text-lg sm:text-xl font-bold text-gray-900">
               ${taxHistory[0]?.assessedValue.toLocaleString() || 'N/A'}
             </p>
           </div>
           <div>
-            <p className="text-xs text-gray-600 mb-1">Avg. Annual Increase</p>
-            <p className="text-xl font-bold text-gray-900">
+            <p className="text-[10px] sm:text-xs text-gray-600 mb-0.5 sm:mb-1">Avg. Annual Increase</p>
+            <p className="text-lg sm:text-xl font-bold text-gray-900">
               {avgIncrease > 0 ? '+' : ''}{avgIncrease.toFixed(1)}%
             </p>
           </div>
@@ -102,15 +102,16 @@ export default function TaxHistory({ property, propertyAddress }: TaxHistoryProp
       </div>
 
       {/* Tax History Table */}
-      <Table>
+      <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0 scrollbar-hide">
+      <Table className="min-w-[520px]">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[120px] py-3">Year</TableHead>
-            <TableHead className="w-[150px] text-right py-3">Assessed Value</TableHead>
-            <TableHead className="w-[120px] text-right py-3">Tax Amount</TableHead>
-            <TableHead className="w-[120px] text-right py-3">Tax Rate</TableHead>
-            <TableHead className="w-[130px] text-right py-3">Change</TableHead>
-            <TableHead className="w-[150px] text-center py-3">Status</TableHead>
+            <TableHead className="w-[70px] sm:w-[120px] py-2 sm:py-3">Year</TableHead>
+            <TableHead className="w-[100px] sm:w-[150px] text-right py-2 sm:py-3">Assessed Value</TableHead>
+            <TableHead className="w-[90px] sm:w-[120px] text-right py-2 sm:py-3">Tax Amount</TableHead>
+            <TableHead className="w-[80px] sm:w-[120px] text-right py-2 sm:py-3">Tax Rate</TableHead>
+            <TableHead className="w-[90px] sm:w-[130px] text-right py-2 sm:py-3">Change</TableHead>
+            <TableHead className="w-[80px] sm:w-[150px] text-center py-2 sm:py-3">Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -178,25 +179,26 @@ export default function TaxHistory({ property, propertyAddress }: TaxHistoryProp
           })}
         </TableBody>
       </Table>
+      </div>
 
       {/* Additional Info */}
-      <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-        <p className="text-xs text-gray-600">
+      <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
+        <p className="text-[10px] sm:text-xs text-gray-600">
           <strong>Note:</strong> Property tax information is based on public records and may vary. 
           Tax rates and assessed values are subject to change. Please verify with your local tax assessor's office.
         </p>
       </div>
       {/* Call to Action */}
-      <div className="flex justify-center pt-6 pb-4">
+      <div className="flex justify-center pt-4 sm:pt-6 pb-4">
         <Button 
           variant="default" 
-          className="px-8 py-6 text-base rounded-lg gap-2"
+          className="w-full sm:w-auto px-4 sm:px-8 py-4 sm:py-6 text-sm sm:text-base rounded-lg gap-2"
           onClick={() => {
             // Add handler for CTA click
             console.log('Need more tax history details about this property');
           }}
         >
-          <TrendingUp className="h-5 w-5" />
+          <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" aria-hidden />
           Need more tax history details about this property
         </Button>
       </div>

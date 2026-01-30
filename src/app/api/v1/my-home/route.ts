@@ -102,8 +102,12 @@ export async function POST(request: NextRequest) {
     verifiedAt: (() => {
       const v = toStringOrUndef(verification.verifiedAt);
       if (v) return new Date(v);
-      // If they provided deedName but no explicit timestamp, record "now"
-      return toStringOrUndef(verification.deedName) ? new Date() : undefined;
+      // Record "verified now" when user completed verification (deedName or identity fields)
+      const hasVerification =
+        toStringOrUndef(verification.deedName) ||
+        toStringOrUndef(verification.firstName) ||
+        toStringOrUndef(verification.email);
+      return hasVerification ? new Date() : undefined;
     })(),
   };
 

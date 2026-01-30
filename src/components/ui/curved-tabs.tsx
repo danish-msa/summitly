@@ -13,8 +13,9 @@ const CurvedTabsList = React.forwardRef<
   CurvedTabsListProps
 >(({ className, mobileScrollable = true, children, ...props }, ref) => {
   const hasGrid = className?.includes('grid') || className?.includes('md:grid')
-  
-  if (mobileScrollable && hasGrid) {
+  const useMobileScroll = mobileScrollable && (hasGrid || className?.includes('justify-start'))
+
+  if (useMobileScroll) {
     const enhancedChildren = React.Children.map(children, (child) => {
       if (React.isValidElement(child)) {
         const childProps = child.props as { className?: string } & React.HTMLAttributes<HTMLButtonElement>
@@ -24,9 +25,9 @@ const CurvedTabsList = React.forwardRef<
       }
       return child
     })
-    
+
     return (
-      <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible">
+      <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible [touch-action:pan-x]" style={{ WebkitOverflowScrolling: 'touch' }}>
         <TabsPrimitive.List
           ref={ref}
           className={cn(
@@ -73,14 +74,14 @@ const CurvedTabsTrigger = React.forwardRef<
     <TabsPrimitive.Trigger
       ref={ref}
       className={cn(
-        // Base styles
-        "left-7 relative inline-flex items-center justify-center whitespace-nowrap px-7 py-5 text-base font-medium transition-all duration-200",
+        // Base styles - smaller on mobile for better fit
+        "left-4 sm:left-7 relative inline-flex items-center justify-center whitespace-nowrap px-4 py-3.5 sm:px-7 sm:py-5 text-sm sm:text-base font-medium transition-all duration-200",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2",
         "disabled:pointer-events-none disabled:opacity-50",
         // Inactive state
         "text-zinc-500 bg-transparent hover:text-zinc-700",
         // Active state - white background with curved top corners and shadow
-        "data-[state=active]:bg-white data-[state=active]:rounded-t-xl",
+        "data-[state=active]:bg-white data-[state=active]:rounded-t-lg sm:data-[state=active]:rounded-t-xl",
         "data-[state=active]:shadow-[0_-0.5rem_1.25rem_-1.25rem_#00000014,0.3rem_-0.3rem_0.75rem_-0.7rem_#0000000d,-0.5rem_-0.5rem_1.25rem_-0.7rem_#00000014]",
         // Active color
         colorClasses[activeColor],
@@ -109,8 +110,8 @@ const CurvedTabsContent = React.forwardRef<
 >(({ className, variant = "default", ...props }, ref) => {
   const variantClasses = {
     default: cn(
-      "bg-white rounded-b-2xl rounded-tr-2xl rounded-tl-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)]",
-      "p-8 pt-10 pl-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      "bg-white rounded-b-xl rounded-tr-xl rounded-tl-xl sm:rounded-b-2xl sm:rounded-tr-2xl sm:rounded-tl-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)]",
+      "p-4 pt-6 pl-0 sm:p-6 sm:pt-8 md:p-8 md:pt-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     ),
     borderless: "mt-4 focus-visible:outline-none",
   }

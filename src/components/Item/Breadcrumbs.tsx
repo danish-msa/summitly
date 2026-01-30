@@ -31,31 +31,35 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ property, isPreCon = false, i
   ];
 
   return (
-    <nav className="flex items-center gap-2 text-sm text-gray-600 mb-4" aria-label="Breadcrumb">
-      <ol className="flex items-center gap-2 flex-wrap">
+    <nav
+      className="overflow-x-auto overflow-y-hidden -mx-1 px-1 mb-3 sm:mb-4 scrollbar-hide [touch-action:pan-x]"
+      style={{ WebkitOverflowScrolling: 'touch' }}
+      aria-label="Breadcrumb"
+    >
+      <ol className="flex items-center gap-1.5 sm:gap-2 flex-nowrap w-max min-w-full text-xs sm:text-sm text-gray-600">
         {breadcrumbItems.map((item, index) => (
-          <li key={index} className="flex items-center gap-2">
+          <li key={index} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             {index === 0 && (
               <Link 
                 href={item.href || '#'} 
-                className="flex items-center gap-1 hover:text-primary transition-colors"
+                className="flex items-center gap-0.5 sm:gap-1 hover:text-primary transition-colors flex-shrink-0"
               >
-                <Home className="h-4 w-4" />
+                <Home className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden />
                 <span className="sr-only">Home</span>
               </Link>
             )}
             {index > 0 && (
               <>
-                <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" aria-hidden />
                 {item.href ? (
                   <Link 
                     href={item.href} 
-                    className="hover:text-primary transition-colors"
+                    className="hover:text-primary transition-colors whitespace-nowrap"
                   >
                     {item.label}
                   </Link>
                 ) : (
-                  <span className="text-gray-900 font-medium">{item.label}</span>
+                  <span className="text-gray-900 font-medium whitespace-nowrap">{item.label}</span>
                 )}
               </>
             )}

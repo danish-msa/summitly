@@ -23,7 +23,8 @@ interface VerifyHomeownerModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   addressLine?: string;
-  onSubmit?: (payload: VerifyHomeownerModalSubmitPayload) => void | Promise<void>;
+  /** Return false (or throw) to indicate failure and keep user on form; otherwise success and move to step 2 */
+  onSubmit?: (payload: VerifyHomeownerModalSubmitPayload) => void | Promise<void | boolean>;
   onContinue?: () => void;
 }
 
@@ -72,7 +73,7 @@ export default function VerifyHomeownerModal({
 
   const handleVerify = async () => {
     if (!canVerify) return;
-    await onSubmit?.({
+    const result = await onSubmit?.({
       deedName: "",
       agreedToTerms: false,
       firstName: firstName.trim(),
@@ -80,7 +81,7 @@ export default function VerifyHomeownerModal({
       email: email.trim(),
       phone: phone.trim() || undefined,
     });
-    setStep(2);
+    if (result !== false) setStep(2);
   };
 
   return (

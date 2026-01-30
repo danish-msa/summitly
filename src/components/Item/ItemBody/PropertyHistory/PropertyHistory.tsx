@@ -33,11 +33,15 @@ export default function PropertyHistory({ listingHistory, property, rawProperty 
   });
 
   return (
-    <div className="w-full pl-10">
+    <div className="w-full pl-4 md:pl-10 min-w-0">
       <Tabs defaultValue="transactions" className="w-full">
-        <TabsList>
-          <TabsTrigger value="transactions">Transaction History</TabsTrigger>
-          <TabsTrigger value="tax">Tax History</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-2 sm:flex sm:w-fit h-auto p-1 gap-1">
+          <TabsTrigger value="transactions" className="text-xs sm:text-sm py-2 sm:py-2.5 px-3 sm:px-4 data-[state=active]:bg-background">
+            Transaction History
+          </TabsTrigger>
+          <TabsTrigger value="tax" className="text-xs sm:text-sm py-2 sm:py-2.5 px-3 sm:px-4 data-[state=active]:bg-background">
+            Tax History
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="transactions">

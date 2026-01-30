@@ -61,16 +61,15 @@ const MobileBottomNav = ({ openNav }: Props) => {
           {/* Summitly Logo - Center */}
           <Link
             href="/"
-            className="flex flex-col items-center justify-center gap-0.5 flex-1 min-w-0 px-2 py-2"
+            className="px-4 py-2"
           >
             <Image
-              src="/images/logo/favicon.png"
+              src="/images/logo/summitly-logo-square.png"
               alt="Summitly"
-              width={24}
-              height={24}
-              className="h-8 w-8"
+              width={52}
+              height={52}
+              className="h-12 w-12 object-contain"
             />
-            <span className="text-[10px] font-semibold text-foreground">Summitly</span>
           </Link>
 
           {/* Pre-Con */}

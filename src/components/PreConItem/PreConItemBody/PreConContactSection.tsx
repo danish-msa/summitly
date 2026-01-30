@@ -76,35 +76,35 @@ export const PreConContactSection = () => {
   };
 
   return (
-    <section id="contact-section" className="w-full min-h-screen flex items-center justify-center bg-background px-6 py-16 lg:py-24">
-      <div className="w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+    <section id="contact-section" className="w-full min-h-0 flex items-center justify-center bg-background px-4 py-10 sm:px-6 sm:py-12 lg:py-24">
+      <div className="w-full max-w-5xl mx-auto min-w-0">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-16 items-start">
           {/* Left Column - Header & Questions */}
-          <div className="space-y-8">
+          <div className="space-y-5 sm:space-y-6 lg:space-y-8">
             {/* Available Now Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 border border-secondary/20">
-              <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
-              <span className="text-sm font-medium text-secondary">Available Now</span>
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-secondary/10 border border-secondary/20">
+              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-secondary animate-pulse flex-shrink-0" />
+              <span className="text-xs sm:text-sm font-medium text-secondary">Available Now</span>
             </div>
 
             {/* Heading */}
-            <div className="space-y-4">
-              <h2 className="text-4xl lg:text-5xl font-bold text-foreground leading-tight">
+            <div className="space-y-3 sm:space-y-4">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight">
                 Let's find your dream home together.
               </h2>
-              <p className="text-lg text-muted-foreground leading-relaxed">
+              <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
                 Have questions about a property or need help with your search? Our team of experts is ready to assist you every step of the way.
               </p>
             </div>
 
             {/* Pre-built Questions */}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2 sm:gap-3">
               {preBuiltQuestions.map((question, index) => (
                 <Button
                   key={index}
                   variant="outline"
                   onClick={() => handleQuestionClick(question)}
-                  className="w-fit h-auto py-3 px-5 text-base font-normal text-left rounded-lg border border-secondary/30 text-secondary hover:bg-secondary/5 hover:border-secondary/50 transition-all duration-200"
+                  className="w-full sm:w-fit max-w-full h-auto py-2.5 px-4 sm:py-3 sm:px-5 text-xs sm:text-sm md:text-base font-normal text-left justify-start whitespace-normal break-words rounded-lg border border-secondary/30 text-secondary hover:bg-secondary/5 hover:border-secondary/50 transition-all duration-200"
                 >
                   {question}
                 </Button>
@@ -113,14 +113,14 @@ export const PreConContactSection = () => {
           </div>
 
           {/* Right Column - Form Card */}
-          <div className="bg-card rounded-2xl p-8 shadow-xl border border-border/50">
-            <h3 className="text-2xl font-semibold text-card-foreground mb-6">
+          <div className="bg-card rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-xl border border-border/50 w-full min-w-0">
+            <h3 className="text-xl sm:text-2xl font-semibold text-card-foreground mb-4 sm:mb-6">
               Send us a message
             </h3>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Name Fields Row */}
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+              {/* Name Fields Row - stack on mobile */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <Input
                   id="firstName"
                   type="text"
@@ -171,21 +171,21 @@ export const PreConContactSection = () => {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, message: e.target.value }))
                 }
-                className="min-h-[120px] resize-none"
+                className="min-h-[100px] sm:min-h-[120px] resize-none"
               />
 
               {/* Submit Button */}
               <Button
                 variant="default"
                 type="submit"
-                className="w-full h-14 text-base font-semibold rounded-xl hover:shadow-xl transition-all duration-300"
+                className="w-full h-12 sm:h-14 text-sm sm:text-base font-semibold rounded-xl hover:shadow-xl transition-all duration-300"
               >
                 Send Message
-                <Send className="ml-2 h-5 w-5 text-white" />
+                <Send className="ml-2 h-4 w-4 sm:h-5 sm:w-5 text-white flex-shrink-0" aria-hidden />
               </Button>
 
               {/* Privacy Policy */}
-              <p className="text-center text-sm text-muted-foreground pt-2">
+              <p className="text-center text-xs sm:text-sm text-muted-foreground pt-2">
                 By submitting this form, you agree to our{" "}
                 <a href="#" className="text-primary hover:underline font-medium">
                   Privacy Policy

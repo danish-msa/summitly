@@ -25,15 +25,15 @@ export const FiltersSection = ({ category, activeFilter, onFilterChange }: Filte
   );
 
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-sm font-medium text-muted-foreground">Filter:</span>
+    <div className="flex items-center gap-2 sm:gap-3 flex-wrap min-w-0">
+      <span className="text-xs sm:text-sm font-medium text-muted-foreground flex-shrink-0">Filter:</span>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-[250px] justify-between rounded-lg bg-background hover:bg-muted/50 transition-colors"
+            className="w-full min-w-0 sm:w-[250px] justify-between rounded-lg bg-background hover:bg-muted/50 transition-colors text-sm sm:text-base"
           >
             <span className="font-medium truncate">
               {activeFilterData ? `${activeFilterData.label} (${activeFilterData.count})` : "Select filter..."}
@@ -41,7 +41,7 @@ export const FiltersSection = ({ category, activeFilter, onFilterChange }: Filte
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0 bg-card border-border" align="start">
+        <PopoverContent className="w-[min(300px,calc(100vw-2rem))] p-0 bg-card border-border" align="start">
           <div className="p-2 border-b border-border">
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />

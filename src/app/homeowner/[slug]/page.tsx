@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { parseHomeownerPropertySlug, isSlugMlsNumber } from '@/lib/utils/homeownerUrl';
@@ -133,9 +134,9 @@ const HomeownerPropertyPage: React.FC<HomeownerPropertyPageProps> = async ({ par
           role="alert"
         >
           We couldn&apos;t load this property&apos;s details. It may be off-market or the listing may have changed. Try searching again from{" "}
-          <a href="/homeowner" className="font-medium underline hover:no-underline">
+          <Link href="/homeowner" className="font-medium underline hover:no-underline">
             My Home
-          </a>
+          </Link>
           .
         </div>
       )}

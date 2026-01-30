@@ -182,26 +182,26 @@ export const AmenitiesSection = ({
   });
 
   return (
-    <div className="w-full p-2">
-      <div className="mb-6">
-        <p className="text-gray-600">
+    <div className="w-full p-2 sm:p-4 min-w-0">
+      <div className="mb-4 sm:mb-6">
+        <p className="text-sm sm:text-base text-gray-600">
           {descriptionText}{" "}
           <span className="font-semibold text-gray-900">{address}</span>
         </p>
         {!latitude || !longitude ? (
-          <p className="text-sm text-amber-600 mt-2">
+          <p className="text-xs sm:text-sm text-amber-600 mt-2">
             Location coordinates are required to load amenities
           </p>
         ) : null}
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-600">{error}</p>
+        <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-xs sm:text-sm text-red-600">{error}</p>
         </div>
       )}
 
-      <div className="w-full">
+      <div className="w-full min-w-0">
         <CategoryTabs
           categories={categoryList}
           activeTab={activeTab}
@@ -211,13 +211,13 @@ export const AmenitiesSection = ({
         {categoryList.map((category) => (
           <div
             key={category.id}
-            className={`space-y-6 ${activeTab === category.id ? "block" : "hidden"}`}
+            className={`space-y-4 sm:space-y-6 ${activeTab === category.id ? "block" : "hidden"}`}
           >
             {loading[category.id] ? (
-              <div className="flex items-center justify-center py-12">
+              <div className="flex items-center justify-center py-8 sm:py-12">
                 <div className="text-center">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-                  <p className="text-sm text-gray-600">Loading {category.label.toLowerCase()}...</p>
+                  <div className="inline-block animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary mb-3 sm:mb-4"></div>
+                  <p className="text-xs sm:text-sm text-gray-600">Loading {category.label.toLowerCase()}...</p>
                 </div>
               </div>
             ) : currentCategory && currentCategory.id === category.id ? (
@@ -231,8 +231,8 @@ export const AmenitiesSection = ({
                 onAmenityClick={handleAmenityClick}
               />
             ) : (
-              <div className="text-center py-12 text-gray-500">
-                <p>No {category.label.toLowerCase()} found nearby</p>
+              <div className="text-center py-8 sm:py-12 text-gray-500">
+                <p className="text-sm sm:text-base">No {category.label.toLowerCase()} found nearby</p>
               </div>
             )}
           </div>

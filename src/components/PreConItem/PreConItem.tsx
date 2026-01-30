@@ -73,7 +73,7 @@ const PreConItem: React.FC = () => {
   return (
     
     <>
-    <div className='container-1400 px-4 sm:px-6 lg:px-8 mt-10 mb-4'>
+    <div className='container-1400 px-4 sm:px-6 lg:px-8 mt-4 sm:mt-6 md:mt-10 mb-4'>
       <StickyPropertyBar 
         property={property} 
         bannerRef={bannerRef}
@@ -97,14 +97,14 @@ const PreConItem: React.FC = () => {
         }}
       />
       
-      <div className='flex flex-row gap-8 mt-6 mb-10'>
-        <div className='w-[70%] flex flex-col gap-6'>
+      <div className='flex flex-col md:flex-row gap-6 md:gap-8 mt-4 md:mt-6 mb-6 md:mb-10'>
+        <div className='w-full md:w-[70%] flex flex-col gap-6'>
           <div ref={bannerRef} data-banner-section>
             <ModernBannerGallery property={property} />
           </div>
           <Description property={property} isPreCon={isPreCon} />
         </div>
-        <div className='w-[30%] flex flex-col gap-4 items-start gap-0 sticky top-2 self-start'>
+        <div className='w-full md:w-[30%] flex flex-col gap-4 items-stretch md:items-start md:gap-0 md:sticky md:top-2 md:self-start'>
           <StartingPriceCard 
             property={property}
             onGetPreQualified={() => {

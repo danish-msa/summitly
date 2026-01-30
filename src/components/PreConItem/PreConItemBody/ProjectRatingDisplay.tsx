@@ -90,12 +90,12 @@ const ProjectRatingDisplay: React.FC<ProjectRatingDisplayProps> = ({ propertyId 
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-2 my-2">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-1.5 my-1.5">
+        <div className="flex items-center gap-1 sm:gap-1.5">
           {[1, 2, 3, 4, 5].map((star) => (
             <Star
               key={star}
-              className="h-6 w-6 text-gray-300 animate-pulse"
+              className="h-4 w-4 sm:h-5 sm:w-5 text-gray-300 animate-pulse"
             />
           ))}
         </div>
@@ -104,10 +104,10 @@ const ProjectRatingDisplay: React.FC<ProjectRatingDisplayProps> = ({ propertyId 
   }
 
   return (
-    <div className="flex items-center gap-2 my-2">
+    <div className="flex items-center gap-1.5 sm:gap-2 my-1.5 sm:my-2">
       {/* Star Rating */}
       <div 
-        className="flex items-center gap-1"
+        className="flex items-center gap-0.5 sm:gap-1"
         onMouseLeave={handleMouseLeave}
       >
         {[1, 2, 3, 4, 5].map((star) => {
@@ -132,7 +132,7 @@ const ProjectRatingDisplay: React.FC<ProjectRatingDisplayProps> = ({ propertyId 
             >
             <Star
               className={cn(
-                "h-6 w-6 transition-colors",
+                "h-4 w-4 sm:h-5 sm:w-5 transition-colors",
                 isActive || isHovered
                   ? "text-yellow-400 fill-yellow-400"
                   : isAverage && ratingData.average > 0 && !hasRated
@@ -147,7 +147,7 @@ const ProjectRatingDisplay: React.FC<ProjectRatingDisplayProps> = ({ propertyId 
       
       {/* Rating Stats - Professional One-Line Format */}
       {ratingData.total > 0 && (
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
           <span className="font-semibold text-foreground">
             {ratingData.average.toFixed(1)}
           </span>

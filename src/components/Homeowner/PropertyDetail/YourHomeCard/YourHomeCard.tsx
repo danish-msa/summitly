@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import VerifyHomeownerModal from './VerifyHomeownerModal';
 import AuthModal from '@/components/Auth/AuthModal';
 import { useSession } from 'next-auth/react';
+import { toast } from '@/hooks/use-toast';
 
 interface YourHomeCardProps {
   onVerify?: () => void;
@@ -115,11 +116,12 @@ const YourHomeCard: React.FC<YourHomeCardProps> = ({
         onOpenChange={setIsVerifyOpen}
         addressLine={addressLine}
         onSubmit={async (payload) => {
-          if (!propertySlug) return;
+          if (!propertySlug) return false;
 
-          await fetch("/api/v1/my-home", {
+          const res = await fetch("/api/v1/my-home", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include",
             body: JSON.stringify({
               slug: propertySlug,
               addressLine: addressLine || "",
@@ -146,6 +148,21 @@ const YourHomeCard: React.FC<YourHomeCardProps> = ({
                 phone: payload.phone,
               },
             }),
+          });
+
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({ error: "Failed to save" }));
+            toast({
+              title: "Could not save home",
+              description: err?.error ?? "Please try again.",
+              variant: "destructive",
+            });
+            return false;
+          }
+
+          toast({
+            title: "Home saved",
+            description: "Your property is saved. View it anytime under Dashboard → My Home.",
           });
         }}
         onContinue={() => {

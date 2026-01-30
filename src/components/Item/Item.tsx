@@ -153,36 +153,7 @@ const Item: React.FC = () => {
 
   return (
     <div>
-      {/* Sticky Property Bar */}
-      {/* <StickyPropertyBar property={property} bannerRef={bannerRef} /> */}
-      {/* <div className='container-1400 mt-10 mb-4'>
-        <Breadcrumbs property={property} isPreCon={false} isRent={isRental} />
-        <BannerGallery property={property} />
-      </div> */}
-      
-      {/* <div className='container-1400'>
-      <SectionNavigation sections={navigationSections} property={property} />
-        <div className='flex flex-row gap-8'>
-          <div className='w-[70%] flex flex-col gap-6'>
-            <div ref={bannerRef} data-banner-section>
-              <Banner property={property} rawProperty={rawProperty} isPreCon={false} isRent={isRental} />
-            </div>
-            <NewItemBody property={property} rawProperty={rawProperty} isPreCon={false} isRent={isRental} /> */}
-            {/* <ItemBody property={property} rawProperty={rawProperty} isPreCon={false} isRent={isRental} /> */}
-          {/* </div>
-          <div className='w-[30%] flex flex-col gap-4 items-start gap-0 sticky top-[130px] self-start'>
-            <BasicInfo property={property} rawProperty={rawProperty} isPreCon={false} isRent={isRental} />
-            <PropertyAlerts 
-              propertyId={property.mlsNumber} 
-              cityName={property.address.city || 'this area'}
-              propertyType={property.details.propertyType || 'property'}
-              neighborhood={property.address.neighborhood || undefined}
-            />
-          </div>
-        </div>
-      </div> */}
-
-      <div className='container-1400 px-4 sm:px-6 lg:px-8 mt-10 mb-4'>
+      <div className='container-1400 px-4 sm:px-6 lg:px-8 mt-2 sm:mt-4 md:mt-6 lg:mt-10 mb-4'>
 
         <StickyPropertyBar 
           property={property} 
@@ -206,8 +177,8 @@ const Item: React.FC = () => {
           }}
         />
         
-        <div className='flex flex-row gap-8 mt-6 mb-10'>
-          <div className='w-[70%] flex flex-col gap-6'>
+        <div className='flex flex-col md:flex-row gap-6 md:gap-8 mt-4 md:mt-6 mb-6 md:mb-10'>
+          <div className='w-full md:w-[70%] flex flex-col gap-6'>
             <div ref={bannerRef} data-banner-section>
               <ModernBannerGallery property={property} />
             </div>
@@ -218,7 +189,7 @@ const Item: React.FC = () => {
             </div> */}
             
           </div>
-          <div className='w-[30%] flex flex-col gap-4 items-start gap-0 sticky top-2 self-start'>
+          <div className='w-full md:w-[30%] flex flex-col gap-4 items-stretch md:items-start md:gap-4 md:sticky md:top-2 md:self-start'>
             <PriceCard property={property} rawProperty={rawProperty} isPreCon={false} isRent={isRental} />
             <BasicInfo property={property} rawProperty={rawProperty} isPreCon={false} isRent={isRental} />
             <Sidebar isPreCon={isPreCon} isRent={isRental} property={property} />
@@ -234,10 +205,10 @@ const Item: React.FC = () => {
         <PropertiesComparison currentProperty={property} />
       </div>
 
-      <div className='container-1400 mt-20 mb-4'>
+      <div className='container-1400 px-4 sm:px-6 lg:px-8 mt-12 md:mt-20 mb-4'>
         <ContactSection />
       </div>
-      <div className='container-1400 mt-20 mb-4'>
+      <div className='container-1400 px-4 sm:px-6 lg:px-8 mt-12 md:mt-20 mb-4'>
         <SimilarListings currentProperty={property} />
       </div>
     </div>

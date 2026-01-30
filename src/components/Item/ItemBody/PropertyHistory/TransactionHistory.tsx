@@ -83,18 +83,18 @@ export default function TransactionHistory({ groupedHistory, propertyAddress: _p
   });
 
   return (
-    <div>
-      <Table>
+    <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0 scrollbar-hide">
+      <Table className="min-w-[640px]">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[120px]">Date</TableHead>
-            <TableHead className="w-[150px]">Status</TableHead>
-            <TableHead className="w-[120px] text-right">Price</TableHead>
-            <TableHead className="w-[130px] text-right">Price Change</TableHead>
-            <TableHead className="w-[120px] text-right">Days on Market</TableHead>
-            <TableHead className="w-[120px] text-right">Appreciation</TableHead>
-            <TableHead className="w-[200px]">Brokerage</TableHead>
-            <TableHead className="w-[100px] text-center">Actions</TableHead>
+            <TableHead className="w-[90px] sm:w-[120px]">Date</TableHead>
+            <TableHead className="w-[100px] sm:w-[150px]">Status</TableHead>
+            <TableHead className="w-[90px] sm:w-[120px] text-right">Price</TableHead>
+            <TableHead className="w-[100px] sm:w-[130px] text-right">Price Change</TableHead>
+            <TableHead className="w-[80px] sm:w-[120px] text-right">Days</TableHead>
+            <TableHead className="w-[80px] sm:w-[120px] text-right">Appr.</TableHead>
+            <TableHead className="w-[140px] sm:w-[200px]">Brokerage</TableHead>
+            <TableHead className="w-[70px] sm:w-[100px] text-center">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

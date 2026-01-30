@@ -179,28 +179,28 @@ const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property, onCalculatorC
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         {/* Left Section: Address and Features */}
         <div className="flex-1 gap-4">
-          <div className="flex flex-row items-center gap-4 mb-2">
+          <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-4 mb-2">
             {/* Address */}
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 break-words min-w-0">
               {address}
             </h1>
             
             {/* Status Badge */}
-            <Badge variant={propertyStatus.variant} showDot>
+            <Badge variant={propertyStatus.variant} showDot className="flex-shrink-0">
               {propertyStatus.label}
             </Badge>
           </div>
 
           {/* Property Features */}
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 md:gap-4">
             {/* Only show MLS # for non pre-con properties */}
             {!preConData && (
-              <span className="text-base text-gray-500">MLS # {property.mlsNumber}</span>
+              <span className="text-xs sm:text-sm text-gray-500">MLS # {property.mlsNumber}</span>
             )}
 
             {/* Property Type */}
-            <div className="flex items-center gap-2">
-              <Home className="h-4 w-4 text-gray-600" />
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Home className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-600 flex-shrink-0" />
               {(() => {
                 const propertyType = property.details?.propertyType || 'Property'
                 const typeUrl = getPropertyTypeUrl(propertyType, property.address?.city)
@@ -208,21 +208,21 @@ const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property, onCalculatorC
                   return (
                     <Link 
                       href={typeUrl}
-                      className="text-base text-gray-700 hover:text-primary hover:underline transition-colors"
+                      className="text-xs sm:text-sm text-gray-700 hover:text-primary hover:underline transition-colors"
                     >
                       {propertyType}
                     </Link>
                   )
                 }
-                return <span className="text-base text-gray-700">{propertyType}</span>
+                return <span className="text-xs sm:text-sm text-gray-700">{propertyType}</span>
               })()}
             </div>
 
             {/* Bedrooms */}
             {property.details?.numBedrooms > 0 && (
-              <div className="flex items-center gap-2">
-                <Bed className="h-4 w-4 text-gray-600" />
-                <span className="text-base text-gray-700">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Bed className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-600 flex-shrink-0" />
+                <span className="text-xs sm:text-sm text-gray-700">
                   {property.details.numBedrooms} {property.details.numBedrooms === 1 ? 'Bed' : 'Beds'}
                 </span>
               </div>
@@ -230,9 +230,9 @@ const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property, onCalculatorC
 
             {/* Bathrooms */}
             {property.details?.numBathrooms > 0 && (
-              <div className="flex items-center gap-2">
-                <Bath className="h-4 w-4 text-gray-600" />
-                <span className="text-base text-gray-700">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Bath className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-600 flex-shrink-0" />
+                <span className="text-xs sm:text-sm text-gray-700">
                   {property.details.numBathrooms} {property.details.numBathrooms === 1 ? 'Bath' : 'Baths'}
                 </span>
               </div>
@@ -240,9 +240,9 @@ const PropertyHeader: React.FC<PropertyHeaderProps> = ({ property, onCalculatorC
 
             {/* Square Footage */}
             {sqftDisplay !== 'N/A' && (
-              <div className="flex items-center gap-2">
-                <Maximize2 className="h-4 w-4 text-gray-600" />
-                <span className="text-base text-gray-700">{sqftDisplay}</span>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Maximize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-600 flex-shrink-0" />
+                <span className="text-xs sm:text-sm text-gray-700">{sqftDisplay}</span>
               </div>
             )}
             {/* Project Rating Display - Only for non pre-con properties */}
