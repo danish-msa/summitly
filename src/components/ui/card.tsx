@@ -14,7 +14,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
       bordered: "rounded-xl border bg-card text-card-foreground p-6",
       light: "rounded-xl bg-secondary/5 text-card-foreground",
       transparent: "rounded-xl text-card-foreground",
-      white: "rounded-xl bg-white shadow-lg text-card-foreground",
+      white: "rounded-2xl bg-white shadow-card text-card-foreground p-6",
     }
 
     return (
