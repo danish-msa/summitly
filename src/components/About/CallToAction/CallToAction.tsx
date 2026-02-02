@@ -1,5 +1,5 @@
 import React from 'react'
-import BlurImage from '../../Helper/BlurImage'
+import Image from 'next/image'
 import { ButtonColorful } from '@/components/ui/button-colorful'
 
 const CallToAction = () => {
@@ -16,7 +16,7 @@ const CallToAction = () => {
                   <ButtonColorful label='Join Us!' href='/contact' variant='gradient' />
               </div>
               <div className='mt-0 sm:mt-5 w-full md:w-auto flex justify-center'>
-                  <BlurImage className='mt-0 sm:mt-[-45] max-w-full h-auto' src='/images/cta-banner.png' width={750} height={750} alt='Call to Action' />
+                  <Image className='mt-0 sm:mt-[-45] max-w-full h-auto' src='/images/cta-banner.png' width={750} height={750} alt='Call to Action' />
               </div>
           </div>
       </div>

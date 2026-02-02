@@ -1,6 +1,6 @@
 import React from 'react'
+import Image from 'next/image'
 import { FaArrowRightLong } from 'react-icons/fa6'
-import BlurImage from '../../Helper/BlurImage'
 
 const Banner = () => {
   return (
@@ -12,7 +12,7 @@ const Banner = () => {
                 <span className='text-base font-normal'>Leslie Alexander</span>
                 <span className='text-sm font-light text-slate-500'>CEO, Real Estate</span>
             </div>
-            <BlurImage src='/images/signature.png' width={200} height={200} alt='Leslie Alexander' />
+            <Image src='/images/signature.png' width={200} height={200} alt='Leslie Alexander' />
             <button className='btn btn-primary w-[40%] rounded-full text-center mt-20'>Contact us <FaArrowRightLong /> </button>
         </div>
     </div>

@@ -11,6 +11,7 @@ import {
   DollarSign,
   Calculator,
   Users,
+  UserCircle,
   FileText,
   Phone,
   HelpCircle,
@@ -97,6 +98,13 @@ export const MoreMegaMenu: React.FC<MoreMegaMenuProps> = ({
     {
       title: 'Services',
       items: [
+        {
+          id: 'our-agents',
+          label: 'Our Agents',
+          description: 'Meet our team of experts',
+          href: '/our-agents',
+          icon: UserCircle,
+        },
         {
           id: 'find-realtor',
           label: 'Find a Realtor',

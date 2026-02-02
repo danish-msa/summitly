@@ -12,6 +12,8 @@ type MapRootProps = {
   zoom: number;
   center: LngLat | null;
   polygon?: Array<[number, number]> | null;
+  /** Multiple polygons for agent service areas (boundaries). */
+  areaPolygons?: Array<Array<[number, number]>> | null;
   onMove: (bounds: LngLatBounds, center: LngLat, zoom: number) => void;
   onLoad: (bounds: LngLatBounds, center: LngLat, zoom: number) => void;
 };
@@ -19,7 +21,7 @@ type MapRootProps = {
 const DEFAULT_CENTER: [number, number] = [-79.3832, 43.6532]; // Toronto [lng,lat]
 const DEFAULT_ZOOM = 10;
 
-export default function MapRoot({ zoom, center, polygon, onMove, onLoad }: MapRootProps) {
+export default function MapRoot({ zoom, center, polygon, areaPolygons, onMove, onLoad }: MapRootProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
   const { setMapRef } = useMapOptions();
@@ -67,6 +69,7 @@ export default function MapRoot({ zoom, center, polygon, onMove, onLoad }: MapRo
       const bounds = map.getBounds();
       if (bounds) onLoadRef.current(bounds, map.getCenter(), map.getZoom());
       upsertPolygon(map, polygon);
+      upsertAreaPolygons(map, areaPolygons);
     });
 
     map.on("moveend", () => {
@@ -93,6 +96,13 @@ export default function MapRoot({ zoom, center, polygon, onMove, onLoad }: MapRo
     if (!mapRef.current.isStyleLoaded()) return;
     upsertPolygon(mapRef.current, polygon);
   }, [polygon]);
+
+  // Sync area polygons (agent service areas) when they change.
+  useEffect(() => {
+    if (!mapRef.current) return;
+    if (!mapRef.current.isStyleLoaded()) return;
+    upsertAreaPolygons(mapRef.current, areaPolygons);
+  }, [areaPolygons]);
 
   // Sync center/zoom updates (e.g. from URL or autosuggest)
   useEffect(() => {
@@ -153,6 +163,64 @@ function upsertPolygon(map: MapboxMap, polygon?: Array<[number, number]> | null)
       source: POLY_SOURCE_ID,
       paint: {
         "line-color": "#0F766E",
+        "line-width": 2,
+      },
+    });
+  } else {
+    existing.setData(data);
+  }
+}
+
+const AREA_POLY_SOURCE_ID = "agent-area-polygons";
+const AREA_POLY_FILL_ID = "agent-area-polygons-fill";
+const AREA_POLY_LINE_ID = "agent-area-polygons-line";
+
+function upsertAreaPolygons(
+  map: MapboxMap,
+  polygons?: Array<Array<[number, number]>> | null
+) {
+  const hasPolygons = polygons && polygons.length > 0;
+  const features =
+    hasPolygons &&
+    polygons!
+      .filter((p) => p.length >= 3)
+      .map((ring) => ({
+        type: "Feature" as const,
+        geometry: {
+          type: "Polygon" as const,
+          coordinates: [[...ring, ring[0]]],
+        },
+        properties: {},
+      }));
+
+  const existing = map.getSource(AREA_POLY_SOURCE_ID) as mapboxgl.GeoJSONSource | undefined;
+
+  if (!hasPolygons || !features || features.length === 0) {
+    if (existing) {
+      existing.setData({ type: "FeatureCollection", features: [] });
+    }
+    return;
+  }
+
+  const data = { type: "FeatureCollection" as const, features };
+
+  if (!existing) {
+    map.addSource(AREA_POLY_SOURCE_ID, { type: "geojson", data });
+    map.addLayer({
+      id: AREA_POLY_FILL_ID,
+      type: "fill",
+      source: AREA_POLY_SOURCE_ID,
+      paint: {
+        "fill-color": "#0ea5e9",
+        "fill-opacity": 0.12,
+      },
+    });
+    map.addLayer({
+      id: AREA_POLY_LINE_ID,
+      type: "line",
+      source: AREA_POLY_SOURCE_ID,
+      paint: {
+        "line-color": "#0284c7",
         "line-width": 2,
       },
     });

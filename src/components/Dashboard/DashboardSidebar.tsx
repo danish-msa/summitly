@@ -27,6 +27,7 @@ import {
   Calendar as CalendarIcon,
   MapPin,
   FolderTree,
+  UserCircle,
 } from "lucide-react"
 import {
   Sidebar,
@@ -100,11 +101,24 @@ const pagesMenuItem: MenuItem = {
   ]
 }
 
-// Admin menu items (Dashboard first, then Pre-Constructions, then Pages, then subscriber items)
+// Agents menu item (admin + super admin only)
+const agentsMenuItem: MenuItem = {
+  title: "Agents",
+  url: "/dashboard/admin/agents",
+  icon: UserCircle,
+  hasSubmenu: true,
+  submenu: [
+    { title: "All Agents", url: "/dashboard/admin/agents", icon: List },
+    { title: "Add New Agent", url: "/dashboard/admin/agents/new", icon: Plus },
+  ]
+}
+
+// Admin menu items (Dashboard first, then Pre-Constructions, then Pages, then Agents, then subscriber items)
 const adminMenuItems: MenuItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   preConstructionsMenuItem,
   pagesMenuItem,
+  agentsMenuItem,
   ...subscriberMenuItems,
 ]
 

@@ -554,7 +554,7 @@
     --card-foreground: 220 65% 15%; /* #0A1730 - MIDNIGHT */
     --popover: 0 0% 100%; /* Pure white for popovers */
     --popover-foreground: 220 65% 15%; /* #0A1730 - MIDNIGHT */
-    --primary: 214 100% 12%; /* #001D3D */
+    --primary: 194 74% 32%; /* #15738F */
     --primary-foreground: 0 0% 98%; /* White text on primary */
     --secondary: 194 85% 51%; /* #1AC0EB */
     --secondary-foreground: 0 0% 98%; /* White text on secondary */
@@ -572,7 +572,7 @@
     --secondary-glow: 220 100% 60%; /* Glow effect color */
     --border: 220 25% 85%; /* #BECAD7 - MIST */
     --input: 220 25% 90%; /* #DAE1E8 - GLACIER */
-    --ring: 214 100% 12%; /* #001D3D for focus rings */
+    --ring: 194 74% 32%; /* #15738F for focus rings */
     --radius: 0.5rem;
     
     /* Design System Tokens */

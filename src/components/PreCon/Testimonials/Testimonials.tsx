@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, Quote, ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Carousel,
@@ -11,6 +9,7 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
+import { TestimonialCard } from "@/components/ui/testimonial-card";
 import SectionHeading from "@/components/Helper/SectionHeading";
 
 interface Testimonial {
@@ -159,51 +158,14 @@ export const Testimonials = () => {
                   key={testimonial.id}
                   className="pl-2 md:pl-4 basis-full md:basis-1/2 lg:basis-1/3"
                 >
-                  <Card 
-                    className="p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white border-0 rounded-3xl shadow-lg relative h-full"
-                  >
-                    {/* Large Quote Icon - Top Right */}
-                    <div className="absolute top-6 right-6 z-0">
-                      <Quote className="w-10 h-10 text-secondary/20" strokeWidth={1} />
-                    </div>
-
-                    {/* Rating Stars */}
-                    <div className="flex gap-1 mb-4 relative z-10">
-                      {[...Array(testimonial.rating)].map((_, i) => (
-                        <Star 
-                          key={i} 
-                          className="w-5 h-5 fill-yellow-400 text-yellow-400" 
-                        />
-                      ))}
-                    </div>
-
-                    {/* Testimonial Content */}
-                    <p className="text-foreground mb-6 leading-relaxed relative z-10">
-                      {testimonial.content}
-                      <span className="text-muted-foreground">"</span>
-                    </p>
-
-                    {/* Client Info */}
-                    <div className="flex items-center gap-4 relative z-10">
-                      <Avatar className="w-12 h-12 flex-shrink-0">
-                        <AvatarImage src={testimonial.image} alt={testimonial.name} />
-                        <AvatarFallback className="bg-muted text-foreground">
-                          {testimonial.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-foreground">
-                          {testimonial.name}
-                        </h4>
-                        <p className="text-sm text-muted-foreground">
-                          {testimonial.role}
-                        </p>
-                        <p className="text-sm text-secondary font-medium mt-1">
-                          {testimonial.project}
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
+                  <TestimonialCard
+                    name={testimonial.name}
+                    role={testimonial.role}
+                    project={testimonial.project}
+                    image={testimonial.image}
+                    rating={testimonial.rating}
+                    content={testimonial.content}
+                  />
                 </CarouselItem>
               ))}
             </CarouselContent>

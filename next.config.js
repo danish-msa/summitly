@@ -45,6 +45,18 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'summitly.vercel.app',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'summitly.vercel.app',
+        port: '',
+        pathname: '/**',
+      },
     ],
     // Configure image qualities for Next.js 16 compatibility
     qualities: [75, 100],

@@ -1,7 +1,7 @@
 import React from 'react'
+import Image from 'next/image'
 import { BiEnvelope, BiPhone } from 'react-icons/bi';
 import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from 'react-icons/fa';
-import BlurImage from '../../Helper/BlurImage';
 import { Agent } from '@/data/data';
 
 type Props = {
@@ -12,12 +12,12 @@ const AgentCard = ({agent}: Props) => {
   return (
     <div className='flex flex-col gap-4 group w-full'>
         <div className='relative overflow-hidden rounded-2xl'>
-            <BlurImage 
+            <Image 
                 src={agent.image} 
                 alt={agent.name} 
                 width={1000} 
                 height={200} 
-                className='rounded-2xl transition-transform duration-500 group-hover:scale-110' 
+                className='rounded-2xl w-full h-[200px] object-cover transition-transform duration-500 group-hover:scale-110' 
             />
             <div className='absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300'>
                 <div className='flex gap-2 justify-center'>

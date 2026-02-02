@@ -13,6 +13,7 @@
     "prisma:generate": "dotenv -e .env.local -- npx prisma generate",
     "prisma:migrate": "dotenv -e .env.local -- npx prisma migrate dev",
     "prisma:migrate:prod": "dotenv -e .env.local -- npx prisma migrate deploy",
+    "prisma:agents:schema": "dotenv -e .env.local -- npx prisma db execute --file prisma/migrations/add_agent_schema.sql",
     "prisma:studio": "dotenv -e .env.local -- npx prisma studio",
     "prisma:format": "npx prisma format",
     "prisma:validate": "npx prisma validate",

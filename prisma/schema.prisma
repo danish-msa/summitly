@@ -45,6 +45,7 @@ model User {
   role               UserRole            @default(SUBSCRIBER)
   accounts           Account[]
   agentProfile       AgentProfile?
+  agent              Agent?              // optional: when this user is the agent
   favorites          Favorite[]
   pages              Page[]
   properties         Property[]
@@ -218,6 +219,165 @@ model AgentProfile {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// Agent (full schema – standalone agents, optional link to User)
+// ---------------------------------------------------------------------------
+
+enum AgentType {
+  COMMERCIAL
+  RESIDENTIAL
+  BOTH
+}
+
+enum AgentStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Agent {
+  id                  String    @id @default(cuid())
+  userId              String?   @unique  // optional: link to User when agent can log in
+  user                User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  first_name          String
+  last_name           String
+  full_name           String
+  job_title           String
+  agent_type          AgentType
+  profile_image       String?
+  cover_image         String?
+  slug                String    @unique
+  sort_order          Int       @default(0)
+
+  // About / Bio
+  about_agent         String?   @db.Text
+  tagline             String?
+
+  // Contact
+  email               String?
+  phone               String?
+  website_url         String?
+
+  // CTA / Engagement
+  allow_contact_form  Boolean   @default(true)
+  allow_reviews       Boolean   @default(true)
+  response_time       String?   // e.g. "Within 24 hours"
+  verified_agent      Boolean   @default(false)
+
+  // Ratings summary (aggregate)
+  overall_rating      Float     @default(0)
+  total_reviews_count Int      @default(0)
+
+  // Specializations (stored on Agent for simple querying; details in AgentSpecialization if needed)
+  primary_focus       String?
+  property_specialties String[] @default([])
+  industry_role       String?
+  languages_spoken    String[]  @default([])
+
+  status              AgentStatus @default(ACTIVE)
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  stats               AgentStats?
+  social_links        AgentSocialLinks?
+  service_areas       AgentServiceArea[]
+  featured_listings  AgentFeaturedListing[]
+  market_stats        AgentMarketStats?
+  activity_summary   AgentActivitySummary?
+  reviews             AgentReview[]
+
+  @@index([slug])
+  @@index([status])
+  @@index([agent_type])
+}
+
+model AgentStats {
+  id                      String   @id @default(cuid())
+  agentId                 String   @unique
+  years_experience        Int      @default(0)   // store as int; UI can show "25+"
+  total_properties_sold   Int      @default(0)
+  active_listings_count   Int      @default(0)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  agent                   Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+}
+
+model AgentSocialLinks {
+  id          String   @id @default(cuid())
+  agentId     String   @unique
+  linkedin    String?
+  facebook    String?
+  instagram   String?
+  twitter     String?
+  youtube     String?
+  other       Json?    // flexible: { "tiktok": "url", ... }
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  agent       Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+}
+
+model AgentServiceArea {
+  id        String   @id @default(cuid())
+  agentId   String
+  area_name String
+  createdAt DateTime @default(now())
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, area_name])
+  @@index([agentId])
+}
+
+model AgentFeaturedListing {
+  id        String   @id @default(cuid())
+  agentId   String
+  mlsNumber String   // listing ID from MLS/Repliers; no FK to keep flexible
+  sort_order Int     @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([mlsNumber])
+}
+
+// Top cities + property type distribution (JSON for flexibility)
+model AgentMarketStats {
+  id                       String   @id @default(cuid())
+  agentId                  String   @unique
+  top_cities               Json?    // [{ "city_name": "Toronto", "percentage": 15 }, ...]
+  property_type_distribution Json?   // [{ "property_type": "Detached", "percentage": 40 }, ...]
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  agent                    Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+}
+
+model AgentActivitySummary {
+  id                    String   @id @default(cuid())
+  agentId               String   @unique
+  activity_period       String   @default("last_12_months")
+  total_transactions    Int      @default(0)
+  active_listings       Int      @default(0)
+  worked_with_buyers    Int      @default(0)
+  worked_with_sellers   Int      @default(0)
+  for_sale_count        Int      @default(0)
+  sold_count            Int      @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  agent                 Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+}
+
+model AgentReview {
+  id           String   @id @default(cuid())
+  agentId      String
+  reviewer_name String
+  rating       Int      // 1–5
+  review_text  String   @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  agent        Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
 }
 
 model Contact {
