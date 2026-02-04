@@ -700,6 +700,202 @@ def health_check():
     })
 
 
+@condo_api.route('/schools/<mls_number>', methods=['GET'])
+def get_schools_for_property(mls_number):
+    """
+    Fetch schools for a condo property.
+    
+    Query params:
+        - mls_number: Property MLS (required)
+        - city: Property city (optional)
+        - limit: Max schools (default: 5)
+    
+    Returns: School data for the property location
+    """
+    try:
+        limit = request.args.get('limit', 5, type=int)
+        city = request.args.get('city', '')
+        
+        # Validate MLS number
+        if not mls_number or mls_number == 'N/A':
+            return jsonify({
+                'success': False,
+                'error': 'Invalid MLS number',
+                'mls_number': mls_number
+            }), 400
+        
+        print(f"🏫 [CONDO SCHOOLS] Fetching schools for MLS: {mls_number}")
+        
+        # Fetch property data
+        property_data = {}
+        try:
+            from services.listings_service import listings_service
+            
+            prop_response = listings_service.get_listing_details(mls_number)
+            if prop_response:
+                property_data = prop_response if isinstance(prop_response, dict) else {}
+                print(f"✅ [CONDO SCHOOLS] Got property data for {mls_number}")
+        except Exception as e:
+            print(f"⚠️ [CONDO SCHOOLS] Could not fetch property data: {e}")
+        
+        # Import and use schools service
+        try:
+            from services.schools_service import schools_service
+            
+            # Get schools data
+            schools_result = schools_service.get_nearby_schools_for_property(
+                mls_number=mls_number,
+                property_data=property_data,
+                limit=limit
+            )
+            
+            if schools_result.get('success'):
+                response_data = {
+                    'success': True,
+                    'mls_number': mls_number,
+                    'city': schools_result.get('city'),
+                    'schools': schools_result.get('schools', []),
+                    'count': len(schools_result.get('schools', [])),
+                    'fetch_timestamp': schools_result.get('fetch_timestamp')
+                }
+                
+                # Add fallback disclosure if data came from public registry
+                if schools_result.get('is_fallback'):
+                    response_data['data_source'] = schools_result.get('data_source')
+                    response_data['note'] = "School data from Ontario Education Registry (public source)"
+                
+                print(f"✅ [CONDO SCHOOLS] Found {len(schools_result.get('schools', []))} schools for MLS {mls_number}")
+                return jsonify(response_data)
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': schools_result.get('error', 'Unknown error'),
+                    'mls_number': mls_number,
+                    'schools': []
+                }), 500
+        
+        except ImportError as e:
+            print(f"❌ [CONDO SCHOOLS] Schools service not available: {e}")
+            return jsonify({
+                'success': False,
+                'error': 'Schools service not available',
+                'mls_number': mls_number,
+                'schools': []
+            }), 503
+    
+    except Exception as e:
+        print(f"❌ [CONDO SCHOOLS] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'mls_number': mls_number,
+            'schools': []
+        }), 500
+
+
+@condo_api.route('/highlights/<mls_number>', methods=['GET'])
+def get_highlights_for_property(mls_number):
+    """
+    Fetch nearby highlights (parks, shopping, transit, dining) for a condo property.
+    
+    Query params:
+        - mls_number: Property MLS (required)
+        - city: Property city (optional)
+        - neighborhood: Property neighborhood (optional)
+    
+    Returns: Curated nearby amenities data
+    """
+    try:
+        city = request.args.get('city', '')
+        neighborhood = request.args.get('neighborhood', '')
+        
+        # Validate MLS number
+        if not mls_number or mls_number == 'N/A':
+            return jsonify({
+                'success': False,
+                'error': 'Invalid MLS number',
+                'mls_number': mls_number
+            }), 400
+        
+        print(f"🌟 [CONDO HIGHLIGHTS] Fetching highlights for MLS: {mls_number}")
+        
+        # Fetch property data to get location details
+        property_data = {}
+        try:
+            from services.listings_service import listings_service
+            
+            prop_response = listings_service.get_listing_details(mls_number)
+            if prop_response:
+                property_data = prop_response if isinstance(prop_response, dict) else {}
+                
+                # Extract city and neighborhood if not provided
+                if not city and property_data.get('City'):
+                    city = property_data.get('City')
+                if not neighborhood and property_data.get('Neighborhood'):
+                    neighborhood = property_data.get('Neighborhood')
+        except Exception as e:
+            print(f"⚠️ [CONDO HIGHLIGHTS] Could not fetch property data: {e}")
+        
+        # Import and use nearby highlights service
+        try:
+            from services.nearby_highlights_service import get_nearby_highlights
+            
+            # Get highlights data
+            highlights_result = get_nearby_highlights(
+                city=city or 'Toronto',
+                neighborhood=neighborhood,
+                property_data=property_data
+            )
+            
+            if highlights_result.get('success'):
+                response_data = {
+                    'success': True,
+                    'mls_number': mls_number,
+                    'city': highlights_result.get('city'),
+                    'neighborhood': highlights_result.get('neighborhood'),
+                    'highlights': highlights_result.get('highlights', {}),
+                    'summary': highlights_result.get('summary', ''),
+                    'timestamp': highlights_result.get('timestamp')
+                }
+                
+                if highlights_result.get('is_fallback'):
+                    response_data['data_source'] = highlights_result.get('data_source')
+                    response_data['note'] = highlights_result.get('note', '')
+                
+                total_highlights = sum(len(v) for v in highlights_result.get('highlights', {}).values())
+                print(f"✅ [CONDO HIGHLIGHTS] Returning {total_highlights} highlights for MLS {mls_number}")
+                return jsonify(response_data)
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': highlights_result.get('error', 'Unknown error'),
+                    'mls_number': mls_number,
+                    'highlights': {}
+                }), 500
+        
+        except ImportError as e:
+            print(f"❌ [CONDO HIGHLIGHTS] Highlights service not available: {e}")
+            return jsonify({
+                'success': False,
+                'error': 'Highlights service not available',
+                'mls_number': mls_number,
+                'highlights': {}
+            }), 503
+    
+    except Exception as e:
+        print(f"❌ [CONDO HIGHLIGHTS] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'mls_number': mls_number,
+            'highlights': {}
+        }), 500
+
+
 # ==================== STANDALONE APP (for testing) ====================
 
 if __name__ == '__main__':

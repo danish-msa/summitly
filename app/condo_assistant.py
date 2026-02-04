@@ -1559,6 +1559,7 @@ def filter_by_amenities(properties: List[Dict], required_amenities: List[str]) -
 def extract_condo_criteria_with_ai(query: str) -> Dict:
     """
     Use OpenAI to extract ALL condo search criteria from natural language.
+    ✅ FIX #3: NOW SUPPORTS FLEXIBLE PURPOSE - Understands "2 bedroom condo for business"
     Supports 60+ condo-specific fields including location, amenities, floor level, etc.
     """
     if not OPENAI_ENABLED:
@@ -1567,6 +1568,22 @@ def extract_condo_criteria_with_ai(query: str) -> Dict:
     
     try:
         logger.info(f"🤖 Extracting criteria from: '{query}'")
+        
+        # ✅ FIX #3: Detect flexible purpose (business use, creative space, etc.)
+        try:
+            from conversation_enhancements import understand_flexible_purpose
+            purpose_analysis = understand_flexible_purpose(query, "condo")
+            
+            if purpose_analysis.get('search_strategy') in ['commercial_focus', 'hybrid', 'both_equally']:
+                logger.info(f"🧠 [FLEXIBLE PURPOSE] {purpose_analysis.get('intent')}")
+                logger.info(f"📋 Strategy: {purpose_analysis.get('search_strategy')}")
+                logger.info(f"💡 Explanation: {purpose_analysis.get('explanation')}")
+                
+                # This indicates we should search BOTH condos AND commercial properties
+                # Store in extracted criteria for later use
+                query += f"\n\nFLEXIBLE PURPOSE: {purpose_analysis.get('intent')}"
+        except Exception as e:
+            logger.warning(f"⚠️  Flexible purpose detection failed: {e}")
         
         prompt = f"""Extract ALL possible condo search criteria from this query: "{query}"
 
@@ -1629,6 +1646,10 @@ COMPLETE LIST OF AVAILABLE CONDO FIELDS:
 - air_conditioning: string or boolean
 - heat_type: string
 
+**SPECIAL FIELD - FLEXIBLE PURPOSE:**
+- flexible_purpose: string ("business", "office", "creative", "airbnb", "residential") - Indicates non-traditional use
+- search_commercial_also: boolean - If true, should also search commercial properties
+
 EXTRACTION RULES:
 1. Extract EVERY relevant field mentioned in the query
 2. For location: Extract city, neighborhood, building name, street, or intersection
@@ -1641,6 +1662,7 @@ EXTRACTION RULES:
 9. For view: City, Water, Lake, Park, Mountain, etc.
 10. For laundry: "in-unit laundry" or "ensuite laundry" = "In Unit"
 11. For listing type: "rent", "rental", "lease" = "rent", otherwise "sale"
+12. ✅ NEW: For flexible purpose queries (e.g., "2 bedroom for business"), set flexible_purpose and search_commercial_also flags
 
 EXAMPLES:
 Input: "2 bedroom condo in Toronto with gym and pool"
@@ -1666,6 +1688,23 @@ Output: {{"waterfront": true, "amenities": ["Gym", "Pool", "Concierge", "Party R
 
 Input: "penthouse condo over 1500 sqft with rooftop access"
 Output: {{"min_sqft": 1500, "floor_level_min": 20, "amenities": ["Rooftop"], "rooftop": true}}
+
+✅ NEW FLEXIBLE PURPOSE EXAMPLES:
+Input: "2 bedroom condo for business in Toronto"
+Output: {{"city": "Toronto", "bedrooms": 2, "flexible_purpose": "business", "search_commercial_also": true}}
+Explanation: User wants condo-sized space for business - should search BOTH residential condos AND small commercial offices
+
+Input: "3 bedroom house for daycare in Mississauga"
+Output: {{"city": "Mississauga", "bedrooms": 3, "flexible_purpose": "daycare", "search_commercial_also": true}}
+Explanation: Daycare can operate in residential with permits OR commercial space
+
+Input: "studio for art gallery downtown"
+Output: {{"city": "Toronto", "neighborhood": "Downtown", "bedrooms": 0, "flexible_purpose": "creative", "search_commercial_also": true}}
+Explanation: Art gallery needs commercial space, but creative lofts (residential) could work too
+
+Input: "1 bedroom for medical practice near hospitals"
+Output: {{"bedrooms": 1, "flexible_purpose": "office", "search_commercial_also": true}}
+Explanation: Medical practice needs professional space - search both small residential units AND commercial medical offices
 
 Respond with JSON only, no markdown or explanations."""
 
@@ -1935,6 +1974,140 @@ def extract_condo_criteria_fallback(query: str) -> Dict:
     return criteria
 
 
+# ==================== MULTI-LOCATION SEARCH SUPPORT ====================
+
+def search_multiple_condo_locations(query: str, base_criteria: Dict = None) -> Dict:
+    """
+    ✅ FIX #2: Search for condos across multiple locations in one query
+    
+    Examples:
+        "2 bedroom condos in Toronto and Mississauga"
+        "condos near Yonge Street and in Oshawa"
+        
+    Returns:
+    {
+        "properties": [...],  # Combined deduplicated results
+        "by_location": {"Toronto": [...], "Mississauga": [...]},
+        "total_count": 123,
+        "location_counts": {"Toronto": 50, "Mississauga": 73},
+        "multi_location": True
+    }
+    """
+    try:
+        from conversation_enhancements import extract_multiple_locations
+        
+        # Extract multiple locations from query
+        locations = extract_multiple_locations(query)
+        
+        if len(locations) <= 1:
+            # Single location or no locations detected, use normal search
+            logger.info("ℹ️  Single location detected, using normal search")
+            criteria = base_criteria or extract_condo_criteria_with_ai(query)
+            result = search_condo_properties(**criteria)
+            return {
+                "properties": result.get("properties", []),
+                "by_location": {criteria.get("city", "Unknown"): result.get("properties", [])},
+                "total_count": result.get("total", 0),
+                "location_counts": {criteria.get("city", "Unknown"): result.get("total", 0)},
+                "multi_location": False
+            }
+        
+        logger.info(f"🗺️  [MULTI-LOCATION CONDO] Detected {len(locations)} locations!")
+        logger.info(f"📍 Locations: {[loc.get('location') or loc.get('street_name') for loc in locations]}")
+        
+        # Extract base criteria from query (bedrooms, price, amenities, etc.)
+        if not base_criteria:
+            base_criteria = extract_condo_criteria_with_ai(query)
+        
+        # Remove location from base criteria (we'll add per-location)
+        base_criteria.pop('city', None)
+        base_criteria.pop('location', None)
+        
+        results_by_location = {}
+        all_properties = []
+        
+        # Search each location
+        for loc in locations:
+            loc_name = loc.get('location') or loc.get('street_name') or loc.get('intersection') or 'Unknown'
+            
+            logger.info(f"   🔍 Searching condos in {loc_name}...")
+            
+            try:
+                # Merge location with base criteria
+                search_criteria = base_criteria.copy()
+                search_criteria['city'] = loc.get('location', loc_name)
+                
+                # Add street/intersection if specified
+                if 'street_name' in loc:
+                    search_criteria['street_name'] = loc['street_name']
+                if 'intersection' in loc:
+                    search_criteria['intersection'] = loc['intersection']
+                if 'neighborhood' in loc:
+                    search_criteria['neighborhood'] = loc['neighborhood']
+                
+                # Search this location
+                result = search_condo_properties(**search_criteria, limit=25)
+                properties = result.get("properties", [])
+                
+                # Tag with search location
+                for prop in properties:
+                    prop['search_location'] = loc_name
+                
+                results_by_location[loc_name] = properties
+                all_properties.extend(properties)
+                logger.info(f"   ✅ {loc_name}: {len(properties)} condos")
+                
+            except Exception as e:
+                logger.error(f"   ❌ {loc_name} search failed: {e}")
+                results_by_location[loc_name] = []
+        
+        # Deduplicate by MLS number
+        seen_mls = set()
+        unique_properties = []
+        for prop in all_properties:
+            mls = prop.get('mlsNumber') or prop.get('mls') or prop.get('MlsNumber')
+            if mls and mls not in seen_mls:
+                seen_mls.add(mls)
+                unique_properties.append(prop)
+            elif not mls:
+                unique_properties.append(prop)
+        
+        location_counts = {k: len(v) for k, v in results_by_location.items()}
+        
+        logger.info(f"✅ [MULTI-LOCATION CONDO] Total: {len(unique_properties)} unique condos across {len(locations)} locations")
+        
+        return {
+            "properties": unique_properties,
+            "by_location": results_by_location,
+            "total_count": len(unique_properties),
+            "location_counts": location_counts,
+            "multi_location": True
+        }
+        
+    except ImportError:
+        logger.warning("⚠️  conversation_enhancements not available, using single-location search")
+        # Fallback to normal search
+        criteria = base_criteria or extract_condo_criteria_with_ai(query)
+        result = search_condo_properties(**criteria)
+        return {
+            "properties": result.get("properties", []),
+            "by_location": {criteria.get("city", "Unknown"): result.get("properties", [])},
+            "total_count": result.get("total", 0),
+            "multi_location": False
+        }
+    except Exception as e:
+        logger.error(f"❌ Multi-location condo search failed: {e}")
+        import traceback
+        traceback.print_exc()
+        # Fallback to normal search
+        criteria = base_criteria or extract_condo_criteria_with_ai(query)
+        result = search_condo_properties(**criteria)
+        return {
+            "properties": result.get("properties", []),
+            "multi_location": False
+        }
+
+
 # ==================== EXPORT FUNCTIONS ====================
 
 __all__ = [
@@ -1945,7 +2118,8 @@ __all__ = [
     "extract_condo_criteria_with_ai",
     "filter_by_floor_level",
     "filter_by_pets",
-    "filter_by_amenities"
+    "filter_by_amenities",
+    "search_multiple_condo_locations"  # NEW: Multi-location support
 ]
 
 logger.info("[OK] Condo Assistant module loaded successfully")

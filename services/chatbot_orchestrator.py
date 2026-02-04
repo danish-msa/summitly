@@ -109,6 +109,12 @@ from services.commercial_property_service import (
     search_commercial_properties
 )
 
+# NEW: Import Pre-Construction Property Service
+from services.preconstruction_service import (
+    detect_preconstruction_intent,
+    search_preconstruction_properties
+)
+
 # NEW: Import Condo Property Service for condo property searches
 from services.condo_property_service import (
     search_condo_properties
@@ -1611,6 +1617,54 @@ Now resolve "{postal_code}":"""
             # Default to residential
             return PropertyType.RESIDENTIAL, 0.0
     
+    def _detect_multiple_cities(self, user_message: str) -> List[str]:
+        """
+        Detect multiple cities in a single query.
+        
+        Examples:
+            - "bakeries in toronto and ottawa" → ["Toronto", "Ottawa"]
+            - "show properties in mississauga, brampton and hamilton" → ["Mississauga", "Brampton", "Hamilton"]
+            - "toronto properties" → ["Toronto"]
+        
+        Returns:
+            List of detected city names
+        """
+        try:
+            import re
+            
+            # List of major Ontario cities to detect
+            ontario_cities = [
+                'Toronto', 'Ottawa', 'Mississauga', 'Brampton', 'Hamilton',
+                'London', 'Markham', 'Vaughan', 'Kitchener', 'Windsor',
+                'Richmond Hill', 'Oakville', 'Burlington', 'Barrie', 'Oshawa',
+                'St. Catharines', 'Cambridge', 'Waterloo', 'Guelph', 'Sudbury',
+                'Kingston', 'Thunder Bay', 'Niagara Falls', 'Peterborough',
+                'Pickering', 'Ajax', 'Whitby', 'Milton', 'Newmarket'
+            ]
+            
+            detected_cities = []
+            user_message_lower = user_message.lower()
+            
+            # Check each city name in the message
+            for city in ontario_cities:
+                # Use word boundary regex to avoid partial matches
+                pattern = r'\b' + re.escape(city.lower()) + r'\b'
+                if re.search(pattern, user_message_lower):
+                    detected_cities.append(city)
+            
+            # If multiple cities detected, return all
+            if len(detected_cities) > 1:
+                logger.info(f"🌍 [MULTI-CITY DETECTION] Found {len(detected_cities)} cities: {detected_cities}")
+                return detected_cities
+            elif len(detected_cities) == 1:
+                return detected_cities
+            else:
+                return []
+                
+        except Exception as e:
+            logger.warning(f"⚠️ Multi-city detection failed: {e}")
+            return []
+    
     def _search_commercial_properties(
         self,
         user_message: str,
@@ -1964,6 +2018,90 @@ Now resolve "{postal_code}":"""
             
             # No pending confirmation or message wasn't a confirmation response
             # Continue with normal processing
+            
+            # STEP 1.1.5: PRE-CONSTRUCTION INTENT DETECTION (PRIORITY CHECK)
+            # Check if user is asking for pre-construction properties
+            # CRITICAL: Skip pre-construction check for commercial/business searches
+            is_commercial_query = any(word in user_message.lower() for word in [
+                'bakery', 'bakeries', 'restaurant', 'restaurants', 'office', 'retail', 
+                'warehouse', 'industrial', 'commercial', 'business', 'store', 'shop',
+                'gym', 'spa', 'salon', 'cafe', 'bar', 'hotel'
+            ])
+            
+            if not is_commercial_query and detect_preconstruction_intent(user_message):
+                logger.info(f"🏗️ [PRE-CONSTRUCTION] Intent detected in unified orchestrator")
+                
+                # Extract filters from unified state
+                filters = unified_state.active_filters
+                location = filters.location or (filters.city if hasattr(filters, 'city') else None)
+                
+                # ALWAYS extract location from current message (to override stale location)
+                location_result = location_extractor.extract_location_entities(user_message)
+                new_location = location_result.city or location_result.neighborhood
+                
+                if new_location:
+                    logger.info(f"📍 [PRE-CONSTRUCTION] Extracted location from message: {new_location}")
+                    location = new_location  # Override with fresh extraction
+                    # Update state with extracted location
+                    unified_state.active_filters.location = location
+                elif location:
+                    logger.info(f"📍 [PRE-CONSTRUCTION] Using existing location from state: {location}")
+                
+                # Search pre-construction properties
+                precon_result = search_preconstruction_properties(
+                    query=user_message,
+                    city=location,
+                    min_price=filters.min_price,
+                    max_price=filters.max_price,
+                    property_type=filters.property_type,
+                    bedrooms=filters.bedrooms
+                )
+                
+                properties = precon_result.get("properties", [])
+                total_count = precon_result.get("total_count", 0)
+                
+                # Format response
+                city_text = f" in {location}" if location else ""
+                response_text = f"🏗️ I found {total_count} pre-construction project{'s' if total_count != 1 else ''}{city_text}! "
+                
+                if total_count > 0:
+                    response_text += "These are brand new developments with the latest designs and amenities. "
+                else:
+                    response_text += "Try adjusting your search criteria or check back later for new projects."
+                
+                # Update state - use correct attributes
+                unified_state.last_property_results = properties[:20]  # Max 20 as per field definition
+                unified_state.search_count += 1
+                if total_count == 0:
+                    unified_state.zero_results_count += 1
+                else:
+                    unified_state.zero_results_count = 0  # Reset on success
+                
+                # Add assistant response to history
+                unified_state.add_conversation_turn("assistant", response_text)
+                
+                # Update timestamp
+                unified_state.updated_at = datetime.now()
+                
+                # Save state
+                self.state_manager.save(unified_state)
+                
+                return {
+                    "success": True,
+                    "response": response_text,
+                    "suggestions": ["Tell me more about these projects", "Show me other cities", "What amenities do they have?"],
+                    "properties": properties[:50],
+                    "property_count": total_count,
+                    "filters": {
+                        "location": location,
+                        "min_price": filters.min_price,
+                        "max_price": filters.max_price,
+                        "property_type": filters.property_type,
+                        "is_preconstruction": True
+                    },
+                    "source": "preconstruction",
+                    "request_id": request_id
+                }
             
             # STEP 1.2: Add user message to history (atomic append with timestamp validation)
             unified_state.add_conversation_turn("user", user_message)
@@ -3179,6 +3317,14 @@ Now resolve "{postal_code}":"""
                     logger.info(f"🏢 [COMMERCIAL] Routing to commercial property search (confidence: {confidence:.0%})")
                     
                     # ═══════════════════════════════════════════════════════════════
+                    # 🌍 MULTI-LOCATION DETECTION: Check for multiple cities
+                    # Example: "bakeries in toronto and ottawa" should search both cities
+                    # ═══════════════════════════════════════════════════════════════
+                    multi_location_cities = self._detect_multiple_cities(user_message)
+                    if len(multi_location_cities) > 1:
+                        logger.info(f"🌍 [MULTI-LOCATION] Detected {len(multi_location_cities)} cities: {multi_location_cities}")
+                    
+                    # ═══════════════════════════════════════════════════════════════
                     # CRITICAL FIX: Merge with existing session state for follow-up queries
                     # When user says "under 300K" after "restaurants in Mississauga",
                     # we need to preserve business_type and location from previous search
@@ -3205,12 +3351,48 @@ Now resolve "{postal_code}":"""
                     # Log merged filters for debugging
                     logger.info(f"🏢 [COMMERCIAL] Merged filters: {merged_filters}")
                     
-                    # Execute commercial search using merged filters
-                    commercial_result = self._search_commercial_properties(
-                        user_message=user_message,
-                        session_id=session_id,
-                        interpreted_filters=merged_filters
-                    )
+                    # ═══════════════════════════════════════════════════════════════
+                    # 🌍 MULTI-LOCATION SEARCH: Handle multiple cities
+                    # ═══════════════════════════════════════════════════════════════
+                    if len(multi_location_cities) > 1:
+                        logger.info(f"🌍 [MULTI-LOCATION] Searching in {len(multi_location_cities)} cities...")
+                        all_properties = []
+                        city_results = []
+                        
+                        for city in multi_location_cities:
+                            logger.info(f"🌍 [MULTI-LOCATION] Searching in {city}...")
+                            city_filters = dict(merged_filters)
+                            city_filters['location'] = city
+                            
+                            city_result = self._search_commercial_properties(
+                                user_message=user_message,
+                                session_id=session_id,
+                                interpreted_filters=city_filters
+                            )
+                            
+                            if city_result["success"] and city_result["properties"]:
+                                city_props = city_result["properties"]
+                                all_properties.extend(city_props)
+                                city_results.append(f"{city} ({len(city_props)} properties)")
+                                logger.info(f"✅ [MULTI-LOCATION] Found {len(city_props)} properties in {city}")
+                        
+                        # Combine results from all cities
+                        commercial_result = {
+                            "success": len(all_properties) > 0,
+                            "properties": all_properties[:30],  # Limit to top 30 across all cities
+                            "total": len(all_properties),
+                            "message": f"Found {len(all_properties)} properties across {len(multi_location_cities)} cities: {', '.join(city_results)}",
+                            "multi_location": True,
+                            "cities_searched": multi_location_cities
+                        }
+                        logger.info(f"🌍 [MULTI-LOCATION] Combined: {len(all_properties)} total properties")
+                    else:
+                        # Single location search
+                        commercial_result = self._search_commercial_properties(
+                            user_message=user_message,
+                            session_id=session_id,
+                            interpreted_filters=merged_filters
+                        )
                     
                     if commercial_result["success"]:
                         properties = commercial_result["properties"]
@@ -4178,6 +4360,15 @@ Now resolve "{postal_code}":"""
             filters_from_gpt.get("location_state") is not None
         )
         
+        # CRITICAL FIX: Location-only change should PRESERVE filters (not clear them)
+        is_location_only_change = (
+            location_changed and
+            filters_from_gpt.get("bedrooms") is None and
+            filters_from_gpt.get("bathrooms") is None and
+            filters_from_gpt.get("property_type") is None and
+            min_p is None and max_p is None
+        )
+        
         is_refining = (
             (filters_from_gpt.get("bedrooms") is not None or 
              filters_from_gpt.get("bathrooms") is not None or
@@ -4186,7 +4377,7 @@ Now resolve "{postal_code}":"""
         )
         
         # ═══════════════════════════════════════════════════════════════════════════
-        # CRITICAL: Check for explicit budget/price removal FIRST (before preservation logic)
+        # CRITICAL: Check for explicit filter removal patterns FIRST
         # ═══════════════════════════════════════════════════════════════════════════
         budget_removal_patterns = [
             r'i don\'?t have (?:any )?budget',
@@ -4200,22 +4391,67 @@ Now resolve "{postal_code}":"""
             r'clear (?:the )?(?:price|budget)',
             r'(?:price|budget) (?:doesn\'?t|does not) matter',
             r'(?:i\'?m )?flexible on (?:price|budget)',
+            r'show (?:me )?all properties',  # "show all properties" = remove filters
+            r'no (?:price )?limit',
+            r'(?:any|all) price(?:s)?',
         ]
         
         should_remove_budget = any(re.search(pattern, user_message, re.I) for pattern in budget_removal_patterns)
         
         if should_remove_budget:
-            logger.info(f"🏠 [BUDGET REMOVAL] User requested to remove budget constraints: '{user_message}'")
+            logger.info(f"💰 [FILTER REMOVAL] User explicitly requested to remove price filter: '{user_message}'")
             updates["price_range"] = (None, None)  # Clear budget - mark as explicit clear
             updates["_explicit_price_clear"] = True  # Flag to prevent overwrite in refinement logic
         
+        # ═══════════════════════════════════════════════════════════════════════════
+        # CRITICAL FIX: PRESERVE ALL filters during location-only changes
+        # ═══════════════════════════════════════════════════════════════════════════
         # Only clear price on TRUE fresh search if price was NOT extracted
-        # DON'T clear if: 1) Refining search, 2) Price mentioned, 3) User confirmed to keep filters
-        # DON'T overwrite if user explicitly asked to remove budget
-        if not merge and not price_mentioned and not is_refining and current_state and current_state.price_range != (None, None):
+        # PRESERVE if: 1) Location-only change, 2) Refining search, 3) Price mentioned
+        if is_location_only_change and current_state and not should_remove_budget:
+            # Location change without other filters = PRESERVE ALL existing filters
+            logger.info(f"✅ [LOCATION CHANGE] Preserving ALL existing filters during location change")
+            
+            # Preserve price range
+            if current_state.price_range != (None, None):
+                if "price_range" not in updates or updates.get("price_range") == (None, None):
+                    updates["price_range"] = current_state.price_range
+                    logger.info(f"  💰 Preserved price range: {current_state.price_range}")
+            
+            # Preserve bedrooms
+            if current_state.bedrooms is not None and "bedrooms" not in updates:
+                updates["bedrooms"] = current_state.bedrooms
+                logger.info(f"  🛏️ Preserved bedrooms: {current_state.bedrooms}")
+            
+            # Preserve bathrooms
+            if current_state.bathrooms is not None and "bathrooms" not in updates:
+                updates["bathrooms"] = current_state.bathrooms
+                logger.info(f"  🚿 Preserved bathrooms: {current_state.bathrooms}")
+            
+            # Preserve property_type
+            if current_state.property_type and "property_type" not in updates:
+                updates["property_type"] = current_state.property_type
+                logger.info(f"  🏠 Preserved property_type: {current_state.property_type}")
+            
+            # Preserve business_type (for commercial searches)
+            if hasattr(current_state, 'business_type') and current_state.business_type and "business_type" not in updates:
+                updates["business_type"] = current_state.business_type
+                logger.info(f"  🏢 Preserved business_type: {current_state.business_type}")
+            
+            # Preserve amenities
+            if hasattr(current_state, 'amenities') and current_state.amenities and "amenities" not in updates:
+                updates["amenities"] = current_state.amenities
+                logger.info(f"  ✨ Preserved amenities: {current_state.amenities}")
+            
+            # Preserve listing_type (sale/rent)
+            if current_state.listing_type and "listing_type" not in updates:
+                updates["listing_type"] = current_state.listing_type
+                logger.info(f"  📋 Preserved listing_type: {current_state.listing_type}")
+                
+        elif not merge and not price_mentioned and not is_refining and not is_location_only_change and current_state and current_state.price_range != (None, None):
             if not should_remove_budget:  # Don't double-clear
-                # Fresh search without price mentioned - but DON'T clear if extracting now or refining
-                logger.info(f"🏠 [FRESH SEARCH] Clearing old price range (not mentioned in new search)")
+                # TRUE fresh search (new criteria, not just location) - clear old filters
+                logger.info(f"🏠 [FRESH SEARCH] New search with different criteria - clearing old price range")
                 updates["price_range"] = (None, None)
         elif is_refining and current_state and current_state.price_range != (None, None):
             # User is refining search - KEEP existing price range UNLESS user explicitly wants to clear it
@@ -4745,7 +4981,28 @@ Examples:
             elif unified_state.active_filters.location:
                 location_str = unified_state.active_filters.location
             
-            response = interpreter_out.get("message", f"I found {total} properties in {location_str}!")
+            # Check if this was a location-only change (filters preserved)
+            preserved_filters = []
+            active_filters = unified_state.get_active_filters()
+            if active_filters.get("max_price"):
+                preserved_filters.append(f"under ${active_filters['max_price']:,}")
+            if active_filters.get("min_price"):
+                preserved_filters.append(f"over ${active_filters['min_price']:,}")
+            if active_filters.get("bedrooms"):
+                preserved_filters.append(f"{active_filters['bedrooms']} bedroom")
+            if active_filters.get("bathrooms"):
+                preserved_filters.append(f"{active_filters['bathrooms']} bathroom")
+            if active_filters.get("business_type"):
+                preserved_filters.append(f"{active_filters['business_type']}")
+            
+            # Build response with preserved filters mentioned
+            if preserved_filters and confirmation_result == "location_changed":
+                filter_desc = ", ".join(preserved_filters)
+                response = interpreter_out.get("message", f"I found {total} properties in {location_str} {filter_desc}!")
+                logger.info(f"📍 [LOCATION CHANGE] Response includes preserved filters: {filter_desc}")
+            else:
+                response = interpreter_out.get("message", f"I found {total} properties in {location_str}!")
+            
             suggestions = [
                 "Show me more details",
                 "Adjust my filters",

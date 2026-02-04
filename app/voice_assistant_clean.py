@@ -74,6 +74,18 @@ except ImportError as e:
     REPLIERS_INTEGRATION_AVAILABLE = False
     print(f"⚠️ Repliers services not available: {e}")
 
+# Pre-construction Service Integration
+try:
+    from services.preconstruction_service import (
+        detect_preconstruction_intent,
+        search_preconstruction_properties
+    )
+    PRECONSTRUCTION_AVAILABLE = True
+    print("✅ Pre-construction service loaded successfully")
+except ImportError as e:
+    PRECONSTRUCTION_AVAILABLE = False
+    print(f"⚠️ Pre-construction service not available: {e}")
+
 # OpenAI Integration
 try:
     from services.openai_service import (
@@ -386,9 +398,16 @@ class ConversationContext:
         return self.sessions[session_id]
     
     def update_filters_from_message(self, session_id, message):
-        """Extract and update search filters from user message"""
+        """
+        Extract and update search filters from user message
+        ✅ FIX #1: PRESERVE FILTERS when location changes
+        """
         session = self.get_or_create_session(session_id)
         message_lower = message.lower()
+        
+        # Store old location to detect changes
+        old_location = session['filters'].get('location')
+        new_filters = {}
         
         # Extract location
         location_keywords = {
@@ -401,12 +420,19 @@ class ConversationContext:
             'north york': 'North York',
             'etobicoke': 'Etobicoke',
             'richmond hill': 'Richmond Hill',
-            'oakville': 'Oakville'
+            'oakville': 'Oakville',
+            'ottawa': 'Ottawa',
+            'hamilton': 'Hamilton',
+            'kitchener': 'Kitchener',
+            'london': 'London',
+            'windsor': 'Windsor',
+            'oshawa': 'Oshawa',
+            'barrie': 'Barrie'
         }
         
         for keyword, city_name in location_keywords.items():
             if keyword in message_lower:
-                session['filters']['location'] = city_name
+                new_filters['location'] = city_name
                 break
         
         # Extract price range
@@ -422,7 +448,7 @@ class ConversationContext:
             match = re.search(pattern, message_lower)
             if match:
                 price = int(match.group(1).replace(',', ''))
-                session['filters']['max_price'] = price
+                new_filters['max_price'] = price
                 break
         
         # Extract minimum price
@@ -437,14 +463,14 @@ class ConversationContext:
             match = re.search(pattern, message_lower)
             if match:
                 price = int(match.group(1).replace(',', ''))
-                session['filters']['min_price'] = price
+                new_filters['min_price'] = price
                 break
         
         # Extract price range (between X and Y)
         range_match = re.search(r'between \$?([0-9,]+) and \$?([0-9,]+)', message_lower)
         if range_match:
-            session['filters']['min_price'] = int(range_match.group(1).replace(',', ''))
-            session['filters']['max_price'] = int(range_match.group(2).replace(',', ''))
+            new_filters['min_price'] = int(range_match.group(1).replace(',', ''))
+            new_filters['max_price'] = int(range_match.group(2).replace(',', ''))
         
         # Extract bedrooms
         bed_patterns = [
@@ -455,7 +481,7 @@ class ConversationContext:
         for pattern in bed_patterns:
             match = re.search(pattern, message_lower)
             if match:
-                session['filters']['bedrooms'] = int(match.group(1))
+                new_filters['bedrooms'] = int(match.group(1))
                 break
         
         # Extract bathrooms  
@@ -466,16 +492,31 @@ class ConversationContext:
         for pattern in bath_patterns:
             match = re.search(pattern, message_lower)
             if match:
-                session['filters']['bathrooms'] = float(match.group(1))
+                new_filters['bathrooms'] = float(match.group(1))
                 break
         
         # Extract property type
         if 'condo' in message_lower:
-            session['filters']['property_type'] = 'condo'
+            new_filters['property_type'] = 'condo'
         elif 'house' in message_lower or 'detached' in message_lower:
-            session['filters']['property_type'] = 'house'
+            new_filters['property_type'] = 'house'
         elif 'townhouse' in message_lower:
-            session['filters']['property_type'] = 'townhouse'
+            new_filters['property_type'] = 'townhouse'
+        
+        # ✅ FIX #1: Check if location changed
+        new_location = new_filters.get('location')
+        if new_location and old_location and new_location.lower() != old_location.lower():
+            # Location changed! PRESERVE other filters
+            print(f"📍 Location changed: {old_location} → {new_location}")
+            print(f"✅ Preserving filters: {[k for k, v in session['filters'].items() if k != 'location' and v is not None]}")
+            
+            # Merge: Keep old filters, update with new ones
+            preserved = {k: v for k, v in session['filters'].items() if v is not None}
+            preserved.update(new_filters)
+            session['filters'] = preserved
+        else:
+            # Normal update: Merge new filters with existing
+            session['filters'].update(new_filters)
         
         # Update last activity
         session['last_updated'] = datetime.now()
@@ -5007,6 +5048,56 @@ def text_chat():
         # Add to history
         session.history.append({'user': user_message, 'mode': 'text'})
         
+        # ✅ CHECK FOR PRE-CONSTRUCTION INTENT FIRST
+        if PRECONSTRUCTION_AVAILABLE and detect_preconstruction_intent(user_message):
+            print(f"🏗️ [PRE-CONSTRUCTION] Intent detected in residential system")
+            
+            # Extract location and price from message
+            location = session.user_data.get('location')
+            budget = session.user_data.get('budget_max', session.user_data.get('budget'))
+            
+            # Parse budget if string
+            max_price = None
+            if budget:
+                try:
+                    budget_str = str(budget).replace('$', '').replace(',', '').replace('K', '000').replace('M', '000000')
+                    max_price = float(budget_str)
+                except:
+                    pass
+            
+            # Search pre-construction properties
+            precon_result = search_preconstruction_properties(
+                query=user_message,
+                city=location,
+                max_price=max_price,
+                property_type="Residential"
+            )
+            
+            properties = precon_result.get("properties", [])
+            total_count = precon_result.get("total_count", 0)
+            
+            # Format response
+            city_text = f" in {location}" if location else ""
+            response_text = f"🏗️ I found {total_count} pre-construction residential project{'s' if total_count != 1 else ''}{city_text}! "
+            
+            if total_count > 0:
+                response_text += "These are brand new developments with modern designs and amenities. Would you like to see more details?"
+            else:
+                response_text += "Try checking other cities or adjusting your budget."
+            
+            # Update session
+            session.history[-1]['agent'] = response_text
+            
+            return jsonify({
+                'success': True,
+                'ai_response': response_text,
+                'properties': properties[:20],
+                'property_count': total_count,
+                'source': 'preconstruction',
+                'session_id': session_id,
+                'trigger_property_search': True
+            })
+        
         print(f"🤖 [TEXT CHAT] Attempting HuggingFace integration for: '{user_message}'")
         
         # Try HuggingFace FastAPI integration first - NO DEFAULT LOCATION
@@ -5643,7 +5734,7 @@ def chat_with_context():
 # ==================== ENHANCED GPT-4 CHATBOT ENDPOINT ====================
 @app.route('/api/chat-gpt4', methods=['POST', 'OPTIONS'])
 def chat_gpt4():
-    """Enhanced GPT-4 chatbot with rental/sale detection fix"""
+    """Enhanced GPT-4 chatbot with rental/sale detection fix and multi-location support"""
     if request.method == 'OPTIONS':
         response = jsonify({"status": "ok"})
         response.headers.add('Access-Control-Allow-Origin', '*')
@@ -5662,6 +5753,92 @@ def chat_gpt4():
             return jsonify({"success": False, "error": "Message required"}), 400
         
         print(f"🤖 GPT-4 Chat: session={session_id}, msg='{message[:60]}...', property_type={property_type}")
+        
+        # ✅ FIX #2: CHECK FOR MULTIPLE LOCATIONS in query
+        # CRITICAL: Only handle multi-location for RESIDENTIAL searches
+        # Commercial searches should go through the orchestrator with proper business type routing
+        try:
+            import sys
+            import os
+            sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
+            from conversation_enhancements import extract_multiple_locations, search_multiple_locations_sync
+            
+            multiple_locations = extract_multiple_locations(message)
+            
+            # SKIP multi-location handler if this is a COMMERCIAL search (let orchestrator handle it)
+            is_commercial_search = property_type == 'commercial' or any(word in message.lower() for word in [
+                'bakery', 'bakeries', 'restaurant', 'restaurants', 'office', 'retail', 
+                'warehouse', 'industrial', 'business', 'store', 'shop',
+                'gym', 'spa', 'salon', 'cafe', 'bar', 'hotel', 'clinic'
+            ])
+            
+            if len(multiple_locations) > 1 and not is_commercial_search:
+                print(f"🗺️  [MULTI-LOCATION] Detected {len(multiple_locations)} locations in residential search!")
+                print(f"📍 Locations: {[loc.get('location') or loc.get('street_name') for loc in multiple_locations]}")
+                
+                # Import property search functions
+                all_location_results = []
+                location_summaries = []
+                
+                # Get session context for filters
+                session = conversation_context.get_or_create_session(session_id)
+                filters = session.get('filters', {})
+                
+                for loc_criteria in multiple_locations:
+                    # Get location name
+                    loc_name = loc_criteria.get('location') or loc_criteria.get('street_name') or loc_criteria.get('intersection') or 'Unknown'
+                    
+                    print(f"   🔍 Searching {loc_name}...")
+                    
+                    try:
+                        # Search this location with preserved filters
+                        properties = get_live_properties(
+                            city=loc_criteria.get('location', 'Toronto'),
+                            max_price=filters.get('max_price'),
+                            bedrooms=filters.get('bedrooms'),
+                            bathrooms=filters.get('bathrooms'),
+                            property_type=filters.get('property_type'),
+                            limit=25
+                        )
+                        
+                        if properties:
+                            # Tag with search location
+                            for prop in properties:
+                                prop['search_location'] = loc_name
+                            
+                            all_location_results.extend(properties[:25])
+                            location_summaries.append(f"{loc_name} ({len(properties)})")
+                            print(f"   ✅ {loc_name}: {len(properties)} properties")
+                        else:
+                            print(f"   ⚠️  {loc_name}: 0 properties")
+                            location_summaries.append(f"{loc_name} (0)")
+                    
+                    except Exception as e:
+                        print(f"   ❌ {loc_name} search failed: {e}")
+                
+                # Return multi-location results
+                if all_location_results:
+                    reply = f"I found {len(all_location_results)} properties across {len(multiple_locations)} locations:\n"
+                    reply += " • " + "\n • ".join(location_summaries)
+                    
+                    return jsonify({
+                        "success": True,
+                        "message": reply,
+                        "response": reply,
+                        "agent_response": reply,
+                        "properties": all_location_results,
+                        "property_count": len(all_location_results),
+                        "multi_location": True,
+                        "locations_searched": [loc.get('location') or loc.get('street_name') for loc in multiple_locations],
+                        "session_id": session_id
+                    })
+        
+        except ImportError:
+            print("⚠️  conversation_enhancements module not found, skipping multi-location")
+        except Exception as e:
+            print(f"⚠️  Multi-location detection failed: {e}")
+            import traceback
+            traceback.print_exc()
         
         # Import enhanced orchestrator
         from services.chatbot_orchestrator import process_user_message
@@ -8957,6 +9134,110 @@ def get_schools_for_property(mls_number):
             'mls_number': mls_number
         }), 500
 
+# ==================== HIGHLIGHTS API ENDPOINT ====================
+
+@app.route('/api/highlights/<mls_number>', methods=['GET'])
+def get_highlights_for_property(mls_number):
+    """
+    CRITICAL API: Fetch nearby highlights (parks, shopping, transit, dining) for a property.
+    
+    Query params:
+        - mls_number: Property MLS (required)
+        - city: Property city (optional)
+        - neighborhood: Property neighborhood (optional)
+    
+    Returns: Curated nearby amenities data
+    """
+    try:
+        city = request.args.get('city', '')
+        neighborhood = request.args.get('neighborhood', '')
+        
+        # Validate MLS number
+        if not mls_number or mls_number == 'N/A':
+            return jsonify({
+                'success': False,
+                'error': 'Invalid MLS number',
+                'mls_number': mls_number
+            }), 400
+        
+        print(f"🌟 [HIGHLIGHTS API] Fetching highlights for MLS: {mls_number}")
+        
+        # Fetch property data to get location details
+        property_data = {}
+        try:
+            from services.listings_service import listings_service
+            
+            prop_response = listings_service.get_listing_details(mls_number)
+            if prop_response:
+                property_data = prop_response if isinstance(prop_response, dict) else {}
+                print(f"✅ [HIGHLIGHTS API] Got property data for {mls_number}")
+                
+                # Extract city and neighborhood if not provided
+                if not city and property_data.get('City'):
+                    city = property_data.get('City')
+                if not neighborhood and property_data.get('Neighborhood'):
+                    neighborhood = property_data.get('Neighborhood')
+        except Exception as e:
+            print(f"⚠️ [HIGHLIGHTS API] Could not fetch property data: {e}")
+        
+        # Import and use nearby highlights service
+        try:
+            from services.nearby_highlights_service import get_nearby_highlights
+            
+            # Get highlights data
+            highlights_result = get_nearby_highlights(
+                city=city or 'Toronto',  # Default to Toronto if no city
+                neighborhood=neighborhood,
+                property_data=property_data
+            )
+            
+            if highlights_result.get('success'):
+                response_data = {
+                    'success': True,
+                    'mls_number': mls_number,
+                    'city': highlights_result.get('city'),
+                    'neighborhood': highlights_result.get('neighborhood'),
+                    'highlights': highlights_result.get('highlights', {}),
+                    'summary': highlights_result.get('summary', ''),
+                    'timestamp': highlights_result.get('timestamp')
+                }
+                
+                # Add data source disclosure if using fallback
+                if highlights_result.get('is_fallback'):
+                    response_data['data_source'] = highlights_result.get('data_source')
+                    response_data['note'] = highlights_result.get('note', '')
+                
+                total_highlights = sum(len(v) for v in highlights_result.get('highlights', {}).values())
+                print(f"✅ [HIGHLIGHTS API] Returning {total_highlights} highlights for MLS {mls_number}")
+                return jsonify(response_data)
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': highlights_result.get('error', 'Unknown error'),
+                    'mls_number': mls_number,
+                    'highlights': {}
+                }), 500
+        
+        except ImportError as e:
+            print(f"❌ [HIGHLIGHTS API] Highlights service not available: {e}")
+            return jsonify({
+                'success': False,
+                'error': 'Highlights service not available',
+                'mls_number': mls_number,
+                'highlights': {}
+            }), 503
+    
+    except Exception as e:
+        print(f"❌ [HIGHLIGHTS API] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'mls_number': mls_number,
+            'highlights': {}
+        }), 500
+
 # ==================== MARKET ANALYSIS API ENDPOINT (FEATURE 2) ====================
 
 @app.route('/api/market-analysis/<city>', methods=['GET'])
@@ -9455,6 +9736,62 @@ def property_details_api():
             }), 404
         
         print(f"🏠 [PROPERTY DETAILS] Fetching details for MLS: {mls_number}")
+        
+        # ✅ CHECK IF THIS IS A PRE-CONSTRUCTION PROPERTY
+        # Only check if the MLS number looks like a pre-construction ID (lowercase with hyphens)
+        # Skip check for regular MLS numbers (uppercase letters + numbers like E12753688, C12753666)
+        is_likely_precon_id = ('-' in mls_number and mls_number.islower()) or not any(c.isdigit() for c in mls_number)
+        
+        if PRECONSTRUCTION_AVAILABLE and is_likely_precon_id:
+            from services.preconstruction_service import is_preconstruction_mls, get_preconstruction_by_mls
+            
+            print(f"🔍 [PRE-CONSTRUCTION CHECK] Checking if MLS '{mls_number}' is pre-construction...")
+            
+            if is_preconstruction_mls(mls_number):
+                print(f"✅ [PRE-CONSTRUCTION] Confirmed: '{mls_number}' is a pre-construction property")
+                precon_prop = get_preconstruction_by_mls(mls_number)
+                
+                if precon_prop:
+                    print(f"📦 [PRE-CONSTRUCTION] Returning details for: {precon_prop.get('projectName', 'Unknown')}")
+                    # Format as property details response
+                    return jsonify({
+                        "success": True,
+                        "property": {
+                            "mls_number": mls_number,
+                            "projectName": precon_prop.get("projectName"),
+                            "developer": precon_prop.get("developer"),
+                            "address": precon_prop.get("addressObject", {}),  # Use addressObject for details
+                            "fullAddress": precon_prop.get("address", ""),  # String address
+                            "streetAddress": precon_prop.get("streetAddress", ""),
+                            "city": precon_prop.get("city", ""),
+                            "price": precon_prop.get("listPrice") or precon_prop.get("price", 0),
+                            "priceDisplay": precon_prop.get("priceDisplay", "Contact for Pricing"),
+                            "pricePerSqft": precon_prop.get("pricePerSqft", 0),
+                            "description": precon_prop.get("description", ""),
+                            "remarks": precon_prop.get("remarks", ""),
+                            "details": {
+                                "bedrooms": precon_prop.get("bedrooms"),
+                                "bathrooms": precon_prop.get("bathrooms"),
+                                "bedroomRange": precon_prop.get("bedroomRange", "N/A"),
+                                "bathroomRange": precon_prop.get("bathroomRange", "N/A"),
+                                "sqft": precon_prop.get("sqft"),
+                                "sqftRange": precon_prop.get("sqftRange", "N/A"),
+                                "property_type": precon_prop.get("propertyType", "Pre-Construction"),
+                                "subType": precon_prop.get("type", ""),
+                                "totalUnits": precon_prop.get("totalUnits"),
+                                "availableUnits": precon_prop.get("availableUnits"),
+                                "storeys": precon_prop.get("storeys"),
+                            },
+                            "features": precon_prop.get("amenities", []),
+                            "amenities": precon_prop.get("amenities", []),
+                            "images": precon_prop.get("images", []),
+                            "virtualTourUrl": precon_prop.get("virtualTourUrl"),
+                            "status": precon_prop.get("status", "").replace("-", " ").title(),
+                            "completion": precon_prop.get("completion", {}),
+                            "isPreconstruction": True,
+                            "coordinates": precon_prop.get("coordinates", {}),
+                        }
+                    })
         
         if not REPLIERS_INTEGRATION_AVAILABLE:
             print("⚠️ [PROPERTY DETAILS] Repliers integration not available, returning mock data")
