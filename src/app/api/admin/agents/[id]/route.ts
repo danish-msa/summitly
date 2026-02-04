@@ -312,7 +312,7 @@ export async function PATCH(
         .filter(Boolean);
       if (areas.length > 0) {
         await prisma.agentServiceArea.createMany({
-          data: areas.map((area_name) => ({ agentId: id, area_name })),
+          data: areas.map((area_name: string) => ({ agentId: id, area_name })),
           skipDuplicates: true,
         });
       }
