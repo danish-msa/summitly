@@ -2033,19 +2033,33 @@ Now resolve "{postal_code}":"""
                 
                 # Extract filters from unified state
                 filters = unified_state.active_filters
-                location = filters.location or (filters.city if hasattr(filters, 'city') else None)
+                cached_location = filters.location or (filters.city if hasattr(filters, 'city') else None)
                 
-                # ALWAYS extract location from current message (to override stale location)
-                location_result = location_extractor.extract_location_entities(user_message)
-                new_location = location_result.city or location_result.neighborhood
+                # CRITICAL: Try manual city detection first (location_extractor sometimes fails)
+                import re
+                ontario_cities = ['Toronto', 'Ottawa', 'Mississauga', 'Brampton', 'Hamilton', 'London', 'Markham', 'Vaughan']
+                detected_city = None
+                for city in ontario_cities:
+                    if re.search(r'\b' + re.escape(city.lower()) + r'\b', user_message.lower()):
+                        detected_city = city
+                        logger.info(f"📍 [PRE-CONSTRUCTION] Manual detection found: {city}")
+                        break
                 
-                if new_location:
-                    logger.info(f"📍 [PRE-CONSTRUCTION] Extracted location from message: {new_location}")
-                    location = new_location  # Override with fresh extraction
-                    # Update state with extracted location
+                # Try location extractor if manual detection failed
+                if not detected_city:
+                    location_result = location_extractor.extract_location_entities(user_message)
+                    detected_city = location_result.city or location_result.neighborhood
+                
+                # Use detected city, fallback to cached location
+                if detected_city:
+                    logger.info(f"📍 [PRE-CONSTRUCTION] Using location from message: {detected_city}")
+                    location = detected_city
                     unified_state.active_filters.location = location
-                elif location:
-                    logger.info(f"📍 [PRE-CONSTRUCTION] Using existing location from state: {location}")
+                elif cached_location:
+                    logger.info(f"📍 [PRE-CONSTRUCTION] No location in message, using cached: {cached_location}")
+                    location = cached_location
+                else:
+                    location = None
                 
                 # Search pre-construction properties
                 precon_result = search_preconstruction_properties(

@@ -273,8 +273,8 @@ def filter_preconstruction_properties(
         filtered = [p for p in filtered if price_matches(p)]
         logger.info(f"💰 Filtered by price: {len(filtered)} properties")
     
-    # Filter by property type
-    if property_type:
+    # Filter by property type (SKIP for 'commercial' - pre-construction doesn't use this label)
+    if property_type and property_type.lower() not in ['commercial', 'condo', 'residential']:
         type_lower = property_type.lower()
         filtered = [
             p for p in filtered
@@ -282,6 +282,8 @@ def filter_preconstruction_properties(
                type_lower in p.get("details", {}).get("subPropertyType", "").lower()
         ]
         logger.info(f"🏠 Filtered by type '{property_type}': {len(filtered)} properties")
+    elif property_type:
+        logger.info(f"⏭️ Skipping property type filter for '{property_type}' (pre-construction uses different categorization)")
     
     # Filter by bedrooms
     if bedrooms:
