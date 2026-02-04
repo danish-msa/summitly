@@ -56,7 +56,7 @@ const ThreeStepsSection: React.FC = () => {
             className="hidden md:block absolute top-16 left-1/4 right-1/4 h-0.5 border-t-2 border-dashed border-slate-200"
             aria-hidden
           />
-          {STEPS.map((item, index) => {
+          {STEPS.map((item) => {
             const Icon = item.icon;
             return (
               <div key={item.id} className="relative text-center">

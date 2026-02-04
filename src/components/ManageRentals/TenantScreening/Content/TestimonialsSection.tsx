@@ -79,7 +79,9 @@ export default function TestimonialsSection() {
     };
     updateSelection();
     carouselApi.on("select", updateSelection);
-    return () => carouselApi.off("select", updateSelection);
+    return () => {
+      carouselApi.off("select", updateSelection);
+    };
   }, [carouselApi]);
 
   return (
