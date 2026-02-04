@@ -6,7 +6,7 @@ import mapboxgl, { LngLatBounds } from "mapbox-gl";
 import { MapOptionsProvider, useMapOptions } from "@/features/map-search-v2/providers/MapOptionsProvider";
 import MapRoot from "@/features/map-search-v2/components/MapRoot";
 import MapService from "@/features/map-search-v2/services/map/MapService";
-import SearchService from "@/features/map-search-v2/services/search/SearchService";
+import SearchService, { type SearchResponse } from "@/features/map-search-v2/services/search/SearchService";
 import { getPolygonsForAreas, getBoundsForPolygons } from "@/data/agentAreaBounds";
 import { DEFAULT_FILTER_STATE } from "@/lib/types/filters";
 import type { AgentServiceArea } from "@prisma/client";
@@ -92,8 +92,8 @@ export function AgentServiceAreasMap({
     [areaPolygons]
   );
 
-  const [listings, setListings] = useState<Awaited<ReturnType<typeof SearchService.fetch>>["list"]>([]);
-  const [clusters, setClusters] = useState<Awaited<ReturnType<typeof SearchService.fetch>>["clusters"]>([]);
+  const [listings, setListings] = useState<SearchResponse["list"]>([]);
+  const [clusters, setClusters] = useState<SearchResponse["clusters"]>([]);
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
