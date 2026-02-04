@@ -27,10 +27,11 @@ function AgentServiceAreasMapInner({
   const [mapReady, setMapReady] = useState(false);
 
   const center = useMemo(
-    () => ({
-      lng: (combinedBounds.west + combinedBounds.east) / 2,
-      lat: (combinedBounds.south + combinedBounds.north) / 2,
-    }),
+    () =>
+      new mapboxgl.LngLat(
+        (combinedBounds.west + combinedBounds.east) / 2,
+        (combinedBounds.south + combinedBounds.north) / 2
+      ),
     [combinedBounds]
   );
 
