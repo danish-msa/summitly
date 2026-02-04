@@ -148,7 +148,7 @@ export async function PATCH(
       where: {
         OR: [{ id: identifier }, { slug: identifier }],
       },
-      include: { stats: true },
+      include: { stats: true, social_links: true },
     });
     if (!existing) {
       return NextResponse.json({ error: "Agent not found" }, { status: 404 });
