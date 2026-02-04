@@ -15,7 +15,7 @@ const PAGE_SIZE = 20;
 
 const AssignmentProjectsList: React.FC = () => {
   const searchParams = useSearchParams();
-  const city = searchParams.get("city") || "";
+  const city = searchParams?.get("city") ?? "";
 
   const [projects, setProjects] = useState<PreConstructionProperty[]>([]);
   const [loading, setLoading] = useState(true);
