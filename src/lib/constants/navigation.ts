@@ -22,6 +22,7 @@ export const navLinks = [
     },
     { id: 4, label: 'Find a Realtor', url: '/agents' },
     { id: 5, label: 'Pre-Con', url: '/pre-con' },
+    { id: 8, label: 'Rentals', url: '/manage-rentals' },
     {
       id: 6,
       label: 'Tools',

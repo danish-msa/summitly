@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import {
   PriceMyRentalBanner,
   PricingSection,
+  PriceMyRentalFAQ,
 } from "@/components/ManageRentals/PriceMyRental";
 
 export const metadata: Metadata = {
@@ -20,6 +21,7 @@ export default function PriceMyRentalPage() {
     <div className="min-h-screen bg-white">
       <PriceMyRentalBanner />
       <PricingSection />
+      <PriceMyRentalFAQ />
     </div>
   );
 }

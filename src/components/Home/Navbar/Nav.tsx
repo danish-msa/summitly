@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { AutocompleteSearch } from '@/components/common/AutocompleteSearch';
 import { BuyMegaMenu } from './BuyMegaMenu';
 import { RentMegaMenu } from './RentMegaMenu';
+import { RentalsMegaMenu } from './RentalsMegaMenu';
 import { ProjectsMegaMenu } from './ProjectsMegaMenu';
 import { MoreMegaMenu } from './MoreMegaMenu';
 import { AIButton } from '@/components/ui/ai-button';
@@ -120,6 +121,7 @@ const Nav = ({ openNav }: Props) => {
   const [showBuyDropdown, setShowBuyDropdown] = useState(false);
   const [showRentDropdown, setShowRentDropdown] = useState(false);
   const [showProjectsDropdown, setShowProjectsDropdown] = useState(false);
+  const [showRentalsDropdown, setShowRentalsDropdown] = useState(false);
   const [showMoreDropdown, setShowMoreDropdown] = useState(false);
 
   const handleLoginClick = () => {
@@ -304,6 +306,25 @@ const Nav = ({ openNav }: Props) => {
                     My Home
                   </motion.div>
                 </Link>
+
+                {/* Rentals Mega Menu */}
+                <RentalsMegaMenu
+                  isOpen={showRentalsDropdown}
+                  onMouseEnter={() => setShowRentalsDropdown(true)}
+                  onMouseLeave={() => setShowRentalsDropdown(false)}
+                >
+                  <motion.div
+                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide flex items-center gap-1 cursor-pointer"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.47 }}
+                  >
+                    Rentals
+                    <ChevronDown className={cn("w-4 h-4 transition-transform", showRentalsDropdown && "rotate-180")} />
+                  </motion.div>
+                </RentalsMegaMenu>
 
                 {/* More Mega Menu */}
                 <MoreMegaMenu

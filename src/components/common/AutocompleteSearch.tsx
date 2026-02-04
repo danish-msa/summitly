@@ -10,6 +10,22 @@ import type { PropertyListing } from "@/lib/types";
 import type { Location } from "@/lib/api/repliers/services/locations";
 import { cn } from "@/lib/utils";
 
+// Extracted to avoid parser confusion with square brackets / # in JSX attribute values
+const INPUT_EASE = "ease-[cubic-bezier(0.4,0,0.2,1)]";
+const MODERN_INPUT_CLASSES =
+  "h-12 pl-10 pr-10 rounded-2xl border-[1.5px] border-zinc-400 bg-transparent py-4 text-base text-foreground transition-[border] duration-150 " +
+  INPUT_EASE +
+  " focus:border-[#3b82f6] focus:ring-0";
+const MODERN_INPUT_FOCUS_BORDER = "border-[#3b82f6]";
+const MODERN_LABEL_BASE =
+  "absolute left-10 pointer-events-none text-zinc-500 transition-all duration-150 " +
+  INPUT_EASE +
+  " origin-left";
+const MODERN_LABEL_FLOATING =
+  "top-0 -translate-y-1/2 scale-[0.8] bg-white px-2 text-[#3b82f6]";
+const LEGACY_INPUT_CLASSES =
+  "h-10 sm:h-12 rounded-full text-sm border border-slate-200 bg-white focus:ring-2 focus:ring-sky-500/40 focus:border-sky-500";
+
 function formatPrice(price: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -152,7 +168,10 @@ function AutocompleteLoadingSkeleton() {
 }
 
 export interface AutocompleteSearchProps {
+  /** Placeholder when no label is used. Ignored when `label` is set. */
   placeholder?: string;
+  /** When set, uses modern floating label UI (label animates up on focus/value). Omit for simple input with placeholder. */
+  label?: string;
   className?: string;
   inputClassName?: string;
   onSelectListing?: (listing: PropertyListing) => void;
@@ -161,6 +180,7 @@ export interface AutocompleteSearchProps {
 
 export function AutocompleteSearch({
   placeholder = "Search properties or locations...",
+  label,
   className,
   inputClassName,
   onSelectListing,
@@ -179,7 +199,11 @@ export function AutocompleteSearch({
   } = useAutocompleteSearch();
 
   const [isOpen, setIsOpen] = React.useState(false);
+  const [isFocused, setIsFocused] = React.useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const useModernLabel = !!label;
+  const isFloating = isFocused || query.trim().length > 0;
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -195,6 +219,9 @@ export function AutocompleteSearch({
     isOpen &&
     (query.length >= minQueryLength || (listings.length > 0 || locations.length > 0));
 
+  const inputVariantClass = useModernLabel ? MODERN_INPUT_CLASSES : LEGACY_INPUT_CLASSES;
+  const inputFocusClass = useModernLabel && isFloating ? MODERN_INPUT_FOCUS_BORDER : null;
+
   return (
     <div className={cn("relative w-full", className)} ref={dropdownRef}>
       <div className="relative">
@@ -205,16 +232,32 @@ export function AutocompleteSearch({
             setQuery(e.target.value);
             setIsOpen(true);
           }}
-          onFocus={() => query.length >= minQueryLength && setIsOpen(true)}
-          placeholder={placeholder}
+          onFocus={() => {
+            setIsFocused(true);
+            if (query.length >= minQueryLength) setIsOpen(true);
+          }}
+          onBlur={() => setIsFocused(false)}
+          placeholder={useModernLabel ? undefined : placeholder}
           className={cn(
-            "w-full h-10 sm:h-12 pl-10 pr-10 rounded-full text-sm border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-500",
+            "w-full pl-10 pr-10 focus:outline-none",
+            inputVariantClass,
+            inputFocusClass,
             inputClassName
           )}
-          aria-label="Search properties and locations"
+          aria-label={label ?? "Search properties and locations"}
           aria-expanded={showDropdown}
           aria-haspopup="listbox"
         />
+        {useModernLabel && (
+          <label
+            className={cn(
+              MODERN_LABEL_BASE,
+              isFloating ? MODERN_LABEL_FLOATING : "top-3"
+            )}
+          >
+            {label}
+          </label>
+        )}
         <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400">
           <Search className="h-4 w-4" aria-hidden="true" />
         </div>

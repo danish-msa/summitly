@@ -6,7 +6,7 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import RentZestimateChart from "./RentZestimateChart";
+import { AddressAutocompleteInput } from "../AddressAutocompleteInput";
 
 const PricingSection: React.FC = () => {
   const [streetAddress, setStreetAddress] = useState("");
@@ -34,11 +34,17 @@ const PricingSection: React.FC = () => {
             className="object-cover rounded-xl"
           />
           <div
-            className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-auto sm:max-w-[280px] bg-white/90 backdrop-blur rounded-xl shadow-lg border border-white/50"
+            className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 w-[260px] sm:w-[280px] h-[180px] sm:h-[300px] rounded-xl overflow-hidden"
             aria-label="Rent Zestimate history chart"
           >
-            <RentZestimateChart />
-          </div>
+            <Image
+              src="/images/managerentals/rent-zestimate-chart.png"
+              alt="Rent Zestimate history chart"
+              fill
+              sizes="280px"
+              className="object-contain rounded-xl"
+            />
+          </div>  
         </div>
 
         {/* Right: Content + form */}
@@ -83,23 +89,12 @@ const PricingSection: React.FC = () => {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
-            <div className="grid grid-cols-1 sm:grid-cols-[1fr_100px] gap-4">
-              <Input
-                type="text"
-                label="Street Address"
+          <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl">
+              <AddressAutocompleteInput
                 value={streetAddress}
-                onChange={(e) => setStreetAddress(e.target.value)}
-                aria-label="Street address"
+                onSelect={setStreetAddress}
+                name="streetAddress"
               />
-              <Input
-                type="text"
-                label="Unit"
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                aria-label="Unit number"
-              />
-            </div>
             <Input
               type="email"
               label="Email Address"

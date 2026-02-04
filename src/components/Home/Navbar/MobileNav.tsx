@@ -47,6 +47,8 @@ const MobileNav = ({ closeNav, showNav }: Props) => {
                 return <FaExchangeAlt className="text-xl" />;
             case 'more':
                 return <FaEllipsisH className="text-xl" />;
+            case 'rentals':
+                return <FaBuilding className="text-xl" />;
             case 'about':
                 return <FaInfoCircle className="text-xl" />;
             case 'contact':
