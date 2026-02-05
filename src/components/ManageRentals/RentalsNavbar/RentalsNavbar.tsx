@@ -25,7 +25,7 @@ const RENTAL_MANAGER_ITEMS = [
   { label: "Price my rental", href: "/manage-rentals/price-my-rental" },
   { label: "Listing", href: "/manage-rentals/listing" },
   { label: "Applications", href: "/manage-rentals/tenant-screening" },
-  { label: "Leases", href: "/manage-rentals/leases" },
+  { label: "Leases", href: "/manage-rentals/rental-lease-agreements" },
   { label: "Payment", href: "/manage-rentals/payment" },
 ] as const;
 
@@ -266,7 +266,7 @@ export function RentalsNavbar() {
         <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 h-full">
           <div className="flex items-center justify-between h-full">
             <div className="flex items-center gap-4 lg:gap-6">
-              <Link href="/manage-rentals" className="flex items-center flex-shrink-0" aria-label="Summitly Rentals home">
+              <Link href="/manage-rentals" className="flex items-center gap-1 flex-shrink-0" aria-label="Summitly Rentals home">
                 <Image
                   src="/images/logo/summitly-logo.png"
                   alt="Summitly Logo"
@@ -276,6 +276,7 @@ export function RentalsNavbar() {
                   priority
                   quality={75}
                 />
+                <span className="text-2xl font-bold ">Rentals</span>
               </Link>
               <RentalsNavbarDesktop />
             </div>

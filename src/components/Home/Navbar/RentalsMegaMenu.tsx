@@ -84,7 +84,7 @@ const menuSections: MenuSection[] = [
       {
         id: "leases",
         label: "Create and manage leases",
-        href: "/manage-rentals",
+        href: "/manage-rentals/rental-lease-agreements",
         icon: FileText,
       },
       {

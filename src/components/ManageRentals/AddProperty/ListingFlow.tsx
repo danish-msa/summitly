@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Circle, ChevronLeft, ChevronRight, Info, Upload, Image as ImageIcon, Video, Camera, Plus, FileText, Car, Zap, MoreHorizontal, Lightbulb, AlertCircle, Shield } from "lucide-react";
+import { Check, Circle, ChevronLeft, ChevronRight, Info, Upload, Image as ImageIcon, Video, Camera, Plus, FileText, Car, Zap, MoreHorizontal, Lightbulb, AlertCircle, Shield, Home, DollarSign, ListChecks, Eye, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,7 +29,7 @@ const SIDEBAR_STEPS = [
   { id: "review", label: "Review & publish" },
 ] as const;
 
-const TOTAL_STEPS = 16; // Property info 2, Rent 3, Media 1, Amenities 2, Costs & fees 1, Final details 7
+const TOTAL_STEPS = 17; // ... Final details 7, Review & publish 1
 const PROPERTY_INFO_END = 2;
 const RENT_DETAILS_END = 5;
 const MEDIA_END = 6;
@@ -60,7 +60,10 @@ function getSectionAndStep(stepIndex: number): {
   if (stepIndex >= 9 && stepIndex < 16) {
     return { sectionTitle: "Final details", stepLabel: `Step ${stepIndex - 9 + 1} of 7`, sectionId: "final-details" };
   }
-  return { sectionTitle: "Final details", stepLabel: "Step 7 of 7", sectionId: "final-details" };
+  if (stepIndex === 16) {
+    return { sectionTitle: "Review & publish", stepLabel: "", sectionId: "review" };
+  }
+  return { sectionTitle: "Review & publish", stepLabel: "", sectionId: "review" };
 }
 
 const BEDROOM_OPTIONS = Array.from({ length: 10 }, (_, i) => (i + 1).toString());
@@ -197,6 +200,7 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
               const isAmenities = item.id === "amenities";
               const isCostsFees = item.id === "costs-fees";
               const isFinalDetails = item.id === "final-details";
+              const isReview = item.id === "review";
               const isCompleted =
                 (isPropertyInfo && completedPropertyInfo) ||
                 (isRentDetails && completedRentDetails) ||
@@ -210,7 +214,8 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                 (isMedia && step === 5) ||
                 (isAmenities && step >= 6 && step < 8) ||
                 (isCostsFees && step === 8) ||
-                (isFinalDetails && step >= 9 && step < 16);
+                (isFinalDetails && step >= 9 && step < 16) ||
+                (isReview && step === 16);
 
               return (
                 <div
@@ -1215,6 +1220,70 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                 </div>
               </>
             )}
+
+            {/* Step 16: Review & publish */}
+            {step === 16 && (
+              <>
+                <div className="rounded-xl border border-border overflow-hidden bg-muted/30 w-full max-w-sm">
+                  <div className="aspect-video bg-muted flex items-center justify-center">
+                    <Camera className="h-12 w-12 text-muted-foreground" aria-hidden />
+                  </div>
+                  <div className="p-4 space-y-2">
+                    <p className="font-medium text-foreground">
+                      {initialData?.streetAddress ?? "Address"}
+                    </p>
+                    <p className="text-lg font-semibold text-foreground">
+                      {monthlyRent ? `$${Number(monthlyRent).toLocaleString()}/mo` : "$—/mo"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {totalBedrooms || "—"} bd · {totalBathrooms || "—"} ba · {squareFootage ? `${squareFootage} sq. ft.` : "— sq. ft."}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30 p-4 mt-6">
+                  <AlertCircle className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-500" aria-hidden />
+                  <div>
+                    <p className="font-medium text-foreground">Your listing is incomplete</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      Complete 6 key sections to publish your listing.{" "}
+                      <button type="button" className="text-primary underline hover:no-underline">
+                        Learn more
+                      </button>
+                    </p>
+                  </div>
+                </div>
+                <Button variant="outline" className="gap-2 mt-4">
+                  <Eye className="h-4 w-4" aria-hidden />
+                  Preview listing
+                </Button>
+                <div className="mt-8 space-y-2">
+                  {[
+                    { id: "property-info", label: "Property information", icon: Home },
+                    { id: "rent-details", label: "Rent details", icon: DollarSign },
+                    { id: "media", label: "Media", icon: Camera },
+                    { id: "amenities", label: "Amenities", icon: ListChecks },
+                    { id: "costs-fees", label: "Costs and fees", icon: FileText },
+                    { id: "final-details", label: "Final details", icon: FileText },
+                  ].map(({ id, label, icon: Icon }) => (
+                    <button
+                      key={id}
+                      type="button"
+                      className="flex w-full items-center gap-3 rounded-lg border border-border p-4 text-left hover:bg-muted/50 transition-colors"
+                    >
+                      <Icon className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+                      <span className="flex-1 font-medium text-foreground">{label}</span>
+                      <span className="rounded bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">
+                        INCOMPLETE
+                      </span>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                    </button>
+                  ))}
+                </div>
+                <p className="text-sm text-muted-foreground mt-6">
+                  By publishing this listing, you agree to comply with our Terms of Use, Rentals Lister Terms, and Respectful Renting Pledge.
+                </p>
+              </>
+            )}
             </div>
           </main>
 
@@ -1227,6 +1296,11 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
               <Button onClick={handleNext} className="gap-2">
                 Next
                 <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : step === 16 ? (
+              <Button onClick={handleFinish} className="gap-2">
+                Publish
+                <Send className="h-4 w-4" aria-hidden />
               </Button>
             ) : (
               <Button onClick={handleFinish} className="gap-2">

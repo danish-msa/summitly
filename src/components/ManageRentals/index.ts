@@ -20,3 +20,8 @@ export {
   TenantScreeningBanner,
   TenantScreeningContent,
 } from "./TenantScreening";
+
+export {
+  RentalLeaseAgreementsBanner,
+  RentalLeaseAgreementsContent,
+} from "./RentalLeaseAgreements";
