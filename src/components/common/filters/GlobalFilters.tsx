@@ -8,7 +8,8 @@ import CommunityFilter from './CommunityFilter';
 import PriceFilter from './PriceFilter';
 import BedroomFilter from './BedroomFilter';
 import BathroomFilter from './BathroomFilter';
-import EnhancedAdvancedFilters from './EnhancedAdvancedFilters';
+import PreconAdvancedFilters from './PreconAdvancedFilters';
+import RepliersAdvancedFilters from './RepliersAdvancedFilters';
 import SellRentToggle from './SellRentToggle';
 import DeveloperFilter from './DeveloperFilter';
 import PreConStatusFilter from './PreConStatusFilter';
@@ -135,56 +136,58 @@ const GlobalFilters: React.FC<GlobalFiltersProps> = ({
     );
   }
 
-  // Add Advanced Filters button
+  // Add Advanced Filters button (Precon vs MLS/Repliers)
   if (showAdvanced) {
+    const advancedCommon = {
+      open: advancedOpen,
+      onOpenChange: setAdvancedOpen,
+      filters,
+      onFilterChange: handleFilterChange,
+      onApplyFilters: () => {},
+      onResetAdvanced: () => {
+        const advancedFilterKeys = [
+          'propertyType',
+          'subPropertyType',
+          'lastStatus',
+          'searchKeywords',
+          'minGarageSpaces',
+          'minParkingSpaces',
+          'hasPool',
+          'flooringType',
+          'timeOnSummitly',
+          'openHouseFilter',
+          'minSquareFeet',
+          'maxSquareFeet',
+          'yearBuilt',
+          'features',
+          'listingDate',
+          'constructionStatus',
+          'preConStatus',
+          'occupancyDate',
+          'developer',
+          'basement',
+          'locker',
+          'balcony',
+          'unitTypes',
+          'availableUnits',
+          'suites',
+          'storeys'
+        ];
+        advancedFilterKeys.forEach(key => {
+          let value: string | number | string[] = 'all';
+          if (key === 'features' || key === 'unitTypes') value = [];
+          else if (key.includes('SquareFeet') || key === 'availableUnits' || key === 'suites' || key === 'storeys' || key === 'minGarageSpaces' || key === 'minParkingSpaces') value = 0;
+          else if (key === 'searchKeywords') value = '';
+          else if (key === 'timeOnSummitly') value = 'none';
+          else if (key === 'openHouseFilter') value = 'any';
+          handleFilterChange({ target: { name: key, value } });
+        });
+      }
+    };
     filterComponents.push(
-      <EnhancedAdvancedFilters
-        key="advanced"
-        open={advancedOpen}
-        onOpenChange={setAdvancedOpen}
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        isPreCon={isPreCon}
-        onApplyFilters={() => {
-          // Advanced filters are applied immediately when changed
-          // This function can be used for any additional logic
-        }}
-        onResetAdvanced={() => {
-          // Reset only advanced filters
-          const advancedFilterKeys = [
-            'propertyType',
-            'subPropertyType',
-            'minSquareFeet', 
-            'maxSquareFeet', 
-            'yearBuilt', 
-            'features', 
-            'listingDate',
-            'constructionStatus',
-            'preConStatus',
-            'occupancyDate',
-            'developer',
-            'basement',
-            'locker',
-            'balcony',
-            'unitTypes',
-            'availableUnits',
-            'suites',
-            'storeys'
-          ];
-          advancedFilterKeys.forEach(key => {
-            handleFilterChange({
-              target: {
-                name: key,
-                value: key === 'features' || key === 'unitTypes' 
-                  ? [] 
-                  : (key.includes('SquareFeet') || key === 'availableUnits' || key === 'suites' || key === 'storeys')
-                    ? 0 
-                    : 'all'
-              }
-            });
-          });
-        }}
-      />
+      isPreCon
+        ? <PreconAdvancedFilters key="advanced" {...advancedCommon} />
+        : <RepliersAdvancedFilters key="advanced" {...advancedCommon} />
     );
   }
 

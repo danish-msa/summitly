@@ -18,14 +18,13 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-interface EnhancedAdvancedFiltersProps {
+interface PreconAdvancedFiltersProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   filters: FilterState;
   onFilterChange: (e: { target: { name: string; value: string | number | string[] } }) => void;
   onApplyFilters: () => void;
   onResetAdvanced: () => void;
-  isPreCon?: boolean;
 }
 
 // Construction status options
@@ -108,14 +107,13 @@ const BATHROOM_OPTIONS = [
   { value: 5, label: '5+' },
 ];
 
-export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = ({
+export const PreconAdvancedFilters: React.FC<PreconAdvancedFiltersProps> = ({
   open,
   onOpenChange,
   filters,
   onFilterChange,
   onApplyFilters,
   onResetAdvanced,
-  isPreCon: _isPreCon = false,
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -268,9 +266,9 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
             <div className="flex items-center gap-3">
               <div>
-                <h3 className="text-xl font-bold text-foreground">Advanced Filters</h3>
+                <h3 className="text-xl font-bold text-foreground">Pre-Construction Advanced Filters</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Refine your search with detailed criteria
+                  Refine your pre-construction search with detailed criteria
                 </p>
               </div>
               {activeFiltersCount > 0 && (
@@ -282,7 +280,9 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
             <div className="flex items-center gap-3">
               <Button variant="default" className="h-9 px-4 py-2 rounded-lg bg-secondary text-primary-foreground hover:bg-secondary/90 transition-colors font-medium text-sm">Reset Filters</Button>
               <Button variant="default" className="h-9 px-4 py-2 rounded-lg bg-secondary text-primary-foreground hover:bg-secondary/90 transition-colors font-medium text-sm">Apply Filters</Button>
-              <Button variant="default" className="h-9 px-4 py-2 rounded-lg bg-secondary text-primary-foreground hover:bg-secondary/90 transition-colors font-medium text-sm">Close</Button>
+              <button type="button" onClick={() => onOpenChange(false)} className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors" aria-label="Close">
+                <X className="h-5 w-5" aria-hidden />
+              </button>
             </div>
           </div>
 
@@ -296,7 +296,6 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
                 subValue={filters.subPropertyType || 'all'}
                 onChange={(value) => {
                   onFilterChange({ target: { name: 'propertyType', value } });
-                  // Reset subPropertyType when propertyType changes to 'all' or a type without subtypes
                   if (value === 'all' || !['Condos', 'Houses'].includes(value)) {
                     onFilterChange({ target: { name: 'subPropertyType', value: 'all' } });
                   }
@@ -363,23 +362,18 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
 
             {/* Middle Column */}
             <div className="space-y-6">
-              {/* Bedrooms */}
               <PillSelector
                 label="Bedrooms"
                 options={BEDROOM_OPTIONS}
                 value={filters.bedrooms}
                 onChange={(value) => onFilterChange({ target: { name: 'bedrooms', value: value as number } })}
               />
-
-              {/* Bathrooms */}
               <PillSelector
                 label="Bathrooms"
                 options={BATHROOM_OPTIONS}
                 value={filters.bathrooms}
                 onChange={(value) => onFilterChange({ target: { name: 'bathrooms', value: value as number } })}
               />
-
-              {/* Price Range */}
               <RangeSlider
                 label="Price"
                 min={0}
@@ -391,8 +385,6 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
                 onMaxChange={(value) => onFilterChange({ target: { name: 'maxPrice', value } })}
                 formatValue={formatPrice}
               />
-
-              {/* Square Footage */}
               <RangeSlider
                 label="Square Footage (sqft)"
                 min={0}
@@ -408,7 +400,6 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
 
             {/* Right Column */}
             <div className="space-y-6">
-              {/* Unit Types */}
               <div className="space-y-3">
                 <Label className="text-sm font-semibold text-foreground">Unit Types Available</Label>
                 <div className="grid grid-cols-4 gap-2">
@@ -416,7 +407,6 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
                     const Icon = unitType.icon;
                     const unitTypesArray = Array.isArray(filters.unitTypes) ? filters.unitTypes : [];
                     const isChecked = unitTypesArray.includes(unitType.value);
-                    
                     return (
                       <button
                         key={unitType.value}
@@ -424,14 +414,11 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
                         onClick={() => {
                           const current = Array.isArray(filtersRef.current.unitTypes) ? [...filtersRef.current.unitTypes] : [];
                           const shouldAdd = !isChecked;
-                          
                           if (shouldAdd && current.includes(unitType.value)) return;
                           if (!shouldAdd && !current.includes(unitType.value)) return;
-                          
                           const updated = shouldAdd
                             ? [...current, unitType.value]
                             : current.filter((item) => item !== unitType.value);
-                          
                           onFilterChange({ target: { name: 'unitTypes', value: updated } });
                         }}
                         className={cn(
@@ -454,8 +441,6 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
                   })}
                 </div>
               </div>
-
-              {/* Basement */}
               <div className="space-y-2">
                 <Label className="text-sm font-semibold">Basement</Label>
                 <select
@@ -468,14 +453,9 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
                   ))}
                 </select>
               </div>
-
-              {/* Condo Includes Section */}
               <div className="space-y-3 pt-2">
                 <Label className="text-sm font-semibold text-foreground">Condo Includes:</Label>
-                
-                {/* Locker and Balcony in same row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Locker */}
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-muted-foreground">Locker</Label>
                     <select
@@ -488,8 +468,6 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
                       ))}
                     </select>
                   </div>
-
-                  {/* Balcony */}
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-muted-foreground">Balcony</Label>
                     <select
@@ -504,8 +482,6 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
                   </div>
                 </div>
               </div>
-
-              {/* Additional Inputs */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">Available Units</Label>
@@ -546,4 +522,4 @@ export const EnhancedAdvancedFilters: React.FC<EnhancedAdvancedFiltersProps> = (
   );
 };
 
-export default EnhancedAdvancedFilters;
+export default PreconAdvancedFilters;

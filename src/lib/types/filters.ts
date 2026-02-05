@@ -32,7 +32,23 @@ export interface FilterState {
   yearBuilt?: string;
   features?: string[];
   listingDate?: string;
-  
+  /** Repliers lastStatus (e.g. Sus, Exp, Sld, Ter, Dft, Lsd, Sc, Lc, Pc, Ext, New, Cs) */
+  lastStatus?: string;
+  /** Keyword search (Repliers search param, e.g. "swimming pool", "garage") */
+  searchKeywords?: string;
+  /** Min garage spaces */
+  minGarageSpaces?: number;
+  /** Min parking spaces */
+  minParkingSpaces?: number;
+  /** Has pool: 'all' | 'yes' */
+  hasPool?: string;
+  /** Flooring type (e.g. "Hardwood", "Carpet") */
+  flooringType?: string;
+  /** Time on Summitly / days on market: none | new | lt3 | lt7 | lt14 | gt7 | gt14 | gt30 */
+  timeOnSummitly?: string;
+  /** Open house: any | this-weekend | within-3 | within-7 */
+  openHouseFilter?: string;
+
   // Pre-construction specific filters
   developer?: string;
   preConStatus?: string;
@@ -257,6 +273,91 @@ export const PROPERTY_TYPES = [
   { value: 'Locker', label: 'Locker' },
   { value: 'Timeshare', label: 'Timeshare' },
   { value: 'Shared Room', label: 'Shared Room' }
+];
+
+// MLS/Repliers property types shown in listing filters (reduced set; value = Repliers API type)
+export const REPLIERS_PROPERTY_TYPE_OPTIONS = [
+  { value: 'all', label: 'All Property Types' },
+  { value: 'Detached', label: 'Detached' },
+  { value: 'Semi-Detached', label: 'Semi-Detached' },
+  { value: 'Condo Apartment', label: 'Condo Apt' },
+  { value: 'Att/Row/Townhouse', label: 'Freehold Townhouse' },
+  { value: 'Condo Townhouse', label: 'Condo Townhouse' },
+  { value: 'Link', label: 'Link' },
+  { value: 'Duplex', label: 'Duplex' },
+  { value: 'Multiplex', label: 'Multiplex' },
+  { value: 'Vacant Land', label: 'Vacant Land' },
+  { value: 'Farm', label: 'Farm' },
+  { value: 'Other', label: 'Others' },
+];
+
+// Repliers lastStatus options (abbreviation = API value, label = description)
+export const LAST_STATUS_OPTIONS = [
+  { value: 'all', label: 'All statuses' },
+  { value: 'Sus', label: 'Suspended' },
+  { value: 'Exp', label: 'Expired' },
+  { value: 'Sld', label: 'Sold' },
+  { value: 'Ter', label: 'Terminated' },
+  { value: 'Dft', label: 'Deal Fell Through' },
+  { value: 'Lsd', label: 'Leased' },
+  { value: 'Sc', label: 'Sold Conditionally' },
+  { value: 'Sce', label: 'Sold Conditionally with Escape Clause' },
+  { value: 'Lc', label: 'Leased Conditionally' },
+  { value: 'Pc', label: 'Price Change' },
+  { value: 'Ext', label: 'Extension' },
+  { value: 'New', label: 'New' },
+  { value: 'Cs', label: 'Coming Soon' },
+];
+
+// Time on Summitly (days on market / list date)
+export const TIME_ON_SUMMITLY_OPTIONS = [
+  { value: 'none', label: 'None' },
+  { value: 'new', label: 'New Listings' },
+  { value: 'lt3', label: 'Less than 3 days' },
+  { value: 'lt7', label: 'Less than 7 days' },
+  { value: 'lt14', label: 'Less than 14 days' },
+  { value: 'gt7', label: 'More than 7 days' },
+  { value: 'gt14', label: 'More than 14 days' },
+  { value: 'gt30', label: 'More than 30 days' },
+];
+
+// Open house filter
+export const OPEN_HOUSE_FILTER_OPTIONS = [
+  { value: 'any', label: 'Any Time' },
+  { value: 'this-weekend', label: 'This Weekend' },
+  { value: 'within-3', label: 'Within 3 days' },
+  { value: 'within-7', label: 'Within 7 days' },
+];
+
+// Garage / parking (min spaces)
+export const GARAGE_SPACES_OPTIONS = [
+  { value: 0, label: 'Any' },
+  { value: 1, label: '1+' },
+  { value: 2, label: '2+' },
+  { value: 3, label: '3+' },
+];
+
+export const PARKING_SPACES_OPTIONS = [
+  { value: 0, label: 'Any' },
+  { value: 1, label: '1+' },
+  { value: 2, label: '2+' },
+];
+
+// Has pool
+export const HAS_POOL_OPTIONS = [
+  { value: 'all', label: 'Any' },
+  { value: 'yes', label: 'Has pool' },
+];
+
+// Flooring type (common values; Repliers may have more)
+export const FLOORING_TYPE_OPTIONS = [
+  { value: 'all', label: 'Any' },
+  { value: 'Hardwood', label: 'Hardwood' },
+  { value: 'Carpet', label: 'Carpet' },
+  { value: 'Laminate', label: 'Laminate' },
+  { value: 'Tile', label: 'Tile' },
+  { value: 'Vinyl', label: 'Vinyl' },
+  { value: 'Other', label: 'Other' },
 ];
 
 // Listing type options

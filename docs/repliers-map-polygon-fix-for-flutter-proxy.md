@@ -127,6 +127,65 @@ mlsNumbers: List[str] = Field(..., min_length=1)
 
 ---
 
+## Follow-up: Empty `savedProperties` and `clusters` (success but no data)
+
+If the proxy returns `success: true` but `savedProperties: []` and `clusters: []`, fix these:
+
+### 1. Use the correct response key for listings
+
+Repliers returns listings under **`listings`**, not `results`. In the proxy you had:
+
+```python
+listings = repliers_data.get("results", [])  # ❌ wrong key
+```
+
+Change to:
+
+```python
+listings = repliers_data.get("listings", [])  # ✅ Repliers uses "listings"
+```
+
+Otherwise you always get an empty array.
+
+### 2. Ask for clusters with `aggregates=map`
+
+To get cluster data, the request must include **`aggregates: 'map'`**. Summitly does:
+
+```python
+# When clustering, send:
+body["cluster"] = True
+body["aggregates"] = "map"   # required for clusters to be returned
+# Optional: body["listings"] = False  to only get clusters (smaller response)
+```
+
+If `aggregates` is not set, Repliers won’t populate `aggregates.map.clusters`, so you’ll get `clusters: []`.
+
+### 3. Ask for listings and pagination
+
+To get actual listings in the response:
+
+- Don’t set `listings: false` if you want both clusters and listings.
+- Send **`resultsPerPage`** (e.g. `20` or `50`) so Repliers returns listing records.
+
+Example body shape that matches what works in Summitly:
+
+```python
+body = {
+    "map": to_map_param(req.polygon),
+    "cluster": True,
+    "aggregates": "map",      # so meta.clusters is filled
+    "listings": True,         # or omit; False = clusters only
+    "resultsPerPage": 50,     # so listings array is filled
+    **req.filters,
+}
+```
+
+### 4. Check the polygon area
+
+If the polygon is over water or a region with no listings in Repliers’ data, both `listings` and `clusters` can legitimately be empty. Test with a polygon over a city (e.g. Toronto) to confirm.
+
+---
+
 ## Summary
 
 | What you had | What Repliers expects (from working Summitly) |

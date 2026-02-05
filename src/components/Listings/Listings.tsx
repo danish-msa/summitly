@@ -153,10 +153,9 @@ const Listings = () => {
   const [selectedProperty, setSelectedProperty] = useState<PropertyListing | null>(null);
   const [communities, setCommunities] = useState<string[]>([]);
   const [listingType, setListingType] = useState<'sell' | 'rent'>('sell');
-  // Initialize viewMode to 'list' - this is the grid view (LayoutGrid icon)
+  // Initialize viewMode to 'mixed' - list view with both map and properties
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    // Always return 'list' on initial mount, ignore any potential localStorage
-    return 'list';
+    return 'mixed';
   });
   const [filters, setFilters] = useState<FilterState>({
     location: 'all',
@@ -229,7 +228,7 @@ const Listings = () => {
   // Track if we've initialized the view mode
   const viewModeInitializedRef = useRef(false);
 
-  // Ensure list view is selected on page load and clear any persisted state
+  // Ensure list view (map + properties) is selected on page load and clear any persisted state
   // Use useLayoutEffect to set it synchronously before paint
   useLayoutEffect(() => {
     // Only run once on mount
@@ -238,7 +237,6 @@ const Listings = () => {
 
     // Clear any localStorage that might be persisting viewMode
     if (typeof window !== 'undefined') {
-      // Clear all possible localStorage keys related to viewMode
       const keys = Object.keys(localStorage);
       keys.forEach(key => {
         const lowerKey = key.toLowerCase();
@@ -248,12 +246,10 @@ const Listings = () => {
       });
     }
     
-    // Force set to 'list' view immediately - this activates the LayoutGrid button (Grid View)
-    // Note: 'list' viewMode = Grid View button (LayoutGrid icon)
-    setViewMode('list');
+    // Force set to 'mixed' (list view: both map and properties)
+    setViewMode('mixed');
     
-    // Log for debugging
-    console.log('[Listings] Initialized viewMode to:', 'list');
+    console.log('[Listings] Initialized viewMode to:', 'mixed');
   }, []);
 
   // Get user's current location

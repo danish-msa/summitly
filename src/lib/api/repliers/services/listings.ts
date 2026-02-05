@@ -39,6 +39,11 @@ export interface ListingsParams {
   maxListDate?: string; // Format: YYYY-MM-DD
   city?: string;
   status?: string | string[];
+  lastStatus?: string | string[];
+  search?: string;
+  searchFields?: string;
+  minGarageSpaces?: number;
+  minParkingSpaces?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   [key: string]: unknown;

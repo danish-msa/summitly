@@ -24,7 +24,7 @@ import {
 const RENTAL_MANAGER_ITEMS = [
   { label: "Price my rental", href: "/manage-rentals/price-my-rental" },
   { label: "Listing", href: "/manage-rentals/listing" },
-  { label: "Applications", href: "/manage-rentals/applications" },
+  { label: "Applications", href: "/manage-rentals/tenant-screening" },
   { label: "Leases", href: "/manage-rentals/leases" },
   { label: "Payment", href: "/manage-rentals/payment" },
 ] as const;
@@ -241,7 +241,7 @@ function RentalsNavbarMobile() {
             Contact sales
           </Link>
           <div className="mt-4 px-4">
-            <Link href="/manage-rentals/listing" onClick={() => setOpen(false)}>
+            <Link href="/manage-rentals/dashboard/properties/new" onClick={() => setOpen(false)}>
               <Button className="w-full" size="lg">
                 Post your listing
               </Button>
@@ -260,7 +260,7 @@ export function RentalsNavbar() {
   return (
     <>
       <header
-        className="fixed top-10 left-0 right-0 z-[99] bg-background/95 backdrop-blur-md border-b border-border shadow-sm navbar-smooth"
+        className="fixed top-10 left-0 right-0 z-[99] bg-white/85 backdrop-blur-md shadow-sm navbar-smooth"
         style={{ minHeight: "4rem", height: "4rem" }}
       >
         <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 h-full">
@@ -294,7 +294,7 @@ export function RentalsNavbar() {
                 </Button>
               )}
               <RentalsNavbarMobile />
-              <Link href="/manage-rentals/listing" className="hidden lg:inline-flex">
+              <Link href="/manage-rentals/dashboard/properties/new" className="hidden lg:inline-flex">
                 <Button size="default">Post your listing</Button>
               </Link>
             </div>

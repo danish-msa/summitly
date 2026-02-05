@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Circle, ChevronLeft, ChevronRight, Info, Upload, Image as ImageIcon, Video, Camera, Plus, FileText, Car, Zap, MoreHorizontal, Lightbulb } from "lucide-react";
+import { Check, Circle, ChevronLeft, ChevronRight, Info, Upload, Image as ImageIcon, Video, Camera, Plus, FileText, Car, Zap, MoreHorizontal, Lightbulb, AlertCircle, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,13 +29,13 @@ const SIDEBAR_STEPS = [
   { id: "review", label: "Review & publish" },
 ] as const;
 
-const TOTAL_STEPS = 11; // Property info 2, Rent 3, Media 1, Amenities 2, Costs & fees 1, Final details 2
+const TOTAL_STEPS = 16; // Property info 2, Rent 3, Media 1, Amenities 2, Costs & fees 1, Final details 7
 const PROPERTY_INFO_END = 2;
 const RENT_DETAILS_END = 5;
 const MEDIA_END = 6;
 const AMENITIES_END = 8;
 const COSTS_FEES_END = 9;
-const FINAL_DETAILS_END = 11;
+const FINAL_DETAILS_END = 16;
 
 function getSectionAndStep(stepIndex: number): {
   sectionTitle: string;
@@ -57,10 +57,10 @@ function getSectionAndStep(stepIndex: number): {
   if (stepIndex === 8) {
     return { sectionTitle: "Costs & fees", stepLabel: "", sectionId: "costs-fees" };
   }
-  if (stepIndex < 11) {
+  if (stepIndex >= 9 && stepIndex < 16) {
     return { sectionTitle: "Final details", stepLabel: `Step ${stepIndex - 9 + 1} of 7`, sectionId: "final-details" };
   }
-  return { sectionTitle: "Final details", stepLabel: "Step 2 of 7", sectionId: "final-details" };
+  return { sectionTitle: "Final details", stepLabel: "Step 7 of 7", sectionId: "final-details" };
 }
 
 const BEDROOM_OPTIONS = Array.from({ length: 10 }, (_, i) => (i + 1).toString());
@@ -102,6 +102,21 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
   const [leaseDuration, setLeaseDuration] = useState("");
   const [leaseTerms, setLeaseTerms] = useState("");
   const [rentersInsurance, setRentersInsurance] = useState<"yes" | "no">("no");
+  const [listedBy, setListedBy] = useState<"owner" | "management" | "tenant">("owner");
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [allowPhoneContact, setAllowPhoneContact] = useState<"yes" | "no">("yes");
+  const [bookToursMethod, setBookToursMethod] = useState<"instantly" | "review">("instantly");
+  const [propertyDescription, setPropertyDescription] = useState("");
+  const [touched, setTouched] = useState({
+    step0: false,
+    step2: false,
+    step3: false,
+    step9: false,
+    step11: false,
+    step12: false,
+  });
 
   const { sectionTitle, stepLabel, sectionId } = getSectionAndStep(step);
   const completedPropertyInfo = step >= PROPERTY_INFO_END;
@@ -115,12 +130,46 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
     if (step > 0) setStep(step - 1);
   };
 
+  const validateStep = (s: number): boolean => {
+    if (s === 0) {
+      setTouched((t) => ({ ...t, step0: true }));
+      return !!(squareFootage.trim() && totalBedrooms && totalBathrooms);
+    }
+    if (s === 2) {
+      setTouched((t) => ({ ...t, step2: true }));
+      return !!monthlyRent.trim();
+    }
+    if (s === 3) {
+      setTouched((t) => ({ ...t, step3: true }));
+      return !!dateAvailable.trim();
+    }
+    if (s === 9) {
+      setTouched((t) => ({ ...t, step9: true }));
+      return !!leaseDuration;
+    }
+    if (s === 11) {
+      setTouched((t) => ({ ...t, step11: true }));
+      return !!(contactName.trim() && contactEmail.trim());
+    }
+    if (s === 12) {
+      setTouched((t) => ({ ...t, step12: true }));
+      return !!phoneNumber.trim();
+    }
+    return true;
+  };
+
   const handleNext = () => {
+    if (!validateStep(step)) return;
     if (step < TOTAL_STEPS - 1) setStep(step + 1);
   };
 
   const handleSaveExit = () => {
     router.push("/manage-rentals/dashboard/properties");
+  };
+
+  const handleFinish = () => {
+    if (!validateStep(step)) return;
+    router.push("/manage-rentals/dashboard/properties/new");
   };
 
   return (
@@ -161,7 +210,7 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                 (isMedia && step === 5) ||
                 (isAmenities && step >= 6 && step < 8) ||
                 (isCostsFees && step === 8) ||
-                (isFinalDetails && step >= 9 && step < 11);
+                (isFinalDetails && step >= 9 && step < 16);
 
               return (
                 <div
@@ -224,10 +273,22 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                           placeholder="e.g. 1200"
                           value={squareFootage}
                           onChange={(e) => setSquareFootage(e.target.value)}
-                          className="max-w-[140px]"
+                          onBlur={() => setTouched((t) => ({ ...t, step0: true }))}
+                          className={cn(
+                            "max-w-[140px]",
+                            touched.step0 && !squareFootage.trim() && "border-destructive focus-visible:ring-destructive"
+                          )}
+                          aria-invalid={touched.step0 && !squareFootage.trim()}
+                          aria-describedby={touched.step0 && !squareFootage.trim() ? "square-footage-error" : undefined}
                         />
                         <span className="text-sm text-muted-foreground">sq. ft.</span>
                       </div>
+                      {touched.step0 && !squareFootage.trim() && (
+                        <p id="square-footage-error" className="flex items-center gap-1.5 text-sm text-destructive" role="alert">
+                          <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
+                          Enter square footage
+                        </p>
+                      )}
                     </div>
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-2">
@@ -237,8 +298,15 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                         <Select
                           value={totalBedrooms}
                           onValueChange={setTotalBedrooms}
+                          onOpenChange={(open) => !open && setTouched((t) => ({ ...t, step0: true }))}
                         >
-                          <SelectTrigger id="bedrooms">
+                          <SelectTrigger
+                            id="bedrooms"
+                            className={cn(
+                              touched.step0 && !totalBedrooms && "border-destructive focus:ring-destructive"
+                            )}
+                            aria-invalid={touched.step0 && !totalBedrooms}
+                          >
                             <SelectValue placeholder="Select an option" />
                           </SelectTrigger>
                           <SelectContent>
@@ -249,6 +317,12 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                             ))}
                           </SelectContent>
                         </Select>
+                        {touched.step0 && !totalBedrooms && (
+                          <p className="flex items-center gap-1.5 text-sm text-destructive" role="alert">
+                            <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
+                            Select total bedrooms
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="bathrooms">
@@ -257,8 +331,15 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                         <Select
                           value={totalBathrooms}
                           onValueChange={setTotalBathrooms}
+                          onOpenChange={(open) => !open && setTouched((t) => ({ ...t, step0: true }))}
                         >
-                          <SelectTrigger id="bathrooms">
+                          <SelectTrigger
+                            id="bathrooms"
+                            className={cn(
+                              touched.step0 && !totalBathrooms && "border-destructive focus:ring-destructive"
+                            )}
+                            aria-invalid={touched.step0 && !totalBathrooms}
+                          >
                             <SelectValue placeholder="Select an option" />
                           </SelectTrigger>
                           <SelectContent>
@@ -269,6 +350,12 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                             ))}
                           </SelectContent>
                         </Select>
+                        {touched.step0 && !totalBathrooms && (
+                          <p className="flex items-center gap-1.5 text-sm text-destructive" role="alert">
+                            <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
+                            Select total bathrooms
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -349,12 +436,24 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                           placeholder="0"
                           value={monthlyRent}
                           onChange={(e) => setMonthlyRent(e.target.value)}
-                          className="pr-16"
+                          onBlur={() => setTouched((t) => ({ ...t, step2: true }))}
+                          className={cn(
+                            "pr-16",
+                            touched.step2 && !monthlyRent.trim() && "border-destructive focus-visible:ring-destructive"
+                          )}
+                          aria-invalid={touched.step2 && !monthlyRent.trim()}
+                          aria-describedby={touched.step2 && !monthlyRent.trim() ? "monthly-rent-error" : undefined}
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
                           /month
                         </span>
                       </div>
+                      {touched.step2 && !monthlyRent.trim() && (
+                        <p id="monthly-rent-error" className="flex items-center gap-1.5 text-sm text-destructive" role="alert">
+                          <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
+                          Enter monthly rent
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="security-deposit">Security deposit</Label>
@@ -397,23 +496,34 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                       <div className="flex items-center gap-2">
                         <Input
                           id="date-available"
-                          type="text"
-                          placeholder="mm/dd/yyyy"
+                          type="date"
                           value={dateAvailable}
                           onChange={(e) => setDateAvailable(e.target.value)}
-                          className="max-w-[180px]"
+                          onBlur={() => setTouched((t) => ({ ...t, step3: true }))}
+                          className={cn(
+                            "max-w-[180px]",
+                            touched.step3 && !dateAvailable.trim() && "border-destructive focus-visible:ring-destructive"
+                          )}
+                          aria-invalid={touched.step3 && !dateAvailable.trim()}
+                          aria-describedby={touched.step3 && !dateAvailable.trim() ? "date-available-error" : undefined}
                         />
                         <span className="text-muted-foreground" aria-hidden>
                           📅
                         </span>
                       </div>
+                      {touched.step3 && !dateAvailable.trim() && (
+                        <p id="date-available-error" className="flex items-center gap-1.5 text-sm text-destructive" role="alert">
+                          <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
+                          Enter date available
+                        </p>
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground">
                       Quick select:{" "}
                       <button
                         type="button"
                         className="text-primary hover:underline"
-                        onClick={() => setDateAvailable("03/01/2026")}
+                        onClick={() => setDateAvailable("2026-03-01")}
                       >
                         Set to 03/01/2026
                       </button>
@@ -785,6 +895,12 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                       </div>
                     ))}
                   </RadioGroup>
+                  {touched.step9 && !leaseDuration && (
+                    <p className="flex items-center gap-1.5 text-sm text-destructive mt-2" role="alert">
+                      <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
+                      Select lease duration
+                    </p>
+                  )}
                 </div>
               </>
             )}
@@ -842,6 +958,263 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                 </div>
               </>
             )}
+
+            {/* Step 11: Final details – Step 3 of 7 (who's listing) */}
+            {step === 11 && (
+              <>
+                <h2 className="text-2xl font-bold text-foreground">
+                  Who&apos;s listing this property for rent?
+                </h2>
+                <p className="text-muted-foreground mt-1 mb-6">
+                  Enter your information, unless you&apos;re creating the listing for someone else and they should be the main contact person.
+                </p>
+                <div className="flex gap-8 flex-col lg:flex-row">
+                  <div className="flex-1 space-y-6">
+                    <div>
+                      <Label className="text-sm font-medium mb-3 block">Listed by</Label>
+                      <RadioGroup
+                        value={listedBy}
+                        onValueChange={(v) => setListedBy(v as "owner" | "management" | "tenant")}
+                        className="space-y-3"
+                      >
+                        {[
+                          { value: "owner", label: "Property owner" },
+                          { value: "management", label: "Management company or broker" },
+                          { value: "tenant", label: "Tenant" },
+                        ].map(({ value, label }) => (
+                          <div key={value} className="flex items-center space-x-2">
+                            <RadioGroupItem value={value} id={`listed-${value}`} />
+                            <Label htmlFor={`listed-${value}`} className="font-normal cursor-pointer">{label}</Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="contact-name">
+                        Name <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="contact-name"
+                        placeholder="Your full name"
+                        value={contactName}
+                        onChange={(e) => setContactName(e.target.value)}
+                        onBlur={() => setTouched((t) => ({ ...t, step11: true }))}
+                        className={cn(
+                          touched.step11 && !contactName.trim() && "border-destructive focus-visible:ring-destructive"
+                        )}
+                        aria-invalid={touched.step11 && !contactName.trim()}
+                      />
+                      {touched.step11 && !contactName.trim() && (
+                        <p className="flex items-center gap-1.5 text-sm text-destructive" role="alert">
+                          <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
+                          Enter your name
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="contact-email">
+                        Email <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="contact-email"
+                        type="email"
+                        placeholder="Add email address"
+                        value={contactEmail}
+                        onChange={(e) => setContactEmail(e.target.value)}
+                        onBlur={() => setTouched((t) => ({ ...t, step11: true }))}
+                        className={cn(
+                          touched.step11 && !contactEmail.trim() && "border-destructive focus-visible:ring-destructive"
+                        )}
+                        aria-invalid={touched.step11 && !contactEmail.trim()}
+                      />
+                      {touched.step11 && !contactEmail.trim() && (
+                        <p className="flex items-center gap-1.5 text-sm text-destructive" role="alert">
+                          <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
+                          Enter email address
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-3 rounded-lg bg-primary/5 border border-primary/20 p-4 lg:max-w-sm shrink-0">
+                    <Lightbulb className="h-5 w-5 shrink-0 text-primary mt-0.5" aria-hidden />
+                    <div>
+                      <p className="font-medium text-foreground">Tips for contact information</p>
+                      <ul className="text-sm text-muted-foreground mt-2 space-y-1 list-disc list-inside">
+                        <li>We&apos;ll deliver renter inquiries to the email you provide here.</li>
+                        <li>Other communications will be sent to your account email.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Step 12: Final details – Step 4 of 7 (verify phone) */}
+            {step === 12 && (
+              <>
+                <h2 className="text-2xl font-bold text-foreground">Verify your phone number</h2>
+                <p className="text-muted-foreground mt-1 mb-6">
+                  For your security, we&apos;ll send a one-time verification code to this number to verify that this listing belongs to you.
+                </p>
+                <div className="space-y-2">
+                  <Label htmlFor="phone-number">
+                    Phone number <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="phone-number"
+                    type="tel"
+                    placeholder="Add phone number"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    onBlur={() => setTouched((t) => ({ ...t, step12: true }))}
+                    className={cn(
+                      "max-w-[280px]",
+                      touched.step12 && !phoneNumber.trim() && "border-destructive focus-visible:ring-destructive"
+                    )}
+                    aria-invalid={touched.step12 && !phoneNumber.trim()}
+                  />
+                  {touched.step12 && !phoneNumber.trim() && (
+                    <p className="flex items-center gap-1.5 text-sm text-destructive" role="alert">
+                      <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
+                      Enter phone number
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Step 13: Final details – Step 5 of 7 (allow phone contact) */}
+            {step === 13 && (
+              <>
+                <h2 className="text-2xl font-bold text-foreground">
+                  Do you want to allow renters to contact you by phone?
+                </h2>
+                <p className="text-muted-foreground mt-1 mb-6">
+                  If you choose No, the listing will display without a phone number. Please note, to protect your information, the number displayed on your listing differs from your actual number.
+                </p>
+                <div className="flex gap-8 flex-col lg:flex-row">
+                  <div className="flex-1">
+                    <Label className="text-sm font-medium mb-3 block">Allow renters to contact you by phone</Label>
+                    <RadioGroup
+                      value={allowPhoneContact}
+                      onValueChange={(v) => setAllowPhoneContact(v as "yes" | "no")}
+                      className="space-y-3"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="allow-phone-yes" />
+                        <Label htmlFor="allow-phone-yes" className="font-normal cursor-pointer">Yes (Recommended)</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="allow-phone-no" />
+                        <Label htmlFor="allow-phone-no" className="font-normal cursor-pointer">No</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                  <div className="flex gap-3 rounded-lg bg-primary/5 border border-primary/20 p-4 lg:max-w-sm shrink-0">
+                    <Info className="h-5 w-5 shrink-0 text-primary mt-0.5" aria-hidden />
+                    <div>
+                      <p className="font-medium text-foreground">How is my number used?</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        We&apos;ll assign your listing a random number that will automatically route incoming calls to your phone. It&apos;s up to you to share your number directly with an applicant.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Step 14: Final details – Step 6 of 7 (book tours) */}
+            {step === 14 && (
+              <>
+                <h2 className="text-2xl font-bold text-foreground">Choose a way to book tours</h2>
+                <p className="text-muted-foreground mt-1 mb-6">
+                  You can change your settings anytime. Skip this if you prefer to book tours on your own.
+                </p>
+                <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
+                  <button
+                    type="button"
+                    onClick={() => setBookToursMethod("instantly")}
+                    className={cn(
+                      "flex flex-col items-start rounded-lg border-2 p-4 text-left transition-colors",
+                      bookToursMethod === "instantly"
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:bg-muted/50"
+                    )}
+                  >
+                    <div className="flex w-full items-start justify-between">
+                      <Zap className="h-6 w-6 text-primary shrink-0" aria-hidden />
+                      {bookToursMethod === "instantly" && (
+                        <Check className="h-5 w-5 text-primary shrink-0" aria-hidden />
+                      )}
+                    </div>
+                    <span className="mt-2 font-medium text-foreground">Book tours instantly</span>
+                    <span className="inline-block mt-1 rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                      MOST EFFICIENT
+                    </span>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Renters directly book a time from the availability provided on your listing.
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBookToursMethod("review")}
+                    className={cn(
+                      "flex flex-col items-start rounded-lg border-2 p-4 text-left transition-colors",
+                      bookToursMethod === "review"
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:bg-muted/50"
+                    )}
+                  >
+                    <div className="flex w-full items-start justify-between">
+                      <Shield className="h-6 w-6 text-muted-foreground shrink-0" aria-hidden />
+                      {bookToursMethod === "review" && (
+                        <Check className="h-5 w-5 text-primary shrink-0" aria-hidden />
+                      )}
+                    </div>
+                    <span className="mt-2 font-medium text-foreground">Review and confirm</span>
+                    <span className="inline-block mt-1 rounded bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                      MORE CONTROL
+                    </span>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Renters request a time from the availability on your listing, then you confirm or decline.
+                    </p>
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* Step 15: Final details – Step 7 of 7 (property description) */}
+            {step === 15 && (
+              <>
+                <h2 className="text-2xl font-bold text-foreground">Describe the property.</h2>
+                <p className="text-muted-foreground mt-1 mb-6">
+                  Write several sentences describing the upgrades and desirable features that will attract renters to your property.
+                </p>
+                <div className="flex gap-8 flex-col lg:flex-row">
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="property-description">Property description</Label>
+                    <Textarea
+                      id="property-description"
+                      placeholder="Freshly painted home with new appliances and carpeting. Easy walking to public transit and a great neighborhood."
+                      value={propertyDescription}
+                      onChange={(e) => setPropertyDescription(e.target.value)}
+                      className="min-h-[140px] resize-y"
+                    />
+                  </div>
+                  <div className="flex gap-3 rounded-lg bg-primary/5 border border-primary/20 p-4 lg:max-w-sm shrink-0">
+                    <Lightbulb className="h-5 w-5 shrink-0 text-primary mt-0.5" aria-hidden />
+                    <div>
+                      <p className="font-medium text-foreground">Tips for property descriptions</p>
+                      <ul className="text-sm text-muted-foreground mt-2 space-y-1 list-disc list-inside">
+                        <li>Market the property&apos;s proximity to transit, dining, shopping, and other local attractions.</li>
+                        <li>Mention upgrades, attractive amenities, and other appealing details.</li>
+                        <li>Indicate whether you live on-site.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
             </div>
           </main>
 
@@ -856,7 +1229,7 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                 <ChevronRight className="h-4 w-4" />
               </Button>
             ) : (
-              <Button className="gap-2">
+              <Button onClick={handleFinish} className="gap-2">
                 Finish
                 <ChevronRight className="h-4 w-4" />
               </Button>
