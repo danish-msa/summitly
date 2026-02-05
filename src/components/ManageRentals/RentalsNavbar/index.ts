@@ -1,0 +1,1 @@
+export { RentalsNavbar } from "./RentalsNavbar";

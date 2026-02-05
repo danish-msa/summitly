@@ -35,7 +35,7 @@ const ListingBanner: React.FC = () => {
 
   return (
     <section
-      className="relative min-h-[420px] sm:min-h-[520px] flex items-center justify-center mt-16"
+      className="relative min-h-[420px] sm:min-h-[520px] flex items-center justify-center"
       aria-labelledby="listing-banner-heading"
     >
       {/* Background image with blur */}

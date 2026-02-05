@@ -2,6 +2,6 @@
 
 import { AlertsContent } from "@/components/Dashboard/AlertsContent";
 
-export default function Alerts() {
+export default function RentalsAlertsPage() {
   return <AlertsContent />;
 }

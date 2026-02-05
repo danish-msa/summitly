@@ -9,7 +9,9 @@ import {
   Calendar,
   Settings,
   ArrowRightFromLine,
-  Building2
+  Building2,
+  Users,
+  CreditCard
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -23,7 +25,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Link from 'next/link'
 import { isAdmin } from '@/lib/roles'
 
-export function UserProfileDropdown() {
+type UserProfileDropdownProps = {
+  /** When "rentals", shows only Dashboard, Leads, Properties, Chats, Payments, Alerts, Settings, Logout */
+  variant?: 'default' | 'rentals'
+}
+
+export function UserProfileDropdown({ variant = 'default' }: UserProfileDropdownProps) {
   const { data: session } = useSession()
 
   if (!session?.user) {
@@ -41,7 +48,7 @@ export function UserProfileDropdown() {
   const canAccessPreCon = isAdmin(userRole)
 
   const handleSignOut = async () => {
-    await signOut({ callbackUrl: '/' })
+    await signOut({ callbackUrl: variant === 'rentals' ? '/manage-rentals' : '/' })
   }
 
   return (
@@ -68,55 +75,110 @@ export function UserProfileDropdown() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <Link href="/dashboard">
-          <DropdownMenuItem>
-            <LayoutDashboard className="mr-2 h-4 w-4" />
-            <span>Dashboard</span>
-          </DropdownMenuItem>
-        </Link>
-        {canAccessPreCon && (
-          <Link href="/dashboard/admin/pre-con-projects">
-            <DropdownMenuItem>
-              <Building2 className="mr-2 h-4 w-4" />
-              <span>Pre-Con Projects</span>
+
+        {variant === 'rentals' ? (
+          <>
+            <Link href="/manage-rentals/dashboard">
+              <DropdownMenuItem>
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                <span>Dashboard</span>
+              </DropdownMenuItem>
+            </Link>
+            <Link href="/manage-rentals/dashboard/leads">
+              <DropdownMenuItem>
+                <Users className="mr-2 h-4 w-4" />
+                <span>Leads</span>
+              </DropdownMenuItem>
+            </Link>
+            <Link href="/manage-rentals/dashboard/properties">
+              <DropdownMenuItem>
+                <Building2 className="mr-2 h-4 w-4" />
+                <span>Properties</span>
+              </DropdownMenuItem>
+            </Link>
+            <Link href="/manage-rentals/dashboard/messages">
+              <DropdownMenuItem>
+                <MessageSquare className="mr-2 h-4 w-4" />
+                <span>Chats</span>
+              </DropdownMenuItem>
+            </Link>
+            <Link href="/manage-rentals/dashboard/payments">
+              <DropdownMenuItem>
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>Payments</span>
+              </DropdownMenuItem>
+            </Link>
+            <Link href="/manage-rentals/dashboard/alerts">
+              <DropdownMenuItem>
+                <Bell className="mr-2 h-4 w-4" />
+                <span>Alerts</span>
+              </DropdownMenuItem>
+            </Link>
+            <DropdownMenuSeparator />
+            <Link href="/dashboard/settings">
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+            </Link>
+            <DropdownMenuItem onClick={handleSignOut}>
+              <ArrowRightFromLine className="mr-2 h-4 w-4" />
+              <span>Logout</span>
             </DropdownMenuItem>
-          </Link>
+          </>
+        ) : (
+          <>
+            <Link href="/dashboard">
+              <DropdownMenuItem>
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                <span>Dashboard</span>
+              </DropdownMenuItem>
+            </Link>
+            {canAccessPreCon && (
+              <Link href="/dashboard/admin/pre-con-projects">
+                <DropdownMenuItem>
+                  <Building2 className="mr-2 h-4 w-4" />
+                  <span>Pre-Con Projects</span>
+                </DropdownMenuItem>
+              </Link>
+            )}
+            <Link href="/dashboard/saved">
+              <DropdownMenuItem>
+                <Heart className="mr-2 h-4 w-4" />
+                <span>Saved Properties</span>
+              </DropdownMenuItem>
+            </Link>
+            <Link href="/dashboard/alerts">
+              <DropdownMenuItem>
+                <Bell className="mr-2 h-4 w-4" />
+                <span>Alerts</span>
+              </DropdownMenuItem>
+            </Link>
+            <Link href="/dashboard/chat">
+              <DropdownMenuItem>
+                <MessageSquare className="mr-2 h-4 w-4" />
+                <span>Chat</span>
+              </DropdownMenuItem>
+            </Link>
+            <Link href="/dashboard/tours">
+              <DropdownMenuItem>
+                <Calendar className="mr-2 h-4 w-4" />
+                <span>Tours & Appointments</span>
+              </DropdownMenuItem>
+            </Link>
+            <DropdownMenuSeparator />
+            <Link href="/dashboard/settings">
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+            </Link>
+            <DropdownMenuItem onClick={handleSignOut}>
+              <ArrowRightFromLine className="mr-2 h-4 w-4" />
+              <span>Sign Out</span>
+            </DropdownMenuItem>
+          </>
         )}
-        <Link href="/dashboard/saved">
-          <DropdownMenuItem>
-            <Heart className="mr-2 h-4 w-4" />
-            <span>Saved Properties</span>
-          </DropdownMenuItem>
-        </Link>
-        <Link href="/dashboard/alerts">
-          <DropdownMenuItem>
-            <Bell className="mr-2 h-4 w-4" />
-            <span>Alerts</span>
-          </DropdownMenuItem>
-        </Link>
-        <Link href="/dashboard/chat">
-          <DropdownMenuItem>
-            <MessageSquare className="mr-2 h-4 w-4" />
-            <span>Chat</span>
-          </DropdownMenuItem>
-        </Link>
-        <Link href="/dashboard/tours">
-          <DropdownMenuItem>
-            <Calendar className="mr-2 h-4 w-4" />
-            <span>Tours & Appointments</span>
-          </DropdownMenuItem>
-        </Link>
-        <DropdownMenuSeparator />
-        <Link href="/dashboard/settings">
-          <DropdownMenuItem>
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Settings</span>
-          </DropdownMenuItem>
-        </Link>
-        <DropdownMenuItem onClick={handleSignOut}>
-          <ArrowRightFromLine className="mr-2 h-4 w-4" />
-          <span>Sign Out</span>
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

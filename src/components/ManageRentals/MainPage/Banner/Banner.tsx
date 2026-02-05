@@ -11,7 +11,7 @@ const FEATURES = ["Leases", "Payments", "Maintenance", "Screening"];
 const ManageRentalsBanner: React.FC = () => {
   return (
     <section
-      className="relative w-full bg-white mt-14 sm:mt-16 overflow-x-hidden"
+      className="relative w-full bg-white overflow-x-hidden"
       aria-labelledby="manage-rentals-heading"
     >
       <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-16 lg:py-20">

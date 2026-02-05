@@ -20,7 +20,7 @@ const PriceMyRentalBanner: React.FC = () => {
 
   return (
     <section
-      className="relative bg-muted/30 mt-16"
+      className="relative bg-muted/30"
       aria-labelledby="price-my-rental-heading"
     >
       <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16">
