@@ -373,7 +373,7 @@ export function transformListing(listing: ApiListing): PropertyListing {
       taxLot: listing.lot?.taxLot || 0,
     },
     
-    boardId: listing.boardId && listing.boardId > 0 ? listing.boardId : undefined,
+    boardId: listing.boardId && listing.boardId > 0 ? listing.boardId : 0,
     
     images: {
       imageUrl: images[0] || '',
