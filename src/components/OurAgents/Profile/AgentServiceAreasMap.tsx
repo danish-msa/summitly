@@ -11,7 +11,6 @@ import { getPolygonsForAreas, getBoundsForPolygons } from "@/data/agentAreaBound
 import { DEFAULT_FILTER_STATE } from "@/lib/types/filters";
 import type { AgentServiceArea } from "@prisma/client";
 
-const DEFAULT_CENTER = { lng: -79.3832, lat: 43.6532 };
 const DEFAULT_ZOOM = 9;
 
 function AgentServiceAreasMapInner({
@@ -92,9 +91,9 @@ export function AgentServiceAreasMap({
     [areaPolygons]
   );
 
-  const [listings, setListings] = useState<SearchResponse["list"]>([]);
-  const [clusters, setClusters] = useState<SearchResponse["clusters"]>([]);
-  const [count, setCount] = useState(0);
+  const [_listings, setListings] = useState<SearchResponse["list"]>([]);
+  const [_clusters, setClusters] = useState<SearchResponse["clusters"]>([]);
+  const [_count, setCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const handleMapLoad = useCallback(() => {
