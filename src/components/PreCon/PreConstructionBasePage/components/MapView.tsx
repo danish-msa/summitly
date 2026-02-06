@@ -1,47 +1,48 @@
 import React from 'react';
-import type { PropertyListing } from '@/lib/types';
 import type { PreConstructionProperty } from '@/components/PreCon/PropertyCards/types';
-import StaticPropertyMap from '@/features/map-search-v2/components/StaticPropertyMap';
+import { PreConMap } from './PreConMap';
 
 type ViewMode = 'list' | 'mixed' | 'map';
 
 interface MapViewProps {
   viewMode: ViewMode;
-  mapProperties: PropertyListing[];
-  selectedProperty: PropertyListing | null;
+  /** Not used: pre-con page uses PreConMap with preConProjects only. Kept for type compatibility. */
+  mapProperties?: unknown[];
+  selectedProperty?: unknown;
   selectedProject: PreConstructionProperty | null;
-  onPropertySelect: (property: PropertyListing | null) => void;
+  onPropertySelect?: (property: unknown) => void;
   preConProjects: PreConstructionProperty[];
   onProjectSelect: (project: PreConstructionProperty) => void;
 }
 
+/**
+ * Map for pre-construction page. Uses a dedicated PreConMap (no clusters, no MapService)
+ * so the Repliers properties map setup is not affected.
+ */
 export const MapView: React.FC<MapViewProps> = ({
   viewMode,
-  mapProperties,
-  selectedProperty,
-  selectedProject: _selectedProject,
-  onPropertySelect,
+  selectedProject,
   preConProjects,
   onProjectSelect,
 }) => {
   if (viewMode === 'list') return null;
 
+  const isFullMap = viewMode === 'map';
   return (
-    <div className={`${viewMode === 'mixed' ? 'md:w-1/2' : 'w-full'} bg-gray-100 rounded-lg overflow-hidden`} 
-         style={{ height: viewMode === 'mixed' ? 'calc(100vh - 200px)' : '70vh' }}>
-      <StaticPropertyMap
-        properties={mapProperties}
-        selectedProperty={selectedProperty}
-        onPropertySelect={(property) => {
-          if (property) {
-            const project = preConProjects.find((p) => p.id === property.mlsNumber);
-            if (project) onProjectSelect(project);
-            onPropertySelect(property);
-          } else {
-            onPropertySelect(null);
-          }
-        }}
-        initialZoom={12}
+    <div
+      className={`bg-gray-100 rounded-lg overflow-hidden ${
+        isFullMap ? 'w-full flex-1 min-w-0 min-h-0' : viewMode === 'mixed' ? 'md:w-1/2' : 'w-full'
+      }`}
+      style={{
+        height: isFullMap ? 'calc(100vh - 200px)' : viewMode === 'mixed' ? 'calc(100vh - 200px)' : '70vh',
+      }}
+    >
+      <PreConMap
+        projects={preConProjects}
+        selectedProject={selectedProject}
+        onProjectSelect={onProjectSelect}
+        initialZoom={10}
+        className="w-full h-full"
       />
     </div>
   );

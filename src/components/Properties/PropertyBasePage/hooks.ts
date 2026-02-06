@@ -36,6 +36,7 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
   const [allProperties, setAllProperties] = useState<PropertyListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [pageInfo, setPageInfo] = useState<PropertyPageInfo | null>(null);
@@ -666,6 +667,7 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
         } else {
           // Replace all properties (e.g. initial load or pagination page change)
           setAllProperties(filtered);
+          setHasLoadedOnce(true);
         }
         setCurrentPage(page);
         
@@ -848,10 +850,14 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
     }
   }, [currentPage, totalPages, loadProperties]);
 
+  // Full-page skeleton only on initial load; filter/page changes keep the layout
+  const initialLoading = loading && !hasLoadedOnce;
+
   return {
     properties,
     allProperties,
     loading,
+    initialLoading,
     loadingMore,
     hasMore,
     loadMore,

@@ -11,7 +11,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 
 interface HeroSectionProps {
-  heroImage: string | null;
+  heroImage?: string | null;
   title: string;
   customContent?: string | null;
   lastUpdatedDate: string;
@@ -20,7 +20,6 @@ interface HeroSectionProps {
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
-  heroImage,
   title,
   customContent,
   lastUpdatedDate: _lastUpdatedDate,
@@ -71,106 +70,74 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     if (pageType === 'by-location') {
       return (
         <>
-          Pre Construction Homes in <span className='text-secondary'>{title}</span>
-        </>
-      );
-    } else if (isDevelopmentTeamPage) {
-      // For development team pages, just show the name without project count
-      return (
-        <>
-          <span className='text-secondary'>{title}</span>
-        </>
-      );
-    } else {
-      return (
-        <>
-          <span className='text-secondary'>{title}</span>
+          Pre Construction Homes in <span className="font-extrabold">{title}</span>
         </>
       );
     }
+    return <span className="font-extrabold">{title}</span>;
   };
 
   return (
-    <div className="w-full relative bg-white" style={{ background: 'white' }}>
-      {/* Content Section - Two Column Layout */}
-      <div 
-        className="w-full bg-white py-8 md:py-12 px-4 z-10"
-        style={{ background: 'white' }}
-      >
-          <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 w-full">
-            {/* Breadcrumb Navigation */}
-            <div className="mb-4 relative z-20">
-              <nav className="flex items-center gap-2 text-sm text-foreground" aria-label="Breadcrumb">
-                <Link 
-                  href="/pre-con" 
-                  className="text-primary hover:text-primary/80 transition-colors font-medium"
-                >
-                  Pre-Construction
-                </Link>
-                <ChevronRight className="h-4 w-4 text-foreground" />
-                <span className="text-foreground font-medium">{title}</span>
-              </nav>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-              {/* Left Column: Title and Search Bar */}
-              <div className="space-y-4 relative z-20">
-                {isDevelopmentTeamPage && teamMemberInfo?.image ? (
-                  <div className="space-y-4">
-                    <div className="relative w-full max-w-xs h-20 md:h-20">
-                      <Image
-                        src={teamMemberInfo.image}
-                        alt={title}
-                        fill
-                        className="object-contain"
-                        sizes="(max-width: 768px) 100vw, 400px"
-                      />
-                    </div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                      {buildHeading()}
-                    </h1>
-                  </div>
-                ) : (
-                  <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                    {buildHeading()}
-                  </h1>
-                )}
-                
-                {/* Search Bar - Positioned below title, self-contained styling */}
-                <div className="w-full relative z-30">
-                  <PreConSearchBar
-                    placeholder="Enter location to search pre-construction properties"
-                    className="bg-white/95 backdrop-blur-sm shadow-lg"
-                    autoNavigate={true}
-                  />
+    <div className="w-full">
+      {/* Simple banner - same style as Properties HeroSection */}
+      <section className="w-full bg-primary text-secondary-foreground mt-16 py-8 md:py-10">
+        <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-6 items-start justify-between">
+          <div className="space-y-4">
+            <nav className="flex items-center gap-2 text-sm mb-4 text-secondary-foreground/90" aria-label="Breadcrumb">
+              <Link href="/pre-con" className="hover:underline font-medium">
+                Pre-Construction
+              </Link>
+              <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />
+              <span className="font-medium">{title}</span>
+            </nav>
+            {isDevelopmentTeamPage && teamMemberInfo?.image ? (
+              <div className="relative w-full max-w-xs h-16 md:h-20">
+                <Image
+                  src={teamMemberInfo.image}
+                  alt={title}
+                  fill
+                  className="object-contain object-left"
+                  sizes="(max-width: 768px) 100vw, 400px"
+                />
+              </div>
+            ) : null}
+            <h1 className="text-2xl md:text-3xl font-bold">
+              {buildHeading()}
+            </h1>
+            <PreConSearchBar
+              placeholder="Enter location to search pre-construction properties"
+              className="bg-white/95 backdrop-blur-sm shadow-lg text-foreground"
+              autoNavigate={true}
+            />
+          </div>
+          {/* Right Column: Alert Card */}
+          <div className="flex flex-col items-start md:items-end">
+            <div
+              onClick={() => setAlertsOpen(true)}
+              className="bg-white/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer w-full md:w-auto max-w-sm"
+            >
+              <div className="flex items-start gap-3 mb-3">
+                <div className="flex-shrink-0 w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-secondary" aria-hidden />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-bold text-foreground mb-1">Never Miss Out</h4>
+                  <p className="text-sm font-light text-muted-foreground">
+                    Get instant alerts when new pre-construction properties match your search criteria
+                  </p>
                 </div>
               </div>
-
-              {/* Right Column: Alert Card */}
-              <div className="flex flex-col items-start md:items-end">
-                <div 
-                  onClick={() => setAlertsOpen(true)}
-                  className="bg-secondary/10 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer w-full md:w-auto max-w-sm"
-                >
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className="flex-shrink-0 w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                      <Sparkles className="w-5 h-5 text-secondary" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-foreground mb-1">Never Miss Out</h4>
-                      <p className="text-sm font-light text-muted-foreground">
-                        Get instant alerts when new pre-construction criteria  properties match your search criteria
-                      </p>
-                    </div>
-                  </div>
-                  <Button variant="default" className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-secondary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium text-sm">
-                    <Bell className="w-4 h-4" />
-                    <span>Enable Property Alerts</span>
-                  </Button>
-                </div>
-              </div>
+              <Button
+                variant="default"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-secondary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium text-sm"
+              >
+                <Bell className="w-4 h-4" aria-hidden />
+                <span>Enable Property Alerts</span>
+              </Button>
             </div>
           </div>
         </div>
+      </section>
 
       {/* Additional Content Section (if customContent exists) */}
       {customContent && (

@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Bell, ChevronRight } from 'lucide-react';
+import { Bell, ChevronRight, Sparkles } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useSession } from 'next-auth/react';
 import PropertyAlertsDialog from '@/components/common/PropertyAlertsDialog';
 import { usePropertyAlerts } from '@/hooks/usePropertyAlerts';
 import type { PropertyPageType } from '../types';
-import Image from 'next/image';
+import { Button } from '@/components/ui/button';
 
 interface HeroSectionProps {
-  heroImage: string | null;
+  heroImage?: string | null;
   title: string;
   customContent?: string | null;
   lastUpdatedDate: string;
@@ -19,7 +19,6 @@ interface HeroSectionProps {
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
-  heroImage,
   title,
   customContent,
   lastUpdatedDate: _lastUpdatedDate,
@@ -27,7 +26,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   displayCount,
   cityName,
 }) => {
-  const imageSrc = heroImage || '/images/HeroBackImage-3.jpg';
   const { data: session } = useSession();
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [alertOptions, setAlertOptions] = useState<Record<string, boolean>>({
@@ -66,74 +64,62 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     if (pageType === 'by-location') {
       return (
         <>
-          {displayCount} Homes for Sale in <span className='text-secondary'>{title}</span>
-        </>
-      );
-    } else {
-      return (
-        <>
-          <span className='text-secondary'>{displayCount}</span> {title}
+          {displayCount} Homes for Sale in <span className="font-extrabold">{title}</span>
         </>
       );
     }
+    return (
+      <>
+        <span className="font-extrabold">{displayCount}</span> {title}
+      </>
+    );
   };
 
   return (
-    <div className="w-full relative">
-      {/* Hero Image with Overlays */}
-      <div className="w-full h-48 md:h-64 relative">
-        <div className="absolute inset-0 overflow-hidden">
-          <Image 
-            src={imageSrc} 
-            alt={title}
-            fill
-            className="object-cover"
-            sizes="100vw"
-            priority
-          />
-        </div>
-      </div>
-      
-      {/* Content Section */}
-      <div className="absolute inset-0 flex items-center px-4 z-10">
-        <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          {/* Breadcrumb Navigation */}
-          <div className="mb-4 relative z-20">
-            <nav className="flex items-center gap-2 text-sm text-white/90 drop-shadow-md" aria-label="Breadcrumb">
-              <Link 
-                href="/properties" 
-                className="text-primary hover:text-primary/80 transition-colors font-medium"
-              >
+    <div className="w-full">
+      {/* Simple banner - same layout as PreCon HeroSection */}
+      <section className="w-full bg-primary text-secondary-foreground mt-16 py-8 md:py-10">
+        <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-6 items-start justify-between">
+          <div className="space-y-4">
+            <nav className="flex items-center gap-2 text-sm text-secondary-foreground/90" aria-label="Breadcrumb">
+              <Link href="/properties" className="hover:underline font-medium">
                 Properties
               </Link>
-              <ChevronRight className="h-4 w-4 text-primary" />
-              <span className="text-primary font-medium">{title}</span>
+              <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />
+              <span className="font-medium">{title}</span>
             </nav>
+            <h1 className="text-2xl md:text-3xl font-bold">
+              {buildHeading()}
+            </h1>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-            {/* Left Column: Title */}
-            <div className="space-y-4 relative z-20">
-              <h1 className="text-2xl md:text-3xl font-bold drop-shadow-lg">
-                {buildHeading()}
-              </h1>
-            </div>
-
-            {/* Right Column: Alert Button */}
-            <div className="flex flex-col items-start md:items-end gap-2">
-              <p className="text-sm text-right drop-shadow-md">
-                Be the first to hear about new properties
-              </p>
-              <button 
-                onClick={() => setAlertsOpen(true)}
-                className="flex items-center gap-2 px-6 py-3 bg-secondary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors shadow-lg font-medium whitespace-nowrap"
+          {/* Right Column: Alert Card */}
+          <div className="flex flex-col items-start md:items-end">
+            <div
+              onClick={() => setAlertsOpen(true)}
+              className="bg-white/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer w-full md:w-auto max-w-sm"
+            >
+              <div className="flex items-start gap-3 mb-3">
+                <div className="flex-shrink-0 w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-secondary" aria-hidden />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-bold text-foreground mb-1">Never Miss Out</h4>
+                  <p className="text-sm font-light text-muted-foreground">
+                    Be the first to hear about new properties that match your search criteria
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="default"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-secondary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium text-sm"
               >
-                <Bell className="w-5 h-5" />
+                <Bell className="w-4 h-4" aria-hidden />
                 <span>Alert Me of New Properties</span>
-              </button>
+              </Button>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Additional Content Section (if customContent exists) */}
       {customContent && (

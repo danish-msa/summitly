@@ -29,7 +29,7 @@ interface PreconAdvancedFiltersProps {
 
 // Construction status options
 const CONSTRUCTION_STATUSES = [
-  { value: 'all', label: 'All Status' },
+  { value: 'all', label: 'All' },
   { value: '0', label: 'Pre-Construction' },
   { value: '1', label: 'Under Construction' },
   { value: '2', label: 'Completed' },
@@ -37,23 +37,19 @@ const CONSTRUCTION_STATUSES = [
 
 // Selling status options
 const SELLING_STATUSES = [
-  { value: 'all', label: 'All Status' },
+  { value: 'all', label: 'All' },
   { value: 'selling', label: 'Selling Now' },
   { value: 'coming-soon', label: 'Coming Soon' },
   { value: 'sold-out', label: 'Sold Out' },
 ];
 
-// Generate occupancy date options
+// Occupancy date options: years only
 const generateOccupancyDates = () => {
   const currentYear = new Date().getFullYear();
   const dates = [{ value: 'all', label: 'All Dates' }];
   for (let year = currentYear; year <= currentYear + 10; year++) {
-    dates.push(
-      { value: `Q1 ${year}`, label: `Q1 ${year}` },
-      { value: `Q2 ${year}`, label: `Q2 ${year}` },
-      { value: `Q3 ${year}`, label: `Q3 ${year}` },
-      { value: `Q4 ${year}`, label: `Q4 ${year}` }
-    );
+    const y = String(year);
+    dates.push({ value: y, label: y });
   }
   return dates;
 };
@@ -223,7 +219,7 @@ export const PreconAdvancedFilters: React.FC<PreconAdvancedFiltersProps> = ({
         <button
           ref={buttonRef}
           onClick={() => onOpenChange(!open)}
-          className={`relative flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all ${open ? 'border-2 border-secondary text-primary' : 'border border-gray-300 text-primary'} hover:border-secondary`}
+          className={`relative flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground transition-all border border-transparent hover:opacity-90 ${open ? 'opacity-100' : ''}`}
         >
           <Filter className="h-4 w-4" />
           <span>Advanced</span>
@@ -278,8 +274,8 @@ export const PreconAdvancedFilters: React.FC<PreconAdvancedFiltersProps> = ({
               )}
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="default" className="h-9 px-4 py-2 rounded-lg bg-secondary text-primary-foreground hover:bg-secondary/90 transition-colors font-medium text-sm">Reset Filters</Button>
-              <Button variant="default" className="h-9 px-4 py-2 rounded-lg bg-secondary text-primary-foreground hover:bg-secondary/90 transition-colors font-medium text-sm">Apply Filters</Button>
+              <Button type="button" variant="default" className="h-9 px-4 py-2 rounded-lg bg-secondary text-primary-foreground hover:bg-secondary/90 transition-colors font-medium text-sm" onClick={() => onResetAdvanced()}>Reset Filters</Button>
+              <Button type="button" variant="default" className="h-9 px-4 py-2 rounded-lg bg-secondary text-primary-foreground hover:bg-secondary/90 transition-colors font-medium text-sm" onClick={() => { onApplyFilters(); onOpenChange(false); }}>Apply Filters</Button>
               <button type="button" onClick={() => onOpenChange(false)} className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors" aria-label="Close">
                 <X className="h-5 w-5" aria-hidden />
               </button>

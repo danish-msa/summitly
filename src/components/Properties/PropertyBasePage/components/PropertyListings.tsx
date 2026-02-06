@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from "react";
 import PropertyCard from "@/components/Helper/PropertyCard";
 import type { PropertyListing } from "@/lib/types";
 import { Loader2 } from "lucide-react";
+import { PropertyCardSkeleton } from "@/components/skeletons";
 
 type ViewMode = "list" | "mixed" | "map";
 
@@ -11,6 +12,7 @@ interface PropertyListingsProps {
   properties: PropertyListing[];
   displayTitle: string;
   pageType: string;
+  loading?: boolean;
   loadingMore?: boolean;
   hasMore?: boolean;
   onLoadMore?: () => void;
@@ -23,6 +25,7 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
   properties,
   displayTitle,
   pageType,
+  loading = false,
   loadingMore = false,
   hasMore = false,
   onLoadMore,
@@ -104,6 +107,12 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
             </div>
           )}
         </>
+      ) : loading ? (
+        <div className={gridClass}>
+          {[...Array(8)].map((_, i) => (
+            <PropertyCardSkeleton key={i} />
+          ))}
+        </div>
       ) : (
         <div className="bg-secondary/30 rounded-lg p-12 text-center">
           <p className="text-lg text-muted-foreground">

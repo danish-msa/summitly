@@ -8,10 +8,10 @@ interface PreConstructionCardSkeletonProps {
 export const PreConstructionCardSkeleton = ({ className }: PreConstructionCardSkeletonProps) => {
   return (
     <Card 
-      className={`group hover:shadow-lg transition-all duration-300 overflow-hidden border-border cursor-pointer h-full w-full flex flex-col ${className || ''}`}
+      className={`group card-shadow transition-all duration-300 overflow-hidden cursor-pointer h-full w-full flex flex-col ${className || ''}`}
     >
       {/* Image Section */}
-      <div className="aspect-video relative overflow-hidden bg-muted">
+      <div className="aspect-video relative overflow-hidden bg-muted rounded-lg">
         <Skeleton className="w-full h-full" />
         
         {/* Status Badge Skeleton - Top Left */}

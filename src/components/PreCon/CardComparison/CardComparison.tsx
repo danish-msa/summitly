@@ -1,12 +1,7 @@
 "use client";
 
 import React from 'react';
-import { 
-  PreConstructionPropertyCard, 
-  PreConstructionPropertyCardV2, 
-  PreConstructionPropertyCardV3,
-  FeaturedPropertyCard 
-} from '../PropertyCards';
+import { PreConstructionPropertyCardV3, FeaturedPropertyCard } from '../PropertyCards';
 import type { PreConstructionProperty } from '../PropertyCards/types';
 import SectionHeading from '@/components/Helper/SectionHeading';
 
@@ -54,40 +49,12 @@ const CardComparison: React.FC = () => {
         <SectionHeading
           heading="Card Design Comparison"
           subheading="Pre-Construction Cards"
-          description="Compare all three pre-construction property card designs side by side"
+          description="Pre-construction property card and featured card designs"
           position="center"
         />
 
         {/* Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 mt-12">
-          {/* Card V1 */}
-          <div className="flex flex-col">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold text-foreground mb-2">Card Design V1</h3>
-              <p className="text-sm text-muted-foreground">Full-featured card with image gallery and detailed information</p>
-            </div>
-            <div className="flex-1">
-              <PreConstructionPropertyCard
-                property={sampleProperty}
-                onHide={() => {}}
-              />
-            </div>
-          </div>
-
-          {/* Card V2 */}
-          <div className="flex flex-col">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold text-foreground mb-2">Card Design V2</h3>
-              <p className="text-sm text-muted-foreground">Alternative layout with enhanced visual appeal</p>
-            </div>
-            <div className="flex-1">
-              <PreConstructionPropertyCardV2
-                property={sampleProperty}
-                onHide={() => {}}
-              />
-            </div>
-          </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mt-12">
           {/* Card V3 */}
           <div className="flex flex-col">
             <div className="mb-4">
@@ -101,43 +68,18 @@ const CardComparison: React.FC = () => {
               />
             </div>
           </div>
-        </div>
 
-        {/* Featured Property Cards Row */}
-        <div className="mt-16">
-          <SectionHeading
-            heading="Featured Property Cards"
-            subheading="Horizontal Layout"
-            description="Horizontal card design optimized for featured properties - 2 cards per row"
-            position="center"
-          />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mt-12">
-            {/* Featured Card 1 */}
-            <div className="flex flex-col">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold text-foreground mb-2">Featured Card Design</h3>
-                <p className="text-sm text-muted-foreground">Horizontal layout with image on left and content on right</p>
-              </div>
-              <div className="flex-1">
-                <FeaturedPropertyCard
-                  property={sampleProperty}
-                  onHide={() => {}}
-                />
-              </div>
+          {/* Featured Card */}
+          <div className="flex flex-col">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-foreground mb-2">Featured Card Design</h3>
+              <p className="text-sm text-muted-foreground">Horizontal layout with image on left and content on right</p>
             </div>
-
-            {/* Featured Card 2 */}
-            <div className="flex flex-col">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold text-foreground mb-2">Featured Card Design</h3>
-                <p className="text-sm text-muted-foreground">Horizontal layout with image on left and content on right</p>
-              </div>
-              <div className="flex-1">
-                <FeaturedPropertyCard
-                  property={sampleProperty}
-                  onHide={() => {}}
-                />
-              </div>
+            <div className="flex-1">
+              <FeaturedPropertyCard
+                property={sampleProperty}
+                onHide={() => {}}
+              />
             </div>
           </div>
         </div>

@@ -8,7 +8,8 @@ import { LOCATIONS } from "@/lib/types/filters";
 import type { PropertyListing } from "@/lib/types";
 import type { PropertyBasePageProps } from "./types";
 import { usePropertyData } from "./hooks";
-import { LoadingState } from "./components/LoadingState";
+import { Skeleton } from "@/components/ui/skeleton";
+import { PropertyCardSkeleton } from "@/components/skeletons";
 import { HeroSection } from "./components/HeroSection";
 import { NavigationButtons } from "./components/NavigationButtons";
 import { ViewModeToggle } from "@/components/common/ViewModeToggle";
@@ -42,6 +43,7 @@ const PropertyBasePage: React.FC<PropertyBasePageProps> = ({
 
   const {
     loading,
+    initialLoading,
     loadingMore,
     hasMore,
     loadMore,
@@ -78,8 +80,61 @@ const PropertyBasePage: React.FC<PropertyBasePageProps> = ({
     }
   }, [pageInfo]);
 
-  if (loading) {
-    return <LoadingState />;
+  if (initialLoading) {
+    return (
+      <div className="">
+        <section className="w-full bg-primary text-secondary-foreground mt-16 py-8 md:py-10">
+          <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-6 items-start justify-between">
+            <div className="space-y-4">
+              <nav className="flex items-center gap-2 mb-4" aria-hidden>
+                <Skeleton className="h-4 w-20 bg-white/20 rounded" />
+                <Skeleton className="h-4 w-4 rounded" />
+                <Skeleton className="h-4 w-32 bg-white/20 rounded" />
+              </nav>
+              <Skeleton className="h-9 w-3/4 bg-white/20 rounded" />
+            </div>
+            <div className="flex flex-col items-start md:items-end">
+              <div className="bg-white/80 rounded-2xl p-5 shadow-sm w-full md:w-auto max-w-sm">
+                <div className="flex items-start gap-3 mb-3">
+                  <Skeleton className="h-10 w-10 rounded-lg flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-4/5" />
+                  </div>
+                </div>
+                <Skeleton className="h-10 w-full rounded-lg" />
+              </div>
+            </div>
+          </div>
+        </section>
+        <main className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <Skeleton className="h-9 w-28 rounded-lg" />
+            <Skeleton className="h-9 w-36 rounded-lg" />
+            <Skeleton className="h-9 w-24 rounded-lg" />
+          </div>
+          <section>
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex flex-wrap gap-2 flex-1">
+                <Skeleton className="h-12 w-40 rounded-lg" />
+                <Skeleton className="h-12 w-44 rounded-lg" />
+                <Skeleton className="h-12 w-48 rounded-lg" />
+                <Skeleton className="h-12 w-36 rounded-lg" />
+              </div>
+              <Skeleton className="h-10 w-24 rounded-lg" />
+            </div>
+          </section>
+          <section className="pb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {[...Array(8)].map((_, i) => (
+                <PropertyCardSkeleton key={i} />
+              ))}
+            </div>
+          </section>
+        </main>
+      </div>
+    );
   }
 
   const displayTitle = pageInfo?.title || "";
@@ -166,7 +221,8 @@ const PropertyBasePage: React.FC<PropertyBasePageProps> = ({
               properties={properties}
               displayTitle={displayTitle}
               pageType={pageType}
-              loadingMore={loading}
+              loading={loading}
+              loadingMore={loadingMore}
               hasMore={false}
               viewMode={viewMode}
               selectedProperty={selectedProperty}

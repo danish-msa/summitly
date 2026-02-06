@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FaChevronDown } from 'react-icons/fa';
 import { Maximize2 } from 'lucide-react';
 import { IndividualFilterProps, FilterChangeEvent } from '@/lib/types/filters';
@@ -10,6 +10,18 @@ const SquareFeetFilter: React.FC<IndividualFilterProps> = ({
   handleFilterChange
 }) => {
   const [activeDropdown, setActiveDropdown] = useState<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!activeDropdown) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setActiveDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeDropdown]);
 
   // Get display text for square feet
   const getSquareFeetText = () => {
@@ -47,7 +59,7 @@ const SquareFeetFilter: React.FC<IndividualFilterProps> = ({
   const hasActiveFilter = filters.minSquareFeet || filters.maxSquareFeet;
 
   return (
-    <div className="relative w-full sm:w-auto">
+    <div className="relative w-full sm:w-auto" ref={containerRef}>
       <button 
         className={`w-full sm:w-auto bg-white flex items-center gap-2 px-4 py-2 rounded-lg border ${activeDropdown ? 'border-secondary bg-secondary/5' : 'border-gray-300'} hover:border-secondary transition-all`}
         onClick={() => setActiveDropdown(!activeDropdown)}
@@ -72,58 +84,39 @@ const SquareFeetFilter: React.FC<IndividualFilterProps> = ({
       </button>
       
       {activeDropdown && (
-        <div className="absolute z-10 mt-2 left-0 w-auto min-w-fit bg-white rounded-lg shadow-lg p-4">
-          <p className="font-semibold mb-3">Square Feet</p>
-          <div className="flex gap-0">
-            {[
-              { label: 'All', value: 'all', min: undefined, max: undefined },
-              { label: 'Under 1,000', value: 'under-1000', min: undefined, max: 999 },
-              { label: '1,000 - 1,500', value: '1000-1500', min: 1000, max: 1500 },
-              { label: 'Over 1,500', value: 'over-1500', min: 1501, max: undefined }
-            ].map((option, index) => {
-              const isSelected = 
-                (option.value === 'all' && !hasActiveFilter) ||
-                (option.value === 'under-1000' && filters.maxSquareFeet === 999 && !filters.minSquareFeet) ||
-                (option.value === '1000-1500' && filters.minSquareFeet === 1000 && filters.maxSquareFeet === 1500) ||
-                (option.value === 'over-1500' && filters.minSquareFeet === 1501 && !filters.maxSquareFeet);
-              
-              const isFirst = index === 0;
-              const isLast = index === 3;
-              
-              return (
-                <label 
-                  key={`sqft-${option.value}`}
-                  className={`
-                    border cursor-pointer capitalize text-center hover:bg-gray-100
-                    py-2 px-3 text-xs whitespace-nowrap transition-all
-                    ${isFirst ? 'rounded-l-lg' : 'border-l-transparent'}
-                    ${isLast ? 'rounded-r-lg' : ''}
-                    ${isSelected 
-                      ? 'border-2 border-secondary text-secondary font-bold' 
-                      : 'border-gray-300 hover:border-secondary'}
-                  `}
-                  onClick={() => {
-                    const minEvent: FilterChangeEvent = {
-                      target: {
-                        name: 'minSquareFeet',
-                        value: option.min ?? 0
-                      }
-                    };
-                    const maxEvent: FilterChangeEvent = {
-                      target: {
-                        name: 'maxSquareFeet',
-                        value: option.max ?? 0
-                      }
-                    };
-                    handleFilterChange(minEvent);
-                    handleFilterChange(maxEvent);
-                  }}
-                >
-                  {option.label}
-                </label>
-              );
-            })}
-          </div>
+        <div className="absolute z-[100] mt-1 w-full min-w-[200px] bg-white p-2 rounded-lg shadow-lg border border-gray-200 max-h-[280px] overflow-y-auto">
+          {[
+            { label: 'All', value: 'all', min: undefined, max: undefined },
+            { label: 'Under 1,000', value: 'under-1000', min: undefined, max: 999 },
+            { label: '1,000 - 1,500', value: '1000-1500', min: 1000, max: 1500 },
+            { label: 'Over 1,500', value: 'over-1500', min: 1501, max: undefined }
+          ].map((option) => {
+            const isSelected =
+              (option.value === 'all' && !hasActiveFilter) ||
+              (option.value === 'under-1000' && filters.maxSquareFeet === 999 && !filters.minSquareFeet) ||
+              (option.value === '1000-1500' && filters.minSquareFeet === 1000 && filters.maxSquareFeet === 1500) ||
+              (option.value === 'over-1500' && filters.minSquareFeet === 1501 && !filters.maxSquareFeet);
+            return (
+              <button
+                key={option.value}
+                type="button"
+                className={`
+                  w-full text-left px-3 py-2 text-sm cursor-pointer transition-colors rounded-lg
+                  ${isSelected ? 'bg-secondary/10 text-secondary font-medium' : 'text-gray-700 hover:bg-gray-100'}
+                `}
+                onClick={() => {
+                  handleFilterChange({
+                    target: { name: 'minSquareFeet', value: option.min ?? 0 }
+                  } as FilterChangeEvent);
+                  handleFilterChange({
+                    target: { name: 'maxSquareFeet', value: option.max ?? 0 }
+                  } as FilterChangeEvent);
+                }}
+              >
+                {option.label}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

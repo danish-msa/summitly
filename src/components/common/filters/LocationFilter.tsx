@@ -111,7 +111,7 @@ const LocationFilter: React.FC<IndividualFilterProps> = ({
   return (
     <div className="relative w-full sm:w-auto" ref={dropdownRef}>
       <button 
-        className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all ${activeDropdown ? 'border-2 border-secondary text-primary' : 'border border-gray-300 text-primary'} hover:border-secondary`}
+        className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all border ${activeDropdown ? 'border-secondary text-primary' : 'border-gray-300 text-primary'} hover:border-secondary`}
         onClick={() => setActiveDropdown(!activeDropdown)}
       >
         <FaMapMarkerAlt className="text-secondary" />

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FaChevronDown } from 'react-icons/fa';
 import { IndividualFilterProps, FilterChangeEvent } from '@/lib/types/filters';
 
@@ -10,6 +10,18 @@ const CommunityFilter: React.FC<IndividualFilterProps> = ({
   communities
 }) => {
   const [activeDropdown, setActiveDropdown] = useState<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!activeDropdown) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setActiveDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeDropdown]);
 
   // Handle community selection
   const handleCommunitySelect = (value: string) => {
@@ -41,9 +53,9 @@ const CommunityFilter: React.FC<IndividualFilterProps> = ({
   };
 
   return (
-    <div className="relative w-full sm:w-auto filter-dropdown">
+    <div className="relative w-full sm:w-auto filter-dropdown" ref={containerRef}>
       <button 
-        className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all ${activeDropdown ? 'border-2 border-secondary text-primary' : 'border border-gray-300 text-primary'} hover:border-secondary`}
+        className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all border ${activeDropdown ? 'border-secondary text-primary' : 'border-gray-300 text-primary'} hover:border-secondary`}
         onClick={() => setActiveDropdown(!activeDropdown)}
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -68,38 +80,33 @@ const CommunityFilter: React.FC<IndividualFilterProps> = ({
       </button>
       
       {activeDropdown && (
-        <div className="absolute z-[100] mt-2 w-full sm:w-64 bg-white rounded-lg shadow-lg p-4 max-h-80 overflow-y-auto">
-          <p className="font-semibold mb-3">Community</p>
-          <div className="space-y-2">
-            <div 
-              className={`
-                border rounded-md py-2 px-3 cursor-pointer text-center
-                transition-all hover:bg-gray-50 text-sm
-                ${filters.community === 'all' 
-                  ? 'border-2 border-secondary bg-secondary/5 text-secondary font-semibold' 
-                  : 'border-gray-300 hover:border-secondary text-gray-700'}
-              `}
-              onClick={() => handleCommunitySelect('all')}
-            >
-              All Communities
-            </div>
-            
-            {communities.map((community) => (
-              <div 
-                key={`community-${community}`}
+        <div className="absolute z-[100] mt-1 w-full min-w-[200px] bg-white p-2 rounded-lg shadow-lg border border-gray-200 max-h-[280px] overflow-y-auto">
+          <button
+            type="button"
+            className={`
+              w-full text-left px-3 py-2 text-sm cursor-pointer transition-colors rounded-lg
+              ${filters.community === 'all' ? 'bg-secondary/10 text-secondary font-medium' : 'text-gray-700 hover:bg-gray-100'}
+            `}
+            onClick={() => handleCommunitySelect('all')}
+          >
+            All Communities
+          </button>
+          {communities.map((community) => {
+            const isSelected = filters.community === community;
+            return (
+              <button
+                key={community}
+                type="button"
                 className={`
-                  border rounded-md py-2 px-3 cursor-pointer text-center
-                  transition-all hover:bg-gray-50 text-sm
-                  ${filters.community === community 
-                    ? 'border-2 border-secondary bg-secondary/5 text-secondary font-semibold' 
-                    : 'border-gray-300 hover:border-secondary text-gray-700'}
+                  w-full text-left px-3 py-2 text-sm cursor-pointer transition-colors rounded-lg
+                  ${isSelected ? 'bg-secondary/10 text-secondary font-medium' : 'text-gray-700 hover:bg-gray-100'}
                 `}
                 onClick={() => handleCommunitySelect(community)}
               >
                 {community}
-              </div>
-            ))}
-          </div>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

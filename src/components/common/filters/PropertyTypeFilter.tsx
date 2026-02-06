@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FaChevronDown } from 'react-icons/fa';
 import { IndividualFilterProps, FilterChangeEvent, REPLIERS_PROPERTY_TYPE_OPTIONS } from '@/lib/types/filters';
 import { HomeIcon } from 'lucide-react';
@@ -21,6 +21,18 @@ const PropertyTypeFilter: React.FC<IndividualFilterProps> = ({
   handleFilterChange
 }) => {
   const [activeDropdown, setActiveDropdown] = useState<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!activeDropdown) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setActiveDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeDropdown]);
 
   const handlePropertyTypeSelect = (value: string) => {
     handleFilterChange({
@@ -39,9 +51,9 @@ const PropertyTypeFilter: React.FC<IndividualFilterProps> = ({
   const isFilterActive = filters.propertyType && filters.propertyType !== 'all';
 
   return (
-    <div className="relative w-full sm:w-auto">
+    <div className="relative w-full sm:w-auto" ref={containerRef}>
       <button
-        className={`w-full sm:w-auto flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all ${activeDropdown ? 'border-2 border-secondary text-primary' : 'border border-gray-300 text-primary'} hover:border-secondary`}
+        className={`w-full sm:w-auto flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all border ${activeDropdown ? 'border-secondary text-primary' : 'border-gray-300 text-primary'} hover:border-secondary`}
         onClick={() => setActiveDropdown(!activeDropdown)}
       >
         <HomeIcon className="w-4 h-4" />
@@ -64,7 +76,7 @@ const PropertyTypeFilter: React.FC<IndividualFilterProps> = ({
       </button>
 
       {activeDropdown && (
-        <div className="absolute z-[100] mt-1 w-full min-w-[200px] bg-white rounded-lg shadow-lg border border-gray-200 py-1 max-h-[280px] overflow-y-auto">
+        <div className="absolute z-[100] mt-1 w-full min-w-[200px] bg-white p-2 rounded-lg shadow-lg border border-gray-200 max-h-[280px] overflow-y-auto">
           {REPLIERS_PROPERTY_TYPE_OPTIONS.map((option) => {
             const currentValue = filters.propertyType || 'all';
             const effectiveValue = REPLIERS_PROPERTY_TYPE_VALUES.has(currentValue) ? currentValue : 'Other';
@@ -75,7 +87,7 @@ const PropertyTypeFilter: React.FC<IndividualFilterProps> = ({
                 key={option.value}
                 type="button"
                 className={`
-                  w-full text-left px-3 py-2 text-sm cursor-pointer transition-colors
+                  w-full text-left px-3 py-2 text-sm cursor-pointer transition-colors rounded-lg
                   ${isSelected
                     ? 'bg-secondary/10 text-secondary font-medium'
                     : 'text-gray-700 hover:bg-gray-100'}

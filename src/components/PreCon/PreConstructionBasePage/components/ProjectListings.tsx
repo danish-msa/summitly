@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { PreConstructionPropertyCardV3 } from '@/components/PreCon/PropertyCards';
 import type { PreConstructionProperty } from '@/components/PreCon/PropertyCards/types';
 import { Loader2 } from 'lucide-react';
+import { PreConstructionCardSkeleton } from '@/components/skeletons';
 
 type ViewMode = 'list' | 'mixed' | 'map';
 
@@ -14,6 +15,7 @@ interface ProjectListingsProps {
   onProjectSelect: (project: PreConstructionProperty) => void;
   displayTitle: string;
   pageType: string;
+  loading?: boolean;
   loadingMore?: boolean;
   hasMore?: boolean;
   onLoadMore?: () => void;
@@ -26,11 +28,19 @@ export const ProjectListings: React.FC<ProjectListingsProps> = ({
   onProjectSelect,
   displayTitle,
   pageType,
+  loading = false,
   loadingMore = false,
   hasMore = false,
   onLoadMore,
 }) => {
   const observerTarget = useRef<HTMLDivElement>(null);
+
+  // Scroll selected project card into view when selection changes (e.g. from map click)
+  useEffect(() => {
+    if (viewMode !== 'mixed' || !selectedProject) return;
+    const el = document.getElementById(`project-card-${selectedProject.id}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [viewMode, selectedProject?.id]);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -75,8 +85,11 @@ export const ProjectListings: React.FC<ProjectListingsProps> = ({
             {projects.map((project) => (
               <div
                 key={project.id}
-                className={`cursor-pointer transition-all ${
-                  selectedProject?.id === project.id ? 'ring-2 ring-primary' : ''
+                id={`project-card-${project.id}`}
+                className={`cursor-pointer transition-all rounded-lg ${
+                  selectedProject?.id === project.id
+                    ? 'ring-2 ring-primary shadow-lg shadow-primary/20'
+                    : ''
                 }`}
                 onClick={() => onProjectSelect(project)}
               >
@@ -100,10 +113,23 @@ export const ProjectListings: React.FC<ProjectListingsProps> = ({
             </div>
           )}
         </>
+      ) : loading ? (
+        <div className={`grid gap-6 ${
+          viewMode === 'mixed'
+            ? 'grid-cols-1 sm:grid-cols-2'
+            : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+        }`}>
+          {[...Array(8)].map((_, i) => (
+            <PreConstructionCardSkeleton key={i} />
+          ))}
+        </div>
       ) : (
-        <div className="bg-secondary/30 rounded-lg p-12 text-center">
-          <p className="text-lg text-muted-foreground">
-            No pre-construction projects found{pageType === 'by-location' ? ` in ${displayTitle}` : ''}
+        <div className="bg-muted/30 rounded-lg p-12 text-center">
+          <p className="text-lg font-medium text-foreground">
+            No pre-construction projects match your search
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Try adjusting your filters or explore other areas
           </p>
         </div>
       )}

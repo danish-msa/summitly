@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FaChevronDown, FaBuilding } from 'react-icons/fa';
 import { IndividualFilterProps, FilterChangeEvent } from '@/lib/types/filters';
 
@@ -9,6 +9,7 @@ const DeveloperFilter: React.FC<IndividualFilterProps> = ({
   handleFilterChange
 }) => {
   const [activeDropdown, setActiveDropdown] = useState<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [developers, setDevelopers] = useState<Array<{ value: string; label: string }>>([
     { value: 'all', label: 'All Developers' }
   ]);
@@ -36,6 +37,17 @@ const DeveloperFilter: React.FC<IndividualFilterProps> = ({
 
     fetchDevelopers();
   }, []);
+
+  useEffect(() => {
+    if (!activeDropdown) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setActiveDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeDropdown]);
 
   // Handle developer selection
   const handleDeveloperSelect = (value: string) => {
@@ -68,9 +80,9 @@ const DeveloperFilter: React.FC<IndividualFilterProps> = ({
   };
 
   return (
-    <div className="relative w-full sm:w-auto">
+    <div className="relative w-full sm:w-auto" ref={containerRef}>
       <button 
-        className={`w-full sm:w-auto flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all ${activeDropdown ? 'border-2 border-secondary text-primary' : 'border border-gray-300 text-primary'} hover:border-secondary`}
+        className={`w-full sm:w-auto flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all border ${activeDropdown ? 'border-secondary text-primary' : 'border-gray-300 text-primary'} hover:border-secondary`}
         onClick={() => setActiveDropdown(!activeDropdown)}
       >
         <FaBuilding className="text-secondary" />
@@ -93,29 +105,23 @@ const DeveloperFilter: React.FC<IndividualFilterProps> = ({
       </button>
       
       {activeDropdown && (
-        <div className="absolute z-[100] mt-2 w-full sm:w-64 bg-white rounded-lg shadow-lg p-4 max-h-80 overflow-y-auto">
-          <p className="font-semibold mb-3">Developer</p>
-          <div className="space-y-2">
-            {developers.map((developer) => {
-              const isSelected = (filters.developer || 'all') === developer.value;
-              
-              return (
-                <div 
-                  key={`developer-${developer.value}`}
-                  className={`
-                    border rounded-md py-2 px-3 cursor-pointer
-                    transition-all hover:bg-gray-50 text-sm
-                    ${isSelected 
-                      ? 'border-2 border-secondary bg-secondary/5 text-secondary font-semibold' 
-                      : 'border-gray-300 hover:border-secondary text-gray-700'}
-                  `}
-                  onClick={() => handleDeveloperSelect(developer.value)}
-                >
-                  {developer.label}
-                </div>
-              );
-            })}
-          </div>
+        <div className="absolute z-[100] mt-1 w-full min-w-[200px] bg-white p-2 rounded-lg shadow-lg border border-gray-200 max-h-[280px] overflow-y-auto">
+          {developers.map((developer) => {
+            const isSelected = (filters.developer || 'all') === developer.value;
+            return (
+              <button
+                key={developer.value}
+                type="button"
+                className={`
+                  w-full text-left px-3 py-2 text-sm cursor-pointer transition-colors rounded-lg
+                  ${isSelected ? 'bg-secondary/10 text-secondary font-medium' : 'text-gray-700 hover:bg-gray-100'}
+                `}
+                onClick={() => handleDeveloperSelect(developer.value)}
+              >
+                {developer.label}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

@@ -8,7 +8,8 @@ import { LOCATIONS } from '@/lib/types/filters';
 import type { PreConstructionProperty } from '@/components/PreCon/PropertyCards/types';
 import type { PreConstructionBasePageProps } from './types';
 import { usePreConProjectsData } from './hooks';
-import { LoadingState } from './components/LoadingState';
+import { Skeleton } from '@/components/ui/skeleton';
+import { PreConstructionCardSkeleton } from '@/components/skeletons';
 import { HeroSection } from './components/HeroSection';
 import { NavigationButtons } from './components/NavigationButtons';
 import { ViewModeToggle, type ViewMode } from './components/ViewModeToggle';
@@ -68,6 +69,7 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({
   // Use custom hook for data fetching and filtering
   const {
     loading,
+    initialLoading,
     loadingMore,
     hasMore,
     loadMore,
@@ -110,8 +112,63 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({
     }
   }, [pageContent, pageInfo]);
 
-  if (loading) {
-    return <LoadingState />;
+  // Skeleton only on first load; filter changes keep the page visible
+  if (initialLoading) {
+    return (
+      <div className="">
+        <section className="w-full bg-primary text-secondary-foreground mt-16 py-8 md:py-10">
+          <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-6 items-start justify-between">
+            <div className="space-y-4">
+              <nav className="flex items-center gap-2 mb-4" aria-hidden>
+                <Skeleton className="h-4 w-24 bg-white/20 rounded" />
+                <Skeleton className="h-4 w-4 rounded" />
+                <Skeleton className="h-4 w-32 bg-white/20 rounded" />
+              </nav>
+              <Skeleton className="h-9 w-3/4 bg-white/20 rounded" />
+              <Skeleton className="h-12 w-full max-w-md bg-white/20 rounded-lg" />
+            </div>
+            <div className="flex flex-col items-start md:items-end">
+              <div className="bg-white/80 rounded-2xl p-5 shadow-sm w-full md:w-auto max-w-sm">
+                <div className="flex items-start gap-3 mb-3">
+                  <Skeleton className="h-10 w-10 rounded-lg flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-4/5" />
+                  </div>
+                </div>
+                <Skeleton className="h-10 w-full rounded-lg" />
+              </div>
+            </div>
+          </div>
+        </section>
+        <main className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <Skeleton className="h-9 w-28 rounded-lg" />
+            <Skeleton className="h-9 w-36 rounded-lg" />
+            <Skeleton className="h-9 w-24 rounded-lg" />
+          </div>
+          <section>
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex flex-wrap gap-2 flex-1">
+                <Skeleton className="h-12 w-40 rounded-lg" />
+                <Skeleton className="h-12 w-44 rounded-lg" />
+                <Skeleton className="h-12 w-48 rounded-lg" />
+                <Skeleton className="h-12 w-36 rounded-lg" />
+              </div>
+              <Skeleton className="h-10 w-24 rounded-lg" />
+            </div>
+          </section>
+          <section className="pb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {[...Array(8)].map((_, i) => (
+                <PreConstructionCardSkeleton key={i} />
+              ))}
+            </div>
+          </section>
+        </main>
+      </div>
+    );
   }
 
   // Use custom content if available and published, otherwise use default
@@ -178,14 +235,18 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({
               communities={communities}
               locations={LOCATIONS}
               showLocation={false}
-              showPropertyType={true}
+              showPropertyType={false}
               showCommunity={false}
               showPrice={true}
-              showBedrooms={false}
-              showBathrooms={false}
+              showBedrooms={true}
+              showBathrooms={true}
               showAdvanced={true}
+              isPreCon={true}
+              showPreConStatus={true}
+              showOccupancyDate={false}
+              showDeveloper={false}
               showSellRentToggle={false}
-              showResetButton={false}
+              showResetButton={true}
               layout="horizontal"
               className="w-full"
             />
@@ -200,21 +261,16 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({
         <section className="pb-8">
           
           
-          {/* Show message if no projects but not loading */}
-          {!loading && preConProjects.length === 0 && (
-            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded text-sm">
-              <p className="font-semibold text-yellow-800">No projects found</p>
-              <p className="text-yellow-700 mt-2">
-                Debug: pageType={pageType}, slug={slug}, projects.length={preConProjects.length}
-              </p>
-              <p className="text-yellow-700 text-xs mt-1">
-                Check browser console for API call details
-              </p>
-            </div>
-          )}
-
-          {/* View Content */}
-          <div className={`flex ${viewMode === 'map' ? 'flex-col' : viewMode === 'list' ? 'flex-col' : 'flex-col md:flex-row'} gap-6`}>
+          {/* View Content - when map-only, let map fill width and height */}
+          <div
+            className={`flex gap-6 ${
+              viewMode === 'map'
+                ? 'flex-col w-full min-h-[calc(100vh_-_200px)]'
+                : viewMode === 'list'
+                  ? 'flex-col'
+                  : 'flex-col md:flex-row'
+            }`}
+          >
             {/* Project Listings */}
             <ProjectListings
               projects={preConProjects}
@@ -223,6 +279,7 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({
               onProjectSelect={setSelectedProject}
               displayTitle={displayTitle}
               pageType={pageType}
+              loading={loading}
               loadingMore={loadingMore}
               hasMore={hasMore}
               onLoadMore={loadMore}

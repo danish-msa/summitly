@@ -124,14 +124,14 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({
             <button
               type="button"
               onClick={() => handleDecrement('min')}
-              className="h-8 w-8 rounded-md border border-border bg-background flex items-center justify-center hover:bg-accent transition-colors"
+              className="h-8 w-8 rounded-md border border-border bg-background flex items-center justify-center hover:bg-secondary/50 transition-colors"
             >
               <Minus className="h-3 w-3" />
             </button>
             <button
               type="button"
               onClick={() => handleIncrement('min')}
-              className="h-8 w-8 rounded-md border border-border bg-background flex items-center justify-center hover:bg-accent transition-colors"
+              className="h-8 w-8 rounded-md border border-border bg-background flex items-center justify-center hover:bg-secondary/50 transition-colors"
             >
               <Plus className="h-3 w-3" />
             </button>
@@ -189,14 +189,14 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({
             <button
               type="button"
               onClick={() => handleDecrement('max')}
-              className="h-8 w-8 rounded-md border border-border bg-background flex items-center justify-center hover:bg-accent transition-colors"
+              className="h-8 w-8 rounded-md border border-border bg-background flex items-center justify-center hover:bg-secondary/50 transition-colors"
             >
               <Minus className="h-3 w-3" />
             </button>
             <button
               type="button"
               onClick={() => handleIncrement('max')}
-              className="h-8 w-8 rounded-md border border-border bg-background flex items-center justify-center hover:bg-accent transition-colors"
+              className="h-8 w-8 rounded-md border border-border bg-background flex items-center justify-center hover:bg-secondary/50 transition-colors"
             >
               <Plus className="h-3 w-3" />
             </button>

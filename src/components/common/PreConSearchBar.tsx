@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Search, X } from 'lucide-react';
@@ -54,10 +55,39 @@ const PreConSearchBar: React.FC<PreConSearchBarProps> = ({
   const [loadingStatuses, setLoadingStatuses] = useState(true);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [dropdownRect, setDropdownRect] = useState<{ top: number; left: number; width: number } | null>(null);
 
   // Use controlled or uncontrolled value
   const searchValue = controlledValue !== undefined ? controlledValue : internalValue;
   const setSearchValue = onChange || setInternalValue;
+
+  const showingSuggestions = showSuggestions && searchValue.trim().length < 2 && isSuggestionsOpen;
+  const showingSearchResults = showSuggestions && searchValue.trim().length >= 2 && (searchResults.length > 0 || isSearching);
+  const showDropdown = showingSuggestions || showingSearchResults;
+
+  const updateDropdownRect = useCallback(() => {
+    if (!searchContainerRef.current || !showDropdown) return;
+    const rect = searchContainerRef.current.getBoundingClientRect();
+    setDropdownRect({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+  }, [showDropdown]);
+
+  useLayoutEffect(() => {
+    if (!showDropdown) {
+      setDropdownRect(null);
+      return;
+    }
+    updateDropdownRect();
+  }, [showDropdown, isSuggestionsOpen, searchResults.length, isSearching, searchValue, updateDropdownRect]);
+
+  useEffect(() => {
+    if (!showDropdown) return;
+    window.addEventListener('scroll', updateDropdownRect, true);
+    window.addEventListener('resize', updateDropdownRect);
+    return () => {
+      window.removeEventListener('scroll', updateDropdownRect, true);
+      window.removeEventListener('resize', updateDropdownRect);
+    };
+  }, [showDropdown, updateDropdownRect]);
 
   // Fetch cities from backend
   useEffect(() => {
@@ -216,10 +246,13 @@ const PreConSearchBar: React.FC<PreConSearchBarProps> = ({
     };
   }, [searchValue, performSearch]);
 
-  // Handle click outside to close suggestions
+  // Handle click outside to close suggestions (search input + portaled dropdown count as "inside")
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const insideInput = searchContainerRef.current?.contains(target);
+      const insideDropdown = (target as Element).closest?.('[data-precon-search-dropdown]');
+      if (!insideInput && !insideDropdown) {
         setIsSuggestionsOpen(false);
       }
     };
@@ -320,10 +353,19 @@ const PreConSearchBar: React.FC<PreConSearchBarProps> = ({
         )}
       </div>
 
-      {/* Search Results or Suggestions */}
-      {showSuggestions && (
-        <>
-          {/* Show search results when user is typing (2+ characters) */}
+      {/* Search Results or Suggestions - portaled so they appear above filters/cards */}
+      {typeof document !== 'undefined' && showDropdown && dropdownRect && createPortal(
+        <div
+          data-precon-search-dropdown
+          className="left-0 w-full"
+          style={{
+            position: 'fixed',
+            top: dropdownRect.top,
+            left: dropdownRect.left,
+            width: dropdownRect.width,
+            zIndex: 200,
+          }}
+        >
           {searchValue && searchValue.trim().length >= 2 ? (
             <SearchResults
               results={searchResults}
@@ -335,7 +377,6 @@ const PreConSearchBar: React.FC<PreConSearchBarProps> = ({
               }}
             />
           ) : (
-            /* Show static suggestions when input is empty or less than 2 characters */
             <PreConSuggestions
               cities={displayCities}
               sellingStatuses={displayStatuses}
@@ -345,7 +386,8 @@ const PreConSearchBar: React.FC<PreConSearchBarProps> = ({
               isLoading={loadingCities || loadingStatuses}
             />
           )}
-        </>
+        </div>,
+        document.body
       )}
     </div>
   );

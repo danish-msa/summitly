@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FaChevronDown, FaHardHat } from 'react-icons/fa';
 import { IndividualFilterProps, FilterChangeEvent } from '@/lib/types/filters';
 
 // Construction status options (based on completionProgress: 0 = Pre-construction, 1 = Construction, 2 = Complete)
 const CONSTRUCTION_STATUSES = [
-  { value: 'all', label: 'All Status' },
+  { value: 'all', label: 'All' },
   { value: '0', label: 'Pre-Construction' },
   { value: '1', label: 'Under Construction' },
   { value: '2', label: 'Completed' },
@@ -17,6 +17,18 @@ const ConstructionStatusFilter: React.FC<IndividualFilterProps> = ({
   handleFilterChange
 }) => {
   const [activeDropdown, setActiveDropdown] = useState<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!activeDropdown) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setActiveDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeDropdown]);
 
   // Handle construction status selection
   const handleConstructionStatusSelect = (value: string) => {
@@ -30,11 +42,12 @@ const ConstructionStatusFilter: React.FC<IndividualFilterProps> = ({
     setActiveDropdown(false);
   };
 
-  // Get display text for construction status
+  // Get display text for construction status (button shows "Construction Status" when All, or the specific option)
   const getConstructionStatusText = () => {
     const statusValue = filters.constructionStatus || 'all';
+    if (statusValue === 'all') return 'Construction Status';
     const selectedStatus = CONSTRUCTION_STATUSES.find(s => s.value === statusValue);
-    return selectedStatus ? selectedStatus.label : 'All Status';
+    return selectedStatus ? selectedStatus.label : 'Construction Status';
   };
 
   // Handle individual filter reset
@@ -49,9 +62,9 @@ const ConstructionStatusFilter: React.FC<IndividualFilterProps> = ({
   };
 
   return (
-    <div className="relative w-full sm:w-auto">
+    <div className="relative w-full sm:w-auto" ref={containerRef}>
       <button 
-        className={`w-full sm:w-auto flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all ${activeDropdown ? 'border-2 border-secondary text-primary' : 'border border-gray-300 text-primary'} hover:border-secondary`}
+        className={`w-full sm:w-auto flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all border ${activeDropdown ? 'border-secondary text-primary' : 'border-gray-300 text-primary'} hover:border-secondary`}
         onClick={() => setActiveDropdown(!activeDropdown)}
       >
         <FaHardHat className="text-secondary" />
@@ -74,29 +87,23 @@ const ConstructionStatusFilter: React.FC<IndividualFilterProps> = ({
       </button>
       
       {activeDropdown && (
-        <div className="absolute z-[100] mt-2 w-full sm:w-64 bg-white rounded-lg shadow-lg p-4">
-          <p className="font-semibold mb-3">Construction Status</p>
-          <div className="grid grid-cols-2 gap-2">
-            {CONSTRUCTION_STATUSES.map((status) => {
-              const isSelected = (filters.constructionStatus || 'all') === status.value;
-              
-              return (
-                <div 
-                  key={`status-${status.value}`}
-                  className={`
-                    border rounded-md py-2 px-3 cursor-pointer text-center
-                    transition-all hover:bg-gray-50 text-sm
-                    ${isSelected 
-                      ? 'border-2 border-secondary bg-secondary/5 text-secondary font-semibold' 
-                      : 'border-gray-300 hover:border-secondary text-gray-700'}
-                  `}
-                  onClick={() => handleConstructionStatusSelect(status.value)}
-                >
-                  {status.label}
-                </div>
-              );
-            })}
-          </div>
+        <div className="absolute z-[100] mt-1 w-full min-w-[200px] bg-white p-2 rounded-lg shadow-lg border border-gray-200 max-h-[280px] overflow-y-auto">
+          {CONSTRUCTION_STATUSES.map((status) => {
+            const isSelected = (filters.constructionStatus || 'all') === status.value;
+            return (
+              <button
+                key={status.value}
+                type="button"
+                className={`
+                  w-full text-left px-3 py-2 text-sm cursor-pointer transition-colors rounded-lg
+                  ${isSelected ? 'bg-secondary/10 text-secondary font-medium' : 'text-gray-700 hover:bg-gray-100'}
+                `}
+                onClick={() => handleConstructionStatusSelect(status.value)}
+              >
+                {status.label}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

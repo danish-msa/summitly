@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FaChevronDown, FaTag } from 'react-icons/fa';
 import { IndividualFilterProps, FilterChangeEvent } from '@/lib/types/filters';
 
-// Pre-construction status options
+// Pre-construction selling status options
 const PRECON_STATUSES = [
-  { value: 'all', label: 'All Status' },
+  { value: 'all', label: 'All' },
   { value: 'selling', label: 'Selling Now' },
   { value: 'coming-soon', label: 'Coming Soon' },
   { value: 'sold-out', label: 'Sold Out' },
@@ -17,6 +17,18 @@ const PreConStatusFilter: React.FC<IndividualFilterProps> = ({
   handleFilterChange
 }) => {
   const [activeDropdown, setActiveDropdown] = useState<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!activeDropdown) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setActiveDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeDropdown]);
 
   // Handle status selection
   const handleStatusSelect = (value: string) => {
@@ -30,11 +42,12 @@ const PreConStatusFilter: React.FC<IndividualFilterProps> = ({
     setActiveDropdown(false);
   };
 
-  // Get display text for status
+  // Get display text for status (button shows "Selling Status" when All, or the specific option)
   const getStatusText = () => {
     const statusValue = filters.preConStatus || 'all';
+    if (statusValue === 'all') return 'Selling Status';
     const selectedStatus = PRECON_STATUSES.find(s => s.value === statusValue);
-    return selectedStatus ? selectedStatus.label : 'All Status';
+    return selectedStatus ? selectedStatus.label : 'Selling Status';
   };
 
   // Handle individual filter reset
@@ -49,9 +62,9 @@ const PreConStatusFilter: React.FC<IndividualFilterProps> = ({
   };
 
   return (
-    <div className="relative w-full sm:w-auto">
+    <div className="relative w-full sm:w-auto" ref={containerRef}>
       <button 
-        className={`w-full sm:w-auto flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all ${activeDropdown ? 'border-2 border-secondary text-primary' : 'border border-gray-300 text-primary'} hover:border-secondary`}
+        className={`w-full sm:w-auto flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all border ${activeDropdown ? 'border-secondary text-primary' : 'border-gray-300 text-primary'} hover:border-secondary`}
         onClick={() => setActiveDropdown(!activeDropdown)}
       >
         <FaTag className="text-secondary" />
@@ -74,29 +87,23 @@ const PreConStatusFilter: React.FC<IndividualFilterProps> = ({
       </button>
       
       {activeDropdown && (
-        <div className="absolute z-[100] mt-2 w-full sm:w-64 bg-white rounded-lg shadow-lg p-4">
-          <p className="font-semibold mb-3">Status</p>
-          <div className="grid grid-cols-2 gap-2">
-            {PRECON_STATUSES.map((status) => {
-              const isSelected = (filters.preConStatus || 'all') === status.value;
-              
-              return (
-                <div 
-                  key={`status-${status.value}`}
-                  className={`
-                    border rounded-md py-2 px-3 cursor-pointer text-center
-                    transition-all hover:bg-gray-50 text-sm
-                    ${isSelected 
-                      ? 'border-2 border-secondary bg-secondary/5 text-secondary font-semibold' 
-                      : 'border-gray-300 hover:border-secondary text-gray-700'}
-                  `}
-                  onClick={() => handleStatusSelect(status.value)}
-                >
-                  {status.label}
-                </div>
-              );
-            })}
-          </div>
+        <div className="absolute z-[100] mt-1 w-full min-w-[200px] bg-white p-2 rounded-lg shadow-lg border border-gray-200 max-h-[280px] overflow-y-auto">
+          {PRECON_STATUSES.map((status) => {
+            const isSelected = (filters.preConStatus || 'all') === status.value;
+            return (
+              <button
+                key={status.value}
+                type="button"
+                className={`
+                  w-full text-left px-3 py-2 text-sm cursor-pointer transition-colors rounded-lg
+                  ${isSelected ? 'bg-secondary/10 text-secondary font-medium' : 'text-gray-700 hover:bg-gray-100'}
+                `}
+                onClick={() => handleStatusSelect(status.value)}
+              >
+                {status.label}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

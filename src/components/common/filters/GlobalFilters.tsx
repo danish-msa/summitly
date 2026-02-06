@@ -28,6 +28,8 @@ interface GlobalFiltersProps extends FilterComponentProps {
   showResetButton?: boolean; // Flag to show/hide reset button
   isPreCon?: boolean; // Flag to show pre-construction specific filters
   showPreConStatus?: boolean; // Flag to show/hide pre-construction status filter
+  showOccupancyDate?: boolean; // Flag to show/hide occupancy date filter (when isPreCon)
+  showDeveloper?: boolean; // Flag to show/hide developer filter (when isPreCon)
   layout?: 'horizontal' | 'vertical';
   className?: string;
 }
@@ -49,6 +51,8 @@ const GlobalFilters: React.FC<GlobalFiltersProps> = ({
   showResetButton = true,
   isPreCon = false,
   showPreConStatus = false,
+  showOccupancyDate = true,
+  showDeveloper = true,
   layout = 'horizontal',
   className = ''
 }) => {
@@ -107,12 +111,16 @@ const GlobalFilters: React.FC<GlobalFiltersProps> = ({
 
   // Add Pre-Construction specific filters
   if (isPreCon) {
-    filterComponents.push(
-      <DeveloperFilter key="developer" {...commonProps} />
-    );
-    filterComponents.push(
-      <OccupancyDateFilter key="occupancyDate" {...commonProps} />
-    );
+    if (showDeveloper) {
+      filterComponents.push(
+        <DeveloperFilter key="developer" {...commonProps} />
+      );
+    }
+    if (showOccupancyDate) {
+      filterComponents.push(
+        <OccupancyDateFilter key="occupancyDate" {...commonProps} />
+      );
+    }
     filterComponents.push(
       <ConstructionStatusFilter key="constructionStatus" {...commonProps} />
     );

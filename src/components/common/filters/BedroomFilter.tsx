@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FaChevronDown } from 'react-icons/fa';
 import { IndividualFilterProps, FilterChangeEvent } from '@/lib/types/filters';
 import { BedIcon } from 'lucide-react';
@@ -10,6 +10,18 @@ const BedroomFilter: React.FC<IndividualFilterProps> = ({
   handleFilterChange
 }) => {
   const [activeDropdown, setActiveDropdown] = useState<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!activeDropdown) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setActiveDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeDropdown]);
 
   // Handle bedroom selection
   const handleBedroomSelect = (value: number) => {
@@ -42,9 +54,9 @@ const BedroomFilter: React.FC<IndividualFilterProps> = ({
   };
 
   return (
-    <div className="relative w-full sm:w-auto">
+    <div className="relative w-full sm:w-auto" ref={containerRef}>
       <button 
-        className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all ${activeDropdown ? 'border-2 border-secondary text-primary' : 'border border-gray-300 text-primary'} hover:border-secondary`}
+        className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all border ${activeDropdown ? 'border-secondary text-primary' : 'border-gray-300 text-primary'} hover:border-secondary`}
         onClick={() => setActiveDropdown(!activeDropdown)}
       >
         <BedIcon className="w-4 h-4" />
@@ -76,38 +88,27 @@ const BedroomFilter: React.FC<IndividualFilterProps> = ({
       </button>
       
       {activeDropdown && (
-        <div className="absolute z-[100] mt-2 left-0 w-auto min-w-fit bg-white rounded-lg shadow-lg p-4">
-          <p className="font-semibold mb-3">Bedrooms</p>
-          <div className="flex gap-0">
-            {['Any', '1', '2', '3', '4', '5+'].map((value, index) => {
-              const numValue = value === 'Any' ? 0 : value === '5+' ? 5 : parseInt(value);
-              const isSelected = 
-                (value === 'Any' && filters.bedrooms === 0) || 
-                (value !== 'Any' && value !== '5+' && filters.bedrooms === numValue) ||
-                (value === '5+' && filters.bedrooms >= 5);
-              
-              const isFirst = index === 0;
-              const isLast = index === 5;
-              
-              return (
-                <label 
-                  key={`bed-${value}`}
-                  className={`
-                    border cursor-pointer capitalize text-center hover:bg-gray-100
-                    py-2 px-3 text-xs whitespace-nowrap transition-all
-                    ${isFirst ? 'rounded-l-lg' : 'border-l-transparent'}
-                    ${isLast ? 'rounded-r-lg' : ''}
-                    ${isSelected 
-                      ? 'border-2 border-secondary text-secondary font-bold' 
-                      : 'border-gray-300 hover:border-secondary'}
-                  `}
-                  onClick={() => handleBedroomSelect(numValue)}
-                >
-                  {value}
-                </label>
-              );
-            })}
-          </div>
+        <div className="absolute z-[100] mt-1 w-full min-w-[200px] bg-white p-2 rounded-lg shadow-lg border border-gray-200 max-h-[280px] overflow-y-auto">
+          {['Any', '1', '2', '3', '4', '5+'].map((value) => {
+            const numValue = value === 'Any' ? 0 : value === '5+' ? 5 : parseInt(value);
+            const isSelected =
+              (value === 'Any' && filters.bedrooms === 0) ||
+              (value !== 'Any' && value !== '5+' && filters.bedrooms === numValue) ||
+              (value === '5+' && filters.bedrooms >= 5);
+            return (
+              <button
+                key={`bed-${value}`}
+                type="button"
+                className={`
+                  w-full text-left px-3 py-2 text-sm cursor-pointer transition-colors rounded-lg
+                  ${isSelected ? 'bg-secondary/10 text-secondary font-medium' : 'text-gray-700 hover:bg-gray-100'}
+                `}
+                onClick={() => handleBedroomSelect(numValue)}
+              >
+                {value}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

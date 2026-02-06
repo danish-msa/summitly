@@ -146,7 +146,7 @@ export const RepliersAdvancedFilters: React.FC<RepliersAdvancedFiltersProps> = (
         <button
           ref={buttonRef}
           onClick={() => onOpenChange(!open)}
-          className={`relative flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all ${open ? 'border-2 border-secondary text-primary' : 'border border-gray-300 text-primary'} hover:border-secondary`}
+          className={`relative flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground transition-all border border-transparent hover:opacity-90 ${open ? 'opacity-100' : ''}`}
         >
           <Filter className="h-4 w-4" />
           <span>Advanced</span>

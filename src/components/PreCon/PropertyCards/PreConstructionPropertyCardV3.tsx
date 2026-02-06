@@ -178,37 +178,6 @@ const PreConstructionPropertyCardV3 = ({
               </p>
             </div>
           </div>
-          {/* Hover Panel for Property Details - Slides from Right */}
-          {(property.details.bedroomRange || property.details.bathroomRange || property.details.sqftRange) && (
-            <div className="absolute top-0 right-0 h-full z-20 flex items-center">
-              <div className="bg-white/30 backdrop-blur-md border border-white/20 shadow-xl rounded-l-lg px-2 py-2.5 transform translate-x-full group-hover:translate-x-0 transition-transform duration-300 ease-out flex flex-col gap-1.5">
-                {property.details.bedroomRange && (
-                  <div className="flex items-center gap-1.5 transform translate-x-2 group-hover:translate-x-0 opacity-0 group-hover:opacity-100 transition-all duration-300 delay-75">
-                    <div className="bg-white/40 backdrop-blur-sm rounded-full p-1">
-                      <Bed className="h-3 w-3 text-primary" />
-                    </div>
-                    <span className="text-xs font-medium text-primary whitespace-nowrap drop-shadow-sm">{property.details.bedroomRange}</span>
-                  </div>
-                )}
-                {property.details.bathroomRange && (
-                  <div className="flex items-center gap-1.5 transform translate-x-2 group-hover:translate-x-0 opacity-0 group-hover:opacity-100 transition-all duration-300 delay-150">
-                    <div className="bg-white/40 backdrop-blur-sm rounded-full p-1">
-                      <Bath className="h-3 w-3 text-primary" />
-                    </div>
-                    <span className="text-xs font-medium text-primary whitespace-nowrap drop-shadow-sm">{property.details.bathroomRange}</span>
-                  </div>
-                )}
-                {property.details.sqftRange && (
-                  <div className="flex items-center gap-1.5 transform translate-x-2 group-hover:translate-x-0 opacity-0 group-hover:opacity-100 transition-all duration-300 delay-225">
-                    <div className="bg-white/40 backdrop-blur-sm rounded-full p-1">
-                      <Maximize2 className="h-3 w-3 text-primary" />
-                    </div>
-                    <span className="text-xs font-medium text-primary whitespace-nowrap drop-shadow-sm">{property.details.sqftRange}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </div>
         <div className="flex flex-col flex-1">
           <div className="flex items-start justify-between gap-4 p-4 pb-0 mb-3 flex-1">
@@ -228,6 +197,29 @@ const PreConstructionPropertyCardV3 = ({
               <p className={`${hasPrice ? 'text-lg' : 'text-sm'} font-bold text-foreground ${hasPrice ? 'whitespace-nowrap' : 'break-words'}`}>{formattedPrice}</p>
             </div>
           </div>
+          {/* Property details at bottom - always visible */}
+          {(property.details.bedroomRange || property.details.bathroomRange || property.details.sqftRange) && (
+            <div className="flex items-center gap-4 px-4 py-2 border-t border-border/50">
+              {property.details.bedroomRange && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Bed className="h-3.5 w-3.5 flex-shrink-0" aria-hidden />
+                  <span>{property.details.bedroomRange}</span>
+                </div>
+              )}
+              {property.details.bathroomRange && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Bath className="h-3.5 w-3.5 flex-shrink-0" aria-hidden />
+                  <span>{property.details.bathroomRange}</span>
+                </div>
+              )}
+              {property.details.sqftRange && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Maximize2 className="h-3.5 w-3.5 flex-shrink-0" aria-hidden />
+                  <span>{property.details.sqftRange}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </Card>
     </Link>

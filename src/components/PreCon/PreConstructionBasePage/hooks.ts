@@ -31,6 +31,7 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
   const [allProjects, setAllProjects] = useState<PropertyListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [_totalProjects, setTotalProjects] = useState(0);
@@ -186,7 +187,10 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
       if (filters.maxSquareFeet) {
         filterParams.push(`maxSqft=${filters.maxSquareFeet}`);
       }
-      
+      if (filters.occupancyDate && filters.occupancyDate !== 'all') {
+        filterParams.push(`completionYear=${encodeURIComponent(filters.occupancyDate)}`);
+      }
+
       const filterQuery = filterParams.length > 0 ? `&${filterParams.join('&')}` : '';
       const apiQuery = `${buildBaseApiQuery}&limit=${limit}&page=${page}${filterQuery}`;
       
@@ -262,8 +266,9 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
       } else {
         setAllProjects(fetchedProjects);
         setCurrentPage(1); // Reset to 1 for new loads
+        setHasLoadedOnce(true);
       }
-      
+
       setTotalProjects(total);
       const hasMorePages = page < totalPages;
       setHasMore(hasMorePages);
@@ -431,7 +436,7 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
       setProjects([]);
       loadProjects(1, false);
     }
-  }, [filters.bedrooms, filters.bathrooms, filters.propertyType, filters.minPrice, filters.maxPrice, filters.locationArea, buildBaseApiQuery, loadProjects]);
+  }, [filters.bedrooms, filters.bathrooms, filters.propertyType, filters.minPrice, filters.maxPrice, filters.occupancyDate, filters.locationArea, buildBaseApiQuery, loadProjects]);
 
   // Filter projects based on filter state
   useEffect(() => {
@@ -648,10 +653,14 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
     return preConProjects.map(convertToPropertyListing);
   }, [preConProjects]);
 
+  // Full-page loader only on initial load; filter refetches keep the layout
+  const initialLoading = loading && !hasLoadedOnce;
+
   return {
     projects,
     allProjects,
     loading,
+    initialLoading,
     loadingMore,
     hasMore,
     loadMore,

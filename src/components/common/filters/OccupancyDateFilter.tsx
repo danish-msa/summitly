@@ -1,24 +1,17 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FaChevronDown, FaCalendar } from 'react-icons/fa';
 import { IndividualFilterProps, FilterChangeEvent } from '@/lib/types/filters';
 
-// Generate occupancy date options (current year to 10 years ahead)
+// Generate occupancy date options (years only: current year to 10 years ahead)
 const generateOccupancyDates = () => {
   const currentYear = new Date().getFullYear();
   const dates = [{ value: 'all', label: 'All Dates' }];
-  
-  // Add quarters for current year and next 10 years
   for (let year = currentYear; year <= currentYear + 10; year++) {
-    dates.push(
-      { value: `Q1 ${year}`, label: `Q1 ${year}` },
-      { value: `Q2 ${year}`, label: `Q2 ${year}` },
-      { value: `Q3 ${year}`, label: `Q3 ${year}` },
-      { value: `Q4 ${year}`, label: `Q4 ${year}` }
-    );
+    const y = String(year);
+    dates.push({ value: y, label: y });
   }
-  
   return dates;
 };
 
@@ -29,6 +22,18 @@ const OccupancyDateFilter: React.FC<IndividualFilterProps> = ({
   handleFilterChange
 }) => {
   const [activeDropdown, setActiveDropdown] = useState<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!activeDropdown) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setActiveDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeDropdown]);
 
   // Handle occupancy date selection
   const handleOccupancyDateSelect = (value: string) => {
@@ -42,11 +47,14 @@ const OccupancyDateFilter: React.FC<IndividualFilterProps> = ({
     setActiveDropdown(false);
   };
 
-  // Get display text for occupancy date
+  // Get display text for occupancy date (show year only)
   const getOccupancyDateText = () => {
     const dateValue = filters.occupancyDate || 'all';
-    const selectedDate = OCCUPANCY_DATES.find(d => d.value === dateValue);
-    return selectedDate ? selectedDate.label : 'All Dates';
+    if (dateValue === 'all') return 'All Dates';
+    // If stored value is like "Q1 2026", show just the year
+    const year = /20\d{2}/.exec(dateValue)?.[0] ?? dateValue;
+    const found = OCCUPANCY_DATES.find(d => d.value === dateValue || d.value === year);
+    return found ? found.label : year;
   };
 
   // Handle individual filter reset
@@ -61,9 +69,9 @@ const OccupancyDateFilter: React.FC<IndividualFilterProps> = ({
   };
 
   return (
-    <div className="relative w-full sm:w-auto">
+    <div className="relative w-full sm:w-auto" ref={containerRef}>
       <button 
-        className={`w-full sm:w-auto flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all ${activeDropdown ? 'border-2 border-secondary text-primary' : 'border border-gray-300 text-primary'} hover:border-secondary`}
+        className={`w-full sm:w-auto flex items-center gap-2 px-4 py-2 rounded-lg bg-white transition-all border ${activeDropdown ? 'border-secondary text-primary' : 'border-gray-300 text-primary'} hover:border-secondary`}
         onClick={() => setActiveDropdown(!activeDropdown)}
       >
         <FaCalendar className="text-secondary" />
@@ -86,29 +94,23 @@ const OccupancyDateFilter: React.FC<IndividualFilterProps> = ({
       </button>
       
       {activeDropdown && (
-        <div className="absolute z-[100] mt-2 w-full sm:w-64 bg-white rounded-lg shadow-lg p-4 max-h-80 overflow-y-auto">
-          <p className="font-semibold mb-3">Occupancy Date</p>
-          <div className="space-y-2">
-            {OCCUPANCY_DATES.map((date) => {
-              const isSelected = (filters.occupancyDate || 'all') === date.value;
-              
-              return (
-                <div 
-                  key={`date-${date.value}`}
-                  className={`
-                    border rounded-md py-2 px-3 cursor-pointer
-                    transition-all hover:bg-gray-50 text-sm
-                    ${isSelected 
-                      ? 'border-2 border-secondary bg-secondary/5 text-secondary font-semibold' 
-                      : 'border-gray-300 hover:border-secondary text-gray-700'}
-                  `}
-                  onClick={() => handleOccupancyDateSelect(date.value)}
-                >
-                  {date.label}
-                </div>
-              );
-            })}
-          </div>
+        <div className="absolute z-[100] mt-1 w-full min-w-[200px] bg-white p-2 rounded-lg shadow-lg border border-gray-200 max-h-[280px] overflow-y-auto">
+          {OCCUPANCY_DATES.map((date) => {
+            const isSelected = (filters.occupancyDate || 'all') === date.value;
+            return (
+              <button
+                key={date.value}
+                type="button"
+                className={`
+                  w-full text-left px-3 py-2 text-sm cursor-pointer transition-colors rounded-lg
+                  ${isSelected ? 'bg-secondary/10 text-secondary font-medium' : 'text-gray-700 hover:bg-gray-100'}
+                `}
+                onClick={() => handleOccupancyDateSelect(date.value)}
+              >
+                {date.label}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
