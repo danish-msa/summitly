@@ -664,15 +664,10 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
           // Append new properties to existing ones
           setAllProperties(prev => [...prev, ...filtered]);
         } else {
-          // Replace all properties
+          // Replace all properties (e.g. initial load or pagination page change)
           setAllProperties(filtered);
-          setCurrentPage(1); // Reset to 1 for new loads
         }
-        
-        // Only update currentPage if appending, otherwise it's already set to 1 above
-        if (append) {
-          setCurrentPage(page);
-        }
+        setCurrentPage(page);
         
         // Set properties directly - the global filters effect will apply additional filters if needed
         // But if there are no global filters active, we want to show all filtered properties
@@ -845,14 +840,13 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
     setProperties(filtered);
   }, [filters, allProperties, parsedParams]);
 
-  // Handle page change
-  const handlePageChange = (page: number) => {
+  // Handle page change (fetch that page and replace list)
+  const handlePageChange = useCallback((page: number) => {
     if (page >= 1 && page <= totalPages && page !== currentPage) {
-      setCurrentPage(page);
-      // Scroll to top when page changes
+      loadProperties(page, false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  };
+  }, [currentPage, totalPages, loadProperties]);
 
   return {
     properties,

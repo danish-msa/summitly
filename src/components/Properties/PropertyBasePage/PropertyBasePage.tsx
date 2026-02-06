@@ -1,37 +1,45 @@
 "use client";
 
-import React, { useEffect } from 'react';
-import { Separator } from '@/components/ui/separator';
-import { useGlobalFilters } from '@/hooks/useGlobalFilters';
-import GlobalFilters from '@/components/common/filters/GlobalFilters';
-import { LOCATIONS } from '@/lib/types/filters';
-import type { PropertyBasePageProps } from './types';
-import { usePropertyData } from './hooks';
-import { LoadingState } from './components/LoadingState';
-import { HeroSection } from './components/HeroSection';
-import { PropertyListings } from './components/PropertyListings';
-import Pagination from '@/components/ui/pagination';
+import React, { useEffect, useState } from "react";
+import { Separator } from "@/components/ui/separator";
+import { useGlobalFilters } from "@/hooks/useGlobalFilters";
+import GlobalFilters from "@/components/common/filters/GlobalFilters";
+import { LOCATIONS } from "@/lib/types/filters";
+import type { PropertyListing } from "@/lib/types";
+import type { PropertyBasePageProps } from "./types";
+import { usePropertyData } from "./hooks";
+import { LoadingState } from "./components/LoadingState";
+import { HeroSection } from "./components/HeroSection";
+import { NavigationButtons } from "./components/NavigationButtons";
+import { ViewModeToggle } from "@/components/common/ViewModeToggle";
+import { PropertyListings } from "./components/PropertyListings";
+import { MapView } from "./components/MapView";
+import { BlogSectionWrapper } from "./components/BlogSectionWrapper";
+import { FAQSection } from "./components/FAQSection";
+import { PropertyContactSection } from "./components/ContactSection";
+import Pagination from "@/components/ui/pagination";
 
-const PropertyBasePage: React.FC<PropertyBasePageProps> = ({ 
-  slug, 
-  pageType, 
+type ViewMode = "list" | "mixed" | "map";
+
+const PropertyBasePage: React.FC<PropertyBasePageProps> = ({
+  slug,
+  pageType,
   citySlug,
   listingType,
   locationType,
   locationName,
 }) => {
-  // Use global filters hook
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [selectedProperty, setSelectedProperty] = useState<PropertyListing | null>(null);
+
   const { filters, handleFilterChange, resetFilters, setFilter } = useGlobalFilters();
-  
-  // Set listing type from props if provided
+
   React.useEffect(() => {
     if (listingType) {
-      setFilter('listingType', listingType);
+      setFilter("listingType", listingType);
     }
   }, [listingType, setFilter]);
-  
 
-  // Use custom hook for data fetching and filtering
   const {
     loading,
     loadingMore,
@@ -42,32 +50,28 @@ const PropertyBasePage: React.FC<PropertyBasePageProps> = ({
     communities,
     parsedParams,
     pagination,
-  } = usePropertyData({ 
-    slug, 
-    pageType, 
-    citySlug, 
+  } = usePropertyData({
+    slug,
+    pageType,
+    citySlug,
     filters,
     locationType,
     locationName,
-    listingType, // Pass listingType directly to hook
+    listingType,
   });
 
-  // Update document title and meta tags for SEO
   useEffect(() => {
-    const title = pageInfo?.title || '';
-    
+    const title = pageInfo?.title || "";
     if (title) {
       document.title = `${title} | Summitly`;
     }
-
-    // Update meta description
     const metaDescription = document.querySelector('meta[name="description"]');
     if (pageInfo?.description) {
       if (metaDescription) {
-        metaDescription.setAttribute('content', pageInfo.description);
+        metaDescription.setAttribute("content", pageInfo.description);
       } else {
-        const meta = document.createElement('meta');
-        meta.name = 'description';
+        const meta = document.createElement("meta");
+        meta.name = "description";
         meta.content = pageInfo.description;
         document.head.appendChild(meta);
       }
@@ -78,25 +82,23 @@ const PropertyBasePage: React.FC<PropertyBasePageProps> = ({
     return <LoadingState />;
   }
 
-  // Use page info or defaults
-  const displayTitle = pageInfo?.title || '';
+  const displayTitle = pageInfo?.title || "";
   const propertyCount = pageInfo?.numberOfProperties || 0;
-  // const province = pageInfo?.province || 'ON';
-  const displayCount = propertyCount > 0 ? `${propertyCount}+` : '100+';
+  const displayCount = propertyCount > 0 ? `${propertyCount}+` : "100+";
+  const province = pageInfo?.province || "ON";
 
-  // Get current date for "Last Updated"
-  const lastUpdatedDate = new Date().toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
+  const lastUpdatedDate = new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 
-  // Build description
-  const description = pageInfo?.description || `Find properties for sale. Browse listings, view photos, and connect with real estate agents.`;
+  const description =
+    pageInfo?.description ||
+    "Find properties for sale. Browse listings, view photos, and connect with real estate agents.";
 
   return (
-    <div className="min-h-screen pt-16">
-      {/* Hero Section with Header */}
+    <div className="">
       <HeroSection
         heroImage={null}
         title={displayTitle}
@@ -107,49 +109,79 @@ const PropertyBasePage: React.FC<PropertyBasePageProps> = ({
         cityName={parsedParams?.cityName || null}
       />
 
-      {/* Main Content */}
       <main className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-4">
-        
-        {/* Filters */}
+        <NavigationButtons
+          pageType={pageType}
+          slug={slug}
+          displayTitle={displayTitle}
+        />
+
         <section>
-          <div className="flex flex-col md:flex-row gap-4 w-full">
-            <div className="flex justify-between items-center gap-1 w-full">
-              <div className="flex-1 w-full lg:w-auto">
-                <GlobalFilters
-                  filters={filters}
-                  handleFilterChange={handleFilterChange}
-                  resetFilters={resetFilters}
-                  communities={communities}
-                  locations={LOCATIONS}
-                  showLocation={true}
-                  showPropertyType={!parsedParams?.propertyType}
-                  showCommunity={false}
-                  showPrice={!parsedParams?.priceRange}
-                  showBedrooms={!parsedParams?.bedrooms}
-                  showBathrooms={!parsedParams?.bathrooms}
-                  showAdvanced={true}
-                  showSellRentToggle={false}
-                  layout="horizontal"
-                  className="w-full"
-                />
-              </div>
-            </div>
+          <div className="flex flex-col md:flex-row gap-4">
+            <GlobalFilters
+              filters={filters}
+              handleFilterChange={handleFilterChange}
+              resetFilters={resetFilters}
+              communities={communities}
+              locations={LOCATIONS}
+              showLocation={true}
+              showPropertyType={!parsedParams?.propertyType}
+              showCommunity={false}
+              showPrice={!parsedParams?.priceRange}
+              showBedrooms={!parsedParams?.bedrooms}
+              showBathrooms={!parsedParams?.bathrooms}
+              showAdvanced={true}
+              showSellRentToggle={false}
+              showResetButton={false}
+              layout="horizontal"
+              className="w-full"
+            />
+            <ViewModeToggle
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+            />
           </div>
         </section>
 
-        {/* Property Listings */}
         <section className="pb-8">
-          <PropertyListings
-            properties={properties}
-            displayTitle={displayTitle}
-            pageType={pageType}
-            loadingMore={loadingMore}
-            hasMore={hasMore}
-            onLoadMore={loadMore}
-          />
-          
-          {/* Pagination - Fallback if infinite scroll doesn't work */}
-          {pagination && pagination.totalPages > 1 && !hasMore && (
+          {!loading && properties.length === 0 && (
+            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded text-sm">
+              <p className="font-semibold text-yellow-800">No properties found</p>
+              <p className="text-yellow-700 mt-2">
+                Try adjusting your filters or search in a different area.
+              </p>
+            </div>
+          )}
+
+          <div
+            className={`flex ${
+              viewMode === "map"
+                ? "flex-col"
+                : viewMode === "list"
+                  ? "flex-col"
+                  : "flex-col md:flex-row"
+            } gap-6`}
+          >
+            <PropertyListings
+              properties={properties}
+              displayTitle={displayTitle}
+              pageType={pageType}
+              loadingMore={loading}
+              hasMore={false}
+              viewMode={viewMode}
+              selectedProperty={selectedProperty}
+              onPropertySelect={setSelectedProperty}
+            />
+
+            <MapView
+              viewMode={viewMode}
+              mapProperties={properties}
+              selectedProperty={selectedProperty}
+              onPropertySelect={setSelectedProperty}
+            />
+          </div>
+
+          {pagination && pagination.totalPages > 1 && (
             <div className="mt-8 flex justify-center">
               <Pagination
                 currentPage={pagination.currentPage}
@@ -162,23 +194,33 @@ const PropertyBasePage: React.FC<PropertyBasePageProps> = ({
             </div>
           )}
         </section>
+
         <Separator />
-        
-        {/* Description Section */}
+
         {description && (
           <section className="py-6">
             <div className="w-full prose prose-sm max-w-none">
-              <div 
+              <div
                 className="text-muted-foreground text-base leading-loose"
                 dangerouslySetInnerHTML={{ __html: description }}
               />
             </div>
           </section>
         )}
+
+        <BlogSectionWrapper
+          pageType={pageType}
+          displayTitle={displayTitle}
+          province={province}
+          slug={slug}
+        />
       </main>
+
+      <FAQSection pageType={pageType} displayTitle={displayTitle} />
+
+      <PropertyContactSection pageType={pageType} displayTitle={displayTitle} />
     </div>
   );
 };
 
 export default PropertyBasePage;
-

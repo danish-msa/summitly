@@ -1,7 +1,11 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+const PAGINATION = {
+  inactiveBg: '#FFFF',
+  textGray: '#5F6B7F',
+} as const;
 
 interface PaginationProps {
   currentPage: number;
@@ -20,25 +24,35 @@ interface PaginationItemProps {
   children?: React.ReactNode;
 }
 
-const PaginationItem: React.FC<PaginationItemProps> = ({ 
-  page, 
-  isActive, 
-  onClick, 
-  children 
+const PaginationItem: React.FC<PaginationItemProps> = ({
+  page,
+  isActive,
+  onClick,
+  children,
 }) => {
   return (
-    <Button
-      variant={isActive ? "default" : "outline"}
-      size="sm"
+    <button
+      type="button"
       onClick={onClick}
       className={cn(
-        "h-9 w-9 p-0 rounded-lg",
-        isActive && "bg-primary text-primary-foreground hover:bg-primary/90"
+        'h-9 w-9 min-w-[2.25rem] p-0 rounded-xl font-medium text-sm inline-flex items-center justify-center transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+        'hover:opacity-90',
+        isActive && 'bg-secondary text-secondary-foreground'
       )}
-      aria-current={isActive ? "page" : undefined}
+      style={
+        isActive
+          ? { boxShadow: '0 2px 8px hsl(var(--secondary) / 0.35)' }
+          : {
+              backgroundColor: PAGINATION.inactiveBg,
+              color: PAGINATION.textGray,
+            }
+      }
+      aria-current={isActive ? 'page' : undefined}
+      aria-label={isActive ? `Page ${page}, current page` : `Go to page ${page}`}
     >
-      {children || page}
-    </Button>
+      {children ?? page}
+    </button>
   );
 };
 
@@ -110,11 +124,11 @@ const Pagination: React.FC<PaginationProps> = ({
   const pageNumbers = generatePageNumbers();
 
   return (
-    <nav 
-      className={cn("flex items-center justify-center space-x-1", className)}
+    <nav
+      className={cn('flex items-center justify-center gap-1.5', className)}
       aria-label="Pagination"
     >
-      {/* First Page */}
+      {/* First Page (when showFirstLast) */}
       {showFirstLast && currentPage > 1 && (
         <PaginationItem
           page={1}
@@ -126,36 +140,36 @@ const Pagination: React.FC<PaginationProps> = ({
         </PaginationItem>
       )}
 
-      {/* Previous Button */}
+      {/* Previous */}
       {showPrevNext && (
-        <Button
-          variant="outline"
-          size="sm"
+        <button
+          type="button"
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="h-9 px-3"
+          className="h-9 w-9 rounded-xl inline-flex items-center justify-center transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
+          style={{ color: PAGINATION.textGray }}
           aria-label="Previous page"
         >
-          <ChevronLeft className="h-4 w-4" />
-          <span className="sr-only">Previous</span>
-        </Button>
+          <ChevronLeft className="h-4 w-4" aria-hidden />
+        </button>
       )}
 
       {/* Page Numbers */}
-      <div className="flex items-center space-x-1">
+      <div className="flex items-center gap-1.5">
         {pageNumbers.map((page, index) => {
           if (page === 'ellipsis') {
             return (
-              <div
+              <span
                 key={`ellipsis-${index}`}
-                className="flex h-9 w-9 items-center justify-center"
+                className="flex h-9 w-9 items-center justify-center text-sm font-medium"
+                style={{ color: PAGINATION.textGray }}
+                aria-hidden
               >
-                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                <span className="sr-only">More pages</span>
-              </div>
+                ...
+              </span>
             );
           }
-          
+
           return (
             <PaginationItem
               key={page}
@@ -167,22 +181,21 @@ const Pagination: React.FC<PaginationProps> = ({
         })}
       </div>
 
-      {/* Next Button */}
+      {/* Next */}
       {showPrevNext && (
-        <Button
-          variant="outline"
-          size="sm"
+        <button
+          type="button"
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="h-9 px-3"
+          className="h-9 w-9 rounded-xl inline-flex items-center justify-center transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
+          style={{ color: PAGINATION.textGray }}
           aria-label="Next page"
         >
-          <ChevronRight className="h-4 w-4" />
-          <span className="sr-only">Next</span>
-        </Button>
+          <ChevronRight className="h-4 w-4" aria-hidden />
+        </button>
       )}
 
-      {/* Last Page */}
+      {/* Last Page (when showFirstLast) */}
       {showFirstLast && currentPage < totalPages && (
         <PaginationItem
           page={totalPages}
