@@ -10,7 +10,7 @@ const Hero = () => {
   };
 
   return (
-    <div className='w-full flex-col lg:flex-row flex justify-center items-center pt-28 md:pt-[10vw] pb-[4vw] bg-[url("/images/banner2.webp")] bg-cover bg-center relative mx-auto'>
+    <div className='w-full flex-col lg:flex-row flex justify-center items-center mt-16 py-12 sm:py-16 md:py-20 lg:py-24 bg-[url("/images/banner2.webp")] bg-cover bg-center relative mx-auto'>
         {/* Overlay */}
         <div className='absolute inset-0 bg-black bg-opacity-50'></div>
         

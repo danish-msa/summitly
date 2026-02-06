@@ -3,6 +3,7 @@
 import React from 'react';
 import { FaHandshake, FaChartLine, FaMoneyBillWave } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 
 const AgentMatchingInfo = () => {
   const router = useRouter();
@@ -20,19 +21,19 @@ const AgentMatchingInfo = () => {
         </div>
         
         <div className='grid grid-cols-1 md:grid-cols-3 gap-8 mb-12'>
-          <div className='bg-gray-50 p-8 rounded-lg shadow-md text-center'>
+          <div className='shadow-card p-8 rounded-2xl text-center'>
             <FaChartLine className='mx-auto text-4xl text-primary mb-4' />
             <h3 className=' text-xl mb-3 text-gray-800'>Data-Driven Matching</h3>
             <p className='text-gray-600'>We analyze agents based on their performance, track record, and local expertise to find your perfect match.</p>
           </div>
           
-          <div className='bg-gray-50 p-8 rounded-lg shadow-md text-center'>
+          <div className='shadow-card p-8 rounded-2xl text-center'>
             <FaHandshake className='mx-auto text-4xl text-secondary mb-4' />
             <h3 className='text-xl mb-3 text-gray-800'>Perfect Match Guarantee</h3>
             <p className='text-gray-600'>If your initial match isn't right, we'll keep searching until you find the perfect agent for your needs.</p>
           </div>
           
-          <div className='bg-gray-50 p-8 rounded-lg shadow-md text-center'>
+          <div className='shadow-card p-8 rounded-2xl text-center'>
             <FaMoneyBillWave className='mx-auto text-4xl text-green-600 mb-4' />
             <h3 className='text-xl mb-3 text-gray-800'>Cashback Rewards</h3>
             <p className='text-gray-600'>Work with select agents and receive up to 1% cashback after closing on your new home purchase.</p>
@@ -48,12 +49,13 @@ const AgentMatchingInfo = () => {
               </p>
             </div>
             <div>
-              <button 
+              <Button
+                variant="secondary"
                 onClick={() => router.push('/about')}
                 className='bg-secondary text-white py-3 px-8 rounded-lg font-semibold hover:bg-primary-dark transition-all'
               >
                 LEARN MORE
-              </button>
+              </Button>
             </div>
           </div>
         </div>
