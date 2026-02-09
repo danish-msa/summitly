@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Check, Home, Pencil, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
@@ -30,6 +31,8 @@ interface EditHomeModalProps {
   lotSize?: string;
   garage?: number | string;
   yearBuilt?: number | string;
+  /** Called after a successful save so the parent can refresh displayed data */
+  onSaveSuccess?: () => void;
 }
 
 function formatSqft(value: number | string | undefined) {
@@ -56,8 +59,10 @@ export default function EditHomeModal({
   lotSize,
   garage,
   yearBuilt,
+  onSaveSuccess,
 }: EditHomeModalProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const [bedrooms, setBedrooms] = useState("");
   const [fullBathrooms, setFullBathrooms] = useState("");
@@ -118,12 +123,26 @@ export default function EditHomeModal({
     setCondition(initialState.condition);
   };
 
-  const handleSaveEdit = () => {
-    // Persist to user's profile (requires login; caller already gates)
-    if (propertySlug) {
-      fetch("/api/v1/my-home", {
+  const handleSaveEdit = async (): Promise<boolean> => {
+    if (!propertySlug || !addressLine) {
+      toast({
+        title: "Cannot save",
+        description: "Missing property or address.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    setSaving(true);
+    try {
+      const livingAreaSqft =
+        livingArea != null && livingArea !== ""
+          ? String(livingArea).replace(/[^\d.-]/g, "").trim() || undefined
+          : undefined;
+
+      const res = await fetch("/api/v1/my-home", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           slug: propertySlug,
           addressLine: addressLine || "",
@@ -139,20 +158,44 @@ export default function EditHomeModal({
             fullBathrooms: fullBathrooms || undefined,
             partialBathrooms: partialBathrooms || undefined,
             totalRooms: totalRooms || undefined,
-            livingAreaSqft: livingArea || undefined,
+            livingAreaSqft: livingAreaSqft ?? undefined,
             lotSize: lotSizeValue || undefined,
             basement: basement || undefined,
-            pool,
+            pool: pool === "Yes",
             garageType: garageType || undefined,
             condition: condition || undefined,
             yearBuilt: yearBuilt || undefined,
           },
         }),
-      }).catch(() => {
-        // best-effort; UI can be improved later with toast
       });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Failed to save" }));
+        toast({
+          title: "Save failed",
+          description: err?.error ?? "Could not update home details. Please try again.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      toast({
+        title: "Details saved",
+        description: "Your home details have been updated.",
+      });
+      setIsEditing(false);
+      onSaveSuccess?.();
+      return true;
+    } catch {
+      toast({
+        title: "Save failed",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setSaving(false);
     }
-    setIsEditing(false);
   };
 
   const rows: Array<{ label: string; value?: string; add?: boolean }> = [
@@ -405,13 +448,14 @@ export default function EditHomeModal({
         <div className="border-t px-6 py-6 bg-white">
           <Button
             type="button"
+            disabled={saving}
             className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground py-6 text-base font-semibold"
-            onClick={() => {
-              handleSaveEdit();
-              onOpenChange(false);
+            onClick={async () => {
+              const ok = await handleSaveEdit();
+              if (ok) onOpenChange(false);
             }}
           >
-            Save
+            {saving ? "Saving..." : "Save"}
           </Button>
 
           <p className="mt-6 text-xs text-gray-500 leading-relaxed">

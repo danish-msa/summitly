@@ -11,6 +11,7 @@ import {
   Bell,
   ArrowLeft,
   LogOut,
+  ClipboardList,
 } from "lucide-react"
 import {
   Sidebar,
@@ -31,6 +32,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 const RENTALS_MENU_ITEMS = [
   { title: "Properties", url: "/manage-rentals/dashboard/properties", icon: Building2 },
   { title: "Add a property", url: "/manage-rentals/dashboard/properties/new", icon: Plus },
+  { title: "Applications", url: "/manage-rentals/dashboard/applications", icon: ClipboardList },
   { title: "Leads", url: "/manage-rentals/dashboard/leads", icon: Users },
   { title: "Messages", url: "/manage-rentals/dashboard/messages", icon: MessageSquare },
   { title: "Payments", url: "/manage-rentals/dashboard/payments", icon: CreditCard },

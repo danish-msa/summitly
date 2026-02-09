@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Plus, Users, MessageSquare, CreditCard, Bell } from "lucide-react";
+import { Building2, Plus, ClipboardList, Users, MessageSquare, CreditCard, Bell } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Rentals Dashboard | Manage Your Properties",
@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 const quickLinks = [
   { title: "Properties", href: "/manage-rentals/dashboard/properties", icon: Building2 },
   { title: "Add a property", href: "/manage-rentals/dashboard/properties/new", icon: Plus },
+  { title: "Applications", href: "/manage-rentals/dashboard/applications", icon: ClipboardList },
   { title: "Leads", href: "/manage-rentals/dashboard/leads", icon: Users },
   { title: "Messages", href: "/manage-rentals/dashboard/messages", icon: MessageSquare },
   { title: "Payments", href: "/manage-rentals/dashboard/payments", icon: CreditCard },

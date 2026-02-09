@@ -22,7 +22,7 @@ const FEATURES = [
 
 const HomeownerContent: React.FC = () => {
   return (
-    <div className="max-w-6xl mx-auto px-4 py-16 -mt-24 z-10 relative">
+    <div className="max-w-6xl mx-auto px-4 py-16 -mt-24 z-0 relative">
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {FEATURES.map(({ icon: Icon, label }) => (
           <div

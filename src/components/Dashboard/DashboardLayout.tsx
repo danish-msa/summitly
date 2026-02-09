@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react'
 import { useRouter, usePathname } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { DashboardSidebar } from "./DashboardSidebar"
 import { Loader2 } from 'lucide-react'
@@ -14,6 +14,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
   const router = useRouter()
   const pathname = usePathname()
+  const hasHadSession = useRef(false)
+  if (session) hasHadSession.current = true
+  const showInitialLoading = status === 'loading' && !hasHadSession.current
 
   // Reset body padding on dashboard pages
   useEffect(() => {
@@ -52,7 +55,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     }
   }, [status, session, router, pathname])
 
-  if (status === 'loading') {
+  if (showInitialLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

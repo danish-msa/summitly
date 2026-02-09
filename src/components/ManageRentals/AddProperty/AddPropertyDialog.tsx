@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Home, AlertCircle } from "lucide-react";
+import { Home, AlertCircle, MapPin } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AutocompleteSearch } from "@/components/common/AutocompleteSearch";
+import type { Location } from "@/lib/api/repliers/services/locations";
 import { cn } from "@/lib/utils";
 
 export type AddPropertyInitialData = {
@@ -91,8 +93,7 @@ export function AddPropertyDialog({
                 </DialogTitle>
               </DialogHeader>
               <p className="text-sm text-muted-foreground mt-1 text-left">
-                Once you add your property, you can list it for free on Zillow,
-                Trulia, and HotPads to help find your perfect renter.
+                Add your property to get started.
               </p>
             </div>
           </div>
@@ -100,20 +101,45 @@ export function AddPropertyDialog({
 
         <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="street-address">Street address</Label>
-            <Input
-              id="street-address"
-              value={streetAddress}
-              onChange={(e) => setStreetAddress(e.target.value)}
-              onBlur={() => setTouched((t) => ({ ...t, address: true }))}
-              placeholder="Enter address"
-              className={cn(
-                "w-full",
-                addressError && "border-destructive focus-visible:ring-destructive"
-              )}
-              aria-invalid={addressError}
-              aria-describedby={addressError ? "address-error" : undefined}
-            />
+            <Label htmlFor="neighbourhood-address">Neighbourhood / area</Label>
+            {streetAddress ? (
+              <div
+                id="neighbourhood-address"
+                className="flex items-center gap-3 rounded-lg border border-input bg-muted/30 px-4 py-3"
+              >
+                <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                <span className="flex-1 text-sm font-medium text-foreground truncate">
+                  {streetAddress}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="shrink-0 text-primary hover:text-primary/90"
+                  onClick={() => setStreetAddress("")}
+                >
+                  Change
+                </Button>
+              </div>
+            ) : (
+              <div
+                onBlur={() => setTouched((t) => ({ ...t, address: true }))}
+                className={cn(addressError && "rounded-lg ring-2 ring-destructive ring-offset-2")}
+              >
+                <AutocompleteSearch
+                  placeholder="Search neighbourhood or area..."
+                  locationsOnly
+                  className="[&_input]:rounded-lg [&_input]:border-input [&_input]:h-11"
+                  onSelectLocation={(loc: Location) => {
+                    const display =
+                      loc.address?.city && loc.address?.state
+                        ? `${loc.name}, ${loc.address.city}, ${loc.address.state}`
+                        : loc.name;
+                    setStreetAddress(display);
+                  }}
+                />
+              </div>
+            )}
             {addressError && (
               <p
                 id="address-error"
@@ -121,7 +147,7 @@ export function AddPropertyDialog({
                 role="alert"
               >
                 <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
-                Enter an address
+                Select a neighbourhood or area
               </p>
             )}
           </div>
@@ -167,7 +193,7 @@ export function AddPropertyDialog({
             <Input
               id="unit-number"
               value={unitNumber}
-              onChange={(e) => setUnitNumber(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUnitNumber(e.target.value)}
               placeholder="# Enter apartment, suite, or unit number."
               className="w-full"
             />

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
 import ViewToggle from '../ViewToggle/ViewToggle';
 import WelcomeHeading from '../WelcomeHeading/WelcomeHeading';
 import PropertyInfoCard from '../PropertyInfoCard/PropertyInfoCard';
@@ -16,6 +17,24 @@ import {
   CurvedTabsContent 
 } from '@/components/ui/curved-tabs';
 import { NeighborhoodAmenities } from '@/components/Item/ItemBody/NeighborhoodAmenities/NeighborhoodAmenities';
+
+/** Saved home from GET /api/v1/my-home?slug= */
+type SavedHome = {
+  slug: string;
+  addressLine: string;
+  streetNumber?: string | null;
+  streetName?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+  bedrooms?: number | null;
+  fullBathrooms?: number | null;
+  partialBathrooms?: number | null;
+  livingAreaSqft?: number | null;
+  lotSize?: string | null;
+  garageType?: string | null;
+  yearBuilt?: number | null;
+};
 
 interface PropertyDetailContentProps {
   propertySlug?: string;
@@ -36,24 +55,108 @@ interface PropertyDetailContentProps {
   propertyImage?: string;
 }
 
+function bathsFromSaved(full?: number | null, partial?: number | null): number | string | undefined {
+  const f = full ?? 0;
+  const p = partial ?? 0;
+  const total = f + p;
+  if (total === 0) return undefined;
+  return total % 1 === 0 ? total : Number(total.toFixed(1));
+}
+
 const PropertyDetailContent: React.FC<PropertyDetailContentProps> = (props) => {
+  const { data: session } = useSession();
   const [currentView, setCurrentView] = useState<'public' | 'owner'>('owner');
+  const [savedHome, setSavedHome] = useState<SavedHome | null>(null);
 
-  const handleVerify = () => {
-    console.log('Verify ownership clicked');
-    // Add verification logic here
-  };
+  // When property is verified (in user's My Home), use saved data for display instead of Repliers
+  useEffect(() => {
+    if (!session?.user || !props.propertySlug?.trim()) {
+      setSavedHome(null);
+      return;
+    }
+    let cancelled = false;
+    const slug = props.propertySlug.trim();
+    (async () => {
+      try {
+        const res = await fetch(`/api/v1/my-home?slug=${encodeURIComponent(slug)}`, { credentials: "include" });
+        if (!res.ok || cancelled) return;
+        const json = await res.json();
+        if (!cancelled && json.home) setSavedHome(json.home);
+        else if (!cancelled) setSavedHome(null);
+      } catch {
+        if (!cancelled) setSavedHome(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [session?.user, props.propertySlug]);
 
-  // Build full address for MarketAnalytics
-  const fullAddress = [
-    props.streetNumber,
-    props.streetName,
-    props.city,
-    props.state,
-    props.zip
+  const refetchSavedHome = useCallback(async () => {
+    if (!props.propertySlug?.trim()) return;
+    const slug = props.propertySlug.trim();
+    try {
+      const res = await fetch(`/api/v1/my-home?slug=${encodeURIComponent(slug)}`, { credentials: "include" });
+      if (!res.ok) return;
+      const json = await res.json();
+      setSavedHome(json.home ?? null);
+    } catch {
+      setSavedHome(null);
+    }
+  }, [props.propertySlug]);
+
+  // Use saved user home for display when verified; otherwise Repliers (props)
+  const display = savedHome
+    ? {
+        streetNumber: savedHome.streetNumber ?? props.streetNumber,
+        streetName: savedHome.streetName ?? props.streetName,
+        city: savedHome.city ?? props.city,
+        state: savedHome.state ?? props.state,
+        zip: savedHome.zip ?? props.zip,
+        beds: savedHome.bedrooms ?? props.beds,
+        baths: bathsFromSaved(savedHome.fullBathrooms, savedHome.partialBathrooms) ?? props.baths,
+        sqft: savedHome.livingAreaSqft ?? props.sqft,
+        lotSize: savedHome.lotSize ?? props.lotSize,
+        garage: savedHome.garageType ?? props.garage,
+        yearBuilt: savedHome.yearBuilt ?? props.yearBuilt,
+      }
+    : {
+        streetNumber: props.streetNumber,
+        streetName: props.streetName,
+        city: props.city,
+        state: props.state,
+        zip: props.zip,
+        beds: props.beds,
+        baths: props.baths,
+        sqft: props.sqft,
+        lotSize: props.lotSize,
+        garage: props.garage,
+        yearBuilt: props.yearBuilt,
+      };
+
+  const fullAddress = savedHome?.addressLine?.trim() || [
+    display.streetNumber,
+    display.streetName,
+    display.city,
+    display.state,
+    display.zip,
   ]
     .filter(Boolean)
     .join(', ') || 'Address not available';
+
+  const mergedProps = {
+    ...props,
+    propertySlug: props.propertySlug,
+    streetNumber: display.streetNumber,
+    streetName: display.streetName,
+    city: display.city,
+    state: display.state,
+    zip: display.zip,
+    beds: display.beds,
+    baths: display.baths,
+    sqft: display.sqft,
+    lotSize: display.lotSize,
+    garage: display.garage,
+    yearBuilt: display.yearBuilt,
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -71,23 +174,24 @@ const PropertyDetailContent: React.FC<PropertyDetailContentProps> = (props) => {
               />
             </div>
             
-            <PropertyInfoCard {...props} propertySlug={props.propertySlug} />
+            <PropertyInfoCard {...mergedProps} />
             
             <YourHomeCard
-              onVerify={handleVerify}
+              onVerify={refetchSavedHome}
               addressLine={fullAddress}
               propertySlug={props.propertySlug}
-              streetNumber={props.streetNumber}
-              streetName={props.streetName}
-              city={props.city}
-              state={props.state}
-              zip={props.zip}
-              beds={props.beds}
-              baths={props.baths}
-              sqft={props.sqft}
-              lotSize={props.lotSize}
-              garage={props.garage}
-              yearBuilt={props.yearBuilt}
+              isVerified={!!savedHome}
+              streetNumber={display.streetNumber}
+              streetName={display.streetName}
+              city={display.city}
+              state={display.state}
+              zip={display.zip}
+              beds={display.beds}
+              baths={display.baths}
+              sqft={display.sqft}
+              lotSize={display.lotSize}
+              garage={display.garage}
+              yearBuilt={display.yearBuilt}
             />
 
             {/* Tabbed Section */}
@@ -111,9 +215,9 @@ const PropertyDetailContent: React.FC<PropertyDetailContentProps> = (props) => {
 
                 <CurvedTabsContent value="market-snapshot">
                   <MarketSnapshot
-                    zip={props.zip}
-                    city={props.city}
-                    state={props.state}
+                    zip={mergedProps.zip}
+                    city={mergedProps.city}
+                    state={mergedProps.state}
                   />
                 </CurvedTabsContent>
 

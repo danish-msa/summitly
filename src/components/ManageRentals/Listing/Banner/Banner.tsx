@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -24,14 +26,50 @@ const PROPERTY_TYPES = [
 ];
 
 const ListingBanner: React.FC = () => {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [streetAddress, setStreetAddress] = useState("");
   const [propertyType, setPropertyType] = useState("");
   const [sharedLivingSpace, setSharedLivingSpace] = useState(false);
+
+  useEffect(() => {
+    if (status === "authenticated" && session) {
+      router.replace("/manage-rentals/dashboard/");
+    }
+  }, [status, session, router]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: wire to listing flow
   };
+
+  if (status === "loading") {
+    return (
+      <section
+        className="relative min-h-[420px] sm:min-h-[520px] flex items-center justify-center"
+        aria-label="Loading"
+      >
+        <div className="absolute inset-0">
+          <Image
+            src="/images/managerentals/listing-banner.jpg"
+            alt=""
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" aria-hidden />
+        </div>
+        <div className="relative z-10 flex items-center justify-center">
+          <Loader2 className="h-10 w-10 animate-spin text-white" aria-hidden />
+        </div>
+      </section>
+    );
+  }
+
+  if (session || status === "authenticated") {
+    return null;
+  }
 
   return (
     <section
@@ -136,15 +174,17 @@ const ListingBanner: React.FC = () => {
               </Button>
             </form>
 
-            <p className="text-sm text-zinc-600 text-center mt-5">
-              Already have an account?{" "}
-              <Link
-                href="/dashboard"
-                className="font-medium text-secondary hover:underline"
-              >
-                Sign in
-              </Link>
-            </p>
+            {!session && status === "unauthenticated" && (
+              <p className="text-sm text-zinc-600 text-center mt-5">
+                Already have an account?{" "}
+                <Link
+                  href="/auth/signin?callbackUrl=/manage-rentals/listing"
+                  className="font-medium text-secondary hover:underline"
+                >
+                  Sign in
+                </Link>
+              </p>
+            )}
           </div>
         </div>
       </div>

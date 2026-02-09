@@ -1,12 +1,32 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Check, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
+import { AddPropertyDialog } from "@/components/ManageRentals/AddProperty/AddPropertyDialog";
+import type { AddPropertyInitialData } from "@/components/ManageRentals/AddProperty/AddPropertyDialog";
 
 const TenantScreeningBanner: React.FC = () => {
+  const [screeningDialogOpen, setScreeningDialogOpen] = useState(false);
+  const [addPropertyDialogOpen, setAddPropertyDialogOpen] = useState(false);
+  const router = useRouter();
+
+  const handleAddPropertySubmit = (data: AddPropertyInitialData) => {
+    try {
+      sessionStorage.setItem("add-property-initial", JSON.stringify(data));
+    } catch {
+      // ignore
+    }
+    router.push("/manage-rentals/dashboard/properties/new/listing");
+  };
+
   return (
     <section
       className="relative w-full bg-white overflow-x-hidden"
@@ -33,11 +53,15 @@ const TenantScreeningBanner: React.FC = () => {
               eviction history with our tenant screening service.
             </p>
             <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-6">
-              <Button asChild variant="default" size="lg" className="rounded-xl w-full sm:w-auto">
-                <Link href="/manage-rentals" className="inline-flex items-center justify-center gap-2">
-                  Start screening tenants
-                  <ArrowRight className="h-4 w-4" aria-hidden />
-                </Link>
+              <Button
+                type="button"
+                variant="default"
+                size="lg"
+                className="rounded-xl w-full sm:w-auto"
+                onClick={() => setScreeningDialogOpen(true)}
+              >
+                Start screening tenants
+                <ArrowRight className="h-4 w-4" aria-hidden />
               </Button>
               <Link
                 href="/manage-rentals#pricing"
@@ -83,6 +107,70 @@ const TenantScreeningBanner: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <Dialog open={screeningDialogOpen} onOpenChange={setScreeningDialogOpen}>
+        <DialogContent
+          className="max-w-2xl p-0 gap-0 overflow-hidden"
+          aria-describedby="screening-dialog-description"
+        >
+          <div
+            id="screening-dialog-description"
+            className="sr-only"
+          >
+            Choose whether to create a rental listing first or screen renters now
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border">
+            {/* List first, then screen */}
+            <div className="p-6 flex flex-col">
+              <h3 className="text-lg font-bold text-zinc-900 mb-3">
+                List first, then screen
+              </h3>
+              <p className="text-sm text-zinc-600 mb-6 flex-1">
+                Need to first{" "}
+                <span className="font-semibold text-zinc-900">create a rental listing</span> to find{" "}
+                <span className="font-semibold text-zinc-900">renters</span> interested in your property?
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-xl border-primary text-primary hover:bg-primary/5 w-full sm:w-auto"
+                onClick={() => {
+                  setScreeningDialogOpen(false);
+                  setAddPropertyDialogOpen(true);
+                }}
+              >
+                Create a listing
+              </Button>
+            </div>
+            {/* Screen renters now */}
+            <div className="p-6 flex flex-col">
+              <h3 className="text-lg font-bold text-zinc-900 mb-3">
+                Screen renters now
+              </h3>
+              <p className="text-sm text-zinc-600 mb-6 flex-1">
+                Already have prospective renters that you are ready to invite to apply to your property?
+              </p>
+              <Button
+                type="button"
+                variant="default"
+                className="rounded-xl w-full sm:w-auto"
+                onClick={() => {
+                  setScreeningDialogOpen(false);
+                  router.push("/manage-rentals/dashboard/applications/tenant-screening");
+                }}
+              >
+                Screen tenants
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <AddPropertyDialog
+        open={addPropertyDialogOpen}
+        onOpenChange={setAddPropertyDialogOpen}
+        onSubmit={handleAddPropertySubmit}
+      />
     </section>
   );
 };

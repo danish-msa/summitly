@@ -172,6 +172,8 @@ export interface AutocompleteSearchProps {
   placeholder?: string;
   /** When set, uses modern floating label UI (label animates up on focus/value). Omit for simple input with placeholder. */
   label?: string;
+  /** When true, only show locations (neighbourhoods/areas/cities); hide property listings. */
+  locationsOnly?: boolean;
   className?: string;
   inputClassName?: string;
   onSelectListing?: (listing: PropertyListing) => void;
@@ -181,6 +183,7 @@ export interface AutocompleteSearchProps {
 export function AutocompleteSearch({
   placeholder = "Search properties or locations...",
   label,
+  locationsOnly = false,
   className,
   inputClassName,
   onSelectListing,
@@ -215,9 +218,12 @@ export function AutocompleteSearch({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const hasRelevantResults = locationsOnly
+    ? locations.length > 0
+    : listings.length > 0 || locations.length > 0;
   const showDropdown =
     isOpen &&
-    (query.length >= minQueryLength || (listings.length > 0 || locations.length > 0));
+    (query.length >= minQueryLength || hasRelevantResults);
 
   const inputVariantClass = useModernLabel ? MODERN_INPUT_CLASSES : LEGACY_INPUT_CLASSES;
   const inputFocusClass = useModernLabel && isFloating ? MODERN_INPUT_FOCUS_BORDER : null;
@@ -295,24 +301,26 @@ export function AutocompleteSearch({
             </div>
           )}
 
-          {!loading && !error && query.length >= minQueryLength && listings.length === 0 && locations.length === 0 && (
+          {!loading && !error && query.length >= minQueryLength && !hasRelevantResults && (
             <div className="px-4 py-6 text-sm text-slate-500 text-center">
-              No properties or locations found.
+              {locationsOnly ? "No locations found." : "No properties or locations found."}
             </div>
           )}
 
-          {!loading && !error && (listings.length > 0 || locations.length > 0) && (
+          {!loading && !error && hasRelevantResults && (
             <div className="py-2">
               {locations.length > 0 && (
                 <section
                   className={cn(
                     "px-4 py-2",
-                    listings.length > 0 && "border-b border-slate-100"
+                    !locationsOnly && listings.length > 0 && "border-b border-slate-100"
                   )}
                 >
-                  <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-2">
-                    LOCATIONS
-                  </h3>
+                  {!locationsOnly && (
+                    <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-2">
+                      LOCATIONS
+                    </h3>
+                  )}
                   <ul className="space-y-0" role="list">
                     {locations.map((loc, idx) => (
                       <li key={`${loc.locationId}-${idx}`} role="option">
@@ -320,6 +328,7 @@ export function AutocompleteSearch({
                           <button
                             type="button"
                             onClick={() => {
+                              setQuery(loc.name ?? "");
                               onSelectLocation(loc);
                               setIsOpen(false);
                             }}
@@ -362,7 +371,7 @@ export function AutocompleteSearch({
                 </section>
               )}
 
-              {listings.length > 0 && (
+              {!locationsOnly && listings.length > 0 && (
                 <section className="px-4 py-2 border-b border-slate-100 last:border-b-0">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
@@ -428,6 +437,8 @@ export function AutocompleteSearch({
                             <button
                               type="button"
                               onClick={() => {
+                                const addressText = listing.address?.location ?? "";
+                                setQuery(addressText);
                                 onSelectListing(listing);
                                 setIsOpen(false);
                               }}

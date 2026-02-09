@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Circle, ChevronLeft, ChevronRight, Info, Upload, Image as ImageIcon, Video, Camera, Plus, FileText, Car, Zap, MoreHorizontal, Lightbulb, AlertCircle, Shield, Home, DollarSign, ListChecks, Eye, Send } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Info, Upload, Image as ImageIcon, Video, Camera, Plus, FileText, Car, Zap, MoreHorizontal, Lightbulb, AlertCircle, Shield, Home, DollarSign, ListChecks, Eye, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,10 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import type { AddPropertyInitialData } from "./AddPropertyDialog";
 
-const SIDEBAR_STEPS = [
+const SECTIONS = [
   { id: "property-info", label: "Property info" },
   { id: "rent-details", label: "Rent details" },
   { id: "media", label: "Media" },
@@ -69,6 +72,30 @@ function getSectionAndStep(stepIndex: number): {
 const BEDROOM_OPTIONS = Array.from({ length: 10 }, (_, i) => (i + 1).toString());
 const BATHROOM_OPTIONS = ["1", "1.5", "2", "2.5", "3", "3.5", "4", "4.5", "5"];
 
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+
+export interface PendingImage {
+  file: File;
+  preview: string;
+  id: string;
+}
+
+export type FeeCategoryId = "admin" | "parking" | "utilities" | "other";
+
+export interface FeeEntry {
+  id: string;
+  name: string;
+  amount: string;
+}
+
+const FEE_CATEGORIES: { id: FeeCategoryId; label: string; icon: typeof FileText }[] = [
+  { id: "admin", label: "Administrative", icon: FileText },
+  { id: "parking", label: "Parking", icon: Car },
+  { id: "utilities", label: "Utilities", icon: Zap },
+  { id: "other", label: "Other categories", icon: MoreHorizontal },
+];
+
 type ListingFlowProps = {
   initialData: AddPropertyInitialData | null;
 };
@@ -92,6 +119,7 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
     largeDogs: false,
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
   const [otherAmenity, setOtherAmenity] = useState("");
   const [otherAmenitiesList, setOtherAmenitiesList] = useState<string[]>([]);
   const [laundry, setLaundry] = useState("");
@@ -112,6 +140,16 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
   const [allowPhoneContact, setAllowPhoneContact] = useState<"yes" | "no">("yes");
   const [bookToursMethod, setBookToursMethod] = useState<"instantly" | "review">("instantly");
   const [propertyDescription, setPropertyDescription] = useState("");
+  const [feeCategories, setFeeCategories] = useState<Record<FeeCategoryId, FeeEntry[]>>({
+    admin: [],
+    parking: [],
+    utilities: [],
+    other: [],
+  });
+  const [openFeePopover, setOpenFeePopover] = useState<FeeCategoryId | null>(null);
+  const [newFeeName, setNewFeeName] = useState("");
+  const [newFeeAmount, setNewFeeAmount] = useState("");
+  const [expandedReviewSection, setExpandedReviewSection] = useState<string | null>(null);
   const [touched, setTouched] = useState({
     step0: false,
     step2: false,
@@ -121,13 +159,122 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
     step12: false,
   });
 
-  const { sectionTitle, stepLabel, sectionId } = getSectionAndStep(step);
-  const completedPropertyInfo = step >= PROPERTY_INFO_END;
-  const completedRentDetails = step >= RENT_DETAILS_END;
-  const completedMedia = step >= MEDIA_END;
-  const completedAmenities = step >= AMENITIES_END;
-  const completedCostsFees = step >= COSTS_FEES_END;
-  const completedFinalDetails = step >= FINAL_DETAILS_END;
+  const [openSections, setOpenSections] = useState<string[]>([
+    "property-info",
+    "rent-details",
+    "media",
+    "amenities",
+    "costs-fees",
+    "final-details",
+    "review",
+  ]);
+  const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const [sidebarWidth, setSidebarWidth] = useState(0);
+
+  useEffect(() => {
+    const updateSidebarWidth = () => {
+      const sidebar = document.querySelector("[data-sidebar], .sidebar, [class*=\"sidebar\"]") as HTMLElement;
+      if (sidebar) {
+        setSidebarWidth(sidebar.offsetWidth);
+      } else {
+        const mainContainer = document.querySelector("main")?.parentElement;
+        if (mainContainer) {
+          const sidebarElement = mainContainer.querySelector("[class*=\"w-\"]") as HTMLElement;
+          if (sidebarElement && sidebarElement !== mainContainer.querySelector("main")?.parentElement) {
+            setSidebarWidth(sidebarElement.offsetWidth);
+          }
+        }
+      }
+    };
+    updateSidebarWidth();
+    window.addEventListener("resize", updateSidebarWidth);
+    const interval = setInterval(updateSidebarWidth, 200);
+    return () => {
+      window.removeEventListener("resize", updateSidebarWidth);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const pendingImagesRef = useRef<PendingImage[]>([]);
+  pendingImagesRef.current = pendingImages;
+  useEffect(() => {
+    return () => {
+      pendingImagesRef.current.forEach((img) => URL.revokeObjectURL(img.preview));
+    };
+  }, []);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files?.length) return;
+    const toAdd: PendingImage[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        alert("Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.");
+        continue;
+      }
+      if (file.size > MAX_IMAGE_SIZE) {
+        alert(`File "${file.name}" exceeds 10MB limit.`);
+        continue;
+      }
+      toAdd.push({
+        file,
+        preview: URL.createObjectURL(file),
+        id: `pending-${Date.now()}-${i}-${Math.random()}`,
+      });
+    }
+    if (toAdd.length > 0) {
+      setPendingImages((prev) => [...prev, ...toAdd]);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const removePendingImage = (id: string) => {
+    setPendingImages((prev) => {
+      const imageToRemove = prev.find((img) => img.id === id);
+      if (imageToRemove) {
+        URL.revokeObjectURL(imageToRemove.preview);
+      }
+      return prev.filter((img) => img.id !== id);
+    });
+  };
+
+  const addFee = (categoryId: FeeCategoryId, name: string, amount: string) => {
+    if (!name.trim()) return;
+    const entry: FeeEntry = {
+      id: `fee-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      name: name.trim(),
+      amount: amount.trim(),
+    };
+    setFeeCategories((prev) => ({
+      ...prev,
+      [categoryId]: [...prev[categoryId], entry],
+    }));
+    setNewFeeName("");
+    setNewFeeAmount("");
+    setOpenFeePopover(null);
+  };
+
+  const removeFee = (categoryId: FeeCategoryId, feeId: string) => {
+    setFeeCategories((prev) => ({
+      ...prev,
+      [categoryId]: prev[categoryId].filter((f) => f.id !== feeId),
+    }));
+  };
+
+  const navigateToSection = (section: string) => {
+    if (!openSections.includes(section)) {
+      setOpenSections((prev) => [...prev, section]);
+    }
+    setTimeout(() => {
+      const element = sectionRefs.current[section];
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 100);
+  };
 
   const handleBack = () => {
     if (step > 0) setStep(step - 1);
@@ -176,96 +323,52 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
   };
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-8rem)] bg-[#F8FAFC] rounded-2xl">
-      {/* Top row header - full width */}
-      <header className="flex items-center justify-between bg-white px-6 py-4">
-        <div className="flex items-baseline gap-2">
-          <h1 className="text-lg font-bold text-foreground">{sectionTitle}</h1>
-          {stepLabel && <span className="text-sm text-muted-foreground">{stepLabel}</span>}
+    <div className="flex flex-col min-h-[calc(100vh-8rem)] bg-[#F8FAFC] rounded-2xl relative mt-20 pb-24">
+      {/* Fixed Navigation Header - same as PreConProjectForm */}
+      <div
+        className="fixed z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b shadow-sm"
+        style={{ top: "64px", left: `${sidebarWidth}px`, right: "0px" }}
+      >
+        <div className="px-6 py-4">
+          <div className="flex flex-wrap gap-2 justify-center">
+            {SECTIONS.map((section) => (
+              <Button
+                key={section.id}
+                type="button"
+                variant={openSections.includes(section.id) ? "default" : "outline"}
+                onClick={() => navigateToSection(section.id)}
+                className="rounded-lg"
+              >
+                {section.label}
+              </Button>
+            ))}
+          </div>
         </div>
-        <Button variant="outline" onClick={handleSaveExit} className="border-border text-foreground hover:bg-muted/50">
-          Save & exit
-        </Button>
-      </header>
+      </div>
 
-      {/* Below: sidebar + content */}
-      <div className="flex flex-1 min-h-0">
-        {/* Left sidebar - steps */}
-        <aside className="w-56 shrink-0 p-6 overflow-y-auto">
-          <nav className="space-y-1" aria-label="Listing steps">
-            {SIDEBAR_STEPS.map((item) => {
-              const isPropertyInfo = item.id === "property-info";
-              const isRentDetails = item.id === "rent-details";
-              const isMedia = item.id === "media";
-              const isAmenities = item.id === "amenities";
-              const isCostsFees = item.id === "costs-fees";
-              const isFinalDetails = item.id === "final-details";
-              const isReview = item.id === "review";
-              const isCompleted =
-                (isPropertyInfo && completedPropertyInfo) ||
-                (isRentDetails && completedRentDetails) ||
-                (isMedia && completedMedia) ||
-                (isAmenities && completedAmenities) ||
-                (isCostsFees && completedCostsFees) ||
-                (isFinalDetails && completedFinalDetails);
-              const isCurrent =
-                (isPropertyInfo && step < 2) ||
-                (isRentDetails && step >= 2 && step < 5) ||
-                (isMedia && step === 5) ||
-                (isAmenities && step >= 6 && step < 8) ||
-                (isCostsFees && step === 8) ||
-                (isFinalDetails && step >= 9 && step < 16) ||
-                (isReview && step === 16);
-
-              return (
-                <div
-                  key={item.id}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2",
-                    isCurrent && "bg-primary/10"
-                  )}
-                >
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center">
-                    {isCompleted ? (
-                      <Check className="h-5 w-5 text-green-600" aria-hidden />
-                    ) : (
-                      <Circle
-                        className={cn(
-                          "h-5 w-5",
-                          isCurrent ? "text-primary fill-primary/20" : "text-muted-foreground"
-                        )}
-                        aria-hidden
-                      />
-                    )}
-                  </span>
-                  <span
-                    className={cn(
-                      "text-sm font-medium",
-                      isCurrent ? "text-primary" : "text-muted-foreground"
-                    )}
-                  >
-                    {item.label}
-                  </span>
-                </div>
-              );
-            })}
-          </nav>
-        </aside>
-
-        {/* Main content */}
-        <div className="flex-1 flex flex-col min-w-0 bg-white rounded-2xl my-6 mr-6">
-          <main className="flex-1 overflow-y-auto p-8">
-            <div className="max-w-4xl">
-              {/* Step 0: Property info – size */}
-              {step === 0 && (
-                <>
-                  <h2 className="text-2xl font-bold text-foreground">
-                    Let&apos;s start creating your listing
-                  </h2>
-                  <p className="text-muted-foreground mt-1 mb-8">
-                    Add or review details about your property&apos;s size.
-                  </p>
-                  <div className="space-y-6">
+      {/* Collapsible Sections - same structure as PreConProjectForm */}
+      <Accordion
+        type="multiple"
+        value={openSections}
+        onValueChange={setOpenSections}
+        className="space-y-4 px-4 pt-4"
+      >
+        {/* Property info */}
+        <div ref={(el) => { sectionRefs.current["property-info"] = el }}>
+          <AccordionItem value="property-info">
+            <AccordionTrigger className="container text-lg font-semibold px-6 rounded-lg">
+              Property info
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-6 container">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Property size</CardTitle>
+                    <CardDescription>
+                      Add or review details about your property&apos;s size.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="square-footage">
                         Square footage <span className="text-destructive">*</span>
@@ -363,21 +466,17 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                         )}
                       </div>
                     </div>
-                  </div>
-                </>
-              )}
-
-              {/* Step 1: Property info – hide address */}
-              {step === 1 && (
-                <>
-                  <h2 className="text-2xl font-bold text-foreground">
-                    Do you want to hide the property address on this listing?
-                  </h2>
-                  <div className="mt-8 flex gap-8">
-                    <div className="space-y-4 flex-1">
-                      <Label className="text-sm font-medium text-muted-foreground">
-                        Hide property address
-                      </Label>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Hide property address</CardTitle>
+                    <CardDescription>
+                      Do you want to hide the property address on this listing?
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex gap-8 flex-col sm:flex-row">
                       <RadioGroup
                         value={hideAddress}
                         onValueChange={(v) => setHideAddress(v as "no" | "yes")}
@@ -396,39 +495,45 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                           </Label>
                         </div>
                       </RadioGroup>
-                    </div>
-                    <div className="flex gap-3 rounded-lg bg-primary/5 border border-primary/20 p-4 max-w-sm">
-                      <Info className="h-5 w-5 shrink-0 text-primary mt-0.5" aria-hidden />
-                      <div className="text-sm text-foreground">
-                        <p className="font-medium">Showing the property address</p>
-                        <p className="text-muted-foreground mt-1">
-                          You can hide the address if privacy is a concern, but the
-                          listing may receive fewer views and contacts than listings
-                          that show the property address.
-                        </p>
+                      <div className="flex gap-3 rounded-lg bg-primary/5 border border-primary/20 p-4 max-w-sm">
+                        <Info className="h-5 w-5 shrink-0 text-primary mt-0.5" aria-hidden />
+                        <div className="text-sm text-foreground">
+                          <p className="font-medium">Showing the property address</p>
+                          <p className="text-muted-foreground mt-1">
+                            You can hide the address if privacy is a concern, but the listing may receive fewer views and contacts.
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </>
-              )}
+                  </CardContent>
+                </Card>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </div>
 
-              {/* Step 2: Rent details – rent & deposit */}
-              {step === 2 && (
-                <>
-                  <h2 className="text-2xl font-bold text-foreground">
-                    How much are the monthly rent and the security deposit?
-                  </h2>
-                  <p className="text-muted-foreground mt-1 mb-6">
-                    A security deposit isn&apos;t required, but you can choose to
-                    collect one.
-                  </p>
-                  <div className="flex items-center gap-2 justify-between rounded-lg border border-border bg-muted/30 px-4 py-3 mb-8">
-                    <p className="text-sm text-muted-foreground">
-                      The current Rent Zestimate for this property is:
-                    </p>
-                    <p className="text-2xl font-bold text-foreground mt-1">$2,963</p>
-                  </div>
-                  <div className="space-y-6">
+        {/* Rent details */}
+        <div ref={(el) => { sectionRefs.current["rent-details"] = el }}>
+          <AccordionItem value="rent-details">
+            <AccordionTrigger className="container text-lg font-semibold px-6 rounded-lg">
+              Rent details
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-6 container">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Monthly rent and security deposit</CardTitle>
+                    <CardDescription>
+                      A security deposit isn&apos;t required, but you can choose to collect one.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2 justify-between rounded-lg border border-border bg-muted/30 px-4 py-3">
+                      <p className="text-sm text-muted-foreground">
+                        The current Rent estimate for this property is:
+                      </p>
+                      <p className="text-2xl font-bold text-foreground mt-1">$2,963</p>
+                    </div>
                     <div className="space-y-2">
                       <Label htmlFor="monthly-rent">
                         Monthly rent <span className="text-destructive">*</span>
@@ -479,21 +584,20 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                       <p className="text-sm text-muted-foreground mt-1">
                         Attract more renters with a move-in special.
                       </p>
-                      <Button variant="outline" className="mt-3 gap-2">
+                      <Button type="button" variant="outline" className="mt-3 gap-2">
                         <span className="text-lg">+</span> Add an offer
                       </Button>
                     </div>
-                  </div>
-                </>
-              )}
-
-              {/* Step 3: Rent details – date available */}
-              {step === 3 && (
-                <>
-                  <h2 className="text-2xl font-bold text-foreground">
-                    When is your property available to rent?
-                  </h2>
-                  <div className="mt-8 space-y-6">
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Date available</CardTitle>
+                    <CardDescription>
+                      When is your property available to rent?
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="date-available">
                         Date available <span className="text-destructive">*</span>
@@ -533,20 +637,16 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                         Set to 03/01/2026
                       </button>
                     </p>
-                  </div>
-                </>
-              )}
-
-              {/* Step 4: Rent details – pet policy */}
-              {step === 4 && (
-                <>
-                  <h2 className="text-2xl font-bold text-foreground">
-                    What&apos;s your pet policy?
-                  </h2>
-                  <p className="text-muted-foreground mt-1 mb-8">
-                    Let renters know if you allow pets and, if so, what kind.
-                  </p>
-                  <div className="space-y-4">
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Pet policy</CardTitle>
+                    <CardDescription>
+                      Let renters know if you allow pets and, if so, what kind.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="no-pets"
@@ -583,54 +683,139 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                         Small dogs allowed
                       </Label>
                     </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="large-dogs"
-                      checked={pets.largeDogs}
-                      onCheckedChange={(c) =>
-                        setPets((prev) => ({ ...prev, largeDogs: c === true }))
-                      }
-                    />
-                    <Label htmlFor="large-dogs" className="font-normal cursor-pointer">
-                      Large dogs allowed
-                    </Label>
-                  </div>
-                </div>
-              </>
-            )}
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="large-dogs"
+                        checked={pets.largeDogs}
+                        onCheckedChange={(c) =>
+                          setPets((prev) => ({ ...prev, largeDogs: c === true }))
+                        }
+                      />
+                      <Label htmlFor="large-dogs" className="font-normal cursor-pointer">
+                        Large dogs allowed
+                      </Label>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </div>
 
-            {/* Step 5: Media */}
-            {step === 5 && (
-              <>
-                <div className="space-y-8">
-                  <div>
-                    <h2 className="text-2xl font-bold text-foreground">Add photos</h2>
-                    <p className="text-muted-foreground mt-1">
+        {/* Media */}
+        <div ref={(el) => { sectionRefs.current["media"] = el }}>
+          <AccordionItem value="media">
+            <AccordionTrigger className="container text-lg font-semibold px-6 rounded-lg">
+              Media
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-6 container">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Add photos</CardTitle>
+                    <CardDescription>
                       Photos help renters imagine living in your place.
-                    </p>
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="imageUpload">Upload photos</Label>
+                      <div className="flex gap-2 flex-wrap items-center">
+                        <input
+                          ref={fileInputRef}
+                          id="imageUpload"
+                          type="file"
+                          accept={ALLOWED_IMAGE_TYPES.join(",")}
+                          multiple
+                          className="hidden"
+                          onChange={handleImageUpload}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="gap-2 rounded-lg"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <Upload className="h-4 w-4" />
+                          Choose files
+                        </Button>
+                        <p className="text-sm text-muted-foreground">
+                          Max 10MB each (JPEG, PNG, WebP, GIF)
+                        </p>
+                      </div>
+                    </div>
                     <div
-                      className="mt-6 border-2 border-dashed border-border rounded-xl p-12 flex flex-col items-center justify-center gap-2 bg-muted/20 cursor-pointer hover:bg-muted/30 transition-colors"
+                      className="border-2 border-dashed border-border rounded-xl p-12 flex flex-col items-center justify-center gap-2 bg-muted/20 cursor-pointer hover:bg-muted/30 transition-colors"
                       onClick={() => fileInputRef.current?.click()}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => e.preventDefault()}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const files = e.dataTransfer.files;
+                        if (!files?.length) return;
+                        const fileList = Array.from(files).filter((f) => ALLOWED_IMAGE_TYPES.includes(f.type));
+                        const rejected = files.length - fileList.length;
+                        if (rejected > 0) {
+                          alert(`${rejected} file(s) skipped. Only JPEG, PNG, WebP, and GIF are allowed.`);
+                        }
+                        const toAdd: PendingImage[] = fileList
+                          .filter((f) => f.size <= MAX_IMAGE_SIZE)
+                          .map((f, i) => ({
+                            file: f,
+                            preview: URL.createObjectURL(f),
+                            id: `pending-${Date.now()}-${i}-${Math.random()}`,
+                          }));
+                        const overSize = fileList.filter((f) => f.size > MAX_IMAGE_SIZE).length;
+                        if (overSize > 0) {
+                          alert(`${overSize} file(s) skipped. Max size 10MB per file.`);
+                        }
+                        if (toAdd.length > 0) {
+                          setPendingImages((prev) => [...prev, ...toAdd]);
+                        }
+                      }}
                     >
                       <ImageIcon className="h-12 w-12 text-muted-foreground" aria-hidden />
                       <p className="font-medium text-foreground">Drag photos here</p>
-                      <p className="text-sm text-muted-foreground">or select from your computer</p>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        className="hidden"
-                        onChange={() => {}}
-                      />
+                      <p className="text-sm text-muted-foreground">or click to select from your computer</p>
                     </div>
-                    <Button variant="outline" className="mt-4 gap-2" onClick={() => fileInputRef.current?.click()}>
-                      <Upload className="h-4 w-4" />
-                      Select photos
-                    </Button>
-                    <div className="mt-6 flex gap-3 rounded-lg bg-primary/5 border border-primary/20 p-4">
+                    {pendingImages.length > 0 && (
+                      <div className="space-y-2">
+                        <Label>Selected photos ({pendingImages.length})</Label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          {pendingImages.map((pendingImg) => (
+                            <div
+                              key={pendingImg.id}
+                              className="relative group border rounded-lg overflow-hidden aspect-square border-primary/50"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={pendingImg.preview}
+                                alt={pendingImg.file.name}
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removePendingImage(pendingImg.id);
+                                }}
+                                className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90"
+                                aria-label={`Remove ${pendingImg.file.name}`}
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                              <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate">
+                                {pendingImg.file.name}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex gap-3 rounded-lg bg-primary/5 border border-primary/20 p-4">
                       <Camera className="h-5 w-5 shrink-0 text-primary mt-0.5" aria-hidden />
                       <div>
                         <p className="font-medium text-foreground">Photo tip</p>
@@ -639,258 +824,365 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                         </p>
                       </div>
                     </div>
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-foreground">3D Tour</h2>
-                    <div className="mt-4 flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3">
-                      <Video className="h-5 w-5 text-muted-foreground shrink-0" aria-hidden />
-                      <span className="text-sm text-muted-foreground flex-1">
-                        Add via Zillow 3D Home app or an external link
-                      </span>
-                      <Button size="sm">Add tour</Button>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* Step 6: Amenities – Step 1 of 2 */}
-            {step === 6 && (
-              <>
-                <h2 className="text-2xl font-bold text-foreground">
-                  Showcase what&apos;s included in your home
-                </h2>
-                <p className="text-muted-foreground mt-1 mb-8">
-                  Sharing more will help renters see themselves in your home.
-                </p>
-                <div className="space-y-8">
-                  <div>
-                    <Label className="text-sm font-medium mb-3 block">Laundry</Label>
-                    <RadioGroup value={laundry} onValueChange={setLaundry} className="flex flex-wrap gap-4">
-                      {["Washer-dryer included", "Washer-dryer hookups", "Shared or in building", "No laundry facilities"].map((opt) => (
-                        <div key={opt} className="flex items-center space-x-2">
-                          <RadioGroupItem value={opt} id={`laundry-${opt}`} />
-                          <Label htmlFor={`laundry-${opt}`} className="font-normal cursor-pointer">{opt}</Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium mb-3 block">Cooling</Label>
-                    <RadioGroup value={cooling} onValueChange={setCooling} className="flex flex-wrap gap-4">
-                      {["Central", "Wall", "Window", "None"].map((opt) => (
-                        <div key={opt} className="flex items-center space-x-2">
-                          <RadioGroupItem value={opt} id={`cooling-${opt}`} />
-                          <Label htmlFor={`cooling-${opt}`} className="font-normal cursor-pointer">{opt}</Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium mb-3 block">Heating</Label>
-                    <RadioGroup value={heating} onValueChange={setHeating} className="flex flex-wrap gap-4">
-                      {["Baseboard", "Forced air", "Heat pump", "Wall"].map((opt) => (
-                        <div key={opt} className="flex items-center space-x-2">
-                          <RadioGroupItem value={opt} id={`heating-${opt}`} />
-                          <Label htmlFor={`heating-${opt}`} className="font-normal cursor-pointer">{opt}</Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium mb-3 block">Appliances</Label>
-                    <div className="flex flex-wrap gap-4">
-                      {["Dishwasher", "Freezer", "Microwave", "Oven", "Refrigerator", "Trash compactor"].map((opt) => (
-                        <div key={opt} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`appliances-${opt}`}
-                            checked={appliances.includes(opt)}
-                            onCheckedChange={(c) =>
-                              setAppliances((prev) => c ? [...prev, opt] : prev.filter((x) => x !== opt))
-                            }
-                          />
-                          <Label htmlFor={`appliances-${opt}`} className="font-normal cursor-pointer">{opt}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium mb-3 block">Flooring</Label>
-                    <div className="flex flex-wrap gap-4">
-                      {["Carpet", "Hardwood", "Tile", "Linoleum", "Concrete", "Laminate"].map((opt) => (
-                        <div key={opt} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`flooring-${opt}`}
-                            checked={flooring.includes(opt)}
-                            onCheckedChange={(c) =>
-                              setFlooring((prev) => c ? [...prev, opt] : prev.filter((x) => x !== opt))
-                            }
-                          />
-                          <Label htmlFor={`flooring-${opt}`} className="font-normal cursor-pointer">{opt}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* Step 7: Amenities – Step 2 of 2 */}
-            {step === 7 && (
-              <>
-                <h2 className="text-2xl font-bold text-foreground">
-                  Now tell us more about your property
-                </h2>
-                <p className="text-muted-foreground mt-1 mb-8">
-                  Sharing more will help renters see themselves in your home.
-                </p>
-                <div className="space-y-8">
-                  <div>
-                    <Label className="text-sm font-medium mb-3 block">Parking</Label>
-                    <div className="flex flex-wrap gap-4">
-                      {["Attached garage", "Detached garage", "Off-street parking", "Carport", "Street parking"].map((opt) => (
-                        <div key={opt} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`parking-${opt}`}
-                            checked={parking.includes(opt)}
-                            onCheckedChange={(c) =>
-                              setParking((prev) => c ? [...prev, opt] : prev.filter((x) => x !== opt))
-                            }
-                          />
-                          <Label htmlFor={`parking-${opt}`} className="font-normal cursor-pointer">{opt}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium mb-3 block">Outdoor amenities</Label>
-                    <div className="flex flex-wrap gap-4">
-                      {["Balcony or deck", "Pool", "Bicycle storage", "Fenced yard", "Garden"].map((opt) => (
-                        <div key={opt} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`outdoor-${opt}`}
-                            checked={outdoor.includes(opt)}
-                            onCheckedChange={(c) =>
-                              setOutdoor((prev) => c ? [...prev, opt] : prev.filter((x) => x !== opt))
-                            }
-                          />
-                          <Label htmlFor={`outdoor-${opt}`} className="font-normal cursor-pointer">{opt}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium mb-3 block">Accessibility</Label>
-                    <div className="flex flex-wrap gap-4">
-                      {["Disabled access", "Wheelchair accessible"].map((opt) => (
-                        <div key={opt} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`accessibility-${opt}`}
-                            checked={accessibility.includes(opt)}
-                            onCheckedChange={(c) =>
-                              setAccessibility((prev) => c ? [...prev, opt] : prev.filter((x) => x !== opt))
-                            }
-                          />
-                          <Label htmlFor={`accessibility-${opt}`} className="font-normal cursor-pointer">{opt}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium mb-3 block">Other amenities</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Example: Pet area"
-                        value={otherAmenity}
-                        onChange={(e) => setOtherAmenity(e.target.value)}
-                        className="max-w-xs"
-                      />
-                      <Button
-                        type="button"
-                        variant="default"
-                        className="gap-1.5"
-                        onClick={() => {
-                          if (otherAmenity.trim()) {
-                            setOtherAmenitiesList((prev) => [...prev, otherAmenity.trim()]);
-                            setOtherAmenity("");
-                          }
-                        }}
-                      >
-                        <Plus className="h-4 w-4" />
-                        Add
-                      </Button>
-                    </div>
-                    {otherAmenitiesList.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {otherAmenitiesList.map((item) => (
-                          <span
-                            key={item}
-                            className="inline-flex items-center rounded-md bg-muted px-2 py-1 text-sm"
-                          >
-                            {item}
-                          </span>
-                        ))}
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">3D Tour</Label>
+                      <div className="flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3">
+                        <Video className="h-5 w-5 text-muted-foreground shrink-0" aria-hidden />
+                        <span className="text-sm text-muted-foreground flex-1">
+                          Add via Zillow 3D Home app or an external link
+                        </span>
+                        <Button type="button" size="sm">Add tour</Button>
                       </div>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* Step 8: Costs & fees */}
-            {step === 8 && (
-              <>
-                <h2 className="text-2xl font-bold text-foreground">
-                  What additional costs and fees do you charge?
-                </h2>
-                <p className="text-muted-foreground mt-1 mb-8">
-                  We&apos;ve highlighted some of the most common fee categories. These details help renters know the real cost of renting your property before they apply.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                  {[
-                    { id: "admin", label: "Administrative", icon: FileText },
-                    { id: "parking", label: "Parking", icon: Car },
-                    { id: "utilities", label: "Utilities", icon: Zap },
-                    { id: "other", label: "Other categories", icon: MoreHorizontal },
-                  ].map(({ id, label, icon: Icon }) => (
-                    <div
-                      key={id}
-                      className="flex items-center justify-between rounded-lg border border-border bg-background p-4"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-                          <Icon className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                        <span className="font-medium">{label}</span>
-                      </div>
-                      <Button size="sm" className="gap-1.5">
-                        <Plus className="h-4 w-4" />
-                        Add
-                      </Button>
                     </div>
-                  ))}
-                </div>
-                <div className="flex gap-3 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-4">
-                  <Lightbulb className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-500 mt-0.5" aria-hidden />
-                  <div>
-                    <p className="font-medium text-foreground">Tips for adding costs and fees</p>
-                    <ul className="text-sm text-amber-800 dark:text-amber-200 mt-2 space-y-1 list-disc list-inside">
-                      <li>Wait to add application fees — we&apos;ll ask about those last.</li>
-                      <li>Only add the fees you need, and note which are included in the base rent.</li>
-                      <li>Some states require disclosing certain fees — be sure to check what&apos;s required for your area.</li>
-                    </ul>
-                  </div>
-                </div>
-              </>
-            )}
+                  </CardContent>
+                </Card>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </div>
 
-            {/* Step 9: Final details – Step 1 of 7 (lease duration) */}
-            {step === 9 && (
-              <>
-                <h2 className="text-2xl font-bold text-foreground">
-                  What&apos;s the duration of the lease?
-                </h2>
-                <div className="mt-8">
+        {/* Amenities – single compact section (PreCon-style) */}
+        <div ref={(el) => { sectionRefs.current["amenities"] = el }}>
+          <AccordionItem value="amenities">
+            <AccordionTrigger className="container text-lg font-semibold px-6 rounded-lg">
+              Amenities
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="container">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Amenities</CardTitle>
+                    <CardDescription>
+                      Select what&apos;s included in your home. Sharing more helps renters see themselves in your property.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div>
+                          <Label className="text-sm font-medium mb-2 block">Laundry</Label>
+                          <RadioGroup value={laundry} onValueChange={setLaundry} className="flex flex-wrap gap-3">
+                            {["Washer-dryer included", "Washer-dryer hookups", "Shared or in building", "No laundry facilities"].map((opt) => (
+                              <div key={opt} className="flex items-center space-x-2">
+                                <RadioGroupItem value={opt} id={`laundry-${opt}`} />
+                                <Label htmlFor={`laundry-${opt}`} className="font-normal cursor-pointer text-sm">{opt}</Label>
+                              </div>
+                            ))}
+                          </RadioGroup>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium mb-2 block">Cooling</Label>
+                          <RadioGroup value={cooling} onValueChange={setCooling} className="flex flex-wrap gap-3">
+                            {["Central", "Wall", "Window", "None"].map((opt) => (
+                              <div key={opt} className="flex items-center space-x-2">
+                                <RadioGroupItem value={opt} id={`cooling-${opt}`} />
+                                <Label htmlFor={`cooling-${opt}`} className="font-normal cursor-pointer text-sm">{opt}</Label>
+                              </div>
+                            ))}
+                          </RadioGroup>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium mb-2 block">Heating</Label>
+                          <RadioGroup value={heating} onValueChange={setHeating} className="flex flex-wrap gap-3">
+                            {["Baseboard", "Forced air", "Heat pump", "Wall"].map((opt) => (
+                              <div key={opt} className="flex items-center space-x-2">
+                                <RadioGroupItem value={opt} id={`heating-${opt}`} />
+                                <Label htmlFor={`heating-${opt}`} className="font-normal cursor-pointer text-sm">{opt}</Label>
+                              </div>
+                            ))}
+                          </RadioGroup>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium mb-2 block">Appliances</Label>
+                          <div className="flex flex-wrap gap-3">
+                            {["Dishwasher", "Freezer", "Microwave", "Oven", "Refrigerator", "Trash compactor"].map((opt) => (
+                              <div key={opt} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`appliances-${opt}`}
+                                  checked={appliances.includes(opt)}
+                                  onCheckedChange={(c) =>
+                                    setAppliances((prev) => c ? [...prev, opt] : prev.filter((x) => x !== opt))
+                                  }
+                                />
+                                <Label htmlFor={`appliances-${opt}`} className="font-normal cursor-pointer text-sm">{opt}</Label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium mb-2 block">Flooring</Label>
+                          <div className="flex flex-wrap gap-3">
+                            {["Carpet", "Hardwood", "Tile", "Linoleum", "Concrete", "Laminate"].map((opt) => (
+                              <div key={opt} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`flooring-${opt}`}
+                                  checked={flooring.includes(opt)}
+                                  onCheckedChange={(c) =>
+                                    setFlooring((prev) => c ? [...prev, opt] : prev.filter((x) => x !== opt))
+                                  }
+                                />
+                                <Label htmlFor={`flooring-${opt}`} className="font-normal cursor-pointer text-sm">{opt}</Label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <div>
+                          <Label className="text-sm font-medium mb-2 block">Parking</Label>
+                          <div className="flex flex-wrap gap-3">
+                            {["Attached garage", "Detached garage", "Off-street parking", "Carport", "Street parking"].map((opt) => (
+                              <div key={opt} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`parking-${opt}`}
+                                  checked={parking.includes(opt)}
+                                  onCheckedChange={(c) =>
+                                    setParking((prev) => c ? [...prev, opt] : prev.filter((x) => x !== opt))
+                                  }
+                                />
+                                <Label htmlFor={`parking-${opt}`} className="font-normal cursor-pointer text-sm">{opt}</Label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium mb-2 block">Outdoor</Label>
+                          <div className="flex flex-wrap gap-3">
+                            {["Balcony or deck", "Pool", "Bicycle storage", "Fenced yard", "Garden"].map((opt) => (
+                              <div key={opt} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`outdoor-${opt}`}
+                                  checked={outdoor.includes(opt)}
+                                  onCheckedChange={(c) =>
+                                    setOutdoor((prev) => c ? [...prev, opt] : prev.filter((x) => x !== opt))
+                                  }
+                                />
+                                <Label htmlFor={`outdoor-${opt}`} className="font-normal cursor-pointer text-sm">{opt}</Label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium mb-2 block">Accessibility</Label>
+                          <div className="flex flex-wrap gap-3">
+                            {["Disabled access", "Wheelchair accessible"].map((opt) => (
+                              <div key={opt} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`accessibility-${opt}`}
+                                  checked={accessibility.includes(opt)}
+                                  onCheckedChange={(c) =>
+                                    setAccessibility((prev) => c ? [...prev, opt] : prev.filter((x) => x !== opt))
+                                  }
+                                />
+                                <Label htmlFor={`accessibility-${opt}`} className="font-normal cursor-pointer text-sm">{opt}</Label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium mb-2 block">Other amenities</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="e.g. Pet area"
+                              value={otherAmenity}
+                              onChange={(e) => setOtherAmenity(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  if (otherAmenity.trim()) {
+                                    setOtherAmenitiesList((prev) => [...prev, otherAmenity.trim()]);
+                                    setOtherAmenity("");
+                                  }
+                                }
+                              }}
+                              className="max-w-[200px] h-9 text-sm"
+                            />
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              className="gap-1.5 h-9"
+                              onClick={() => {
+                                if (otherAmenity.trim()) {
+                                  setOtherAmenitiesList((prev) => [...prev, otherAmenity.trim()]);
+                                  setOtherAmenity("");
+                                }
+                              }}
+                            >
+                              <Plus className="h-4 w-4" />
+                              Add
+                            </Button>
+                          </div>
+                          {otherAmenitiesList.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                              {otherAmenitiesList.map((item) => (
+                                <span
+                                  key={item}
+                                  className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs"
+                                >
+                                  {item}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </div>
+
+        {/* Costs & fees */}
+        <div ref={(el) => { sectionRefs.current["costs-fees"] = el }}>
+          <AccordionItem value="costs-fees">
+            <AccordionTrigger className="container text-lg font-semibold px-6 rounded-lg">
+              Costs &amp; fees
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-6 container">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>What additional costs and fees do you charge?</CardTitle>
+                    <CardDescription>
+                      We&apos;ve highlighted some of the most common fee categories. These details help renters know the real cost of renting your property before they apply.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {FEE_CATEGORIES.map(({ id, label, icon: Icon }) => (
+                        <div
+                          key={id}
+                          className="rounded-lg border border-border bg-background p-4 space-y-3"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                                <Icon className="h-5 w-5 text-muted-foreground" aria-hidden />
+                              </div>
+                              <span className="font-medium">{label}</span>
+                            </div>
+                            <Popover
+                              open={openFeePopover === id}
+                              onOpenChange={(open) => {
+                                setOpenFeePopover(open ? id : null);
+                                setNewFeeName("");
+                                setNewFeeAmount("");
+                              }}
+                            >
+                              <PopoverTrigger asChild>
+                                <Button type="button" size="sm" className="gap-1.5">
+                                  <Plus className="h-4 w-4" aria-hidden />
+                                  Add
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-80" align="end">
+                                <div className="space-y-3">
+                                  <p className="text-sm font-medium">Add {label.toLowerCase()} fee</p>
+                                  <div className="space-y-2">
+                                    <Label htmlFor={`fee-name-${id}`}>Fee name</Label>
+                                    <Input
+                                      id={`fee-name-${id}`}
+                                      placeholder="e.g. Application fee"
+                                      value={openFeePopover === id ? newFeeName : ""}
+                                      onChange={(e) => setNewFeeName(e.target.value)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") e.preventDefault();
+                                      }}
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label htmlFor={`fee-amount-${id}`}>Amount (optional)</Label>
+                                    <Input
+                                      id={`fee-amount-${id}`}
+                                      type="text"
+                                      inputMode="numeric"
+                                      placeholder="e.g. 50"
+                                      value={openFeePopover === id ? newFeeAmount : ""}
+                                      onChange={(e) => setNewFeeAmount(e.target.value)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                          e.preventDefault();
+                                          addFee(id, newFeeName, newFeeAmount);
+                                        }
+                                      }}
+                                    />
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() => addFee(id, newFeeName, newFeeAmount)}
+                                    disabled={!newFeeName.trim()}
+                                  >
+                                    Add fee
+                                  </Button>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                          {feeCategories[id].length > 0 && (
+                            <ul className="space-y-1.5 border-t pt-3 mt-3">
+                              {feeCategories[id].map((fee) => (
+                                <li
+                                  key={fee.id}
+                                  className="flex items-center justify-between gap-2 text-sm py-1.5 px-2 rounded-md bg-muted/50"
+                                >
+                                  <span>
+                                    {fee.name}
+                                    {fee.amount ? ` — $${fee.amount}` : ""}
+                                  </span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                                    onClick={() => removeFee(id, fee.id)}
+                                    aria-label={`Remove ${fee.name}`}
+                                  >
+                                    <X className="h-3.5 w-3.5" aria-hidden />
+                                  </Button>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-3 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-4">
+                      <Lightbulb className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-500 mt-0.5" aria-hidden />
+                      <div>
+                        <p className="font-medium text-foreground">Tips for adding costs and fees</p>
+                        <ul className="text-sm text-amber-800 dark:text-amber-200 mt-2 space-y-1 list-disc list-inside">
+                          <li>Wait to add application fees — we&apos;ll ask about those last.</li>
+                          <li>Only add the fees you need, and note which are included in the base rent.</li>
+                          <li>Some states require disclosing certain fees — be sure to check what&apos;s required for your area.</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </div>
+
+        {/* Final details */}
+        <div ref={(el) => { sectionRefs.current["final-details"] = el }}>
+          <AccordionItem value="final-details">
+            <AccordionTrigger className="container text-lg font-semibold px-6 rounded-lg">
+              Final details
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-6 container">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Lease duration</CardTitle>
+                    <CardDescription>What&apos;s the duration of the lease?</CardDescription>
+                  </CardHeader>
+                  <CardContent>
                   <Label className="text-sm font-medium mb-3 block">Lease duration</Label>
                   <RadioGroup value={leaseDuration} onValueChange={setLeaseDuration} className="space-y-3">
                     {["1 month", "6 months", "1 year", "Rent to own", "Sublet/temporary"].map((opt) => (
@@ -906,19 +1198,14 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                       Select lease duration
                     </p>
                   )}
-                </div>
-              </>
-            )}
-
-            {/* Step 10: Final details – Step 2 of 7 (lease terms + renters insurance) */}
-            {step === 10 && (
-              <>
-                <h2 className="text-2xl font-bold text-foreground">
-                  What should renters know about the lease terms?
-                </h2>
-                <p className="text-muted-foreground mt-1 mb-6">
-                  Help renters decide if your property&apos;s a good fit by including key lease details like duration, fees and utility costs, and other policies.
-                </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Lease terms</CardTitle>
+                    <CardDescription>What should renters know about the lease terms? Help renters decide if your property&apos;s a good fit.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
                 <div className="flex gap-8 flex-col lg:flex-row">
                   <div className="flex-1 space-y-2">
                     <Label htmlFor="lease-terms">Lease terms</Label>
@@ -942,7 +1229,7 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                     </div>
                   </div>
                 </div>
-                <div className="mt-8">
+                <div className="mt-6">
                   <Label className="text-sm font-medium mb-3 block">
                     Do you require tenants to obtain renters insurance?
                   </Label>
@@ -961,18 +1248,14 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                     </div>
                   </RadioGroup>
                 </div>
-              </>
-            )}
-
-            {/* Step 11: Final details – Step 3 of 7 (who's listing) */}
-            {step === 11 && (
-              <>
-                <h2 className="text-2xl font-bold text-foreground">
-                  Who&apos;s listing this property for rent?
-                </h2>
-                <p className="text-muted-foreground mt-1 mb-6">
-                  Enter your information, unless you&apos;re creating the listing for someone else and they should be the main contact person.
-                </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Who&apos;s listing this property for rent?</CardTitle>
+                    <CardDescription>Enter your information, unless you&apos;re creating the listing for someone else.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
                 <div className="flex gap-8 flex-col lg:flex-row">
                   <div className="flex-1 space-y-6">
                     <div>
@@ -1051,16 +1334,14 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                     </div>
                   </div>
                 </div>
-              </>
-            )}
-
-            {/* Step 12: Final details – Step 4 of 7 (verify phone) */}
-            {step === 12 && (
-              <>
-                <h2 className="text-2xl font-bold text-foreground">Verify your phone number</h2>
-                <p className="text-muted-foreground mt-1 mb-6">
-                  For your security, we&apos;ll send a one-time verification code to this number to verify that this listing belongs to you.
-                </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Verify your phone number</CardTitle>
+                    <CardDescription>For your security, we&apos;ll send a one-time verification code to this number.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
                 <div className="space-y-2">
                   <Label htmlFor="phone-number">
                     Phone number <span className="text-destructive">*</span>
@@ -1085,18 +1366,14 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                     </p>
                   )}
                 </div>
-              </>
-            )}
-
-            {/* Step 13: Final details – Step 5 of 7 (allow phone contact) */}
-            {step === 13 && (
-              <>
-                <h2 className="text-2xl font-bold text-foreground">
-                  Do you want to allow renters to contact you by phone?
-                </h2>
-                <p className="text-muted-foreground mt-1 mb-6">
-                  If you choose No, the listing will display without a phone number. Please note, to protect your information, the number displayed on your listing differs from your actual number.
-                </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Allow renters to contact you by phone?</CardTitle>
+                    <CardDescription>If you choose No, the listing will display without a phone number. The number displayed on your listing differs from your actual number.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
                 <div className="flex gap-8 flex-col lg:flex-row">
                   <div className="flex-1">
                     <Label className="text-sm font-medium mb-3 block">Allow renters to contact you by phone</Label>
@@ -1125,16 +1402,14 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                     </div>
                   </div>
                 </div>
-              </>
-            )}
-
-            {/* Step 14: Final details – Step 6 of 7 (book tours) */}
-            {step === 14 && (
-              <>
-                <h2 className="text-2xl font-bold text-foreground">Choose a way to book tours</h2>
-                <p className="text-muted-foreground mt-1 mb-6">
-                  You can change your settings anytime. Skip this if you prefer to book tours on your own.
-                </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Choose a way to book tours</CardTitle>
+                    <CardDescription>You can change your settings anytime. Skip this if you prefer to book tours on your own.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
                 <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
                   <button
                     type="button"
@@ -1185,16 +1460,14 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                     </p>
                   </button>
                 </div>
-              </>
-            )}
-
-            {/* Step 15: Final details – Step 7 of 7 (property description) */}
-            {step === 15 && (
-              <>
-                <h2 className="text-2xl font-bold text-foreground">Describe the property.</h2>
-                <p className="text-muted-foreground mt-1 mb-6">
-                  Write several sentences describing the upgrades and desirable features that will attract renters to your property.
-                </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Describe the property</CardTitle>
+                    <CardDescription>Write several sentences describing the upgrades and desirable features that will attract renters.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
                 <div className="flex gap-8 flex-col lg:flex-row">
                   <div className="flex-1 space-y-2">
                     <Label htmlFor="property-description">Property description</Label>
@@ -1218,12 +1491,27 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                     </div>
                   </div>
                 </div>
-              </>
-            )}
+                  </CardContent>
+                </Card>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </div>
 
-            {/* Step 16: Review & publish */}
-            {step === 16 && (
-              <>
+        {/* Review & publish */}
+        <div ref={(el) => { sectionRefs.current["review"] = el }}>
+          <AccordionItem value="review">
+            <AccordionTrigger className="container text-lg font-semibold px-6 rounded-lg">
+              Review &amp; publish
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-6 container">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Review your listing</CardTitle>
+                    <CardDescription>Preview and publish when ready.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                 <div className="rounded-xl border border-border overflow-hidden bg-muted/30 w-full max-w-sm">
                   <div className="aspect-video bg-muted flex items-center justify-center">
                     <Camera className="h-12 w-12 text-muted-foreground" aria-hidden />
@@ -1264,51 +1552,154 @@ export function ListingFlow({ initialData }: ListingFlowProps) {
                     { id: "amenities", label: "Amenities", icon: ListChecks },
                     { id: "costs-fees", label: "Costs and fees", icon: FileText },
                     { id: "final-details", label: "Final details", icon: FileText },
-                  ].map(({ id, label, icon: Icon }) => (
-                    <button
-                      key={id}
-                      type="button"
-                      className="flex w-full items-center gap-3 rounded-lg border border-border p-4 text-left hover:bg-muted/50 transition-colors"
-                    >
-                      <Icon className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
-                      <span className="flex-1 font-medium text-foreground">{label}</span>
-                      <span className="rounded bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">
-                        INCOMPLETE
-                      </span>
-                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-                    </button>
-                  ))}
+                  ].map(({ id, label, icon: Icon }) => {
+                    const isExpanded = expandedReviewSection === id;
+                    return (
+                      <div
+                        key={id}
+                        className="rounded-lg shadow-sm overflow-hidden"
+                      >
+                        <div className="flex items-center gap-3 p-4 bg-background">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedReviewSection(isExpanded ? null : id)}
+                            className="flex items-center gap-3 flex-1 min-w-0 text-left hover:bg-muted/50 transition-colors -m-2 p-2 rounded-md"
+                            aria-expanded={isExpanded}
+                          >
+                            <ChevronDown
+                              className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", isExpanded && "rotate-180")}
+                              aria-hidden
+                            />
+                            <Icon className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+                            <span className="font-medium text-foreground truncate">{label}</span>
+                          </button>
+                          <span className="rounded bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200 shrink-0">
+                            INCOMPLETE
+                          </span>
+                          <Button
+                            type="button"
+                            variant="default"
+                            size="sm"
+                            className="gap-1 shrink-0"
+                            onClick={() => navigateToSection(id)}
+                          >
+                            Edit
+                            <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+                          </Button>
+                        </div>
+                        {isExpanded && (
+                          <div className="border-t border-border bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
+                            {id === "property-info" && (
+                              <dl className="space-y-1.5">
+                                <div><dt className="font-medium text-foreground inline">Address: </dt><dd className="inline">{initialData?.streetAddress || "—"}</dd></div>
+                                <div><dt className="font-medium text-foreground inline">Sq ft: </dt><dd className="inline">{squareFootage || "—"}</dd></div>
+                                <div><dt className="font-medium text-foreground inline">Beds: </dt><dd className="inline">{totalBedrooms || "—"}</dd></div>
+                                <div><dt className="font-medium text-foreground inline">Baths: </dt><dd className="inline">{totalBathrooms || "—"}</dd></div>
+                                <div><dt className="font-medium text-foreground inline">Hide address: </dt><dd className="inline">{hideAddress === "yes" ? "Yes" : "No"}</dd></div>
+                              </dl>
+                            )}
+                            {id === "rent-details" && (
+                              <dl className="space-y-1.5">
+                                <div><dt className="font-medium text-foreground inline">Monthly rent: </dt><dd className="inline">{monthlyRent ? `$${Number(monthlyRent).toLocaleString()}` : "—"}</dd></div>
+                                <div><dt className="font-medium text-foreground inline">Security deposit: </dt><dd className="inline">{securityDeposit ? `$${Number(securityDeposit).toLocaleString()}` : "—"}</dd></div>
+                                <div><dt className="font-medium text-foreground inline">Date available: </dt><dd className="inline">{dateAvailable || "—"}</dd></div>
+                                <div><dt className="font-medium text-foreground inline">Pets: </dt><dd className="inline">{[pets.noPets && "No pets", pets.cats && "Cats", pets.smallDogs && "Small dogs", pets.largeDogs && "Large dogs"].filter(Boolean).join(", ") || "—"}</dd></div>
+                              </dl>
+                            )}
+                            {id === "media" && (
+                              <dl className="space-y-1.5">
+                                <div><dt className="font-medium text-foreground inline">Photos: </dt><dd className="inline">{pendingImages.length ? `${pendingImages.length} selected` : "None"}</dd></div>
+                                <div><dt className="font-medium text-foreground inline">3D tour: </dt><dd className="inline">Not added</dd></div>
+                              </dl>
+                            )}
+                            {id === "amenities" && (
+                              <dl className="space-y-1.5">
+                                {laundry && <div><dt className="font-medium text-foreground inline">Laundry: </dt><dd className="inline">{laundry}</dd></div>}
+                                {cooling && <div><dt className="font-medium text-foreground inline">Cooling: </dt><dd className="inline">{cooling}</dd></div>}
+                                {heating && <div><dt className="font-medium text-foreground inline">Heating: </dt><dd className="inline">{heating}</dd></div>}
+                                {appliances.length > 0 && <div><dt className="font-medium text-foreground inline">Appliances: </dt><dd className="inline">{appliances.join(", ")}</dd></div>}
+                                {flooring.length > 0 && <div><dt className="font-medium text-foreground inline">Flooring: </dt><dd className="inline">{flooring.join(", ")}</dd></div>}
+                                {parking.length > 0 && <div><dt className="font-medium text-foreground inline">Parking: </dt><dd className="inline">{parking.join(", ")}</dd></div>}
+                                {outdoor.length > 0 && <div><dt className="font-medium text-foreground inline">Outdoor: </dt><dd className="inline">{outdoor.join(", ")}</dd></div>}
+                                {accessibility.length > 0 && <div><dt className="font-medium text-foreground inline">Accessibility: </dt><dd className="inline">{accessibility.join(", ")}</dd></div>}
+                                {otherAmenitiesList.length > 0 && <div><dt className="font-medium text-foreground inline">Other: </dt><dd className="inline">{otherAmenitiesList.join(", ")}</dd></div>}
+                                {!laundry && !cooling && !heating && appliances.length === 0 && flooring.length === 0 && parking.length === 0 && outdoor.length === 0 && accessibility.length === 0 && otherAmenitiesList.length === 0 && (
+                                  <p>No amenities selected</p>
+                                )}
+                              </dl>
+                            )}
+                            {id === "costs-fees" && (
+                              <dl className="space-y-2">
+                                {(Object.entries(feeCategories) as [FeeCategoryId, FeeEntry[]][]).map(([catId, entries]) =>
+                                  entries.length > 0 ? (
+                                    <div key={catId}>
+                                      <dt className="font-medium text-foreground capitalize">{catId}</dt>
+                                      <dd className="mt-0.5 pl-2 space-y-0.5">
+                                        {entries.map((fee) => (
+                                          <span key={fee.id} className="block">{fee.name}{fee.amount ? ` — $${fee.amount}` : ""}</span>
+                                        ))}
+                                      </dd>
+                                    </div>
+                                  ) : null
+                                )}
+                                {Object.values(feeCategories).every((arr) => arr.length === 0) && (
+                                  <p>No fees added</p>
+                                )}
+                              </dl>
+                            )}
+                            {id === "final-details" && (
+                              <dl className="space-y-1.5">
+                                <div><dt className="font-medium text-foreground inline">Lease duration: </dt><dd className="inline">{leaseDuration || "—"}</dd></div>
+                                <div><dt className="font-medium text-foreground inline">Renters insurance: </dt><dd className="inline">{rentersInsurance === "yes" ? "Required" : "Not required"}</dd></div>
+                                <div><dt className="font-medium text-foreground inline">Listed by: </dt><dd className="inline">{listedBy}</dd></div>
+                                <div><dt className="font-medium text-foreground inline">Contact: </dt><dd className="inline">{contactName || "—"} {contactEmail ? `(${contactEmail})` : ""}</dd></div>
+                                <div><dt className="font-medium text-foreground inline">Phone: </dt><dd className="inline">{phoneNumber || "—"} {allowPhoneContact === "no" ? "(hidden on listing)" : ""}</dd></div>
+                                <div><dt className="font-medium text-foreground inline">Book tours: </dt><dd className="inline">{bookToursMethod === "instantly" ? "Book instantly" : "Review and confirm"}</dd></div>
+                                {propertyDescription && <div><dt className="font-medium text-foreground inline">Description: </dt><dd className="inline line-clamp-2">{propertyDescription}</dd></div>}
+                              </dl>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
                 <p className="text-sm text-muted-foreground mt-6">
                   By publishing this listing, you agree to comply with our Terms of Use, Rentals Lister Terms, and Respectful Renting Pledge.
                 </p>
-              </>
-            )}
-            </div>
-          </main>
+                  </CardContent>
+                </Card>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </div>
+      </Accordion>
 
-          <footer className="flex items-center justify-between px-8 py-4 shrink-0 bg-white">
-            <Button variant="outline" onClick={handleBack} disabled={step === 0} className="gap-2">
-              <ChevronLeft className="h-4 w-4" />
-              Back
+      <div className="h-24" />
+
+      <div
+        className="fixed bottom-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t shadow-lg"
+        style={{ left: `${sidebarWidth}px`, right: "0px" }}
+      >
+        <div className="px-6 py-4">
+          <div className="flex justify-between gap-4 max-w-7xl mx-auto items-center">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSaveExit}
+              className="min-w-[120px]"
+            >
+              Save &amp; exit
             </Button>
-            {step < TOTAL_STEPS - 1 ? (
-              <Button onClick={handleNext} className="gap-2">
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            ) : step === 16 ? (
-              <Button onClick={handleFinish} className="gap-2">
-                Publish
-                <Send className="h-4 w-4" aria-hidden />
-              </Button>
-            ) : (
-              <Button onClick={handleFinish} className="gap-2">
-                Finish
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            )}
-          </footer>
+            <Button
+              type="button"
+              onClick={handleFinish}
+              className="min-w-[120px] gap-2"
+            >
+              Publish
+              <Send className="h-4 w-4" aria-hidden />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
