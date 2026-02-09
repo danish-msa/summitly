@@ -104,14 +104,15 @@ export default function MyHomeDetailPage() {
       setLoading(true);
       setNotFound(false);
       try {
-        const res = await fetch("/api/v1/my-home", { credentials: "include" });
+        const res = await fetch(`/api/v1/my-home?slug=${encodeURIComponent(slug)}`, {
+          credentials: "include",
+        });
         if (!res.ok || cancelled) return;
         const json = await res.json();
-        const homes: UserHome[] = json.homes ?? [];
-        const match = homes.find((h: UserHome) => (h.slug || "").trim() === slug.trim());
+        const homeData: UserHome | null = json.home ?? null;
         if (cancelled) return;
-        if (match) {
-          setHome(match);
+        if (homeData) {
+          setHome(homeData);
         } else {
           setNotFound(true);
           setHome(null);

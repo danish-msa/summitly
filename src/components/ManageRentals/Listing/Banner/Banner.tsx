@@ -67,7 +67,7 @@ const ListingBanner: React.FC = () => {
     );
   }
 
-  if (session || status === "authenticated") {
+  if (session) {
     return null;
   }
 
