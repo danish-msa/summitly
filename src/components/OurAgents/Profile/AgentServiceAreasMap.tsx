@@ -7,7 +7,9 @@ import { MapOptionsProvider, useMapOptions } from "@/features/map-search-v2/prov
 import MapRoot from "@/features/map-search-v2/components/MapRoot";
 import MapService from "@/features/map-search-v2/services/map/MapService";
 import SearchService, { type SearchResponse } from "@/features/map-search-v2/services/search/SearchService";
-import { getPolygonsForAreas, getBoundsForPolygons } from "@/data/agentAreaBounds";
+import { getBoundsForPolygons } from "@/data/agentAreaBounds";
+import { getPolygonsFromGeoJSON } from "@/data/agentAreaGeoJSON";
+import { agentServiceAreasBoundaries } from "@/data/agentServiceAreasBoundaries";
 import { DEFAULT_FILTER_STATE } from "@/lib/types/filters";
 import type { AgentServiceArea } from "@prisma/client";
 
@@ -83,7 +85,7 @@ export function AgentServiceAreasMap({
     [serviceAreas]
   );
   const areaPolygons = useMemo(
-    () => getPolygonsForAreas(areaNames),
+    () => getPolygonsFromGeoJSON(agentServiceAreasBoundaries, areaNames),
     [areaNames]
   );
   const combinedBounds = useMemo(

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Mail, Phone, Globe, Linkedin, Twitter } from "lucide-react";
+import { ArrowLeft, Globe, Linkedin, Twitter } from "lucide-react";
 import type { Agent } from "@prisma/client";
 import type { AgentStats, AgentSocialLinks } from "@prisma/client";
 
@@ -25,8 +25,10 @@ export function AgentProfileBanner({ agent }: AgentProfileBannerProps) {
 
   return (
     <section className="mt-16 relative">
+      {/* Banner container */}
+      <div className="bg-primary h-[240px]"></div>
       {/* Two-column banner: image | details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 min-h-[40rem] relative">
+      <div className="grid grid-cols-1 md:grid-cols-2 relative top-[-200px] -mb-[200px] max-w-6xl mx-auto rounded-2xl overflow-hidden shadow-xl">
         {/* Back to Directory - top left of banner */}
         <Link
           href="/our-agents"
@@ -37,7 +39,7 @@ export function AgentProfileBanner({ agent }: AgentProfileBannerProps) {
         </Link>
 
         {/* Left: agent photo */}
-        <div className="relative min-h-[320px] md:min-h-0 bg-muted/20">
+        <div className="relative md:min-h-0 h-[35rem] bg-muted/20">
           {showImage ? (
             <Image
               src={agent.profile_image!}
@@ -61,19 +63,30 @@ export function AgentProfileBanner({ agent }: AgentProfileBannerProps) {
         </div>
 
         {/* Right: dark teal panel */}
-        <div className="bg-[#06262F] flex flex-col justify-center gap-4 p-6 sm:p-8 lg:px-20 lg:py-10">
-          <p className="text-[#7dd3fc] text-sm font-medium uppercase tracking-wide">
+        <div className="bg-white flex flex-col justify-center gap-4 p-6 sm:p-8 lg:px-20 lg:py-10 text-primary">
+          <p className="text-secondary text-sm font-medium uppercase tracking-wide">
             {agent.job_title}
           </p>
-          <h1 className="mt-1 text-3xl sm:text-5xl font-bold text-white">
+          <h1 className="mt-1 text-3xl sm:text-5xl font-bold text-black">
             {agent.full_name}
           </h1>
+          {agent.website_url && (
+            <a
+              href={agent.website_url.startsWith("http") ? agent.website_url : `https://${agent.website_url}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex w-fit items-center gap-2 text-sm text-primary hover:text-secondary transition-colors mt-1"
+            >
+              <Globe className="h-4 w-4 shrink-0" aria-hidden />
+              <span>{agent.website_url.replace(/^https?:\/\//i, "")}</span>
+            </a>
+          )}
           {agent.property_specialties?.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
               {agent.property_specialties.slice(0, 5).map((s) => (
                 <span
                   key={s}
-                  className="inline-flex items-center rounded-full border border-[#7dd3fc]/60 bg-[#7dd3fc]/10 px-3 py-1 text-sm text-white"
+                  className="inline-flex items-center rounded-full border border-secondary/60 bg-secondary/10 px-3 py-1 text-sm text-primary"
                 >
                   {s}
                 </span>
@@ -82,70 +95,43 @@ export function AgentProfileBanner({ agent }: AgentProfileBannerProps) {
           )}
 
           {/* Stats row */}
-          <div className="mt-6 flex flex-wrap gap-8 sm:gap-20">
+          <div className="flex flex-wrap gap-8 sm:gap-20">
             <div>
-              <p className="text-2xl sm:text-4xl font-bold text-white">
+              <p className="text-2xl sm:text-4xl font-bold text-primary">
                 {stats?.years_experience != null && stats.years_experience >= 25
                   ? "25+"
                   : stats?.years_experience ?? "—"}
               </p>
-              <p className="text-xs text-white/80 font-light">Years Exp.</p>
+              <p className="text-xs text-primary/80 font-light">Years Exp.</p>
             </div>
             <div>
-              <p className="text-2xl sm:text-4xl font-bold text-white">
+              <p className="text-2xl sm:text-4xl font-bold text-primary">
                 {stats?.total_properties_sold ?? "—"}
               </p>
-              <p className="text-xs text-white/80 font-light">Sold</p>
+              <p className="text-xs text-primary/80 font-light">Sold</p>
             </div>
             <div>
-              <p className="text-2xl sm:text-4xl font-bold text-white">
+              <p className="text-2xl sm:text-4xl font-bold text-primary">
                 {stats?.active_listings_count ?? "—"}
               </p>
-              <p className="text-xs text-white/80 font-light">Active</p>
+              <p className="text-xs text-primary/80 font-light">Active</p>
             </div>
           </div>
 
-          {/* Contact */}
-          <div className="mt-6 space-y-2">
-            {agent.email && (
-              <a
-                href={`mailto:${agent.email}`}
-                className="flex items-center gap-4 text-white hover:text-[#7dd3fc] transition-colors"
-              >
-                <span className="bg-white/10 text-white rounded-full p-3"><Mail className="h-4 w-4 shrink-0" aria-hidden /></span>
-                <span>{agent.email}</span>
-              </a>
-            )}
-            {agent.phone && (
-              <a
-                href={`tel:${agent.phone}`}
-                className="flex items-center gap-4 text-white hover:text-[#7dd3fc] transition-colors"
-              >
-                <span className="bg-white/20 text-white rounded-full p-3"><Phone className="h-4 w-4 shrink-0" aria-hidden /></span>
-                <span>{agent.phone}</span>
-              </a>
-            )}
-            {agent.website_url && (
-              <a
-                href={agent.website_url.startsWith("http") ? agent.website_url : `https://${agent.website_url}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-4 text-white hover:text-[#7dd3fc] transition-colors"
-              >
-                <span className="bg-white/20 text-white rounded-full p-3"><Globe className="h-4 w-4 shrink-0" aria-hidden /></span>
-                <span>{agent.website_url.replace(/^https?:\/\//i, "")}</span>
-              </a>
-            )}
-          </div>
-
-          {/* Social */}
-          <div className="mt-4 flex gap-3">
+          {/* Contact + Social */}
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <a
+              href={agent.email ? `mailto:${agent.email}` : "#contact"}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-secondary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-secondary/90 transition-colors"
+            >
+              Contact Agent
+            </a>
             {social?.linkedin && (
               <a
                 href={social.linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center w-9 h-9 rounded-full bg-white/10 text-white hover:bg-[#7dd3fc] hover:text-[#0d3d4d] transition-colors"
+                className="flex items-center justify-center w-9 h-9 rounded-full bg-muted text-primary hover:bg-secondary hover:text-primary-foreground transition-colors"
                 aria-label="LinkedIn"
               >
                 <Linkedin className="h-4 w-4" />
@@ -156,7 +142,7 @@ export function AgentProfileBanner({ agent }: AgentProfileBannerProps) {
                 href={social.twitter}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center w-9 h-9 rounded-full bg-white/10 text-white hover:bg-[#7dd3fc] hover:text-[#0d3d4d] transition-colors"
+                className="flex items-center justify-center w-9 h-9 rounded-full bg-muted text-primary hover:bg-secondary hover:text-primary-foreground transition-colors"
                 aria-label="Twitter"
               >
                 <Twitter className="h-4 w-4" />
