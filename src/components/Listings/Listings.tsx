@@ -770,7 +770,7 @@ const Listings = () => {
                     <div 
                       id={`listing-card-${property.mlsNumber}`}
                       key={`${property.mlsNumber}-${index}`}
-                      className={`cursor-pointer transition-all ${selectedProperty?.mlsNumber === property.mlsNumber ? 'ring-2 ring-secondary' : ''}`}
+                      className={`cursor-pointer transition-all h-full ${selectedProperty?.mlsNumber === property.mlsNumber ? 'ring-2 ring-secondary' : ''}`}
                       onClick={() => handlePropertyClick(property)}
                     >
                       <PropertyCard 
@@ -845,7 +845,7 @@ const Listings = () => {
                   <div 
                       id={`listing-card-${property.mlsNumber}`}
                     key={`${property.mlsNumber}-${index}`}
-                    className={`cursor-pointer transition-all ${selectedProperty?.mlsNumber === property.mlsNumber ? 'ring-2 ring-secondary' : ''}`}
+                    className={`cursor-pointer transition-all h-full ${selectedProperty?.mlsNumber === property.mlsNumber ? 'ring-2 ring-secondary' : ''}`}
                     onClick={() => handlePropertyClick(property)}
                   >
                     <PropertyCard 

@@ -305,7 +305,7 @@ const SimilarListings = ({ currentProperty }: SimilarListingsProps) => {
                 className="flex-shrink-0"
                 style={{ width: `${100 / getSlidesPerView()}%` }}
               >
-                <div className="px-2">
+                <div className="px-2 h-full">
                   <PropertyCard 
                     property={property} 
                     onHide={() => hideProperty(property.mlsNumber)}

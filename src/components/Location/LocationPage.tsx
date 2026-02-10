@@ -568,7 +568,7 @@ const LocationPage: React.FC<LocationPageProps> = ({ locationType }) => {
                 {paginatedProperties.map((property, index) => (
                   <div
                     key={`${property.mlsNumber}-${index}-${property.address?.streetNumber || ''}-${property.address?.streetName || ''}`}
-                    className="cursor-pointer transition-all"
+                    className="cursor-pointer transition-all h-full"
                   >
                     <PropertyCard
                       property={property}

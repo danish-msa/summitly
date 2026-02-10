@@ -71,12 +71,12 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
                 key={property.mlsNumber}
                 className={
                   onPropertySelect
-                    ? `cursor-pointer transition-all ${
+                    ? `cursor-pointer transition-all h-full ${
                         selectedProperty?.mlsNumber === property.mlsNumber
                           ? "ring-2 ring-primary rounded-lg"
                           : ""
                       }`
-                    : ""
+                    : "h-full"
                 }
                 onClick={
                   onPropertySelect

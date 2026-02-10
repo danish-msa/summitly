@@ -6,7 +6,6 @@ import CallToAction from './CallToAction/CallToAction';
 const Contact: React.FC = () => {
   return (
     <div className='overflow-hidden bg-white'>
-      <Banner />
       <ContactForm />
       <CallToAction />
     </div>

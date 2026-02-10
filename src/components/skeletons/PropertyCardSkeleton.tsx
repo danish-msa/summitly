@@ -7,11 +7,11 @@ interface PropertyCardSkeletonProps {
 export const PropertyCardSkeleton = ({ className }: PropertyCardSkeletonProps) => {
   return (
     <div 
-      className={`bg-card rounded-3xl overflow-hidden transition-all duration-500 ${className || ''}`}
+      className={`bg-card rounded-3xl overflow-hidden transition-all duration-500 h-full flex flex-col ${className || ''}`}
       style={{ boxShadow: '0 8px 16px 0 rgba(0, 0, 0, 0.05)' }}
     >
       {/* Image Section */}
-      <div className='relative h-60 w-full overflow-hidden'>
+      <div className='relative h-60 w-full overflow-hidden shrink-0'>
         <Skeleton className='w-full h-full' />
         
         {/* Property Type Badge Skeleton - Top Left */}
@@ -37,7 +37,7 @@ export const PropertyCardSkeleton = ({ className }: PropertyCardSkeletonProps) =
       </div>
       
       {/* Content Section */}
-      <div className='p-4'>
+      <div className='p-4 flex-1 flex flex-col min-h-0'>
         {/* Price Section */}
         <div className='mb-3 flex items-center justify-between'>
           <div className="flex items-center justify-between gap-2 flex-1">

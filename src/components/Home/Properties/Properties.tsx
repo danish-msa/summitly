@@ -357,11 +357,11 @@ const Properties = () => {
             }}
             className="w-full"
           >
-            <CarouselContent className="-ml-1 md:-ml-2">
+            <CarouselContent className="-ml-1 md:-ml-2 flex items-stretch">
               {[...Array(8)].map((_, index) => (
                 <CarouselItem 
                   key={index}
-                  className="pl-1 md:pl-2 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
+                  className="pl-1 md:pl-2 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4 h-full"
                 >
                   <PropertyCardSkeleton />
                 </CarouselItem>
@@ -466,11 +466,11 @@ const Properties = () => {
               }}
               className="w-full"
             >
-              <CarouselContent className="-ml-1 md:-ml-2">
+              <CarouselContent className="-ml-1 md:-ml-2 flex items-stretch">
                 {visibleProperties.map((property) => (
                   <CarouselItem 
                     key={property.mlsNumber}
-                    className="pl-1 md:pl-2 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
+                    className="pl-1 md:pl-2 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4 h-full"
                   >
                     <PropertyCard 
                       property={property} 

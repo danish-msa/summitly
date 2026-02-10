@@ -14,6 +14,7 @@ import Fullscreen from 'yet-another-react-lightbox/plugins/fullscreen'
 import 'yet-another-react-lightbox/styles.css'
 import Image from 'next/image'
 import { Slider } from '@/components/ui/slider'
+import { FlyAroundButton } from '@/features/fly-around'
 
 // Custom styles for lightbox close button position (left side)
 const lightboxStyles = `
@@ -287,6 +288,21 @@ const ModernBannerGallery: React.FC<ModernBannerGalleryProps> = ({ property }) =
               Map View
             </Button>
           </div>
+
+          {/* Bottom Left - Fly Around */}
+          {property.map?.latitude != null && property.map?.longitude != null && (
+            <div className="absolute bottom-4 left-4 z-20">
+              <FlyAroundButton
+                latitude={property.map.latitude}
+                longitude={property.map.longitude}
+                address={property.address?.location ?? undefined}
+                label="Fly Around"
+                variant="white"
+                size="sm"
+                className="gap-2 h-9"
+              />
+            </div>
+          )}
         </div>
 
         {/* Thumbnail Carousel */}

@@ -97,6 +97,8 @@ NEXT_PUBLIC_REPLIERS_API_KEY=your_key_here
 - `services/cities.ts` - Cities data
 - `services/analytics.ts` - Market analytics
 - `index.ts` - Main exports
+- `SINGLE_LISTING_API.md` - Single listing response structure
+- `OPEN_HOUSE_SEARCH.md` - How to search listings with open houses (minOpenHouseDate / maxOpenHouseDate)
 
 ## ✨ Features
 

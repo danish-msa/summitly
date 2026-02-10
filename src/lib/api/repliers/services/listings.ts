@@ -37,6 +37,8 @@ export interface ListingsParams {
   yearBuilt?: string; // For age ranges like "0-5"
   minListDate?: string; // Format: YYYY-MM-DD
   maxListDate?: string; // Format: YYYY-MM-DD
+  minOpenHouseDate?: string; // Format: YYYY-MM-DD - listings with open house on or after this date
+  maxOpenHouseDate?: string; // Format: YYYY-MM-DD - listings with open house on or before this date
   city?: string;
   status?: string | string[];
   lastStatus?: string | string[];

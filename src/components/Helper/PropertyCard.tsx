@@ -203,12 +203,12 @@ const PropertyCard = ({ property, onHide }: PropertyCardProps) => {
     <>
       <Link 
         href={getPropertyUrl(property)}
-        className="group cursor-pointer w-full block transition-transform duration-300"
+        className="group cursor-pointer w-full block transition-transform duration-300 h-full"
         aria-label={`View details for ${property.details.propertyType} at ${property.address.city}`}
       >
-        <div className='bg-card rounded-3xl overflow-hidden transition-all duration-500 hover:shadow-xl' style={{ boxShadow: '0 8px 16px 0 rgba(0, 0, 0, 0.05)' }}>
+        <div className='bg-card rounded-3xl overflow-hidden transition-all duration-500 hover:shadow-xl h-full flex flex-col' style={{ boxShadow: '0 8px 16px 0 rgba(0, 0, 0, 0.05)' }}>
         {/* Image Section */}
-        <div className='relative h-60 w-full overflow-hidden'>
+        <div className='relative h-60 w-full overflow-hidden shrink-0'>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
             src={imageSrc} 
@@ -321,11 +321,11 @@ const PropertyCard = ({ property, onHide }: PropertyCardProps) => {
         </div>
         
         {/* Content Section */}
-        <div className='p-4'>
+        <div className='p-4 flex-1 flex flex-col min-h-0'>
           {/* Price */}
           <div className='mb-3 flex items-center justify-between'>
             <div className="flex items-center justify-between gap-2">
-              <h3 className='text-xl font-bold text-foreground'>{priceDisplay}</h3>
+              <h3 className='text-2xl font-bold text-foreground'>{priceDisplay}</h3>
               {isRental ? (
                 <Badge variant="outline" className="text-xs bg-brand-celestial/20 text-black border-brand-icy-blue">
                   For Rent
@@ -338,42 +338,39 @@ const PropertyCard = ({ property, onHide }: PropertyCardProps) => {
             </div>
           </div>
           
-          {/* Property Title/Name - placeholder, you can add this to the interface */}
-          <h4 className='text-sm font-body font-medium text-foreground mb-2 line-clamp-1'>
-            Premium {property.details.propertyType}
-          </h4>
-          
-          {/* Location */}
-          <div className='flex items-start mb-4'>
-            <MapPin className='mr-1 text-muted-foreground flex-shrink-0 mt-0.5' size={12} />
-            <p className='text-xs font-light text-foreground line-clamp-1'>{property.address.location}</p>
-          </div>
           
           {/* Property Details */}
           <div className='flex items-center gap-4'>
             {property.details.numBedrooms > 0 && (
               <div className='flex items-center gap-2 text-foreground'>
                 <Bed className='text-muted-foreground' size={12} />
-                <span className='text-xs font-light'>{property.details.numBedrooms}+{Math.max(0, property.details.numBedrooms - 2)} Bed</span>
+                <span className='text-xs'>{property.details.numBedrooms}+{Math.max(0, property.details.numBedrooms - 2)} Bed</span>
               </div>
             )}
             
             {property.details.numBathrooms > 0 && (
               <div className='flex items-center gap-2 text-foreground'>
                 <Bath className='text-muted-foreground' size={12} />
-                <span className='text-xs font-light'>{property.details.numBathrooms} Bath</span>
+                <span className='text-xs'>{property.details.numBathrooms} Bath</span>
               </div>
             )}
             
             <div className='flex items-center gap-2 text-foreground'>
               <Maximize2 className='text-muted-foreground' size={12} />
-              <span className='text-xs font-light'>
+              <span className='text-xs'>
                 {typeof property.details.sqft === 'number' 
                   ? property.details.sqft.toLocaleString() 
                   : property.details.sqft} sqft
               </span>
             </div>
           </div>
+
+          {/* Location */}
+          <div className='flex items-start mt-2'>
+            <MapPin className='mr-1 text-muted-foreground flex-shrink-0 mt-0.5' size={12} />
+            <p className='text-xs font-light text-foreground'>{property.address.location}</p>
+          </div>
+
         </div>
       </div>
       </Link>

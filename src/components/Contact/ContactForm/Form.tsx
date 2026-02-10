@@ -1,111 +1,137 @@
 "use client";
-import React from 'react';
-import { useState } from 'react';
+
+import React, { useState } from "react";
 
 interface FormData {
   name: string;
   email: string;
+  subject: string;
   message: string;
 }
 
 interface FormErrors {
   name?: string;
   email?: string;
+  subject?: string;
   message?: string;
 }
 
 const Form: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
-    name: '',
-    email: '',
-    message: '',
+    name: "",
+    email: "",
+    subject: "",
+    message: "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.name.trim()) newErrors.name = "Name is required";
+    if (!formData.email.trim()) newErrors.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
+      newErrors.email = "Please enter a valid email";
     }
-    if (!formData.message.trim()) newErrors.message = 'Message is required';
-
+    if (!formData.message.trim()) newErrors.message = "Message is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    // Clear error when user starts typing
+    setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name as keyof FormErrors]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: undefined,
-      }));
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-
     try {
       setIsSubmitting(true);
-      // Add your API call here
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated API call
-      console.log('Form Data:', formData);
-      setFormData({ name: '', email: '', message: '' });
-      alert('Message sent successfully!');
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      alert('Failed to send message. Please try again.');
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log("Form Data:", formData);
+      setFormData({ name: "", email: "", subject: "", message: "" });
+      alert("Message sent successfully!");
+    } catch {
+      alert("Failed to send message. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const inputBase =
+    "w-full bg-transparent py-2 text-foreground placeholder:text-muted-foreground/60 border-0 border-b border-input rounded-none focus:outline-none focus:ring-0 focus:border-primary transition-colors disabled:opacity-60";
+  const labelBase = "block text-sm font-medium text-muted-foreground mb-1";
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div>
+          <label htmlFor="name" className={labelBase}>
+            Your Name
+          </label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            className={`${inputBase} ${errors.name ? "border-destructive" : ""}`}
+            placeholder="John Doe"
+            disabled={isSubmitting}
+            aria-invalid={!!errors.name}
+          />
+          {errors.name && (
+            <p className="text-destructive text-xs mt-1">{errors.name}</p>
+          )}
+        </div>
+        <div>
+          <label htmlFor="email" className={labelBase}>
+            Your Email
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            className={`${inputBase} ${errors.email ? "border-destructive" : ""}`}
+            placeholder="hello@example.com"
+            disabled={isSubmitting}
+            aria-invalid={!!errors.email}
+          />
+          {errors.email && (
+            <p className="text-destructive text-xs mt-1">{errors.email}</p>
+          )}
+        </div>
+      </div>
+
       <div>
-        <label htmlFor="name" className="block text-gray-700 font-medium mb-2">
-          Name
+        <label htmlFor="subject" className={labelBase}>
+          Your Subject
         </label>
         <input
           type="text"
-          id="name"
-          name="name"
-          value={formData.name}
+          id="subject"
+          name="subject"
+          value={formData.subject}
           onChange={handleChange}
-          className={`w-full bg-white p-3 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:border-primary`}
-          placeholder="Enter your name"
+          className={inputBase}
+          placeholder="I want to hire you quickly"
           disabled={isSubmitting}
         />
-        {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
       </div>
+
       <div>
-        <label htmlFor="email" className="block text-gray-700 font-medium mb-2">
-          Email
-        </label>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          className={`w-full p-3 bg-white border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:border-primary`}
-          placeholder="Enter your email"
-          disabled={isSubmitting}
-        />
-        {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-      </div>
-      <div>
-        <label htmlFor="message" className="block text-gray-700 font-medium mb-2">
+        <label
+          htmlFor="message"
+          className="block text-sm font-medium text-primary mb-1"
+        >
           Message
         </label>
         <textarea
@@ -113,19 +139,23 @@ const Form: React.FC = () => {
           name="message"
           value={formData.message}
           onChange={handleChange}
-          className={`w-full p-3 border bg-white border ${errors.message ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:border-primary`}
-          rows={5}
-          placeholder="Enter your message"
+          className={`${inputBase} min-h-[100px] resize-y ${errors.message ? "border-destructive" : ""}`}
+          placeholder="Write here your message"
           disabled={isSubmitting}
+          aria-invalid={!!errors.message}
+          rows={4}
         />
-        {errors.message && <p className="text-red-500 text-sm mt-1">{errors.message}</p>}
+        {errors.message && (
+          <p className="text-destructive text-xs mt-1">{errors.message}</p>
+        )}
       </div>
+
       <button
         type="submit"
-        className={`w-full bg-primary text-white py-3 px-6 rounded-full hover:bg-primary-dark transition duration-300 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+        className="w-full sm:w-auto bg-primary text-primary-foreground font-medium py-3 px-8 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
         disabled={isSubmitting}
       >
-        {isSubmitting ? 'Sending...' : 'Submit'}
+        {isSubmitting ? "Sending..." : "Send Message"}
       </button>
     </form>
   );

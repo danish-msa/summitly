@@ -5,6 +5,7 @@ import MapboxMapComponent from "react-map-gl/mapbox";
 import { Marker, Popup } from "react-map-gl/mapbox";
 import type { MapRef } from "react-map-gl/mapbox";
 import { Navigation, Maximize2, Minimize2, ExternalLink, Loader2 } from "lucide-react";
+import { FlyAroundButton } from "@/features/fly-around";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { PropertyListing } from "@/lib/types";
@@ -27,6 +28,7 @@ interface MapboxMapProps {
   showControls?: boolean;
   showFullscreen?: boolean;
   showExternalLink?: boolean;
+  showFlyAround?: boolean;
   showMarker?: boolean;
   
   // Styling
@@ -50,6 +52,7 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
   showControls = true,
   showFullscreen = true,
   showExternalLink = true,
+  showFlyAround = true,
   showMarker = true,
   className = "",
   borderRadius = "lg",
@@ -384,6 +387,18 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
               >
                 <ExternalLink className="h-4 w-4" />
               </Button>
+            )}
+
+            {/* Fly Around - 3D drone-style view */}
+            {showFlyAround && latitude != null && longitude != null && (
+              <FlyAroundButton
+                latitude={latitude}
+                longitude={longitude}
+                address={address}
+                iconOnly
+                size="icon"
+                className="h-9 w-9 bg-background/90 backdrop-blur-sm hover:bg-background border border-border/50"
+              />
             )}
           </div>
         )}

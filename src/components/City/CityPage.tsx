@@ -329,7 +329,7 @@ const CityPage: React.FC = () => {
               {properties.map((property) => (
                 <div
                   key={property.mlsNumber}
-                  className="cursor-pointer transition-all"
+                  className="cursor-pointer transition-all h-full"
                 >
                   <PropertyCard
                     property={property}
