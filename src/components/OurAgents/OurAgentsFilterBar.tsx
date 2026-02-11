@@ -80,7 +80,7 @@ export default function OurAgentsFilterBar({
               placeholder="Search by agent name..."
               value={searchValue}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="h-11 rounded-lg border-border bg-background pr-4"
+              className="h-[2.75rem] min-h-[2.75rem] py-2 rounded-lg border border-border bg-background pr-4"
               style={{ paddingLeft: "2.5rem" }}
               aria-label="Search agents by name"
             />
@@ -95,7 +95,7 @@ export default function OurAgentsFilterBar({
               placeholder="City or zip..."
               value={locationValue}
               onChange={(e) => onLocationChange(e.target.value)}
-              className="h-11 rounded-lg border-border bg-background pr-4"
+              className="h-[2.75rem] min-h-[2.75rem] py-2 rounded-lg border border-border bg-background pr-4"
               style={{ paddingLeft: "2.5rem" }}
               aria-label="Search by location (city or zip)"
             />
@@ -103,7 +103,7 @@ export default function OurAgentsFilterBar({
         </div>
 
         <Select value={languageValue || ALL_VALUE} onValueChange={onLanguageChange}>
-          <SelectTrigger className="w-full sm:w-[180px] h-11 rounded-lg border-border">
+          <SelectTrigger className="w-full sm:w-[180px] h-[2.75rem] min-h-[2.75rem] py-0 rounded-lg border border-border">
             <SelectValue placeholder="All Languages" />
           </SelectTrigger>
           <SelectContent>
@@ -117,7 +117,7 @@ export default function OurAgentsFilterBar({
         </Select>
 
         <Select value={specializationValue || ALL_VALUE} onValueChange={onSpecializationChange}>
-          <SelectTrigger className="w-full sm:w-[200px] h-11 rounded-lg border-border">
+          <SelectTrigger className="w-full sm:w-[200px] h-[2.75rem] min-h-[2.75rem] py-0 rounded-lg border border-border">
             <SelectValue placeholder="All Specializations" />
           </SelectTrigger>
           <SelectContent>
@@ -131,7 +131,7 @@ export default function OurAgentsFilterBar({
         </Select>
 
         <Select value={typeValue || TYPE_ALL} onValueChange={onTypeChange}>
-          <SelectTrigger className="w-full sm:w-[160px] h-11 rounded-lg border-border">
+          <SelectTrigger className="w-full sm:w-[160px] h-[2.75rem] min-h-[2.75rem] py-0 rounded-lg border border-border">
             <SelectValue placeholder="Type" />
           </SelectTrigger>
           <SelectContent>
@@ -143,7 +143,7 @@ export default function OurAgentsFilterBar({
         </Select>
 
         <Select value={verifiedValue || VERIFIED_ALL} onValueChange={onVerifiedChange}>
-          <SelectTrigger className="w-full sm:w-[180px] h-11 rounded-lg border-border">
+          <SelectTrigger className="w-full sm:w-[180px] h-[2.75rem] min-h-[2.75rem] py-0 rounded-lg border border-border">
             <SelectValue placeholder="Verified" />
           </SelectTrigger>
           <SelectContent>
@@ -159,7 +159,7 @@ export default function OurAgentsFilterBar({
           size="icon"
           onClick={onClear}
           disabled={!hasFilters}
-          className="shrink-0 h-11 w-11 rounded-lg text-muted-foreground hover:text-foreground"
+          className="shrink-0 h-[2.75rem] w-[2.75rem] rounded-lg text-muted-foreground hover:text-foreground"
           aria-label="Clear all filters"
         >
         </Button>
