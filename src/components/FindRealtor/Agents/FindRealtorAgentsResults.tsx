@@ -70,20 +70,19 @@ function getInitialTypeFromSegment(segment: string): string {
   return "";
 }
 
-interface FindRealtorAgentsResultsProps extends FindRealtorAgentsParams {}
-
 export default function FindRealtorAgentsResults({
   search: searchSegment,
   intent,
   sort,
   agenttype,
   page,
-}: FindRealtorAgentsResultsProps) {
+}: FindRealtorAgentsParams) {
   const [agents, setAgents] = useState<AgentListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(() =>
     getInitialSearchFromSegment(searchSegment)
   );
+  const [location, setLocation] = useState("");
   const [language, setLanguage] = useState("");
   const [specialization, setSpecialization] = useState("");
   const [type, setType] = useState(() =>
@@ -139,6 +138,7 @@ export default function FindRealtorAgentsResults({
 
   const clearFilters = () => {
     setSearch("");
+    setLocation("");
     setLanguage("");
     setSpecialization("");
     setType("");
@@ -166,6 +166,8 @@ export default function FindRealtorAgentsResults({
         <OurAgentsFilterBar
           searchValue={search}
           onSearchChange={setSearch}
+          locationValue={location}
+          onLocationChange={setLocation}
           languageValue={language || ALL_VALUE}
           onLanguageChange={handleLanguageChange}
           specializationValue={specialization || ALL_VALUE}

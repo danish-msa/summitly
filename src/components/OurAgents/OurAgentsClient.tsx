@@ -56,6 +56,7 @@ export default function OurAgentsClient() {
   const [agents, setAgents] = useState<AgentListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [location, setLocation] = useState("");
   const [language, setLanguage] = useState("");
   const [specialization, setSpecialization] = useState("");
   const [type, setType] = useState("");
@@ -99,6 +100,7 @@ export default function OurAgentsClient() {
 
   const clearFilters = () => {
     setSearch("");
+    setLocation("");
     setLanguage("");
     setSpecialization("");
     setType("");
@@ -126,6 +128,8 @@ export default function OurAgentsClient() {
         <OurAgentsFilterBar
           searchValue={search}
           onSearchChange={setSearch}
+          locationValue={location}
+          onLocationChange={setLocation}
           languageValue={language || ALL_VALUE}
           onLanguageChange={handleLanguageChange}
           specializationValue={specialization || ALL_VALUE}

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Search, X } from "lucide-react";
+import { Search, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,8 @@ export { ALL_VALUE, TYPE_ALL, VERIFIED_ALL, VERIFIED_ONLY, VERIFIED_NOT };
 interface OurAgentsFilterBarProps {
   searchValue: string;
   onSearchChange: (value: string) => void;
+  locationValue: string;
+  onLocationChange: (value: string) => void;
   languageValue: string;
   onLanguageChange: (value: string) => void;
   specializationValue: string;
@@ -41,6 +43,8 @@ interface OurAgentsFilterBarProps {
 export default function OurAgentsFilterBar({
   searchValue,
   onSearchChange,
+  locationValue,
+  onLocationChange,
   languageValue,
   onLanguageChange,
   specializationValue,
@@ -56,6 +60,7 @@ export default function OurAgentsFilterBar({
 }: OurAgentsFilterBarProps) {
   const hasFilters =
     searchValue.trim() !== "" ||
+    locationValue.trim() !== "" ||
     (languageValue !== "" && languageValue !== ALL_VALUE) ||
     (specializationValue !== "" && specializationValue !== ALL_VALUE) ||
     (typeValue !== "" && typeValue !== TYPE_ALL) ||
@@ -64,20 +69,37 @@ export default function OurAgentsFilterBar({
   return (
     <div>
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
-        <div className="relative flex-1 min-w-0">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none shrink-0"
-            aria-hidden
-          />
-          <Input
-            type="search"
-            placeholder="Search agents by name..."
-            value={searchValue}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="h-11 rounded-lg border-border bg-background pr-4"
-            style={{ paddingLeft: "2.5rem" }}
-            aria-label="Search agents by name"
-          />
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-1 min-w-0 sm:flex-[2]">
+          <div className="relative flex-1 min-w-0">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none shrink-0"
+              aria-hidden
+            />
+            <Input
+              type="search"
+              placeholder="Search by agent name..."
+              value={searchValue}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="h-11 rounded-lg border-border bg-background pr-4"
+              style={{ paddingLeft: "2.5rem" }}
+              aria-label="Search agents by name"
+            />
+          </div>
+          <div className="relative flex-1 min-w-0">
+            <MapPin
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none shrink-0"
+              aria-hidden
+            />
+            <Input
+              type="search"
+              placeholder="City or zip..."
+              value={locationValue}
+              onChange={(e) => onLocationChange(e.target.value)}
+              className="h-11 rounded-lg border-border bg-background pr-4"
+              style={{ paddingLeft: "2.5rem" }}
+              aria-label="Search by location (city or zip)"
+            />
+          </div>
         </div>
 
         <Select value={languageValue || ALL_VALUE} onValueChange={onLanguageChange}>
@@ -140,7 +162,6 @@ export default function OurAgentsFilterBar({
           className="shrink-0 h-11 w-11 rounded-lg text-muted-foreground hover:text-foreground"
           aria-label="Clear all filters"
         >
-          <X className="h-5 w-5" />
         </Button>
       </div>
     </div>
