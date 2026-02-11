@@ -77,7 +77,7 @@ const NewItemBody = forwardRef<NewItemBodyRef, NewItemBodyProps>(({
       <CurvedTabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <CurvedTabsList className="w-full justify-start">
           {!isRent && !isPreCon && <CurvedTabsTrigger value="avm-breakdown">AVM Breakdown</CurvedTabsTrigger>}
-          <CurvedTabsTrigger value="listing-details">Listing Details</CurvedTabsTrigger>
+          <CurvedTabsTrigger value="listing-details">{isPreCon ? "Project Details" : "Listing Details"}</CurvedTabsTrigger>
           {!isRent && !isPreCon && <CurvedTabsTrigger value="history">History</CurvedTabsTrigger>}
           {isPreCon && <CurvedTabsTrigger value="pricing-incentives">Pricing & Incentives</CurvedTabsTrigger>}
           {isPreCon && <CurvedTabsTrigger value="deposit-structure">Deposit Structure</CurvedTabsTrigger>}

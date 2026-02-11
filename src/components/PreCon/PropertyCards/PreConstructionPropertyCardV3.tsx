@@ -10,7 +10,8 @@ import { useEffect, useState, useRef } from 'react';
 
 const PreConstructionPropertyCardV3 = ({ 
   property,
-  className 
+  className,
+  detailBasePath = "/pre-con",
 }: PreConstructionPropertyCardProps) => {
   const image = property.images[0] || '/placeholder.svg';
   const hasPrice = property.startingPrice && property.startingPrice > 0;
@@ -117,7 +118,7 @@ const PreConstructionPropertyCardV3 = ({
   return (
     <Link 
       ref={cardRef}
-      href={`/pre-con/${property.id}`} 
+      href={`${detailBasePath}/${property.id}`}
       className="h-full flex"
     >
       <Card 

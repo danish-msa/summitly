@@ -65,8 +65,8 @@ const AssignmentsBanner: React.FC = () => {
                 (area.value !== "" && currentCity === area.value);
               const href =
                 area.value === ""
-                  ? "/assignment-sale"
-                  : `/assignment-sale?city=${encodeURIComponent(area.value)}`;
+                  ? "/assignments"
+                  : `/assignments?city=${encodeURIComponent(area.value)}`;
               return (
                 <Link
                   key={area.value || "all"}

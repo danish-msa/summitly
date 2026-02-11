@@ -128,7 +128,7 @@ const sellingStatuses: ContentItem[] = [
   { id: 'platinum-access', label: 'Platinum Access', description: 'Exclusive early access projects', href: '/pre-con/platinum-access', icon: CheckCircle },
   { id: 'now-selling', label: 'Now Selling', description: 'Currently available for purchase', href: '/pre-con/now-selling', icon: CheckCircle },
   { id: 'coming-soon', label: 'Coming Soon', description: 'Upcoming projects launching soon', href: '/pre-con/coming-soon', icon: Clock },
-  { id: 'assignments', label: 'Assignments', description: 'Assignment opportunities available', href: '/assignment-sale', icon: Tag },
+  { id: 'assignments', label: 'Assignments', description: 'Assignment opportunities available', href: '/assignments', icon: Tag },
   { id: 'register-now', label: 'Register Now', description: 'Projects accepting registrations', href: '/pre-con/register-now', icon: Clock },
   { id: 'resale', label: 'Resale', description: 'Resale properties available', href: '/pre-con/resale', icon: Tag },
   { id: 'sold-out', label: 'Sold Out', description: 'Fully sold projects', href: '/pre-con/sold-out', icon: XCircle },

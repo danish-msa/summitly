@@ -25,7 +25,11 @@ interface PreConProject {
   lockerPrice: number | null
   lockerPriceDetail: string | null
   assignmentFee: number | null
+  originalPurchasePrice: number | null
+  depositPaid: number | null
+  totalPayment: number | null
   developmentLevies: string | null
+  exposure: string | null
   developmentCharges: number | null
   streetNumber: string | null
   streetName: string | null
@@ -120,8 +124,12 @@ export default function EditProjectPage() {
     lockerPrice: "",
     lockerPriceDetail: "",
     assignmentFee: "",
+    originalPurchasePrice: "",
+    depositPaid: "",
+    totalPayment: "",
     developmentLevies: "",
     developmentCharges: "",
+    exposure: "",
     streetNumber: "",
     streetName: "",
     city: "",
@@ -238,8 +246,12 @@ export default function EditProjectPage() {
         lockerPrice: project.lockerPrice?.toString() || "",
         lockerPriceDetail: project.lockerPriceDetail || "",
         assignmentFee: project.assignmentFee?.toString() || "",
+        originalPurchasePrice: project.originalPurchasePrice?.toString() || "",
+        depositPaid: project.depositPaid?.toString() || "",
+        totalPayment: project.totalPayment?.toString() || "",
         developmentLevies: project.developmentLevies || "",
         developmentCharges: project.developmentCharges?.toString() || "",
+        exposure: project.exposure || "",
         streetNumber: project.streetNumber || "",
         streetName: project.streetName || "",
         city: project.city || "",
@@ -362,8 +374,12 @@ export default function EditProjectPage() {
           lockerPrice: formData.lockerPrice || null,
           lockerPriceDetail: formData.lockerPriceDetail || null,
           assignmentFee: formData.assignmentFee || null,
+          originalPurchasePrice: formData.originalPurchasePrice || null,
+          depositPaid: formData.depositPaid || null,
+          totalPayment: formData.totalPayment || null,
           developmentLevies: formData.developmentLevies || null,
           developmentCharges: formData.developmentCharges || null,
+          exposure: formData.exposure || null,
           streetNumber: formData.streetNumber,
           streetName: formData.streetName,
           city: formData.city,
@@ -509,8 +525,12 @@ export default function EditProjectPage() {
         lockerPrice: formData.lockerPrice === '' ? null : formData.lockerPrice,
         lockerPriceDetail: formData.lockerPriceDetail === '' ? null : formData.lockerPriceDetail,
         assignmentFee: formData.assignmentFee === '' ? null : formData.assignmentFee,
+        originalPurchasePrice: formData.originalPurchasePrice === '' ? null : formData.originalPurchasePrice,
+        depositPaid: formData.depositPaid === '' ? null : formData.depositPaid,
+        totalPayment: formData.totalPayment === '' ? null : formData.totalPayment,
         developmentLevies: formData.developmentLevies === '' ? null : formData.developmentLevies,
         developmentCharges: formData.developmentCharges === '' ? null : formData.developmentCharges,
+        exposure: formData.exposure === '' ? null : formData.exposure,
         streetNumber: formData.streetNumber,
         streetName: formData.streetName,
         city: formData.city,

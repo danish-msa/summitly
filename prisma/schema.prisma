@@ -502,7 +502,11 @@ model PreConstructionProject {
   lockerPrice             Float?
   lockerPriceDetail       String?
   assignmentFee           Float?
+  originalPurchasePrice   Float?
+  depositPaid             Float?
+  totalPayment            Float?
   developmentLevies       String?
+  exposure                String?
   developmentCharges      Float?
   height                  String?
   maintenanceFeesPerSqft  Float?

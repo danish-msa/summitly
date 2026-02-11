@@ -9,9 +9,11 @@ import { formatCurrency } from '@/lib/utils'
 interface StartingPriceCardProps {
   property: PropertyListing
   onGetPreQualified?: () => void
+  /** Price label (e.g. "Listed Price" for assignments, "Starting Price" for pre-con). Default: "Starting Price". */
+  priceLabel?: string
 }
 
-const StartingPriceCard: React.FC<StartingPriceCardProps> = ({ property, onGetPreQualified }) => {
+const StartingPriceCard: React.FC<StartingPriceCardProps> = ({ property, onGetPreQualified, priceLabel = "Starting Price" }) => {
   const preConData = property.preCon
   const startingPrice = preConData?.startingPrice || preConData?.priceRange?.min || property.listPrice || 0
 
@@ -38,10 +40,10 @@ const StartingPriceCard: React.FC<StartingPriceCardProps> = ({ property, onGetPr
   return (
     <Card variant="light" className="bg-white w-full shadow-lg rounded-2xl">
       <CardContent className="p-6">
-        <div className="flex flex-col items-center space-y-4">
-          {/* Starting Price Label */}
+        <div className="flex flex-col items-center space-y-2">
+          {/* Price Label (e.g. Starting Price / Listed Price) */}
           <span className="text-sm font-medium text-gray-600">
-            Starting Price
+            {priceLabel}
           </span>
           
           {/* Price Value or Coming Soon */}

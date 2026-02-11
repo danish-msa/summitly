@@ -61,7 +61,11 @@ export interface FormData {
   lockerPrice: string
   lockerPriceDetail: string
   assignmentFee: string
+  originalPurchasePrice: string
+  depositPaid: string
+  totalPayment: string
   developmentLevies: string
+  exposure: string
   developmentCharges: string
   streetNumber: string
   streetName: string
@@ -1462,6 +1466,18 @@ export function PreConProjectForm({
                 </div>
               </div>
 
+              {/* Exposure */}
+              <div>
+                <Textarea
+                  id="exposure"
+                  label="Exposure"
+                  value={formData.exposure}
+                  onChange={(e) => setFormData({ ...formData, exposure: e.target.value })}
+                  placeholder="e.g., North, South, East, West"
+                  rows={2}
+                />
+              </div>
+
               {/* Row 5: Ownership Type, Garage, Basement */}
               <div className="grid grid-cols-3 gap-4">
                 <div>
@@ -1606,19 +1622,59 @@ export function PreConProjectForm({
                       </div>
                     </div>
 
+                    {/* Assignment pricing */}
+                    <div className="mt-6 pt-6 border-t space-y-3">
+                      <h4 className="text-sm font-medium text-muted-foreground">Assignment</h4>
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                          <Input
+                            id="originalPurchasePrice"
+                            type="number"
+                            step="0.01"
+                            label="Original Purchase Price"
+                            value={formData.originalPurchasePrice}
+                            onChange={(e) => setFormData({ ...formData, originalPurchasePrice: e.target.value })}
+                            placeholder="e.g., 650000"
+                          />
+                        </div>
+                        <div>
+                          <Input
+                            id="depositPaid"
+                            type="number"
+                            step="0.01"
+                            label="Deposit Paid"
+                            value={formData.depositPaid}
+                            onChange={(e) => setFormData({ ...formData, depositPaid: e.target.value })}
+                            placeholder="e.g., 75000"
+                          />
+                        </div>
+                        <div>
+                          <Input
+                            id="totalPayment"
+                            type="number"
+                            step="0.01"
+                            label="Total Payment"
+                            value={formData.totalPayment}
+                            onChange={(e) => setFormData({ ...formData, totalPayment: e.target.value })}
+                            placeholder="e.g., 725000"
+                          />
+                        </div>
+                        <div>
+                          <Input
+                            id="assignmentFee"
+                            type="number"
+                            step="0.01"
+                            label="Assignment Fee"
+                            value={formData.assignmentFee}
+                            onChange={(e) => setFormData({ ...formData, assignmentFee: e.target.value })}
+                            placeholder="e.g., 5000"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Additional Fees */}
                     <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t">
-                      <div>
-                        <Input
-                          id="assignmentFee"
-                          type="number"
-                          step="0.01"
-                          label="Assignment Fee"
-                          value={formData.assignmentFee}
-                          onChange={(e) => setFormData({ ...formData, assignmentFee: e.target.value })}
-                          placeholder="e.g., 5000"
-                        />
-                      </div>
                       <div>
                         <Textarea
                           id="developmentLevies"

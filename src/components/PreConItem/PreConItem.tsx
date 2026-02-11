@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useState, useRef } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, usePathname } from 'next/navigation'
 import { PropertyListing } from '@/lib/types'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import StickyPropertyBar from '../Item/StickyPropertyBar'
@@ -17,7 +17,9 @@ import { PreConContactSection } from '../PreConItem/PreConItemBody/PreConContact
 
 const PreConItem: React.FC = () => {
   const params = useParams();
+  const pathname = usePathname();
   const propertyId = params?.slug as string || '';
+  const isAssignmentPage = pathname?.startsWith('/assignments') ?? false;
   const bannerRef = useRef<HTMLDivElement>(null);
   const newItemBodyRef = useRef<NewItemBodyRef>(null);
   
@@ -85,7 +87,7 @@ const PreConItem: React.FC = () => {
         }}
       />
       {/* Breadcrumbs */}
-      <Breadcrumbs property={property} isPreCon={isPreCon} isRent={isRental} />
+      <Breadcrumbs property={property} isPreCon={isPreCon} isRent={isRental} isAssignment={isAssignmentPage} />
       
       <PropertyHeader 
         property={property}
@@ -104,9 +106,10 @@ const PreConItem: React.FC = () => {
           </div>
           <Description property={property} isPreCon={isPreCon} />
         </div>
-        <div className='w-full md:w-[30%] flex flex-col gap-4 items-stretch md:items-start md:gap-0 md:sticky md:top-2 md:self-start'>
+        <div className='w-full md:w-[30%] flex flex-col gap-4 items-stretch md:items-start md:sticky md:top-2 md:self-start'>
           <StartingPriceCard 
             property={property}
+            priceLabel={isAssignmentPage ? "Listed Price" : "Starting Price"}
             onGetPreQualified={() => {
               // Scroll to contact section
               const contactElement = document.getElementById('contact-section')

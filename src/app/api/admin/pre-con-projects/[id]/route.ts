@@ -218,7 +218,11 @@ export async function PUT(
       lockerPrice?: number | null
       lockerPriceDetail?: string | null
       assignmentFee?: number | null
+      originalPurchasePrice?: number | null
+      depositPaid?: number | null
+      totalPayment?: number | null
       developmentLevies?: string | null
+      exposure?: string | null
       developmentCharges?: number | null
       streetNumber?: string | null
       streetName?: string | null
@@ -304,6 +308,18 @@ export async function PUT(
       const parsed = body.assignmentFee === '' || body.assignmentFee === null ? null : parseFloat(String(body.assignmentFee))
       updateData.assignmentFee = isNaN(parsed as number) ? null : parsed
     }
+    if (body.originalPurchasePrice !== undefined) {
+      const parsed = body.originalPurchasePrice === '' || body.originalPurchasePrice === null ? null : parseFloat(String(body.originalPurchasePrice))
+      updateData.originalPurchasePrice = isNaN(parsed as number) ? null : parsed
+    }
+    if (body.depositPaid !== undefined) {
+      const parsed = body.depositPaid === '' || body.depositPaid === null ? null : parseFloat(String(body.depositPaid))
+      updateData.depositPaid = isNaN(parsed as number) ? null : parsed
+    }
+    if (body.totalPayment !== undefined) {
+      const parsed = body.totalPayment === '' || body.totalPayment === null ? null : parseFloat(String(body.totalPayment))
+      updateData.totalPayment = isNaN(parsed as number) ? null : parsed
+    }
     if (body.developmentLevies !== undefined) {
       updateData.developmentLevies = body.developmentLevies === '' || body.developmentLevies === null ? null : String(body.developmentLevies).trim()
     }
@@ -311,6 +327,7 @@ export async function PUT(
       const parsed = body.developmentCharges === '' || body.developmentCharges === null ? null : parseFloat(String(body.developmentCharges))
       updateData.developmentCharges = isNaN(parsed as number) ? null : parsed
     }
+    if (body.exposure !== undefined) updateData.exposure = body.exposure === '' ? null : (body.exposure || null)
     if (body.streetNumber !== undefined) updateData.streetNumber = body.streetNumber
     if (body.streetName !== undefined) updateData.streetName = body.streetName
     if (body.city !== undefined) updateData.city = body.city || null

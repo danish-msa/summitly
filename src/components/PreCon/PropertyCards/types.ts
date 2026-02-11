@@ -34,5 +34,7 @@ export interface PreConstructionPropertyCardProps {
   property: PreConstructionProperty;
   onHide?: () => void;
   className?: string;
+  /** Base path for the detail link (e.g. "/assignments" for assignment projects). Defaults to "/pre-con". */
+  detailBasePath?: string;
 }
 

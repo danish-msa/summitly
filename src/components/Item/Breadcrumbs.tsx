@@ -7,16 +7,19 @@ interface BreadcrumbsProps {
   property: PropertyListing;
   isPreCon?: boolean;
   isRent?: boolean;
+  isAssignment?: boolean;
 }
 
-const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ property, isPreCon = false, isRent = false }) => {
+const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ property, isPreCon = false, isRent = false, isAssignment = false }) => {
   const getBreadcrumbLabel = () => {
+    if (isAssignment) return 'Assignments';
     if (isPreCon) return 'Pre-Construction';
     if (isRent) return 'Rent';
     return 'Listings';
   };
 
   const getBreadcrumbHref = () => {
+    if (isAssignment) return '/assignments';
     if (isPreCon) return '/pre-con';
     if (isRent) return '/rent';
     return '/listings';

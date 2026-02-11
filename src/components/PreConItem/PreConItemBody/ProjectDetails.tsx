@@ -1,4 +1,7 @@
+"use client"
+
 import React from 'react'
+import { usePathname } from 'next/navigation'
 import { PropertyListing } from '@/lib/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -80,8 +83,10 @@ interface ProjectDetailsProps {
 
 
 const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
+  const pathname = usePathname();
+  const isAssignmentPage = pathname?.startsWith('/assignments') ?? false;
   const preCon = property.preCon;
-  
+
   if (!preCon) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -259,7 +264,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ property }) => {
       show: !!preCon.developer,
     },
     {
-      label: 'Starting Price',
+      label: isAssignmentPage ? 'Listed Price' : 'Starting Price',
       value: preCon.startingPrice && preCon.startingPrice > 0
         ? formatPrice(preCon.startingPrice)
         : preCon.priceRange 

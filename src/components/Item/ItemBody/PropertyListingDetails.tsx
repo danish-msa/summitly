@@ -401,28 +401,29 @@ const getHighlightIcon = (key: string) => {
   // const hasComparableSales = data.comparableSales && data.comparableSales.count > 0;
   
   // Determine default tab (first available)
-  const _hasDetailsTab = hasPropertyDetails || hasBuildingDetails || hasInsideDetails || 
+  const _hasDetailsTab = hasPropertyDetails || hasBuildingDetails || hasInsideDetails ||
     hasUtilitiesDetails || hasParkingDetails || hasLandDetails || hasHighlights;
   // const defaultTab = hasDetailsTab ? 'details' : hasRooms ? 'rooms' : 'comparable';
 
+  // Keys already shown in keyFacts – avoid duplicating them from propertyDetails
+  const keyFactsKeys = new Set(Object.keys(data.keyFacts));
+
   return (
     <div className="w-full pl-4 md:pl-14 min-w-0">
-      {/* Key Facts Section - All Details Combined */}
+      {/* Key Facts Section - All Details Combined (no duplicates) */}
       {hasKeyFacts && (
         <div>
           <div>
             <h2 className="text-base sm:text-lg font-semibold text-foreground leading-tight mb-4 sm:mb-6">Key Facts</h2>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              {/* Original Key Facts */}
+              {/* Key Facts (primary source) */}
               {Object.entries(data.keyFacts).map(([key, value]) => {
                 const Icon = getFactIcon(key);
                 return (
                   <div key={key} className="flex items-center gap-2 sm:gap-3 bg-muted/20 rounded-lg p-3 sm:p-4 shadow-sm min-w-0">
-                    {/* Icon Container */}
                     <div className="flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 bg-white rounded-lg sm:rounded-xl flex items-center justify-center border border-gray-100">
                       <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-secondary" />
                     </div>
-                    {/* Text Content */}
                     <div className="flex-1 min-w-0 overflow-hidden">
                       <p className="text-[10px] sm:text-xs text-gray-500 truncate">{key}</p>
                       <p className="text-xs sm:text-sm font-bold text-gray-900 truncate">{String(value)}</p>
@@ -431,8 +432,10 @@ const getHighlightIcon = (key: string) => {
                 );
               })}
               
-              {/* Property Details */}
-              {hasPropertyDetails && Object.entries(data.propertyDetails.property).map(([key, value]) => {
+              {/* Property Details (only keys not already in keyFacts) */}
+              {hasPropertyDetails && Object.entries(data.propertyDetails.property)
+                .filter(([key]) => !keyFactsKeys.has(key))
+                .map(([key, value]) => {
                 const Icon = getFactIcon(key);
                 return (
                   <div key={`property-${key}`} className="flex items-center gap-2 sm:gap-3 bg-muted/20 rounded-lg p-3 sm:p-4 shadow-sm min-w-0">
@@ -447,8 +450,10 @@ const getHighlightIcon = (key: string) => {
                 );
               })}
               
-              {/* Building Details */}
-              {hasBuildingDetails && Object.entries(data.propertyDetails.building).map(([key, value]) => {
+              {/* Building Details (only keys not already in keyFacts) */}
+              {hasBuildingDetails && Object.entries(data.propertyDetails.building)
+                .filter(([key]) => !keyFactsKeys.has(key))
+                .map(([key, value]) => {
                 const Icon = getFactIcon(key);
                 return (
                   <div key={`building-${key}`} className="flex items-center gap-2 sm:gap-3 bg-muted/20 rounded-lg p-3 sm:p-4 shadow-sm min-w-0">
@@ -463,8 +468,10 @@ const getHighlightIcon = (key: string) => {
                 );
               })}
               
-              {/* Interior Details */}
-              {hasInsideDetails && Object.entries(data.propertyDetails.inside).map(([key, value]) => {
+              {/* Interior Details (only keys not already in keyFacts) */}
+              {hasInsideDetails && Object.entries(data.propertyDetails.inside)
+                .filter(([key]) => !keyFactsKeys.has(key))
+                .map(([key, value]) => {
                 const Icon = getFactIcon(key);
                 return (
                   <div key={`inside-${key}`} className="flex items-center gap-2 sm:gap-3 bg-muted/20 rounded-lg p-3 sm:p-4 shadow-sm min-w-0">
@@ -479,8 +486,10 @@ const getHighlightIcon = (key: string) => {
                 );
               })}
               
-              {/* Parking Details */}
-              {hasParkingDetails && Object.entries(data.propertyDetails.parking).map(([key, value]) => {
+              {/* Parking Details (only keys not already in keyFacts) */}
+              {hasParkingDetails && Object.entries(data.propertyDetails.parking)
+                .filter(([key]) => !keyFactsKeys.has(key))
+                .map(([key, value]) => {
                 const Icon = getFactIcon(key);
                 return (
                   <div key={`parking-${key}`} className="flex items-center gap-2 sm:gap-3 bg-muted/20 rounded-lg p-3 sm:p-4 shadow-sm min-w-0">
@@ -495,8 +504,10 @@ const getHighlightIcon = (key: string) => {
                 );
               })}
               
-              {/* Amenities/Highlights */}
-              {hasHighlights && Object.entries(data.propertyDetails.highlights).map(([key, value]) => {
+              {/* Amenities/Highlights (only keys not already in keyFacts) */}
+              {hasHighlights && Object.entries(data.propertyDetails.highlights)
+                .filter(([key]) => !keyFactsKeys.has(key))
+                .map(([key, value]) => {
                 const Icon = getHighlightIcon(key);
                 return (
                   <div key={`highlight-${key}`} className="flex items-center gap-2 sm:gap-3 bg-white rounded-lg p-3 sm:p-4 border border-gray-200 shadow-sm min-w-0">

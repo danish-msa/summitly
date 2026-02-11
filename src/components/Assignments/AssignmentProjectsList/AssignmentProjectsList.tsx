@@ -152,13 +152,12 @@ const AssignmentProjectsList: React.FC = () => {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {projects.map((project) => (
-              <Link
+              <PreConstructionPropertyCardV3
                 key={project.id}
-                href={`/pre-con/${project.id}`}
+                property={project}
+                detailBasePath="/assignments"
                 className="block transition-all hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 rounded-xl"
-              >
-                <PreConstructionPropertyCardV3 property={project} />
-              </Link>
+              />
             ))}
           </div>
           {loadingMore && (
@@ -180,10 +179,10 @@ const AssignmentProjectsList: React.FC = () => {
             No assignment projects are available at the moment.
           </p>
           <Link
-            href="/pre-con/projects"
+            href="/assignments"
             className="inline-block mt-4 text-secondary font-medium hover:underline"
           >
-            Browse all pre-construction projects
+            Browse assignments
           </Link>
         </div>
       )}

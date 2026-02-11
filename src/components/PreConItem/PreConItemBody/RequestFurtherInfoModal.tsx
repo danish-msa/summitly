@@ -99,7 +99,7 @@ const RequestFurtherInfoModal: React.FC<RequestFurtherInfoModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] p-0 flex flex-col bg-white rounded-lg">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] p-0 flex flex-col bg-white rounded-2xl">
         {/* Fixed Header */}
         <DialogHeader className="sticky top-0 z-10 bg-white border-b border-border py-6 relative">
           <Button
