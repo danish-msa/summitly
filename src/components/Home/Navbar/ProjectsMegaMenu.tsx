@@ -18,7 +18,6 @@ import {
   Clock, 
   XCircle,
   ChevronRight,
-  ArrowUpRight,
   MapPin
 } from 'lucide-react';
 import { getBlogPosts } from '@/data/data';
@@ -457,7 +456,6 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                                         className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-primary hover:underline"
                                       >
                                         View all developers
-                                        <ArrowUpRight className="w-3 h-3" />
                                       </Link>
                                     )}
                                   </div>
@@ -514,7 +512,6 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                                         className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-primary hover:underline"
                                       >
                                         View all architects
-                                        <ArrowUpRight className="w-3 h-3" />
                                       </Link>
                                     )}
                                   </div>
@@ -573,7 +570,6 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                                         className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-primary hover:underline"
                                       >
                                         View all others
-                                        <ArrowUpRight className="w-3 h-3" />
                                       </Link>
                                     )}
                                   </div>
@@ -639,7 +635,6 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                         className="inline-flex items-center gap-1 mt-4 text-xs font-semibold text-primary hover:underline"
                       >
                         View all {activeCategory === 'top-cities' ? 'cities' : activeCategory.replace('-', ' ')}
-                        <ArrowUpRight className="w-3 h-3" />
                       </Link>
                     )}
                   </motion.div>
@@ -690,7 +685,6 @@ export const ProjectsMegaMenu: React.FC<ProjectsMegaMenuProps> = ({
                   className="inline-flex items-center gap-1 mt-4 text-xs font-semibold text-primary hover:underline"
                 >
                   View all articles
-                  <ArrowUpRight className="w-3 h-3" />
                 </Link>
               </div>
             </div>

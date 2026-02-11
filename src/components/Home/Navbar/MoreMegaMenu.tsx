@@ -16,8 +16,7 @@ import {
   Phone,
   HelpCircle,
   BookOpen,
-  ChevronRight,
-  ArrowUpRight
+  ChevronRight
 } from 'lucide-react';
 
 interface MoreMegaMenuProps {
@@ -211,9 +210,6 @@ export const MoreMegaMenu: React.FC<MoreMegaMenuProps> = ({
                                       <p className="text-sm font-medium text-gray-900 group-hover:text-primary transition-colors">
                                         {item.label}
                                       </p>
-                                      {isExternal && (
-                                        <ArrowUpRight className="w-4 h-4 text-gray-400 group-hover:text-primary transition-colors" />
-                                      )}
                                     </div>
                                     {item.description && (
                                       <p className="text-xs text-gray-500 mt-1 line-clamp-2">

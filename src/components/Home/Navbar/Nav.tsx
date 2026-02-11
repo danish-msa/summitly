@@ -11,13 +11,12 @@ import { useSession } from 'next-auth/react';
 // import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import { ChevronDown } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { AutocompleteSearch } from '@/components/common/AutocompleteSearch';
 import { BuyMegaMenu } from './BuyMegaMenu';
+import { SearchModal } from './SearchModal';
 import { RentMegaMenu } from './RentMegaMenu';
 import { RentalsMegaMenu } from './RentalsMegaMenu';
-import { ProjectsMegaMenu } from './ProjectsMegaMenu';
 import { MoreMegaMenu } from './MoreMegaMenu';
 import { AIButton } from '@/components/ui/ai-button';
 
@@ -117,10 +116,15 @@ const Nav = ({ openNav }: Props) => {
   })();
   
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
+
+  // Close search dialog when route changes (e.g. after selecting a result)
+  useEffect(() => {
+    setSearchOpen(false);
+  }, [pathname]);
   const [showBuyDropdown, setShowBuyDropdown] = useState(false);
   const [showRentDropdown, setShowRentDropdown] = useState(false);
-  const [showProjectsDropdown, setShowProjectsDropdown] = useState(false);
   const [showRentalsDropdown, setShowRentalsDropdown] = useState(false);
   const [showMoreDropdown, setShowMoreDropdown] = useState(false);
 
@@ -214,7 +218,7 @@ const Nav = ({ openNav }: Props) => {
                 </Link>
               </motion.div>
 
-              {/* Buy, Rent, Mortgage - Desktop Only */}
+              {/* Desktop nav: Buy, Sell, Rent, Mortgage, My Home, Find an Agent, Manage Rentals, News & Insights, More */}
               <nav className="hidden lg:flex items-center space-x-1">
                 {/* Buy Mega Menu */}
                 <BuyMegaMenu
@@ -223,9 +227,7 @@ const Nav = ({ openNav }: Props) => {
                   onMouseLeave={() => setShowBuyDropdown(false)}
                 >
                   <motion.div
-                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide flex items-center gap-1 cursor-pointer"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary hover:font-semibold transition-colors rounded-lg flex items-center gap-1 cursor-pointer"
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.1 }}
@@ -233,9 +235,20 @@ const Nav = ({ openNav }: Props) => {
                     <Link href="/buy" className="hover:text-primary">
                       Buy
                     </Link>
-                    <ChevronDown className={cn("w-4 h-4 transition-transform", showBuyDropdown && "rotate-180")} />
                   </motion.div>
                 </BuyMegaMenu>
+
+                {/* Sell Link */}
+                <Link href="/sell">
+                  <motion.div
+                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary hover:font-semibold transition-colors rounded-lg"
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.12 }}
+                  >
+                    Sell
+                  </motion.div>
+                </Link>
 
                 {/* Rent Mega Menu */}
                 <RentMegaMenu
@@ -244,9 +257,7 @@ const Nav = ({ openNav }: Props) => {
                   onMouseLeave={() => setShowRentDropdown(false)}
                 >
                   <motion.div
-                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide flex items-center gap-1 cursor-pointer"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary hover:font-semibold transition-colors rounded-lg flex items-center gap-1 cursor-pointer"
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.2 }}
@@ -254,30 +265,8 @@ const Nav = ({ openNav }: Props) => {
                     <Link href="/rent" className="hover:text-primary">
                       Rent
                     </Link>
-                    <ChevronDown className={cn("w-4 h-4 transition-transform", showRentDropdown && "rotate-180")} />
                   </motion.div>
                 </RentMegaMenu>
-
-                {/* Pre-Con Mega Menu */}
-                <ProjectsMegaMenu
-                  isOpen={showProjectsDropdown}
-                  onMouseEnter={() => setShowProjectsDropdown(true)}
-                  onMouseLeave={() => setShowProjectsDropdown(false)}
-                >
-                  <motion.div
-                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide flex items-center gap-1 cursor-pointer"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.3 }}
-                  >
-                    <Link href="/pre-con" className="hover:text-primary">
-                      Pre-Con
-                    </Link>
-                    <ChevronDown className={cn("w-4 h-4 transition-transform", showProjectsDropdown && "rotate-180")} />
-                  </motion.div>
-                </ProjectsMegaMenu>
 
                 {/* Mortgage Link */}
                 <a 
@@ -286,12 +275,10 @@ const Nav = ({ openNav }: Props) => {
                   rel="noopener noreferrer"
                 >
                   <motion.div
-                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary hover:font-semibold transition-colors rounded-lg"
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.4 }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
                   >
                     Mortgage
                   </motion.div>
@@ -300,35 +287,56 @@ const Nav = ({ openNav }: Props) => {
                 {/* My Home Link */}
                 <Link href="/homeowner">
                   <motion.div
-                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary hover:font-semibold transition-colors rounded-lg"
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.45 }}
+                    transition={{ duration: 0.5, delay: 0.35 }}
                   >
                     My Home
                   </motion.div>
                 </Link>
 
-                {/* Rentals Mega Menu */}
+                {/* Find an Agent Link */}
+                <Link href="/find-an-agent">
+                  <motion.div
+                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary hover:font-semibold transition-colors rounded-lg"
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.4 }}
+                  >
+                    Find an Agent
+                  </motion.div>
+                </Link>
+
+                {/* Manage Rentals Mega Menu */}
                 <RentalsMegaMenu
                   isOpen={showRentalsDropdown}
                   onMouseEnter={() => setShowRentalsDropdown(true)}
                   onMouseLeave={() => setShowRentalsDropdown(false)}
                 >
                   <motion.div
-                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide flex items-center gap-1 cursor-pointer"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary hover:font-semibold transition-colors rounded-lg flex items-center gap-1 cursor-pointer"
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.45 }}
+                  >
+                    <Link href="/manage-rentals" className="hover:text-primary">
+                      Manage Rentals
+                    </Link>
+                  </motion.div>
+                </RentalsMegaMenu>
+
+                {/* News & Insights Link */}
+                <Link href="/blogs">
+                  <motion.div
+                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary hover:font-semibold transition-colors rounded-lg"
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.47 }}
                   >
-                    Rentals
-                    <ChevronDown className={cn("w-4 h-4 transition-transform", showRentalsDropdown && "rotate-180")} />
+                    News &amp; Insights
                   </motion.div>
-                </RentalsMegaMenu>
+                </Link>
 
                 {/* More Mega Menu */}
                 <MoreMegaMenu
@@ -337,22 +345,19 @@ const Nav = ({ openNav }: Props) => {
                   onMouseLeave={() => setShowMoreDropdown(false)}
                 >
                   <motion.div
-                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary transition-colors rounded-lg hover:bg-brand-tide flex items-center gap-1 cursor-pointer"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary hover:font-semibold transition-colors rounded-lg flex items-center gap-1 cursor-pointer"
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.5 }}
                   >
                     More
-                    <ChevronDown className={cn("w-4 h-4 transition-transform", showMoreDropdown && "rotate-180")} />
                   </motion.div>
                 </MoreMegaMenu>
               </nav>
             </div>
 
             {/* Right Side: AI Button, Search, Login, Mobile Menu Button */}
-            <div className="flex flex-1 min-w-0 justify-end items-center space-x-2 lg:space-x-3 lg:min-w-[420px]">
+            <div className="flex flex-1 min-w-0 justify-end items-center space-x-2 lg:space-x-3">
               {/* AI Button */}
               <div className="hidden lg:flex">
                 <Link
@@ -364,14 +369,18 @@ const Nav = ({ openNav }: Props) => {
                 </Link>
               </div>
               
-              {/* Search: same behavior as AutocompleteSearch (properties + locations) */}
-              <div className="hidden lg:flex flex-1 min-w-[260px] max-w-[420px]">
-                <AutocompleteSearch
-                  placeholder="Search properties or locations..."
-                  className="w-full"
-                  inputClassName=" text-sm bg-white/80 border-slate-200 focus:ring-secondary/40 focus:border-secondary"
-                />
+              {/* Search icon: opens search dialog */}
+              <div className="hidden lg:flex">
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(true)}
+                  className="p-2.5 rounded-full text-foreground hover:text-primary hover:bg-brand-tide transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  aria-label="Open search"
+                >
+                  <Search className="w-5 h-5" aria-hidden />
+                </button>
               </div>
+              <SearchModal open={searchOpen} onOpenChange={setSearchOpen} />
               {/* Login / Signup Button or User Profile */}
               {session ? (
                 <motion.div

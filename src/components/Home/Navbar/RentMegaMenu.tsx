@@ -13,8 +13,7 @@ import {
   BookOpen, 
   FileText, 
   Shield,
-  ChevronRight,
-  ArrowUpRight
+  ChevronRight
 } from 'lucide-react';
 import { getBlogPosts } from '@/data/data';
 
@@ -239,7 +238,6 @@ export const RentMegaMenu: React.FC<RentMegaMenuProps> = ({
                       className="inline-flex items-center gap-1 mt-4 text-xs font-semibold text-primary hover:underline"
                     >
                       View all {activeCategory.replace('-', ' ')}
-                      <ArrowUpRight className="w-3 h-3" />
                     </Link>
                   </motion.div>
                 </AnimatePresence>
@@ -289,7 +287,6 @@ export const RentMegaMenu: React.FC<RentMegaMenuProps> = ({
                   className="inline-flex items-center gap-1 mt-4 text-xs font-semibold text-primary hover:underline"
                 >
                   View all articles
-                  <ArrowUpRight className="w-3 h-3" />
                 </Link>
               </div>
             </div>
