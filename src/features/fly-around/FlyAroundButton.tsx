@@ -11,7 +11,7 @@ export interface FlyAroundButtonProps {
   address?: string;
   /** Button label or use default "Fly around" */
   label?: string;
-  variant?: "default" | "secondary" | "outline" | "ghost" | "link" | "destructive";
+  variant?: "default" | "secondary" | "outline" | "ghost" | "link" | "destructive" | "white";
   size?: "default" | "sm" | "lg" | "icon";
   className?: string;
   /** Render as icon-only (no text). */

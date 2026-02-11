@@ -1,5 +1,55 @@
 # Database Connection Troubleshooting Guide
 
+## How to establish the database connection
+
+The app connects to **AWS RDS (PostgreSQL)** using a single env variable. The connection is created in `src/lib/prisma.ts` (lines 13 and 37–45).
+
+### 1. Set `DATABASE_URL` in `.env.local`
+
+Create or edit `.env.local` in the project root and add:
+
+```env
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE?sslmode=require
+```
+
+Replace:
+
+| Placeholder  | Meaning |
+|-------------|--------|
+| `USER`      | DB username (often `postgres`) |
+| `PASSWORD`  | DB password. If it contains `@`, `#`, `%`, etc., [URL-encode](https://www.w3schools.com/tags/ref_urlencode.asp) them (e.g. `@` → `%40`) |
+| `HOST`      | RDS endpoint, e.g. `your-instance.xxxxx.ca-central-1.rds.amazonaws.com` |
+| `DATABASE`  | Database name (e.g. `summitly`) |
+
+Example (no special chars in password):
+
+```env
+DATABASE_URL=postgresql://postgres:mySecretPass@summitly-db-instance-1.xxxxx.ca-central-1.rds.amazonaws.com:5432/summitly?sslmode=require
+```
+
+### 2. Restart the dev server
+
+After changing `.env.local`, restart Next.js so it picks up the new value:
+
+```bash
+# Stop the server (Ctrl+C), then:
+npm run dev
+```
+
+### 3. Verify the connection
+
+- **In browser:** open `http://localhost:3000/api/test-db` (or your deployed URL + `/api/test-db`). It should report connection status.
+- **In code:** any API route that uses `prisma` (e.g. `/api/agents`, `/api/properties/save`) will use this connection. If `DATABASE_URL` is missing, the app throws at startup: `DATABASE_URL is not defined`.
+
+### 4. If it still fails
+
+- **"DATABASE_URL is not defined"** → `.env.local` is missing or not loaded. Ensure the file is in the project root and the dev server was restarted.
+- **Connection timeout / ECONNREFUSED** → RDS security group must allow inbound TCP on port **5432** from your IP (or 0.0.0.0/0 for testing only). For Vercel, allow Vercel’s IPs or use a public RDS endpoint.
+- **SSL errors** → Keep `?sslmode=require` in the URL. The app already uses `ssl: { rejectUnauthorized: false }` in `src/lib/prisma.ts` for RDS.
+- **Authentication failed** → Double-check username and password; encode special characters in the password.
+
+---
+
 ## Issue: Pre-con projects not showing on website
 
 ## Step 1: Test Database Connection

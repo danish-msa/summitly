@@ -73,20 +73,6 @@ export const MoreMegaMenu: React.FC<MoreMegaMenuProps> = ({
       title: 'Buy & Sell',
       items: [
         {
-          id: 'buy',
-          label: 'Buy with us',
-          description: 'Find your dream home',
-          href: '/buy',
-          icon: Home,
-        },
-        {
-          id: 'sell',
-          label: 'Sell with us',
-          description: 'Sell your property',
-          href: '/sell',
-          icon: DollarSign,
-        },
-        {
           id: 'home-estimator',
           label: 'Home Estimator',
           description: 'Estimate your home value',

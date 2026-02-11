@@ -230,7 +230,9 @@ const Nav = ({ openNav }: Props) => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.1 }}
                   >
-                    Buy
+                    <Link href="/buy" className="hover:text-primary">
+                      Buy
+                    </Link>
                     <ChevronDown className={cn("w-4 h-4 transition-transform", showBuyDropdown && "rotate-180")} />
                   </motion.div>
                 </BuyMegaMenu>
@@ -249,7 +251,9 @@ const Nav = ({ openNav }: Props) => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.2 }}
                   >
-                    Rent
+                    <Link href="/rent" className="hover:text-primary">
+                      Rent
+                    </Link>
                     <ChevronDown className={cn("w-4 h-4 transition-transform", showRentDropdown && "rotate-180")} />
                   </motion.div>
                 </RentMegaMenu>
