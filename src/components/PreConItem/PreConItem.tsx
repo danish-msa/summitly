@@ -132,10 +132,11 @@ const PreConItem: React.FC = () => {
         property={property} 
         rawProperty={null} 
         isPreCon={isPreCon} 
-        isRent={isRental} 
+        isRent={isRental}
+        isAssignment={isAssignmentPage}
       />
-      <PreConFAQ />
-      <PreConContactSection />
+      <PreConFAQ isAssignment={isAssignmentPage} />
+      <PreConContactSection isAssignment={isAssignmentPage} />
     </div>
     
 

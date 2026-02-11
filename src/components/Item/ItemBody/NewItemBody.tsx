@@ -21,6 +21,7 @@ interface NewItemBodyProps {
   rawProperty?: SinglePropertyListingResponse | null;
   isPreCon?: boolean;
   isRent?: boolean;
+  isAssignment?: boolean;
   activeTab?: string;
   onTabChange?: (value: string) => void;
 }
@@ -35,6 +36,7 @@ const NewItemBody = forwardRef<NewItemBodyRef, NewItemBodyProps>(({
   rawProperty = null,
   isPreCon = false, 
   isRent = false,
+  isAssignment = false,
   activeTab: externalActiveTab,
   onTabChange
 }, ref) => {
@@ -111,7 +113,7 @@ const NewItemBody = forwardRef<NewItemBodyRef, NewItemBodyProps>(({
 
         {isPreCon && (
           <CurvedTabsContent value="pricing-incentives">
-            <PricingIncentives property={property} />
+            <PricingIncentives property={property} isAssignment={isAssignment} />
           </CurvedTabsContent>
         )}
 

@@ -11,6 +11,7 @@ interface Incentive {
 
 interface PricingIncentivesProps {
   property: PropertyListing;
+  isAssignment?: boolean;
 }
 
 interface ExtendedPreCon {
@@ -18,6 +19,9 @@ interface ExtendedPreCon {
   parkingPrice?: number | null;
   lockerPrice?: number | null;
   assignmentFee?: number | null;
+  originalPurchasePrice?: number | null;
+  depositPaid?: number | null;
+  totalPayment?: number | null;
   developmentCharges?: number | null;
   developmentLevies?: number | null;
   maintenanceFeesPerSqft?: number | null;
@@ -28,7 +32,7 @@ interface ExtendedPreCon {
   promotions?: string | null;
 }
 
-const PricingIncentives: React.FC<PricingIncentivesProps> = ({ property }) => {
+const PricingIncentives: React.FC<PricingIncentivesProps> = ({ property, isAssignment = false }) => {
   const preCon = property.preCon;
   const [isRequestInfoModalOpen, setIsRequestInfoModalOpen] = useState(false);
 
@@ -107,46 +111,91 @@ const PricingIncentives: React.FC<PricingIncentivesProps> = ({ property }) => {
       <h2 className="text-2xl font-bold text-foreground mb-6">Pricing & Incentives</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Card 1: Price Range */}
+        {/* Card 1: Assignment details (assignments) or Price Range (pre-con) */}
         <div className="bg-muted/20 rounded-lg p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-white shadow-sm rounded-lg flex items-center justify-center">
               <DollarSign className="h-5 w-5 text-secondary" />
             </div>
-            <span className="font-bold text-foreground">Price Range</span>
+            <span className="font-bold text-foreground">
+              {isAssignment ? 'Assignment details' : 'Price Range'}
+            </span>
           </div>
           
           <div className="space-y-4">
-            {oneBedPrice && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Bed className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-500">1 Bed From</span>
-                </div>
-                <span className="font-bold text-foreground">{oneBedPrice}</span>
-              </div>
-            )}
-            
-            {twoBedPrice && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Bed className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-500">2 Bed From</span>
-                </div>
-                <span className="font-bold text-foreground">{twoBedPrice}</span>
-              </div>
-            )}
-            
-            {oneBedPrice && twoBedPrice && <div className="border-t border-gray-200 my-4"></div>}
-            
-            {pricePerSqft && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Calculator className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-500">Per Sqft</span>
-                </div>
-                <span className="font-bold text-foreground">${pricePerSqft.toLocaleString()}</span>
-              </div>
+            {isAssignment ? (
+              <>
+                {(property.listPrice != null && property.listPrice > 0) && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">Current Price</span>
+                    <span className="font-bold text-foreground">{formatPrice(property.listPrice)}</span>
+                  </div>
+                )}
+                {extendedPreCon.originalPurchasePrice != null && extendedPreCon.originalPurchasePrice > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">Original Purchase Price</span>
+                    <span className="font-bold text-foreground">{formatPrice(extendedPreCon.originalPurchasePrice)}</span>
+                  </div>
+                )}
+                {pricePerSqft != null && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Calculator className="h-4 w-4 text-gray-500" aria-hidden />
+                      <span className="text-sm text-gray-500">Price Per SqFt</span>
+                    </div>
+                    <span className="font-bold text-foreground">${pricePerSqft.toLocaleString()}</span>
+                  </div>
+                )}
+                {extendedPreCon.depositPaid != null && extendedPreCon.depositPaid > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">Deposit Paid</span>
+                    <span className="font-bold text-foreground">{formatPrice(extendedPreCon.depositPaid)}</span>
+                  </div>
+                )}
+                {extendedPreCon.totalPayment != null && extendedPreCon.totalPayment > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">Total Payment</span>
+                    <span className="font-bold text-foreground">{formatPrice(extendedPreCon.totalPayment)}</span>
+                  </div>
+                )}
+                {extendedPreCon.assignmentFee != null && extendedPreCon.assignmentFee > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">Assignment Fee</span>
+                    <span className="font-bold text-foreground">{formatPrice(extendedPreCon.assignmentFee)}</span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                {oneBedPrice && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Bed className="h-4 w-4 text-gray-500" aria-hidden />
+                      <span className="text-sm text-gray-500">1 Bed From</span>
+                    </div>
+                    <span className="font-bold text-foreground">{oneBedPrice}</span>
+                  </div>
+                )}
+                {twoBedPrice && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Bed className="h-4 w-4 text-gray-500" aria-hidden />
+                      <span className="text-sm text-gray-500">2 Bed From</span>
+                    </div>
+                    <span className="font-bold text-foreground">{twoBedPrice}</span>
+                  </div>
+                )}
+                {oneBedPrice && twoBedPrice && <div className="border-t border-gray-200 my-4" />}
+                {pricePerSqft && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Calculator className="h-4 w-4 text-gray-500" aria-hidden />
+                      <span className="text-sm text-gray-500">Per Sqft</span>
+                    </div>
+                    <span className="font-bold text-foreground">${pricePerSqft.toLocaleString()}</span>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

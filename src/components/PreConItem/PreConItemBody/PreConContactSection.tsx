@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +15,20 @@ const preBuiltQuestions = [
   "Is now a good time to buy a home?",
 ];
 
-export const PreConContactSection = () => {
+const assignmentPreBuiltQuestions = [
+  "What is the assignment fee for this unit?",
+  "Is the builder's consent required for this assignment?",
+  "How much have the current owners paid in deposits?",
+  "When is the expected closing date?",
+  "Can I schedule a viewing or get more details?",
+];
+
+export interface PreConContactSectionProps {
+  isAssignment?: boolean;
+}
+
+export const PreConContactSection: React.FC<PreConContactSectionProps> = ({ isAssignment = false }) => {
+  const questions = isAssignment ? assignmentPreBuiltQuestions : preBuiltQuestions;
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -81,25 +94,29 @@ export const PreConContactSection = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-16 items-start">
           {/* Left Column - Header & Questions */}
           <div className="space-y-5 sm:space-y-6 lg:space-y-8">
-            {/* Available Now Badge */}
+            {/* Badge */}
             <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-secondary/10 border border-secondary/20">
               <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-secondary animate-pulse flex-shrink-0" />
-              <span className="text-xs sm:text-sm font-medium text-secondary">Available Now</span>
+              <span className="text-xs sm:text-sm font-medium text-secondary">
+                {isAssignment ? "Assignment opportunity" : "Available Now"}
+              </span>
             </div>
 
             {/* Heading */}
             <div className="space-y-3 sm:space-y-4">
               <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight">
-                Let's find your dream home together.
+                {isAssignment ? "Interested in this assignment?" : "Let's find your dream home together."}
               </h2>
               <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-                Have questions about a property or need help with your search? Our team of experts is ready to assist you every step of the way.
+                {isAssignment
+                  ? "Have questions about taking over this pre-construction contract? Our team can walk you through the assignment process and help you get started."
+                  : "Have questions about a property or need help with your search? Our team of experts is ready to assist you every step of the way."}
               </p>
             </div>
 
             {/* Pre-built Questions */}
             <div className="flex flex-col gap-2 sm:gap-3">
-              {preBuiltQuestions.map((question, index) => (
+              {questions.map((question, index) => (
                 <Button
                   key={index}
                   variant="outline"

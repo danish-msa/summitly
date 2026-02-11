@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import FAQComponent, { type FaqItem } from "@/components/common/FAQ";
 
 const initialFaqs: FaqItem[] = [
@@ -68,16 +69,77 @@ const additionalFaqs: FaqItem[] = [
   },
 ];
 
-export function PreConFAQ() {
-  return (
-    <FAQComponent
-      initialFaqs={initialFaqs}
-      additionalFaqs={additionalFaqs}
-      heading="Frequently asked questions"
-      subheading="FAQ"
-      description="Find answers to common questions about pre-construction projects"
-    />
-  );
+const assignmentInitialFaqs: FaqItem[] = [
+  {
+    id: "a1",
+    question: "What is an assignment sale?",
+    answer: "An assignment sale is when the original pre-construction buyer (assignor) transfers their Agreement of Purchase and Sale to a new buyer (assignee) before the unit is completed. The assignee takes over the contract and completes the purchase with the builder at closing. You step into the original buyer's position and pay the assignor for their interest plus any assignment fee.",
+  },
+  {
+    id: "a2",
+    question: "How does the assignment process work?",
+    answer: "The assignor and assignee sign an assignment agreement. The builder must typically consent to the assignment. The assignee pays the assignor the agreed price (often original purchase price plus deposit paid, plus a premium or assignment fee). At final closing, the assignee completes the purchase directly with the builder and takes title to the unit.",
+  },
+  {
+    id: "a3",
+    question: "What is an assignment fee?",
+    answer: "The assignment fee is the amount the original buyer (assignor) asks above their costs (e.g. original purchase price and deposits paid). It may also include a fee charged by the builder for consenting to the assignment. This is separate from your closing costs and is paid to the assignor (and sometimes the builder) as part of the assignment transaction.",
+  },
+  {
+    id: "a4",
+    question: "Do I need a lawyer for an assignment?",
+    answer: "Yes. Both assignor and assignee should have a real estate lawyer. Your lawyer will review the original purchase agreement, the assignment agreement, and the builder's consent. They will ensure your interests are protected and that the assignment is valid and enforceable.",
+  },
+  {
+    id: "a5",
+    question: "What are the benefits of buying an assignment?",
+    answer: "You may secure a unit in a sold-out or popular building, sometimes at a price that reflects current market conditions. You can avoid the long wait from initial launch to occupancy. You may have a shorter timeline to closing. You still get a new unit and typically the same warranties as the original buyer.",
+  },
+  {
+    id: "a6",
+    question: "What are the risks of an assignment sale?",
+    answer: "The builder must consent to the assignment; not all builders allow it or may charge a fee. You inherit the original contract terms, including completion dates and deposit structure. You need to fund the full purchase price at closing (including what you pay the assignor). Market value at closing may differ from what you pay. Always get legal and financial advice.",
+  },
+];
+
+const assignmentAdditionalFaqs: FaqItem[] = [
+  {
+    id: "a7",
+    question: "Can the builder refuse the assignment?",
+    answer: "Most purchase agreements allow the builder to approve or refuse an assignment. They may charge an assignment fee or administrative fee. If the builder refuses, the assignment cannot proceed. It's important to confirm assignment is permitted and obtain builder consent before finalizing the assignment agreement.",
+  },
+  {
+    id: "a8",
+    question: "When do I pay the assignor vs. the builder?",
+    answer: "You typically pay the assignor (for their interest: deposit paid plus assignment fee) when the assignment closes, often shortly after the assignment agreement is signed and builder consent is obtained. You pay the balance to the builder at the original closing date when you take title to the unit.",
+  },
+  {
+    id: "a9",
+    question: "Do I need mortgage pre-approval for an assignment?",
+    answer: "Yes. You will need financing to pay the assignor (if required) and to complete the purchase with the builder at final closing. Lenders treat assignments similarly to resale or pre-construction in terms of approval. Get pre-approved early so you know your budget and can move quickly when you find a suitable assignment.",
+  },
+  {
+    id: "a10",
+    question: "What documents should I review?",
+    answer: "Review the original Agreement of Purchase and Sale, the assignment agreement, any builder consent and fee letter, and the assignor's deposit receipts. Your lawyer will help you understand your obligations, closing dates, and what is included in the purchase (e.g. upgrades, parking, locker).",
+  },
+];
+
+export interface PreConFAQProps {
+  isAssignment?: boolean;
 }
 
+export const PreConFAQ: React.FC<PreConFAQProps> = ({ isAssignment = false }) => {
+  return (
+    <FAQComponent
+      initialFaqs={isAssignment ? assignmentInitialFaqs : initialFaqs}
+      additionalFaqs={isAssignment ? assignmentAdditionalFaqs : additionalFaqs}
+      heading="Frequently asked questions"
+      subheading="FAQ"
+      description={isAssignment ? "Find answers to common questions about assignment sales" : "Find answers to common questions about pre-construction projects"}
+    />
+  );
+};
+
+PreConFAQ.displayName = "PreConFAQ";
 export default PreConFAQ;
