@@ -1,0 +1,3 @@
+@echo off
+echo Starting Summitly AI Full Stack...
+powershell -ExecutionPolicy Bypass -File "%~dp0start.ps1"

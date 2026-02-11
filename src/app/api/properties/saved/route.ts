@@ -1,0 +1,59 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getAuthenticatedUser } from '@/lib/api/auth-utils'
+import { prisma } from '@/lib/prisma'
+
+// Force dynamic rendering to ensure fresh Prisma client with SSL config
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
+export async function GET(request: NextRequest) {
+  try {
+    const auth = await getAuthenticatedUser(request)
+    
+    if (!auth?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { searchParams } = new URL(request.url)
+    const mlsNumber = searchParams.get('mlsNumber')
+
+    // If mlsNumber is provided, check if specific property is saved
+    if (mlsNumber) {
+      const savedProperty = await prisma.savedProperty.findUnique({
+        where: {
+          userId_mlsNumber: {
+            userId: auth.user.id,
+            mlsNumber: mlsNumber.toString(),
+          },
+        },
+      })
+
+      return NextResponse.json({
+        isSaved: !!savedProperty,
+        savedProperty: savedProperty || null,
+      })
+    }
+
+    // Otherwise, get all saved properties for the user
+    const savedProperties = await prisma.savedProperty.findMany({
+      where: {
+        userId: auth.user.id,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+
+    return NextResponse.json({ savedProperties })
+  } catch (error) {
+    console.error('Error fetching saved properties:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch saved properties' },
+      { status: 500 }
+    )
+  }
+}
+

@@ -1,0 +1,1236 @@
+
+import {
+  PropertyListing,
+  PropertyType,
+  PropertyClass,
+  City,
+  ApiListing,
+  ListingsResponse,
+  PropertyTypesResponse,
+  BlogPost,
+  BlogFilters
+} from './types';
+
+
+export const fetchPropertyTypes = async (): Promise<PropertyType[]> => {
+  try {
+    const options = {
+      method: 'GET',
+      headers: {
+        accept: 'application/json',
+        'REPLIERS-API-KEY': process.env.NEXT_PUBLIC_REPLIERS_API_KEY || ''
+      }
+    };
+
+    const response = await fetch('https://api.repliers.io/listings/property-types', options);
+
+    if (!response.ok) {
+      console.error('API Response:', await response.text());
+      throw new Error(`Failed to fetch property types: ${response.status}`);
+    }
+
+    const data = await response.json() as PropertyTypesResponse;
+    
+    // Transform the API data to match our existing format
+    const transformedData: PropertyType[] = [];
+    let id = 1;
+
+    // Correctly parse the nested structure
+    data.boards.forEach((board) => {
+      Object.entries(board.classes).forEach(([className, classData]) => {
+          // propertyTypes is an array of objects
+        classData.propertyTypes.forEach((propertyTypeObj) => {
+          // Each object in the array has property type names as keys
+          Object.entries(propertyTypeObj).forEach(([typeName, typeDetails]) => {
+            transformedData.push({
+              id: id,
+              icon: `/images/a${(id % 5) + 1}.png`, // Cycle through available icons
+              type: typeName,
+              number: typeDetails.activeCount,
+              class: className
+            });
+            id++;
+          });
+        });
+      });
+    });
+
+    return transformedData;
+  } catch (error) {
+    console.error('Error fetching property types:', error);
+    return []; // Return empty array instead of fallback data
+  }
+};
+
+// Function to fetch and transform property classes
+// In the fetchPropertyClasses function, update the line with the unused variable
+export const fetchPropertyClasses = async (): Promise<PropertyClass[]> => {
+  try {
+    const options = {
+      method: 'GET',
+      headers: {
+        accept: 'application/json',
+        'REPLIERS-API-KEY': process.env.NEXT_PUBLIC_REPLIERS_API_KEY || ''
+      }
+    };
+
+    const response = await fetch('https://api.repliers.io/listings/property-types', options);
+
+    if (!response.ok) {
+      console.error('API Response:', await response.text());
+      throw new Error(`Failed to fetch property types: ${response.status}`);
+    }
+
+    const data = await response.json() as PropertyTypesResponse;
+    
+    // Rest of the function remains the same
+    // Transform the API data to aggregate by class
+    const classTotals: Record<string, number> = {};
+    
+    // Calculate total properties for each class
+    // In the fetchPropertyClasses function, update the line with the unused variable
+    data.boards.forEach((board) => {
+      Object.entries(board.classes).forEach(([className, classData]) => {
+        classTotals[className] = 0;
+        
+        // propertyTypes is an array of objects
+        classData.propertyTypes.forEach((propertyTypeObj) => {
+          // Each object in the array has property type names as keys
+          Object.entries(propertyTypeObj).forEach(([, typeDetails]) => {
+            classTotals[className] += typeDetails.activeCount;
+          });
+        });
+      });
+    });
+    
+    // Convert to our desired format
+    const transformedData: PropertyClass[] = Object.entries(classTotals).map(([className, count], index) => ({
+      id: index + 1,
+      icon: `/images/a${(index % 5) + 1}.png`,
+      type: className.charAt(0).toUpperCase() + className.slice(1) + " Properties", // Capitalize and add "Properties"
+      number: count
+    }));
+
+    return transformedData;
+  } catch (error) {
+    console.error('Error fetching property classes:', error);
+    return []; // Return empty array instead of fallback data
+  }
+};
+
+
+// Now your functions can use these imported types
+export const fetchPropertyListings = async (): Promise<PropertyListing[]> => {
+  try {
+    const options = {
+      method: 'GET',
+      headers: {
+        accept: 'application/json',
+        'REPLIERS-API-KEY': process.env.NEXT_PUBLIC_REPLIERS_API_KEY || ''
+      }
+    };
+
+    const response = await fetch('https://api.repliers.io/listings', options);
+
+    if (!response.ok) {
+      console.error('API Response:', await response.text());
+      throw new Error(`Failed to fetch listings: ${response.status}`);
+    }
+
+    const data = await response.json() as ListingsResponse;
+    
+    // Transform the API data to match our new format
+    const transformedData: PropertyListing[] = data.listings.map((listing: ApiListing) => {
+      // Format location with better handling of undefined values
+      const locationParts = [
+        listing.address?.unitNumber,
+        listing.address?.streetNumber,
+        listing.address?.streetName,
+        listing.address?.streetSuffix,
+        listing.address?.streetDirection,
+        listing.address?.neighborhood,
+        listing.address?.city,
+        listing.address?.zip
+      ].filter(Boolean);
+      
+      const location = locationParts.length > 0 
+        ? locationParts.join(' ') 
+        : 'Location not available';
+      
+      // Improved image handling section
+      let allImages: string[] = [];
+  
+      if (listing.images && Array.isArray(listing.images)) {
+        allImages = listing.images.map((img: string) => {
+          // Construct the full URL for sandbox images
+          if (img.startsWith('sandbox/')) {
+            return `https://cdn.repliers.io/${img}`;
+          }
+          // Handle other possible image formats
+          return img.startsWith('http') ? img : `https://cdn.repliers.io/${img}`;
+        }).filter((url: string) => url); // Filter out any empty strings
+      }
+      // Fallback images if none found
+      if (allImages.length === 0) {
+        allImages = [
+          '/images/p1.jpg',
+          '/images/p2.jpg',
+          '/images/p3.jpg',
+          '/images/p4.jpg',
+          '/images/p5.jpg'
+        ];
+      }
+      
+      return {
+        mlsNumber: listing.mlsNumber || '',
+        status: listing.status || 'Active',
+        class: listing.class || 'residential',
+        type: typeof listing.type === 'string' ? listing.type : 'Sale', // Default to Sale if not specified or not a string
+        listPrice: listing.listPrice || 0,
+        listDate: listing.listDate || new Date().toISOString(),
+        lastStatus: listing.lastStatus || '',
+        soldPrice: listing.soldPrice || '',
+        soldDate: listing.soldDate || '',
+        
+        address: {
+          area: listing.address?.area || null,
+          city: listing.address?.city || null,
+          country: listing.address?.country || null,
+          district: listing.address?.district || null,
+          majorIntersection: listing.address?.majorIntersection || null,
+          neighborhood: listing.address?.neighborhood || null,
+          streetDirection: listing.address?.streetDirection || null,
+          streetName: listing.address?.streetName || null,
+          streetNumber: listing.address?.streetNumber || null,
+          streetSuffix: listing.address?.streetSuffix || null,
+          unitNumber: listing.address?.unitNumber || null,
+          zip: listing.address?.zip || null,
+          state: listing.address?.state || null,
+          communityCode: listing.address?.communityCode || null,
+          streetDirectionPrefix: listing.address?.streetDirectionPrefix || null,
+          addressKey: listing.address?.addressKey || null,
+          location: location
+        },
+        
+        map: {
+          latitude: listing.map?.latitude || null,
+          longitude: listing.map?.longitude || null,
+          point: listing.map?.point || null
+        },
+        
+        details: {
+          numBathrooms: listing.details?.numBathrooms || 0,
+          numBathroomsPlus: listing.details?.numBathroomsPlus || 0,
+          numBedrooms: listing.details?.numBedrooms || 0,
+          numBedroomsPlus: listing.details?.numBedroomsPlus || 0,
+          propertyType: listing.details?.propertyType || 'Unknown',
+          sqft: listing.details?.sqft || 0
+        },
+        
+        updatedOn: listing.updatedOn || new Date().toISOString(),
+        
+        lot: {
+          acres: listing.lot?.acres || 0,
+          depth: listing.lot?.depth || 0,
+          irregular: listing.lot?.irregular || 0,
+          legalDescription: listing.lot?.legalDescription || '',
+          measurement: listing.lot?.measurement || '',
+          width: listing.lot?.width || 0,
+          size: listing.lot?.size || 0,
+          source: listing.lot?.source || '',
+          dimensionsSource: listing.lot?.dimensionsSource || '',
+          dimensions: listing.lot?.dimensions || '',
+          squareFeet: listing.lot?.squareFeet || 0,
+          features: listing.lot?.features || '',
+          taxLot: listing.lot?.taxLot || 0
+        },
+        
+        boardId: listing.boardId || 0,
+        
+        images: {
+          imageUrl: allImages[0] || '',
+          allImages: allImages
+        }
+      };
+    });
+
+    return transformedData;
+  } catch (error) {
+    console.error('Error fetching property listings:', error);
+    return []; // Return empty array instead of fallback data
+  }
+};
+
+// Function to fetch top cities
+export const fetchTopCities = async (): Promise<City[]> => {
+  try {
+    // Import RepliersAPI dynamically to avoid circular dependencies
+    const { RepliersAPI } = await import('@/lib/api/repliers');
+    
+    // Fetch all active listings with a large page size to get accurate city counts
+    // We'll fetch multiple pages if needed to get comprehensive data
+    const cityCounts: Record<string, number> = {};
+    let page = 1;
+    const resultsPerPage = 100; // Maximum allowed by API
+    let hasMorePages = true;
+    
+    // Fetch multiple pages to get all listings for accurate city counts
+    while (hasMorePages && page <= 10) { // Limit to 10 pages to avoid infinite loops
+      const result = await RepliersAPI.listings.getFiltered({
+        status: 'A', // Active listings only
+        resultsPerPage,
+        page,
+      });
+      
+      if (!result || !result.listings || result.listings.length === 0) {
+        hasMorePages = false;
+        break;
+      }
+      
+      // Count properties by city
+      result.listings.forEach((listing) => {
+        const city = listing.address?.city;
+        if (city) {
+          cityCounts[city] = (cityCounts[city] || 0) + 1;
+        }
+      });
+      
+      // Check if there are more pages
+      const totalPages = result.numPages || Math.ceil((result.count || 0) / resultsPerPage);
+      hasMorePages = page < totalPages;
+      page++;
+    }
+    
+    // Helper function to get city image path
+    const getCityImage = (cityName: string): string => {
+      // Normalize city name to match image file names (lowercase, remove spaces/special chars)
+      const normalizedName = cityName.toLowerCase().trim();
+      
+      // Map of city names to image file names
+      const cityImageMap: Record<string, string> = {
+        'ajax': 'ajax.webp',
+        'aurora': 'aurora.webp',
+        'barrie': 'barrie.webp',
+        'brampton': 'brampton.webp',
+        'calgary': 'calgary.webp',
+        'edmonton': 'edmonton.webp',
+        'hamilton': 'hamilton.webp',
+        'milton': 'milton.webp',
+        'mississauga': 'mississauga.webp',
+        'oakville': 'oakville.webp',
+        'toronto': 'toronto.webp',
+      };
+      
+      // Check if we have a direct match
+      if (cityImageMap[normalizedName]) {
+        return `/images/cities/${cityImageMap[normalizedName]}`;
+      }
+      
+      // Try to find a partial match (e.g., "Toronto" matches "toronto")
+      const matchingCity = Object.keys(cityImageMap).find(key => 
+        normalizedName.includes(key) || key.includes(normalizedName)
+      );
+      
+      if (matchingCity) {
+        return `/images/cities/${cityImageMap[matchingCity]}`;
+      }
+      
+      // Fallback to default city image
+      return `/images/cities/toronto.webp`;
+    };
+    
+    // Sort by count and return top 6 cities
+    const sortedCities = Object.entries(cityCounts)
+      .sort(([, countA], [, countB]) => countB - countA)
+      .slice(0, 6)
+      .map(([cityName, count], index) => ({
+        id: index + 1,
+        image: getCityImage(cityName),
+        cityName,
+        numberOfProperties: count
+      }));
+    
+    return sortedCities as City[];
+  } catch (error) {
+    console.error('Error fetching top cities:', error);
+    return []; // Return empty array instead of fallback data
+  }
+};
+
+
+// Function to get listings with filters
+export const getListings = async (params: Record<string, string | number>): Promise<{
+  listings: PropertyListing[];
+  count: number;
+  numPages: number;
+}> => {
+  try {
+    const options = {
+      method: 'GET',
+      headers: {
+        accept: 'application/json',
+        'REPLIERS-API-KEY': process.env.NEXT_PUBLIC_REPLIERS_API_KEY || ''
+      }
+    };
+
+    // Build query string from params
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      queryParams.append(key, value.toString());
+    });
+
+    const url = `https://api.repliers.io/listings?${queryParams.toString()}`;
+    console.log('API URL:', url);
+
+    const response = await fetch(url, options);
+
+    if (!response.ok) {
+      console.error('API Response:', await response.text());
+      throw new Error(`Failed to fetch listings: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Transform the API data to match our format
+    // In the getListings function, update the transformation to match the PropertyListing interface
+    const transformedListings = data.listings.map((listing: ApiListing) => {
+    // Format location with better handling of undefined values
+    const locationParts = [
+      listing.address?.unitNumber,
+      listing.address?.streetNumber,
+      listing.address?.streetName,
+      listing.address?.streetSuffix,
+      listing.address?.streetDirection,
+      listing.address?.neighborhood,
+      listing.address?.city,
+      listing.address?.zip
+    ].filter(Boolean);
+    
+    const location = locationParts.length > 0 
+      ? locationParts.join(' ') 
+      : 'Location not available';
+    
+    // Improved image handling section
+    let allImages: string[] = [];
+  
+    if (listing.images && Array.isArray(listing.images)) {
+      allImages = listing.images.map((img: string) => {
+        // Construct the full URL for sandbox images
+        if (img.startsWith('sandbox/')) {
+          return `https://cdn.repliers.io/${img}`;
+        }
+        // Handle other possible image formats
+        return img.startsWith('http') ? img : `https://cdn.repliers.io/${img}`;
+      }).filter((url: string) => url); // Filter out any empty strings
+    }
+    // Fallback images if none found
+    if (allImages.length === 0) {
+      allImages = [
+        '/images/p1.jpg',
+        '/images/p2.jpg',
+        '/images/p3.jpg',
+        '/images/p4.jpg',
+        '/images/p5.jpg'
+      ];
+    }
+    
+    return {
+      mlsNumber: listing.mlsNumber || '',
+      status: listing.status || 'Active',
+      class: listing.class || 'residential',
+      type: typeof listing.type === 'string' ? listing.type : 'Sale', // Default to Sale if not specified or not a string
+      listPrice: listing.listPrice || 0,
+      listDate: listing.listDate || new Date().toISOString(),
+      lastStatus: listing.lastStatus || '',
+      soldPrice: listing.soldPrice || '',
+      soldDate: listing.soldDate || '',
+      
+      address: {
+        area: listing.address?.area || null,
+        city: listing.address?.city || null,
+        country: listing.address?.country || null,
+        district: listing.address?.district || null,
+        majorIntersection: listing.address?.majorIntersection || null,
+        neighborhood: listing.address?.neighborhood || null,
+        streetDirection: listing.address?.streetDirection || null,
+        streetName: listing.address?.streetName || null,
+        streetNumber: listing.address?.streetNumber || null,
+        streetSuffix: listing.address?.streetSuffix || null,
+        unitNumber: listing.address?.unitNumber || null,
+        zip: listing.address?.zip || null,
+        state: listing.address?.state || null,
+        communityCode: listing.address?.communityCode || null,
+        streetDirectionPrefix: listing.address?.streetDirectionPrefix || null,
+        addressKey: listing.address?.addressKey || null,
+        location: location
+      },
+      
+      map: {
+        latitude: listing.map?.latitude || null,
+        longitude: listing.map?.longitude || null,
+        point: listing.map?.point || null
+      },
+      
+      details: {
+        numBathrooms: listing.details?.numBathrooms || 0,
+        numBathroomsPlus: listing.details?.numBathroomsPlus || 0,
+        numBedrooms: listing.details?.numBedrooms || 0,
+        numBedroomsPlus: listing.details?.numBedroomsPlus || 0,
+        propertyType: listing.details?.propertyType || 'Unknown',
+        sqft: listing.details?.sqft || 0
+      },
+      
+      updatedOn: listing.updatedOn || new Date().toISOString(),
+      
+      lot: {
+        acres: listing.lot?.acres || 0,
+        depth: listing.lot?.depth || 0,
+        irregular: listing.lot?.irregular || 0,
+        legalDescription: listing.lot?.legalDescription || '',
+        measurement: listing.lot?.measurement || '',
+        width: listing.lot?.width || 0,
+        size: listing.lot?.size || 0,
+        source: listing.lot?.source || '',
+        dimensionsSource: listing.lot?.dimensionsSource || '',
+        dimensions: listing.lot?.dimensions || '',
+        squareFeet: listing.lot?.squareFeet || 0,
+        features: listing.lot?.features || '',
+        taxLot: listing.lot?.taxLot || 0
+      },
+      
+      boardId: listing.boardId || 0,
+      
+      images: {
+        imageUrl: allImages[0] || '',
+        allImages: allImages
+      }
+    };
+    });
+
+    return {
+      listings: transformedListings,
+      count: data.count || transformedListings.length,
+      numPages: data.numPages || Math.ceil(transformedListings.length / (Number(params.resultsPerPage) || 10))
+    };
+  } catch (error) {
+    console.error('Error fetching filtered listings:', error);
+    return {
+      listings: [], // Return empty array instead of fallback data
+      count: 0,
+      numPages: 0
+    };
+  }
+};
+
+// Agent data interface
+export interface Agent {
+  id: number;
+  name: string;
+  title: string;
+  phone: string;
+  email: string;
+  bio: string;
+  image: string;
+  socialMedia: {
+    facebook?: string;
+    twitter?: string;
+    instagram?: string;
+    linkedin?: string;
+  };
+  specialties: string[];
+  languages: string[];
+  reviews: number;
+  rating: number;
+  listings: number;
+}
+
+// Sample agent data
+export const agents: Agent[] = [
+  {
+    id: 1,
+    name: "Sarah Johnson",
+    title: "Senior Real Estate Agent",
+    phone: "(555) 123-4567",
+    email: "sarah.johnson@example.com",
+    bio: "With over 15 years of experience in the real estate market, Sarah specializes in luxury properties and has a keen eye for investment opportunities.",
+    image: "/images/agents/agent-1.jpg",
+    socialMedia: {
+      facebook: "https://facebook.com/sarahjohnson",
+      twitter: "https://twitter.com/sarahjohnson",
+      instagram: "https://instagram.com/sarahjohnson",
+      linkedin: "https://linkedin.com/in/sarahjohnson"
+    },
+    specialties: ["Luxury Homes", "Investment Properties", "First-time Buyers"],
+    languages: ["English", "Spanish"],
+    reviews: 87,
+    rating: 4.9,
+    listings: 24
+  },
+  {
+    id: 2,
+    name: "Michael Chen",
+    title: "Commercial Property Specialist",
+    phone: "(555) 234-5678",
+    email: "michael.chen@example.com",
+    bio: "Michael has helped countless businesses find their perfect commercial space. His background in business administration gives him unique insights into client needs.",
+    image: "/images/agents/agent-2.jpg",
+    socialMedia: {
+      facebook: "https://facebook.com/michaelchen",
+      linkedin: "https://linkedin.com/in/michaelchen"
+    },
+    specialties: ["Commercial Properties", "Office Spaces", "Retail Locations"],
+    languages: ["English", "Mandarin", "Cantonese"],
+    reviews: 62,
+    rating: 4.8,
+    listings: 18
+  },
+  {
+    id: 3,
+    name: "Jessica Rodriguez",
+    title: "Residential Sales Expert",
+    phone: "(555) 345-6789",
+    email: "jessica.rodriguez@example.com",
+    bio: "Jessica is passionate about helping families find their dream homes. Her attention to detail and negotiation skills have earned her a loyal client base.",
+    image: "/images/agents/agent-3.jpg",
+    socialMedia: {
+      instagram: "https://instagram.com/jessicarodriguez",
+      facebook: "https://facebook.com/jessicarodriguez",
+      twitter: "https://twitter.com/jessicarodriguez"
+    },
+    specialties: ["Family Homes", "Suburban Properties", "Relocation Services"],
+    languages: ["English", "Spanish"],
+    reviews: 93,
+    rating: 4.7,
+    listings: 31
+  },
+  {
+    id: 4,
+    name: "David Thompson",
+    title: "Luxury Property Consultant",
+    phone: "(555) 456-7890",
+    email: "david.thompson@example.com",
+    bio: "David specializes in high-end properties and has a network of exclusive clients. His background in interior design helps clients visualize potential in every space.",
+    image: "/images/agents/agent-4.jpg",
+    socialMedia: {
+      linkedin: "https://linkedin.com/in/davidthompson",
+      instagram: "https://instagram.com/davidthompson"
+    },
+    specialties: ["Luxury Estates", "Waterfront Properties", "Celebrity Homes"],
+    languages: ["English", "French"],
+    reviews: 45,
+    rating: 4.9,
+    listings: 12
+  }
+];
+
+
+// SAMPLE DATA 
+
+// Update static data to include class property
+export const appartmentTypeData = [
+  {
+    id: 1,
+    icon: "/images/a1.png",
+    type: "House",
+    number: 12,
+    class: "residential"
+  },
+  {
+    id: 2,
+    icon: "/images/a2.png",
+    type: "Appartments",
+    number: 22,
+    class: "residential"
+  },
+  {
+    id: 3,
+    icon: "/images/a3.png",
+    type: "Office",
+    number: 14,
+    class: "commercial"
+  },
+  {
+    id: 4,
+    icon: "/images/a4.png",
+    type: "Villa",
+    number: 9,
+    class: "residential"
+  },
+  {
+    id: 5,
+    icon: "/images/a5.png",
+    type: "TownHouse",
+    number: 12,
+    class: "residential"
+  },
+];
+
+export const properties = [
+  {
+    id: 1,
+    propertyName: "Equestrian Family Home",
+    location: "New York City, CA, USA",
+    bedrooms: 1,
+    type: "House",
+    bathrooms: 2,
+    size: 1200,
+    price: 45000,
+    imageUrl: "/images/p1.jpg",
+  },
+  {
+    id: 2,
+    propertyName: "Modern Urban Retreat",
+    location: "Brooklyn, NY, USA",
+    bedrooms: 2,
+    type: "Appartments",
+    bathrooms: 1,
+    size: 950,
+    price: 50000,
+    imageUrl: "/images/p2.jpg",
+  },
+  {
+    id: 3,
+    propertyName: "Cozy Countryside Cottage",
+    location: "Albany, NY, USA",
+    type: "House",
+    bedrooms: 3,
+    bathrooms: 2,
+    size: 1300,
+    price: 60000,
+    imageUrl: "/images/p3.jpg",
+  },
+  {
+    id: 4,
+    propertyName: "Luxury Downtown Apartment",
+    location: "Manhattan, NY, USA",
+    type: "Appartments",
+    bedrooms: 1,
+    bathrooms: 1,
+    size: 800,
+    price: 75000,
+    imageUrl: "/images/p4.jpg",
+  },
+  {
+    id: 5,
+    propertyName: "Spacious Suburban House",
+    location: "Staten Island, NY, USA",
+    type: "House",
+    bedrooms: 4,
+    bathrooms: 3,
+    size: 2000,
+    price: 90000,
+    imageUrl: "/images/p5.jpg",
+  },
+  {
+    id: 6,
+    propertyName: "Chic Studio Loft",
+    location: "Queens, NY, USA",
+    type: "Office",
+    bedrooms: 1,
+    bathrooms: 1,
+    size: 700,
+    price: 48000,
+    imageUrl: "/images/p6.jpg",
+  },
+];
+
+export const cities = [
+  {
+    id: 1,
+    image: "/images/c1.jpg",
+    cityName: "New York",
+    numberOfProperties: 120,
+  },
+  {
+    id: 2,
+    image: "/images/c2.jpg",
+    cityName: "Los Angeles",
+    numberOfProperties: 85,
+  },
+  {
+    id: 3,
+    image: "/images/c3.jpg",
+    cityName: "Chicago",
+    numberOfProperties: 95,
+  },
+  {
+    id: 4,
+    image: "/images/c4.jpg",
+    cityName: "San Francisco",
+    numberOfProperties: 60,
+  },
+  {
+    id: 5,
+    image: "/images/c5.jpg",
+    cityName: "Miami",
+    numberOfProperties: 70,
+  },
+  {
+    id: 6,
+    image: "/images/c6.jpg",
+    cityName: "Boston",
+    numberOfProperties: 50,
+  },
+];
+
+export const buildings = [
+  {
+    id: 1,
+    title: "Secure Parking",
+    description: "Safe parking with 24/7 surveillance.",
+    image: "/images/h1.png",
+  },
+  {
+    id: 2,
+    title: "Luxury Swimming Pool",
+    description: "A pristine pool for relaxation.",
+    image: "/images/h2.png",
+  },
+  {
+    id: 3,
+    title: "24/7 Private Security",
+    description: "Round-the-clock private security.",
+    image: "/images/h3.png",
+  },
+  {
+    id: 4,
+    title: "On-Site Medical Center",
+    description: "Immediate medical care on-site.",
+    image: "/images/h4.png",
+  },
+  {
+    id: 5,
+    title: "Quiet Library Area",
+    description: "Peaceful space for reading and study.",
+    image: "/images/h5.png",
+  },
+  {
+    id: 6,
+    title: "King-Size Comfort Beds",
+    description: "Luxurious king-size beds for comfort.",
+    image: "/images/h6.png",
+  },
+];
+
+export const blogs = [
+  {
+    id: 1,
+    image: "/images/blogs/c1.jpg",
+    date: "Olivia Rhye • 20 Jan 2024",
+    title: "Conversations with: London Maer & Co.",
+    excerpt: "How a mother-daughter design duo created a studio of their own. See how they turned their creativity into a successful design business that serves clients worldwide.",
+    tags: ["Design", "Research"],
+    category: "Design",
+    large: true,
+    featured: true,
+    author: "Olivia Rhye",
+    readTime: "5 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 2,
+    image: "/images/blogs/c2.jpg",
+    date: "Phoenix Baker • 19 Jan 2024",
+    title: "6 Interesting Ways to Use a 3D Character in Procreate",
+    excerpt: "Unleash creativity with 6 innovative ways to use 3D characters in your digital art projects. From concept to final render.",
+    tags: ["Design", "Product"],
+    category: "Design",
+    author: "Phoenix Baker",
+    readTime: "3 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 3,
+    image: "/images/blogs/c3.jpg",
+    date: "Lana Steiner • 18 Jan 2024",
+    title: "Intro to Run a Successful Design Sprint",
+    excerpt: "Starting a new design sprint can be daunting but with the right approach, you can lead your team to breakthrough solutions.",
+    tags: ["Product"],
+    category: "Product",
+    author: "Lana Steiner",
+    readTime: "7 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 4,
+    image: "/images/blogs/c4.jpg",
+    date: "Natali Craig • 17 Jan 2024",
+    title: "Migrating from Craft to Webflow: Process & Tips",
+    excerpt: "Learn the complete process of migrating your design workflow from Craft to Webflow with these expert tips and best practices.",
+    tags: ["Tools"],
+    category: "Tools",
+    author: "Natali Craig",
+    readTime: "4 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 5,
+    image: "/images/blogs/c5.jpg",
+    date: "Candice Wu • 16 Jan 2024",
+    title: "Minimal Organics — Shampoo + Alternatives & Treatment",
+    excerpt: "Discover sustainable beauty products that are good for your hair and the environment. A comprehensive guide to organic hair care.",
+    tags: ["Design", "Research"],
+    category: "Lifestyle",
+    author: "Candice Wu",
+    readTime: "6 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 6,
+    image: "/images/blogs/c6.jpg",
+    date: "Alec Whitten • 1 Jan 2023",
+    title: "A Continually Unfolding History → Where We Work by Hand",
+    excerpt: "Explore the evolution of craftsmanship and how traditional methods inspire modern design practices in our digital age.",
+    tags: ["Design", "Research"],
+    category: "Design",
+    author: "Alec Whitten",
+    readTime: "8 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 7,
+    image: "/images/blogs/c1.jpg",
+    date: "Demi Wilkinson • 15 Jan 2023",
+    title: "Cognitive Dissonance Theory - Cool Course for UX Designers",
+    excerpt: "Understanding psychological principles that influence user behavior and design decisions. Essential knowledge for modern UX designers.",
+    tags: ["Design", "Research"],
+    category: "Design",
+    author: "Demi Wilkinson",
+    readTime: "9 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 8,
+    image: "/images/blogs/c2.jpg",
+    date: "Candice Wu • 10 Jan 2023",
+    title: "How Remote Work Drastically Increased My Quality of Life →",
+    excerpt: "Personal insights on the benefits of remote work and tips for maintaining work-life balance in a distributed team environment.",
+    tags: ["Product", "Tools"],
+    category: "Lifestyle",
+    author: "Candice Wu",
+    readTime: "5 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 9,
+    image: "/images/blogs/c3.jpg",
+    date: "Orlando Diggs • 8 Jan 2023",
+    title: "Poroschic Interview with Designer : Jasmin Santos",
+    excerpt: "An in-depth conversation about design philosophy, creative process, and career journey with renowned designer Jasmin Santos.",
+    tags: ["Design"],
+    category: "Design",
+    author: "Orlando Diggs",
+    readTime: "12 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 10,
+    image: "/images/blogs/c4.jpg",
+    date: "Kate Morrison • 5 Jan 2023",
+    title: "Improve Your UI Design Skills with Copy",
+    excerpt: "Learn how better copywriting can elevate your design work and user experience. The intersection of design and content strategy.",
+    tags: ["Design", "Tools"],
+    category: "Design",
+    author: "Kate Morrison",
+    readTime: "6 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 11,
+    image: "/images/blogs/c5.jpg",
+    date: "Koray Okumus • 3 Jan 2023",
+    title: "The Design Dilemma is Real! UX Versus the Enemy of Creativity",
+    excerpt: "Balancing user experience requirements with creative freedom in modern design. Finding the sweet spot between usability and innovation.",
+    tags: ["Research"],
+    category: "Design",
+    author: "Koray Okumus",
+    readTime: "7 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 12,
+    image: "/images/blogs/c6.jpg",
+    date: "Sarah Johnson • 28 Dec 2022",
+    title: "Building Design Systems That Scale",
+    excerpt: "Creating design systems that grow with your product and team. Best practices for maintaining consistency across large organizations.",
+    tags: ["Design", "Product"],
+    category: "Product",
+    author: "Sarah Johnson",
+    readTime: "10 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 13,
+    image: "/images/blogs/c1.jpg",
+    date: "Michael Chen • 25 Jan 2024",
+    title: "Complete Guide to Buying Pre-Construction Homes in Canada",
+    excerpt: "Everything you need to know about purchasing pre-construction properties, from initial deposits to final occupancy. Learn about the benefits, risks, and essential steps to secure your dream home.",
+    tags: ["Pre-construction", "Home Buying", "Real Estate"],
+    category: "Pre-construction",
+    author: "Michael Chen",
+    readTime: "12 min read",
+    content: "Full article content would go here...",
+    featured: true
+  },
+  {
+    id: 14,
+    image: "/images/blogs/c2.jpg",
+    date: "Sarah Martinez • 22 Jan 2024",
+    title: "Understanding Deposit Structures in Pre-Construction Projects",
+    excerpt: "Navigate the complexities of deposit schedules for pre-construction condos and homes. Learn about typical payment structures, what to expect, and how to protect your investment.",
+    tags: ["Pre-construction", "Investment", "Finance"],
+    category: "Pre-construction",
+    author: "Sarah Martinez",
+    readTime: "8 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 15,
+    image: "/images/blogs/c3.jpg",
+    date: "David Kim • 20 Jan 2024",
+    title: "Top 10 Pre-Construction Condos in Toronto for 2024",
+    excerpt: "Discover the most exciting pre-construction condo developments in Toronto. From luxury waterfront projects to affordable downtown options, find your perfect investment opportunity.",
+    tags: ["Pre-construction", "Toronto", "Condos"],
+    category: "Pre-construction",
+    author: "David Kim",
+    readTime: "10 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 16,
+    image: "/images/blogs/c4.jpg",
+    date: "Jennifer Lee • 18 Jan 2024",
+    title: "VIP Access Programs: Getting Early Access to Pre-Construction Projects",
+    excerpt: "Learn how VIP access programs work and why they're essential for securing the best units and pricing in high-demand pre-construction developments. Tips for joining exclusive programs.",
+    tags: ["Pre-construction", "VIP", "Investment"],
+    category: "Pre-construction",
+    author: "Jennifer Lee",
+    readTime: "7 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 17,
+    image: "/images/blogs/c5.jpg",
+    date: "Robert Taylor • 15 Jan 2024",
+    title: "Pre-Construction vs Resale: Which is Right for You?",
+    excerpt: "Compare the advantages and disadvantages of buying pre-construction versus resale properties. Make an informed decision based on your lifestyle, budget, and investment goals.",
+    tags: ["Pre-construction", "Home Buying", "Real Estate"],
+    category: "Pre-construction",
+    author: "Robert Taylor",
+    readTime: "9 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 18,
+    image: "/images/blogs/c6.jpg",
+    date: "Emily Rodriguez • 12 Jan 2024",
+    title: "What to Look for in a Pre-Construction Developer",
+    excerpt: "Essential factors to consider when choosing a developer for your pre-construction purchase. Learn about track records, reputation, and red flags to avoid.",
+    tags: ["Pre-construction", "Developers", "Investment"],
+    category: "Pre-construction",
+    author: "Emily Rodriguez",
+    readTime: "6 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 19,
+    image: "/images/blogs/c1.jpg",
+    date: "James Wilson • 10 Jan 2024",
+    title: "Timeline Expectations: From Purchase to Occupancy in Pre-Construction",
+    excerpt: "Understand the typical timeline for pre-construction projects, including key milestones, potential delays, and what to expect during each phase of development.",
+    tags: ["Pre-construction", "Timeline", "Home Buying"],
+    category: "Pre-construction",
+    author: "James Wilson",
+    readTime: "8 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 20,
+    image: "/images/blogs/c2.jpg",
+    date: "Lisa Anderson • 8 Jan 2024",
+    title: "Financing Pre-Construction Properties: Mortgage Options and Strategies",
+    excerpt: "Navigate the unique financing challenges of pre-construction purchases. Learn about construction mortgages, rate holds, and financial planning strategies.",
+    tags: ["Pre-construction", "Finance", "Mortgage"],
+    category: "Pre-construction",
+    author: "Lisa Anderson",
+    readTime: "11 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 21,
+    image: "/images/blogs/c3.jpg",
+    date: "Mark Thompson • 5 Jan 2024",
+    title: "Best Pre-Construction Investment Markets in Canada for 2024",
+    excerpt: "Explore the top Canadian cities and regions for pre-construction real estate investment. Market analysis, growth projections, and investment opportunities.",
+    tags: ["Pre-construction", "Investment", "Canada"],
+    category: "Pre-construction",
+    author: "Mark Thompson",
+    readTime: "10 min read",
+    content: "Full article content would go here..."
+  },
+  {
+    id: 22,
+    image: "/images/blogs/c4.jpg",
+    date: "Amanda White • 3 Jan 2024",
+    title: "Floor Plan Selection: Choosing the Right Unit in Pre-Construction",
+    excerpt: "Expert tips for selecting the perfect floor plan for your needs. Consider factors like layout, orientation, views, and future resale value when making your choice.",
+    tags: ["Pre-construction", "Home Buying", "Design"],
+    category: "Pre-construction",
+    author: "Amanda White",
+    readTime: "7 min read",
+    content: "Full article content would go here..."
+  }
+];
+
+export const userReviewData = [
+  {
+    id: 1,
+    name: "John Doe",
+    profession: "Real Estate Agent",
+    userImage: "/images/testimonials/u1.jpg",
+    review:
+      "A wonderful experience! The platform made it easy to find exactly what I needed.",
+  },
+  {
+    id: 2,
+    name: "Mike Smith",
+    profession: "Property Investor",
+    userImage: "/images/testimonials/u2.jpg",
+    review:
+      "Great selection of properties and seamless process. Highly recommended for anyone looking to invest.",
+  },
+  {
+    id: 3,
+    name: "Alex Johnson",
+    profession: "Home Buyer",
+    userImage: "/images/testimonials/u3.jpg",
+    review:
+      "The website helped me find my dream home quickly and hassle-free. Exceptional service!",
+  },
+  {
+    id: 4,
+    name: "Emily Clark",
+    profession: "Interior Designer",
+    userImage: "/images/testimonials/u4.jpg",
+    review:
+      "Fantastic range of properties with clear details. The best platform for home and design inspiration!",
+  },
+];
+
+export const services = [
+  {
+    id: 1,
+    name: "Buy A New Home",
+    description: "Discover your dream home effortlessly. Explore diverse properties and expert guidance for a seamless buying experience.",
+    serviceImage: "/images/home-1.png",
+    serviceURL: "/buy",
+  },
+  {
+    id: 2,
+    name: "Sell a home",
+    description: "Sell confidently with expert guidance and effective strategies, showcasing your property's best features for a successful sale.",
+    serviceImage: "/images/home-2.png",
+    serviceURL: "/sell",
+  },
+  {
+    id: 3,
+    name: "Rent a home",
+    description: "Discover your perfect rental effortlessly. Explore a diverse variety of listings tailored precisely to suit your unique lifestyle needs.",
+    serviceImage: "/images/home-3.png",
+    serviceURL: "/rent",
+  },
+  {
+    id: 4,
+    name: "Mortgage",
+    description: "Apply for a mortgage effortlessly. Explore a diverse variety of listings tailored precisely to suit your unique lifestyle needs.",
+    serviceImage: "/images/home-3.png",
+    serviceURL: "/mortgage",
+  }
+];
+
+// Blog utility functions
+export const getBlogPosts = (filters: BlogFilters = {}): BlogPost[] => {
+  let filteredBlogs = [...blogs];
+
+  // Filter by tag
+  if (filters.tag) {
+    filteredBlogs = filteredBlogs.filter(blog => 
+      blog.tags.some(tag => tag.toLowerCase().includes(filters.tag!.toLowerCase()))
+    );
+  }
+
+  // Filter by author
+  if (filters.author) {
+    filteredBlogs = filteredBlogs.filter(blog => 
+      blog.author?.toLowerCase().includes(filters.author!.toLowerCase())
+    );
+  }
+
+  // Filter by category
+  if (filters.category) {
+    filteredBlogs = filteredBlogs.filter(blog => 
+      blog.category?.toLowerCase() === filters.category!.toLowerCase()
+    );
+  }
+
+  // Filter by search term
+  if (filters.search) {
+    const searchTerm = filters.search.toLowerCase();
+    filteredBlogs = filteredBlogs.filter(blog => 
+      blog.title.toLowerCase().includes(searchTerm) ||
+      blog.excerpt.toLowerCase().includes(searchTerm) ||
+      blog.tags.some(tag => tag.toLowerCase().includes(searchTerm))
+    );
+  }
+
+  // Filter by featured
+  if (filters.featured !== undefined) {
+    filteredBlogs = filteredBlogs.filter(blog => blog.featured === filters.featured);
+  }
+
+  return filteredBlogs;
+};
+
+export const getRecentBlogPosts = (limit: number = 5): BlogPost[] => {
+  return blogs
+    .sort((a, b) => new Date(b.date.split('•')[1].trim()).getTime() - new Date(a.date.split('•')[1].trim()).getTime())
+    .slice(0, limit);
+};
+
+export const getFeaturedBlogPost = (): BlogPost | null => {
+  return blogs.find(blog => blog.featured) || null;
+};
+
+export const getBlogPostById = (id: number): BlogPost | null => {
+  return blogs.find(blog => blog.id === id) || null;
+};
+
+export const getBlogTags = (): string[] => {
+  const allTags = blogs.flatMap(blog => blog.tags);
+  return [...new Set(allTags)].sort();
+};
+
+export const getBlogAuthors = (): string[] => {
+  const allAuthors = blogs.map(blog => blog.author).filter(Boolean) as string[];
+  return [...new Set(allAuthors)].sort();
+};
+
+export const getBlogCategories = (): string[] => {
+  const allCategories = blogs.map(blog => blog.category).filter(Boolean) as string[];
+  return [...new Set(allCategories)].sort();
+};
+
+export const getPaginatedBlogPosts = (filters: BlogFilters = {}, page: number = 1, limit: number = 6) => {
+  const filteredBlogs = getBlogPosts(filters);
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  
+  return {
+    posts: filteredBlogs.slice(startIndex, endIndex),
+    totalPosts: filteredBlogs.length,
+    totalPages: Math.ceil(filteredBlogs.length / limit),
+    currentPage: page,
+    hasNextPage: endIndex < filteredBlogs.length,
+    hasPrevPage: page > 1
+  };
+};
