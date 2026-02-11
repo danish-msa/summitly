@@ -2,7 +2,7 @@
 
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import FindRealtor from '@/components/Home/FindRealtor/FindRealtor';
+import FindRealtor from '@/components/FindRealtor/FindRealtor';
 
 // Create a client component that uses useSearchParams
 const FindRealtorWithParams = () => {

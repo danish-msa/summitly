@@ -1,10 +1,8 @@
-import Agents from '@/components/Agents/Agents';
-import React from 'react';
+import React from "react";
+import FindRealtor from "@/components/FindRealtor/FindRealtor";
 
 const AgentsPage: React.FC = () => {
-  return (
-    <Agents />
-  );
+  return <FindRealtor initialUserType={null} />;
 };
 
 export default AgentsPage;
