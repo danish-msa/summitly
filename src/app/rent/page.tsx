@@ -1,4 +1,4 @@
-import PropertyBasePage from '@/components/Properties/PropertyBasePage/PropertyBasePage';
+import Rent from '@/components/Rent/Rent';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -7,15 +7,6 @@ export const metadata: Metadata = {
 };
 
 export default function RentPage() {
-  return (
-    <PropertyBasePage
-      slug=""
-      pageType="by-location"
-      citySlug=""
-      listingType="rent"
-      locationType="city"
-      locationName={null}
-    />
-  );
+  return <Rent />;
 }
 

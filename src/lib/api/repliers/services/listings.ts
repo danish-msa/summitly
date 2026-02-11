@@ -360,6 +360,7 @@ export function transformListing(listing: ApiListing): PropertyListing {
       yearBuilt: listing.details?.yearBuilt || null,
       garage: listing.details?.garage || null,
       numGarageSpaces: listing.details?.numGarageSpaces || null,
+      swimmingPool: listing.details?.swimmingPool ?? undefined,
     },
     
     updatedOn: listing.updatedOn || new Date().toISOString(),

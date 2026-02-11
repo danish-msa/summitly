@@ -584,6 +584,7 @@ export interface PropertyListing {
         yearBuilt?: string | null;
         garage?: string | null;
         numGarageSpaces?: number | null;
+        swimmingPool?: string | null;
     };
     updatedOn: string;
     lot: {

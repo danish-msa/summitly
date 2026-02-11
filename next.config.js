@@ -69,6 +69,12 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
     // Configure image qualities for Next.js 16 compatibility
     qualities: [75, 100],

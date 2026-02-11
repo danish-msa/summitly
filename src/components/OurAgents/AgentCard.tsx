@@ -11,6 +11,82 @@ interface AgentCardProps {
   agent: AgentListItem;
 }
 
+/** Button that opens a URL (used inside a card that is wrapped in a Link to avoid nested <a>) */
+function ExternalLinkButton({
+  href,
+  label,
+  children,
+  className,
+}: {
+  href: string;
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.open(href, "_blank", "noopener,noreferrer");
+  };
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      e.stopPropagation();
+      window.open(href, "_blank", "noopener,noreferrer");
+    }
+  };
+  return (
+    <span
+      role="link"
+      tabIndex={0}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      className={className}
+      aria-label={label}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** Button that triggers tel: or mailto: (used inside a card that is wrapped in a Link to avoid nested <a>) */
+function ActionLinkButton({
+  href,
+  label,
+  children,
+  className,
+}: {
+  href: string;
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.location.href = href;
+  };
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      e.stopPropagation();
+      window.location.href = href;
+    }
+  };
+  return (
+    <span
+      role="link"
+      tabIndex={0}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      className={className}
+      aria-label={label}
+    >
+      {children}
+    </span>
+  );
+}
+
 export default function AgentCard({ agent }: AgentCardProps) {
   const socialMedia = agent.socialMedia ?? {};
   const displaySpecs = agent.specializations.slice(0, 2);
@@ -46,52 +122,40 @@ export default function AgentCard({ agent }: AgentCardProps) {
         <div className="absolute bottom-0 z-10 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
           <div className="flex gap-2 justify-center">
             {socialMedia.facebook && (
-              <a
+              <ExternalLinkButton
                 href={socialMedia.facebook}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="flex items-center justify-center bg-white text-primary w-8 h-8 rounded-full hover:bg-primary hover:text-white transition-all"
-                aria-label="Facebook"
+                label="Facebook"
+                className="flex items-center justify-center bg-white text-primary w-8 h-8 rounded-full hover:bg-primary hover:text-white transition-all cursor-pointer"
               >
                 <FaFacebook className="w-4 h-4" />
-              </a>
+              </ExternalLinkButton>
             )}
             {socialMedia.twitter && (
-              <a
+              <ExternalLinkButton
                 href={socialMedia.twitter}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="flex items-center justify-center bg-white text-primary w-8 h-8 rounded-full hover:bg-primary hover:text-white transition-all"
-                aria-label="Twitter"
+                label="Twitter"
+                className="flex items-center justify-center bg-white text-primary w-8 h-8 rounded-full hover:bg-primary hover:text-white transition-all cursor-pointer"
               >
                 <FaTwitter className="w-4 h-4" />
-              </a>
+              </ExternalLinkButton>
             )}
             {socialMedia.instagram && (
-              <a
+              <ExternalLinkButton
                 href={socialMedia.instagram}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="flex items-center justify-center bg-white text-primary w-8 h-8 rounded-full hover:bg-primary hover:text-white transition-all"
-                aria-label="Instagram"
+                label="Instagram"
+                className="flex items-center justify-center bg-white text-primary w-8 h-8 rounded-full hover:bg-primary hover:text-white transition-all cursor-pointer"
               >
                 <FaInstagram className="w-4 h-4" />
-              </a>
+              </ExternalLinkButton>
             )}
             {socialMedia.linkedin && (
-              <a
+              <ExternalLinkButton
                 href={socialMedia.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="flex items-center justify-center bg-white text-primary w-8 h-8 rounded-full hover:bg-primary hover:text-white transition-all"
-                aria-label="LinkedIn"
+                label="LinkedIn"
+                className="flex items-center justify-center bg-white text-primary w-8 h-8 rounded-full hover:bg-primary hover:text-white transition-all cursor-pointer"
               >
                 <FaLinkedin className="w-4 h-4" />
-              </a>
+              </ExternalLinkButton>
             )}
           </div>
         </div>
@@ -103,24 +167,22 @@ export default function AgentCard({ agent }: AgentCardProps) {
         </div>
         <div className="flex gap-2 justify-end items-center">
           {agent.phone && (
-            <a
+            <ActionLinkButton
               href={`tel:${agent.phone}`}
-              onClick={(e) => e.stopPropagation()}
-              className="flex items-center justify-center text-primary border border-primary w-8 h-8 rounded-full hover:bg-primary hover:text-white transition-all duration-500"
-              aria-label="Phone"
+              label="Phone"
+              className="flex items-center justify-center text-primary border border-primary w-8 h-8 rounded-full hover:bg-primary hover:text-white transition-all duration-500 cursor-pointer"
             >
               <BiPhone className="w-4 h-4" />
-            </a>
+            </ActionLinkButton>
           )}
           {agent.email && (
-            <a
+            <ActionLinkButton
               href={`mailto:${agent.email}`}
-              onClick={(e) => e.stopPropagation()}
-              className="flex items-center justify-center text-primary border border-primary w-8 h-8 rounded-full hover:bg-primary hover:text-white transition-all duration-500"
-              aria-label="Email"
+              label="Email"
+              className="flex items-center justify-center text-primary border border-primary w-8 h-8 rounded-full hover:bg-primary hover:text-white transition-all duration-500 cursor-pointer"
             >
               <BiEnvelope className="w-4 h-4" />
-            </a>
+            </ActionLinkButton>
           )}
         </div>
       </div>
