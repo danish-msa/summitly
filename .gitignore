@@ -113,3 +113,10 @@ build/
 
 # ===== BACKUP DIRECTORIES =====
 backups/
+config/env.txt
+config/.env
+.env
+.env.local
+*.env
+app/commercialapp.py
+scripts/setup_huggingface.sh
