@@ -14,18 +14,25 @@ interface HeroSectionProps {
   customContent?: string | null;
   lastUpdatedDate: string;
   pageType: PropertyPageType;
-  displayCount: string;
+  /** Base path for breadcrumb: 'sell' → /buy, 'rent' → /rent. Defaults to /buy. */
+  listingType?: 'sell' | 'rent';
   cityName?: string | null;
 }
+
+const BREADCRUMB_BY_LISTING: Record<string, { href: string; label: string }> = {
+  sell: { href: '/buy', label: 'Buy' },
+  rent: { href: '/rent', label: 'Rent' },
+};
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
   title,
   customContent,
   lastUpdatedDate: _lastUpdatedDate,
   pageType,
-  displayCount,
+  listingType = 'sell',
   cityName,
 }) => {
+  const breadcrumb = BREADCRUMB_BY_LISTING[listingType] ?? BREADCRUMB_BY_LISTING.sell;
   const { data: session } = useSession();
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [alertOptions, setAlertOptions] = useState<Record<string, boolean>>({
@@ -64,15 +71,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     if (pageType === 'by-location') {
       return (
         <>
-          {displayCount} Homes for Sale in <span className="font-extrabold">{title}</span>
+          Homes for {listingType === 'rent' ? 'Rent' : 'Sale'} in <span className="font-extrabold">{title}</span>
         </>
       );
     }
-    return (
-      <>
-        <span className="font-extrabold">{displayCount}</span> {title}
-      </>
-    );
+    return <span className="font-extrabold">{title}</span>;
   };
 
   return (
@@ -82,8 +85,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-6 items-start justify-between">
           <div className="space-y-4">
             <nav className="flex items-center gap-2 text-sm text-secondary-foreground/90" aria-label="Breadcrumb">
-              <Link href="/properties" className="hover:underline font-medium">
-                Properties
+              <Link href={breadcrumb.href} className="hover:underline font-medium">
+                {breadcrumb.label}
               </Link>
               <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />
               <span className="font-medium">{title}</span>

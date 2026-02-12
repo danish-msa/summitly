@@ -1,16 +1,19 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import type { PropertyListing } from "@/lib/types";
 import type { Location } from "@/lib/api/repliers/services/locations";
+import { getRouteSuggestions, type RouteSuggestion } from "@/lib/search/routeSuggestions";
 
 const DEBOUNCE_MS = 400;
 const MIN_QUERY_LENGTH = 3;
+const ROUTE_SUGGESTIONS_LIMIT = 6;
 
 export interface AutocompleteSearchResult {
   listings: PropertyListing[];
   count: number;
   locations: Location[];
+  routeSuggestions: RouteSuggestion[];
 }
 
 export function useAutocompleteSearch() {
@@ -73,16 +76,28 @@ export function useAutocompleteSearch() {
     search(debouncedQuery);
   }, [debouncedQuery, search]);
 
+  // Route suggestions (buy/rent/pre-con) from current query – sync, no debounce
+  const routeSuggestions = useMemo(
+    () =>
+      getRouteSuggestions(query, {
+        limit: ROUTE_SUGGESTIONS_LIMIT,
+        includePopularWhenShort: true,
+      }),
+    [query]
+  );
+
   return {
     query,
     setQuery,
     listings,
     count,
     locations,
+    routeSuggestions,
     loading,
     error,
     hasResults:
-      (listings.length > 0 || locations.length > 0) && debouncedQuery.length >= MIN_QUERY_LENGTH,
+      (listings.length > 0 || locations.length > 0 || routeSuggestions.length > 0) &&
+      (query.length >= 1 || debouncedQuery.length >= MIN_QUERY_LENGTH),
     minQueryLength: MIN_QUERY_LENGTH,
   };
 }

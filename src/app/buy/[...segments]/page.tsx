@@ -21,9 +21,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const resolvedParams = await params;
   const parsed = parseUrlSegments(resolvedParams.segments);
   
-  // Determine location type (neighbourhood vs intersection)
+  // Determine location type (neighbourhood vs intersection) only when first segment is a city
   let locationType: 'city' | 'neighbourhood' | 'intersection' = 'city';
-  if (parsed.locationName) {
+  if (parsed.locationName && !parsed.zipcode) {
     const locationInfo = await parseLocationSegments(
       resolvedParams.segments.slice(1),
       resolvedParams.segments[0]
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     locationType = locationInfo.locationType || 'city';
   }
 
-  const cityName = parsed.city;
+  const cityName = parsed.city; // When zipcode, this is the formatted postal (e.g. "M5H 2N2")
   let title = '';
   let description = '';
 
@@ -125,9 +125,9 @@ export default async function BuyPage({ params }: PageProps) {
   const resolvedParams = await params;
   const parsed = parseUrlSegments(resolvedParams.segments);
 
-  // Determine actual location type (neighbourhood vs intersection)
+  // Determine actual location type (neighbourhood vs intersection) only when first segment is a city, not a zipcode
   let actualLocationType = parsed.locationType;
-  if (parsed.locationName) {
+  if (parsed.locationName && !parsed.zipcode) {
     const locationInfo = await parseLocationSegments(
       resolvedParams.segments.slice(1),
       resolvedParams.segments[0]
@@ -135,20 +135,19 @@ export default async function BuyPage({ params }: PageProps) {
     actualLocationType = locationInfo.locationType;
   }
 
-  // Build combined slug for PropertyBasePage
-  // If we have a location, we need to pass it differently
-  // For now, we'll use the filters as the slug and handle location in the component
-  const combinedSlug = parsed.filters.length > 0 
-    ? parsed.filters.join('-')
-    : parsed.locationName 
-      ? parsed.locationName.toLowerCase().replace(/\s+/g, '-')
-      : parsed.city.toLowerCase().replace(/\s+/g, '-');
+  const combinedSlug =
+    parsed.filters.length > 0
+      ? parsed.filters.join('-')
+      : parsed.locationName
+        ? parsed.locationName.toLowerCase().replace(/\s+/g, '-')
+        : (parsed.zipcode ?? parsed.city).toLowerCase().replace(/\s+/g, '-');
 
   return (
     <PropertyBasePage
       slug={combinedSlug}
       pageType={parsed.pageType}
       citySlug={resolvedParams.segments[0]}
+      zipcode={parsed.zipcode}
       listingType="sell"
       locationType={actualLocationType}
       locationName={parsed.locationName}

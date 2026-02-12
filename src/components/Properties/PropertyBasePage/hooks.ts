@@ -20,18 +20,21 @@ import {
   buildPropertyPageDescription,
   filterProperties,
 } from './utils';
+import { formatZipcodeForDisplay } from '@/lib/utils/zipcode';
 
 interface UsePropertyDataProps {
   slug: string;
   pageType: PropertyPageType;
   citySlug?: string;
+  /** When first URL segment is a zipcode, pass normalized value for API (e.g. M5H2N2). */
+  zipcode?: string | null;
   filters: FilterState;
   locationType?: 'city' | 'neighbourhood' | 'intersection' | null;
   locationName?: string | null;
-  listingType?: 'sell' | 'rent'; // Pass listingType directly from props
+  listingType?: 'sell' | 'rent';
 }
 
-export const usePropertyData = ({ slug, pageType, citySlug, filters, locationType, locationName, listingType }: UsePropertyDataProps) => {
+export const usePropertyData = ({ slug, pageType, citySlug, zipcode, filters, locationType, locationName, listingType }: UsePropertyDataProps) => {
   const [properties, setProperties] = useState<PropertyListing[]>([]);
   const [allProperties, setAllProperties] = useState<PropertyListing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +50,12 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
 
   // Parse parameters from slug and pageType
   const parsedParams = useMemo(() => {
-    const cityName = citySlug ? unslugifyCityName(citySlug) : null;
+    const cityName =
+      citySlug == null
+        ? null
+        : zipcode
+          ? formatZipcodeForDisplay(citySlug)
+          : unslugifyCityName(citySlug);
     let propertyType: string | undefined;
     let priceRange: { min?: number; max?: number; label: string } | undefined;
     let bedrooms: { bedrooms: number; isPlus: boolean } | undefined;
@@ -124,19 +132,35 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
     }
 
     if (pageType === 'propertyType-bedrooms') {
-      // Format: "condos-2-bedroom"
-      const parts = slug.split('-');
-      propertyType = slugToPropertyType(parts[0]);
-      const bedroomSlug = parts.slice(1).join('-');
-      bedrooms = parseBedroomSlug(bedroomSlug) ?? undefined;
+      // Format: "condos-2-bedroom" or "semi-detached-2-bedroom" (property type can contain hyphens)
+      const bedroomMatch = slug.match(/(\d+(-plus)?-(?:bedroom|beds))$/);
+      if (bedroomMatch) {
+        const bedroomSlug = bedroomMatch[1];
+        const propertyTypeSlug = slug.slice(0, slug.length - bedroomSlug.length).replace(/-$/, '');
+        propertyType = slugToPropertyType(propertyTypeSlug);
+        bedrooms = parseBedroomSlug(bedroomSlug) ?? undefined;
+      } else {
+        const parts = slug.split('-');
+        propertyType = slugToPropertyType(parts[0]);
+        const bedroomSlug = parts.slice(1).join('-');
+        bedrooms = parseBedroomSlug(bedroomSlug) ?? undefined;
+      }
     }
 
     if (pageType === 'propertyType-bathrooms') {
-      // Format: "condos-2-bathroom"
-      const parts = slug.split('-');
-      propertyType = slugToPropertyType(parts[0]);
-      const bathroomSlug = parts.slice(1).join('-');
-      bathrooms = parseBathroomSlug(bathroomSlug) ?? undefined;
+      // Format: "condos-2-bathroom" or "semi-detached-2-bathroom" (property type can contain hyphens)
+      const bathroomMatch = slug.match(/(\d+(-plus)?-(?:bathroom|baths))$/);
+      if (bathroomMatch) {
+        const bathroomSlug = bathroomMatch[1];
+        const propertyTypeSlug = slug.slice(0, slug.length - bathroomSlug.length).replace(/-$/, '');
+        propertyType = slugToPropertyType(propertyTypeSlug);
+        bathrooms = parseBathroomSlug(bathroomSlug) ?? undefined;
+      } else {
+        const parts = slug.split('-');
+        propertyType = slugToPropertyType(parts[0]);
+        const bathroomSlug = parts.slice(1).join('-');
+        bathrooms = parseBathroomSlug(bathroomSlug) ?? undefined;
+      }
     }
 
     if (pageType === 'propertyType-sqft') {
@@ -352,7 +376,7 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
     }
 
     return { cityName, propertyType, priceRange, bedrooms, bathrooms, sqft, lotSize, yearBuilt, ownership, feature, status };
-  }, [slug, pageType, citySlug]);
+  }, [slug, pageType, citySlug, zipcode]);
 
   // Load properties function (supports pagination and infinite scroll)
   const loadProperties = useCallback(async (page: number = 1, append: boolean = false) => {
@@ -371,18 +395,20 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
           page: page, // Use the page parameter
         };
 
-        // Add city filter if available
-        // Priority: 1) URL city (parsedParams.cityName), 2) Global filter city (filters.locationArea), 3) Global filter region
-        if (parsedParams.cityName) {
-          apiParams.city = parsedParams.cityName;
-        } else if (filters.locationArea && filters.locationArea !== 'all') {
-          // If a specific city is selected in global filters, use that
-          apiParams.city = filters.locationArea;
-        } else if (filters.location && filters.location !== 'all') {
-          // If only region is selected, use the region name
-          const selectedRegion = REGIONS.find(reg => reg.id === filters.location);
-          if (selectedRegion) {
-            apiParams.city = selectedRegion.name;
+        // Add location filter: zipcode (when first segment is zip) or city
+        if (zipcode) {
+          apiParams.zip = zipcode;
+        } else {
+          // Priority: 1) URL city (parsedParams.cityName), 2) Global filter city, 3) Global filter region
+          if (parsedParams.cityName) {
+            apiParams.city = parsedParams.cityName;
+          } else if (filters.locationArea && filters.locationArea !== 'all') {
+            apiParams.city = filters.locationArea;
+          } else if (filters.location && filters.location !== 'all') {
+            const selectedRegion = REGIONS.find(reg => reg.id === filters.location);
+            if (selectedRegion) {
+              apiParams.city = selectedRegion.name;
+            }
           }
         }
 
@@ -587,6 +613,17 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
           parsedParams.status // Some status filters need client-side
         );
         
+        // When zipcode was used, ensure we only show listings in that postal code (API may or may not support zip)
+        if (zipcode) {
+          const zipNorm = zipcode.replace(/\s/g, '').replace(/-/g, '').toUpperCase();
+          filtered = filtered.filter(property => {
+            const propZip = (property.address as { zip?: string } | undefined)?.zip;
+            if (!propZip) return false;
+            const propNorm = propZip.replace(/\s/g, '').replace(/-/g, '').toUpperCase();
+            return propNorm === zipNorm || propNorm.startsWith(zipNorm) || zipNorm.startsWith(propNorm);
+          });
+        }
+
         // Filter by location (neighbourhood or intersection) if provided
         if (locationType && locationName) {
           filtered = filtered.filter(property => {
@@ -725,7 +762,7 @@ export const usePropertyData = ({ slug, pageType, citySlug, filters, locationTyp
         setLoadingMore(false);
       }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [slug, pageType, citySlug, parsedParams, resultsPerPage, filters.location, filters.locationArea, filters.listingType, locationType, locationName, listingType]);
+    }, [slug, pageType, citySlug, zipcode, parsedParams, resultsPerPage, filters.location, filters.locationArea, filters.listingType, locationType, locationName, listingType]);
 
   // Initial fetch properties
   useEffect(() => {

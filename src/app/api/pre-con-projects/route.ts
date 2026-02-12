@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status') || ''
     const city = searchParams.get('city') || ''
+    const zip = searchParams.get('zip') || ''
     const propertyType = searchParams.get('propertyType') || ''
     const subPropertyType = searchParams.get('subPropertyType') || ''
     const completionYear = searchParams.get('completionYear') || ''
@@ -34,6 +35,7 @@ export async function GET(request: NextRequest) {
     console.log('[API] Fetching pre-con projects with params:', {
       status,
       city,
+      zip,
       propertyType,
       subPropertyType,
       completionYear,
@@ -53,6 +55,14 @@ export async function GET(request: NextRequest) {
     }
     if (city) {
       whereConditions.push({ city: { contains: city, mode: 'insensitive' } })
+    }
+    if (zip) {
+      const zipNorm = zip.replace(/\s/g, '').replace(/-/g, '').toUpperCase()
+      const zipWithSpace =
+        zipNorm.length === 6 ? `${zipNorm.slice(0, 3)} ${zipNorm.slice(3)}` : zipNorm
+      whereConditions.push({
+        OR: [{ zip: zipNorm }, { zip: zipWithSpace }, { zip: zip.trim() }],
+      })
     }
     if (propertyType) {
       // Use case-insensitive matching for propertyType

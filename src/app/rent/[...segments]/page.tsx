@@ -21,9 +21,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const resolvedParams = await params;
   const parsed = parseUrlSegments(resolvedParams.segments);
   
-  // Determine location type (neighbourhood vs intersection)
+  // Determine location type (neighbourhood vs intersection) only when first segment is a city
   let locationType: 'city' | 'neighbourhood' | 'intersection' = 'city';
-  if (parsed.locationName) {
+  if (parsed.locationName && !parsed.zipcode) {
     const locationInfo = await parseLocationSegments(
       resolvedParams.segments.slice(1),
       resolvedParams.segments[0]
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     locationType = locationInfo.locationType || 'city';
   }
 
-  const cityName = parsed.city;
+  const cityName = parsed.city; // When zipcode, this is the formatted postal (e.g. "M5H 2N2")
   let title = '';
   let description = '';
 
@@ -130,50 +130,32 @@ export default async function RentPage({ params }: PageProps) {
     parsed,
   });
 
-  // Determine actual location type (neighbourhood vs intersection)
+  // Determine actual location type (neighbourhood vs intersection) only when first segment is a city, not zipcode
   let actualLocationType = parsed.locationType;
   let actualLocationName = parsed.locationName;
-  
-  if (parsed.locationName && resolvedParams.segments.length > 1) {
+
+  if (parsed.locationName && resolvedParams.segments.length > 1 && !parsed.zipcode) {
     const locationInfo = await parseLocationSegments(
       resolvedParams.segments.slice(1),
       resolvedParams.segments[0]
     );
     actualLocationType = locationInfo.locationType;
-    // Use the locationName from locationInfo - it has the correct format from the API
-    // This ensures the neighbourhood name matches what's in the database
     actualLocationName = locationInfo.locationName || parsed.locationName;
-    
-    console.log('[RentPage] Location detection result:', {
-      segments: resolvedParams.segments,
-      parsedLocationName: parsed.locationName,
-      locationInfo,
-      actualLocationType,
-      actualLocationName,
-    });
   }
 
-  // Build combined slug for PropertyBasePage
-  const combinedSlug = parsed.filters.length > 0 
-    ? parsed.filters.join('-')
-    : parsed.locationName 
-      ? parsed.locationName.toLowerCase().replace(/\s+/g, '-')
-      : parsed.city.toLowerCase().replace(/\s+/g, '-');
-
-  console.log('[RentPage] Final props:', {
-    slug: combinedSlug,
-    pageType: parsed.pageType,
-    citySlug: resolvedParams.segments[0],
-    listingType: 'rent',
-    locationType: actualLocationType,
-    locationName: actualLocationName,
-  });
+  const combinedSlug =
+    parsed.filters.length > 0
+      ? parsed.filters.join('-')
+      : parsed.locationName
+        ? parsed.locationName.toLowerCase().replace(/\s+/g, '-')
+        : (parsed.zipcode ?? parsed.city).toLowerCase().replace(/\s+/g, '-');
 
   return (
     <PropertyBasePage
       slug={combinedSlug}
       pageType={parsed.pageType}
       citySlug={resolvedParams.segments[0]}
+      zipcode={parsed.zipcode}
       listingType="rent"
       locationType={actualLocationType}
       locationName={actualLocationName}

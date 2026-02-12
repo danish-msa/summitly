@@ -97,9 +97,16 @@ const Nav = ({ openNav }: Props) => {
       return false; // Default: treat as listing page (sticky navbar)
     }
     
-    // Rent: only match actual property detail pages
-    if (pathname.startsWith('/rent/') && pathname.split('/').length > 2) {
-      return true;
+    // Rent: only actual detail pages (e.g. /rent/[id]) are property pages; listing pages get sticky nav like buy
+    if (pathname.startsWith('/rent/')) {
+      const parts = pathname.split('/').filter(Boolean);
+      if (parts.length > 2) return false; // /rent/toronto/condos = listing page
+      if (parts.length === 2) {
+        const knownCitySlugs = ['toronto', 'brampton', 'hamilton', 'calgary', 'mississauga', 'oakville', 'milton', 'edmonton'];
+        if (knownCitySlugs.includes(parts[1].toLowerCase())) return false; // /rent/toronto = listing page
+        return true; // /rent/[id] = detail page
+      }
+      return false;
     }
     
     // New property page pattern: /{citySlug}/{slug} where slug contains numbers
@@ -190,7 +197,7 @@ const Nav = ({ openNav }: Props) => {
       >
         <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8 h-full">
           <div className="flex items-center justify-between h-full">
-            {/* Left Side: Logo + Buy, Rent, Mortgage */}
+            {/* Left Side: Logo + Buy, Rent, etc. */}
             <div className="flex items-center space-x-4 lg:space-x-6">
               {/* Logo */}
               <motion.div
@@ -218,7 +225,7 @@ const Nav = ({ openNav }: Props) => {
                 </Link>
               </motion.div>
 
-              {/* Desktop nav: Buy, Sell, Rent, Mortgage, My Home, Find an Agent, Manage Rentals, News & Insights, More */}
+              {/* Desktop nav: Buy, Sell, Rent, My Home, Manage Rentals, News & Insights, More */}
               <nav className="hidden lg:flex items-center space-x-1">
                 {/* Buy Mega Menu */}
                 <BuyMegaMenu
@@ -268,22 +275,6 @@ const Nav = ({ openNav }: Props) => {
                   </motion.div>
                 </RentMegaMenu>
 
-                {/* Mortgage Link */}
-                <a 
-                  href="https://mortgagesquad.ca" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                >
-                  <motion.div
-                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary hover:font-semibold transition-colors rounded-lg"
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.3 }}
-                  >
-                    Mortgage
-                  </motion.div>
-                </a>
-
                 {/* My Home Link */}
                 <Link href="/homeowner">
                   <motion.div
@@ -293,18 +284,6 @@ const Nav = ({ openNav }: Props) => {
                     transition={{ duration: 0.5, delay: 0.35 }}
                   >
                     My Home
-                  </motion.div>
-                </Link>
-
-                {/* Find an Agent Link */}
-                <Link href="/find-an-agent">
-                  <motion.div
-                    className="px-4 py-2 text-base font-medium text-foreground hover:text-primary hover:font-semibold transition-colors rounded-lg"
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.4 }}
-                  >
-                    Find an Agent
                   </motion.div>
                 </Link>
 

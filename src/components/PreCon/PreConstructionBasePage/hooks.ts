@@ -24,9 +24,10 @@ interface UsePreConProjectsDataProps {
   teamType?: string; // For development team pages: 'developer', 'architect', etc.
   locationType?: 'city' | 'neighbourhood' | 'intersection' | null;
   locationName?: string | null;
+  zipcode?: string | null;
 }
 
-export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locationType, locationName }: UsePreConProjectsDataProps) => {
+export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locationType, locationName, zipcode }: UsePreConProjectsDataProps) => {
   const [projects, setProjects] = useState<PropertyListing[]>([]);
   const [allProjects, setAllProjects] = useState<PropertyListing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,8 +68,11 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
 
   // Build base API query (without pagination params) based on page type
   const buildBaseApiQuery = useMemo(() => {
-    // Helper to add city filter if location is provided
+    // Helper to add city or zip filter if location is provided
     const addCityFilter = (baseQuery: string): string => {
+      if (zipcode) {
+        return `${baseQuery}&zip=${encodeURIComponent(zipcode)}`;
+      }
       if (locationType === 'city' && locationName) {
         return `${baseQuery}&city=${encodeURIComponent(locationName)}`;
       }
@@ -76,8 +80,11 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
     };
 
     if (pageType === 'by-location') {
+      if (zipcode) {
+        console.log('[PreConstructionBasePage] Building API query (zipcode):', { slug, zipcode });
+        return `/api/v1/pre-con-projects?zip=${encodeURIComponent(zipcode)}`;
+      }
       // Extract city name from slug (handle cases where slug might include filters like "toronto/2-beds")
-      // Split by '/' and take the first part (city)
       const slugParts = slug.split('/');
       const citySlug = slugParts[0];
       const cityName = unslugifyCityName(citySlug);
@@ -118,7 +125,7 @@ export const usePreConProjectsData = ({ slug, pageType, filters, teamType, locat
       return `/api/v1/pre-con-projects?developer=${encodeURIComponent(developerName)}`;
     }
     return '';
-  }, [slug, pageType, locationType, locationName]);
+  }, [slug, pageType, locationType, locationName, zipcode]);
 
   // Fetch page content
   useEffect(() => {

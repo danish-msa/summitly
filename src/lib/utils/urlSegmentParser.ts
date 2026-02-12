@@ -1,11 +1,12 @@
 /**
  * URL Segment Parser
- * 
- * Parses URL segments to determine location hierarchy and filters
- * Used by /buy, /rent, and /pre-con routes
+ *
+ * Parses URL segments to determine location hierarchy and filters.
+ * Used by /buy, /rent, and /pre-con routes.
+ * First segment can be a city slug or a zipcode/postal code.
  */
 
-import { 
+import {
   parsePriceRangeSlug,
   parseBedroomSlug,
   parseBathroomSlug,
@@ -18,9 +19,12 @@ import {
   slugToPropertyType,
 } from '@/components/Properties/PropertyBasePage/utils';
 import type { PropertyPageType } from '@/components/Properties/PropertyBasePage/types';
+import { isZipcodeSegment, formatZipcodeForDisplay, normalizeZipcodeForApi } from '@/lib/utils/zipcode';
 
 export interface ParsedSegments {
   city: string;
+  /** When first segment is a zipcode, this is the normalized value for API (e.g. M5H2N2). Null otherwise. */
+  zipcode: string | null;
   locationType: 'city' | 'neighbourhood' | 'intersection' | null;
   locationName: string | null;
   filters: string[];
@@ -122,42 +126,46 @@ function determinePageTypeFromFilters(filters: string[]): PropertyPageType {
 }
 
 /**
- * Parse URL segments into structured data
+ * Parse URL segments into structured data.
+ * First segment is treated as city slug or zipcode (Canadian/US).
  */
 export function parseUrlSegments(segments: string[]): ParsedSegments {
-  if (segments.length === 0) {
-    return {
-      city: '',
-      locationType: null,
-      locationName: null,
-      filters: [],
-      pageType: 'by-location',
-      combinedSlug: '',
-    };
-  }
+  const empty: ParsedSegments = {
+    city: '',
+    zipcode: null,
+    locationType: null,
+    locationName: null,
+    filters: [],
+    pageType: 'by-location',
+    combinedSlug: '',
+  };
 
-  const citySlug = segments[0];
-  const city = citySlug
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+  if (segments.length === 0) return empty;
 
-  // If only city, return city page
+  const firstSegment = segments[0];
+  const isZip = isZipcodeSegment(firstSegment);
+  const city = isZip
+    ? formatZipcodeForDisplay(firstSegment)
+    : firstSegment
+        .split('-')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+  const zipcode = isZip ? normalizeZipcodeForApi(firstSegment) : null;
+
+  // If only one segment (city or zipcode), return location-only page
   if (segments.length === 1) {
     return {
+      ...empty,
       city,
+      zipcode,
       locationType: 'city',
-      locationName: null,
-      filters: [],
-      pageType: 'by-location',
-      combinedSlug: citySlug,
+      combinedSlug: firstSegment,
     };
   }
 
-  // Check if second segment is a filter (no location)
   const secondSegment = segments[1];
-  const isFilter = (slug: string): boolean => {
-    return !!(
+  const isFilter = (slug: string): boolean =>
+    !!(
       parsePriceRangeSlug(slug) ||
       parseBedroomSlug(slug) ||
       parseBathroomSlug(slug) ||
@@ -169,39 +177,37 @@ export function parseUrlSegments(segments: string[]): ParsedSegments {
       parseStatusSlug(slug) ||
       slugToPropertyType(slug) !== slug.toLowerCase()
     );
-  };
 
-  // If second segment is a filter, treat as city + filters
+  // Second segment is a filter → location + filters
   if (isFilter(secondSegment)) {
     const filters = segments.slice(1);
     const pageType = determinePageTypeFromFilters(filters);
     return {
+      ...empty,
       city,
+      zipcode,
       locationType: 'city',
-      locationName: null,
       filters,
       pageType,
       combinedSlug: filters.join('-'),
     };
   }
 
-  // Otherwise, second segment is a location (neighbourhood or intersection)
-  // We'll determine which one in the route component using locationDetection
+  // Second segment is a location (neighbourhood/area); rest are filters
   const locationSlug = secondSegment;
   const locationName = locationSlug
     .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
-
-  // Remaining segments are filters
   const filters = segments.slice(2);
-  const pageType = filters.length > 0 
-    ? determinePageTypeFromFilters(filters)
-    : 'by-location';
+  const pageType =
+    filters.length > 0 ? determinePageTypeFromFilters(filters) : 'by-location';
 
   return {
+    ...empty,
     city,
-    locationType: null, // Will be determined by locationDetection
+    zipcode,
+    locationType: null,
     locationName,
     filters,
     pageType,

@@ -19,7 +19,7 @@ export interface SearchModalProps {
 export function SearchModal({ open, onOpenChange }: SearchModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[560px] p-0 gap-0 overflow-hidden sm:rounded-2xl">
+      <DialogContent className="top-24 translate-y-0 sm:max-w-[560px] p-0 gap-0 sm:rounded-2xl">
         <DialogHeader className="px-6 pr-12 pt-6 pb-4 space-y-2 text-left border-b border-border/60">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">

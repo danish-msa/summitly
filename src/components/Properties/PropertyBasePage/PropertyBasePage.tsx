@@ -26,6 +26,7 @@ const PropertyBasePage: React.FC<PropertyBasePageProps> = ({
   slug,
   pageType,
   citySlug,
+  zipcode,
   listingType,
   locationType,
   locationName,
@@ -56,6 +57,7 @@ const PropertyBasePage: React.FC<PropertyBasePageProps> = ({
     slug,
     pageType,
     citySlug,
+    zipcode,
     filters,
     locationType,
     locationName,
@@ -138,8 +140,6 @@ const PropertyBasePage: React.FC<PropertyBasePageProps> = ({
   }
 
   const displayTitle = pageInfo?.title || "";
-  const propertyCount = pageInfo?.numberOfProperties || 0;
-  const displayCount = propertyCount > 0 ? `${propertyCount}+` : "100+";
   const province = pageInfo?.province || "ON";
 
   const lastUpdatedDate = new Date().toLocaleDateString("en-US", {
@@ -160,7 +160,7 @@ const PropertyBasePage: React.FC<PropertyBasePageProps> = ({
         customContent={null}
         lastUpdatedDate={lastUpdatedDate}
         pageType={pageType}
-        displayCount={displayCount}
+        listingType={listingType}
         cityName={parsedParams?.cityName || null}
       />
 

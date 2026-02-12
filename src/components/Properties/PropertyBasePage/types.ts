@@ -32,7 +32,9 @@ export type PropertyPageType =
 export interface PropertyBasePageProps {
   slug: string;
   pageType: PropertyPageType;
-  citySlug?: string; // For location-based pages
+  citySlug?: string; // First segment: city slug or zipcode
+  /** When first segment is a zipcode, pass normalized value (e.g. M5H2N2) for API filter. */
+  zipcode?: string | null;
   listingType?: 'sell' | 'rent'; // 'sell' for /buy, 'rent' for /rent
   locationType?: 'city' | 'neighbourhood' | 'intersection' | null;
   locationName?: string | null; // Neighbourhood or intersection name

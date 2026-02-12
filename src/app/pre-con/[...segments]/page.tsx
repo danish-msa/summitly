@@ -7,6 +7,7 @@ import PreConstructionBasePage from '@/components/PreCon/PreConstructionBasePage
 import { preConCities } from '@/components/PreCon/Search/preConSearchData';
 import { parseUrlSegments } from '@/lib/utils/urlSegmentParser';
 import { parseUrlSegments as parseLocationSegments } from '@/lib/utils/locationDetection';
+import { isZipcodeSegment, formatZipcodeForDisplay, normalizeZipcodeForApi } from '@/lib/utils/zipcode';
 import { 
   parseBedroomSlug, 
   parseBathroomSlug,
@@ -29,6 +30,7 @@ const PreConPage: React.FC = () => {
   const [pageType, setPageType] = useState<'project' | 'by-location' | 'status' | 'propertyType' | 'subPropertyType' | 'completionYear' | 'loading'>('loading');
   const [locationType, setLocationType] = useState<'city' | 'neighbourhood' | 'intersection' | null>(null);
   const [locationName, setLocationName] = useState<string | null>(null);
+  const [zipcode, setZipcode] = useState<string | null>(null);
   const [bedroomFilter, setBedroomFilter] = useState<{ bedrooms: number; isPlus: boolean } | null>(null);
   const [bathroomFilter, setBathroomFilter] = useState<{ bathrooms: number; isPlus: boolean } | null>(null);
   const [priceRangeFilter, setPriceRangeFilter] = useState<{ min?: number; max?: number; label: string } | null>(null);
@@ -81,6 +83,7 @@ const PreConPage: React.FC = () => {
         
         // If no segments, show base page
         if (segments.length === 0) {
+          setZipcode(null);
           setPageType('by-location');
           return;
         }
@@ -94,7 +97,19 @@ const PreConPage: React.FC = () => {
           secondSegment,
           isKnownCity: knownCitySlugs.includes(firstSegment),
           isYear: isYear(secondSegment),
+          zipcode: parsed.zipcode,
         });
+
+        // Check if first segment is a zipcode/postal code
+        if (segments[0] && isZipcodeSegment(segments[0])) {
+          setZipcode(normalizeZipcodeForApi(segments[0]));
+          setLocationName(formatZipcodeForDisplay(segments[0]));
+          setLocationType('city');
+          setPageType('by-location');
+          return;
+        }
+
+        setZipcode(null);
 
         // Check if first segment is a known city
         if (knownCitySlugs.includes(firstSegment)) {
@@ -387,6 +402,7 @@ const PreConPage: React.FC = () => {
         pageType={pageType}
         locationType={finalLocationType}
         locationName={finalLocationName}
+        zipcode={zipcode}
         bedroomFilter={bedroomFilter}
         bathroomFilter={bathroomFilter}
         priceRangeFilter={priceRangeFilter}

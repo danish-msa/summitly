@@ -40,6 +40,8 @@ export interface ListingsParams {
   minOpenHouseDate?: string; // Format: YYYY-MM-DD - listings with open house on or after this date
   maxOpenHouseDate?: string; // Format: YYYY-MM-DD - listings with open house on or before this date
   city?: string;
+  /** Zip/postal code filter (e.g. Canadian M5H2N2, US 90210). Pass when first URL segment is a zipcode. */
+  zip?: string;
   status?: string | string[];
   lastStatus?: string | string[];
   search?: string;

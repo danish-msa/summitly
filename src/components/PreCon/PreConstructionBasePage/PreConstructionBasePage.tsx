@@ -25,6 +25,7 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({
   teamType,
   locationType,
   locationName,
+  zipcode,
   bedroomFilter,
   bathroomFilter,
   priceRangeFilter,
@@ -79,7 +80,7 @@ const PreConstructionBasePage: React.FC<PreConstructionBasePageProps> = ({
     preConProjects,
     mapProperties,
     teamMemberInfo,
-  } = usePreConProjectsData({ slug, pageType, filters, teamType, locationType, locationName });
+  } = usePreConProjectsData({ slug, pageType, filters, teamType, locationType, locationName, zipcode });
 
   // Find selected property for map
   const selectedPropertyForMap = useMemo(() => {

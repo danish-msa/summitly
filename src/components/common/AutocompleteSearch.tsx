@@ -3,7 +3,7 @@
 import React, { useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Search, X, MapPin, Bed, Bath, Car, Home } from "lucide-react";
+import { Search, X, MapPin, Bed, Bath, Car, Home, LayoutGrid } from "lucide-react";
 import { useAutocompleteSearch } from "@/hooks/useAutocompleteSearch";
 import { getPropertyUrl } from "@/lib/utils/propertyUrl";
 import type { PropertyListing } from "@/lib/types";
@@ -195,6 +195,7 @@ export function AutocompleteSearch({
     listings,
     count,
     locations,
+    routeSuggestions,
     loading,
     error,
     hasResults,
@@ -220,10 +221,10 @@ export function AutocompleteSearch({
 
   const hasRelevantResults = locationsOnly
     ? locations.length > 0
-    : listings.length > 0 || locations.length > 0;
+    : listings.length > 0 || locations.length > 0 || routeSuggestions.length > 0;
   const showDropdown =
     isOpen &&
-    (query.length >= minQueryLength || hasRelevantResults);
+    (query.length >= 1 || query.length >= minQueryLength || hasRelevantResults);
 
   const inputVariantClass = useModernLabel ? MODERN_INPUT_CLASSES : LEGACY_INPUT_CLASSES;
   const inputFocusClass = useModernLabel && isFloating ? MODERN_INPUT_FOCUS_BORDER : null;
@@ -295,7 +296,7 @@ export function AutocompleteSearch({
             <div className="px-4 py-3 text-sm text-red-600">{error}</div>
           )}
 
-          {!loading && !error && query.length < minQueryLength && (
+          {!loading && !error && query.length < minQueryLength && !hasRelevantResults && (
             <div className="px-4 py-3 text-sm text-slate-500">
               Type at least {minQueryLength} characters to search.
             </div>
@@ -309,6 +310,54 @@ export function AutocompleteSearch({
 
           {!loading && !error && hasRelevantResults && (
             <div className="py-2">
+              {routeSuggestions.length > 0 && (
+                <section
+                  className={cn(
+                    "px-4 py-2",
+                    (locations.length > 0 || (!locationsOnly && listings.length > 0)) &&
+                      "border-b border-slate-100"
+                  )}
+                >
+                  <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-2">
+                    BROWSE
+                  </h3>
+                  <ul className="space-y-0" role="list">
+                    {routeSuggestions.map((suggestion, idx) => (
+                      <li key={`${suggestion.href}-${idx}`} role="option">
+                        <Link
+                          href={suggestion.href}
+                          onClick={() => {
+                            setQuery(suggestion.label);
+                            setIsOpen(false);
+                          }}
+                          className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-b-0 transition-colors"
+                        >
+                          <span
+                            className={cn(
+                              "flex h-8 w-8 shrink-0 items-center justify-center rounded text-slate-600",
+                              suggestion.category === "Buy" && "bg-emerald-100",
+                              suggestion.category === "Rent" && "bg-sky-100",
+                              suggestion.category === "Pre-Con" && "bg-amber-100"
+                            )}
+                            aria-hidden
+                          >
+                            <LayoutGrid className="h-4 w-4" />
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-slate-900 truncate">
+                              {suggestion.label}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {suggestion.category}
+                            </p>
+                          </div>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
               {locations.length > 0 && (
                 <section
                   className={cn(
@@ -349,7 +398,10 @@ export function AutocompleteSearch({
                         ) : (
                           <Link
                             href={`/listings?location=${encodeURIComponent(loc.name)}`}
-                            onClick={() => setIsOpen(false)}
+                            onClick={() => {
+                              setQuery(loc.name ?? "");
+                              setIsOpen(false);
+                            }}
                             className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-b-0 transition-colors"
                           >
                             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-slate-100 text-slate-600">
@@ -423,7 +475,7 @@ export function AutocompleteSearch({
                           </div>
                           <span
                             className={cn(
-                              "shrink-0 px-2.5 py-1 rounded-full text-xs font-medium",
+                              "absolute right-4 top-3 px-2.5 py-1 rounded-full text-xs font-medium",
                               getStatusTagClass(listing.lastStatus || listing.status)
                             )}
                           >
@@ -442,15 +494,18 @@ export function AutocompleteSearch({
                                 onSelectListing(listing);
                                 setIsOpen(false);
                               }}
-                              className="w-full flex items-start gap-3 px-4 py-3 hover:bg-slate-50 text-left border-b border-slate-100 last:border-b-0 transition-colors"
+                              className="relative w-full flex items-start gap-3 px-4 py-3 hover:bg-slate-50 text-left border-b border-slate-100 last:border-b-0 transition-colors"
                             >
                               {content}
                             </button>
                           ) : (
                             <Link
                               href={href}
-                              onClick={() => setIsOpen(false)}
-                              className="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-b-0 transition-colors"
+                              onClick={() => {
+                                setQuery(listing.address?.location ?? "");
+                                setIsOpen(false);
+                              }}
+                              className="relative flex items-start gap-3 px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-b-0 transition-colors"
                             >
                               {content}
                             </Link>

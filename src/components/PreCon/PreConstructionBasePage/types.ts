@@ -6,6 +6,7 @@ export interface PreConstructionBasePageProps {
   teamType?: string; // For development team pages: 'developer', 'architect', etc.
   locationType?: 'city' | 'neighbourhood' | 'intersection' | null;
   locationName?: string | null; // Neighbourhood or intersection name
+  zipcode?: string | null; // When first segment is zipcode/postal code
   bedroomFilter?: { bedrooms: number; isPlus: boolean } | null;
   bathroomFilter?: { bathrooms: number; isPlus: boolean } | null;
   priceRangeFilter?: { min?: number; max?: number; label: string } | null;
