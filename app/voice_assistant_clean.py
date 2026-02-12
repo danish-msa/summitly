@@ -1853,35 +1853,47 @@ def generate_quick_ai_insights(property_data: Dict, mls_number: str = None) -> D
         exa_results = search_exa_for_property_insights(property_info, location, mls_number)
         print(f"🔍 [QUICK INSIGHTS] EXA search found {len(exa_results.get('sources', []))} sources")
         
-        # Step 3: Get REAL AI valuation from Repliers API
-        # This MUST use the same valuation as the Property Valuation Report
+        # Step 3: Get REAL AI valuation using estimates_service (Summitly's Value)
+        # This is the SAME service used for the valuation report - ensures consistency!
         estimated_value = None
-        if mls_number and REPLIERS_INTEGRATION_AVAILABLE:
+        if mls_number and ESTIMATES_SERVICE_AVAILABLE:
             try:
-                print(f"💰 [QUICK INSIGHTS] Fetching real AI valuation for MLS: {mls_number}")
-                valuation_data = estimates_service.get_property_estimate(listing_id=mls_number)
+                print(f"💰 [SUMMITLY'S VALUE] Getting AI-powered estimate for MLS: {mls_number}")
+                valuation_data = estimates_service.get_estimate_by_listing(
+                    listing_id=mls_number,
+                    include_comparables=False,  # Quick mode - no comps needed
+                    include_market_trends=False
+                )
                 
                 if valuation_data and valuation_data.get('success'):
-                    price_estimates = valuation_data.get('price_estimates', {})
-                    if price_estimates:
+                    # NEW: estimates_service returns estimated_value (single number), not price_estimates object
+                    if 'estimated_value' in valuation_data:
+                        estimated_val_number = valuation_data['estimated_value']
+                        estimated_value = estimated_val_number  # Store as single number for frontend
+                        print(f"✅ [SUMMITLY'S VALUE] Estimate: ${estimated_val_number:,} (confidence: {valuation_data.get('confidence', 'N/A')})")
+                    # OLD: Fallback for old structure with price_estimates
+                    elif 'price_estimates' in valuation_data:
+                        price_estimates = valuation_data['price_estimates']
                         estimated_value = {
                             "low": price_estimates.get('low', 0),
                             "mid": price_estimates.get('medium', 0),
                             "high": price_estimates.get('high', 0)
                         }
                         print(f"✅ [QUICK INSIGHTS] Real AI valuation: ${estimated_value['mid']:,}")
-                        print(f"📊 [QUICK INSIGHTS] This matches the Property Valuation Report!")
                     else:
-                        print(f"⚠️ [QUICK INSIGHTS] No price estimates in valuation data")
+                        print(f"⚠️ [QUICK INSIGHTS] No estimated_value or price_estimates in valuation data")
                         print(f"⚠️ [QUICK INSIGHTS] Valuation data keys: {list(valuation_data.keys())}")
+                        estimated_value = None
                 else:
                     print(f"⚠️ [QUICK INSIGHTS] Valuation API returned unsuccessful or no data")
                     if valuation_data:
                         print(f"⚠️ [QUICK INSIGHTS] Response keys: {list(valuation_data.keys())}")
+                    estimated_value = None
             except Exception as e:
                 print(f"❌ [QUICK INSIGHTS] Valuation API failed: {e}")
                 import traceback
                 print(f"❌ [QUICK INSIGHTS] Traceback: {traceback.format_exc()}")
+                estimated_value = None
         
         # Fallback ONLY if valuation completely failed
         if not estimated_value:
@@ -1964,15 +1976,13 @@ def generate_quick_ai_insights(property_data: Dict, mls_number: str = None) -> D
                 "rental_potential": rental,
                 "pros": pros_cons["pros"],
                 "cons": pros_cons["cons"],
-                "mls_number": mls_number
+                "mls_number": mls_number,
+                "ai_summary": generate_market_enhanced_summary(property_info, location, mls_number, market_trend, estimated_value, actual_price)
             },
             "sources": sources
         }
-        
+
     except Exception as e:
-        print(f"❌ [QUICK INSIGHTS ERROR] {e}")
-        print(f"❌ Traceback: {traceback.format_exc()}")
-        
         # Always return basic insights, never fail
         return {
             "success": True,
@@ -2005,6 +2015,138 @@ def generate_quick_ai_insights(property_data: Dict, mls_number: str = None) -> D
             "sources": [{"title": "Real Estate Market Data", "url": "", "type": "internal"}]
         }
 
+
+def generate_fallback_ai_summary(property_data: Dict, insights: Dict) -> str:
+    """
+    Generate fallback AI summary when market analysis service is unavailable
+    """
+    try:
+        summary_parts = []
+        
+        # Basic property description
+        prop_type = property_data.get('property_type', property_data.get('details', {}).get('propertyType', 'property'))
+        location = property_data.get('location', '')
+        if isinstance(location, dict):
+            location = location.get('city', '')
+        price = property_data.get('price', 0)
+        if isinstance(price, dict):
+            price = price.get('amount', 0)
+        bedrooms = property_data.get('bedrooms', property_data.get('details', {}).get('numBedrooms', 0))
+        bathrooms = property_data.get('bathrooms', property_data.get('details', {}).get('numBathrooms', 0))
+        sqft = property_data.get('sqft', property_data.get('details', {}).get('sqft', 0))
+        
+        summary_parts.append(f"This {prop_type.lower()} in {location} is listed at ${price:,.0f}.")
+        
+        if bedrooms or bathrooms or sqft:
+            details = []
+            if bedrooms:
+                details.append(f"{bedrooms} bed")
+            if bathrooms:
+                details.append(f"{bathrooms} bath")
+            if sqft:
+                details.append(f"{sqft:,} sqft")
+            summary_parts.append(f"It features {', '.join(details)}.") 
+        
+        # Add insights if available
+        if insights.get('neighborhood'):
+            neighborhood = insights['neighborhood']
+            if isinstance(neighborhood, dict):
+                if neighborhood.get('walkability_score') or neighborhood.get('walkability'):
+                    score = neighborhood.get('walkability_score') or neighborhood.get('walkability', 0)
+                    summary_parts.append(f"The neighborhood has a walkability score of {score}/100.")
+        
+        return ' '.join(summary_parts)
+    except Exception as e:
+        print(f"❌ Fallback summary error: {e}")
+        location_str = property_data.get('location', 'the area')
+        if isinstance(location_str, dict):
+            location_str = location_str.get('city', 'the area')
+        return f"This property in {location_str} offers great potential for buyers."
+
+def generate_market_enhanced_summary(property_data: Dict, location: str, mls_number: str, market_trend: Dict, estimated_value: Dict, actual_price: any) -> str:
+    """
+    Generate AI summary enhanced with market analysis data
+    """
+    try:
+        if not MARKET_ANALYSIS_SERVICE_AVAILABLE:
+            return generate_fallback_ai_summary(property_data, {'neighborhood': {}})
+        
+        print(f"📊 [AI SUMMARY] Generating market-enhanced summary for {location}")
+        
+        # Extract city and province
+        city = location.split(',')[0].strip() if ',' in location else location
+        province = 'ON'
+        
+        # Get market analysis
+        market_data = market_analysis_service.get_market_analysis_for_location(
+            city=city,
+            province=province,
+            mls_number=mls_number
+        )
+        
+        if not market_data or not market_data.get('success'):
+            print("⚠️ [AI SUMMARY] Market data unavailable, using fallback")
+            return generate_fallback_ai_summary(property_data, {'neighborhood': {}})
+        
+        stats = market_data.get('statistics', {})
+        analysis_text = market_data.get('analysis', '')
+        
+        # Build comprehensive summary
+        summary_parts = []
+        
+        # Property overview
+        prop_type = property_data.get('property_type', property_data.get('details', {}).get('propertyType', 'property'))
+        price = actual_price if actual_price else 0
+        if isinstance(price, dict):
+            price = price.get('amount', 0)
+        
+        summary_parts.append(f"This {prop_type.lower()} in {city} is listed at ${price:,.0f}.")
+        
+        # Market context
+        if stats:
+            avg_price = stats.get('average_price', 0)
+            days_on_market = stats.get('days_on_market', 0)
+            market_condition = stats.get('market_condition', 'Balanced')
+            price_trend = stats.get('price_trend_yoy', 0)
+            
+            if avg_price > 0 and price > 0:
+                price_comparison = "above" if price > avg_price else "below" if price < avg_price else "at"
+                diff_pct = abs((price - avg_price) / avg_price * 100) if avg_price > 0 else 0
+                summary_parts.append(f"The listing price is {price_comparison} the {city} average of ${avg_price:,.0f} by {diff_pct:.1f}%.")
+            
+            if days_on_market > 0:
+                pace_desc = "fast" if days_on_market < 20 else "moderate" if days_on_market < 35 else "slower"
+                summary_parts.append(f"Properties here are selling at a {pace_desc} pace ({days_on_market:.0f} days on market), indicating a {market_condition.lower()}.")
+            
+            if price_trend != 0:
+                trend_word = "increasing" if price_trend > 0 else "decreasing"
+                summary_parts.append(f"The market is {trend_word} with a {abs(price_trend):.1f}% year-over-year trend.")
+        
+        # Add AI analysis excerpt
+        if analysis_text:
+            # Extract first meaningful sentence
+            sentences = [s.strip() for s in analysis_text.split('.') if len(s.strip()) > 20]
+            if sentences:
+                summary_parts.append(sentences[0] + '.')
+        
+        # Value perspective
+        if estimated_value and isinstance(estimated_value, dict):
+            est_mid = estimated_value.get('mid', 0)
+            if est_mid > 0 and price > 0:
+                value_diff = est_mid - price
+                if abs(value_diff) > 10000:
+                    value_desc = "higher" if value_diff > 0 else "lower"
+                    summary_parts.append(f"Our AI valuation suggests the property may be ${abs(value_diff):,.0f} {value_desc} than the asking price.")
+        
+        final_summary = ' '.join(summary_parts)
+        print(f"✅ [AI SUMMARY] Generated {len(final_summary)} character summary")
+        return final_summary
+        
+    except Exception as e:
+        print(f"❌ [AI SUMMARY] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return generate_fallback_ai_summary(property_data, {'neighborhood': {}})
 
 def generate_price_range(property_data: Dict, mls_number: str = None) -> Dict:
     """Generate estimated price range without full comp analysis"""
@@ -4597,7 +4739,8 @@ def property_analysis_endpoint():
             # Generate quick insights (no full comp analysis)
             insights_result = generate_quick_ai_insights(property_data, mls_number)
             
-            print(f"✅ [API] Quick insights generated: {insights_result.get('success', False)}")
+            print(f" [API] Quick insights generated: {insights_result.get('success', False)}")
+            print(f" [API] Response keys: {list(insights_result.keys())}")
             print("=" * 80)
             
             return jsonify(insights_result)
@@ -5802,9 +5945,21 @@ def chat_gpt4():
                         )
                         
                         if properties:
-                            # Tag with search location
+                            # Tag with search location and ensure proper serialization
+                            # Fix [object][object] bug for commercial properties
                             for prop in properties:
                                 prop['search_location'] = loc_name
+                                # Fix [object][object] bug - ensure address is string
+                                if isinstance(prop.get('address'), dict):
+                                    addr = prop['address']
+                                    street_num = str(addr.get('streetNumber', ''))
+                                    street_name = str(addr.get('streetName', ''))
+                                    city = str(addr.get('city', ''))
+                                    prop['address_display'] = f"{street_num} {street_name}, {city}".strip()
+                                elif not isinstance(prop.get('address'), str):
+                                    prop['address_display'] = str(prop.get('title', 'Property'))
+                                else:
+                                    prop['address_display'] = str(prop.get('address', 'Property'))
                             
                             all_location_results.extend(properties[:25])
                             location_summaries.append(f"{loc_name} ({len(properties)})")
@@ -10951,3 +11106,4 @@ if __name__ == '__main__':
         debug=False,  # Set to False for production
         threaded=True
     )
+

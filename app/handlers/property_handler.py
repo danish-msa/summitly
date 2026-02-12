@@ -51,12 +51,16 @@ def generate_quick_ai_insights(property_data: Dict, mls_number: str = None) -> D
         
         # Step 3: Get REAL AI valuation from Repliers API
         estimated_value = None
+        valuation_data = None
         try:
             from services.estimates_service import estimates_service
             if mls_number:
                 valuation_result = estimates_service.get_property_estimate(mls_number)
                 if valuation_result.get('success'):
-                    estimated_value = valuation_result.get('estimate')
+                    # Use estimated_value from the result (single number, NOT dict)
+                    estimated_value = valuation_result.get('estimated_value')
+                    valuation_data = valuation_result  # Store full valuation for summary generation
+                    print(f"✅ [QUICK INSIGHTS] Real AI valuation: ${estimated_value:,}")
         except Exception as e:
             print(f"⚠️ [QUICK INSIGHTS] Valuation API error: {e}")
         
@@ -96,14 +100,47 @@ def generate_quick_ai_insights(property_data: Dict, mls_number: str = None) -> D
         
         actual_price = property_info.get('price', property_info.get('list_price', None))
         print(f"💰 [QUICK INSIGHTS] Actual Price: {actual_price}")
+        print(f"🎯 [QUICK INSIGHTS] AI Estimated Value: {estimated_value}")
+        print(f"📊 [QUICK INSIGHTS] Value Type: {type(estimated_value)}")
         
-        return {
+        # Step 5: Generate AI Summary using the new advanced insights service
+        ai_summary = None
+        try:
+            from services.ai_insights_service import ai_insights_service
+            print(f"🤖 [QUICK INSIGHTS] Generating AI property summary...")
+            
+            # Prepare valuation data for summary generation
+            valuation_for_summary = {
+                'estimated_value': estimated_value if isinstance(estimated_value, int) else None,
+                'confidence': valuation_data.get('confidence') if valuation_data else 85
+            }
+            
+            ai_summary = ai_insights_service.generate_property_summary(
+                property_data=property_info,
+                mls_number=mls_number,
+                market_data=exa_results.get('insights_text', None),
+                valuation_data=valuation_for_summary
+            )
+            
+            if ai_summary:
+                print(f"✅ [QUICK INSIGHTS] AI Summary generated: {len(ai_summary)} characters")
+                print(f"📝 [QUICK INSIGHTS] Summary preview: {ai_summary[:100]}...")
+            else:
+                print(f"⚠️ [QUICK INSIGHTS] AI Summary generation returned empty")
+        except Exception as e:
+            print(f"⚠️ [QUICK INSIGHTS] AI Summary generation failed: {e}")
+            import traceback
+            print(traceback.format_exc())
+        
+        # Build response dictionary
+        response = {
             "success": True,
             "mls_number": mls_number,
             "property_data": property_info,
             "insights": {
                 "estimated_value": estimated_value,
                 "actual_price": actual_price,
+                "ai_summary": ai_summary,  # NEW: AI-generated property summary
                 "schools": schools,
                 "neighborhood": neighborhood,
                 "connectivity": connectivity,
@@ -115,6 +152,14 @@ def generate_quick_ai_insights(property_data: Dict, mls_number: str = None) -> D
             },
             "sources": sources
         }
+        
+        # Log what we're returning to confirm ai_summary is included
+        print(f"📤 [QUICK INSIGHTS] Response insights keys: {list(response['insights'].keys())}")
+        print(f"📤 [QUICK INSIGHTS] ai_summary in response: {response['insights']['ai_summary'] is not None}")
+        if response['insights']['ai_summary']:
+            print(f"📤 [QUICK INSIGHTS] ai_summary length: {len(response['insights']['ai_summary'])}")
+        
+        return response
         
     except Exception as e:
         print(f"❌ [QUICK INSIGHTS ERROR] {e}")
@@ -143,6 +188,7 @@ def generate_basic_insights_fallback(property_data: Dict, mls_number: str = None
             "insights": {
                 "estimated_value": estimated_value,
                 "actual_price": actual_price,
+                "ai_summary": None,  # No AI summary in fallback
                 "schools": "Local schools available in the area.",
                 "neighborhood": f"{location} offers established community living.",
                 "connectivity": "Reasonable transit and highway access available.",
@@ -228,24 +274,45 @@ def generate_ai_analysis_with_llm(property_data: Dict, exa_results: Dict, locati
                 4. Market trends
                 5. Rental potential
                 6. Pros and cons
+                
+                Format your response as a JSON object with these keys:
+                - neighborhood_summary: string
+                - schools: string
+                - connectivity: string
+                - market_trend: string
+                - rental_potential: string
+                - pros_cons: object with "pros" array and "cons" array
                 """
                 
                 response = enhance_conversational_response(context, "property_analysis")
                 
-                if response.get('success'):
-                    return {
-                        "success": True,
-                        "analysis": {
-                            "neighborhood_summary": f"{location} offers established community living with good amenities.",
-                            "schools": "Local schools are rated well in this area.",
-                            "connectivity": "Good transit and highway access available.",
-                            "market_trend": "Market shows stable growth patterns.",
-                            "rental_potential": "Strong rental demand in this location.",
-                            "pros_cons": {"pros": ["Good location", "Strong community"], "cons": ["Market dependent"]}
+                # enhance_conversational_response returns a string, not a dict
+                if response and isinstance(response, str):
+                    # Try to parse as JSON
+                    try:
+                        analysis_data = json.loads(response)
+                        return {
+                            "success": True,
+                            "analysis": analysis_data
                         }
-                    }
-        except:
-            pass
+                    except json.JSONDecodeError:
+                        # If not valid JSON, create structured response from text
+                        print(f"✅ [LLM ANALYSIS] Got text response, using structured fallback")
+                        return {
+                            "success": True,
+                            "analysis": {
+                                "neighborhood_summary": f"{location} offers established community living with good amenities.",
+                                "schools": "Local schools are rated well in this area.",
+                                "connectivity": "Good transit and highway access available.",
+                                "market_trend": "Market shows stable growth patterns.",
+                                "rental_potential": "Strong rental demand in this location.",
+                                "pros_cons": {"pros": ["Good location", "Strong community"], "cons": ["Market dependent"]}
+                            }
+                        }
+        except Exception as e:
+            print(f"❌ LLM analysis error in try block: {e}")
+            import traceback
+            print(traceback.format_exc())
         
         return {"success": False, "analysis": {}}
         

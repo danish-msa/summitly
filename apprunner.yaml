@@ -1,0 +1,15 @@
+version: 1.0
+runtime: python3
+build:
+  commands:
+    build:
+      - pip install -r requirements.txt
+run:
+  runtime-version: 3.10
+  command: python app/voice_assistant_clean.py
+  network:
+    port: 5050
+    env: PORT
+  env:
+    - name: PYTHONUNBUFFERED
+      value: "1"
