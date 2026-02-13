@@ -6,6 +6,7 @@ import Image from "next/image";
 import { ArrowLeft, Globe, Linkedin, Twitter, Facebook, Instagram, Youtube } from "lucide-react";
 import type { Agent } from "@prisma/client";
 import type { AgentStats, AgentSocialLinks } from "@prisma/client";
+import { Button } from "@/components/ui/button";
 
 type AgentWithBanner = Agent & {
   stats: AgentStats | null;
@@ -187,22 +188,24 @@ export function AgentProfileBanner({ agent }: AgentProfileBannerProps) {
 
           {/* Contact + Visit Website */}
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <a
-              href={agent.email ? `mailto:${agent.email}` : "#contact"}
+            <Button
+              asChild
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-secondary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-secondary/90 transition-colors"
             >
-              Contact Agent
-            </a>
-            {agent.website_url && (
-              <a
-                href={agent.website_url.startsWith("http") ? agent.website_url : `https://${agent.website_url}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-secondary bg-transparent px-6 py-3 text-sm font-medium text-primary hover:bg-secondary/10 transition-colors"
-              >
-                <Globe className="h-4 w-4 shrink-0" aria-hidden />
-                Visit Website
+              <a href="#contact">
+                Contact Agent
               </a>
+            </Button>
+            {agent.website_url && (
+              <Button
+                asChild
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-secondary bg-transparent px-6 py-3 text-sm font-medium text-primary transition-colors"
+              >
+                <a href={agent.website_url.startsWith("http") ? agent.website_url : `https://${agent.website_url}`} target="_blank" rel="noopener noreferrer">
+                  <Globe className="h-4 w-4 shrink-0" aria-hidden />
+                  Visit Website
+                </a>
+              </Button>
             )}
           </div>
         </div>

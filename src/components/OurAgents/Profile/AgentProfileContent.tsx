@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Send, Award } from "lucide-react";
+import { Send, Award, ArrowRight } from "lucide-react";
 import { PropertyTypeDistributionChart } from "./PropertyTypeDistributionChart";
 import { AgentRatingReviews } from "./AgentRatingReviews";
 import { AgentServiceAreasMap } from "./AgentServiceAreasMap";
@@ -14,6 +14,9 @@ import type {
   AgentFeaturedListing,
   AgentReview,
 } from "@prisma/client";
+import { getBlogPosts } from "@/data/data";
+import BlogCard from "@/components/Home/Blogs/BlogCard";
+import FAQ, { type FaqItem } from "@/components/common/FAQ/FAQ";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -90,7 +93,25 @@ const MOCK_AWARDS_RECOGNITIONS = [
 export function AgentProfileContent({ agent }: AgentProfileContentProps) {
   const router = useRouter();
   const [showAllAreas, setShowAllAreas] = useState(false);
+  const [contactHighlight, setContactHighlight] = useState(false);
+  const contactSectionRef = useRef<HTMLDivElement>(null);
   const areas = agent.service_areas ?? [];
+
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const checkHash = () => {
+      if (typeof window === "undefined" || window.location.hash !== "#contact") return;
+      contactSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setContactHighlight(true);
+      timeoutId = setTimeout(() => setContactHighlight(false), 2500);
+    };
+    checkHash();
+    window.addEventListener("hashchange", checkHash);
+    return () => {
+      window.removeEventListener("hashchange", checkHash);
+      clearTimeout(timeoutId);
+    };
+  }, []);
   const displayedAreas = showAllAreas
     ? areas
     : areas.slice(0, AREAS_DISPLAY_LIMIT);
@@ -173,10 +194,15 @@ export function AgentProfileContent({ agent }: AgentProfileContentProps) {
           </div>
 
           {/* Right column: Contact form + Badge */}
-          <div className="space-y-6">
-            {agent.allow_contact_form && (
-              <ContactForm agentName={agent.full_name} agentId={agent.id} />
-            )}
+          <div
+            id="contact"
+            ref={contactSectionRef}
+            className={`scroll-mt-24 transition-shadow duration-500 rounded-2xl ${contactHighlight ? "ring-2 ring-primary ring-offset-4 shadow-lg shadow-primary/20" : ""}`}
+          >
+            <div className="space-y-6">
+              {agent.allow_contact_form && (
+                <ContactForm agentName={agent.full_name} agentId={agent.id} />
+              )}
             {/* {agent.verified_agent && (
               <div className="rounded-2xl price-card-gradient p-6 text-white shadow-lg">
                 <div className="flex items-start gap-4">
@@ -210,6 +236,7 @@ export function AgentProfileContent({ agent }: AgentProfileContentProps) {
               >
                 <Link href="/homeowner">Get your home value</Link>
               </Button>
+            </div>
             </div>
           </div>
         </div>
@@ -265,10 +292,95 @@ export function AgentProfileContent({ agent }: AgentProfileContentProps) {
             </div>
           )}
         </div>
+
+        {/* Blog section */}
+        {(() => {
+          const bySearch = getBlogPosts({ search: "real estate" }).slice(0, 3);
+          const blogPosts =
+            bySearch.length > 0 ? bySearch : getBlogPosts().slice(0, 3);
+          if (blogPosts.length === 0) {
+            return null;
+          }
+          return (
+            <div className="mt-14 pt-10 border-t border-border">
+              <h2 className="text-2xl font-semibold text-foreground mb-2">
+                Latest News & Insights
+              </h2>
+              <p className="text-muted-foreground text-sm mb-6">
+                Stay informed with the latest real estate news and expert advice.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {blogPosts.map((blog) => (
+                  <BlogCard key={blog.id} blog={blog} />
+                ))}
+              </div>
+              <div className="mt-6">
+                <Link
+                  href="/blogs"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
+                >
+                  View all articles
+                  <ArrowRight className="h-4 w-4" aria-hidden />
+                </Link>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* FAQ section */}
+        <div className="mt-14 pt-10 border-t border-border">
+          <FAQ
+            initialFaqs={AGENT_FAQ_ITEMS}
+            heading="Frequently asked questions"
+            subheading="FAQ"
+            description="Common questions about working with your agent and the buying or selling process."
+            showLoadMore={false}
+            className="!py-0 !px-0 max-w-none"
+          />
+        </div>
       </div>
     </section>
   );
 }
+
+const AGENT_FAQ_ITEMS: FaqItem[] = [
+  {
+    id: "agent-1",
+    question: "How do I contact this agent?",
+    answer:
+      "Use the contact form on this page to send a message directly to the agent. You can also call or email using the details shown in their profile. They typically respond within 24–48 hours.",
+  },
+  {
+    id: "agent-2",
+    question: "Is there a fee to work with this agent?",
+    answer:
+      "Buyer representation is typically free for buyers—the agent’s commission is usually paid by the seller. For sellers, commission is agreed in the listing agreement. Ask the agent for details specific to your situation.",
+  },
+  {
+    id: "agent-3",
+    question: "What areas does this agent cover?",
+    answer:
+      "Service areas are listed on this profile. You can also view the map to see where this agent is active. They can often assist with nearby areas—reach out to confirm availability for your location.",
+  },
+  {
+    id: "agent-4",
+    question: "How do I schedule a property viewing?",
+    answer:
+      "Submit an inquiry through the contact form or call/email the agent. Mention the listing address or type of property you’re interested in, and they will arrange a viewing at a time that works for you.",
+  },
+  {
+    id: "agent-5",
+    question: "Can this agent help me both buy and sell?",
+    answer:
+      "Yes. Most agents assist with both buying and selling. Indicate your purpose (buy, sell, or both) in the contact form so they can tailor their response and next steps.",
+  },
+  {
+    id: "agent-6",
+    question: "What should I prepare before contacting an agent?",
+    answer:
+      "It helps to have an idea of your budget, preferred areas, and must-haves (e.g. bedrooms, type of property). For sellers, rough details about your current home and timeline are useful. The agent can guide you from there.",
+  },
+];
 
 function RecentExperienceSection() {
   const [showAllCities, setShowAllCities] = useState(false);
