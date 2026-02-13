@@ -117,6 +117,8 @@ export default function EditAgentPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [profilePreviewError, setProfilePreviewError] = useState(false);
+  const [coverPreviewError, setCoverPreviewError] = useState(false);
   // Single source of truth: null until API returns; then form data. Form only renders when this is set.
   const [formData, setFormData] = useState<FormShape | null>(null);
 
@@ -134,6 +136,14 @@ export default function EditAgentPage() {
       }
     }
   }, [status, session, router]);
+
+  // Reset image preview error when URL changes so we retry loading
+  useEffect(() => {
+    setProfilePreviewError(false);
+  }, [formData?.profile_image]);
+  useEffect(() => {
+    setCoverPreviewError(false);
+  }, [formData?.cover_image]);
 
   // Fetch agent when slug is available and only when it's a different agent (same pattern as pre-con edit)
   useEffect(() => {
@@ -537,17 +547,21 @@ export default function EditAgentPage() {
                 </Button>
               </div>
               {formData.profile_image && (
-                <div className="relative border rounded-lg overflow-hidden w-24 h-24 border-border">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={formData.profile_image}
-                    alt="Profile preview"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = "none";
-                    }}
-                  />
+                <div className="relative border rounded-lg overflow-hidden w-24 h-24 border-border bg-muted/30 flex items-center justify-center">
+                  {!profilePreviewError && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={formData.profile_image}
+                      alt="Profile preview"
+                      className="w-full h-full object-cover absolute inset-0"
+                      onError={() => setProfilePreviewError(true)}
+                    />
+                  )}
+                  {profilePreviewError && (
+                    <span className="text-xs text-center text-muted-foreground p-1" aria-live="polite">
+                      Preview unavailable
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -582,17 +596,21 @@ export default function EditAgentPage() {
                 </Button>
               </div>
               {formData.cover_image && (
-                <div className="relative border rounded-lg overflow-hidden max-w-xs aspect-video border-border">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={formData.cover_image}
-                    alt="Cover preview"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = "none";
-                    }}
-                  />
+                <div className="relative border rounded-lg overflow-hidden max-w-xs aspect-video border-border bg-muted/30 flex items-center justify-center">
+                  {!coverPreviewError && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={formData.cover_image}
+                      alt="Cover preview"
+                      className="w-full h-full object-cover absolute inset-0"
+                      onError={() => setCoverPreviewError(true)}
+                    />
+                  )}
+                  {coverPreviewError && (
+                    <span className="text-xs text-center text-muted-foreground p-2" aria-live="polite">
+                      Preview unavailable
+                    </span>
+                  )}
                 </div>
               )}
             </div>

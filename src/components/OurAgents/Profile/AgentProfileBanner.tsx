@@ -18,9 +18,11 @@ interface AgentProfileBannerProps {
 }
 
 
+const FALLBACK_AVATAR = "/images/agents/no-avatar.png";
+
 export function AgentProfileBanner({ agent }: AgentProfileBannerProps) {
   const [imageError, setImageError] = useState(false);
-  const showImage = agent.profile_image && !imageError;
+  const profileImageSrc = agent.profile_image && !imageError ? agent.profile_image : FALLBACK_AVATAR;
   const stats = agent.stats;
   const social = agent.social_links;
 
@@ -41,26 +43,16 @@ export function AgentProfileBanner({ agent }: AgentProfileBannerProps) {
 
         {/* Left: agent photo */}
         <div className="relative md:min-h-0 h-[35rem] bg-muted/20">
-          {showImage ? (
-            <Image
-              src={agent.profile_image!}
-              alt={agent.full_name}
-              fill
-              className="object-cover object-top"
-              sizes="(max-width: 768px) 100vw, 45vw"
-              onError={() => setImageError(true)}
-              unoptimized={agent.profile_image?.startsWith("/images/")}
-              priority
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-6xl font-semibold text-white/40">
-              {agent.full_name
-                .split(" ")
-                .map((n) => n[0])
-                .join("")
-                .slice(0, 2)}
-            </div>
-          )}
+          <Image
+            src={profileImageSrc}
+            alt={agent.full_name}
+            fill
+            className="object-cover object-top"
+            sizes="(max-width: 768px) 100vw, 45vw"
+            onError={() => setImageError(true)}
+            unoptimized={profileImageSrc.startsWith("/images/")}
+            priority
+          />
         </div>
 
         {/* Right: dark teal panel */}

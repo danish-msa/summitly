@@ -22,7 +22,7 @@ export function RentalLeaseAgreementsContent() {
         subheading="Latest news"
         description="Tips and updates for landlords and property managers."
         limit={3}
-        viewAllLink="/blogs"
+        viewAllLink="/news"
         showViewAll
       />
     </>

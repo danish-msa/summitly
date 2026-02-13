@@ -306,7 +306,7 @@ const Nav = ({ openNav }: Props) => {
                 </RentalsMegaMenu>
 
                 {/* News & Insights Link */}
-                <Link href="/blogs">
+                <Link href="/news">
                   <motion.div
                     className="px-4 py-2 text-base font-medium text-foreground hover:text-primary hover:font-semibold transition-colors rounded-lg"
                     initial={{ opacity: 0, y: -20 }}

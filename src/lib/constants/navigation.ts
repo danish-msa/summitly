@@ -39,7 +39,7 @@ export const navLinks = [
         { id: 71, label: 'About Us', url: '/about' },
         { id: 72, label: 'Contact us', url: '/contact' },
         { id: 73, label: 'FAQs', url: '/faqs' },
-        { id: 74, label: 'Blogs', url: '/blogs' },
+        { id: 74, label: 'News', url: '/news' },
       ],
     },
 ];

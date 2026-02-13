@@ -26,7 +26,7 @@ const Blogs = () => {
                 <Button 
                     variant="outline" 
                     className="group flex items-center gap-2 px-6 py-3 text-primary border-primary hover:bg-primary hover:text-white transition-all duration-300"
-                    onClick={() => window.location.href = '/blogs'}
+                    onClick={() => window.location.href = '/news'}
                 >
                     Show All Blogs
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />

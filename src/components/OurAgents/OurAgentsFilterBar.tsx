@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Search, MapPin } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,29 +11,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 
 const ALL_VALUE = "__all__";
-const TYPE_ALL = "__all__";
-const VERIFIED_ALL = "__all__";
-const VERIFIED_ONLY = "verified";
-const VERIFIED_NOT = "not_verified";
 
-export { ALL_VALUE, TYPE_ALL, VERIFIED_ALL, VERIFIED_ONLY, VERIFIED_NOT };
+export { ALL_VALUE };
 
 interface OurAgentsFilterBarProps {
   searchValue: string;
   onSearchChange: (value: string) => void;
-  locationValue: string;
-  onLocationChange: (value: string) => void;
   languageValue: string;
   onLanguageChange: (value: string) => void;
   specializationValue: string;
   onSpecializationChange: (value: string) => void;
-  typeValue: string;
-  onTypeChange: (value: string) => void;
-  verifiedValue: string;
-  onVerifiedChange: (value: string) => void;
   languageOptions: string[];
   specializationOptions: string[];
   onClear: () => void;
@@ -43,16 +32,10 @@ interface OurAgentsFilterBarProps {
 export default function OurAgentsFilterBar({
   searchValue,
   onSearchChange,
-  locationValue,
-  onLocationChange,
   languageValue,
   onLanguageChange,
   specializationValue,
   onSpecializationChange,
-  typeValue,
-  onTypeChange,
-  verifiedValue,
-  onVerifiedChange,
   languageOptions,
   specializationOptions,
   onClear,
@@ -60,11 +43,8 @@ export default function OurAgentsFilterBar({
 }: OurAgentsFilterBarProps) {
   const hasFilters =
     searchValue.trim() !== "" ||
-    locationValue.trim() !== "" ||
     (languageValue !== "" && languageValue !== ALL_VALUE) ||
-    (specializationValue !== "" && specializationValue !== ALL_VALUE) ||
-    (typeValue !== "" && typeValue !== TYPE_ALL) ||
-    (verifiedValue !== "" && verifiedValue !== VERIFIED_ALL);
+    (specializationValue !== "" && specializationValue !== ALL_VALUE);
 
   return (
     <div>
@@ -83,21 +63,6 @@ export default function OurAgentsFilterBar({
               className="h-[2.75rem] min-h-[2.75rem] py-2 rounded-lg border border-border bg-background pr-4"
               style={{ paddingLeft: "2.5rem" }}
               aria-label="Search agents by name"
-            />
-          </div>
-          <div className="relative flex-1 min-w-0">
-            <MapPin
-              className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none shrink-0"
-              aria-hidden
-            />
-            <Input
-              type="search"
-              placeholder="City or zip..."
-              value={locationValue}
-              onChange={(e) => onLocationChange(e.target.value)}
-              className="h-[2.75rem] min-h-[2.75rem] py-2 rounded-lg border border-border bg-background pr-4"
-              style={{ paddingLeft: "2.5rem" }}
-              aria-label="Search by location (city or zip)"
             />
           </div>
         </div>
@@ -127,29 +92,6 @@ export default function OurAgentsFilterBar({
                 {spec}
               </SelectItem>
             ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={typeValue || TYPE_ALL} onValueChange={onTypeChange}>
-          <SelectTrigger className="w-full sm:w-[160px] h-[2.75rem] min-h-[2.75rem] py-0 rounded-lg border border-border">
-            <SelectValue placeholder="Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={TYPE_ALL}>All Types</SelectItem>
-            <SelectItem value="RESIDENTIAL">Residential</SelectItem>
-            <SelectItem value="COMMERCIAL">Commercial</SelectItem>
-            <SelectItem value="BOTH">Both</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={verifiedValue || VERIFIED_ALL} onValueChange={onVerifiedChange}>
-          <SelectTrigger className="w-full sm:w-[180px] h-[2.75rem] min-h-[2.75rem] py-0 rounded-lg border border-border">
-            <SelectValue placeholder="Verified" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={VERIFIED_ALL}>All Agents</SelectItem>
-            <SelectItem value={VERIFIED_ONLY}>Verified only</SelectItem>
-            <SelectItem value={VERIFIED_NOT}>Not verified</SelectItem>
           </SelectContent>
         </Select>
 

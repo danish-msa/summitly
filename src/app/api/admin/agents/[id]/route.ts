@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/api/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { isAdmin } from "@/lib/roles";
+import { isOurStorageUrl, toDirectS3UrlIfNeeded, uploadImageFromUrl } from "@/lib/s3";
 
 const AGENT_TABLE_MISSING_MESSAGE =
   "Agent tables are not created yet. Run: npm run prisma:agents:schema (or execute prisma/migrations/add_agent_schema.sql on your database).";
@@ -72,8 +73,8 @@ export async function GET(
         email: agent.email != null ? String(agent.email) : "",
         phone: agent.phone != null ? String(agent.phone) : "",
         website_url: agent.website_url != null ? String(agent.website_url) : "",
-        profile_image: agent.profile_image != null ? String(agent.profile_image) : "",
-        cover_image: agent.cover_image != null ? String(agent.cover_image) : "",
+        profile_image: toDirectS3UrlIfNeeded(agent.profile_image) ?? (agent.profile_image != null ? String(agent.profile_image) : ""),
+        cover_image: toDirectS3UrlIfNeeded(agent.cover_image) ?? (agent.cover_image != null ? String(agent.cover_image) : ""),
         about_agent: agent.about_agent != null ? String(agent.about_agent) : "",
         tagline: agent.tagline != null ? String(agent.tagline) : "",
         primary_focus: agent.primary_focus != null ? String(agent.primary_focus) : "",
@@ -198,6 +199,34 @@ export async function PATCH(
       }
     }
 
+    // Upload external profile/cover image URLs to our S3 when provided
+    let profileImage: string | null | undefined =
+      body.profile_image != null ? (String(body.profile_image).trim() || null) : undefined;
+    let coverImage: string | null | undefined =
+      body.cover_image != null ? (String(body.cover_image).trim() || null) : undefined;
+    if (profileImage && !isOurStorageUrl(profileImage)) {
+      try {
+        profileImage = await uploadImageFromUrl(profileImage, "profile");
+      } catch (e) {
+        console.error("Agent profile_image upload from URL failed:", e);
+        return NextResponse.json(
+          { error: "Could not fetch and store profile image. Check the URL is public and try again." },
+          { status: 400 }
+        );
+      }
+    }
+    if (coverImage && !isOurStorageUrl(coverImage)) {
+      try {
+        coverImage = await uploadImageFromUrl(coverImage, "cover");
+      } catch (e) {
+        console.error("Agent cover_image upload from URL failed:", e);
+        return NextResponse.json(
+          { error: "Could not fetch and store cover image. Check the URL is public and try again." },
+          { status: 400 }
+        );
+      }
+    }
+
     await prisma.agent.update({
       where: { id },
       data: {
@@ -210,8 +239,8 @@ export async function PATCH(
         email: body.email != null ? (String(body.email).trim() || null) : undefined,
         phone: body.phone != null ? (String(body.phone).trim() || null) : undefined,
         website_url: body.website_url != null ? (String(body.website_url).trim() || null) : undefined,
-        profile_image: body.profile_image != null ? (String(body.profile_image).trim() || null) : undefined,
-        cover_image: body.cover_image != null ? (String(body.cover_image).trim() || null) : undefined,
+        profile_image: profileImage,
+        cover_image: coverImage,
         about_agent: body.about_agent != null ? (String(body.about_agent).trim() || null) : undefined,
         tagline: body.tagline != null ? (String(body.tagline).trim() || null) : undefined,
         primary_focus: body.primary_focus != null ? (String(body.primary_focus).trim() || null) : undefined,
@@ -334,6 +363,53 @@ export async function PATCH(
     console.error("Admin agents PATCH [id] error:", error);
     return NextResponse.json(
       { error: "Failed to update agent" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE - Remove agent (admin only); related records are removed by DB cascade
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const auth = await getAuthenticatedUser(_request);
+    if (!auth?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!isAdmin(auth.user.role)) {
+      return NextResponse.json(
+        { error: "Forbidden - Admin access required" },
+        { status: 403 }
+      );
+    }
+
+    const { id: identifier } = await params;
+    const existing = await prisma.agent.findFirst({
+      where: {
+        OR: [{ id: identifier }, { slug: identifier }],
+      },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Agent not found" }, { status: 404 });
+    }
+
+    await prisma.agent.delete({
+      where: { id: existing.id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    if (isAgentTableMissing(error)) {
+      return NextResponse.json(
+        { error: AGENT_TABLE_MISSING_MESSAGE },
+        { status: 503 }
+      );
+    }
+    console.error("Admin agents DELETE [id] error:", error);
+    return NextResponse.json(
+      { error: "Failed to delete agent" },
       { status: 500 }
     );
   }

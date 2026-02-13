@@ -87,11 +87,13 @@ function ActionLinkButton({
   );
 }
 
+const FALLBACK_AVATAR = "/images/agents/no-avatar.png";
+
 export default function AgentCard({ agent }: AgentCardProps) {
   const socialMedia = agent.socialMedia ?? {};
   const displaySpecs = agent.specializations.slice(0, 2);
   const [imageError, setImageError] = useState(false);
-  const showImage = agent.image && !imageError;
+  const imageSrc = agent.image && !imageError ? agent.image : FALLBACK_AVATAR;
 
   return (
     <Link
@@ -100,25 +102,15 @@ export default function AgentCard({ agent }: AgentCardProps) {
       aria-label={`View ${agent.name}'s profile`}
     >
       <div className="relative overflow-hidden rounded-2xl h-[300px]">
-        {showImage ? (
-          <Image
-            src={agent.image!}
-            alt={agent.name}
-            fill
-            className="rounded-2xl object-cover transition-transform duration-500 group-hover:scale-110"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            onError={() => setImageError(true)}
-            unoptimized={agent.image?.startsWith("/images/")}
-          />
-        ) : (
-          <div className="absolute inset-0 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground text-2xl font-semibold">
-            {agent.name
-              .split(" ")
-              .map((n) => n[0])
-              .join("")
-              .slice(0, 2)}
-          </div>
-        )}
+        <Image
+          src={imageSrc}
+          alt={agent.name}
+          fill
+          className="rounded-2xl object-cover transition-transform duration-500 group-hover:scale-110"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          onError={() => setImageError(true)}
+          unoptimized={imageSrc.startsWith("/images/")}
+        />
         <div className="absolute bottom-0 z-10 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
           <div className="flex gap-2 justify-center">
             {socialMedia.facebook && (

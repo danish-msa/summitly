@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Pencil, Plus, Search } from "lucide-react";
+import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { isAdmin } from "@/lib/roles";
 
 interface AgentRow {
@@ -43,6 +43,7 @@ export default function AdminAgentsPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const limit = 10;
 
   useEffect(() => {
@@ -83,6 +84,24 @@ export default function AdminAgentsPage() {
       setAgents([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (agent: AgentRow) => {
+    if (!confirm(`Delete agent "${agent.full_name}"? This cannot be undone.`)) return;
+    setDeletingId(agent.id);
+    try {
+      const res = await fetch(`/api/admin/agents/${agent.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to delete agent");
+      }
+      await fetchAgents();
+    } catch (e) {
+      console.error(e);
+      alert(e instanceof Error ? e.message : "Failed to delete agent");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -215,6 +234,17 @@ export default function AdminAgentsPage() {
                             <Link href={`/our-agents/${agent.slug}`} target="_blank">
                               View
                             </Link>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => handleDelete(agent)}
+                            disabled={deletingId === agent.id}
+                            aria-label={`Delete ${agent.full_name}`}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-1" aria-hidden />
+                            {deletingId === agent.id ? "Deleting..." : "Delete"}
                           </Button>
                         </td>
                       </tr>

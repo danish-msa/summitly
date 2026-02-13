@@ -2,13 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import OurAgentsBanner from "@/components/OurAgents/OurAgentsBanner";
-import OurAgentsFilterBar, {
-  ALL_VALUE,
-  TYPE_ALL,
-  VERIFIED_ALL,
-  VERIFIED_ONLY,
-  VERIFIED_NOT,
-} from "@/components/OurAgents/OurAgentsFilterBar";
+import OurAgentsFilterBar, { ALL_VALUE } from "@/components/OurAgents/OurAgentsFilterBar";
 import AgentCard from "@/components/OurAgents/AgentCard";
 import type { AgentListItem } from "@/lib/types/agents";
 import type { FindRealtorAgentsParams } from "./types";
@@ -21,9 +15,7 @@ function filterAgents(
   agents: AgentListItem[],
   search: string,
   language: string,
-  specialization: string,
-  type: string,
-  verified: string
+  specialization: string
 ): AgentListItem[] {
   return agents.filter((a) => {
     const searchNorm = normalize(search);
@@ -44,11 +36,6 @@ function filterAgents(
       )
     )
       return false;
-    if (type && type !== TYPE_ALL && a.agent_type !== type) return false;
-    if (verified && verified !== VERIFIED_ALL) {
-      if (verified === VERIFIED_ONLY && !a.verified_agent) return false;
-      if (verified === VERIFIED_NOT && a.verified_agent) return false;
-    }
     return true;
   });
 }
@@ -60,14 +47,6 @@ function getInitialSearchFromSegment(segment: string): string {
     return segment.replace("agentname-", "").replace(/-/g, " ");
   }
   return segment;
-}
-
-/** Map URL agenttype segment to filter value (e.g. agenttype-all -> ""). */
-function getInitialTypeFromSegment(segment: string): string {
-  if (!segment || segment === "agenttype-all") return "";
-  const v = segment.replace("agenttype-", "").toUpperCase();
-  if (v === "RESIDENTIAL" || v === "COMMERCIAL" || v === "BOTH") return v;
-  return "";
 }
 
 export default function FindRealtorAgentsResults({
@@ -82,13 +61,8 @@ export default function FindRealtorAgentsResults({
   const [search, setSearch] = useState(() =>
     getInitialSearchFromSegment(searchSegment)
   );
-  const [location, setLocation] = useState("");
   const [language, setLanguage] = useState("");
   const [specialization, setSpecialization] = useState("");
-  const [type, setType] = useState(() =>
-    getInitialTypeFromSegment(agenttype)
-  );
-  const [verified, setVerified] = useState("");
 
   useEffect(() => {
     const fetchAgents = async () => {
@@ -124,25 +98,14 @@ export default function FindRealtorAgentsResults({
   }, [agents]);
 
   const filteredAgents = useMemo(
-    () =>
-      filterAgents(
-        agents,
-        search,
-        language,
-        specialization,
-        type,
-        verified
-      ),
-    [agents, search, language, specialization, type, verified]
+    () => filterAgents(agents, search, language, specialization),
+    [agents, search, language, specialization]
   );
 
   const clearFilters = () => {
     setSearch("");
-    setLocation("");
     setLanguage("");
     setSpecialization("");
-    setType("");
-    setVerified("");
   };
 
   const handleLanguageChange = (value: string) => {
@@ -150,12 +113,6 @@ export default function FindRealtorAgentsResults({
   };
   const handleSpecializationChange = (value: string) => {
     setSpecialization(value === ALL_VALUE ? "" : value);
-  };
-  const handleTypeChange = (value: string) => {
-    setType(value === TYPE_ALL ? "" : value);
-  };
-  const handleVerifiedChange = (value: string) => {
-    setVerified(value === VERIFIED_ALL ? "" : value);
   };
 
   return (
@@ -166,16 +123,10 @@ export default function FindRealtorAgentsResults({
         <OurAgentsFilterBar
           searchValue={search}
           onSearchChange={setSearch}
-          locationValue={location}
-          onLocationChange={setLocation}
           languageValue={language || ALL_VALUE}
           onLanguageChange={handleLanguageChange}
           specializationValue={specialization || ALL_VALUE}
           onSpecializationChange={handleSpecializationChange}
-          typeValue={type || TYPE_ALL}
-          onTypeChange={handleTypeChange}
-          verifiedValue={verified || VERIFIED_ALL}
-          onVerifiedChange={handleVerifiedChange}
           languageOptions={languageOptions}
           specializationOptions={specializationOptions}
           onClear={clearFilters}

@@ -35,7 +35,7 @@ interface BlogSectionProps {
   limit?: number;
   
   /**
-   * URL for "View All" button (default: '/blogs' with category query param if category is provided)
+   * URL for "View All" button (default: '/news' with category query param if category is provided)
    */
   viewAllLink?: string;
   
@@ -80,8 +80,8 @@ const BlogSection: React.FC<BlogSectionProps> = ({
 
   // Generate view all link if not provided
   const defaultViewAllLink = category 
-    ? `/blogs?category=${encodeURIComponent(category)}`
-    : '/blogs';
+    ? `/news?category=${encodeURIComponent(category)}`
+    : '/news';
 
   const finalViewAllLink = viewAllLink || defaultViewAllLink;
 

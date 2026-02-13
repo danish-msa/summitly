@@ -2,6 +2,7 @@ import React from "react";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+import { toDirectS3UrlIfNeeded } from "@/lib/s3";
 import { AgentProfileBanner, AgentProfileContent } from "@/components/OurAgents/Profile";
 
 interface AgentProfilePageProps {
@@ -44,10 +45,16 @@ export default async function AgentProfilePage({ params }: AgentProfilePageProps
 
   if (!agent) notFound();
 
+  const agentWithDirectImageUrls = {
+    ...agent,
+    profile_image: toDirectS3UrlIfNeeded(agent.profile_image) ?? agent.profile_image,
+    cover_image: toDirectS3UrlIfNeeded(agent.cover_image) ?? agent.cover_image,
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <AgentProfileBanner agent={agent} />
-      <AgentProfileContent agent={agent} />
+      <AgentProfileBanner agent={agentWithDirectImageUrls} />
+      <AgentProfileContent agent={agentWithDirectImageUrls} />
     </div>
   );
 }

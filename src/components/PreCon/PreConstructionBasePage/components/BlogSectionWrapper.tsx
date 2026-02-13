@@ -39,14 +39,14 @@ export const BlogSectionWrapper: React.FC<BlogSectionWrapperProps> = ({
 
   const getViewAllLink = () => {
     if (pageType === 'by-location') {
-      return `/blogs?category=Pre-construction&search=${encodeURIComponent(displayTitle)}`;
+      return `/news?category=Pre-construction&search=${encodeURIComponent(displayTitle)}`;
     } else if (pageType === 'status') {
       const statusSlug = slug.toLowerCase();
-      return `/blogs?category=Pre-construction&search=${encodeURIComponent(statusSlug)}`;
+      return `/news?category=Pre-construction&search=${encodeURIComponent(statusSlug)}`;
     } else if (pageType === 'propertyType' || pageType === 'subPropertyType' || pageType === 'completionYear') {
-      return `/blogs?category=Pre-construction&search=${encodeURIComponent(displayTitle)}`;
+      return `/news?category=Pre-construction&search=${encodeURIComponent(displayTitle)}`;
     }
-    return '/blogs?category=Pre-construction';
+    return '/news?category=Pre-construction';
   };
 
   return (

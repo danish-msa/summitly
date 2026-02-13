@@ -125,7 +125,7 @@ export const MoreMegaMenu: React.FC<MoreMegaMenuProps> = ({
           id: 'blogs',
           label: 'Blogs',
           description: 'Real estate insights & news',
-          href: '/blogs',
+          href: '/news',
           icon: BookOpen,
         },
       ],

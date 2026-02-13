@@ -255,7 +255,7 @@ export const RentMegaMenu: React.FC<RentMegaMenuProps> = ({
                   {displayBlogs.map((blog) => (
                     <Link
                       key={blog.id}
-                      href={`/blogs?id=${blog.id}`}
+                      href={`/news?id=${blog.id}`}
                       className="block group"
                     >
                       <div className="flex gap-3 p-2 hover:bg-background rounded-lg transition-colors">
@@ -283,7 +283,7 @@ export const RentMegaMenu: React.FC<RentMegaMenuProps> = ({
                   ))}
                 </div>
                 <Link
-                  href="/blogs"
+                  href="/news"
                   className="inline-flex items-center gap-1 mt-4 text-xs font-semibold text-primary hover:underline"
                 >
                   View all articles

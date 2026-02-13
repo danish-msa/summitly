@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { isOurStorageUrl, toDirectS3UrlIfNeeded } from "@/lib/s3";
 import type { AgentListItem } from "@/lib/types/agents";
 
 export const dynamic = "force-dynamic";
@@ -13,11 +14,17 @@ export async function GET() {
       include: { social_links: true },
     });
 
-    const agents: AgentListItem[] = rows.map((a) => ({
+    const agents: AgentListItem[] = rows.map((a) => {
+      const rawImage = a.profile_image ?? null;
+      const image =
+        rawImage && (isOurStorageUrl(rawImage) || rawImage.startsWith("/"))
+          ? (toDirectS3UrlIfNeeded(rawImage) ?? rawImage)
+          : null;
+      return {
       id: a.id,
       slug: a.slug,
       name: a.full_name,
-      image: a.profile_image ?? null,
+      image,
       email: a.email ?? null,
       title: a.job_title,
       specializations: a.property_specialties ?? [],
@@ -33,7 +40,8 @@ export async function GET() {
             linkedin: a.social_links.linkedin ?? undefined,
           }
         : undefined,
-    }));
+    };
+    });
 
     return NextResponse.json({ agents });
   } catch (error) {

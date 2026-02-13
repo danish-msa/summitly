@@ -3,6 +3,7 @@ import { getAuthenticatedUser } from "@/lib/api/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { isAdmin } from "@/lib/roles";
 import { Prisma } from "@prisma/client";
+import { isOurStorageUrl, uploadImageFromUrl } from "@/lib/s3";
 
 const AGENT_TABLE_MISSING_MESSAGE =
   "Agent tables are not created yet. Run: npm run prisma:agents:schema (or execute prisma/migrations/add_agent_schema.sql on your database).";
@@ -159,6 +160,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Upload external profile/cover image URLs to our S3 so we own the asset and avoid next/image host issues
+    let profileImage = body.profile_image ? String(body.profile_image).trim() || null : null;
+    let coverImage = body.cover_image ? String(body.cover_image).trim() || null : null;
+    if (profileImage && !isOurStorageUrl(profileImage)) {
+      try {
+        profileImage = await uploadImageFromUrl(profileImage, "profile");
+      } catch (e) {
+        console.error("Agent profile_image upload from URL failed:", e);
+        return NextResponse.json(
+          { error: "Could not fetch and store profile image. Check the URL is public and try again." },
+          { status: 400 }
+        );
+      }
+    }
+    if (coverImage && !isOurStorageUrl(coverImage)) {
+      try {
+        coverImage = await uploadImageFromUrl(coverImage, "cover");
+      } catch (e) {
+        console.error("Agent cover_image upload from URL failed:", e);
+        return NextResponse.json(
+          { error: "Could not fetch and store cover image. Check the URL is public and try again." },
+          { status: 400 }
+        );
+      }
+    }
+
     const agent = await prisma.agent.create({
       data: {
         first_name: firstName,
@@ -170,8 +197,8 @@ export async function POST(request: NextRequest) {
         email: body.email ? String(body.email).trim() || null : null,
         phone: body.phone ? String(body.phone).trim() || null : null,
         website_url: body.website_url ? String(body.website_url).trim() || null : null,
-        profile_image: body.profile_image ? String(body.profile_image).trim() || null : null,
-        cover_image: body.cover_image ? String(body.cover_image).trim() || null : null,
+        profile_image: profileImage,
+        cover_image: coverImage,
         about_agent: body.about_agent ? String(body.about_agent).trim() || null : null,
         tagline: body.tagline ? String(body.tagline).trim() || null : null,
         primary_focus: body.primary_focus ? String(body.primary_focus).trim() || null : null,

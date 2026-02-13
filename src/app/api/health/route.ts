@@ -29,10 +29,10 @@ export async function GET() {
     },
     environment: {
       hasDatabaseUrl: !!process.env.DATABASE_URL,
-      hasS3AccessKey: !!process.env.S3_ACCESS_KEY_ID,
-      hasS3SecretKey: !!process.env.S3_SECRET_ACCESS_KEY,
-      hasS3Region: !!process.env.S3_REGION,
-      hasS3Bucket: !!process.env.S3_BUCKET,
+      hasS3AccessKey: !!(process.env.S3_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID),
+      hasS3SecretKey: !!(process.env.S3_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY),
+      hasS3Region: !!(process.env.S3_REGION || process.env.AWS_REGION),
+      hasS3Bucket: !!(process.env.S3_BUCKET || process.env.AWS_S3_BUCKET),
       nodeEnv: process.env.NODE_ENV || 'unknown',
     },
   }

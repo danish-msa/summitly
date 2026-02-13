@@ -31,7 +31,7 @@ export const BlogSectionWrapper: React.FC<BlogSectionWrapperProps> = ({
   };
 
   const getViewAllLink = () => {
-    return "/blogs?search=" + encodeURIComponent(displayTitle);
+    return "/news?search=" + encodeURIComponent(displayTitle);
   };
 
   return (

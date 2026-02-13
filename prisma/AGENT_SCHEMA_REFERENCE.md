@@ -29,8 +29,8 @@ This document maps your agent fields (from the ChatGPT spec) to the Prisma model
 | full_name | `full_name` | |
 | job_title | `job_title` | |
 | agent_type | `agent_type` | Enum: COMMERCIAL, RESIDENTIAL, BOTH |
-| profile_image | `profile_image` | URL or asset ID |
-| cover_image | `cover_image` | Optional |
+| profile_image | `profile_image` | Full image URL (String, optional). On create/update, external URLs are fetched and stored in S3; the saved value is the S3 URL. |
+| cover_image | `cover_image` | Full image URL (String, optional). Same as profile_image — external URLs are uploaded to S3 and the stored value is the S3 URL. |
 | slug | `slug` | Unique, e.g. "david-cohen" |
 | sort_order | `sort_order` | Int for display order |
 

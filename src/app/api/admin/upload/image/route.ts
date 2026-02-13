@@ -59,9 +59,9 @@ export async function POST(request: NextRequest) {
     const fileName = `${timestamp}-${randomString}.${fileExtension}`
 
     // Validate AWS S3 configuration
-    if (!process.env.S3_ACCESS_KEY_ID || !process.env.S3_SECRET_ACCESS_KEY) {
+    if (!(process.env.S3_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID) || !(process.env.S3_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY)) {
       return NextResponse.json(
-        { error: 'AWS S3 is not configured. Please set S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY environment variables.' },
+        { error: 'AWS S3 is not configured. Set S3_ACCESS_KEY_ID/S3_SECRET_ACCESS_KEY or AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY.' },
         { status: 500 }
       )
     }

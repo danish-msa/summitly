@@ -82,7 +82,13 @@ export default function NewAgentPage() {
     }
   }, [status, session, router]);
 
-  // Auto-fill slug from first + last name (or full name) as the user types, e.g. "John" + "Doe" → "john-doe"
+  // Auto-fill Full name from first + last as the user types
+  useEffect(() => {
+    const derived = `${form.first_name} ${form.last_name}`.trim();
+    setForm((f) => (f.full_name === derived ? f : { ...f, full_name: derived }));
+  }, [form.first_name, form.last_name]);
+
+  // Auto-fill slug from full name (or first + last) as the user types, e.g. "John Doe" → "john-doe"
   useEffect(() => {
     const name = form.full_name.trim() || `${form.first_name} ${form.last_name}`.trim();
     if (!name) return;

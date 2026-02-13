@@ -316,7 +316,7 @@ export function AgentProfileContent({ agent }: AgentProfileContentProps) {
               </div>
               <div className="mt-6">
                 <Link
-                  href="/blogs"
+                  href="/news"
                   className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
                 >
                   View all articles
