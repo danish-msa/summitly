@@ -51,6 +51,7 @@ export async function GET(
         social_links: true,
         stats: true,
         service_areas: true,
+        reviews: { orderBy: { createdAt: "desc" } },
       },
     });
 
@@ -109,6 +110,13 @@ export async function GET(
               twitter: "",
               youtube: "",
             },
+        reviews: (agent.reviews ?? []).map((r) => ({
+          id: r.id,
+          reviewer_name: r.reviewer_name,
+          rating: r.rating,
+          review_text: r.review_text,
+          createdAt: r.createdAt,
+        })),
       },
     };
     return NextResponse.json(payload);

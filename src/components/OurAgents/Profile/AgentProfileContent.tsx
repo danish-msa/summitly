@@ -17,6 +17,7 @@ import type {
 import { getBlogPosts } from "@/data/data";
 import BlogCard from "@/components/Home/Blogs/BlogCard";
 import FAQ, { type FaqItem } from "@/components/common/FAQ/FAQ";
+import { DEFAULT_ABOUT_AGENT } from "@/lib/constants/agents";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -127,21 +128,19 @@ export function AgentProfileContent({ agent }: AgentProfileContentProps) {
           {/* Left column */}
           <div className="space-y-10">
             {/* About */}
-            {(agent.about_agent || agent.tagline) && (
-              <div>
-                <h2 className="text-2xl font-semibold text-foreground mb-3">
-                  About {agent.first_name}
-                </h2>
-                {agent.tagline && (
-                  <p className="text-muted-foreground mb-2 font-medium">
-                    {agent.tagline}
-                  </p>
-                )}
-                <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                  {agent.about_agent ?? ""}
+            <div>
+              <h2 className="text-2xl font-semibold text-foreground mb-3">
+                About {agent.first_name}
+              </h2>
+              {agent.tagline && (
+                <p className="text-muted-foreground mb-2 font-medium">
+                  {agent.tagline}
                 </p>
-              </div>
-            )}
+              )}
+              <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                {(agent.about_agent?.trim() || DEFAULT_ABOUT_AGENT)}
+              </p>
+            </div>
 
 
             {/* Featured Listings */}

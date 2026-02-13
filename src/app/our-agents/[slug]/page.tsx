@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { toDirectS3UrlIfNeeded } from "@/lib/s3";
+import { DEFAULT_ABOUT_AGENT } from "@/lib/constants/agents";
 import { AgentProfileBanner, AgentProfileContent } from "@/components/OurAgents/Profile";
 
 interface AgentProfilePageProps {
@@ -19,8 +20,9 @@ export async function generateMetadata({
   });
   if (!agent) return { title: "Agent Not Found | Our Agents" };
   const name = agent.full_name;
+  const aboutText = (agent.about_agent?.trim() || DEFAULT_ABOUT_AGENT).slice(0, 160);
   const description =
-    agent.about_agent?.slice(0, 160) ||
+    aboutText ||
     `${agent.job_title} at Summitly. View ${name}'s profile and contact information.`;
   return {
     title: `${name} | Our Agents`,

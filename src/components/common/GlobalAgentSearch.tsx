@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -44,6 +44,7 @@ export default function GlobalAgentSearch({
   onAgentSelect,
   onSubmit,
 }: GlobalAgentSearchProps) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [agents, setAgents] = useState<AgentListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,7 +78,7 @@ export default function GlobalAgentSearch({
   }, [agents, query]);
 
   const showDropdown =
-    isOpen && (isFocused || query.length > 0) && (loading || suggestions.length > 0 || query.length >= 1);
+    isOpen && (loading || suggestions.length > 0 || query.length >= 1);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -90,9 +91,10 @@ export default function GlobalAgentSearch({
   }, []);
 
   const handleSelectAgent = (agent: AgentListItem) => {
-    onAgentSelect?.(agent);
-    setQuery("");
+    setQuery(agent.name);
     setIsOpen(false);
+    onAgentSelect?.(agent);
+    router.push(`/our-agents/${agent.slug}`);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -193,10 +195,14 @@ function AgentSuggestionItem({
 
   return (
     <li role="option">
-      <Link
-        href={`/our-agents/${agent.slug}`}
-        onClick={onSelect}
-        className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-b-0 transition-colors text-left"
+      <button
+        type="button"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onSelect();
+        }}
+        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-b-0 transition-colors text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-inset cursor-pointer"
         aria-label={`View ${agent.name}, ${agent.title}`}
       >
         <span className="relative h-12 w-12 shrink-0 rounded-full overflow-hidden bg-slate-100">
@@ -230,7 +236,7 @@ function AgentSuggestionItem({
             </div>
           )}
         </div>
-      </Link>
+      </button>
     </li>
   );
 }

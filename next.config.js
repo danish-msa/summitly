@@ -75,6 +75,18 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'i2.wp.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.wp.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
     // Configure image qualities for Next.js 16 compatibility
     qualities: [75, 100],

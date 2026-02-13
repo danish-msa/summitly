@@ -1,0 +1,6 @@
+/** Default "About agent" text shown when the agent has no custom about/bio. */
+export const DEFAULT_ABOUT_AGENT = `Buying or selling a home is a big decision, and you deserve someone who keeps it simple, honest, and organized. My role is to protect your time, your money, and your peace of mind — with clear advice, quick communication, and a plan that fits your situation (not a one-size-fits-all script). You'll always know what's happening, what your options are, and what the next step should be.
+
+I take the time to understand what matters most to you, then guide you through the process in a way that feels calm and clear. From pricing and timing to showings, marketing, offers, and negotiations, I focus on the details that protect you and the strategy that gets results. I'll point out risks early, explain numbers in plain language, and help you make confident decisions without feeling rushed.
+
+Whether you're buying, selling, investing, or leasing, you'll get straightforward answers and support you can count on. I'm honest about what I'm seeing in the market, I'm proactive when things change, and I'm always in your corner. If you want a no-pressure conversation to start, reach out and tell me what you're trying to do — I'll help you map out the best way to get there.`;

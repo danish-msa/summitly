@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-export default function BlogsRedirectPage({
+export default async function BlogsRedirectPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

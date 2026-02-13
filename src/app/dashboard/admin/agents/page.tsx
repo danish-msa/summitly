@@ -198,7 +198,7 @@ export default function AdminAgentsPage() {
                   <thead>
                     <tr className="border-b bg-muted/50">
                       <th className="text-left p-3 font-medium">Name</th>
-                      <th className="text-left p-3 font-medium">Job title</th>
+                      <th className="text-left p-3 font-medium">Agent Role</th>
                       <th className="text-left p-3 font-medium">Type</th>
                       <th className="text-left p-3 font-medium">Status</th>
                       <th className="text-left p-3 font-medium">Slug</th>

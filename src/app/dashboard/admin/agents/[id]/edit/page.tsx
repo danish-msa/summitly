@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
   Select,
   SelectContent,
@@ -17,8 +18,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronLeft, Loader2, X } from "lucide-react";
+import { ChevronLeft, Loader2, X, Trash2, Star } from "lucide-react";
 import { isAdmin } from "@/lib/roles";
+import { DEFAULT_ABOUT_AGENT } from "@/lib/constants/agents";
 
 function isImageUrl(text: string): boolean {
   const t = text.trim();
@@ -38,6 +40,24 @@ function toSlug(s: string): string {
     || "";
 }
 
+const SPECIALIZATION_OPTIONS = ["Residential", "Commercial", "Pre-Construction"] as const;
+
+const SECTIONS = [
+  { id: "basic", label: "Basic Info" },
+  { id: "engagement", label: "CTA & Engagement" },
+  { id: "stats", label: "Stats" },
+  { id: "social", label: "Social Links" },
+  { id: "reviews", label: "Testimonials" },
+];
+
+type AgentReviewItem = {
+  id: string;
+  reviewer_name: string;
+  rating: number;
+  review_text: string;
+  createdAt: string;
+};
+
 type FormShape = {
   first_name: string;
   last_name: string;
@@ -55,7 +75,7 @@ type FormShape = {
   tagline: string;
   primary_focus: string;
   industry_role: string;
-  property_specialties: string;
+  property_specialties: string[];
   languages_spoken: string;
   status: "ACTIVE" | "INACTIVE";
   allow_contact_form: boolean;
@@ -90,7 +110,7 @@ const emptyForm: FormShape = {
   tagline: "",
   primary_focus: "",
   industry_role: "",
-  property_specialties: "",
+  property_specialties: [],
   languages_spoken: "",
   status: "ACTIVE",
   allow_contact_form: true,
@@ -121,8 +141,19 @@ export default function EditAgentPage() {
   const [coverPreviewError, setCoverPreviewError] = useState(false);
   // Single source of truth: null until API returns; then form data. Form only renders when this is set.
   const [formData, setFormData] = useState<FormShape | null>(null);
+  const [reviewsList, setReviewsList] = useState<AgentReviewItem[]>([]);
+  const [newReview, setNewReview] = useState({
+    reviewer_name: "",
+    rating: 5,
+    review_text: "",
+  });
+  const [addingReview, setAddingReview] = useState(false);
+  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
 
   const loadedSlugRef = useRef<string | null>(null);
+  const [openSections, setOpenSections] = useState<string[]>(["basic", "engagement", "stats", "social", "reviews"]);
+  const [sidebarWidth, setSidebarWidth] = useState(0);
+  const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -136,6 +167,29 @@ export default function EditAgentPage() {
       }
     }
   }, [status, session, router]);
+
+  useEffect(() => {
+    const updateSidebarWidth = () => {
+      const sidebar = document.querySelector('[data-sidebar], .sidebar, [class*="sidebar"]') as HTMLElement;
+      if (sidebar) setSidebarWidth(sidebar.offsetWidth);
+      else {
+        const mainContainer = document.querySelector("main")?.parentElement;
+        if (mainContainer) {
+          const sidebarElement = mainContainer.querySelector("[class*=\"w-\"]") as HTMLElement;
+          if (sidebarElement && sidebarElement !== mainContainer.querySelector("main")?.parentElement) {
+            setSidebarWidth(sidebarElement.offsetWidth);
+          }
+        }
+      }
+    };
+    updateSidebarWidth();
+    window.addEventListener("resize", updateSidebarWidth);
+    const interval = setInterval(updateSidebarWidth, 200);
+    return () => {
+      window.removeEventListener("resize", updateSidebarWidth);
+      clearInterval(interval);
+    };
+  }, []);
 
   // Reset image preview error when URL changes so we retry loading
   useEffect(() => {
@@ -201,11 +255,17 @@ export default function EditAgentPage() {
         website_url: String(agent.website_url ?? "").trim(),
         profile_image: String(agent.profile_image ?? "").trim(),
         cover_image: String(agent.cover_image ?? "").trim(),
-        about_agent: String(agent.about_agent ?? "").trim(),
+        about_agent: (String(agent.about_agent ?? "").trim() || DEFAULT_ABOUT_AGENT),
         tagline: String(agent.tagline ?? "").trim(),
         primary_focus: String(agent.primary_focus ?? "").trim(),
         industry_role: String(agent.industry_role ?? "").trim(),
-        property_specialties: Array.isArray(specs) ? specs.map((s) => String(s).trim()).filter(Boolean).join(", ") : "",
+        property_specialties: Array.isArray(specs)
+          ? specs
+              .map((s) => String(s).trim())
+              .filter((s): s is (typeof SPECIALIZATION_OPTIONS)[number] =>
+                (SPECIALIZATION_OPTIONS as readonly string[]).includes(s)
+              )
+          : [],
         languages_spoken: Array.isArray(langs) ? langs.map((l) => String(l).trim()).filter(Boolean).join(", ") : "",
         status: (agent.status === "INACTIVE" ? "INACTIVE" : "ACTIVE") as "ACTIVE" | "INACTIVE",
         allow_contact_form: agent.allow_contact_form !== false,
@@ -224,6 +284,8 @@ export default function EditAgentPage() {
       };
 
       setFormData(nextForm);
+      const reviews = (agent as { reviews?: AgentReviewItem[] }).reviews ?? [];
+      setReviewsList(Array.isArray(reviews) ? reviews : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load agent");
     } finally {
@@ -235,6 +297,65 @@ export default function EditAgentPage() {
     if (!formData) return;
     const name = formData.full_name.trim() || `${formData.first_name} ${formData.last_name}`.trim();
     if (name && !formData.slug) setFormData((f) => (f ? { ...f, slug: toSlug(name) } : f));
+  };
+
+  const navigateToSection = (section: string) => {
+    if (!openSections.includes(section)) {
+      setOpenSections((prev) => [...prev, section]);
+    }
+    setTimeout(() => {
+      const element = sectionRefs.current[section];
+      if (element) element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  };
+
+  const handleAddReview = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!slug || !newReview.reviewer_name.trim() || !newReview.review_text.trim()) return;
+    setAddingReview(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/agents/${encodeURIComponent(slug)}/reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reviewer_name: newReview.reviewer_name.trim(),
+          rating: newReview.rating,
+          review_text: newReview.review_text.trim(),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed to add review");
+      if (data.review) {
+        setReviewsList((prev) => [data.review, ...prev]);
+        setNewReview({ reviewer_name: "", rating: 5, review_text: "" });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add review");
+    } finally {
+      setAddingReview(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!slug) return;
+    setDeletingReviewId(reviewId);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/admin/agents/${encodeURIComponent(slug)}/reviews/${encodeURIComponent(reviewId)}`,
+        { method: "DELETE" }
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to delete review");
+      }
+      setReviewsList((prev) => prev.filter((r) => r.id !== reviewId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete review");
+    } finally {
+      setDeletingReviewId(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -267,10 +388,7 @@ export default function EditAgentPage() {
           tagline: formData.tagline.trim() || null,
           primary_focus: formData.primary_focus.trim() || null,
           industry_role: formData.industry_role.trim() || null,
-          property_specialties: formData.property_specialties
-            .split(/[,;]/)
-            .map((s) => s.trim())
-            .filter(Boolean),
+          property_specialties: formData.property_specialties,
           languages_spoken: formData.languages_spoken
             .split(/[,;]/)
             .map((s) => s.trim())
@@ -354,7 +472,7 @@ export default function EditAgentPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative pb-24 mt-16">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/dashboard/admin/agents">
@@ -369,18 +487,55 @@ export default function EditAgentPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="mb-4 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+          <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
             {error}
           </div>
         )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Agent details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div
+          className="fixed z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b shadow-sm"
+          style={{ top: "64px", left: `${sidebarWidth}px`, right: "0px" }}
+        >
+          <div className="px-6 py-4">
+            <div className="flex flex-wrap gap-2 justify-center">
+              {SECTIONS.map((section) => (
+                <Button
+                  key={section.id}
+                  type="button"
+                  variant={openSections.includes(section.id) ? "default" : "outline"}
+                  onClick={() => navigateToSection(section.id)}
+                  className="rounded-lg"
+                >
+                  {section.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <Accordion
+          type="multiple"
+          value={openSections}
+          onValueChange={setOpenSections}
+          className="space-y-4"
+        >
+          <div ref={(el) => { sectionRefs.current["basic"] = el }}>
+            <AccordionItem value="basic">
+              <AccordionTrigger className="container text-lg font-semibold px-6">
+                Basic Information
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-6 container">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Agent details</CardTitle>
+                      <CardDescription>
+                        Name, role, contact, images, and profile content.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="first_name">First name *</Label>
@@ -422,7 +577,7 @@ export default function EditAgentPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="job_title">Job title *</Label>
+                <Label htmlFor="job_title">Agent Role *</Label>
                 <Input
                   id="job_title"
                   value={formData.job_title}
@@ -662,19 +817,38 @@ export default function EditAgentPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="property_specialties">
-                Property specialties (comma-separated)
-              </Label>
-              <Input
-                id="property_specialties"
-                value={formData.property_specialties}
-                onChange={(e) =>
-                  setFormData((f) => (f ? {
-                    ...f,
-                    property_specialties: e.target.value,
-                  } : f))
-                }
-              />
+              <Label>Specialization</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Select all that apply
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {SPECIALIZATION_OPTIONS.map((opt) => (
+                  <label
+                    key={opt}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.property_specialties.includes(opt)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setFormData((f) =>
+                          f
+                            ? {
+                                ...f,
+                                property_specialties: checked
+                                  ? [...f.property_specialties, opt]
+                                  : f.property_specialties.filter((s) => s !== opt),
+                              }
+                            : f
+                        );
+                      }}
+                      className="rounded border-input"
+                    />
+                    <span className="text-sm">{opt}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -713,16 +887,27 @@ export default function EditAgentPage() {
                 </SelectContent>
               </Select>
             </div>
-          </CardContent>
-        </Card>
+                    </CardContent>
+                  </Card>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </div>
 
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle>CTA &amp; engagement</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Contact form, reviews, response time, and verified badge.
-            </p>
-          </CardHeader>
+          <div ref={(el) => { sectionRefs.current["engagement"] = el }}>
+            <AccordionItem value="engagement">
+              <AccordionTrigger className="container text-lg font-semibold px-6">
+                CTA &amp; Engagement
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-6 container">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>CTA &amp; engagement</CardTitle>
+                      <CardDescription>
+                        Contact form, reviews, response time, and verified badge.
+                      </CardDescription>
+                    </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap items-center gap-6">
               <label className="flex items-center gap-2 cursor-pointer">
@@ -770,148 +955,328 @@ export default function EditAgentPage() {
                 placeholder="e.g. Within 24 hours"
               />
             </div>
-          </CardContent>
-        </Card>
+                    </CardContent>
+                  </Card>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </div>
 
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle>Stats</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Years of experience, properties sold, active listings.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="years_experience">Years experience</Label>
-                <Input
-                  id="years_experience"
-                  type="number"
-                  min={0}
-                  value={formData.years_experience}
-                  onChange={(e) =>
-                    setFormData((f) => (f ? { ...f, years_experience: e.target.value } : f))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="total_properties_sold">Total properties sold</Label>
-                <Input
-                  id="total_properties_sold"
-                  type="number"
-                  min={0}
-                  value={formData.total_properties_sold}
-                  onChange={(e) =>
-                    setFormData((f) => (f ? { ...f, total_properties_sold: e.target.value } : f))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="active_listings_count">Active listings count</Label>
-                <Input
-                  id="active_listings_count"
-                  type="number"
-                  min={0}
-                  value={formData.active_listings_count}
-                  onChange={(e) =>
-                    setFormData((f) => (f ? { ...f, active_listings_count: e.target.value } : f))
-                  }
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="service_areas">Areas served (comma-separated)</Label>
-              <Input
-                id="service_areas"
-                value={formData.service_areas}
-                onChange={(e) =>
-                  setFormData((f) => (f ? { ...f, service_areas: e.target.value } : f))
+          <div ref={(el) => { sectionRefs.current["stats"] = el }}>
+            <AccordionItem value="stats">
+              <AccordionTrigger className="container text-lg font-semibold px-6">
+                Stats
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-6 container">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Stats</CardTitle>
+                      <CardDescription>
+                        Years of experience, properties sold, active listings, areas served.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="years_experience">Years experience</Label>
+                          <Input
+                            id="years_experience"
+                            type="number"
+                            min={0}
+                            value={formData.years_experience}
+                            onChange={(e) =>
+                              setFormData((f) => (f ? { ...f, years_experience: e.target.value } : f))
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="total_properties_sold">Total properties sold</Label>
+                          <Input
+                            id="total_properties_sold"
+                            type="number"
+                            min={0}
+                            value={formData.total_properties_sold}
+                            onChange={(e) =>
+                              setFormData((f) => (f ? { ...f, total_properties_sold: e.target.value } : f))
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="active_listings_count">Active listings count</Label>
+                          <Input
+                            id="active_listings_count"
+                            type="number"
+                            min={0}
+                            value={formData.active_listings_count}
+                            onChange={(e) =>
+                              setFormData((f) => (f ? { ...f, active_listings_count: e.target.value } : f))
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="service_areas">Areas served (comma-separated)</Label>
+                        <Input
+                          id="service_areas"
+                          value={formData.service_areas}
+                          onChange={(e) =>
+                            setFormData((f) => (f ? { ...f, service_areas: e.target.value } : f))
+                          }
+                          placeholder="e.g. Toronto, Mississauga, Brampton"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </div>
+
+          <div ref={(el) => { sectionRefs.current["reviews"] = el }}>
+            <AccordionItem value="reviews">
+              <AccordionTrigger className="container text-lg font-semibold px-6">
+                Testimonials / Reviews
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-6 container">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Testimonials / Reviews</CardTitle>
+                      <CardDescription>
+                        Add or remove reviews shown on the agent&apos;s public profile.
+                      </CardDescription>
+                    </CardHeader>
+          <CardContent className="space-y-6">
+            <div
+              className="space-y-4 p-4 rounded-lg border border-border bg-muted/30"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleAddReview();
                 }
-                placeholder="e.g. Toronto, Mississauga, Brampton"
-              />
+              }}
+            >
+              <h3 className="text-sm font-semibold">Add a review</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new_review_name">Reviewer name</Label>
+                  <Input
+                    id="new_review_name"
+                    value={newReview.reviewer_name}
+                    onChange={(e) =>
+                      setNewReview((r) => ({ ...r, reviewer_name: e.target.value }))
+                    }
+                    placeholder="e.g. John Smith"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new_review_rating">Rating (1–5)</Label>
+                  <Select
+                    value={String(newReview.rating)}
+                    onValueChange={(v) =>
+                      setNewReview((r) => ({ ...r, rating: parseInt(v, 10) }))
+                    }
+                  >
+                    <SelectTrigger id="new_review_rating">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <SelectItem key={n} value={String(n)}>
+                          {n} {n === 1 ? "star" : "stars"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new_review_text">Review text</Label>
+                <Textarea
+                  id="new_review_text"
+                  value={newReview.review_text}
+                  onChange={(e) =>
+                    setNewReview((r) => ({ ...r, review_text: e.target.value }))
+                  }
+                  rows={3}
+                  placeholder="What did the client say?"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={addingReview}
+                onClick={() => handleAddReview()}
+              >
+                {addingReview ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" aria-hidden />
+                    Adding…
+                  </>
+                ) : (
+                  "Add review"
+                )}
+              </Button>
             </div>
-          </CardContent>
-        </Card>
 
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle>Social links (optional)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="linkedin">LinkedIn</Label>
-                <Input
-                  id="linkedin"
-                  type="url"
-                  value={formData.linkedin}
-                  onChange={(e) =>
-                    setFormData((f) => (f ? { ...f, linkedin: e.target.value } : f))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="facebook">Facebook</Label>
-                <Input
-                  id="facebook"
-                  type="url"
-                  value={formData.facebook}
-                  onChange={(e) =>
-                    setFormData((f) => (f ? { ...f, facebook: e.target.value } : f))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="instagram">Instagram</Label>
-                <Input
-                  id="instagram"
-                  type="url"
-                  value={formData.instagram}
-                  onChange={(e) =>
-                    setFormData((f) => (f ? { ...f, instagram: e.target.value } : f))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="twitter">Twitter</Label>
-                <Input
-                  id="twitter"
-                  type="url"
-                  value={formData.twitter}
-                  onChange={(e) =>
-                    setFormData((f) => (f ? { ...f, twitter: e.target.value } : f))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="youtube">YouTube</Label>
-                <Input
-                  id="youtube"
-                  type="url"
-                  value={formData.youtube}
-                  onChange={(e) =>
-                    setFormData((f) => (f ? { ...f, youtube: e.target.value } : f))
-                  }
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="mt-6 flex gap-3">
-          <Button type="submit" disabled={submitting}>
-            {submitting ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Saving...
-              </>
+            {reviewsList.length > 0 ? (
+              <ul className="space-y-3">
+                {reviewsList.map((review) => (
+                  <li
+                    key={review.id}
+                    className="flex items-start gap-3 p-4 rounded-lg border border-border bg-background"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-sm">{review.reviewer_name}</span>
+                        <span className="flex items-center gap-0.5 text-amber-600" aria-label={`${review.rating} stars`}>
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`h-4 w-4 ${i < review.rating ? "fill-amber-500" : "fill-muted"}`}
+                              aria-hidden
+                            />
+                          ))}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                        {review.review_text}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="shrink-0 text-destructive hover:text-destructive"
+                      onClick={() => handleDeleteReview(review.id)}
+                      disabled={deletingReviewId === review.id}
+                      aria-label={`Delete review by ${review.reviewer_name}`}
+                    >
+                      {deletingReviewId === review.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                      ) : (
+                        <Trash2 className="h-4 w-4" aria-hidden />
+                      )}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
             ) : (
-              "Save changes"
+              <p className="text-sm text-muted-foreground">No reviews yet. Add one above.</p>
             )}
-          </Button>
-          <Button type="button" variant="outline" asChild>
-            <Link href="/dashboard/admin/agents">Cancel</Link>
-          </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </div>
+
+          <div ref={(el) => { sectionRefs.current["social"] = el }}>
+            <AccordionItem value="social">
+              <AccordionTrigger className="container text-lg font-semibold px-6">
+                Social Links
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-6 container">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Social links (optional)</CardTitle>
+                      <CardDescription>
+                        LinkedIn, Facebook, Instagram, Twitter, YouTube.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="linkedin">LinkedIn</Label>
+                          <Input
+                            id="linkedin"
+                            type="url"
+                            value={formData.linkedin}
+                            onChange={(e) =>
+                              setFormData((f) => (f ? { ...f, linkedin: e.target.value } : f))
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="facebook">Facebook</Label>
+                          <Input
+                            id="facebook"
+                            type="url"
+                            value={formData.facebook}
+                            onChange={(e) =>
+                              setFormData((f) => (f ? { ...f, facebook: e.target.value } : f))
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="instagram">Instagram</Label>
+                          <Input
+                            id="instagram"
+                            type="url"
+                            value={formData.instagram}
+                            onChange={(e) =>
+                              setFormData((f) => (f ? { ...f, instagram: e.target.value } : f))
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="twitter">Twitter</Label>
+                          <Input
+                            id="twitter"
+                            type="url"
+                            value={formData.twitter}
+                            onChange={(e) =>
+                              setFormData((f) => (f ? { ...f, twitter: e.target.value } : f))
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="youtube">YouTube</Label>
+                          <Input
+                            id="youtube"
+                            type="url"
+                            value={formData.youtube}
+                            onChange={(e) =>
+                              setFormData((f) => (f ? { ...f, youtube: e.target.value } : f))
+                            }
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </div>
+        </Accordion>
+
+        <div className="h-24" />
+
+        <div
+          className="fixed bottom-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t shadow-lg"
+          style={{ left: `${sidebarWidth}px`, right: "0px" }}
+        >
+          <div className="px-6 py-4">
+            <div className="flex justify-between gap-4 max-w-7xl mx-auto items-center">
+              <Button type="button" variant="outline" asChild>
+                <Link href="/dashboard/admin/agents">Cancel</Link>
+              </Button>
+              <div className="flex-1" />
+              <Button type="submit" disabled={submitting} className="min-w-[120px]">
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" aria-hidden />
+                    Saving...
+                  </>
+                ) : (
+                  "Save changes"
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
       </form>
     </div>
