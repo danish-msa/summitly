@@ -14,11 +14,24 @@ import type {
   AgentFeaturedListing,
   AgentReview,
 } from "@prisma/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectWithLabel,
+} from "@/components/ui/select";
 
 type AgentWithContent = Agent & {
   service_areas: AgentServiceArea[];
   featured_listings: AgentFeaturedListing[];
   reviews?: AgentReview[] | null;
+  /** Awards and recognitions (optional; add to schema/API when ready) */
+  awards_recognitions?: string[] | null;
 };
 
 interface AgentProfileContentProps {
@@ -65,6 +78,15 @@ const MOCK_TOP_CITIES = [
   { city: "Brampton", percentage: 7 },
 ];
 
+// Mock data for Awards and Recognitions (when agent has none from backend)
+const MOCK_AWARDS_RECOGNITIONS = [
+  "Top 1% Producer – Regional Sales Award",
+  "RE/MAX Platinum Club – 5+ Years",
+  "CREA Certified Professional (CP)",
+  "Best in Client Satisfaction – Toronto Board",
+  "Million Dollar Club – 2022 & 2023",
+];
+
 export function AgentProfileContent({ agent }: AgentProfileContentProps) {
   const router = useRouter();
   const [showAllAreas, setShowAllAreas] = useState(false);
@@ -80,7 +102,7 @@ export function AgentProfileContent({ agent }: AgentProfileContentProps) {
   return (
     <section className="bg-background py-10 sm:py-14">
       <div className="container-1400 mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_450px] gap-8 lg:gap-12">
           {/* Left column */}
           <div className="space-y-10">
             {/* About */}
@@ -100,24 +122,6 @@ export function AgentProfileContent({ agent }: AgentProfileContentProps) {
               </div>
             )}
 
-            {/* Languages Spoken */}
-            {agent.languages_spoken?.length > 0 && (
-              <div>
-                <h2 className="text-2xl font-semibold text-foreground mb-3">
-                  Languages Spoken
-                </h2>
-                <div className="flex flex-wrap gap-2">
-                  {agent.languages_spoken.map((lang) => (
-                    <span
-                      key={lang}
-                      className="inline-flex items-center rounded-lg bg-muted px-3 py-1.5 text-sm text-foreground"
-                    >
-                      {lang}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Featured Listings */}
             <div>
@@ -140,33 +144,32 @@ export function AgentProfileContent({ agent }: AgentProfileContentProps) {
               )}
             </div>
 
-            {/* Areas served */}
-            {areas.length > 0 && (
-              <div>
-                <h2 className="text-2xl font-semibold text-foreground mb-3">
-                  Areas served
-                </h2>
-                <div className="flex flex-wrap gap-2">
-                  {displayedAreas.map((a) => (
-                    <span
-                      key={a.id}
-                      className="inline-flex items-center rounded-lg bg-muted px-3 py-1.5 text-sm text-foreground"
-                    >
-                      {a.area_name}
-                    </span>
-                  ))}
-                  {hasMoreAreas && !showAllAreas && (
-                    <button
-                      type="button"
-                      onClick={() => setShowAllAreas(true)}
-                      className="inline-flex items-center rounded-lg bg-primary/10 text-primary px-3 py-1.5 text-sm font-medium hover:bg-primary/20 transition-colors"
-                    >
-                      See all {areas.length} areas…
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
+            {/* Awards and Recognitions */}
+            <div>
+              <h2 className="text-2xl font-semibold text-foreground mb-3">
+                Awards and Recognitions
+              </h2>
+              {(() => {
+                const items = (agent.awards_recognitions?.length ?? 0) > 0
+                  ? agent.awards_recognitions!
+                  : MOCK_AWARDS_RECOGNITIONS;
+                return (
+                  <ul className="space-y-4" aria-label="Awards and recognitions">
+                    {items.map((item, index) => (
+                      <li
+                        key={index}
+                        className="flex items-start gap-3 rounded-lg shadow-sm bg-muted/30 px-4 py-3 text-sm text-foreground"
+                      >
+                        <Award className="h-5 w-5 shrink-0 text-primary mt-0.5" aria-hidden />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                );
+              })()}
+            </div>
+
+            
           </div>
 
           {/* Right column: Contact form + Badge */}
@@ -174,7 +177,7 @@ export function AgentProfileContent({ agent }: AgentProfileContentProps) {
             {agent.allow_contact_form && (
               <ContactForm agentName={agent.full_name} agentId={agent.id} />
             )}
-            {agent.verified_agent && (
+            {/* {agent.verified_agent && (
               <div className="rounded-2xl price-card-gradient p-6 text-white shadow-lg">
                 <div className="flex items-start gap-4">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20">
@@ -191,12 +194,28 @@ export function AgentProfileContent({ agent }: AgentProfileContentProps) {
                   </div>
                 </div>
               </div>
-            )}
+            )} */}
+
+            {/* How much is your home worth? CTA */}
+            <div className="rounded-2xl price-card-gradient border border-border p-6 shadow-sm">
+              <h3 className="text-lg font-semibold text-white">
+                How much is your home worth?
+              </h3>
+              <p className="mt-2 text-sm text-white">
+                Get a free, no-obligation estimate of your home&apos;s value. See what similar properties are selling for and plan your next move with confidence.
+              </p>
+              <Button
+                asChild
+                className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <Link href="/homeowner">Get your home value</Link>
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Recent Experience - full width below */}
-        <RecentExperienceSection />
+        {/* Recent Experience - hidden for now */}
+        {false && <RecentExperienceSection />}
 
         {/* Service areas map - boundaries + properties */}
         {(agent.service_areas?.length ?? 0) > 0 && (
@@ -211,9 +230,6 @@ export function AgentProfileContent({ agent }: AgentProfileContentProps) {
           <AgentRatingReviews
             overallRating={agent.overall_rating}
             totalReviewsCount={agent.total_reviews_count}
-            allowReviews={agent.allow_reviews}
-            agentId={agent.id}
-            onReviewSubmitted={() => router.refresh()}
           />
           {/* Testimonials from reviews (real or 3 mocks when none) */}
           {(agent.reviews?.length ?? 0) > 0 ? (
@@ -347,27 +363,41 @@ function ContactForm({
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
     "idle"
   );
+  const [iAmA, setIAmA] = useState("");
+  const [planningTimeline, setPlanningTimeline] = useState("");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!iAmA.trim() || !planningTimeline.trim()) {
+      setStatus("error");
+      return;
+    }
     setStatus("sending");
     const form = e.currentTarget;
     const fd = new FormData(form);
+    const firstName = (fd.get("firstName") as string)?.trim() ?? "";
+    const lastName = (fd.get("lastName") as string)?.trim() ?? "";
     try {
       const res = await fetch("/api/contact-agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           agentId,
-          name: fd.get("name"),
+          firstName,
+          lastName,
+          name: `${firstName} ${lastName}`.trim(),
           email: fd.get("email"),
           phone: fd.get("phone"),
+          iAmA: iAmA.trim(),
+          planningTimeline: planningTimeline.trim(),
           message: fd.get("message"),
         }),
       });
       if (res.ok) {
         setStatus("sent");
         form.reset();
+        setIAmA("");
+        setPlanningTimeline("");
       } else {
         setStatus("error");
       }
@@ -389,73 +419,96 @@ function ContactForm({
           Message sent. We&apos;ll get back to you soon.
         </p>
       ) : (
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="contact-name" className="sr-only">
-                Your Name
-              </label>
-              <input
-                id="contact-name"
-                name="name"
-                type="text"
-                required
-                placeholder="Your Name"
-                className="w-full rounded-lg border border-input bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              />
-            </div>
-            <div>
-              <label htmlFor="contact-email" className="sr-only">
-                Email
-              </label>
-              <input
-                id="contact-email"
-                name="email"
-                type="email"
-                required
-                placeholder="your@email.com"
-                className="w-full rounded-lg border border-input bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              />
-            </div>
-          </div>
-          <div>
-            <label htmlFor="contact-phone" className="sr-only">
-              Phone (Optional)
-            </label>
-            <input
-              id="contact-phone"
-              name="phone"
-              type="tel"
-              placeholder="+1 (555) 000-0000"
-              className="w-full rounded-lg border border-input bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
-          </div>
-          <div>
-            <label htmlFor="contact-message" className="sr-only">
-              Message
-            </label>
-            <textarea
-              id="contact-message"
-              name="message"
-              rows={4}
+        <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <Input
+              id="contact-first-name"
+              name="firstName"
+              type="text"
               required
-              placeholder={`Hi ${agentName}, I'm interested in...`}
-              className="w-full rounded-lg border border-input bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
+              label="First Name"
+            />
+            <Input
+              id="contact-last-name"
+              name="lastName"
+              type="text"
+              required
+              label="Last Name"
             />
           </div>
+          <Input
+            id="contact-email"
+            name="email"
+            type="email"
+            required
+            label="Email"
+          />
+          <Input
+            id="contact-phone"
+            name="phone"
+            type="tel"
+            label="Phone (optional)"
+          />
+          <SelectWithLabel
+            label="I am a"
+            value={iAmA}
+            onValueChange={setIAmA}
+            required
+          >
+            <SelectTrigger id="contact-i-am-a">
+              <SelectValue placeholder="" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Buyer">Buyer</SelectItem>
+              <SelectItem value="Seller">Seller</SelectItem>
+              <SelectItem value="Buyer & Seller">Buyer & Seller</SelectItem>
+              <SelectItem value="Tenant">Tenant</SelectItem>
+              <SelectItem value="Landlord">Landlord</SelectItem>
+              <SelectItem value="Other">Other</SelectItem>
+            </SelectContent>
+          </SelectWithLabel>
+          <SelectWithLabel
+            label="When are you planning to Buy or Sell?"
+            value={planningTimeline}
+            onValueChange={setPlanningTimeline}
+            required
+          >
+            <SelectTrigger id="contact-planning-timeline">
+              <SelectValue placeholder="" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ASAP">ASAP</SelectItem>
+              <SelectItem value="Within 1 month">Within 1 month</SelectItem>
+              <SelectItem value="1-3 months">1-3 months</SelectItem>
+              <SelectItem value="3-6 months">3-6 months</SelectItem>
+              <SelectItem value="6+ months">6+ months</SelectItem>
+              <SelectItem value="Just exploring">Just exploring</SelectItem>
+            </SelectContent>
+          </SelectWithLabel>
+          <Textarea
+            id="contact-message"
+            name="message"
+            rows={4}
+            required
+            label="Message"
+          />
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            By submitting this form, you agree to be contacted by this agent or their team regarding your inquiry. Your information will not be shared with third parties for marketing purposes.
+          </p>
           {status === "error" && (
             <p className="text-sm text-destructive">
               Something went wrong. Please try again.
             </p>
           )}
-          <button
+          <Button
             type="submit"
             disabled={status === "sending"}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 transition-colors"
+            size="lg"
+            className="w-full sm:w-auto"
           >
             <Send className="h-4 w-4" aria-hidden />
             {status === "sending" ? "Sending…" : "Send Message"}
-          </button>
+          </Button>
         </form>
       )}
     </div>

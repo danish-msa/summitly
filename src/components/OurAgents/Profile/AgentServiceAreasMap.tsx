@@ -136,10 +136,10 @@ export function AgentServiceAreasMap({
   return (
     <div className={className}>
       <h2 className="text-2xl font-semibold text-foreground mb-2">
-        Service areas
+        Agent's Properties
       </h2>
       <p className="text-muted-foreground text-sm mb-4">
-        Areas this agent serves. Properties shown within these boundaries.
+        Properties shown within these boundaries.
       </p>
       <div className="relative rounded-xl overflow-hidden border border-border bg-card shadow-sm h-[400px] sm:h-[450px]">
         {loading && (

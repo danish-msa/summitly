@@ -27,7 +27,7 @@ interface BuyMegaMenuProps {
   children: React.ReactNode;
 }
 
-type CategoryType = 'for-sale' | 'new-homes' | 'buying-resources';
+type CategoryType = 'popular-searches' | 'new-condos-and-homes' | 'buying-resources';
 
 interface CategoryItem {
   id: CategoryType;
@@ -45,20 +45,45 @@ interface ContentItem {
 
 const mainCategories: CategoryItem[] = [
   {
-    id: 'for-sale',
-    title: 'For Sale',
-    description: 'Browse properties for sale'
+    id: 'popular-searches',
+    title: 'Popular Searches',
+    description: 'Browse popular searches for properties for sale'
   },
   {
-    id: 'new-homes',
-    title: 'New Homes',
-    description: 'Explore new construction'
+    id: 'new-condos-and-homes',
+    title: 'New Condos & Homes',
+    description: 'Explore new condos and homes for sale'
   },
   {
     id: 'buying-resources',
     title: 'Buying Resources',
     description: 'Tools and guides'
   }
+];
+
+const buyBase = '/buy/toronto';
+
+/** Popular Searches – Column 1 */
+const popularSearchesColumn1: { label: string; href: string }[] = [
+  { label: 'New Listings', href: `${buyBase}/new-listings` },
+  { label: 'Open Houses', href: `${buyBase}/open-houses` },
+  { label: 'Listed in Last 7 Days', href: `${buyBase}/last-7-days` },
+  { label: 'Listed in Last 24 Hours', href: `${buyBase}/last-24-hours` },
+  { label: 'Price Reduced', href: `${buyBase}/price-reduced` },
+  { label: 'Back on Market', href: `${buyBase}/back-on-market` },
+  { label: 'Motivated Sellers', href: `${buyBase}/motivated-sellers` },
+  { label: 'Great Value (Below Market)', href: `${buyBase}/great-value` },
+];
+
+/** Popular Searches – Column 2 */
+const popularSearchesColumn2: { label: string; href: string }[] = [
+  { label: 'Recently Sold', href: `${buyBase}/recently-sold` },
+  { label: 'Power of Sale', href: `${buyBase}/power-of-sale` },
+  { label: 'Foreclosure / Distressed', href: `${buyBase}/foreclosure` },
+  { label: 'Estate Sales', href: `${buyBase}/estate-sales` },
+  { label: 'Assignment Sales', href: `${buyBase}/assignment-sales` },
+  { label: 'Fixer-Uppers', href: `${buyBase}/fixer-uppers` },
+  { label: 'Quick Closing Available', href: `${buyBase}/quick-closing` },
 ];
 
 const forSaleItems: ContentItem[] = [
@@ -76,11 +101,45 @@ const forSaleItems: ContentItem[] = [
   { id: '3-bedroom', label: '3-Bedroom Homes', description: 'Spacious family homes', href: '/properties/toronto/3-bedroom', icon: Home },
 ];
 
+const preConBase = '/pre-con';
+
+/** New Condos – search options column */
+const newCondosColumn: { label: string; href: string }[] = [
+  { label: 'Search by City', href: `${preConBase}/cities` },
+  { label: 'Search by Neighbourhood', href: `${preConBase}/projects` },
+  { label: 'Search by Intersection', href: `${preConBase}` },
+  { label: 'Search by Project', href: `${preConBase}/projects` },
+  { label: 'Search by Builder', href: `${preConBase}/projects` },
+  { label: 'Search by Status (Coming Soon / Pre-Launch / Now Selling)', href: `${preConBase}/selling` },
+  { label: 'Search by Occupancy Date', href: `${preConBase}/projects` },
+  { label: 'Search by Price / Under $X', href: `${preConBase}/projects` },
+  { label: 'Search by Bedrooms (Studio / 1 / 1+Den / 2 / 2+Den)', href: `${preConBase}/condos` },
+  { label: 'Platinum / VIP Access', href: `${preConBase}/projects` },
+  { label: 'Special Promotions / Incentives', href: `${preConBase}` },
+];
+
+/** New Homes – search options column */
+const newHomesColumn: { label: string; href: string }[] = [
+  { label: 'Search by City', href: `${preConBase}/cities` },
+  { label: 'Search by Neighbourhood / Community', href: `${preConBase}/projects` },
+  { label: 'Search by Intersection', href: `${preConBase}` },
+  { label: 'Search by Project / Community', href: `${preConBase}/projects` },
+  { label: 'Search by Builder', href: `${preConBase}/projects` },
+  { label: 'Search by Status (Coming Soon / Pre-Launch / Now Selling)', href: `${preConBase}/selling` },
+  { label: 'Search by Occupancy Date', href: `${preConBase}/projects` },
+  { label: 'Quick Move-In / Quick Possession', href: `${preConBase}/projects` },
+  { label: 'Search by Price / Under $X', href: `${preConBase}/projects` },
+  { label: 'Search by Type (Townhome / Semi / Detached)', href: `${preConBase}/houses` },
+  { label: 'Search by Bedrooms (3 / 4 / 5+)', href: `${preConBase}/houses` },
+  { label: 'Platinum / VIP Access', href: `${preConBase}/projects` },
+  { label: 'Special Promotions / Incentives', href: `${preConBase}` },
+];
+
 const newHomesItems: ContentItem[] = [
-  { id: 'discover', label: 'Discover Your New Home', description: 'Find new construction projects', href: '/new-homes/discover', icon: MapPin },
-  { id: 'new-homes-sale', label: 'New Homes For Sale', description: 'Browse all new construction listings', href: '/new-homes', icon: Home },
-  { id: 'communities', label: 'New Home Communities', description: 'Explore master-planned communities', href: '/new-homes/communities', icon: Building2 },
-  { id: 'news', label: 'New Construction News', description: 'Stay updated on new developments', href: '/new-homes/news', icon: TrendingUp },
+  { id: 'discover', label: 'Discover Your New Home', description: 'Find new construction projects', href: '/pre-con', icon: MapPin },
+  { id: 'new-homes-sale', label: 'New Homes For Sale', description: 'Browse all new construction listings', href: '/pre-con/projects', icon: Home },
+  { id: 'communities', label: 'New Home Communities', description: 'Explore master-planned communities', href: '/pre-con/projects', icon: Building2 },
+  { id: 'news', label: 'New Construction News', description: 'Stay updated on new developments', href: '/pre-con', icon: TrendingUp },
 ];
 
 const buyingResourcesItems: ContentItem[] = [
@@ -92,8 +151,8 @@ const buyingResourcesItems: ContentItem[] = [
 
 const getCategoryTitle = (category: CategoryType): string => {
   const titles: Record<CategoryType, string> = {
-    'for-sale': 'Browse Properties For Sale',
-    'new-homes': 'Explore New Construction',
+    'popular-searches': 'Popular Searches',
+    'new-condos-and-homes': 'Explore New Condos & Homes',
     'buying-resources': 'Buying Tools & Resources'
   };
   return titles[category];
@@ -101,8 +160,8 @@ const getCategoryTitle = (category: CategoryType): string => {
 
 const getCategoryDescription = (category: CategoryType): string => {
   const descriptions: Record<CategoryType, string> = {
-    'for-sale': 'Find your perfect home from houses to condos. Browse thousands of properties available for sale in your area.',
-    'new-homes': 'Discover new construction projects and master-planned communities. Get early access to the latest developments.',
+    'popular-searches': 'Fresh listings, hot deals, and quick ways to find the right home fast.',
+    'new-condos-and-homes': 'Discover new construction projects and master-planned communities. Get early access to the latest developments.',
     'buying-resources': 'Use our calculators and guides to make informed decisions. Learn everything you need to know about buying a home.'
   };
   return descriptions[category];
@@ -110,9 +169,9 @@ const getCategoryDescription = (category: CategoryType): string => {
 
 const getContentForCategory = (category: CategoryType): ContentItem[] => {
   switch (category) {
-    case 'for-sale': 
+    case 'popular-searches': 
       return forSaleItems;
-    case 'new-homes': 
+    case 'new-condos-and-homes': 
       return newHomesItems;
     case 'buying-resources': 
       return buyingResourcesItems;
@@ -129,7 +188,7 @@ export const BuyMegaMenu: React.FC<BuyMegaMenuProps> = ({
   children
 }) => {
   const [mounted, setMounted] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<CategoryType>('for-sale');
+  const [activeCategory, setActiveCategory] = useState<CategoryType>('popular-searches');
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
   useEffect(() => {
@@ -214,56 +273,132 @@ export const BuyMegaMenu: React.FC<BuyMegaMenuProps> = ({
                     exit={{ opacity: 0, x: -10 }}
                     transition={{ duration: 0.15 }}
                   >
-                    <h4 className="text-sm font-medium text-muted-foreground mb-4">
+                    <h4 className="text-sm font-medium text-muted-foreground mb-1">
                       {getCategoryTitle(activeCategory)}
                     </h4>
-                    <div className="grid grid-cols-2 gap-1">
-                      {contentItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <Link
-                            key={item.id}
-                            href={item.href}
-                            className={cn(
-                              "flex items-start gap-3 p-3 rounded-lg transition-all duration-200",
-                              hoveredItem === item.id 
-                                ? "bg-secondary/10" 
-                                : "hover:bg-muted/50"
-                            )}
-                            onMouseEnter={() => setHoveredItem(item.id)}
-                            onMouseLeave={() => setHoveredItem(null)}
-                          >
-                            <div className={cn(
-                              "w-10 h-10 rounded-lg flex items-center justify-center transition-colors flex-shrink-0",
-                              hoveredItem === item.id 
-                                ? "bg-primary/20" 
-                                : "bg-secondary/20"
-                            )}>
-                              <Icon className={cn(
-                                "w-5 h-5 transition-colors",
-                                hoveredItem === item.id ? "text-primary" : "text-muted-foreground"
-                              )} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h5 className={cn(
-                                "text-sm font-semibold transition-colors",
-                                hoveredItem === item.id ? "text-primary" : "text-foreground"
-                              )}>
+                    <p className="text-sm text-foreground mb-4">
+                      {getCategoryDescription(activeCategory)}
+                    </p>
+                    {activeCategory === 'popular-searches' ? (
+                      <div className="grid grid-cols-2 gap-x-8 gap-y-0">
+                        <nav className="flex flex-col" aria-label="Popular searches column 1">
+                          {popularSearchesColumn1.map((item) => (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              className="py-2.5 border-b border-border/60 text-sm text-foreground hover:text-primary transition-colors last:border-b-0"
+                            >
+                              {item.label}
+                            </Link>
+                          ))}
+                        </nav>
+                        <nav className="flex flex-col" aria-label="Popular searches column 2">
+                          {popularSearchesColumn2.map((item) => (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              className="py-2.5 border-b border-border/60 text-sm text-foreground hover:text-primary transition-colors last:border-b-0"
+                            >
+                              {item.label}
+                            </Link>
+                          ))}
+                        </nav>
+                      </div>
+                    ) : activeCategory === 'new-condos-and-homes' ? (
+                      <div className="grid grid-cols-2 gap-x-8 gap-y-0">
+                        <div>
+                          <h5 className="text-sm font-semibold text-foreground pb-2 mb-2 border-b border-border">
+                            New Condos
+                          </h5>
+                          <nav className="flex flex-col" aria-label="New condos search options">
+                            {newCondosColumn.map((item) => (
+                              <Link
+                                key={item.href + item.label}
+                                href={item.href}
+                                className="py-2.5 border-b border-border/60 text-sm text-foreground hover:text-primary transition-colors last:border-b-0"
+                              >
                                 {item.label}
-                              </h5>
-                              <p className="text-xs text-muted-foreground line-clamp-1">
-                                {item.description}
-                              </p>
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
+                              </Link>
+                            ))}
+                          </nav>
+                        </div>
+                        <div>
+                          <h5 className="text-sm font-semibold text-foreground pb-2 mb-2 border-b border-border">
+                            New Homes
+                          </h5>
+                          <nav className="flex flex-col" aria-label="New homes search options">
+                            {newHomesColumn.map((item) => (
+                              <Link
+                                key={item.href + item.label}
+                                href={item.href}
+                                className="py-2.5 border-b border-border/60 text-sm text-foreground hover:text-primary transition-colors last:border-b-0"
+                              >
+                                {item.label}
+                              </Link>
+                            ))}
+                          </nav>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-1">
+                        {contentItems.map((item) => {
+                          const Icon = item.icon;
+                          return (
+                            <Link
+                              key={item.id}
+                              href={item.href}
+                              className={cn(
+                                "flex items-start gap-3 p-3 rounded-lg transition-all duration-200",
+                                hoveredItem === item.id 
+                                  ? "bg-secondary/10" 
+                                  : "hover:bg-muted/50"
+                              )}
+                              onMouseEnter={() => setHoveredItem(item.id)}
+                              onMouseLeave={() => setHoveredItem(null)}
+                            >
+                              <div className={cn(
+                                "w-10 h-10 rounded-lg flex items-center justify-center transition-colors flex-shrink-0",
+                                hoveredItem === item.id 
+                                  ? "bg-primary/20" 
+                                  : "bg-secondary/20"
+                              )}>
+                                <Icon className={cn(
+                                  "w-5 h-5 transition-colors",
+                                  hoveredItem === item.id ? "text-primary" : "text-muted-foreground"
+                                )} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h5 className={cn(
+                                  "text-sm font-semibold transition-colors",
+                                  hoveredItem === item.id ? "text-primary" : "text-foreground"
+                                )}>
+                                  {item.label}
+                                </h5>
+                                <p className="text-xs text-muted-foreground line-clamp-1">
+                                  {item.description}
+                                </p>
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
                     <Link
-                      href={activeCategory === 'for-sale' ? '/properties/toronto/homes' : '/buy'}
+                      href={
+                        activeCategory === 'popular-searches'
+                          ? '/buy/toronto'
+                          : activeCategory === 'new-condos-and-homes'
+                            ? '/pre-con'
+                            : '/buy'
+                      }
                       className="inline-flex items-center gap-1 mt-4 text-xs font-semibold text-primary hover:underline"
                     >
-                      View all {activeCategory.replace('-', ' ')}
+                      View all{' '}
+                      {activeCategory === 'popular-searches'
+                        ? 'properties for sale'
+                        : activeCategory === 'new-condos-and-homes'
+                          ? 'new condos & homes'
+                          : activeCategory.replace(/-/g, ' ')}
                     </Link>
                   </motion.div>
                 </AnimatePresence>

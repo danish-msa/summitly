@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Globe, Linkedin, Twitter } from "lucide-react";
+import { ArrowLeft, Globe, Linkedin, Twitter, Facebook, Instagram, Youtube } from "lucide-react";
 import type { Agent } from "@prisma/client";
 import type { AgentStats, AgentSocialLinks } from "@prisma/client";
 
@@ -64,23 +64,12 @@ export function AgentProfileBanner({ agent }: AgentProfileBannerProps) {
 
         {/* Right: dark teal panel */}
         <div className="bg-white flex flex-col justify-center gap-4 p-6 sm:p-8 lg:px-20 lg:py-10 text-primary">
-          <p className="text-secondary text-sm font-medium uppercase tracking-wide">
-            {agent.job_title}
-          </p>
           <h1 className="mt-1 text-3xl sm:text-5xl font-bold text-black">
             {agent.full_name}
           </h1>
-          {agent.website_url && (
-            <a
-              href={agent.website_url.startsWith("http") ? agent.website_url : `https://${agent.website_url}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex w-fit items-center gap-2 text-sm text-primary hover:text-secondary transition-colors mt-1"
-            >
-              <Globe className="h-4 w-4 shrink-0" aria-hidden />
-              <span>{agent.website_url.replace(/^https?:\/\//i, "")}</span>
-            </a>
-          )}
+          <p className="text-secondary text-sm font-medium uppercase tracking-wide">
+            {agent.job_title}
+          </p>
           {agent.property_specialties?.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
               {agent.property_specialties.slice(0, 5).map((s) => (
@@ -93,9 +82,87 @@ export function AgentProfileBanner({ agent }: AgentProfileBannerProps) {
               ))}
             </div>
           )}
+          {agent.languages_spoken?.length > 0 && (
+            <div className="mt-3">
+              <h2 className="text-sm font-semibold text-primary mb-2">
+                Languages Spoken
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {agent.languages_spoken.map((lang) => (
+                  <span
+                    key={lang}
+                    className="inline-flex items-center rounded-lg bg-muted px-3 py-1.5 text-sm text-foreground"
+                  >
+                    {lang}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Social media – below Languages Spoken */}
+          {(social?.linkedin || social?.twitter || social?.facebook || social?.instagram || social?.youtube) && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {social?.linkedin && (
+                <a
+                  href={social.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center w-9 h-9 rounded-full bg-muted text-primary hover:bg-secondary hover:text-primary-foreground transition-colors"
+                  aria-label="LinkedIn"
+                >
+                  <Linkedin className="h-4 w-4" />
+                </a>
+              )}
+              {social?.twitter && (
+                <a
+                  href={social.twitter}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center w-9 h-9 rounded-full bg-muted text-primary hover:bg-secondary hover:text-primary-foreground transition-colors"
+                  aria-label="Twitter"
+                >
+                  <Twitter className="h-4 w-4" />
+                </a>
+              )}
+              {social?.facebook && (
+                <a
+                  href={social.facebook}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center w-9 h-9 rounded-full bg-muted text-primary hover:bg-secondary hover:text-primary-foreground transition-colors"
+                  aria-label="Facebook"
+                >
+                  <Facebook className="h-4 w-4" />
+                </a>
+              )}
+              {social?.instagram && (
+                <a
+                  href={social.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center w-9 h-9 rounded-full bg-muted text-primary hover:bg-secondary hover:text-primary-foreground transition-colors"
+                  aria-label="Instagram"
+                >
+                  <Instagram className="h-4 w-4" />
+                </a>
+              )}
+              {social?.youtube && (
+                <a
+                  href={social.youtube}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center w-9 h-9 rounded-full bg-muted text-primary hover:bg-secondary hover:text-primary-foreground transition-colors"
+                  aria-label="YouTube"
+                >
+                  <Youtube className="h-4 w-4" />
+                </a>
+              )}
+            </div>
+          )}
 
           {/* Stats row */}
-          <div className="flex flex-wrap gap-8 sm:gap-20">
+          {/* <div className="flex flex-wrap gap-8 sm:gap-20">
             <div>
               <p className="text-2xl sm:text-4xl font-bold text-primary">
                 {stats?.years_experience != null && stats.years_experience >= 25
@@ -116,9 +183,9 @@ export function AgentProfileBanner({ agent }: AgentProfileBannerProps) {
               </p>
               <p className="text-xs text-primary/80 font-light">Active</p>
             </div>
-          </div>
+          </div> */}
 
-          {/* Contact + Social */}
+          {/* Contact + Visit Website */}
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <a
               href={agent.email ? `mailto:${agent.email}` : "#contact"}
@@ -126,26 +193,15 @@ export function AgentProfileBanner({ agent }: AgentProfileBannerProps) {
             >
               Contact Agent
             </a>
-            {social?.linkedin && (
+            {agent.website_url && (
               <a
-                href={social.linkedin}
+                href={agent.website_url.startsWith("http") ? agent.website_url : `https://${agent.website_url}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center w-9 h-9 rounded-full bg-muted text-primary hover:bg-secondary hover:text-primary-foreground transition-colors"
-                aria-label="LinkedIn"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-secondary bg-transparent px-6 py-3 text-sm font-medium text-primary hover:bg-secondary/10 transition-colors"
               >
-                <Linkedin className="h-4 w-4" />
-              </a>
-            )}
-            {social?.twitter && (
-              <a
-                href={social.twitter}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center w-9 h-9 rounded-full bg-muted text-primary hover:bg-secondary hover:text-primary-foreground transition-colors"
-                aria-label="Twitter"
-              >
-                <Twitter className="h-4 w-4" />
+                <Globe className="h-4 w-4 shrink-0" aria-hidden />
+                Visit Website
               </a>
             )}
           </div>

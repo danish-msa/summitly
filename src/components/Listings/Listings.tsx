@@ -676,8 +676,8 @@ const Listings = () => {
 
   return (
     <MapOptionsProvider initialLayout="split">
-    <div className="px-4 sm:px-6 lg:px-8 mt-20">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-4">
+    <div className="flex flex-col px-4 sm:px-6 lg:px-8 mt-20 h-[calc(100vh-5rem)]">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-4 flex-shrink-0">
       {/* Use the separated filter component */}
         <GlobalFilters
           filters={filters}
@@ -711,8 +711,8 @@ const Listings = () => {
       
       {/* Property Listings and Map View */}
       {viewMode === 'map' ? (
-        // Map View Only
-        <div className="w-full bg-gray-100 rounded-lg overflow-hidden" style={{ height: '70vh' }}>
+        // Map View Only - fills to bottom edge
+        <div className="flex-1 min-h-0 w-full bg-gray-100 rounded-lg overflow-hidden">
           <div className="relative w-full h-full">
             <MapRoot
               zoom={mapPosition.zoom}
@@ -725,12 +725,11 @@ const Listings = () => {
           </div>
         </div>
       ) : viewMode === 'mixed' ? (
-        // Mixed View (List + Map Side by Side)
+        // Mixed View (List + Map Side by Side) - fills viewport to bottom edge
         <div 
           ref={splitContainerRef}
-          className="flex flex-col md:flex-row mb-10 relative" 
+          className="flex flex-col md:flex-row flex-1 min-h-0 relative" 
           style={{ 
-            height: 'calc(100vh - 200px)',
             // Optimize container for smooth dragging
             contain: 'layout style',
             willChange: 'contents'

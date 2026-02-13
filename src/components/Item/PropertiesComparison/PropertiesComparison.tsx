@@ -6,10 +6,13 @@ import { getListingDetails } from '@/lib/api/properties'
 import { useSavedComparables } from '@/hooks/useSavedComparables'
 import { CurvedTabs, CurvedTabsList, CurvedTabsTrigger, CurvedTabsContent } from '@/components/ui/curved-tabs'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
+import ComparableSelectorModal from '@/components/Comparables/ComparableSelectorModal'
 import CardView from './CardView'
 import ListView from './ListView'
 import ComparisonView from './ComparisonView'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
+import { Plus } from 'lucide-react'
 
 interface PropertiesComparisonProps {
   currentProperty: PropertyListing
@@ -20,6 +23,7 @@ const PropertiesComparison: React.FC<PropertiesComparisonProps> = ({ currentProp
   const [comparableProperties, setComparableProperties] = useState<PropertyListing[]>([])
   const [isLoadingProperties, setIsLoadingProperties] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isComparableModalOpen, setIsComparableModalOpen] = useState(false)
 
   // Fetch property details for all saved comparables
   useEffect(() => {
@@ -90,9 +94,14 @@ const PropertiesComparison: React.FC<PropertiesComparisonProps> = ({ currentProp
             </div>
           ) : !hasComparables ? (
             <div className="text-center py-12">
-              <p className="text-zinc-500">
-                No comparables selected yet. Use the "Select Comparables" button in the price card to add properties for comparison.
-              </p>
+              <Button
+                onClick={() => setIsComparableModalOpen(true)}
+                variant="default"
+                className="gap-2"
+              >
+                <Plus className="w-4 h-4" aria-hidden />
+                Select Comparables
+              </Button>
             </div>
           ) : (
             <Tabs defaultValue="card-view" className="w-full">
@@ -127,6 +136,11 @@ const PropertiesComparison: React.FC<PropertiesComparisonProps> = ({ currentProp
           )}
         </CurvedTabsContent>
       </CurvedTabs>
+      <ComparableSelectorModal
+        open={isComparableModalOpen}
+        onOpenChange={setIsComparableModalOpen}
+        property={currentProperty}
+      />
     </div>
   )
 }
